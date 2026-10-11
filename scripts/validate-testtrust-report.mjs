@@ -7,37 +7,6 @@ import { readReportFile } from './report-path.mjs';
 const EXPECTED_VERSION = '0.1.9';
 const SEVERITIES = new Set(['fail', 'warn', 'info']);
 
-/**
- * Validate TestTrust's CLI status and complete JSON evidence for a diff scan.
- * The report must cover every changed unit-test file selected by the workflow;
- * a score alone or a neutral fallback is never accepted as evidence.
- *
- * @param {string} source
- * @param {{ baseRef: string, expectedFileCount: number, cliExitCode: number, failThreshold: number }} options
- * @returns {{ version: string, filesAnalyzed: number, findingCount: number, verdict: 'pass' | 'neutral' | 'fail', score: number }}
- */
-export function parseTestTrustReport(source, options) {
-  assertOptions(options);
-  const report = requireReportObject(source);
-  assertReportEnvelope(report, options);
-
-  const { severityCounts, ruleCounts } = collectFindings(report.findings);
-  const score = report.score;
-  assertScoreShape(score, options, report.findings.length);
-  assertSeverityCounts(score.countsBySeverity, severityCounts);
-  const totalPenalty = assertBreakdown(score.breakdown, ruleCounts);
-  assertScoreFromBreakdown(score.score, totalPenalty);
-  assertVerdict(score, severityCounts, options.failThreshold);
-
-  return {
-    version: report.version,
-    filesAnalyzed: report.filesAnalyzed,
-    findingCount: report.findings.length,
-    verdict: score.verdict,
-    score: score.score
-  };
-}
-
 function assertOptions(options) {
   if (
     !Number.isSafeInteger(options.expectedFileCount) ||
@@ -117,6 +86,22 @@ function assertReportEnvelope(report, options) {
   }
 }
 
+function isValidFinding(finding) {
+  return (
+    finding !== null &&
+    typeof finding === 'object' &&
+    typeof finding.ruleId === 'string' &&
+    finding.ruleId.length > 0 &&
+    SEVERITIES.has(finding.severity) &&
+    typeof finding.file === 'string' &&
+    finding.file.length > 0 &&
+    Number.isSafeInteger(finding.line) &&
+    finding.line >= 1 &&
+    typeof finding.message === 'string' &&
+    finding.message.length > 0
+  );
+}
+
 /** @param {unknown[]} findings */
 function collectFindings(findings) {
   const severityCounts = new Map(
@@ -134,22 +119,6 @@ function collectFindings(findings) {
     ruleCounts.set(finding.ruleId, (ruleCounts.get(finding.ruleId) ?? 0) + 1);
   }
   return { severityCounts, ruleCounts };
-}
-
-function isValidFinding(finding) {
-  return (
-    finding !== null &&
-    typeof finding === 'object' &&
-    typeof finding.ruleId === 'string' &&
-    finding.ruleId.length > 0 &&
-    SEVERITIES.has(finding.severity) &&
-    typeof finding.file === 'string' &&
-    finding.file.length > 0 &&
-    Number.isSafeInteger(finding.line) &&
-    finding.line >= 1 &&
-    typeof finding.message === 'string' &&
-    finding.message.length > 0
-  );
 }
 
 function assertScoreShape(score, options, findingsLength) {
@@ -200,6 +169,19 @@ function assertSeverityCounts(countsBySeverity, severityCounts) {
   }
 }
 
+function isValidBreakdownEntry(entry) {
+  return (
+    entry !== null &&
+    typeof entry === 'object' &&
+    typeof entry.ruleId === 'string' &&
+    Number.isSafeInteger(entry.count) &&
+    entry.count >= 1 &&
+    typeof entry.penalty === 'number' &&
+    Number.isFinite(entry.penalty) &&
+    entry.penalty >= 0
+  );
+}
+
 /** @param {Map<string, number>} ruleCounts */
 function assertBreakdown(breakdown, ruleCounts) {
   if (!Array.isArray(breakdown)) {
@@ -234,19 +216,6 @@ function assertBreakdown(breakdown, ruleCounts) {
     );
   }
   return totalPenalty;
-}
-
-function isValidBreakdownEntry(entry) {
-  return (
-    entry !== null &&
-    typeof entry === 'object' &&
-    typeof entry.ruleId === 'string' &&
-    Number.isSafeInteger(entry.count) &&
-    entry.count >= 1 &&
-    typeof entry.penalty === 'number' &&
-    Number.isFinite(entry.penalty) &&
-    entry.penalty >= 0
-  );
 }
 
 function assertScoreFromBreakdown(score, totalPenalty) {
@@ -285,6 +254,37 @@ function assertVerdict(score, severityCounts, failThreshold) {
   if (score.verdict === 'fail') {
     throw new Error('TestTrust reported a failing test-integrity verdict');
   }
+}
+
+/**
+ * Validate TestTrust's CLI status and complete JSON evidence for a diff scan.
+ * The report must cover every changed unit-test file selected by the workflow;
+ * a score alone or a neutral fallback is never accepted as evidence.
+ *
+ * @param {string} source
+ * @param {{ baseRef: string, expectedFileCount: number, cliExitCode: number, failThreshold: number }} options
+ * @returns {{ version: string, filesAnalyzed: number, findingCount: number, verdict: 'pass' | 'neutral' | 'fail', score: number }}
+ */
+export function parseTestTrustReport(source, options) {
+  assertOptions(options);
+  const report = requireReportObject(source);
+  assertReportEnvelope(report, options);
+
+  const { severityCounts, ruleCounts } = collectFindings(report.findings);
+  const score = report.score;
+  assertScoreShape(score, options, report.findings.length);
+  assertSeverityCounts(score.countsBySeverity, severityCounts);
+  const totalPenalty = assertBreakdown(score.breakdown, ruleCounts);
+  assertScoreFromBreakdown(score.score, totalPenalty);
+  assertVerdict(score, severityCounts, options.failThreshold);
+
+  return {
+    version: report.version,
+    filesAnalyzed: report.filesAnalyzed,
+    findingCount: report.findings.length,
+    verdict: score.verdict,
+    score: score.score
+  };
 }
 
 function parseCliOptions(argv) {

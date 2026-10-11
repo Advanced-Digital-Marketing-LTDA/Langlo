@@ -4,6 +4,32 @@ import { isAbsolute, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 
 /**
+ * Roots a report file may live under: the working directory, the system
+ * temporary directory, and CI temp directories exposed through environment
+ * variables. Roots that cannot be resolved are skipped.
+ *
+ * @returns {string[]} canonicalized absolute roots
+ */
+function allowedRoots() {
+  const roots = [process.cwd(), tmpdir()];
+  for (const value of [process.env.RUNNER_TEMP, process.env.TMPDIR]) {
+    if (value) {
+      roots.push(value);
+    }
+  }
+  const canonical = [];
+  for (const root of roots) {
+    try {
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
+      canonical.push(realpathSync(root));
+    } catch {
+      // Unreadable roots are not valid report locations.
+    }
+  }
+  return canonical;
+}
+
+/**
  * Resolve a CLI-supplied report path and confirm the canonicalized target
  * stays inside an allowed root: the working directory, the system temporary
  * directory, or a CI temp directory exposed through RUNNER_TEMP/TMPDIR.
@@ -19,21 +45,8 @@ export function resolveReportPath(reportPath) {
   } catch {
     throw new Error('Report file could not be read');
   }
-  const roots = [process.cwd(), tmpdir()];
-  for (const name of ['RUNNER_TEMP', 'TMPDIR']) {
-    const value = process.env[name];
-    if (value) {
-      roots.push(value);
-    }
-  }
-  const contained = roots.some((root) => {
-    let canonicalRoot;
-    try {
-      canonicalRoot = realpathSync(root);
-    } catch {
-      return false;
-    }
-    const rel = relative(canonicalRoot, target);
+  const contained = allowedRoots().some((root) => {
+    const rel = relative(root, target);
     return (
       rel !== '' &&
       rel !== '..' &&
@@ -60,6 +73,8 @@ export function resolveReportPath(reportPath) {
 export function readReportFile(reportPath) {
   const target = resolveReportPath(reportPath);
   try {
+    // NOSONAR jssecurity:S8707 — resolveReportPath confines the canonicalized
+    // target to approved working/temp roots before this read.
     return readFileSync(target, 'utf8');
   } catch {
     throw new Error('Report file could not be read');

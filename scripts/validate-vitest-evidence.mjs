@@ -13,44 +13,6 @@ const ASSERTION_STATUSES = new Set([
   'disabled'
 ]);
 
-/**
- * Parse the Vitest/Jest-compatible JSON report and reject absent or hollow
- * evidence: reports in which no assertion executed at all. Test failures
- * remain valid evidence; the test step and Merge-Evidence Gate decide
- * whether those failures should fail the workflow.
- *
- * @param {string} source
- * @returns {{ suiteCount: number, testCount: number, passedTestCount: number, failedTestCount: number, skippedTestCount: number }}
- */
-export function parseVitestEvidence(source) {
-  const report = requireReportObject(source);
-  const assertions = collectAssertions(report.testResults);
-
-  if (assertions.length === 0) {
-    throw new Error('Vitest report contains no test results');
-  }
-  if (assertions.length !== report.numTotalTests) {
-    throw new Error(
-      `Vitest report test count ${report.numTotalTests} does not match ${assertions.length} assertion results`
-    );
-  }
-
-  const counts = countAssertionStatuses(assertions);
-  assertExecutedAssertions(counts);
-  assertTestCounters(report, counts);
-  assertSuiteCounters(report, report.testResults);
-  assertSuccessFlag(report, counts.get('failed') ?? 0);
-
-  return {
-    suiteCount: report.testResults.length,
-    testCount: assertions.length,
-    passedTestCount: counts.get('passed') ?? 0,
-    failedTestCount: counts.get('failed') ?? 0,
-    skippedTestCount:
-      (counts.get('skipped') ?? 0) + (counts.get('disabled') ?? 0)
-  };
-}
-
 /** @param {string} source */
 function requireReportObject(source) {
   if (typeof source !== 'string' || source.trim() === '') {
@@ -194,6 +156,44 @@ function assertSuccessFlag(report, failedTestCount) {
       'Vitest report success flag does not match its test results'
     );
   }
+}
+
+/**
+ * Parse the Vitest/Jest-compatible JSON report and reject absent or hollow
+ * evidence: reports in which no assertion executed at all. Test failures
+ * remain valid evidence; the test step and Merge-Evidence Gate decide
+ * whether those failures should fail the workflow.
+ *
+ * @param {string} source
+ * @returns {{ suiteCount: number, testCount: number, passedTestCount: number, failedTestCount: number, skippedTestCount: number }}
+ */
+export function parseVitestEvidence(source) {
+  const report = requireReportObject(source);
+  const assertions = collectAssertions(report.testResults);
+
+  if (assertions.length === 0) {
+    throw new Error('Vitest report contains no test results');
+  }
+  if (assertions.length !== report.numTotalTests) {
+    throw new Error(
+      `Vitest report test count ${report.numTotalTests} does not match ${assertions.length} assertion results`
+    );
+  }
+
+  const counts = countAssertionStatuses(assertions);
+  assertExecutedAssertions(counts);
+  assertTestCounters(report, counts);
+  assertSuiteCounters(report, report.testResults);
+  assertSuccessFlag(report, counts.get('failed') ?? 0);
+
+  return {
+    suiteCount: report.testResults.length,
+    testCount: assertions.length,
+    passedTestCount: counts.get('passed') ?? 0,
+    failedTestCount: counts.get('failed') ?? 0,
+    skippedTestCount:
+      (counts.get('skipped') ?? 0) + (counts.get('disabled') ?? 0)
+  };
 }
 
 function main() {

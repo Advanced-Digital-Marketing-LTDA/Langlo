@@ -61,10 +61,32 @@ suite-counter cross-checks), then passed after the changes.
 - `npm run build`: passed.
 - `npm run test:e2e`: 32 passed.
 
+## Hosted-run follow-up — 2026-10-11
+
+Push head `27b608c` (validator round + maintainer commits `41f8b7d` base-ref
+hardening, `461e550` CODEOWNERS note, and a Prettier fix keeping the
+`tests/*evidence*` glob literal inside a code span). Push-event `foundation`
+passed fully; the pull-request run passed every step except the Merge-Evidence
+Gate, which failed by design on `C4` for `ci.yml` and `AGENTS.md` edits. The
+updated validators ran in CI: `Validated Vitest evidence: 220/220` and
+`Validated TestTrust evidence: 3 files, 0 findings, pass (100/100)`. Overlock
+reported one LOW finding (`TEST_AND_IMPL_TOGETHER` on the new report-path
+test), below the `fail-on: high` threshold.
+
+CodeAnt went green (0 antipatterns, 0 complex functions). SonarCloud narrowed
+to a single S8707 on `readFileSync` inside `report-path.mjs`; the containment
+helper is the mitigation, so the line carries a `// NOSONAR jssecurity:S8707`
+justification. Codacy's remaining security findings are the three intrinsic fs
+sinks in the path helper itself (`realpathSync` ×2, `readFileSync` ×1); a path
+validator cannot resolve paths without them, so they need maintainer
+acceptance in Codacy. `process.env[name]` computed access was replaced with
+explicit variables, and helpers were reordered ahead of their callers to clear
+the remaining warning-class findings.
+
 ## Pending
 
-- `ci.yml` base-ref guard + merge-base fallback (Gitar, CodeAnt first-push).
-- SonarCloud/Codacy residual style findings and gate acceptance are verified
-  only by the hosted runs after push; the Merge-Evidence Gate C4 flag on
-  workflow edits stays red on this PR by design and requires maintainer
-  resolution.
+- `ci.yml` base-ref guard + merge-base fallback — landed via maintainer commit
+  `41f8b7d`.
+- Codacy fs-sink findings and SonarCloud/Codacy gate acceptance remain with
+  the maintainer; the Merge-Evidence Gate C4 flags stay red on this PR by
+  design and require maintainer resolution.
