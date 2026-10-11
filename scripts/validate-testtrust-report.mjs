@@ -200,12 +200,12 @@ export function parseTestTrustReport(source, options) {
     );
   }
 
-  const expectedVerdict =
-    severityCounts.fail > 0 || score.score < options.failThreshold
-      ? 'fail'
-      : severityCounts.warn > 0
-        ? 'neutral'
-        : 'pass';
+  let expectedVerdict = 'pass';
+  if (severityCounts.fail > 0 || score.score < options.failThreshold) {
+    expectedVerdict = 'fail';
+  } else if (severityCounts.warn > 0) {
+    expectedVerdict = 'neutral';
+  }
   if (score.verdict !== expectedVerdict) {
     throw new Error(
       'TestTrust report verdict is inconsistent with its findings and score'
