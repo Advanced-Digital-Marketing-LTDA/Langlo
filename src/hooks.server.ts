@@ -105,14 +105,16 @@ export const handle: Handle = async ({ event, resolve }) => {
     return output;
   }
   if (auth && (appPath || path === '/login')) {
-    const session = await auth.api
-      .getSession({ headers: event.request.headers })
-      .catch(() => {
-        // A backend outage is not a missing session; report it as one would
-        // convert 503 service failures into misleading 401s/redirects.
-        sessionLookupFailed = true;
-        return null;
+    let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
+    try {
+      session = await auth.api.getSession({
+        headers: event.request.headers
       });
+    } catch {
+      // A backend outage is not a missing session; reporting it as one
+      // would convert 503 service failures into misleading 401s/redirects.
+      sessionLookupFailed = true;
+    }
     if (session) {
       event.locals.user = session.user as App.Locals['user'];
       event.locals.session = session.session as App.Locals['session'];

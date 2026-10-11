@@ -16,31 +16,36 @@ const fail = (): never => {
   process.exit(1);
 };
 
-const knownArgs = new Set([
-  'email',
-  'name',
-  'password',
-  'fixture-root',
-  'database-url'
-]);
-
 const parseArgs = (argv: string[]) => {
-  const args: Record<string, string | undefined> = Object.create(null);
+  const args: Record<string, string | undefined> = {};
   const flags = new Set<string>();
+  const takeValue = (index: number): string => {
+    const next = argv[index];
+    if (!next || next.startsWith('--')) fail();
+    return next;
+  };
   for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-    const key = arg.startsWith('--') ? arg.slice(2) : '';
-    if (arg === '--app') {
-      flags.add('app');
-    } else if (
-      arg.startsWith('--') &&
-      knownArgs.has(key) &&
-      argv[i + 1] &&
-      !argv[i + 1].startsWith('--')
-    ) {
-      args[key] = argv[++i];
-    } else {
-      fail();
+    switch (argv[i]) {
+      case '--app':
+        flags.add('app');
+        break;
+      case '--email':
+        args.email = takeValue(++i);
+        break;
+      case '--name':
+        args.name = takeValue(++i);
+        break;
+      case '--password':
+        args.password = takeValue(++i);
+        break;
+      case '--fixture-root':
+        args['fixture-root'] = takeValue(++i);
+        break;
+      case '--database-url':
+        args['database-url'] = takeValue(++i);
+        break;
+      default:
+        fail();
     }
   }
   return { args, flags };
