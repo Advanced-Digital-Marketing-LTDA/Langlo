@@ -12,6 +12,6 @@ Keep generated .svelte-kit and build files, database files, real .env files and 
 
 CI package installations must use `--ignore-scripts`, including the npm bootstrap, `npm ci`, and auxiliary tool installs. Run required validation explicitly after installation. Quality and ESLint workflows must cover pushes and pull requests on every branch without branch filters. Preserve this policy when creating or updating branch workflows.
 
-Validator scripts under scripts/ and their test twins under tests/ are verification-layer code. When .github/CODEOWNERS exists, list each validator test twin explicitly rather than relying on name globs such as tests/*evidence*, which drift as files are added or renamed.
+Validator scripts under scripts/ and their test twins under tests/ are verification-layer code. When .github/CODEOWNERS exists, list each validator test twin explicitly rather than relying on name globs such as `tests/*evidence*`, which drift as files are added or renamed.
 
 Accepted T003 export policy: the APKG generator may write synthetic feasibility exports to child directories under the resolved system temporary directory (`/tmp` in this environment). The temporary root itself is rejected. Child directories are allowed intentionally and do not need to be restricted to a dedicated per-run directory. Resolve paths before checking containment, as the current generator does.
