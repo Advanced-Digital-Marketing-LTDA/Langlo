@@ -132,6 +132,25 @@ const headTreeEntries = (cwd) =>
     .map((path) => ({ status: 'A', path }));
 
 /**
+ * Before-SHA or default-branch merge-base, whichever resolves; '' when
+ * neither does (caller falls back to the no-divergence path).
+ * @param {string | undefined} eventBefore
+ * @param {string | undefined} defaultBranch
+ * @param {string} cwd
+ * @param {string[]} notices
+ * @returns {string}
+ */
+const usableBase = (eventBefore, defaultBranch, cwd, notices) => {
+  const base = beforeShaBase(eventBefore, cwd);
+  if (eventBefore && !base && !/^0+$/u.test(eventBefore)) {
+    notices.push(
+      `Push 'before' SHA ${eventBefore} is unreachable or not an ancestor of HEAD (force-push or rebase); using the default-branch merge-base.`
+    );
+  }
+  return base || mergeBaseSha(defaultBranch, cwd);
+};
+
+/**
  * Resolve the diff base for the event. Fails closed: an advertised base that
  * does not resolve is an error, not a skipped audit.
  * @param {object} options
@@ -149,22 +168,15 @@ export function resolveBaseRef(options) {
     options;
   if (eventName === 'pull_request')
     return { base: `origin/${baseRef}`, scanAll: false };
-  let base = beforeShaBase(eventBefore, cwd);
-  if (eventBefore && !base && !/^0+$/u.test(eventBefore)) {
-    notices.push(
-      `Push 'before' SHA ${eventBefore} is unreachable or not an ancestor of HEAD (force-push or rebase); using the default-branch merge-base.`
-    );
-  }
-  if (!base) base = mergeBaseSha(defaultBranch, cwd);
-  let scanAll = false;
-  if (!base || base === git(['rev-parse', 'HEAD'], cwd)) {
+  const head = git(['rev-parse', 'HEAD'], cwd);
+  const base = usableBase(eventBefore, defaultBranch, cwd, notices) || head;
+  if (base === head) {
     notices.push(
       'No divergent merge-base with the default branch; scanning the full HEAD tree and reporting the repository root as the TestTrust base.'
     );
-    base = repoRootCommit(cwd);
-    scanAll = true;
+    return { base: repoRootCommit(cwd), scanAll: true };
   }
-  return { base, scanAll };
+  return { base, scanAll: false };
 }
 
 // Parse `git diff --name-status -z --find-renames` records into

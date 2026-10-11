@@ -29,6 +29,16 @@ const commitFile = (cwd: string, path: string, content: string) => {
   git(cwd, 'commit', '-qm', `add ${path}`);
 };
 
+const commitAll = (cwd: string, files: Record<string, string>) => {
+  for (const [path, content] of Object.entries(files)) {
+    const target = join(cwd, path);
+    execFileSync('mkdir', ['-p', dirname(target)]);
+    writeFileSync(target, content);
+    git(cwd, 'add', path);
+  }
+  git(cwd, 'commit', '-qm', 'root commit');
+};
+
 const initRepo = () => {
   const cwd = mkdtempSync(join(tmpdir(), 'langlo-detect-'));
   git(cwd, 'init', '-q', '-b', 'main');
@@ -43,16 +53,6 @@ const initRepo = () => {
   });
   git(cwd, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
   return cwd;
-};
-
-const commitAll = (cwd: string, files: Record<string, string>) => {
-  for (const [path, content] of Object.entries(files)) {
-    const target = join(cwd, path);
-    execFileSync('mkdir', ['-p', dirname(target)]);
-    writeFileSync(target, content);
-    git(cwd, 'add', path);
-  }
-  git(cwd, 'commit', '-qm', 'root commit');
 };
 
 // Run a fixture scenario in a fresh disposable repo, always cleaned up.

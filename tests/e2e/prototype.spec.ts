@@ -41,6 +41,12 @@ async function goToDrafts(page: Page) {
   ]);
 }
 
+// Visit drafts and return — exercises keep state across a remount.
+async function draftsRoundTrip(page: Page) {
+  await goToDrafts(page);
+  await page.goBack();
+}
+
 const prototypePages = [
   '/prototype',
   '/prototype/map',
@@ -154,8 +160,7 @@ test('a kept mistake stays kept after leaving and returning to results', async (
   await expect(page.getByText('Draft card created')).toHaveCount(0);
   await expect(page.getByText('Kept mistakes stay drafts')).toBeVisible();
   // Leave and return once more — the keep must stay a no-op, not duplicate.
-  await goToDrafts(page);
-  await page.goBack();
+  await draftsRoundTrip(page);
   await expect(firstMissed).toContainText('Added to drafts');
   await goToDrafts(page);
   await expect(keptDraft).toHaveCount(1);
