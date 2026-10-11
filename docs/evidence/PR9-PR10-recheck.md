@@ -45,16 +45,19 @@ On a no-divergence push the fallback `base_ref` was
 `git hash-object -t tree /dev/null` — a tree object, while TestTrust's
 `--base` expects a commit.
 
-Fix: the same code path now materializes a real empty-root commit
-(`git commit-tree` with explicit CI identity), so `git diff` and TestTrust
-both receive a commit. Comparison semantics are unchanged — every file diffs
-as added — and no audit path is skipped; an advertised base that fails
-`cat-file -e` still errors out.
+Fix: the same code path now reports the repository's existing root commit
+(`git rev-list --max-parents=0 HEAD`) — a real ancestor, so TestTrust's
+merge-base diff resolves — and detection enumerates the full HEAD tree so
+files already in the root commit are still classified. No audit path is
+skipped; an advertised base that fails `cat-file -e` still errors out.
+(An intermediate revision materialized a synthetic `commit-tree` root; it
+was parentless and could not satisfy merge-base diffing.)
 
 Evidence (same fixture suite): new-branch push resolves the fork-point
 merge-base, before-SHA push resolves the ancestor, a no-divergence push
-returns a `commit`-typed object that diffs all files, and an unavailable PR
-base throws `Unable to resolve diff base` (fail closed).
+reports the root commit while classifying test files seeded into that root
+commit, and an unavailable PR base throws `Unable to resolve diff base`
+(fail closed).
 
 ## Finding 3 — results page showed fixed fixture mistakes
 
