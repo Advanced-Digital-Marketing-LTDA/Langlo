@@ -140,20 +140,20 @@ export function parseRuntimeConfig(
 
 const emailPattern = /^[^\s@]{1,254}@[^\s@]{1,253}\.[^\s@]{2,63}$/;
 
-/** Auth exists only when data is enabled; secret/mail rules follow the selected transport. */
-function parseAuthConfig(
+function parseMailTransport(
   env: Record<string, string | undefined>,
   environment: string
-): AuthRuntimeConfig {
-  const secret = env.BETTER_AUTH_SECRET?.trim();
-  if (!secret || secret.length < 32)
-    throw new ConfigError('BETTER_AUTH_SECRET');
+): AuthMailConfig['transport'] {
   const rawTransport = env.MAIL_TRANSPORT ?? 'capture';
   if (!['capture', 'smtp'].includes(rawTransport))
     throw new ConfigError('MAIL_TRANSPORT');
   const transport = rawTransport as AuthMailConfig['transport'];
   if (environment === 'production' && transport === 'capture')
     throw new ConfigError('MAIL_TRANSPORT');
+  return transport;
+}
+
+function parseSmtpHost(env: Record<string, string | undefined>): string {
   const smtpHost = env.SMTP_HOST ?? 'smtp.protonmail.ch';
   let hostUrl: URL;
   try {
@@ -171,13 +171,32 @@ function parseAuthConfig(
     !/^[a-zA-Z0-9.-]+$/.test(smtpHost)
   )
     throw new ConfigError('SMTP_HOST');
+  return smtpHost;
+}
+
+function parseSmtpPort(env: Record<string, string | undefined>): number {
   const rawPort = env.SMTP_PORT ?? '587';
   if (!/^[0-9]{1,5}$/.test(rawPort)) throw new ConfigError('SMTP_PORT');
   const smtpPort = Number(rawPort);
   if (!Number.isSafeInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535)
     throw new ConfigError('SMTP_PORT');
-  const mail: AuthMailConfig = { transport, smtpHost, smtpPort };
-  if (transport === 'smtp') {
+  return smtpPort;
+}
+
+/** Auth exists only when data is enabled; secret/mail rules follow the selected transport. */
+function parseAuthConfig(
+  env: Record<string, string | undefined>,
+  environment: string
+): AuthRuntimeConfig {
+  const secret = env.BETTER_AUTH_SECRET?.trim();
+  if (!secret || secret.length < 32)
+    throw new ConfigError('BETTER_AUTH_SECRET');
+  const mail: AuthMailConfig = {
+    transport: parseMailTransport(env, environment),
+    smtpHost: parseSmtpHost(env),
+    smtpPort: parseSmtpPort(env)
+  };
+  if (mail.transport === 'smtp') {
     const from = env.MAIL_FROM?.trim();
     if (!from || !emailPattern.test(from)) throw new ConfigError('MAIL_FROM');
     const token = env.PROTON_SMTP_TOKEN?.trim();

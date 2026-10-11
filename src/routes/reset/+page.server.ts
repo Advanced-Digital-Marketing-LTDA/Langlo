@@ -1,9 +1,16 @@
+import { timingSafeEqual } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { resolveAuth } from '../../lib/server/auth-runtime';
 import { authFormRequest } from '../../lib/server/auth-request';
 
 const invalid = 'This reset link is invalid or has expired. Request a new one.';
+const utf8 = new TextEncoder();
+const sameValue = (left: string, right: string): boolean => {
+  const a = utf8.encode(left);
+  const b = utf8.encode(right);
+  return a.length === b.length && timingSafeEqual(a, b);
+};
 
 export const load: PageServerLoad = ({ cookies }) => ({
   token: cookies.get('langlo_reset_token') ?? ''
@@ -18,7 +25,7 @@ export const actions: Actions = {
     if (!token) {
       return fail(400, { token, message: invalid });
     }
-    if (password !== confirm) {
+    if (!sameValue(password, confirm)) {
       return fail(400, { token, message: 'Passwords do not match.' });
     }
     const auth = event.locals.config
