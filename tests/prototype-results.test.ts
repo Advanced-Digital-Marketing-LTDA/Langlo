@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   deriveMissedItems,
+  deriveTotals,
   draftIdFor,
   mistakePreview,
   type SessionAnswer
@@ -48,6 +49,40 @@ describe('deriveMissedItems', () => {
     expect(fallback).toHaveLength(1);
     expect(fallback[0]?.expected).toBe('est');
     expect(deriveMissedItems([], 0)).toEqual([]);
+  });
+});
+
+describe('deriveTotals', () => {
+  it('counts every outcome across a mixed session', () => {
+    const answers = [
+      answer('a', 'correct'),
+      answer('b', 'incorrect', 'es', 'est'),
+      answer('c', 'correct'),
+      answer('d', 'incorrect', 'x', 'y'),
+      answer('e', 'uncertain')
+    ];
+    expect(deriveTotals(answers)).toEqual({
+      correct: 2,
+      incorrect: 2,
+      uncertain: 1
+    });
+  });
+
+  it('reports zero incorrect for a clean session', () => {
+    const answers = [answer('a', 'correct'), answer('b', 'correct')];
+    expect(deriveTotals(answers)).toEqual({
+      correct: 2,
+      incorrect: 0,
+      uncertain: 0
+    });
+  });
+
+  it('returns zero totals when no run happened', () => {
+    expect(deriveTotals([])).toEqual({
+      correct: 0,
+      incorrect: 0,
+      uncertain: 0
+    });
   });
 });
 

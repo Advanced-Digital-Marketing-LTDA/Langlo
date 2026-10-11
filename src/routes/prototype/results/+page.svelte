@@ -7,6 +7,7 @@
   import { prototypeSession } from '../../../lib/prototype/session.svelte';
   import {
     deriveMissedItems,
+    deriveTotals,
     draftIdFor,
     mistakePreview,
     type MissedItem
@@ -18,9 +19,22 @@
     const raw = Number.parseInt(page.url.searchParams.get(name) ?? '', 10);
     return Number.isFinite(raw) && raw >= 0 ? raw : fallback;
   }
-  const correct = $derived(readCount('correct', defaultResults.correct));
-  const incorrect = $derived(readCount('incorrect', defaultResults.incorrect));
-  const uncertain = $derived(readCount('uncertain', defaultResults.uncertain));
+  // Recorded answers outrank the count params: a retry or a stripped URL
+  // drops the params while the session answers stay authoritative.
+  const sessionTotals = $derived(
+    prototypeSession.answers.length > 0
+      ? deriveTotals(prototypeSession.answers)
+      : null
+  );
+  const correct = $derived(
+    sessionTotals?.correct ?? readCount('correct', defaultResults.correct)
+  );
+  const incorrect = $derived(
+    sessionTotals?.incorrect ?? readCount('incorrect', defaultResults.incorrect)
+  );
+  const uncertain = $derived(
+    sessionTotals?.uncertain ?? readCount('uncertain', defaultResults.uncertain)
+  );
 
   const missedItems = $derived(
     deriveMissedItems(prototypeSession.answers, incorrect)
@@ -29,9 +43,13 @@
     (d) => d.id === 'deck-mistakes'
   );
 
-  const isKept = (missed: MissedItem) =>
-    mistakesDeck?.notes.some((note) => note.id === draftIdFor(missed)) ?? false;
-  const anyKept = $derived(missedItems.some((missed) => isKept(missed)));
+  // A kept mistake's note carries its lifecycle status — drafts stay
+  // approvable; approved and rejected notes are terminal states.
+  const keptStatus = (missed: MissedItem) =>
+    mistakesDeck?.notes.find((note) => note.id === draftIdFor(missed))?.status;
+  const anyKept = $derived(
+    missedItems.some((missed) => keptStatus(missed) === 'draft')
+  );
 
   function keepAsFlashcard(missed: MissedItem) {
     if (!mistakesDeck) return;
@@ -126,8 +144,12 @@
               Your answer: {missed.yourAnswer}<br />
               Accepted: <strong>{missed.expected}</strong>
             </p>
-            {#if isKept(missed)}
+            {#if keptStatus(missed) === 'draft'}
               <p class="muted">Added to drafts — approve it in Decks.</p>
+            {:else if keptStatus(missed) === 'approved'}
+              <p class="muted">Approved as a flashcard.</p>
+            {:else if keptStatus(missed) === 'rejected'}
+              <p class="muted">Rejected in Decks.</p>
             {:else}
               <button
                 class="secondary"

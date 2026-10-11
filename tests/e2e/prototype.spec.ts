@@ -146,6 +146,40 @@ test('a kept mistake stays kept after leaving and returning to results', async (
   await expect(keptDraft).toHaveCount(1);
 });
 
+test('an approved kept mistake shows its terminal state, not draft copy', async ({
+  page
+}) => {
+  await page.goto('/prototype/results');
+  await page.getByRole('button', { name: 'Keep as flashcard' }).click();
+  await goToDrafts(page);
+  await page
+    .locator('ul.drafts li', { hasText: '« Elle ___ fatiguée » — est, not es' })
+    .getByRole('button', { name: 'Approve' })
+    .click();
+  await page.goBack();
+  const missed = page.locator('.missed').first();
+  await expect(missed).toContainText('Approved as a flashcard.');
+  await expect(missed).not.toContainText('Added to drafts');
+  await expect(
+    missed.getByRole('button', { name: 'Keep as flashcard' })
+  ).toHaveCount(0);
+});
+
+test('results totals follow the session when the count params are stripped', async ({
+  page
+}) => {
+  await completePractice(page, TWO_MISS_RESPONSES);
+  // The screen-state switcher flips to the error view in-session…
+  await page
+    .getByRole('navigation', { name: 'Prototype screen states' })
+    .getByRole('link', { name: 'error' })
+    .click();
+  // …and Retry lands on a bare results URL while answers stay recorded.
+  await page.getByRole('link', { name: 'Retry' }).click();
+  await expect(page.locator('.totals dd')).toHaveText(['2', '2', '0']);
+  await expect(page.locator('.missed')).toHaveCount(2);
+});
+
 test('kept mistake becomes an approvable draft in decks', async ({ page }) => {
   await page.goto('/prototype/results');
   await page.getByRole('button', { name: 'Keep as flashcard' }).click();

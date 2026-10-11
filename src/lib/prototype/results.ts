@@ -11,6 +11,20 @@ export interface SessionAnswer {
 
 export type MissedItem = ResultsBreakdown['missedItems'][number];
 
+// Outcome totals likewise come from recorded answers when a run happened,
+// so a stripped-URL results view stays consistent with the mistake list.
+export function deriveTotals(answers: SessionAnswer[]) {
+  let correct = 0;
+  let incorrect = 0;
+  let uncertain = 0;
+  for (const answer of answers) {
+    if (answer.outcome === 'correct') correct += 1;
+    else if (answer.outcome === 'incorrect') incorrect += 1;
+    else uncertain += 1;
+  }
+  return { correct, incorrect, uncertain };
+}
+
 // Displayed mistakes come from the learner's recorded answers. When no
 // practice run happened this session (direct navigation for design review)
 // the fixture breakdown stands in so the screen still renders its variants.
