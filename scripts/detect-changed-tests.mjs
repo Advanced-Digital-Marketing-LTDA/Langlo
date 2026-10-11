@@ -327,6 +327,12 @@ const outputLines = (result) => [
   `has_tests=${result.changedUnitTests.length > 0 ? 'true' : 'false'}`
 ];
 
+/** @param {string} path */
+const uncollectedError = (path) =>
+  console.log(
+    `::error file=${path}::Test-named file is not collected by Vitest (src/tests *.test.ts outside tests/e2e) or Playwright (tests/e2e). Move or rename it into a collected pattern, or remove it.`
+  );
+
 /**
  * @param {{ renamedTestOutOfScope: number, uncollectedTestPaths: string[], changedUnitTests: string[], deletedTestPaths: string[] }} result
  * @returns {number}
@@ -338,12 +344,8 @@ function reportGate(result) {
     );
     return 1;
   }
+  for (const path of result.uncollectedTestPaths) uncollectedError(path);
   if (result.uncollectedTestPaths.length > 0) {
-    for (const path of result.uncollectedTestPaths) {
-      console.log(
-        `::error file=${path}::Test-named file is not collected by Vitest (src/tests *.test.ts outside tests/e2e) or Playwright (tests/e2e). Move or rename it into a collected pattern, or remove it.`
-      );
-    }
     return 1;
   }
   if (result.changedUnitTests.length === 0) {

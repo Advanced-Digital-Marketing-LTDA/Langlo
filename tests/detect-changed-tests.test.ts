@@ -65,28 +65,29 @@ const detect = (cwd: string, env: DetectEnv) =>
     cwd
   });
 
+// path, expected collected (vitest include or playwright testDir)
+const COLLECTION_CASES: [string, boolean][] = [
+  ['tests/auth.test.ts', true],
+  ['tests/sub/deep.test.ts', true],
+  ['src/lib/x.test.ts', true],
+  ['tests/foo.pbt.test.ts', true],
+  ['tests/e2e/auth.spec.ts', true],
+  ['tests/e2e/auth.test.ts', true],
+  ['tests/e2e/nested/flow.spec.js', true],
+  ['tests/__tests__/unit.test.ts', true],
+  ['tests/login.spec.ts', false],
+  ['tests/helper.test.js', false],
+  ['tests/helper.test.tsx', false],
+  ['src/lib/x.test.tsx', false],
+  ['tests/e2e/flow.spec.tsx', false],
+  ['tests/e2e/nested/helper.ts', false],
+  ['tests/__tests__/helper.ts', false],
+  ['src/__tests__/fixture.mjs', false],
+  ['tests/__test__/util.cjs', false]
+];
+
 describe('test path classification matches runner collection rules', () => {
-  const cases: [string, boolean][] = [
-    // path, expected collected (vitest include or playwright testDir)
-    ['tests/auth.test.ts', true],
-    ['tests/sub/deep.test.ts', true],
-    ['src/lib/x.test.ts', true],
-    ['tests/foo.pbt.test.ts', true],
-    ['tests/e2e/auth.spec.ts', true],
-    ['tests/e2e/auth.test.ts', true],
-    ['tests/e2e/nested/flow.spec.js', true],
-    ['tests/__tests__/unit.test.ts', true],
-    ['tests/login.spec.ts', false],
-    ['tests/helper.test.js', false],
-    ['tests/helper.test.tsx', false],
-    ['src/lib/x.test.tsx', false],
-    ['tests/e2e/flow.spec.tsx', false],
-    ['tests/e2e/nested/helper.ts', false],
-    ['tests/__tests__/helper.ts', false],
-    ['src/__tests__/fixture.mjs', false],
-    ['tests/__test__/util.cjs', false]
-  ];
-  it.each(cases)('%s collected=%s', (path, collected) => {
+  it.each(COLLECTION_CASES)('%s collected=%s', (path, collected) => {
     expect(isCollectedPath(path)).toBe(collected);
     if (isTestPath(path)) {
       expect(isUncollectedTestPath(path)).toBe(!collected);
