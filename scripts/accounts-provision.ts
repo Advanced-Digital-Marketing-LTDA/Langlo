@@ -16,19 +16,29 @@ const fail = (): never => {
   process.exit(1);
 };
 
+const knownArgs = new Set([
+  'email',
+  'name',
+  'password',
+  'fixture-root',
+  'database-url'
+]);
+
 const parseArgs = (argv: string[]) => {
   const args: Record<string, string | undefined> = Object.create(null);
   const flags = new Set<string>();
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
+    const key = arg.startsWith('--') ? arg.slice(2) : '';
     if (arg === '--app') {
       flags.add('app');
     } else if (
       arg.startsWith('--') &&
+      knownArgs.has(key) &&
       argv[i + 1] &&
       !argv[i + 1].startsWith('--')
     ) {
-      args[arg.slice(2)] = argv[++i];
+      args[key] = argv[++i];
     } else {
       fail();
     }
