@@ -15,5 +15,5 @@
 # do not exist yet are inert and activate when the files arrive.
 /scripts/ @Bonobo791
 /tests/report-path.test.ts @Bonobo791
-/tests/validate-testtrust-report.test.ts @Bonobo791
-/tests/validate-vitest-evidence.test.ts @Bonobo791
+/tests/testtrust-report.test.ts @Bonobo791
+/tests/vitest-evidence.test.ts @Bonobo791
