@@ -1,4 +1,23 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+// Answer the four practice items in order; the first is the multiple-choice
+// item, the rest are typed inputs. Ends on the results page.
+async function completePractice(page: Page, responses: string[]) {
+  await page.goto('/prototype/practice');
+  for (const [index, response] of responses.entries()) {
+    if (index === 0) {
+      await page.getByRole('radio', { name: response, exact: true }).check();
+    } else {
+      await page.getByRole('textbox', { name: 'Your answer' }).fill(response);
+    }
+    await page.getByRole('button', { name: 'Submit answer' }).click();
+    if (index === responses.length - 1) {
+      await page.getByRole('link', { name: 'See results' }).click();
+    } else {
+      await page.getByRole('button', { name: 'Next item' }).click();
+    }
+  }
+}
 
 const prototypePages = [
   '/prototype',
@@ -66,6 +85,75 @@ test('deck draft approval updates the pending queue', async ({ page }) => {
   await expect(pending).toBeVisible();
   await page.getByRole('button', { name: 'Approve' }).first().click();
   await expect(page.getByRole('status')).toContainText('approved');
+});
+
+test('results derives missed items from the answers actually given', async ({
+  page
+}) => {
+  await completePractice(page, [
+    'es',
+    'allons',
+    'je mange',
+    'je vais au marché'
+  ]);
+  const missed = page.locator('.missed');
+  await expect(missed).toHaveCount(2);
+  await expect(missed.nth(0)).toContainText('fatiguée');
+  await expect(missed.nth(0)).toContainText('Your answer: es');
+  await expect(missed.nth(1)).toContainText('Your answer: je mange');
+});
+
+test('results shows no mistakes when every answer was correct', async ({
+  page
+}) => {
+  await completePractice(page, [
+    'est',
+    'allons',
+    'je vais manger',
+    'je vais au marché'
+  ]);
+  await expect(page.locator('.missed')).toHaveCount(0);
+  await expect(page.getByText('No mistakes this session')).toBeVisible();
+});
+
+test('a kept mistake stays kept after leaving and returning to results', async ({
+  page
+}) => {
+  await completePractice(page, [
+    'es',
+    'allons',
+    'je mange',
+    'je vais au marché'
+  ]);
+  const firstMissed = page.locator('.missed').first();
+  await firstMissed.getByRole('button', { name: 'Keep as flashcard' }).click();
+  const draftsLink = page.getByRole('link', { name: 'See card drafts' });
+  await Promise.all([
+    page.waitForURL('**/prototype/decks'),
+    draftsLink.click()
+  ]);
+  await expect(
+    page.getByText('« Elle ___ fatiguée » — est, not es', { exact: true })
+  ).toHaveCount(1);
+  await page.goBack();
+  await expect(
+    firstMissed.getByRole('button', { name: 'Keep as flashcard' })
+  ).toHaveCount(0);
+  await expect(firstMissed).toContainText('Added to drafts');
+  // Leave and return once more — the keep must stay a no-op, not duplicate.
+  await Promise.all([
+    page.waitForURL('**/prototype/decks'),
+    draftsLink.click()
+  ]);
+  await page.goBack();
+  await expect(firstMissed).toContainText('Added to drafts');
+  await Promise.all([
+    page.waitForURL('**/prototype/decks'),
+    draftsLink.click()
+  ]);
+  await expect(
+    page.getByText('« Elle ___ fatiguée » — est, not es', { exact: true })
+  ).toHaveCount(1);
 });
 
 test('kept mistake becomes an approvable draft in decks', async ({ page }) => {

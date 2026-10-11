@@ -5,6 +5,10 @@
   import Chip from '../../../lib/prototype/Chip.svelte';
   import StateSwitcher from '../../../lib/prototype/StateSwitcher.svelte';
   import { outcomeLabel, practiceItems } from '../../../lib/prototype/data';
+  import { prototypeSession } from '../../../lib/prototype/session.svelte';
+
+  // A new practice mount starts a fresh synthetic run for this session.
+  prototypeSession.answers = [];
 
   const screenState = $derived(page.url.searchParams.get('state') ?? 'normal');
 
@@ -37,6 +41,12 @@
       ? 'correct'
       : 'incorrect';
     counts[outcome] += 1;
+    prototypeSession.answers.push({
+      prompt: item.prompt,
+      yourAnswer: item.format === 'multiple-choice' ? selected : typed.trim(),
+      expected: item.sampleAnswer,
+      outcome
+    });
     phase = 'feedback';
     await tick();
     nextButton?.focus();
@@ -46,6 +56,12 @@
     if (phase !== 'answering') return;
     outcome = 'uncertain';
     counts.uncertain += 1;
+    prototypeSession.answers.push({
+      prompt: item.prompt,
+      yourAnswer: '',
+      expected: item.sampleAnswer,
+      outcome
+    });
     phase = 'feedback';
     await tick();
     nextButton?.focus();

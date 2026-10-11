@@ -5,6 +5,12 @@
   import StateSwitcher from '../../../lib/prototype/StateSwitcher.svelte';
   import { defaultResults, outcomeLabel } from '../../../lib/prototype/data';
   import { prototypeSession } from '../../../lib/prototype/session.svelte';
+  import {
+    deriveMissedItems,
+    draftIdFor,
+    mistakePreview,
+    type MissedItem
+  } from '../../../lib/prototype/results';
 
   const screenState = $derived(page.url.searchParams.get('state') ?? 'normal');
 
@@ -16,18 +22,25 @@
   const incorrect = $derived(readCount('incorrect', defaultResults.incorrect));
   const uncertain = $derived(readCount('uncertain', defaultResults.uncertain));
 
-  let keptDraft = $state(false);
+  const missedItems = $derived(
+    deriveMissedItems(prototypeSession.answers, incorrect)
+  );
+  const mistakesDeck = prototypeSession.decks.find(
+    (d) => d.id === 'deck-mistakes'
+  );
 
-  function keepAsFlashcard() {
-    const mistakes = prototypeSession.decks.find(
-      (d) => d.id === 'deck-mistakes'
-    );
-    if (keptDraft || !mistakes) return;
-    keptDraft = true;
-    mistakes.notes.push({
-      id: `n-session-${mistakes.notes.length + 1}`,
+  const isKept = (missed: MissedItem) =>
+    mistakesDeck?.notes.some((note) => note.id === draftIdFor(missed)) ?? false;
+  const anyKept = $derived(missedItems.some((missed) => isKept(missed)));
+
+  function keepAsFlashcard(missed: MissedItem) {
+    if (!mistakesDeck) return;
+    const id = draftIdFor(missed);
+    if (mistakesDeck.notes.some((note) => note.id === id)) return;
+    mistakesDeck.notes.push({
+      id,
       kind: 'basic',
-      preview: '« Elle ___ fatiguée » — est, not es',
+      preview: mistakePreview(missed),
       status: 'draft',
       scheduling: 'new'
     });
@@ -102,28 +115,31 @@
     </ul>
   </section>
 
-  {#if incorrect > 0}
+  {#if missedItems.length > 0}
     <section class="panel" aria-labelledby="missed-heading">
       <h2 id="missed-heading">Keep a mistake as a flashcard</h2>
       <ul>
-        {#each defaultResults.missedItems as missed (missed.prompt)}
+        {#each missedItems as missed (missed.prompt)}
           <li class="missed">
             <p class="prompt">{missed.prompt}</p>
             <p>
               Your answer: {missed.yourAnswer}<br />
               Accepted: <strong>{missed.expected}</strong>
             </p>
-            {#if keptDraft}
+            {#if isKept(missed)}
               <p class="muted">Added to drafts — approve it in Decks.</p>
             {:else}
-              <button class="secondary" type="button" onclick={keepAsFlashcard}
+              <button
+                class="secondary"
+                type="button"
+                onclick={() => keepAsFlashcard(missed)}
                 >Keep as flashcard</button
               >
             {/if}
           </li>
         {/each}
       </ul>
-      {#if keptDraft}
+      {#if anyKept}
         <p role="status" class="announced">
           Draft card created. It stays a draft until you approve it.
         </p>
