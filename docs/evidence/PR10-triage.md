@@ -109,3 +109,57 @@ Latest heads: `8046d4d` (SonarCloud green, Codacy 24 residual findings),
 - Codacy fs-sink findings and the Lizard complexity/length minors remain with
   the maintainer for acceptance; the Merge-Evidence Gate C4 flags stay red on
   this PR by design and require maintainer resolution.
+
+## Codex P2 round — 2026-10-11 (head `2f7fa37`)
+
+Two Codex connector P2 findings on the current head were verified valid and
+fixed in `.github/workflows/ci.yml`; all other open findings from the round are
+already resolved or adjudicated.
+
+### Red evidence (pre-fix harness run)
+
+The step's `run:` block was extracted verbatim from `ci.yml` and executed
+against a fixture repository. Pre-fix results: 18/23 checks passed; failures
+reproduced both findings:
+
+- S4: push `before` SHA kept alive by another ref but not an ancestor of `HEAD`
+  → `base_ref` resolved to the non-ancestor SHA instead of the default-branch
+  merge-base (file selection diverges from TestTrust's merge-base resolution).
+- S5: added `src/util.test.js` → counted as a TestTrust candidate
+  (`count=1`, `has_tests=true`) although Vitest only collects `*.test.ts`, so
+  the file would pass CI without ever running.
+- S8: rename `.test.ts` → `.test.js` → scanned instead of rejected.
+
+### Fixes
+
+- `git merge-base --is-ancestor "$EVENT_BEFORE" HEAD` is now required in
+  addition to `git cat-file -e` before trusting the push `before` SHA; a
+  reachable-but-non-ancestor SHA (old tip kept alive by a tag/branch after a
+  force-push) takes the existing default-branch merge-base fallback, matching
+  TestTrust's own merge-base resolution for `--base`.
+- `is_testtrust_path` now matches only `*.test.ts` outside `tests/e2e`,
+  matching `vitest.config.ts` `include`/`exclude` exactly. A new
+  `is_uncollected_test_path` predicate fails the step (annotated per file) when
+  a changed file is test-named (`*.test.*`/`*.spec.*` under `src`/`tests`) but
+  collected by neither Vitest nor Playwright — covering `.test.js` additions,
+  `.spec.ts` outside `tests/e2e`, and renames into uncollected extensions.
+
+### Green evidence (post-fix)
+
+Same harness against the updated `ci.yml`: 23/23 checks passed, including the
+preserved behaviors (PR `origin/<base>` diffing, ancestor `before`, unreachable
+`before` notice + merge-base fallback, e2e-only changes skipped, rename
+out-of-scope error, deletion recording for Overlock).
+
+- `npx prettier --check .github/workflows/ci.yml`: passed.
+
+### Still open after this round
+
+- Codacy: `ACTION_REQUIRED` persists (three intrinsic fs-sink findings in
+  `scripts/report-path.mjs` + complexity minors); advisory only — maintainer
+  acceptance in the Codacy dashboard.
+- Merge-Evidence Gate C4: `ci.yml`/`AGENTS.md` edits stay `NEEDS_HUMAN` by
+  `.merge-evidence.yml` policy — expected.
+- Merge remains `BLOCKED` on human ruleset requirements (approving review,
+  code-owner review, approval by a non-pusher): the sole code owner is the PR
+  author, so a second reviewer or ruleset/admin action is required.
