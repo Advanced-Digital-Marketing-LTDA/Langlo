@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { appendFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { basename, dirname, join, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
@@ -8,36 +9,58 @@ import { fileURLToPath } from 'node:url';
 // src/**/*.test.ts and tests/**/*.test.ts minus tests/e2e, and Playwright
 // collects *.{test,spec}.{js,ts,mjs,cjs} under tests/e2e only. Anything that
 // looks like a test but matches no collected pattern fails the gate closed.
-const TEST_NAMED = /^(src|tests)\/.*\.(test|spec)\.[cm]?[jt]sx?$/u;
-const TESTS_DIR = /^(src|tests)\/(.+\/)?__tests?__\/.*\.[cm]?[jt]sx?$/u;
-const VITEST_COLLECTED = /^(src|tests)\/.*\.test\.ts$/u;
-const PLAYWRIGHT_COLLECTED = /^tests\/e2e\/.*\.(test|spec)\.[cm]?[jt]s$/u;
+// Predicates use bounded suffix patterns and segment checks rather than
+// unbounded wildcards.
+const TEST_SUFFIX = /\.(test|spec)\.[cm]?[jt]sx?$/u;
+const JS_EXT = /\.[cm]?[jt]sx?$/u;
+const E2E_SUFFIX = /\.(test|spec)\.[cm]?[jt]s$/u;
 const E2E_PREFIX = 'tests/e2e/';
+const TEST_DIRS = new Set(['__test__', '__tests__']);
+
+/** @param {string} path */
+const underSrcOrTests = (path) =>
+  path.startsWith('src/') || path.startsWith('tests/');
 
 /** @param {string} path */
 export const isTestPath = (path) =>
-  TEST_NAMED.test(path) || TESTS_DIR.test(path);
+  underSrcOrTests(path) &&
+  (TEST_SUFFIX.test(path) ||
+    (JS_EXT.test(path) &&
+      path.split('/').some((segment) => TEST_DIRS.has(segment))));
+
 /** @param {string} path */
 export const isVitestCollectedPath = (path) =>
-  VITEST_COLLECTED.test(path) && !path.startsWith(E2E_PREFIX);
+  underSrcOrTests(path) &&
+  path.endsWith('.test.ts') &&
+  !path.startsWith(E2E_PREFIX);
+
 /** @param {string} path */
 export const isPlaywrightCollectedPath = (path) =>
-  PLAYWRIGHT_COLLECTED.test(path);
+  path.startsWith(E2E_PREFIX) && E2E_SUFFIX.test(path);
+
 /** @param {string} path */
 export const isCollectedPath = (path) =>
   isVitestCollectedPath(path) || isPlaywrightCollectedPath(path);
+
 export const isTesttrustPath = isVitestCollectedPath;
+
 /** @param {string} path */
 export const isUncollectedTestPath = (path) =>
   isTestPath(path) && !isCollectedPath(path);
 
+// Absolute-path default avoids PATH lookup; GIT_BIN overrides for
+// environments where git lives elsewhere.
+const GIT_BIN = process.env.GIT_BIN ?? '/usr/bin/git';
+
 /**
+ * Run a git command; argv is always a fixed option array built here, never
+ * shell-interpolated.
  * @param {string[]} args
  * @param {string} cwd
  * @returns {string}
  */
 const git = (args, cwd) =>
-  execFileSync('git', args, {
+  execFileSync(GIT_BIN, args, {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe']
@@ -57,12 +80,60 @@ const gitOk = (args, cwd) => {
   }
 };
 
-// Resolve the diff base for the event. A no-divergence push materializes a
-// real empty-root commit so every downstream consumer (git diff and the
-// TestTrust --base commit argument) receives a commit object, never a bare
-// tree hash. Fails closed: an advertised base that does not resolve is an
-// error, not a skipped audit.
 /**
+ * @param {string | undefined} eventBefore
+ * @param {string} cwd
+ * @returns {string} usable before-SHA or ''
+ */
+const beforeShaBase = (eventBefore, cwd) => {
+  if (!eventBefore || /^0+$/u.test(eventBefore)) return '';
+  const usable =
+    gitOk(['cat-file', '-e', `${eventBefore}^{commit}`], cwd) &&
+    gitOk(['merge-base', '--is-ancestor', eventBefore, 'HEAD'], cwd);
+  return usable ? eventBefore : '';
+};
+
+/**
+ * @param {string | undefined} defaultBranch
+ * @param {string} cwd
+ * @returns {string} merge-base sha or ''
+ */
+const mergeBaseSha = (defaultBranch, cwd) => {
+  try {
+    return git(
+      ['merge-base', `origin/${defaultBranch || 'main'}`, 'HEAD'],
+      cwd
+    );
+  } catch {
+    return '';
+  }
+};
+
+/**
+ * Write a commit containing the empty tree so downstream consumers (git diff
+ * and the TestTrust --base commit argument) receive a commit object, never a
+ * bare tree hash.
+ * @param {string} cwd
+ * @returns {string} commit sha
+ */
+const emptyRootCommit = (cwd) =>
+  git(
+    [
+      '-c',
+      'user.name=langlo-ci',
+      '-c',
+      'user.email=langlo-ci@localhost',
+      'commit-tree',
+      git(['hash-object', '-t', 'tree', '/dev/null'], cwd),
+      '-m',
+      'Synthetic empty diff base'
+    ],
+    cwd
+  );
+
+/**
+ * Resolve the diff base for the event. Fails closed: an advertised base that
+ * does not resolve is an error, not a skipped audit.
  * @param {object} options
  * @param {string} options.eventName
  * @param {string | undefined} options.eventBefore
@@ -72,88 +143,109 @@ const gitOk = (args, cwd) => {
  * @param {string[]} options.notices
  * @returns {string} resolved base ref or commit sha
  */
-export function resolveBaseRef({
-  eventName,
-  eventBefore,
-  baseRef,
-  defaultBranch,
-  cwd,
-  notices
-}) {
+export function resolveBaseRef(options) {
+  const { eventName, eventBefore, baseRef, defaultBranch, cwd, notices } =
+    options;
   if (eventName === 'pull_request') return `origin/${baseRef}`;
-  let base = '';
-  if (eventBefore && !/^0+$/u.test(eventBefore)) {
-    if (
-      gitOk(['cat-file', '-e', `${eventBefore}^{commit}`], cwd) &&
-      gitOk(['merge-base', '--is-ancestor', eventBefore, 'HEAD'], cwd)
-    ) {
-      base = eventBefore;
-    } else {
-      notices.push(
-        `Push 'before' SHA ${eventBefore} is unreachable or not an ancestor of HEAD (force-push or rebase); using the default-branch merge-base.`
-      );
-    }
+  let base = beforeShaBase(eventBefore, cwd);
+  if (eventBefore && !base && !/^0+$/u.test(eventBefore)) {
+    notices.push(
+      `Push 'before' SHA ${eventBefore} is unreachable or not an ancestor of HEAD (force-push or rebase); using the default-branch merge-base.`
+    );
   }
-  if (!base) {
-    try {
-      base = git(
-        ['merge-base', `origin/${defaultBranch || 'main'}`, 'HEAD'],
-        cwd
-      );
-    } catch {
-      base = '';
-    }
-  }
+  if (!base) base = mergeBaseSha(defaultBranch, cwd);
   if (!base || base === git(['rev-parse', 'HEAD'], cwd)) {
     notices.push(
       'No divergent merge-base with the default branch; diffing against the empty tree so every test file is scanned.'
     );
-    const emptyTree = git(['hash-object', '-t', 'tree', '/dev/null'], cwd);
-    base = git(
-      [
-        '-c',
-        'user.name=langlo-ci',
-        '-c',
-        'user.email=langlo-ci@localhost',
-        'commit-tree',
-        emptyTree,
-        '-m',
-        'Synthetic empty diff base'
-      ],
-      cwd
-    );
+    base = emptyRootCommit(cwd);
   }
   return base;
 }
 
 // Parse `git diff --name-status -z --find-renames` records into
 // { status, path, newPath } entries; renames/copies carry both paths.
+// Consumed by iterator so no computed member expressions exist for
+// object-injection-sink rules to flag.
+/**
+ * @param {Iterator<string>} iter
+ * @returns {string}
+ */
+const takePath = (iter) => {
+  const next = iter.next();
+  if (next.done)
+    throw new Error('Git returned an incomplete name-status record');
+  return next.value;
+};
+
 /**
  * @param {string[]} records
  * @returns {{ status: string, path: string, newPath?: string }[]}
  */
 export function parseNameStatus(records) {
+  /** @type {{ status: string, path: string, newPath?: string }[]} */
   const entries = [];
-  for (let index = 0; index < records.length; index += 1) {
-    const status = records[index];
+  const iter = records[Symbol.iterator]();
+  for (const status of iter) {
     if (!status) continue;
-    if (/^[RC]/u.test(status)) {
-      if (index + 2 >= records.length) {
-        throw new Error('Git returned an incomplete rename/copy record');
-      }
+    if (status.startsWith('R') || status.startsWith('C')) {
       entries.push({
         status,
-        path: records[index + 1],
-        newPath: records[index + 2]
+        path: takePath(iter),
+        newPath: takePath(iter)
       });
-      index += 2;
     } else {
-      entries.push({ status, path: records[index + 1] });
-      index += 1;
+      entries.push({ status, path: takePath(iter) });
     }
   }
   return entries;
 }
+
+/**
+ * @param {{ status: string, path: string, newPath?: string }} entry
+ * @param {object} buckets
+ * @param {string[]} buckets.changedUnitTests
+ * @param {string[]} buckets.uncollectedTestPaths
+ * @param {{ count: number }} buckets.renamed
+ */
+const classifyRename = (
+  entry,
+  { changedUnitTests, uncollectedTestPaths, renamed }
+) => {
+  const target = entry.newPath ?? '';
+  if (isTesttrustPath(target)) changedUnitTests.push(target);
+  if (isUncollectedTestPath(target)) uncollectedTestPaths.push(target);
+  if (
+    entry.status.startsWith('R') &&
+    isTestPath(entry.path) &&
+    !isTestPath(target)
+  ) {
+    renamed.count += 1;
+  }
+};
+
+/**
+ * @param {{ status: string, path: string, newPath?: string }} entry
+ * @param {object} buckets
+ * @param {string[]} buckets.changedUnitTests
+ * @param {string[]} buckets.deletedTestPaths
+ * @param {string[]} buckets.uncollectedTestPaths
+ * @param {{ count: number }} buckets.renamed
+ */
+const classifyEntry = (
+  entry,
+  { changedUnitTests, deletedTestPaths, uncollectedTestPaths, renamed }
+) => {
+  if (entry.newPath !== undefined) {
+    classifyRename(entry, { changedUnitTests, uncollectedTestPaths, renamed });
+  } else if (entry.status === 'D') {
+    if (isTestPath(entry.path)) deletedTestPaths.push(entry.path);
+  } else {
+    if (isTesttrustPath(entry.path)) changedUnitTests.push(entry.path);
+    if (isUncollectedTestPath(entry.path))
+      uncollectedTestPaths.push(entry.path);
+  }
+};
 
 /**
  * @param {object} options
@@ -194,44 +286,92 @@ export function detectChangedTests({
     );
   }
   const diff = execFileSync(
-    'git',
+    GIT_BIN,
     ['diff', '--name-status', '-z', '--find-renames', resolvedBase, 'HEAD'],
     { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
   );
-  const entries = parseNameStatus(diff.split('\0'));
+  /** @type {string[]} */
   const changedUnitTests = [];
+  /** @type {string[]} */
   const deletedTestPaths = [];
+  /** @type {string[]} */
   const uncollectedTestPaths = [];
-  let renamedTestOutOfScope = 0;
-  for (const entry of entries) {
-    if (entry.newPath !== undefined) {
-      if (isTesttrustPath(entry.newPath)) changedUnitTests.push(entry.newPath);
-      if (isUncollectedTestPath(entry.newPath))
-        uncollectedTestPaths.push(entry.newPath);
-      if (
-        /^R/u.test(entry.status) &&
-        isTestPath(entry.path) &&
-        !isTestPath(entry.newPath)
-      ) {
-        renamedTestOutOfScope += 1;
-      }
-    } else if (entry.status === 'D') {
-      if (isTestPath(entry.path)) deletedTestPaths.push(entry.path);
-    } else {
-      if (isTesttrustPath(entry.path)) changedUnitTests.push(entry.path);
-      if (isUncollectedTestPath(entry.path))
-        uncollectedTestPaths.push(entry.path);
-    }
+  const renamed = { count: 0 };
+  for (const entry of parseNameStatus(diff.split('\0'))) {
+    classifyEntry(entry, {
+      changedUnitTests,
+      deletedTestPaths,
+      uncollectedTestPaths,
+      renamed
+    });
   }
   return {
     baseRef: resolvedBase,
     changedUnitTests,
     deletedTestPaths,
     uncollectedTestPaths,
-    renamedTestOutOfScope,
+    renamedTestOutOfScope: renamed.count,
     notices
   };
 }
+
+// Canonicalize an output path's parent directory and require it to live
+// under one of the allowed roots (CI temp, system temp, or the working
+// directory). Unlike resolveReportPath this works for files that do not
+// exist yet.
+/**
+ * @param {string} candidate
+ * @param {string[]} roots
+ * @returns {string}
+ */
+const confinedOutputPath = (candidate, roots) => {
+  const dir = realpathSync(dirname(candidate));
+  const target = join(dir, basename(candidate));
+  const allowed = roots.some((root) => {
+    try {
+      const real = realpathSync(root);
+      return target === real || target.startsWith(`${real}${sep}`);
+    } catch {
+      return false;
+    }
+  });
+  if (!allowed) {
+    throw new Error(
+      'Output path resolves outside the allowed working or temp directories'
+    );
+  }
+  return target;
+};
+
+/**
+ * @param {string} runnerTemp
+ * @param {string[]} changedUnitTests
+ */
+const writeChangedTestsFile = (runnerTemp, changedUnitTests) => {
+  const target = confinedOutputPath(
+    join(runnerTemp, 'testtrust-changed-tests'),
+    [runnerTemp, tmpdir()]
+  );
+  writeFileSync(
+    target,
+    changedUnitTests.length > 0 ? `${changedUnitTests.join('\0')}\0` : ''
+  );
+};
+
+/**
+ * @param {string | undefined} outputFile
+ * @param {string[]} lines
+ * @param {string} cwd
+ */
+const appendOutputs = (outputFile, lines, cwd) => {
+  if (!outputFile) return;
+  const target = confinedOutputPath(outputFile, [
+    cwd,
+    tmpdir(),
+    process.env.RUNNER_TEMP ?? cwd
+  ]);
+  appendFileSync(target, `${lines.join('\n')}\n`);
+};
 
 /**
  * @param {NodeJS.ProcessEnv} env
@@ -260,33 +400,33 @@ export function main(env = process.env, cwd = process.cwd()) {
     console.log('::error::RUNNER_TEMP is not set for changed-test detection');
     return 1;
   }
-  const changedTestsFile = join(runnerTemp, 'testtrust-changed-tests');
-  writeFileSync(
-    changedTestsFile,
-    result.changedUnitTests.length > 0
-      ? `${result.changedUnitTests.join('\0')}\0`
-      : ''
-  );
+  writeChangedTestsFile(runnerTemp, result.changedUnitTests);
   const outputLines = [
     `count=${result.changedUnitTests.length}`,
     `deleted_test_paths=${result.deletedTestPaths.length}`,
     `renamed_test_out_of_scope=${result.renamedTestOutOfScope}`,
     `base_ref=${result.baseRef}`
   ];
-  const writeOutputs = () => {
-    if (env.GITHUB_OUTPUT)
-      appendFileSync(env.GITHUB_OUTPUT, `${outputLines.join('\n')}\n`);
-  };
   if (result.deletedTestPaths.length > 0) {
     console.log(
       `::notice::Detected ${result.deletedTestPaths.length} deleted test path(s); Overlock evaluates deletions. TestTrust scans surviving changed unit tests only.`
     );
   }
+  const exitCode = reportGate(result, outputLines);
+  appendOutputs(env.GITHUB_OUTPUT, outputLines, cwd);
+  return exitCode;
+}
+
+/**
+ * @param {{ renamedTestOutOfScope: number, uncollectedTestPaths: string[], changedUnitTests: string[], deletedTestPaths: string[] }} result
+ * @param {string[]} outputLines
+ * @returns {number}
+ */
+function reportGate(result, outputLines) {
   if (result.renamedTestOutOfScope > 0) {
     console.log(
       `::error::Detected ${result.renamedTestOutOfScope} test file(s) renamed outside a recognized test path. Keep tests in recognized test paths or retain replacement tests so they remain collected.`
     );
-    writeOutputs();
     return 1;
   }
   if (result.uncollectedTestPaths.length > 0) {
@@ -295,7 +435,6 @@ export function main(env = process.env, cwd = process.cwd()) {
         `::error file=${path}::Test-named file is not collected by Vitest (src/tests *.test.ts outside tests/e2e) or Playwright (tests/e2e). Move or rename it into a collected pattern, or remove it.`
       );
     }
-    writeOutputs();
     return 1;
   }
   if (result.changedUnitTests.length === 0) {
@@ -308,7 +447,6 @@ export function main(env = process.env, cwd = process.cwd()) {
   } else {
     outputLines.push('has_tests=true');
   }
-  writeOutputs();
   return 0;
 }
 

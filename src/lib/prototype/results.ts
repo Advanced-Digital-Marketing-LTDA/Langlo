@@ -33,21 +33,26 @@ export function deriveMissedItems(
 // Draft previews follow the existing fixture style: pull the quoted exercise
 // out of the prompt when present, then «expected», not «yourAnswer».
 export function mistakePreview(missed: MissedItem): string {
-  const quoted = /«([^»]+)»/u
-    .exec(missed.prompt)?.[1]
-    .trim()
-    .replace(/\.$/u, '');
+  const open = missed.prompt.indexOf('«');
+  const close = open === -1 ? -1 : missed.prompt.indexOf('»', open + 1);
+  let quoted = close === -1 ? '' : missed.prompt.slice(open + 1, close).trim();
+  if (quoted.endsWith('.')) quoted = quoted.slice(0, -1);
   const label = quoted ? `« ${quoted} »` : missed.prompt;
   return `${label} — ${missed.expected}, not ${missed.yourAnswer}`;
 }
 
+const isSlugChar = (char: string) =>
+  (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9');
+
 // Stable per-mistake identity so a keep survives page remounts and a repeat
 // keep is a no-op — the same prompt maps to the same draft note id.
 export function draftIdFor(missed: MissedItem): string {
-  const slug = missed.prompt
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/gu, '-')
-    .replace(/^-+|-+$/g, '')
+  const slug = [...missed.prompt.toLowerCase()]
+    .map((char) => (isSlugChar(char) ? char : '-'))
+    .join('')
+    .split('-')
+    .filter(Boolean)
+    .join('-')
     .slice(0, 48);
   return `n-session-${slug || 'item'}`;
 }
