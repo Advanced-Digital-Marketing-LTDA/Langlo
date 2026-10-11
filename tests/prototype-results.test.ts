@@ -137,7 +137,9 @@ describe('draftIdFor', () => {
       expected: 'est'
     };
     const first = draftIdFor(missed);
-    expect(first).toBe('n-session-choose-the-correct-completion-elle-fatig-es');
+    expect(first).toMatch(
+      /^n-session-choose-the-correct-completion-elle-fatig-[a-z0-9]+$/u
+    );
     expect(draftIdFor(missed)).toBe(first);
     expect(
       draftIdFor({ prompt: 'Different prompt', yourAnswer: 'a', expected: 'b' })
@@ -150,5 +152,12 @@ describe('draftIdFor', () => {
     const suis = draftIdFor({ prompt, yourAnswer: 'suis', expected: 'est' });
     expect(es).not.toBe(suis);
     expect(es).toBe(draftIdFor({ prompt, yourAnswer: 'es', expected: 'est' }));
+  });
+
+  it('distinguishes answers that only differ in accents', () => {
+    const prompt = 'Type the missing word: « Nous ___ au marché demain. »';
+    const eAcute = draftIdFor({ prompt, yourAnswer: 'é', expected: 'allons' });
+    const eGrave = draftIdFor({ prompt, yourAnswer: 'è', expected: 'allons' });
+    expect(eAcute).not.toBe(eGrave);
   });
 });

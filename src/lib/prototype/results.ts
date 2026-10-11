@@ -79,11 +79,22 @@ const slugify = (value: string, limit: number) =>
     .join('-')
     .slice(0, limit);
 
+// djb2 — small, dependency-free fingerprint for draft identity. The slug
+// alone cannot carry identity: accents slug away and truncation collides.
+const fingerprint = (value: string) => {
+  let hash = 5381;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = ((hash << 5) + hash + value.charCodeAt(index)) >>> 0;
+  }
+  return hash.toString(36);
+};
+
 // Stable per-mistake identity so a keep survives page remounts and a repeat
-// keep is a no-op. The answer is part of the identity: answering the same
-// prompt wrongly a different way is a different mistake, not a duplicate.
+// keep is a no-op. The fingerprint covers the complete prompt and answer —
+// answering the same prompt wrongly a different way (or with accents) is a
+// different mistake, not a duplicate. The slug stays only for readability.
 export function draftIdFor(missed: MissedItem): string {
   const prompt = slugify(missed.prompt, 40) || 'item';
-  const answer = slugify(missed.yourAnswer, 24) || 'blank';
-  return `n-session-${prompt}-${answer}`;
+  const identity = fingerprint(`${missed.prompt} ${missed.yourAnswer}`);
+  return `n-session-${prompt}-${identity}`;
 }
