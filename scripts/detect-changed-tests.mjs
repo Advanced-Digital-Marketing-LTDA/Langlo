@@ -107,15 +107,29 @@ const mergeBaseSha = (defaultBranch, cwd) => {
 };
 
 /**
- * The repository's earliest commit — a real ancestor of HEAD, so a
- * merge-base-based diff (TestTrust --base) resolves instead of comparing
- * unrelated roots. Scanning from the root covers every file, which matches
- * the no-divergence fallback's intent.
+ * The repository's earliest commit — a real ancestor of HEAD, so the base
+ * reported to TestTrust resolves merge-base diffing instead of comparing
+ * unrelated roots. It is only the reported base: classifying files by a
+ * root..HEAD diff would skip everything already present in the root commit,
+ * so the no-divergence path scans the full HEAD tree instead.
  * @param {string} cwd
  * @returns {string} commit sha
  */
 const repoRootCommit = (cwd) =>
   git(['rev-list', '--max-parents=0', 'HEAD'], cwd).split('\n')[0];
+
+/**
+ * Every file in HEAD as an 'added' diff entry. Used on the no-divergence
+ * path: a diff from the root commit omits files the root already contains,
+ * while enumerating the tree classifies root-commit files too.
+ * @param {string} cwd
+ * @returns {{ status: string, path: string }[]}
+ */
+const headTreeEntries = (cwd) =>
+  git(['ls-tree', '-r', '--name-only', '-z', 'HEAD'], cwd)
+    .split('\0')
+    .filter(Boolean)
+    .map((path) => ({ status: 'A', path }));
 
 /**
  * Resolve the diff base for the event. Fails closed: an advertised base that
@@ -127,12 +141,14 @@ const repoRootCommit = (cwd) =>
  * @param {string | undefined} options.defaultBranch
  * @param {string} options.cwd
  * @param {string[]} options.notices
- * @returns {string} resolved base ref or commit sha
+ * @returns {{ base: string, scanAll: boolean }} resolved base ref plus
+ *   whether detection must scan the whole HEAD tree (no-divergence path)
  */
 export function resolveBaseRef(options) {
   const { eventName, eventBefore, baseRef, defaultBranch, cwd, notices } =
     options;
-  if (eventName === 'pull_request') return `origin/${baseRef}`;
+  if (eventName === 'pull_request')
+    return { base: `origin/${baseRef}`, scanAll: false };
   let base = beforeShaBase(eventBefore, cwd);
   if (eventBefore && !base && !/^0+$/u.test(eventBefore)) {
     notices.push(
@@ -140,13 +156,15 @@ export function resolveBaseRef(options) {
     );
   }
   if (!base) base = mergeBaseSha(defaultBranch, cwd);
+  let scanAll = false;
   if (!base || base === git(['rev-parse', 'HEAD'], cwd)) {
     notices.push(
-      'No divergent merge-base with the default branch; diffing from the repository root so every test file is scanned.'
+      'No divergent merge-base with the default branch; scanning the full HEAD tree and reporting the repository root as the TestTrust base.'
     );
     base = repoRootCommit(cwd);
+    scanAll = true;
   }
-  return base;
+  return { base, scanAll };
 }
 
 // Parse `git diff --name-status -z --find-renames` records into
@@ -257,7 +275,7 @@ export function detectChangedTests({
 }) {
   /** @type {string[]} */
   const notices = [];
-  const resolvedBase = resolveBaseRef({
+  const { base: resolvedBase, scanAll } = resolveBaseRef({
     eventName,
     eventBefore,
     baseRef,
@@ -270,11 +288,22 @@ export function detectChangedTests({
       `Unable to resolve diff base '${resolvedBase}' for changed-test detection`
     );
   }
-  const diff = execFileSync(
-    GIT_BIN,
-    ['diff', '--name-status', '-z', '--find-renames', resolvedBase, 'HEAD'],
-    { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
-  );
+  const entries = scanAll
+    ? headTreeEntries(cwd)
+    : parseNameStatus(
+        execFileSync(
+          GIT_BIN,
+          [
+            'diff',
+            '--name-status',
+            '-z',
+            '--find-renames',
+            resolvedBase,
+            'HEAD'
+          ],
+          { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }
+        ).split('\0')
+      );
   /** @type {string[]} */
   const changedUnitTests = [];
   /** @type {string[]} */
@@ -282,7 +311,7 @@ export function detectChangedTests({
   /** @type {string[]} */
   const uncollectedTestPaths = [];
   const renamed = { count: 0 };
-  for (const entry of parseNameStatus(diff.split('\0'))) {
+  for (const entry of entries) {
     classifyEntry(entry, {
       changedUnitTests,
       deletedTestPaths,

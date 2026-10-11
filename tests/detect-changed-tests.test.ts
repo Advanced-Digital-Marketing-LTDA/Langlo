@@ -34,10 +34,25 @@ const initRepo = () => {
   git(cwd, 'init', '-q', '-b', 'main');
   git(cwd, 'config', 'user.email', 'fixture@example.test');
   git(cwd, 'config', 'user.name', 'Fixture');
-  commitFile(cwd, 'file.txt', 'root');
-  commitFile(cwd, 'tests/base.test.ts', 'test');
+  // Both test shapes land in the ROOT commit: a root..HEAD diff omits them,
+  // so the no-divergence fallback proves it scans the whole HEAD tree.
+  commitAll(cwd, {
+    'file.txt': 'root',
+    'tests/base.test.ts': 'test',
+    'tests/__tests__/seeded-helper.ts': 'export {}'
+  });
   git(cwd, 'update-ref', 'refs/remotes/origin/main', 'HEAD');
   return cwd;
+};
+
+const commitAll = (cwd: string, files: Record<string, string>) => {
+  for (const [path, content] of Object.entries(files)) {
+    const target = join(cwd, path);
+    execFileSync('mkdir', ['-p', dirname(target)]);
+    writeFileSync(target, content);
+    git(cwd, 'add', path);
+  }
+  git(cwd, 'commit', '-qm', 'root commit');
 };
 
 // Run a fixture scenario in a fresh disposable repo, always cleaned up.
@@ -144,19 +159,22 @@ describe('diff base resolution against disposable git fixtures', () => {
     });
   });
 
-  it('falls back to the repository root commit on a no-divergence push', () => {
+  it('scans the whole HEAD tree on a no-divergence push', () => {
     withRepo((cwd) => {
       // No divergence: origin/main already points at HEAD, so the merge-base
-      // equals HEAD. The resolved base must be a real ancestor — TestTrust's
+      // equals HEAD. The reported base must be a real ancestor — TestTrust's
       // diff mode resolves a merge-base, which a disconnected commit lacks.
       const result = detect(cwd, { eventName: 'push' });
       const root = git(cwd, 'rev-list', '--max-parents=0', 'HEAD');
       expect(result.baseRef).toBe(root);
       expect(git(cwd, 'cat-file', '-t', result.baseRef)).toBe('commit');
       git(cwd, 'merge-base', '--is-ancestor', result.baseRef, 'HEAD');
-      // Diff from the root scans every file: the seeded test file is
-      // reported as changed rather than silently skipped.
+      // The root commit itself holds the test files: only a full-tree scan
+      // (not a root..HEAD diff) can classify them.
       expect(result.changedUnitTests).toEqual(['tests/base.test.ts']);
+      expect(result.uncollectedTestPaths).toEqual([
+        'tests/__tests__/seeded-helper.ts'
+      ]);
     });
   });
 

@@ -143,6 +143,14 @@ answers; approved/rejected notes rendered by status). One was stale — the
 emit-mode rewrite. A tenth comment arrived during triage (finding 5
 above).
 
+Follow-up review (root-commit fallback): a root..HEAD diff omits files
+already in the root commit — and is empty when HEAD is the root — so the
+no-divergence path no longer diffs at all. Detection enumerates the full
+HEAD tree (`git ls-tree -r`), while `base_ref` reported to TestTrust stays
+the real root commit for merge-base compatibility. The fixture now places
+both a collected test and an uncollected `__tests__` file in the root
+commit; the no-divergence test asserts both are classified.
+
 Navigation-model note: after a client-side trip from results to practice,
 SvelteKit replaces the history entry — the prior results URL has no
 reachable forward/back entry, and a synthesized link click is not a trusted
