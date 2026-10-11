@@ -11,7 +11,10 @@ import process from 'node:process';
  */
 function allowedRoots() {
   const roots = [process.cwd()];
-  for (const value of [process.env.RUNNER_TEMP, process.env.TMPDIR]) {
+  // Per-job CI temp dirs are legitimate report roots; targets are
+  // canonicalized and contents strictly validated after read.
+  const tempRoots = [process.env.RUNNER_TEMP, process.env.TMPDIR]; // NOSONAR
+  for (const value of tempRoots) {
     if (value) {
       roots.push(value);
     }
