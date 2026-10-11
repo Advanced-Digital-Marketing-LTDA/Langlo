@@ -244,7 +244,7 @@ test('recovery mails a link that resets the password once', async () => {
   expect(relogin.status()).toBe(303);
 });
 
-test('reset form reports a mismatched confirmation distinctly', async () => {
+test('reset form reports mismatched and out-of-bounds passwords distinctly', async () => {
   const response = await ctx.post(
     '/reset',
     form({
@@ -255,6 +255,18 @@ test('reset form reports a mismatched confirmation distinctly', async () => {
   );
   expect(response.status()).toBe(400);
   expect(await response.text()).toContain('Passwords do not match.');
+
+  const longPassword = 'e2e-long-password-' + '9'.repeat(130);
+  const tooLong = await ctx.post(
+    '/reset',
+    form({
+      token: 'synthetic-token',
+      password: longPassword,
+      confirm: longPassword
+    })
+  );
+  expect(tooLong.status()).toBe(400);
+  expect(await tooLong.text()).toContain('12–128 characters');
 });
 
 test('no registration endpoint and unauthenticated /app requests are denied', async () => {

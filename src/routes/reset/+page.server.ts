@@ -25,6 +25,12 @@ export const actions: Actions = {
     if (!token) {
       return fail(400, { token, message: invalid });
     }
+    if (password.length < 12 || password.length > 128) {
+      return fail(400, {
+        token,
+        message: 'Password must be 12–128 characters long.'
+      });
+    }
     if (!sameValue(password, confirm)) {
       return fail(400, { token, message: 'Passwords do not match.' });
     }

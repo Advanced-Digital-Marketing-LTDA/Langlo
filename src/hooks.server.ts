@@ -61,6 +61,7 @@ export const handle: Handle = async ({ event, resolve }) => {
       );
     }
   }
+  let sessionLookupFailed = false;
   if (authPath) {
     if (!auth) {
       return Response.json(
@@ -106,7 +107,12 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (auth && (appPath || path === '/login')) {
     const session = await auth.api
       .getSession({ headers: event.request.headers })
-      .catch(() => null);
+      .catch(() => {
+        // A backend outage is not a missing session; report it as one would
+        // convert 503 service failures into misleading 401s/redirects.
+        sessionLookupFailed = true;
+        return null;
+      });
     if (session) {
       event.locals.user = session.user as App.Locals['user'];
       event.locals.session = session.session as App.Locals['session'];
@@ -114,6 +120,12 @@ export const handle: Handle = async ({ event, resolve }) => {
   }
   if (appPath) {
     if (!event.locals.user) {
+      if (sessionLookupFailed) {
+        return Response.json(
+          { message: 'Service unavailable. Please try again.', correlationId },
+          { status: 503, headers }
+        );
+      }
       if (event.request.method === 'GET' || event.request.method === 'HEAD') {
         return new Response(null, {
           status: 303,
