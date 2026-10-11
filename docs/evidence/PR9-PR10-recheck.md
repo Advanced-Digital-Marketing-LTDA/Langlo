@@ -101,6 +101,15 @@ once; the keep → drafts → approve flow is unchanged.
 - `npm run build` — clean
 - `npx playwright test` — 50 passed (desktop + mobile)
 
+## Hosted scanner triage (2026-10-11)
+
+| Check | Result |
+| --- | --- |
+| SonarCloud | pass (duplication fixed by `withRepo` scaffold helper) |
+| CodeAnt (5 gates), CodeQL, Semgrep, OSSAR, ESLint, dependency-review, Gitar | pass |
+| foundation, merge-evidence-gate | pass |
+| Codacy | `action_required` with **zero added issues** — remaining axis is the project-side complexity-variation gate (new files inherently add complexity). No annotations; a settings decision, not a code finding. |
+
 ## Boundaries
 
 Local checks only; no claim of hosted CI, deployment, or production
