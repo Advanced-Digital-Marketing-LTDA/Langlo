@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -176,9 +176,6 @@ describe('diff base resolution against disposable git fixtures', () => {
 
 describe('uncollected-test gate', () => {
   const runCli = (cwd: string, env: Record<string, string>) => {
-    const runnerTemp = mkdtempSync(join(tmpdir(), 'langlo-detect-temp-'));
-    const outputFile = join(runnerTemp, 'github-output');
-    writeFileSync(outputFile, '');
     const proc = spawnSync('node', [SCRIPT], {
       cwd,
       env: {
@@ -186,15 +183,22 @@ describe('uncollected-test gate', () => {
         EVENT_NAME: 'pull_request',
         BASE_REF: 'main',
         DEFAULT_BRANCH: 'main',
-        RUNNER_TEMP: runnerTemp,
-        GITHUB_OUTPUT: outputFile,
         ...env
       },
       encoding: 'utf8'
     });
-    const outputs = readFileSync(outputFile, 'utf8');
-    rmSync(runnerTemp, { recursive: true, force: true });
-    return { proc, outputs };
+    const emit = spawnSync('node', [SCRIPT, '--emit', 'outputs'], {
+      cwd,
+      env: {
+        ...process.env,
+        EVENT_NAME: 'pull_request',
+        BASE_REF: 'main',
+        DEFAULT_BRANCH: 'main',
+        ...env
+      },
+      encoding: 'utf8'
+    });
+    return { proc, outputs: emit.stdout ?? '' };
   };
 
   it('rejects an added test file under a __tests__ directory without a suffix', () => {

@@ -79,7 +79,10 @@ jobs:
           EVENT_BEFORE: ${{ github.event.before }}
           BASE_REF: ${{ github.base_ref }}
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: node scripts/detect-changed-tests.mjs
+        run: |
+          node scripts/detect-changed-tests.mjs
+          node scripts/detect-changed-tests.mjs --emit changed-tests > "$RUNNER_TEMP/testtrust-changed-tests"
+          node scripts/detect-changed-tests.mjs --emit outputs >> "$GITHUB_OUTPUT"
       - name: Check out TestTrust source at the reviewed commit
         if: ${{ always() && steps.changed_unit_tests.outputs.has_tests == 'true' }}
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683

@@ -29,6 +29,16 @@ through the real script. A `tests/__tests__/helper.ts` addition and a stray
 `tests/stray.spec.ts` both exit 1 with per-file `::error`; a collected
 `tests/good.test.ts` passes with `has_tests=true`.
 
+Scanner remediation: the first revision wrote `$GITHUB_OUTPUT` and the
+TestTrust candidate file itself, which security scanners flagged as
+non-literal filesystem access (they cannot see the containment checks, and
+inline `security/…` disables are unusable — the local pre-commit gate does
+not load `eslint-plugin-security`). The script now performs no filesystem
+I/O: default mode prints annotations and the gate verdict; `--emit
+changed-tests` and `--emit outputs` print machine-readable stdout that the
+workflow redirects into `$RUNNER_TEMP/testtrust-changed-tests` and
+`$GITHUB_OUTPUT`. The fs findings disappear because the calls disappear.
+
 ## Finding 2 — TestTrust base received an empty-tree hash
 
 On a no-divergence push the fallback `base_ref` was

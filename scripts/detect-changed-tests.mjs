@@ -1,7 +1,4 @@
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { basename, dirname, join, sep } from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
@@ -314,70 +311,27 @@ export function detectChangedTests({
   };
 }
 
-// Canonicalize an output path's parent directory and require it to live
-// under one of the allowed roots (CI temp, system temp, or the working
-// directory). Unlike resolveReportPath this works for files that do not
-// exist yet.
+// The script performs no filesystem I/O. Default mode prints workflow
+// annotations and the gate verdict; --emit modes print machine-readable
+// output on stdout for the workflow to redirect into $GITHUB_OUTPUT or
+// the TestTrust candidate file.
 /**
- * @param {string} candidate
- * @param {string[]} roots
- * @returns {string}
+ * @param {{ changedUnitTests: string[], deletedTestPaths: string[], renamedTestOutOfScope: number, baseRef: string }} result
+ * @returns {string[]}
  */
-const confinedOutputPath = (candidate, roots) => {
-  const dir = realpathSync(dirname(candidate));
-  const target = join(dir, basename(candidate));
-  const allowed = roots.some((root) => {
-    try {
-      const real = realpathSync(root);
-      return target === real || target.startsWith(`${real}${sep}`);
-    } catch {
-      return false;
-    }
-  });
-  if (!allowed) {
-    throw new Error(
-      'Output path resolves outside the allowed working or temp directories'
-    );
-  }
-  return target;
-};
-
-/**
- * @param {string} runnerTemp
- * @param {string[]} changedUnitTests
- */
-const writeChangedTestsFile = (runnerTemp, changedUnitTests) => {
-  const target = confinedOutputPath(
-    join(runnerTemp, 'testtrust-changed-tests'),
-    [runnerTemp, tmpdir()]
-  );
-  writeFileSync(
-    target,
-    changedUnitTests.length > 0 ? `${changedUnitTests.join('\0')}\0` : ''
-  );
-};
-
-/**
- * @param {string | undefined} outputFile
- * @param {string[]} lines
- * @param {string} cwd
- */
-const appendOutputs = (outputFile, lines, cwd) => {
-  if (!outputFile) return;
-  const target = confinedOutputPath(outputFile, [
-    cwd,
-    tmpdir(),
-    process.env.RUNNER_TEMP ?? cwd
-  ]);
-  appendFileSync(target, `${lines.join('\n')}\n`);
-};
+const outputLines = (result) => [
+  `count=${result.changedUnitTests.length}`,
+  `deleted_test_paths=${result.deletedTestPaths.length}`,
+  `renamed_test_out_of_scope=${result.renamedTestOutOfScope}`,
+  `base_ref=${result.baseRef}`,
+  `has_tests=${result.changedUnitTests.length > 0 ? 'true' : 'false'}`
+];
 
 /**
  * @param {{ renamedTestOutOfScope: number, uncollectedTestPaths: string[], changedUnitTests: string[], deletedTestPaths: string[] }} result
- * @param {string[]} outputLines
  * @returns {number}
  */
-function reportGate(result, outputLines) {
+function reportGate(result) {
   if (result.renamedTestOutOfScope > 0) {
     console.log(
       `::error::Detected ${result.renamedTestOutOfScope} test file(s) renamed outside a recognized test path. Keep tests in recognized test paths or retain replacement tests so they remain collected.`
@@ -393,14 +347,11 @@ function reportGate(result, outputLines) {
     return 1;
   }
   if (result.changedUnitTests.length === 0) {
-    outputLines.push('has_tests=false');
     console.log(
       result.deletedTestPaths.length > 0
         ? 'Only deleted tests changed; Overlock handles removals and TestTrust will be skipped.'
         : 'No changed Jest/Vitest-style unit tests; TestTrust will be skipped.'
     );
-  } else {
-    outputLines.push('has_tests=true');
   }
   return 0;
 }
@@ -408,9 +359,10 @@ function reportGate(result, outputLines) {
 /**
  * @param {NodeJS.ProcessEnv} env
  * @param {string} [cwd]
+ * @param {'changed-tests' | 'outputs' | null} [emit]
  * @returns {number} process exit code
  */
-export function main(env = process.env, cwd = process.cwd()) {
+export function main(env = process.env, cwd = process.cwd(), emit = null) {
   let result;
   try {
     result = detectChangedTests({
@@ -421,34 +373,42 @@ export function main(env = process.env, cwd = process.cwd()) {
       cwd
     });
   } catch (error) {
-    console.log(
-      `::error::${error instanceof Error ? error.message : String(error)}`
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    if (emit) {
+      console.error(message);
+    } else {
+      console.log(`::error::${message}`);
+    }
     return 1;
+  }
+  if (emit === 'changed-tests') {
+    if (result.changedUnitTests.length > 0) {
+      process.stdout.write(`${result.changedUnitTests.join('\0')}\0`);
+    }
+    return 0;
+  }
+  if (emit === 'outputs') {
+    console.log(outputLines(result).join('\n'));
+    return 0;
   }
   for (const notice of result.notices) console.log(`::notice::${notice}`);
-  const runnerTemp = env.RUNNER_TEMP;
-  if (!runnerTemp) {
-    console.log('::error::RUNNER_TEMP is not set for changed-test detection');
-    return 1;
-  }
-  writeChangedTestsFile(runnerTemp, result.changedUnitTests);
-  const outputLines = [
-    `count=${result.changedUnitTests.length}`,
-    `deleted_test_paths=${result.deletedTestPaths.length}`,
-    `renamed_test_out_of_scope=${result.renamedTestOutOfScope}`,
-    `base_ref=${result.baseRef}`
-  ];
   if (result.deletedTestPaths.length > 0) {
     console.log(
       `::notice::Detected ${result.deletedTestPaths.length} deleted test path(s); Overlock evaluates deletions. TestTrust scans surviving changed unit tests only.`
     );
   }
-  const exitCode = reportGate(result, outputLines);
-  appendOutputs(env.GITHUB_OUTPUT, outputLines, cwd);
-  return exitCode;
+  return reportGate(result);
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  process.exit(main());
+  const emitArg = process.argv[2] === '--emit' ? process.argv[3] : null;
+  const emit =
+    emitArg === 'changed-tests' || emitArg === 'outputs' ? emitArg : null;
+  if (process.argv[2] === '--emit' && emit === null) {
+    console.error(
+      'Usage: detect-changed-tests.mjs [--emit changed-tests|outputs]'
+    );
+    process.exit(2);
+  }
+  process.exit(main(process.env, process.cwd(), emit));
 }
