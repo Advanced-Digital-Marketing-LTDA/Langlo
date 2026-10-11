@@ -15,8 +15,8 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "test": "vitest run",
-    "test:property": "vitest run .pbt.test.ts",
+    "test": "svelte-kit sync && vitest run",
+    "test:property": "svelte-kit sync && vitest run .pbt.test.ts",
     "test:e2e": "playwright test",
     "validate:curriculum": "node scripts/curriculum-contract.mjs",
     "build": "vite build",
@@ -27,12 +27,24 @@
     "db:migrate": "node tests/fixtures/cli.ts migrate",
     "db:seed:test": "node tests/fixtures/cli.ts seed",
     "db:test:reset": "node tests/fixtures/cli.ts reset",
-    "db:fixture:dispose": "node tests/fixtures/cli.ts dispose"
+    "db:fixture:dispose": "node tests/fixtures/cli.ts dispose",
+    "accounts:provision": "node scripts/accounts-provision.ts"
   },
   "dependencies": {
+    "@better-auth/drizzle-adapter": "1.7.7",
     "@libsql/client": "0.18.0",
+    "better-auth": "1.7.7",
     "drizzle-orm": "0.45.3",
+    "nodemailer": "10.0.13",
     "ts-fsrs": "5.4.2"
+  },
+  "overrides": {
+    "better-auth": {
+      "@sveltejs/kit": "$@sveltejs/kit"
+    },
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    }
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

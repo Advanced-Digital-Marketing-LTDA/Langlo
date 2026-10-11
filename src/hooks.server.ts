@@ -3,6 +3,7 @@ import * as env from '$app/env/private';
 import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
 import { parseRuntimeConfig } from './lib/server/config';
 import { safeDiagnostic, safeError } from './lib/server/diagnostics';
+import { resolveAuth } from './lib/server/auth-runtime';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const correlationId = randomUUID();
@@ -45,17 +46,105 @@ export const handle: Handle = async ({ event, resolve }) => {
       );
     }
   }
-  if (path === '/app' || path.startsWith('/app/')) {
-    if (event.request.method === 'GET' || event.request.method === 'HEAD') {
-      return new Response(null, {
-        status: 303,
-        headers: { ...headers, location: '/login' }
-      });
+  const authPath = path === '/api/auth' || path.startsWith('/api/auth/');
+  const appPath = path === '/app' || path.startsWith('/app/');
+  const authNeeded = authPath || appPath || path === '/login';
+  let auth: Awaited<ReturnType<typeof resolveAuth>> = null;
+  let authFailed = false;
+  if (authNeeded && event.locals.config) {
+    try {
+      auth = await resolveAuth(event.locals.config);
+    } catch (error) {
+      authFailed = true;
+      console.warn(
+        JSON.stringify(safeDiagnostic('auth', error, correlationId))
+      );
     }
-    return Response.json(
-      { message: 'Accounts are not ready yet.', correlationId },
-      { status: 503, headers }
-    );
+  }
+  let sessionLookupFailed = false;
+  if (authPath) {
+    if (!auth) {
+      return Response.json(
+        { message: 'Accounts are not ready yet.', correlationId },
+        { status: 503, headers }
+      );
+    }
+    const authResponse = await auth.handler(event.request);
+    const output = new Response(authResponse.body, authResponse);
+    if (
+      path.startsWith('/api/auth/reset-password/') &&
+      output.status >= 300 &&
+      output.status < 400
+    ) {
+      // The email link must carry the token once, but it must not persist in
+      // the /reset page URL (browser history, referers, re-navigation). Hand
+      // it to the page through a short-lived HttpOnly cookie instead.
+      try {
+        const target = new URL(
+          output.headers.get('location') ?? '',
+          event.url.origin
+        );
+        const token = target.searchParams.get('token');
+        if (token) {
+          // Force /reset for every permitted callback target so a caller-
+          // supplied redirectTo cannot park the token in another URL.
+          output.headers.set('location', '/reset');
+          const secure = event.locals.config?.origin.startsWith('https:')
+            ? '; Secure'
+            : '';
+          output.headers.append(
+            'set-cookie',
+            `langlo_reset_token=${token}; HttpOnly; SameSite=Lax; Path=/reset; Max-Age=1800${secure}`
+          );
+        }
+      } catch {
+        /* leave the framework redirect untouched */
+      }
+    }
+    for (const [key, value] of Object.entries(headers))
+      output.headers.set(key, value);
+    return output;
+  }
+  if (auth && (appPath || path === '/login')) {
+    let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
+    try {
+      session = await auth.api.getSession({
+        headers: event.request.headers
+      });
+    } catch {
+      // A backend outage is not a missing session; reporting it as one
+      // would convert 503 service failures into misleading 401s/redirects.
+      sessionLookupFailed = true;
+    }
+    if (session) {
+      event.locals.user = session.user as App.Locals['user'];
+      event.locals.session = session.session as App.Locals['session'];
+    }
+  }
+  if (appPath) {
+    if (!event.locals.user) {
+      if (sessionLookupFailed) {
+        return Response.json(
+          { message: 'Service unavailable. Please try again.', correlationId },
+          { status: 503, headers }
+        );
+      }
+      if (event.request.method === 'GET' || event.request.method === 'HEAD') {
+        return new Response(null, {
+          status: 303,
+          headers: { ...headers, location: '/login' }
+        });
+      }
+      const message = authFailed
+        ? 'Service unavailable. Please try again.'
+        : auth
+          ? 'Sign in required.'
+          : 'Accounts are not ready yet.';
+      return Response.json(
+        { message, correlationId },
+        { status: auth ? 401 : 503, headers }
+      );
+    }
   }
   const response = await resolve(event);
   const output = new Response(response.body, response);

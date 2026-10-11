@@ -7,5 +7,12 @@ export const variables = defineEnvVars({
   DATA_ENABLED: { schema: (value) => value },
   DATABASE_URL: { schema: (value) => value },
   TURSO_AUTH_TOKEN: { schema: (value) => value },
-  APP_BUILD_SHA: { schema: (value) => value }
+  APP_BUILD_SHA: { schema: (value) => value },
+  BETTER_AUTH_SECRET: { schema: (value) => value },
+  MAIL_TRANSPORT: { schema: (value) => value },
+  MAIL_FROM: { schema: (value) => value },
+  PROTON_SMTP_TOKEN: { schema: (value) => value },
+  SMTP_HOST: { schema: (value) => value },
+  SMTP_PORT: { schema: (value) => value },
+  MAIL_CAPTURE_DIR: { schema: (value) => value }
 });

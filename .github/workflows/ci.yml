@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
@@ -56,6 +55,14 @@ jobs:
       - name: Validate non-empty Vitest evidence
         if: always()
         run: node scripts/validate-vitest-evidence.mjs .ci-reports/vitest.json
+      - name: Upload Vitest report for the merge-evidence gate
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: vitest-report-${{ github.sha }}
+          path: .ci-reports/vitest.json
+          if-no-files-found: ignore
+          retention-days: 1
       - name: Check test integrity with Overlock
         if: always()
         uses: rxova/overlock@9b3323d5dc4df767d544a72c05a156adea1dcbc6 # v0.10.4
@@ -237,18 +244,6 @@ jobs:
             "$cli_status" \
             60
           rm -rf "$TESTTRUST_DIR"
-      - name: Check merge evidence without rerunning Vitest
-        if: ${{ always() && github.event_name == 'pull_request' }}
-        uses: axigatelabs/merge-evidence-gate@bee226c890ee0115ab8222c2f1c0262c176df8c2 # v0.11.0
-        with:
-          agents-only: 'false'
-          fail-on: fail
-          evidence: report
-          report-path: .ci-reports/vitest.json
-          report-format: vitest
-          report-command: npm test -- --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
-          comment: 'true'
-          upload-receipt: 'true'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()
         with:
@@ -258,6 +253,34 @@ jobs:
             test-results/
           if-no-files-found: ignore
           retention-days: 3
+
+  merge-evidence-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: foundation
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: vitest-report-${{ github.sha }}
+          path: .ci-reports
+      - name: Check merge evidence without rerunning Vitest
+        uses: axigatelabs/merge-evidence-gate@bee226c890ee0115ab8222c2f1c0262c176df8c2 # v0.11.0
+        with:
+          agents-only: 'false'
+          fail-on: fail
+          evidence: report
+          report-path: .ci-reports/vitest.json
+          report-format: vitest
+          comment: 'true'
+          upload-receipt: 'true'
 
 # No production secrets, privileged PR triggers, publishing, deployment or migrations.
 # Branch protection and an actual remote run remain separately verified operator gates.

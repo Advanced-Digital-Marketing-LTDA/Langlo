@@ -14,6 +14,7 @@ import {
   type FixtureTarget
 } from '../src/lib/server/db/connection';
 import { migrateFixtureDatabase } from '../src/lib/server/db/migrate';
+import { isTable } from 'drizzle-orm';
 import {
   createDisposableFixture,
   disposeDisposableFixture
@@ -205,6 +206,7 @@ describe('disposable libSQL migrations', () => {
     const { db, close } = await openFixtureDatabase(target);
     try {
       for (const table of Object.values(schema)) {
+        if (!isTable(table)) continue;
         expect(await db.select().from(table)).toEqual([]);
       }
     } finally {
@@ -238,7 +240,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT count(*) AS count FROM __drizzle_migrations'
           )
         ).rows[0].count
-      ).toBe(5);
+      ).toBe(6);
     } finally {
       close();
     }
