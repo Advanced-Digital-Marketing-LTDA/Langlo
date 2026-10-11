@@ -175,8 +175,12 @@ describe('diff base resolution against disposable git fixtures', () => {
 });
 
 describe('uncollected-test gate', () => {
-  const runCli = (cwd: string, env: Record<string, string>) => {
-    const proc = spawnSync('node', [SCRIPT], {
+  const runScript = (
+    cwd: string,
+    env: Record<string, string>,
+    args: string[] = []
+  ) =>
+    spawnSync('node', [SCRIPT, ...args], {
       cwd,
       env: {
         ...process.env,
@@ -187,19 +191,11 @@ describe('uncollected-test gate', () => {
       },
       encoding: 'utf8'
     });
-    const emit = spawnSync('node', [SCRIPT, '--emit', 'outputs'], {
-      cwd,
-      env: {
-        ...process.env,
-        EVENT_NAME: 'pull_request',
-        BASE_REF: 'main',
-        DEFAULT_BRANCH: 'main',
-        ...env
-      },
-      encoding: 'utf8'
-    });
-    return { proc, outputs: emit.stdout ?? '' };
-  };
+
+  const runCli = (cwd: string, env: Record<string, string>) => ({
+    proc: runScript(cwd, env),
+    outputs: runScript(cwd, env, ['--emit', 'outputs']).stdout ?? ''
+  });
 
   it('rejects an added test file under a __tests__ directory without a suffix', () => {
     const cwd = initRepo();

@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// Two incorrect typed answers ('es', 'je mange') out of four items.
+const TWO_MISS_RESPONSES = ['es', 'allons', 'je mange', 'je vais au marché'];
+
 // Answer the four practice items in order; the first is the multiple-choice
 // item, the rest are typed inputs. Ends on the results page.
 async function completePractice(page: Page, responses: string[]) {
@@ -17,6 +20,14 @@ async function completePractice(page: Page, responses: string[]) {
       await page.getByRole('button', { name: 'Next item' }).click();
     }
   }
+}
+
+// Navigate results → decks via the 'See card drafts' link.
+async function goToDrafts(page: Page) {
+  await Promise.all([
+    page.waitForURL('**/prototype/decks'),
+    page.getByRole('link', { name: 'See card drafts' }).click()
+  ]);
 }
 
 const prototypePages = [
@@ -90,12 +101,7 @@ test('deck draft approval updates the pending queue', async ({ page }) => {
 test('results derives missed items from the answers actually given', async ({
   page
 }) => {
-  await completePractice(page, [
-    'es',
-    'allons',
-    'je mange',
-    'je vais au marché'
-  ]);
+  await completePractice(page, TWO_MISS_RESPONSES);
   const missed = page.locator('.missed');
   await expect(missed).toHaveCount(2);
   await expect(missed.nth(0)).toContainText('fatiguée');
@@ -119,41 +125,25 @@ test('results shows no mistakes when every answer was correct', async ({
 test('a kept mistake stays kept after leaving and returning to results', async ({
   page
 }) => {
-  await completePractice(page, [
-    'es',
-    'allons',
-    'je mange',
-    'je vais au marché'
-  ]);
+  await completePractice(page, TWO_MISS_RESPONSES);
   const firstMissed = page.locator('.missed').first();
   await firstMissed.getByRole('button', { name: 'Keep as flashcard' }).click();
-  const draftsLink = page.getByRole('link', { name: 'See card drafts' });
-  await Promise.all([
-    page.waitForURL('**/prototype/decks'),
-    draftsLink.click()
-  ]);
-  await expect(
-    page.getByText('« Elle ___ fatiguée » — est, not es', { exact: true })
-  ).toHaveCount(1);
+  const keptDraft = page.getByText('« Elle ___ fatiguée » — est, not es', {
+    exact: true
+  });
+  await goToDrafts(page);
+  await expect(keptDraft).toHaveCount(1);
   await page.goBack();
   await expect(
     firstMissed.getByRole('button', { name: 'Keep as flashcard' })
   ).toHaveCount(0);
   await expect(firstMissed).toContainText('Added to drafts');
   // Leave and return once more — the keep must stay a no-op, not duplicate.
-  await Promise.all([
-    page.waitForURL('**/prototype/decks'),
-    draftsLink.click()
-  ]);
+  await goToDrafts(page);
   await page.goBack();
   await expect(firstMissed).toContainText('Added to drafts');
-  await Promise.all([
-    page.waitForURL('**/prototype/decks'),
-    draftsLink.click()
-  ]);
-  await expect(
-    page.getByText('« Elle ___ fatiguée » — est, not es', { exact: true })
-  ).toHaveCount(1);
+  await goToDrafts(page);
+  await expect(keptDraft).toHaveCount(1);
 });
 
 test('kept mistake becomes an approvable draft in decks', async ({ page }) => {
