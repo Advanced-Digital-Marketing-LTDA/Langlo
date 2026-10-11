@@ -38,6 +38,11 @@
     "nodemailer": "10.0.13",
     "ts-fsrs": "5.4.2"
   },
+  "overrides": {
+    "better-auth": {
+      "@sveltejs/kit": "$@sveltejs/kit"
+    }
+  },
   "devDependencies": {
     "@better-auth/cli": "1.4.21",
     "@eslint/js": "10.0.1",
