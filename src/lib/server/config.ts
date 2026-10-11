@@ -134,7 +134,7 @@ export function parseRuntimeConfig(
     databaseUrl: dataEnabled ? databaseUrl : undefined,
     databaseToken,
     revision,
-    auth: dataEnabled ? parseAuthConfig(env) : undefined
+    auth: dataEnabled ? parseAuthConfig(env, environment) : undefined
   };
 }
 
@@ -142,7 +142,8 @@ const emailPattern = /^[^\s@]{1,254}@[^\s@]{1,253}\.[^\s@]{2,63}$/;
 
 /** Auth exists only when data is enabled; secret/mail rules follow the selected transport. */
 function parseAuthConfig(
-  env: Record<string, string | undefined>
+  env: Record<string, string | undefined>,
+  environment: string
 ): AuthRuntimeConfig {
   const secret = env.BETTER_AUTH_SECRET?.trim();
   if (!secret || secret.length < 32)
@@ -151,6 +152,8 @@ function parseAuthConfig(
   if (!['capture', 'smtp'].includes(rawTransport))
     throw new ConfigError('MAIL_TRANSPORT');
   const transport = rawTransport as AuthMailConfig['transport'];
+  if (environment === 'production' && transport === 'capture')
+    throw new ConfigError('MAIL_TRANSPORT');
   const smtpHost = env.SMTP_HOST ?? 'smtp.protonmail.ch';
   let hostUrl: URL;
   try {

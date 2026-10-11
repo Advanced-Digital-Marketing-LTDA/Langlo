@@ -55,6 +55,14 @@ jobs:
       - name: Validate non-empty Vitest evidence
         if: always()
         run: node scripts/validate-vitest-evidence.mjs .ci-reports/vitest.json
+      - name: Upload Vitest report for the merge-evidence gate
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: vitest-report-${{ github.sha }}
+          path: .ci-reports/vitest.json
+          if-no-files-found: ignore
+          retention-days: 1
       - name: Check test integrity with Overlock
         if: always()
         uses: rxova/overlock@9b3323d5dc4df767d544a72c05a156adea1dcbc6 # v0.10.4
@@ -259,12 +267,10 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          node-version: 24.19.0
-          cache: npm
-      - run: npm install --global --ignore-scripts npm@11.9.0
-      - run: npm ci --ignore-scripts
+          name: vitest-report-${{ github.sha }}
+          path: .ci-reports
       - name: Check merge evidence without rerunning Vitest
         uses: axigatelabs/merge-evidence-gate@bee226c890ee0115ab8222c2f1c0262c176df8c2 # v0.11.0
         with:
@@ -273,7 +279,6 @@ jobs:
           evidence: report
           report-path: .ci-reports/vitest.json
           report-format: vitest
-          report-command: npm test -- --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
           comment: 'true'
           upload-receipt: 'true'
 

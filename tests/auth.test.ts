@@ -11,6 +11,7 @@ import {
 import { seedStudy } from './fixtures/study';
 import { createAuth, type Auth } from '../src/lib/server/auth';
 import { provisionAccount } from '../src/lib/server/accounts';
+import { resolveAuth } from '../src/lib/server/auth-runtime';
 import { CaptureMailer } from '../src/lib/server/mail';
 import {
   createDeck,
@@ -201,6 +202,72 @@ describe('sign-up closure and credential login', () => {
     expect((me.json as { user: { email: string } }).user.email).toBe(
       'a@example.test'
     );
+  });
+
+  it.each([11, 129])(
+    'rejects passwords outside the 12-128 sign-in bounds: %i',
+    async (length) => {
+      await expect(
+        provisionAccount(fixture.auth, {
+          email: `bounds-${length}@example.test`,
+          name: 'Bounds',
+          password: 'p'.repeat(length)
+        })
+      ).rejects.toThrow('Cannot provision account: invalid');
+    }
+  );
+
+  it('accepts a password at the 128-character sign-in maximum', async () => {
+    const account = await provisionAccount(fixture.auth, {
+      email: 'bounds-128@example.test',
+      name: 'Bounds',
+      password: 'p'.repeat(128)
+    });
+    expect(account.email).toBe('bounds-128@example.test');
+  });
+
+  it('removes the user row when credential linking fails so retry succeeds', async () => {
+    const context = await fixture.auth.$context;
+    const spy = vi
+      .spyOn(context.internalAdapter, 'linkAccount')
+      .mockRejectedValueOnce(new Error('synthetic link failure'));
+    await expect(
+      provisionAccount(fixture.auth, {
+        email: 'rollback@example.test',
+        name: 'Rollback',
+        password: 'rollback-password-1'
+      })
+    ).rejects.toThrow('Cannot provision account: unavailable');
+    spy.mockRestore();
+    const retry = await provisionAccount(fixture.auth, {
+      email: 'rollback@example.test',
+      name: 'Rollback',
+      password: 'rollback-password-1'
+    });
+    expect(retry.email).toBe('rollback@example.test');
+  });
+});
+
+describe('auth runtime resolution', () => {
+  let fixture: Rig;
+  beforeAll(async () => {
+    fixture = await rig();
+  });
+  afterAll(async () => {
+    fixture.close();
+    await disposeDisposableFixture(fixture.target);
+  });
+
+  it('resolves concurrent first requests to a single auth instance', async () => {
+    const runtime = config(fixture.target.databaseUrl);
+    const [first, second, third] = await Promise.all([
+      resolveAuth(runtime),
+      resolveAuth(runtime),
+      resolveAuth(runtime)
+    ]);
+    expect(first).not.toBeNull();
+    expect(second).toBe(first);
+    expect(third).toBe(first);
   });
 });
 
@@ -490,7 +557,7 @@ describe('rate limiting and logging', () => {
     );
     expect(counters.rows).toHaveLength(1);
     // Rejected requests do not inflate the counter; it saturates at the cap.
-    expect(Number(counters.rows[0].count)).toBeGreaterThanOrEqual(5);
+    expect(Number(counters.rows[0].count)).toBe(5);
   });
 
   it('limits repeated recovery requests', async () => {

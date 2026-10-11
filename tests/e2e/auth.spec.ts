@@ -120,15 +120,21 @@ test.beforeAll(async () => {
 test.afterAll(async () => {
   await ctx?.dispose();
   server?.kill();
-  run([
-    'tests/fixtures/cli.ts',
-    'dispose',
-    '--fixture-root',
-    fixtureRoot,
-    '--database-url',
-    `file://${dbFile}`
-  ]);
-  await rm(mailDir, { recursive: true, force: true });
+  if (!fixtureRoot) return;
+  try {
+    run([
+      'tests/fixtures/cli.ts',
+      'dispose',
+      '--fixture-root',
+      fixtureRoot,
+      '--database-url',
+      `file://${dbFile}`
+    ]);
+  } catch {
+    // Setup may have failed before the database file existed; drop the root.
+    await rm(fixtureRoot, { recursive: true, force: true });
+  }
+  if (mailDir) await rm(mailDir, { recursive: true, force: true });
 });
 
 const form = (data: Record<string, string>) => ({
@@ -223,6 +229,19 @@ test('recovery mails a link that resets the password once', async () => {
     form({ email: 'e2e@example.test', password: 'e2e-rotated-0000' })
   );
   expect(relogin.status()).toBe(303);
+});
+
+test('reset form reports a mismatched confirmation distinctly', async () => {
+  const response = await ctx.post(
+    '/reset',
+    form({
+      token: 'synthetic-token',
+      password: 'e2e-mismatch-0000',
+      confirm: 'e2e-mismatch-9999'
+    })
+  );
+  expect(response.status()).toBe(400);
+  expect(await response.text()).toContain('Passwords do not match.');
 });
 
 test('no registration endpoint and unauthenticated /app requests are denied', async () => {

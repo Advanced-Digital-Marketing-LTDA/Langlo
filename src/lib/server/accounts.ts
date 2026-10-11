@@ -21,7 +21,12 @@ export async function provisionAccount(
 ): Promise<{ userId: string; email: string; name: string }> {
   const email = input.email.trim().toLowerCase();
   const name = input.name.trim();
-  if (!emailPattern.test(email) || !name || input.password.length < 12)
+  if (
+    !emailPattern.test(email) ||
+    !name ||
+    input.password.length < 12 ||
+    input.password.length > 128
+  )
     throw new ProvisionError('invalid');
   const context = await auth.$context;
   const password = await context.password.hash(input.password);
@@ -31,6 +36,10 @@ export async function provisionAccount(
       { email, name, emailVerified: true },
       { method: 'admin' }
     );
+  } catch {
+    throw new ProvisionError('unavailable');
+  }
+  try {
     await context.internalAdapter.linkAccount({
       userId: user.id,
       providerId: 'credential',
@@ -38,6 +47,7 @@ export async function provisionAccount(
       password
     });
   } catch {
+    await context.internalAdapter.deleteUser(user.id).catch(() => undefined);
     throw new ProvisionError('unavailable');
   }
   return { userId: user.id, email, name };

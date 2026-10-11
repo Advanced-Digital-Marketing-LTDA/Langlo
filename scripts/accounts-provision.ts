@@ -1,4 +1,5 @@
 import { createInterface } from 'node:readline/promises';
+import { Writable } from 'node:stream';
 import { stdin as input, stderr as output } from 'node:process';
 import { parseRuntimeConfig } from '../src/lib/server/config.ts';
 import { createAuth } from '../src/lib/server/auth.ts';
@@ -41,12 +42,22 @@ const readPassword = async (): Promise<string> => {
     for await (const chunk of input) data += chunk;
     return data.trim();
   }
-  const rl = createInterface({ input, output });
+  output.write('Password: ');
+  const sink = new Writable({
+    write: (_chunk, _encoding, callback) => callback()
+  });
+  const rl = createInterface({ input, output: sink, terminal: true });
+  let password = '';
   try {
-    return (await rl.question('Password: ')).trim();
+    for await (const line of rl) {
+      password = line;
+      break;
+    }
   } finally {
     rl.close();
+    output.write('\n');
   }
+  return password.trim();
 };
 
 const main = async () => {

@@ -83,7 +83,10 @@ describe('runtime configuration', () => {
         DATA_ENABLED: 'true',
         DATABASE_URL: 'libsql://dedicated.example',
         TURSO_AUTH_TOKEN: '  synthetic-remote-token\n',
-        BETTER_AUTH_SECRET: 'b'.repeat(40)
+        BETTER_AUTH_SECRET: 'b'.repeat(40),
+        MAIL_TRANSPORT: 'smtp',
+        MAIL_FROM: 'ops@langlo.app',
+        PROTON_SMTP_TOKEN: 'synthetic-smtp-token'
       }).databaseToken
     ).toBe('synthetic-remote-token');
   });
@@ -104,5 +107,38 @@ describe('runtime configuration', () => {
         DATABASE_URL: 'libsql://dedicated.example'
       })
     ).toThrow('Invalid TURSO_AUTH_TOKEN');
+  });
+  it('defaults to capture mail outside production', () => {
+    expect(
+      parseRuntimeConfig({
+        DATA_ENABLED: 'true',
+        DATABASE_URL: 'file:./.fixtures/local.db',
+        BETTER_AUTH_SECRET: 'a'.repeat(40)
+      }).auth?.mail.transport
+    ).toBe('capture');
+  });
+  it('requires explicit SMTP transport in production', () => {
+    const production = {
+      APP_ENV: 'production',
+      APP_ORIGIN: 'https://langlo.app',
+      DATA_ENABLED: 'true',
+      DATABASE_URL: 'libsql://dedicated.example',
+      TURSO_AUTH_TOKEN: 'synthetic-remote-token',
+      BETTER_AUTH_SECRET: 'b'.repeat(40)
+    };
+    expect(() => parseRuntimeConfig(production)).toThrow(
+      'Invalid MAIL_TRANSPORT'
+    );
+    expect(() =>
+      parseRuntimeConfig({ ...production, MAIL_TRANSPORT: 'capture' })
+    ).toThrow('Invalid MAIL_TRANSPORT');
+    expect(
+      parseRuntimeConfig({
+        ...production,
+        MAIL_TRANSPORT: 'smtp',
+        MAIL_FROM: 'ops@langlo.app',
+        PROTON_SMTP_TOKEN: 'synthetic-smtp-token'
+      }).auth?.mail.transport
+    ).toBe('smtp');
   });
 });
