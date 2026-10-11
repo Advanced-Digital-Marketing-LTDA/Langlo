@@ -71,7 +71,7 @@ export default ts.config(
     rules: { 'no-restricted-globals': 'off' }
   },
   {
-    files: ['**/*.svelte'],
+    files: ['**/*.svelte', '**/*.svelte.ts'],
     languageOptions: { parserOptions: { parser: ts.parser } }
   }
 );

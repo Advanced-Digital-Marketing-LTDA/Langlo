@@ -5,6 +5,16 @@
   import Chip from '../../../lib/prototype/Chip.svelte';
   import StateSwitcher from '../../../lib/prototype/StateSwitcher.svelte';
   import { outcomeLabel, practiceItems } from '../../../lib/prototype/data';
+  import { prototypeSession } from '../../../lib/prototype/session.svelte';
+  import {
+    recordRunAnswer,
+    type SessionAnswer
+  } from '../../../lib/prototype/results';
+
+  // A completed run's answers stay recorded across navigation — they are
+  // only replaced when a new run's first item is actually answered.
+  const recordAnswer = (answer: SessionAnswer) =>
+    recordRunAnswer(prototypeSession, answer, index === 0);
 
   const screenState = $derived(page.url.searchParams.get('state') ?? 'normal');
 
@@ -37,6 +47,12 @@
       ? 'correct'
       : 'incorrect';
     counts[outcome] += 1;
+    recordAnswer({
+      prompt: item.prompt,
+      yourAnswer: item.format === 'multiple-choice' ? selected : typed.trim(),
+      expected: item.sampleAnswer,
+      outcome
+    });
     phase = 'feedback';
     await tick();
     nextButton?.focus();
@@ -46,6 +62,12 @@
     if (phase !== 'answering') return;
     outcome = 'uncertain';
     counts.uncertain += 1;
+    recordAnswer({
+      prompt: item.prompt,
+      yourAnswer: '',
+      expected: item.sampleAnswer,
+      outcome
+    });
     phase = 'feedback';
     await tick();
     nextButton?.focus();
