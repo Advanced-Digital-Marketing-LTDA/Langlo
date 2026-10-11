@@ -40,6 +40,16 @@ const initRepo = () => {
   return cwd;
 };
 
+// Run a fixture scenario in a fresh disposable repo, always cleaned up.
+const withRepo = (fn: (cwd: string) => void) => {
+  const cwd = initRepo();
+  try {
+    fn(cwd);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+};
+
 interface DetectEnv {
   eventName: string;
   eventBefore?: string;
@@ -92,8 +102,7 @@ describe('test path classification matches runner collection rules', () => {
 
 describe('diff base resolution against disposable git fixtures', () => {
   it('resolves the origin base for a normal pull request', () => {
-    const cwd = initRepo();
-    try {
+    withRepo((cwd) => {
       const baseSha = git(cwd, 'rev-parse', 'refs/remotes/origin/main');
       git(cwd, 'checkout', '-qb', 'feature');
       commitFile(cwd, 'tests/new.test.ts', 'test');
@@ -106,27 +115,21 @@ describe('diff base resolution against disposable git fixtures', () => {
       expect(git(cwd, 'rev-parse', result.baseRef)).toBe(baseSha);
       expect(result.changedUnitTests).toEqual(['tests/new.test.ts']);
       expect(result.uncollectedTestPaths).toEqual([]);
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+    });
   });
 
   it('uses the event before-SHA for a push when it is an ancestor', () => {
-    const cwd = initRepo();
-    try {
+    withRepo((cwd) => {
       const before = git(cwd, 'rev-parse', 'HEAD');
       commitFile(cwd, 'tests/push.test.ts', 'test');
       const result = detect(cwd, { eventName: 'push', eventBefore: before });
       expect(result.baseRef).toBe(before);
       expect(result.changedUnitTests).toEqual(['tests/push.test.ts']);
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+    });
   });
 
   it('falls back to the default merge-base on a new branch push', () => {
-    const cwd = initRepo();
-    try {
+    withRepo((cwd) => {
       const forkPoint = git(cwd, 'rev-parse', 'HEAD');
       git(cwd, 'checkout', '-qb', 'new-branch');
       commitFile(cwd, 'tests/branch.test.ts', 'test');
@@ -136,14 +139,11 @@ describe('diff base resolution against disposable git fixtures', () => {
       });
       expect(result.baseRef).toBe(forkPoint);
       expect(result.changedUnitTests).toEqual(['tests/branch.test.ts']);
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+    });
   });
 
   it('materializes a real commit when there is no divergent merge-base', () => {
-    const cwd = initRepo();
-    try {
+    withRepo((cwd) => {
       // No divergence: origin/main already points at HEAD, so the merge-base
       // equals HEAD. The resolved base must be a commit TestTrust can accept,
       // not an empty-tree object.
@@ -155,22 +155,17 @@ describe('diff base resolution against disposable git fixtures', () => {
       // Diff against the empty root scans every file: the seeded test file
       // is reported as changed rather than silently skipped.
       expect(result.changedUnitTests).toEqual(['tests/base.test.ts']);
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+    });
   });
 
   it('fails closed when the advertised PR base is unavailable', () => {
-    const cwd = initRepo();
-    try {
+    withRepo((cwd) => {
       git(cwd, 'checkout', '-qb', 'feature');
       commitFile(cwd, 'tests/x.test.ts', 'test');
       expect(() =>
         detect(cwd, { eventName: 'pull_request', baseRef: 'missing' })
       ).toThrow(/Unable to resolve diff base/u);
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+    });
   });
 });
 
@@ -197,43 +192,32 @@ describe('uncollected-test gate', () => {
     outputs: runScript(cwd, env, ['--emit', 'outputs']).stdout ?? ''
   });
 
-  it('rejects an added test file under a __tests__ directory without a suffix', () => {
-    const cwd = initRepo();
-    try {
+  const expectRejection = (path: string, content: string) => {
+    withRepo((cwd) => {
       git(cwd, 'checkout', '-qb', 'feature');
-      commitFile(cwd, 'tests/__tests__/helper.ts', 'export {}');
+      commitFile(cwd, path, content);
       const { proc } = runCli(cwd, {});
       expect(proc.status).toBe(1);
-      expect(proc.stdout).toContain('::error file=tests/__tests__/helper.ts::');
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+      expect(proc.stdout).toContain(`::error file=${path}::`);
+    });
+  };
+
+  it('rejects an added test file under a __tests__ directory without a suffix', () => {
+    expectRejection('tests/__tests__/helper.ts', 'export {}');
   });
 
   it('rejects a spec-named file outside tests/e2e that vitest never collects', () => {
-    const cwd = initRepo();
-    try {
-      git(cwd, 'checkout', '-qb', 'feature');
-      commitFile(cwd, 'tests/stray.spec.ts', 'test');
-      const { proc } = runCli(cwd, {});
-      expect(proc.status).toBe(1);
-      expect(proc.stdout).toContain('::error file=tests/stray.spec.ts::');
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+    expectRejection('tests/stray.spec.ts', 'test');
   });
 
   it('passes collected vitest tests through to TestTrust unchanged', () => {
-    const cwd = initRepo();
-    try {
+    withRepo((cwd) => {
       git(cwd, 'checkout', '-qb', 'feature');
       commitFile(cwd, 'tests/good.test.ts', 'test');
       const { proc, outputs } = runCli(cwd, {});
       expect(proc.status).toBe(0);
       expect(outputs).toContain('has_tests=true');
       expect(outputs).toContain('count=1');
-    } finally {
-      rmSync(cwd, { recursive: true, force: true });
-    }
+    });
   });
 });
