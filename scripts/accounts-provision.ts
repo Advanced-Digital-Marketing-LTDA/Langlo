@@ -17,14 +17,14 @@ const fail = (): never => {
 };
 
 const parseArgs = (argv: string[]) => {
-  const args: Record<string, string> = {};
+  const args: Record<string, string | undefined> = Object.create(null);
   const flags = new Set<string>();
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--app') {
       flags.add('app');
     } else if (
-      arg?.startsWith('--') &&
+      arg.startsWith('--') &&
       argv[i + 1] &&
       !argv[i + 1].startsWith('--')
     ) {

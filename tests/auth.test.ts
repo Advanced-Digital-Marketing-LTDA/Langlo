@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   createDisposableFixture,
@@ -105,7 +106,7 @@ async function mintResetToken(
   userId: string,
   expiresAt: Date
 ): Promise<string> {
-  const token = `minted-${crypto.randomUUID().replaceAll('-', '')}`;
+  const token = `minted-${randomUUID().replaceAll('-', '')}`;
   const context = await auth.$context;
   await context.internalAdapter.createVerificationValue({
     identifier: `reset-password:${token}`,
@@ -116,8 +117,9 @@ async function mintResetToken(
 }
 
 const resetTokenFromMail = (mailer: CaptureMailer, index = 0): string =>
-  /\/reset-password\/([^?\s]+)/.exec(mailer.messages[index]?.text ?? '')?.[1] ??
-  '';
+  /\/reset-password\/([^?\s]+)/u.exec(
+    mailer.messages[index]?.text ?? ''
+  )?.[1] ?? '';
 
 const clearRateLimits = (rig: Rig) =>
   rig.client.execute('DELETE FROM rate_limits');
@@ -312,7 +314,7 @@ describe('logout, expiry and ownership', () => {
       header.startsWith('better-auth.session_token=')
     );
     expect(cleared).toMatch(
-      /Max-Age=0|Expires=Thu, 01 Jan 1970|session_token=;/
+      /Max-Age=0|Expires=Thu, 01 Jan 1970|session_token=;/u
     );
     const sessions = await fixture.client.execute('SELECT id FROM sessions');
     expect(sessions.rows).toEqual([]);

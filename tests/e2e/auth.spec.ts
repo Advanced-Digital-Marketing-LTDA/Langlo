@@ -8,6 +8,7 @@ import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import { mkdtemp, readdir, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { setTimeout } from 'node:timers/promises';
 import { createClient } from '@libsql/client/sqlite3';
 
 const run = (args: string[], input?: string, env?: NodeJS.ProcessEnv) => {
@@ -108,7 +109,7 @@ test.beforeAll(async () => {
     } catch {
       /* not up yet */
     }
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await setTimeout(100);
     if (attempt === 99) throw new Error('auth e2e server did not start');
   }
   ctx = await request.newContext({
@@ -194,7 +195,7 @@ test('recovery mails a link that resets the password once', async () => {
   let files: string[] = [];
   for (let attempt = 0; attempt < 50 && files.length === 0; attempt += 1) {
     files = (await readdir(mailDir)).filter((name) => name.endsWith('.json'));
-    if (!files.length) await new Promise((resolve) => setTimeout(resolve, 100));
+    if (!files.length) await setTimeout(100);
   }
   expect(files).toHaveLength(1);
   const mail = JSON.parse(await readFile(join(mailDir, files[0]), 'utf8')) as {
@@ -202,7 +203,7 @@ test('recovery mails a link that resets the password once', async () => {
     text: string;
   };
   expect(mail.to).toBe('e2e@example.test');
-  const link = /https?:\/\/\S+/.exec(mail.text)?.[0] ?? '';
+  const link = /https?:\/\/\S+/u.exec(mail.text)?.[0] ?? '';
   expect(link).toContain(`${base}/api/auth/reset-password/`);
 
   const validate = await ctx.get(link, { maxRedirects: 0 });

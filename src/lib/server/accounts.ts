@@ -7,7 +7,7 @@ export class ProvisionError extends Error {
   }
 }
 
-const emailPattern = /^[^\s@]{1,254}@[^\s@]{1,253}\.[^\s@]{2,63}$/;
+const emailPattern = /^[^\s@]{1,254}@[^\s@]{1,253}\.[^\s@]{2,63}$/u;
 
 /**
  * Server-only account creation for the closed pilot. Mirrors the framework's

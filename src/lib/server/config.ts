@@ -23,7 +23,7 @@ const isTemporaryFileUrl = (value: string) => {
     )
       return false;
     const path = decodeURIComponent(url.pathname);
-    return isContainedTemporaryPath(path) && /\.(db|sqlite)$/.test(path);
+    return isContainedTemporaryPath(path) && /\.(db|sqlite)$/u.test(path);
   } catch {
     return false;
   }
@@ -62,6 +62,82 @@ export interface RuntimeConfig {
 }
 
 /** Validate private runtime metadata without connecting to a provider; retain credentials only for selected remote libSQL. */
+const emailPattern = /^[^\s@]{1,254}@[^\s@]{1,253}\.[^\s@]{2,63}$/u;
+
+function parseMailTransport(
+  env: Record<string, string | undefined>,
+  environment: string
+): AuthMailConfig['transport'] {
+  const rawTransport = env.MAIL_TRANSPORT ?? 'capture';
+  if (!['capture', 'smtp'].includes(rawTransport))
+    throw new ConfigError('MAIL_TRANSPORT');
+  const transport = rawTransport as AuthMailConfig['transport'];
+  if (environment === 'production' && transport === 'capture')
+    throw new ConfigError('MAIL_TRANSPORT');
+  return transport;
+}
+
+function parseSmtpHost(env: Record<string, string | undefined>): string {
+  const smtpHost = env.SMTP_HOST ?? 'smtp.protonmail.ch';
+  let hostUrl: URL;
+  try {
+    hostUrl = new URL(`smtp://${smtpHost}`);
+  } catch {
+    throw new ConfigError('SMTP_HOST');
+  }
+  if (
+    hostUrl.username ||
+    hostUrl.password ||
+    (hostUrl.pathname !== '/' && hostUrl.pathname !== '') ||
+    hostUrl.search ||
+    hostUrl.hash ||
+    hostUrl.hostname !== smtpHost ||
+    !/^[a-zA-Z0-9.-]+$/u.test(smtpHost)
+  )
+    throw new ConfigError('SMTP_HOST');
+  return smtpHost;
+}
+
+function parseSmtpPort(env: Record<string, string | undefined>): number {
+  const rawPort = env.SMTP_PORT ?? '587';
+  if (!/^[0-9]{1,5}$/u.test(rawPort)) throw new ConfigError('SMTP_PORT');
+  const smtpPort = Number(rawPort);
+  if (!Number.isSafeInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535)
+    throw new ConfigError('SMTP_PORT');
+  return smtpPort;
+}
+
+/** Auth exists only when data is enabled; secret/mail rules follow the selected transport. */
+function parseAuthConfig(
+  env: Record<string, string | undefined>,
+  environment: string
+): AuthRuntimeConfig {
+  const secret = env.BETTER_AUTH_SECRET?.trim();
+  if (!secret || secret.length < 32)
+    throw new ConfigError('BETTER_AUTH_SECRET');
+  const mail: AuthMailConfig = {
+    transport: parseMailTransport(env, environment),
+    smtpHost: parseSmtpHost(env),
+    smtpPort: parseSmtpPort(env)
+  };
+  if (mail.transport === 'smtp') {
+    const from = env.MAIL_FROM?.trim();
+    if (!from || !emailPattern.test(from)) throw new ConfigError('MAIL_FROM');
+    const token = env.PROTON_SMTP_TOKEN?.trim();
+    if (!token) throw new ConfigError('PROTON_SMTP_TOKEN');
+    mail.from = from;
+    mail.protonSmtpToken = token;
+  } else {
+    const captureDir = env.MAIL_CAPTURE_DIR?.trim();
+    if (captureDir) {
+      if (!isContainedTemporaryPath(captureDir))
+        throw new ConfigError('MAIL_CAPTURE_DIR');
+      mail.captureDir = captureDir;
+    }
+  }
+  return { secret, mail };
+}
+
 export function parseRuntimeConfig(
   env: Record<string, string | undefined>
 ): RuntimeConfig {
@@ -117,7 +193,9 @@ export function parseRuntimeConfig(
         throw new ConfigError('DATABASE_URL');
       databaseToken = env.TURSO_AUTH_TOKEN?.trim();
       if (!databaseToken) throw new ConfigError('TURSO_AUTH_TOKEN');
-    } else if (!/^file:\.\/\.fixtures\/[a-zA-Z0-9_-]+\.db$/.test(databaseUrl)) {
+    } else if (
+      !/^file:\.\/\.fixtures\/[a-zA-Z0-9_-]+\.db$/u.test(databaseUrl)
+    ) {
       if (environment !== 'test' || !isTemporaryFileUrl(databaseUrl))
         throw new ConfigError('DATABASE_URL');
     } else if (environment === 'production') {
@@ -136,80 +214,4 @@ export function parseRuntimeConfig(
     revision,
     auth: dataEnabled ? parseAuthConfig(env, environment) : undefined
   };
-}
-
-const emailPattern = /^[^\s@]{1,254}@[^\s@]{1,253}\.[^\s@]{2,63}$/;
-
-function parseMailTransport(
-  env: Record<string, string | undefined>,
-  environment: string
-): AuthMailConfig['transport'] {
-  const rawTransport = env.MAIL_TRANSPORT ?? 'capture';
-  if (!['capture', 'smtp'].includes(rawTransport))
-    throw new ConfigError('MAIL_TRANSPORT');
-  const transport = rawTransport as AuthMailConfig['transport'];
-  if (environment === 'production' && transport === 'capture')
-    throw new ConfigError('MAIL_TRANSPORT');
-  return transport;
-}
-
-function parseSmtpHost(env: Record<string, string | undefined>): string {
-  const smtpHost = env.SMTP_HOST ?? 'smtp.protonmail.ch';
-  let hostUrl: URL;
-  try {
-    hostUrl = new URL(`smtp://${smtpHost}`);
-  } catch {
-    throw new ConfigError('SMTP_HOST');
-  }
-  if (
-    hostUrl.username ||
-    hostUrl.password ||
-    (hostUrl.pathname !== '/' && hostUrl.pathname !== '') ||
-    hostUrl.search ||
-    hostUrl.hash ||
-    hostUrl.hostname !== smtpHost ||
-    !/^[a-zA-Z0-9.-]+$/.test(smtpHost)
-  )
-    throw new ConfigError('SMTP_HOST');
-  return smtpHost;
-}
-
-function parseSmtpPort(env: Record<string, string | undefined>): number {
-  const rawPort = env.SMTP_PORT ?? '587';
-  if (!/^[0-9]{1,5}$/.test(rawPort)) throw new ConfigError('SMTP_PORT');
-  const smtpPort = Number(rawPort);
-  if (!Number.isSafeInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535)
-    throw new ConfigError('SMTP_PORT');
-  return smtpPort;
-}
-
-/** Auth exists only when data is enabled; secret/mail rules follow the selected transport. */
-function parseAuthConfig(
-  env: Record<string, string | undefined>,
-  environment: string
-): AuthRuntimeConfig {
-  const secret = env.BETTER_AUTH_SECRET?.trim();
-  if (!secret || secret.length < 32)
-    throw new ConfigError('BETTER_AUTH_SECRET');
-  const mail: AuthMailConfig = {
-    transport: parseMailTransport(env, environment),
-    smtpHost: parseSmtpHost(env),
-    smtpPort: parseSmtpPort(env)
-  };
-  if (mail.transport === 'smtp') {
-    const from = env.MAIL_FROM?.trim();
-    if (!from || !emailPattern.test(from)) throw new ConfigError('MAIL_FROM');
-    const token = env.PROTON_SMTP_TOKEN?.trim();
-    if (!token) throw new ConfigError('PROTON_SMTP_TOKEN');
-    mail.from = from;
-    mail.protonSmtpToken = token;
-  } else {
-    const captureDir = env.MAIL_CAPTURE_DIR?.trim();
-    if (captureDir) {
-      if (!isContainedTemporaryPath(captureDir))
-        throw new ConfigError('MAIL_CAPTURE_DIR');
-      mail.captureDir = captureDir;
-    }
-  }
-  return { secret, mail };
 }

@@ -68,11 +68,14 @@ export class SmtpMailer implements Mailer {
 
 export function createMailer(config: AuthMailConfig): Mailer {
   if (config.transport === 'smtp') {
+    const { from, protonSmtpToken } = config;
+    if (!from || !protonSmtpToken)
+      throw new Error('SMTP mail requires MAIL_FROM and PROTON_SMTP_TOKEN');
     return new SmtpMailer({
       host: config.smtpHost,
       port: config.smtpPort,
-      from: config.from!,
-      token: config.protonSmtpToken!
+      from,
+      token: protonSmtpToken
     });
   }
   return config.captureDir
