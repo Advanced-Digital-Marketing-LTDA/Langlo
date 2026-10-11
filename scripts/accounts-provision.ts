@@ -16,38 +16,70 @@ const fail = (): never => {
   process.exit(1);
 };
 
+interface ProvisionArgs {
+  email?: string;
+  name?: string;
+  password?: string;
+  fixtureRoot?: string;
+  databaseUrl?: string;
+}
+
+type ArgKey = keyof ProvisionArgs;
+
+// Static-property writes only: each option value lands on a named key, and
+// argv is consumed by iteration so no computed member expression exists for
+// object-injection sinks to flag.
 const parseArgs = (argv: string[]) => {
-  const args: Record<string, string | undefined> = {};
+  const args: ProvisionArgs = {};
   const flags = new Set<string>();
-  const takeValue = (index: number): string => {
-    const next = argv[index];
-    if (!next || next.startsWith('--')) fail();
-    return next;
-  };
-  for (let i = 0; i < argv.length; i += 1) {
-    switch (argv[i]) {
+  let expecting: ArgKey | null = null;
+  for (const arg of argv) {
+    if (expecting !== null) {
+      if (arg.startsWith('--')) fail();
+      switch (expecting) {
+        case 'email':
+          args.email = arg;
+          break;
+        case 'name':
+          args.name = arg;
+          break;
+        case 'password':
+          args.password = arg;
+          break;
+        case 'fixtureRoot':
+          args.fixtureRoot = arg;
+          break;
+        case 'databaseUrl':
+          args.databaseUrl = arg;
+          break;
+      }
+      expecting = null;
+      continue;
+    }
+    switch (arg) {
       case '--app':
         flags.add('app');
         break;
       case '--email':
-        args.email = takeValue(++i);
+        expecting = 'email';
         break;
       case '--name':
-        args.name = takeValue(++i);
+        expecting = 'name';
         break;
       case '--password':
-        args.password = takeValue(++i);
+        expecting = 'password';
         break;
       case '--fixture-root':
-        args['fixture-root'] = takeValue(++i);
+        expecting = 'fixtureRoot';
         break;
       case '--database-url':
-        args['database-url'] = takeValue(++i);
+        expecting = 'databaseUrl';
         break;
       default:
         fail();
     }
   }
+  if (expecting !== null) fail();
   return { args, flags };
 };
 
@@ -91,17 +123,17 @@ const main = async () => {
     db = opened.db;
     close = opened.close;
   } else {
-    if (!args['fixture-root'] || !args['database-url']) fail();
+    if (!args.fixtureRoot || !args.databaseUrl) fail();
     const opened = await openFixtureDatabase({
-      fixtureRoot: args['fixture-root'],
-      databaseUrl: args['database-url']
+      fixtureRoot: args.fixtureRoot,
+      databaseUrl: args.databaseUrl
     });
     db = opened.db;
     config = {
       environment: 'test',
       origin: 'http://localhost:3000',
       dataEnabled: true,
-      databaseUrl: args['database-url'],
+      databaseUrl: args.databaseUrl,
       revision: 'unknown',
       auth: {
         secret:
