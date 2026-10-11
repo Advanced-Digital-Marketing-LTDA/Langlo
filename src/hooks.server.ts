@@ -85,9 +85,10 @@ export const handle: Handle = async ({ event, resolve }) => {
           event.url.origin
         );
         const token = target.searchParams.get('token');
-        if (token && target.pathname === '/reset') {
-          target.searchParams.delete('token');
-          output.headers.set('location', `${target.pathname}${target.search}`);
+        if (token) {
+          // Force /reset for every permitted callback target so a caller-
+          // supplied redirectTo cannot park the token in another URL.
+          output.headers.set('location', '/reset');
           const secure = event.locals.config?.origin.startsWith('https:')
             ? '; Secure'
             : '';

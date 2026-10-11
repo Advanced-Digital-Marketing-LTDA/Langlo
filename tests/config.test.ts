@@ -140,5 +140,14 @@ describe('runtime configuration', () => {
         PROTON_SMTP_TOKEN: 'synthetic-smtp-token'
       }).auth?.mail.transport
     ).toBe('smtp');
+    expect(
+      parseRuntimeConfig({
+        ...production,
+        MAIL_TRANSPORT: 'smtp',
+        MAIL_FROM: 'ops@langlo.app',
+        PROTON_SMTP_TOKEN: 'synthetic-smtp-token',
+        SMTP_HOST: 'SMTP.ProtonMail.ch'
+      }).auth?.mail.smtpHost
+    ).toBe('SMTP.ProtonMail.ch');
   });
 });

@@ -55,7 +55,9 @@ const readPassword = async (): Promise<string> => {
   if (!input.isTTY) {
     let data = '';
     for await (const chunk of input) data += chunk;
-    return data.trim();
+    // Strip only the transport line ending; the login form does not trim,
+    // so an operator's leading/trailing whitespace must survive intact.
+    return data.replace(/(\r\n|\r|\n)$/, '');
   }
   output.write('Password: ');
   const sink = new Writable({
@@ -63,7 +65,7 @@ const readPassword = async (): Promise<string> => {
   });
   const rl = createInterface({ input, output: sink, terminal: true });
   try {
-    return (await rl.question('')).trim();
+    return await rl.question('');
   } finally {
     rl.close();
     output.write('\n');

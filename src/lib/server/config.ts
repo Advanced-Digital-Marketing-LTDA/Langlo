@@ -91,7 +91,7 @@ function parseSmtpHost(env: Record<string, string | undefined>): string {
     (hostUrl.pathname !== '/' && hostUrl.pathname !== '') ||
     hostUrl.search ||
     hostUrl.hash ||
-    hostUrl.hostname !== smtpHost ||
+    hostUrl.hostname.toLowerCase() !== smtpHost.toLowerCase() ||
     !/^[a-zA-Z0-9.-]+$/u.test(smtpHost)
   )
     throw new ConfigError('SMTP_HOST');
