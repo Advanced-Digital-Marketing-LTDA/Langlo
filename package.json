@@ -41,10 +41,12 @@
   "overrides": {
     "better-auth": {
       "@sveltejs/kit": "$@sveltejs/kit"
+    },
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
     }
   },
   "devDependencies": {
-    "@better-auth/cli": "1.4.21",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.63.0",
     "@sveltejs/adapter-node": "6.0.0",

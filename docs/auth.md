@@ -18,7 +18,7 @@ interface for the Proton SMTP submission path.
 | `better-auth`                  | `1.7.7` (published 2026-09-30)                                      | `npm view better-auth version`                  |
 | `@better-auth/drizzle-adapter` | `1.7.7` (same release train)                                        | `npm view @better-auth/drizzle-adapter version` |
 | `nodemailer`                   | `10.0.13` (published 2026-09-30; `10.1.0` is newer but <7 days old) | `npm view nodemailer versions`                  |
-| `@better-auth/cli`             | `1.4.21`; dev-time schema generation only                           | installed at T010b                              |
+| `@better-auth/cli`             | not a dependency; `auth.gen.ts` remains for ad-hoc regeneration     | removed at PR #15 audit remediation             |
 
 Pins satisfy the repository's ≥7-day preference as of 2026-10-10, re-verified
 at T010b install. The contract constrains the major line (`1.7.x`), not the
