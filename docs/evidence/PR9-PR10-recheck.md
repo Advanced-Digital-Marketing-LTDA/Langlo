@@ -131,10 +131,17 @@ Nine comments reviewed; four additional valid findings fixed:
    `src/lib/prototype/results.ts`), triggered only by a new run's first
    submitted answer.
 
+5. **"Draft card created" announcement was not transient** — `anyKept`
+   derived from persistent notes, so the `role="status"` banner re-rendered
+   on every revisit. A per-mount `justKept` flag now gates the creation
+   announcement; drafts present from earlier visits instead render a muted
+   state line ("Kept mistakes stay drafts …").
+
 Two comments were already fixed in `2f05237` (totals derived from recorded
 answers; approved/rejected notes rendered by status). One was stale — the
 `git hash-object -t tree /dev/null` code was replaced earlier by the
-emit-mode rewrite.
+emit-mode rewrite. A tenth comment arrived during triage (finding 5
+above).
 
 Navigation-model note: after a client-side trip from results to practice,
 SvelteKit replaces the history entry — the prior results URL has no

@@ -50,6 +50,10 @@
   const anyKept = $derived(
     missedItems.some((missed) => keptStatus(missed) === 'draft')
   );
+  // The "Draft card created" announcement confirms a click on this visit —
+  // the persisted notes describe state, not an event, so they must not
+  // re-announce a creation after navigation.
+  let justKept = $state(false);
 
   function keepAsFlashcard(missed: MissedItem) {
     if (!mistakesDeck) return;
@@ -62,6 +66,7 @@
       status: 'draft',
       scheduling: 'new'
     });
+    justKept = true;
   }
 </script>
 
@@ -161,9 +166,13 @@
           </li>
         {/each}
       </ul>
-      {#if anyKept}
+      {#if justKept}
         <p role="status" class="announced">
           Draft card created. It stays a draft until you approve it.
+        </p>
+      {:else if anyKept}
+        <p class="muted">
+          Kept mistakes stay drafts until you approve them in Decks.
         </p>
       {/if}
     </section>

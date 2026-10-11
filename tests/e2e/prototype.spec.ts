@@ -139,6 +139,7 @@ test('a kept mistake stays kept after leaving and returning to results', async (
   await completePractice(page, TWO_MISS_RESPONSES);
   const firstMissed = page.locator('.missed').first();
   await firstMissed.getByRole('button', { name: 'Keep as flashcard' }).click();
+  await expect(page.getByRole('status')).toContainText('Draft card created');
   const keptDraft = page.getByText('« Elle ___ fatiguée » — est, not es', {
     exact: true
   });
@@ -149,6 +150,9 @@ test('a kept mistake stays kept after leaving and returning to results', async (
     firstMissed.getByRole('button', { name: 'Keep as flashcard' })
   ).toHaveCount(0);
   await expect(firstMissed).toContainText('Added to drafts');
+  // Revisiting must not re-announce a creation that did not happen here.
+  await expect(page.getByText('Draft card created')).toHaveCount(0);
+  await expect(page.getByText('Kept mistakes stay drafts')).toBeVisible();
   // Leave and return once more — the keep must stay a no-op, not duplicate.
   await goToDrafts(page);
   await page.goBack();
