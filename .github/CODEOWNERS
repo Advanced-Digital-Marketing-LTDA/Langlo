@@ -1,19 +1,32 @@
 # Code ownership for Langlo — private pilot, single maintainer.
-# Last matching pattern wins. Owners need repo write access.
+# No catch-all: blanket ownership turns every PR into rubber-stamp noise.
 # Convention (AGENTS.md): validator test twins are listed explicitly,
 # never covered by name globs such as tests/*evidence*.
+# Entries for paths that do not exist yet are inert and activate on arrival.
 
-* @Bonobo791
+# Verification layer — requires owner review
+/.github/                        @Bonobo791
+/AGENTS.md                       @Bonobo791
+/.merge-evidence.yml             @Bonobo791
+/scripts/                        @Bonobo791
+/tests/vitest-evidence.test.ts   @Bonobo791
+/tests/testtrust-report.test.ts  @Bonobo791
+/tests/report-path.test.ts       @Bonobo791
 
-# Verification layer — the paths the Merge-Evidence Gate also watches.
-/.github/workflows/ @Bonobo791
-/AGENTS.md @Bonobo791
-/.merge-evidence.yml @Bonobo791
+# Supply chain
+/package.json                    @Bonobo791
+/package-lock.json               @Bonobo791
 
-# Validator scripts and their test twins — explicit entries per convention.
-# The twin paths land with the test-integrity work; entries for paths that
-# do not exist yet are inert and activate when the files arrive.
-/scripts/ @Bonobo791
-/tests/report-path.test.ts @Bonobo791
-/tests/validate-testtrust-report.test.ts @Bonobo791
-/tests/validate-vitest-evidence.test.ts @Bonobo791
+# Gate-adjacent tool config
+/vitest.config.ts                @Bonobo791
+/playwright.config.ts            @Bonobo791
+/vite.config.ts                  @Bonobo791
+/tsconfig.json                   @Bonobo791
+/eslint.config.js                @Bonobo791
+/.prettierrc.json                @Bonobo791
+/.prettierignore                 @Bonobo791
+/.node-version                   @Bonobo791
+/.gitignore                      @Bonobo791
+
+# Schema
+/drizzle/                        @Bonobo791
