@@ -74,12 +74,13 @@ const COLLECTION_CASES: [string, boolean][] = [
   ['tests/e2e/auth.spec.ts', true],
   ['tests/e2e/auth.test.ts', true],
   ['tests/e2e/nested/flow.spec.js', true],
+  ['tests/e2e/flow.spec.tsx', true],
+  ['tests/e2e/form.test.jsx', true],
   ['tests/__tests__/unit.test.ts', true],
   ['tests/login.spec.ts', false],
   ['tests/helper.test.js', false],
   ['tests/helper.test.tsx', false],
   ['src/lib/x.test.tsx', false],
-  ['tests/e2e/flow.spec.tsx', false],
   ['tests/e2e/nested/helper.ts', false],
   ['tests/__tests__/helper.ts', false],
   ['src/__tests__/fixture.mjs', false],
@@ -143,18 +144,18 @@ describe('diff base resolution against disposable git fixtures', () => {
     });
   });
 
-  it('materializes a real commit when there is no divergent merge-base', () => {
+  it('falls back to the repository root commit on a no-divergence push', () => {
     withRepo((cwd) => {
       // No divergence: origin/main already points at HEAD, so the merge-base
-      // equals HEAD. The resolved base must be a commit TestTrust can accept,
-      // not an empty-tree object.
+      // equals HEAD. The resolved base must be a real ancestor — TestTrust's
+      // diff mode resolves a merge-base, which a disconnected commit lacks.
       const result = detect(cwd, { eventName: 'push' });
+      const root = git(cwd, 'rev-list', '--max-parents=0', 'HEAD');
+      expect(result.baseRef).toBe(root);
       expect(git(cwd, 'cat-file', '-t', result.baseRef)).toBe('commit');
-      expect(
-        git(cwd, 'ls-tree', '--name-only', result.baseRef).split('\n')
-      ).toEqual(['']);
-      // Diff against the empty root scans every file: the seeded test file
-      // is reported as changed rather than silently skipped.
+      git(cwd, 'merge-base', '--is-ancestor', result.baseRef, 'HEAD');
+      // Diff from the root scans every file: the seeded test file is
+      // reported as changed rather than silently skipped.
       expect(result.changedUnitTests).toEqual(['tests/base.test.ts']);
     });
   });

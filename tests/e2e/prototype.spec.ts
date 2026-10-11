@@ -2,11 +2,17 @@ import { expect, test, type Page } from '@playwright/test';
 
 // Two incorrect typed answers ('es', 'je mange') out of four items.
 const TWO_MISS_RESPONSES = ['es', 'allons', 'je mange', 'je vais au marché'];
+// Every item answered correctly.
+const ALL_CORRECT_RESPONSES = [
+  'est',
+  'allons',
+  'je vais manger',
+  'je vais au marché'
+];
 
 // Answer the four practice items in order; the first is the multiple-choice
 // item, the rest are typed inputs. Ends on the results page.
-async function completePractice(page: Page, responses: string[]) {
-  await page.goto('/prototype/practice');
+async function answerPracticeItems(page: Page, responses: string[]) {
   for (const [index, response] of responses.entries()) {
     if (index === 0) {
       await page.getByRole('radio', { name: response, exact: true }).check();
@@ -20,6 +26,11 @@ async function completePractice(page: Page, responses: string[]) {
       await page.getByRole('button', { name: 'Next item' }).click();
     }
   }
+}
+
+async function completePractice(page: Page, responses: string[]) {
+  await page.goto('/prototype/practice');
+  await answerPracticeItems(page, responses);
 }
 
 // Navigate results → decks via the 'See card drafts' link.
@@ -178,6 +189,23 @@ test('results totals follow the session when the count params are stripped', asy
   await page.getByRole('link', { name: 'Retry' }).click();
   await expect(page.locator('.totals dd')).toHaveText(['2', '2', '0']);
   await expect(page.locator('.missed')).toHaveCount(2);
+});
+
+test('a re-entered practice run replaces the recorded answers', async ({
+  page
+}) => {
+  await completePractice(page, TWO_MISS_RESPONSES);
+  // Leave results via real links and re-enter practice mid-session; the new
+  // run must replace the recorded answers rather than merge with them.
+  await page.getByRole('link', { name: 'Back to the map' }).click();
+  await page.locator('a.skill-link').first().click();
+  await page.getByRole('link', { name: 'Practice this skill' }).click();
+  await answerPracticeItems(page, ALL_CORRECT_RESPONSES);
+  await expect(page.locator('.totals dd')).toHaveText(['4', '0', '0']);
+  await expect(page.locator('.missed')).toHaveCount(0);
+  await expect(
+    page.getByText('No mistakes this session — nothing to keep.')
+  ).toBeVisible();
 });
 
 test('kept mistake becomes an approvable draft in decks', async ({ page }) => {

@@ -103,12 +103,51 @@ once; the keep → drafts → approve flow is unchanged.
 
 ## Hosted scanner triage (2026-10-11)
 
-| Check | Result |
-| --- | --- |
-| SonarCloud | pass (duplication fixed by `withRepo` scaffold helper) |
-| CodeAnt (5 gates), CodeQL, Semgrep, OSSAR, ESLint, dependency-review, Gitar | pass |
-| foundation, merge-evidence-gate | pass |
-| Codacy | `action_required` with **zero added issues** — remaining axis is the project-side complexity-variation gate (new files inherently add complexity). No annotations; a settings decision, not a code finding. |
+| Check                                                                       | Result                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| SonarCloud                                                                  | pass (duplication fixed by `withRepo` scaffold helper)                                                                                                                                                      |
+| CodeAnt (5 gates), CodeQL, Semgrep, OSSAR, ESLint, dependency-review, Gitar | pass                                                                                                                                                                                                        |
+| foundation, merge-evidence-gate                                             | pass                                                                                                                                                                                                        |
+| Codacy                                                                      | `action_required` with **zero added issues** — remaining axis is the project-side complexity-variation gate (new files inherently add complexity). No annotations; a settings decision, not a code finding. |
+
+## Review triage round 2 (chatgpt-codex-connector, PR #16)
+
+Nine comments reviewed; four additional valid findings fixed:
+
+1. **Playwright collection missed `.jsx`/`.tsx`** — `E2E_SUFFIX` now
+   accepts the optional `x` (`[cm]?[jt]sx?`), matching Playwright's default
+   `testMatch`. Fixture tests cover collected `.jsx`/`.tsx` e2e files.
+2. **TestTrust base could be a disconnected commit** — the synthetic
+   parentless commit had no common ancestor with `HEAD`, so merge-base
+   resolution would fail. The no-divergence fallback now resolves the
+   repository's real root commit (`git rev-list --max-parents=0`), a genuine
+   ancestor, preserving "everything added" diff semantics.
+3. **Draft identity ignored the submitted answer** — `draftIdFor` was
+   prompt-only, so the same prompt answered wrongly a different way across
+   runs collided on one draft. The slug now includes the answer.
+4. **Practice mount wiped recorded answers** — `prototypeSession.answers`
+   was cleared at mount, so any return to practice destroyed a completed
+   run. Clearing moved into `recordRunAnswer` (extracted to
+   `src/lib/prototype/results.ts`), triggered only by a new run's first
+   submitted answer.
+
+Two comments were already fixed in `2f05237` (totals derived from recorded
+answers; approved/rejected notes rendered by status). One was stale — the
+`git hash-object -t tree /dev/null` code was replaced earlier by the
+emit-mode rewrite.
+
+Navigation-model note: after a client-side trip from results to practice,
+SvelteKit replaces the history entry — the prior results URL has no
+reachable forward/back entry, and a synthesized link click is not a trusted
+navigation. The reachable behavioral surface is therefore: recorded answers
+survive practice remount, and a re-entered run replaces them. The unit
+tests pin the preservation invariant; the e2e test (results → map → lesson
+→ practice → new run) verifies replacement, not merging.
+
+Local validation after these fixes: `check` 0 errors · `lint`/`format`
+clean · `npm test` all passed (27 in `detect-changed-tests`, 13 in
+`prototype-results`) · property 3 · build clean · e2e 56 (desktop +
+mobile), including the new re-entered-run test.
 
 ## Boundaries
 

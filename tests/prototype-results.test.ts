@@ -4,6 +4,7 @@ import {
   deriveTotals,
   draftIdFor,
   mistakePreview,
+  recordRunAnswer,
   type SessionAnswer
 } from '../src/lib/prototype/results';
 
@@ -86,6 +87,24 @@ describe('deriveTotals', () => {
   });
 });
 
+describe('recordRunAnswer', () => {
+  it('appends to a run in progress', () => {
+    const session = { answers: [answer('a', 'correct')] };
+    recordRunAnswer(session, answer('b', 'incorrect'), false);
+    expect(session.answers).toHaveLength(2);
+  });
+
+  it('keeps a completed run until a new run is answered', () => {
+    const session = {
+      answers: [answer('a', 'incorrect'), answer('b', 'incorrect')]
+    };
+    // Revisiting practice does not record anything, so nothing is cleared.
+    expect(session.answers).toHaveLength(2);
+    recordRunAnswer(session, answer('c', 'correct'), true);
+    expect(session.answers).toEqual([answer('c', 'correct')]);
+  });
+});
+
 describe('mistakePreview', () => {
   it('extracts the quoted exercise from a completion prompt', () => {
     expect(
@@ -118,10 +137,18 @@ describe('draftIdFor', () => {
       expected: 'est'
     };
     const first = draftIdFor(missed);
-    expect(first).toBe('n-session-choose-the-correct-completion-elle-fatigu-e');
+    expect(first).toBe('n-session-choose-the-correct-completion-elle-fatig-es');
     expect(draftIdFor(missed)).toBe(first);
     expect(
       draftIdFor({ prompt: 'Different prompt', yourAnswer: 'a', expected: 'b' })
     ).not.toBe(first);
+  });
+
+  it('distinguishes different wrong answers to the same prompt', () => {
+    const prompt = 'Choose the correct completion: « Elle ___ fatiguée. »';
+    const es = draftIdFor({ prompt, yourAnswer: 'es', expected: 'est' });
+    const suis = draftIdFor({ prompt, yourAnswer: 'suis', expected: 'est' });
+    expect(es).not.toBe(suis);
+    expect(es).toBe(draftIdFor({ prompt, yourAnswer: 'es', expected: 'est' }));
   });
 });

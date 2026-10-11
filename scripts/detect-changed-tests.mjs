@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 // unbounded wildcards.
 const TEST_SUFFIX = /\.(test|spec)\.[cm]?[jt]sx?$/u;
 const JS_EXT = /\.[cm]?[jt]sx?$/u;
-const E2E_SUFFIX = /\.(test|spec)\.[cm]?[jt]s$/u;
+const E2E_SUFFIX = /\.(test|spec)\.[cm]?[jt]sx?$/u;
 const E2E_PREFIX = 'tests/e2e/';
 const TEST_DIRS = new Set(['__test__', '__tests__']);
 
@@ -107,26 +107,15 @@ const mergeBaseSha = (defaultBranch, cwd) => {
 };
 
 /**
- * Write a commit containing the empty tree so downstream consumers (git diff
- * and the TestTrust --base commit argument) receive a commit object, never a
- * bare tree hash.
+ * The repository's earliest commit — a real ancestor of HEAD, so a
+ * merge-base-based diff (TestTrust --base) resolves instead of comparing
+ * unrelated roots. Scanning from the root covers every file, which matches
+ * the no-divergence fallback's intent.
  * @param {string} cwd
  * @returns {string} commit sha
  */
-const emptyRootCommit = (cwd) =>
-  git(
-    [
-      '-c',
-      'user.name=langlo-ci',
-      '-c',
-      'user.email=langlo-ci@localhost',
-      'commit-tree',
-      git(['hash-object', '-t', 'tree', '/dev/null'], cwd),
-      '-m',
-      'Synthetic empty diff base'
-    ],
-    cwd
-  );
+const repoRootCommit = (cwd) =>
+  git(['rev-list', '--max-parents=0', 'HEAD'], cwd).split('\n')[0];
 
 /**
  * Resolve the diff base for the event. Fails closed: an advertised base that
@@ -153,9 +142,9 @@ export function resolveBaseRef(options) {
   if (!base) base = mergeBaseSha(defaultBranch, cwd);
   if (!base || base === git(['rev-parse', 'HEAD'], cwd)) {
     notices.push(
-      'No divergent merge-base with the default branch; diffing against the empty tree so every test file is scanned.'
+      'No divergent merge-base with the default branch; diffing from the repository root so every test file is scanned.'
     );
-    base = emptyRootCommit(cwd);
+    base = repoRootCommit(cwd);
   }
   return base;
 }

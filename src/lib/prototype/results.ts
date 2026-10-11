@@ -11,6 +11,18 @@ export interface SessionAnswer {
 
 export type MissedItem = ResultsBreakdown['missedItems'][number];
 
+// Records one submitted answer. A run's first answer starts a fresh list —
+// recorded answers are only ever replaced here, never by page navigation —
+// so a completed run survives revisiting practice in the same session.
+export function recordRunAnswer(
+  session: { answers: SessionAnswer[] },
+  answer: SessionAnswer,
+  isNewRun: boolean
+) {
+  if (isNewRun) session.answers = [];
+  session.answers.push(answer);
+}
+
 // Outcome totals likewise come from recorded answers when a run happened,
 // so a stripped-URL results view stays consistent with the mistake list.
 export function deriveTotals(answers: SessionAnswer[]) {
@@ -58,15 +70,20 @@ export function mistakePreview(missed: MissedItem): string {
 const isSlugChar = (char: string) =>
   (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9');
 
-// Stable per-mistake identity so a keep survives page remounts and a repeat
-// keep is a no-op — the same prompt maps to the same draft note id.
-export function draftIdFor(missed: MissedItem): string {
-  const slug = [...missed.prompt.toLowerCase()]
+const slugify = (value: string, limit: number) =>
+  [...value.toLowerCase()]
     .map((char) => (isSlugChar(char) ? char : '-'))
     .join('')
     .split('-')
     .filter(Boolean)
     .join('-')
-    .slice(0, 48);
-  return `n-session-${slug || 'item'}`;
+    .slice(0, limit);
+
+// Stable per-mistake identity so a keep survives page remounts and a repeat
+// keep is a no-op. The answer is part of the identity: answering the same
+// prompt wrongly a different way is a different mistake, not a duplicate.
+export function draftIdFor(missed: MissedItem): string {
+  const prompt = slugify(missed.prompt, 40) || 'item';
+  const answer = slugify(missed.yourAnswer, 24) || 'blank';
+  return `n-session-${prompt}-${answer}`;
 }
