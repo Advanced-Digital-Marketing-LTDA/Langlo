@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import process from 'node:process';
 import { describe, expect, it } from 'vitest';
 import { readReportFile } from '../scripts/report-path.mjs';
 
