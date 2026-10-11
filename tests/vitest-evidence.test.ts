@@ -4,7 +4,36 @@ import { parseVitestEvidence } from '../scripts/validate-vitest-evidence.mjs';
 type AssertionStatus =
   'passed' | 'failed' | 'skipped' | 'pending' | 'todo' | 'disabled';
 
-function reportWith(statuses: AssertionStatus[] = ['passed']) {
+type Report = {
+  numTotalTestSuites: number;
+  numPassedTestSuites: number;
+  numFailedTestSuites: number;
+  numPendingTestSuites: number;
+  numTotalTests: number;
+  numPassedTests: number;
+  numFailedTests: number;
+  numPendingTests: number;
+  numTodoTests: number;
+  success: boolean;
+  testResults: Array<{
+    assertionResults: Array<{ status: string }>;
+    status: string;
+    name: string;
+  }>;
+};
+
+function suiteWith(statuses: AssertionStatus[], status = 'passed') {
+  return {
+    assertionResults: statuses.map((item) => ({ status: item })),
+    status,
+    name: '/workspace/tests/example.test.ts'
+  };
+}
+
+function reportWith(
+  statuses: AssertionStatus[] = ['passed'],
+  overrides: Partial<Report> = {}
+): string {
   const count = (status: AssertionStatus) =>
     statuses.filter((item) => item === status).length;
   const failedTestCount = count('failed');
@@ -12,7 +41,8 @@ function reportWith(statuses: AssertionStatus[] = ['passed']) {
   const pendingTestCount =
     count('skipped') + count('pending') + count('disabled');
   const todoTestCount = count('todo');
-  return JSON.stringify({
+  const suiteStatus = failedTestCount === 0 ? 'passed' : 'failed';
+  const report: Report = {
     numTotalTestSuites: 1,
     numPassedTestSuites: failedTestCount === 0 ? 1 : 0,
     numFailedTestSuites: failedTestCount > 0 ? 1 : 0,
@@ -23,14 +53,17 @@ function reportWith(statuses: AssertionStatus[] = ['passed']) {
     numPendingTests: pendingTestCount,
     numTodoTests: todoTestCount,
     success: failedTestCount === 0,
-    testResults: [
-      {
-        assertionResults: statuses.map((status) => ({ status })),
-        status: failedTestCount === 0 ? 'passed' : 'failed',
-        name: '/workspace/tests/example.test.ts'
-      }
-    ]
-  });
+    testResults: [suiteWith(statuses, suiteStatus)],
+    ...overrides
+  };
+  return JSON.stringify(report);
+}
+
+function parsedReport(
+  statuses: AssertionStatus[] = ['passed'],
+  overrides: Partial<Report> = {}
+): Report {
+  return JSON.parse(reportWith(statuses, overrides)) as Report;
 }
 
 describe('Vitest report evidence validation', () => {
@@ -50,6 +83,16 @@ describe('Vitest report evidence validation', () => {
       testCount: 2,
       passedTestCount: 1,
       failedTestCount: 1,
+      skippedTestCount: 0
+    });
+  });
+
+  it('accepts a report where every executed assertion failed', () => {
+    expect(parseVitestEvidence(reportWith(['failed', 'failed']))).toEqual({
+      suiteCount: 1,
+      testCount: 2,
+      passedTestCount: 0,
+      failedTestCount: 2,
       skippedTestCount: 0
     });
   });
@@ -76,7 +119,7 @@ describe('Vitest report evidence validation', () => {
   );
 
   it('rejects a report with no executed tests', () => {
-    const noAssertions = JSON.parse(reportWith()) as Record<string, unknown>;
+    const noAssertions = parsedReport();
     noAssertions.numTotalTests = 0;
     noAssertions.numPassedTests = 0;
     noAssertions.testResults = [];
@@ -85,84 +128,115 @@ describe('Vitest report evidence validation', () => {
     );
 
     expect(() => parseVitestEvidence(reportWith(['skipped', 'todo']))).toThrow(
-      /passed assertion/u
+      /executed/u
     );
     expect(() =>
       parseVitestEvidence(reportWith(['skipped', 'skipped']))
-    ).toThrow(/passed assertion/u);
+    ).toThrow(/executed/u);
   });
 
-  it('rejects unknown statuses and mismatched report counters', () => {
-    const invalidStatus = JSON.parse(reportWith()) as {
-      testResults: Array<{ assertionResults: Array<{ status: string }> }>;
-    };
-    invalidStatus.testResults[0]!.assertionResults[0]!.status = 'unknown';
+  it('rejects unknown statuses and mismatched assertion counters', () => {
+    const invalidStatus = parsedReport();
+    const [firstSuite] = invalidStatus.testResults;
+    if (!firstSuite) {
+      throw new Error('fixture must contain a suite');
+    }
+    const [firstAssertion] = firstSuite.assertionResults;
+    if (!firstAssertion) {
+      throw new Error('fixture must contain an assertion');
+    }
+    firstAssertion.status = 'unknown';
     expect(() => parseVitestEvidence(JSON.stringify(invalidStatus))).toThrow(
       /status/u
     );
 
-    const mismatchedTotal = JSON.parse(reportWith()) as Record<string, unknown>;
+    const mismatchedTotal = parsedReport();
     mismatchedTotal.numTotalTests = 2;
     expect(() => parseVitestEvidence(JSON.stringify(mismatchedTotal))).toThrow(
       /does not match/u
     );
 
-    const mismatchedPassed = JSON.parse(reportWith()) as Record<
-      string,
-      unknown
-    >;
+    const mismatchedPassed = parsedReport();
     mismatchedPassed.numPassedTests = 0;
     expect(() => parseVitestEvidence(JSON.stringify(mismatchedPassed))).toThrow(
       /numPassedTests count/u
     );
 
-    const mismatchedPending = JSON.parse(
-      reportWith(['passed', 'skipped'])
-    ) as Record<string, unknown>;
+    const mismatchedPending = parsedReport(['passed', 'skipped']);
     mismatchedPending.numPendingTests = 0;
     expect(() =>
       parseVitestEvidence(JSON.stringify(mismatchedPending))
     ).toThrow(/numPendingTests count/u);
 
-    const mismatchedTodo = JSON.parse(reportWith(['passed', 'todo'])) as Record<
-      string,
-      unknown
-    >;
+    const mismatchedTodo = parsedReport(['passed', 'todo']);
     mismatchedTodo.numTodoTests = 0;
     expect(() => parseVitestEvidence(JSON.stringify(mismatchedTodo))).toThrow(
       /numTodoTests count/u
     );
+  });
 
-    const mismatchedSuiteCounts = JSON.parse(reportWith()) as Record<
-      string,
-      unknown
-    >;
-    mismatchedSuiteCounts.numPassedTestSuites = 0;
+  it('rejects suite counters that disagree with the test results', () => {
+    const fewerSuitesThanFiles = parsedReport(['passed'], {
+      numTotalTests: 2,
+      numPassedTests: 2
+    });
+    fewerSuitesThanFiles.testResults.push(suiteWith(['passed']));
     expect(() =>
-      parseVitestEvidence(JSON.stringify(mismatchedSuiteCounts))
+      parseVitestEvidence(JSON.stringify(fewerSuitesThanFiles))
     ).toThrow(/suite counters/u);
 
-    const mismatchedSuiteTotal = JSON.parse(reportWith()) as Record<
-      string,
-      unknown
-    >;
+    const missingFailedSuite = parsedReport(['failed']);
+    missingFailedSuite.numFailedTestSuites = 0;
+    missingFailedSuite.numPassedTestSuites = 1;
+    expect(() =>
+      parseVitestEvidence(JSON.stringify(missingFailedSuite))
+    ).toThrow(/suite counters/u);
+
+    const missingPassedSuite = parsedReport();
+    missingPassedSuite.numPassedTestSuites = 0;
+    missingPassedSuite.numPendingTestSuites = 1;
+    expect(() =>
+      parseVitestEvidence(JSON.stringify(missingPassedSuite))
+    ).toThrow(/suite counters/u);
+
+    const mismatchedSuiteTotal = parsedReport();
     mismatchedSuiteTotal.numTotalTestSuites = 2;
     expect(() =>
       parseVitestEvidence(JSON.stringify(mismatchedSuiteTotal))
     ).toThrow(/suite counters/u);
 
-    const mismatchedSuiteStatus = JSON.parse(reportWith()) as {
-      testResults: Array<{ status: string }>;
-    };
-    mismatchedSuiteStatus.testResults[0]!.status = 'failed';
+    const negativeSuites = parsedReport();
+    negativeSuites.numPendingTestSuites = -1;
+    expect(() => parseVitestEvidence(JSON.stringify(negativeSuites))).toThrow(
+      /suite counters/u
+    );
+  });
+
+  it('accepts pending suite counters produced by incomplete or todo suites', () => {
+    const report = parsedReport();
+    report.numTotalTestSuites = 2;
+    report.numPendingTestSuites = 1;
+    expect(parseVitestEvidence(JSON.stringify(report))).toEqual({
+      suiteCount: 1,
+      testCount: 1,
+      passedTestCount: 1,
+      failedTestCount: 0,
+      skippedTestCount: 0
+    });
+  });
+
+  it('rejects success flags and suite statuses that disagree', () => {
+    const mismatchedSuiteStatus = parsedReport();
+    const [suite] = mismatchedSuiteStatus.testResults;
+    if (!suite) {
+      throw new Error('fixture must contain a suite');
+    }
+    suite.status = 'failed';
     expect(() =>
       parseVitestEvidence(JSON.stringify(mismatchedSuiteStatus))
-    ).toThrow(/success flag/u);
+    ).toThrow(/suite counters/u);
 
-    const incorrectSuccessFlag = JSON.parse(reportWith()) as Record<
-      string,
-      unknown
-    >;
+    const incorrectSuccessFlag = parsedReport();
     incorrectSuccessFlag.success = false;
     expect(() =>
       parseVitestEvidence(JSON.stringify(incorrectSuccessFlag))

@@ -1,32 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import { parseTestTrustReport } from '../scripts/validate-testtrust-report.mjs';
 
+function findingWith(overrides: Record<string, unknown> = {}) {
+  return {
+    ruleId: 'assertion-weakened',
+    severity: 'warn',
+    file: 'tests/example.test.ts',
+    line: 4,
+    message: 'A test assertion was weakened.',
+    data: { baseMatcher: 'toEqual', headMatcher: 'toBeTruthy' },
+    ...overrides
+  };
+}
+
+function scoreWith(overrides: Record<string, unknown> = {}) {
+  return {
+    score: 95,
+    verdict: 'neutral',
+    failThreshold: 60,
+    totalFindings: 1,
+    countsBySeverity: { fail: 0, warn: 1, info: 0 },
+    breakdown: [{ ruleId: 'assertion-weakened', count: 1, penalty: 5 }],
+    ...overrides
+  };
+}
+
 function reportWith(overrides: Record<string, unknown> = {}) {
-  const findings = [
-    {
-      ruleId: 'assertion-weakened',
-      severity: 'warn',
-      file: 'tests/example.test.ts',
-      line: 4,
-      message: 'A test assertion was weakened.',
-      data: { baseMatcher: 'toEqual', headMatcher: 'toBeTruthy' }
-    }
-  ];
   return JSON.stringify({
     version: '0.1.9',
     generatedAt: '2026-10-11T00:00:00.000Z',
     mode: 'diff',
     baseRef: 'origin/main',
     filesAnalyzed: 2,
-    score: {
-      score: 95,
-      verdict: 'neutral',
-      failThreshold: 60,
-      totalFindings: 1,
-      countsBySeverity: { fail: 0, warn: 1, info: 0 },
-      breakdown: [{ ruleId: 'assertion-weakened', count: 1, penalty: 5 }]
-    },
-    findings,
+    score: scoreWith(),
+    findings: [findingWith()],
     ...overrides
   });
 }
@@ -90,30 +97,20 @@ describe('TestTrust report validation', () => {
     expect(() =>
       parseTestTrustReport(
         reportWith({
-          score: {
+          score: scoreWith({
             score: 100,
             verdict: 'pass',
-            failThreshold: 60,
             totalFindings: 0,
             countsBySeverity: { fail: 0, warn: 0, info: 0 },
             breakdown: []
-          }
+          })
         }),
         options
       )
     ).toThrow(/finding count/u);
     expect(() =>
       parseTestTrustReport(
-        reportWith({
-          score: {
-            score: 95,
-            verdict: 'pass',
-            failThreshold: 60,
-            totalFindings: 1,
-            countsBySeverity: { fail: 0, warn: 1, info: 0 },
-            breakdown: [{ ruleId: 'assertion-weakened', count: 1, penalty: 5 }]
-          }
-        }),
+        reportWith({ score: scoreWith({ verdict: 'pass' }) }),
         options
       )
     ).toThrow(/verdict/u);
@@ -123,15 +120,7 @@ describe('TestTrust report validation', () => {
     expect(() =>
       parseTestTrustReport(
         reportWith({
-          findings: [
-            {
-              ruleId: 'test-skipped',
-              severity: 'fail',
-              file: 'tests/example.test.ts',
-              line: 4,
-              message: 'A test was skipped.'
-            }
-          ]
+          findings: [findingWith({ ruleId: 'test-skipped', severity: 'fail' })]
         }),
         options
       )
@@ -147,16 +136,7 @@ describe('TestTrust report validation', () => {
   it('rejects a score that is inconsistent with the reported penalties', () => {
     expect(() =>
       parseTestTrustReport(
-        reportWith({
-          score: {
-            score: 100,
-            verdict: 'neutral',
-            failThreshold: 60,
-            totalFindings: 1,
-            countsBySeverity: { fail: 0, warn: 1, info: 0 },
-            breakdown: [{ ruleId: 'assertion-weakened', count: 1, penalty: 5 }]
-          }
-        }),
+        reportWith({ score: scoreWith({ score: 100 }) }),
         options
       )
     ).toThrow(/penalty breakdown/u);

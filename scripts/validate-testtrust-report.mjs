@@ -1,9 +1,11 @@
-import { readFileSync } from 'node:fs';
+import { error as logError, log } from 'node:console';
 import { resolve } from 'node:path';
+import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { readReportFile } from './report-path.mjs';
 
 const EXPECTED_VERSION = '0.1.9';
-const SEVERITIES = ['fail', 'warn', 'info'];
+const SEVERITIES = new Set(['fail', 'warn', 'info']);
 
 /**
  * Validate TestTrust's CLI status and complete JSON evidence for a diff scan.
@@ -15,9 +17,28 @@ const SEVERITIES = ['fail', 'warn', 'info'];
  * @returns {{ version: string, filesAnalyzed: number, findingCount: number, verdict: 'pass' | 'neutral' | 'fail', score: number }}
  */
 export function parseTestTrustReport(source, options) {
-  if (typeof source !== 'string' || source.trim() === '') {
-    throw new Error('TestTrust report is empty');
-  }
+  assertOptions(options);
+  const report = requireReportObject(source);
+  assertReportEnvelope(report, options);
+
+  const { severityCounts, ruleCounts } = collectFindings(report.findings);
+  const score = report.score;
+  assertScoreShape(score, options, report.findings.length);
+  assertSeverityCounts(score.countsBySeverity, severityCounts);
+  const totalPenalty = assertBreakdown(score.breakdown, ruleCounts);
+  assertScoreFromBreakdown(score.score, totalPenalty);
+  assertVerdict(score, severityCounts, options.failThreshold);
+
+  return {
+    version: report.version,
+    filesAnalyzed: report.filesAnalyzed,
+    findingCount: report.findings.length,
+    verdict: score.verdict,
+    score: score.score
+  };
+}
+
+function assertOptions(options) {
   if (
     !Number.isSafeInteger(options.expectedFileCount) ||
     options.expectedFileCount < 1
@@ -40,6 +61,13 @@ export function parseTestTrustReport(source, options) {
       'TestTrust fail threshold must be an integer from 0 to 100'
     );
   }
+}
+
+/** @param {string} source */
+function requireReportObject(source) {
+  if (typeof source !== 'string' || source.trim() === '') {
+    throw new Error('TestTrust report is empty');
+  }
 
   let report;
   try {
@@ -49,8 +77,12 @@ export function parseTestTrustReport(source, options) {
   }
 
   if (report === null || typeof report !== 'object' || Array.isArray(report)) {
-    throw new Error('TestTrust report must be a JSON object');
+    throw new TypeError('TestTrust report must be a JSON object');
   }
+  return report;
+}
+
+function assertReportEnvelope(report, options) {
   if (report.version !== EXPECTED_VERSION) {
     throw new Error(`TestTrust report version must be ${EXPECTED_VERSION}`);
   }
@@ -66,12 +98,12 @@ export function parseTestTrustReport(source, options) {
     typeof report.generatedAt !== 'string' ||
     !Number.isFinite(Date.parse(report.generatedAt))
   ) {
-    throw new Error(
+    throw new TypeError(
       'TestTrust report must include a valid generation timestamp'
     );
   }
   if (!Number.isSafeInteger(report.filesAnalyzed) || report.filesAnalyzed < 1) {
-    throw new Error(
+    throw new TypeError(
       'TestTrust report must include a positive number of analyzed files'
     );
   }
@@ -81,34 +113,48 @@ export function parseTestTrustReport(source, options) {
     );
   }
   if (!Array.isArray(report.findings)) {
-    throw new Error('TestTrust report must include a findings array');
+    throw new TypeError('TestTrust report must include a findings array');
   }
+}
 
-  const severityCounts = { fail: 0, warn: 0, info: 0 };
+/** @param {unknown[]} findings */
+function collectFindings(findings) {
+  const severityCounts = new Map(
+    [...SEVERITIES].map((severity) => [severity, 0])
+  );
   const ruleCounts = new Map();
-  for (const finding of report.findings) {
-    if (
-      finding === null ||
-      typeof finding !== 'object' ||
-      typeof finding.ruleId !== 'string' ||
-      finding.ruleId.length === 0 ||
-      !SEVERITIES.includes(finding.severity) ||
-      typeof finding.file !== 'string' ||
-      finding.file.length === 0 ||
-      !Number.isSafeInteger(finding.line) ||
-      finding.line < 1 ||
-      typeof finding.message !== 'string' ||
-      finding.message.length === 0
-    ) {
-      throw new Error('TestTrust report contains an invalid finding');
+  for (const finding of findings) {
+    if (!isValidFinding(finding)) {
+      throw new TypeError('TestTrust report contains an invalid finding');
     }
-    severityCounts[finding.severity] += 1;
+    severityCounts.set(
+      finding.severity,
+      (severityCounts.get(finding.severity) ?? 0) + 1
+    );
     ruleCounts.set(finding.ruleId, (ruleCounts.get(finding.ruleId) ?? 0) + 1);
   }
+  return { severityCounts, ruleCounts };
+}
 
-  const score = report.score;
+function isValidFinding(finding) {
+  return (
+    finding !== null &&
+    typeof finding === 'object' &&
+    typeof finding.ruleId === 'string' &&
+    finding.ruleId.length > 0 &&
+    SEVERITIES.has(finding.severity) &&
+    typeof finding.file === 'string' &&
+    finding.file.length > 0 &&
+    Number.isSafeInteger(finding.line) &&
+    finding.line >= 1 &&
+    typeof finding.message === 'string' &&
+    finding.message.length > 0
+  );
+}
+
+function assertScoreShape(score, options, findingsLength) {
   if (score === null || typeof score !== 'object' || Array.isArray(score)) {
-    throw new Error(
+    throw new TypeError(
       'TestTrust report must include complete score and finding details'
     );
   }
@@ -117,10 +163,12 @@ export function parseTestTrustReport(source, options) {
     score.score < 0 ||
     score.score > 100
   ) {
-    throw new Error('TestTrust report score must be an integer from 0 to 100');
+    throw new TypeError(
+      'TestTrust report score must be an integer from 0 to 100'
+    );
   }
   if (!['pass', 'neutral', 'fail'].includes(score.verdict)) {
-    throw new Error('TestTrust report verdict is invalid');
+    throw new TypeError('TestTrust report verdict is invalid');
   }
   if (score.failThreshold !== options.failThreshold) {
     throw new Error(
@@ -129,46 +177,41 @@ export function parseTestTrustReport(source, options) {
   }
   if (
     !Number.isSafeInteger(score.totalFindings) ||
-    score.totalFindings !== report.findings.length
+    score.totalFindings !== findingsLength
   ) {
     throw new Error(
       'TestTrust report finding count does not match its findings array'
     );
   }
+}
 
+/** @param {Map<string, number>} severityCounts */
+function assertSeverityCounts(countsBySeverity, severityCounts) {
   if (
-    score.countsBySeverity === null ||
-    typeof score.countsBySeverity !== 'object'
+    countsBySeverity === null ||
+    typeof countsBySeverity !== 'object' ||
+    countsBySeverity.fail !== severityCounts.get('fail') ||
+    countsBySeverity.warn !== severityCounts.get('warn') ||
+    countsBySeverity.info !== severityCounts.get('info')
   ) {
-    throw new Error('TestTrust report must include finding counts by severity');
-  }
-  for (const severity of SEVERITIES) {
-    if (score.countsBySeverity[severity] !== severityCounts[severity]) {
-      throw new Error(
-        'TestTrust report severity counts do not match its findings'
-      );
-    }
-  }
-
-  if (!Array.isArray(score.breakdown)) {
     throw new Error(
+      'TestTrust report severity counts do not match its findings'
+    );
+  }
+}
+
+/** @param {Map<string, number>} ruleCounts */
+function assertBreakdown(breakdown, ruleCounts) {
+  if (!Array.isArray(breakdown)) {
+    throw new TypeError(
       'TestTrust report must include a per-rule findings breakdown'
     );
   }
   const breakdownCounts = new Map();
   let totalPenalty = 0;
-  for (const entry of score.breakdown) {
-    if (
-      entry === null ||
-      typeof entry !== 'object' ||
-      typeof entry.ruleId !== 'string' ||
-      !Number.isSafeInteger(entry.count) ||
-      entry.count < 1 ||
-      typeof entry.penalty !== 'number' ||
-      !Number.isFinite(entry.penalty) ||
-      entry.penalty < 0
-    ) {
-      throw new Error(
+  for (const entry of breakdown) {
+    if (!isValidBreakdownEntry(entry)) {
+      throw new TypeError(
         'TestTrust report contains an invalid per-rule breakdown'
       );
     }
@@ -190,23 +233,51 @@ export function parseTestTrustReport(source, options) {
       'TestTrust report per-rule breakdown does not match its findings'
     );
   }
+  return totalPenalty;
+}
+
+function isValidBreakdownEntry(entry) {
+  return (
+    entry !== null &&
+    typeof entry === 'object' &&
+    typeof entry.ruleId === 'string' &&
+    Number.isSafeInteger(entry.count) &&
+    entry.count >= 1 &&
+    typeof entry.penalty === 'number' &&
+    Number.isFinite(entry.penalty) &&
+    entry.penalty >= 0
+  );
+}
+
+function assertScoreFromBreakdown(score, totalPenalty) {
   const scoreFromBreakdown = Math.max(
     0,
     Math.min(100, Math.round(100 - totalPenalty))
   );
-  if (score.score !== scoreFromBreakdown) {
+  if (score !== scoreFromBreakdown) {
     throw new Error(
       'TestTrust report score does not match its per-rule penalty breakdown'
     );
   }
+}
 
-  const expectedVerdict =
-    severityCounts.fail > 0 || score.score < options.failThreshold
-      ? 'fail'
-      : severityCounts.warn > 0
-        ? 'neutral'
-        : 'pass';
-  if (score.verdict !== expectedVerdict) {
+/** @param {Map<string, number>} severityCounts */
+function expectedVerdict(severityCounts, score, failThreshold) {
+  if ((severityCounts.get('fail') ?? 0) > 0 || score < failThreshold) {
+    return 'fail';
+  }
+  if ((severityCounts.get('warn') ?? 0) > 0) {
+    return 'neutral';
+  }
+  return 'pass';
+}
+
+/** @param {Map<string, number>} severityCounts */
+function assertVerdict(score, severityCounts, failThreshold) {
+  if (
+    score.verdict !==
+    expectedVerdict(severityCounts, score.score, failThreshold)
+  ) {
     throw new Error(
       'TestTrust report verdict is inconsistent with its findings and score'
     );
@@ -214,17 +285,9 @@ export function parseTestTrustReport(source, options) {
   if (score.verdict === 'fail') {
     throw new Error('TestTrust reported a failing test-integrity verdict');
   }
-
-  return {
-    version: report.version,
-    filesAnalyzed: report.filesAnalyzed,
-    findingCount: report.findings.length,
-    verdict: score.verdict,
-    score: score.score
-  };
 }
 
-function main() {
+function parseCliOptions(argv) {
   const [
     ,
     ,
@@ -233,7 +296,7 @@ function main() {
     expectedFilesRaw,
     cliExitRaw,
     failThresholdRaw
-  ] = process.argv;
+  ] = argv;
   if (
     !reportPath ||
     !baseRef ||
@@ -245,14 +308,21 @@ function main() {
       'Usage: node scripts/validate-testtrust-report.mjs <report> <base-ref> <expected-files> <cli-exit-code> <fail-threshold>'
     );
   }
-  const expectedFileCount = Number(expectedFilesRaw);
-  const cliExitCode = Number(cliExitRaw);
-  const failThreshold = Number(failThresholdRaw);
-  const summary = parseTestTrustReport(
-    readFileSync(resolve(process.cwd(), reportPath), 'utf8'),
-    { baseRef, expectedFileCount, cliExitCode, failThreshold }
-  );
-  console.log(
+  return {
+    reportPath,
+    options: {
+      baseRef,
+      expectedFileCount: Number(expectedFilesRaw),
+      cliExitCode: Number(cliExitRaw),
+      failThreshold: Number(failThresholdRaw)
+    }
+  };
+}
+
+function main() {
+  const { reportPath, options } = parseCliOptions(process.argv);
+  const summary = parseTestTrustReport(readReportFile(reportPath), options);
+  log(
     `Validated TestTrust evidence: ${summary.filesAnalyzed} files, ${summary.findingCount} findings, ${summary.verdict} (${summary.score}/100)`
   );
 }
@@ -265,7 +335,7 @@ if (
     main();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error(`Invalid TestTrust evidence: ${message}`);
+    logError(`Invalid TestTrust evidence: ${message}`);
     process.exitCode = 1;
   }
 }
