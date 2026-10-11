@@ -224,13 +224,13 @@ jobs:
         if: ${{ always() && github.event_name == 'pull_request' }}
         uses: axigatelabs/merge-evidence-gate@bee226c890ee0115ab8222c2f1c0262c176df8c2 # v0.11.0
         with:
-          agents-only: 'true'
-          fail-on: needs-human
+          agents-only: 'false'
+          fail-on: fail
           evidence: report
           report-path: .ci-reports/vitest.json
           report-format: vitest
           report-command: npm test -- --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
-          comment: 'false'
+          comment: 'true'
           upload-receipt: 'true'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()
