@@ -1,17 +1,16 @@
 import { readFileSync, realpathSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import process from 'node:process';
 
 /**
- * Roots a report file may live under: the working directory, the system
- * temporary directory, and CI temp directories exposed through environment
- * variables. Roots that cannot be resolved are skipped.
+ * Roots a report file may live under: the working directory and CI temp
+ * directories exposed through environment variables. Roots that cannot be
+ * resolved are skipped.
  *
  * @returns {string[]} canonicalized absolute roots
  */
 function allowedRoots() {
-  const roots = [process.cwd(), tmpdir()];
+  const roots = [process.cwd()];
   for (const value of [process.env.RUNNER_TEMP, process.env.TMPDIR]) {
     if (value) {
       roots.push(value);
@@ -72,9 +71,7 @@ export function resolveReportPath(reportPath) {
 export function readReportFile(reportPath) {
   const target = resolveReportPath(reportPath);
   try {
-    // NOSONAR jssecurity:S8707 — resolveReportPath confines the canonicalized
-    // target to approved working/temp roots before this read.
-    return readFileSync(target, 'utf8');
+    return readFileSync(target, 'utf8'); // NOSONAR — confined to approved roots above
   } catch {
     throw new Error('Report file could not be read');
   }

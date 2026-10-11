@@ -9,13 +9,20 @@ describe('CI report path resolution', () => {
     expect(readReportFile('package.json')).toContain('"name": "langlo"');
   });
 
-  it('reads a report under the system temporary directory', () => {
+  it('reads a report under a CI temp directory from the environment', () => {
     const dir = mkdtempSync(join(tmpdir(), 'langlo-report-'));
+    const previous = process.env.RUNNER_TEMP;
+    process.env.RUNNER_TEMP = dir;
     try {
       const file = join(dir, 'report.json');
       writeFileSync(file, '{}');
       expect(readReportFile(file)).toBe('{}');
     } finally {
+      if (previous === undefined) {
+        delete process.env.RUNNER_TEMP;
+      } else {
+        process.env.RUNNER_TEMP = previous;
+      }
       rmSync(dir, { recursive: true, force: true });
     }
   });
