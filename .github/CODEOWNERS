@@ -1,0 +1,19 @@
+# Code ownership for Langlo — private pilot, single maintainer.
+# Last matching pattern wins. Owners need repo write access.
+# Convention (AGENTS.md): validator test twins are listed explicitly,
+# never covered by name globs such as tests/*evidence*.
+
+* @Bonobo791
+
+# Verification layer — the paths the Merge-Evidence Gate also watches.
+/.github/workflows/ @Bonobo791
+/AGENTS.md @Bonobo791
+/.merge-evidence.yml @Bonobo791
+
+# Validator scripts and their test twins — explicit entries per convention.
+# The twin paths land with the test-integrity work; entries for paths that
+# do not exist yet are inert and activate when the files arrive.
+/scripts/ @Bonobo791
+/tests/report-path.test.ts @Bonobo791
+/tests/testtrust-report.test.ts @Bonobo791
+/tests/vitest-evidence.test.ts @Bonobo791

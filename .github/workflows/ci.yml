@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
@@ -44,16 +45,217 @@ jobs:
       - run: npm run check
       - run: npm run lint
       - run: npm run format:check
-      - run: npm test
+      - name: Run tests with machine-readable evidence
+        run: |
+          mkdir -p .ci-reports
+          npm test -- --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
       - run: npm run test:property
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Validate non-empty Vitest evidence
+        if: always()
+        run: node scripts/validate-vitest-evidence.mjs .ci-reports/vitest.json
+      - name: Check test integrity with Overlock
+        if: always()
+        uses: rxova/overlock@9b3323d5dc4df767d544a72c05a156adea1dcbc6 # v0.10.4
+        with:
+          version: '0.10.4'
+          cli-path: ${{ github.workspace }}/node_modules/overlock/dist/cli.js
+          fail-on: high
+          comment: 'false'
+      - name: Identify changed Jest/Vitest-style unit tests
+        id: changed_unit_tests
+        if: always()
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_BEFORE: ${{ github.event.before }}
+          BASE_REF: ${{ github.base_ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          is_test_path() {
+            [[ "$1" =~ ^(src|tests)/.*\.(test|spec)\.[cm]?[jt]sx?$ ]] ||
+              [[ "$1" =~ ^(src|tests)/(.*/)?__tests?__/.*\.[cm]?[jt]sx?$ ]]
+          }
+          is_testtrust_path() {
+            [[ "$1" != tests/e2e/* && "$1" =~ ^(src|tests)/.*\.test\.ts$ ]]
+          }
+          is_uncollected_test_path() {
+            [[ "$1" =~ ^(src|tests)/.*\.(test|spec)\.[cm]?[jt]sx?$ ]] &&
+              [[ "$1" != tests/e2e/* ]] &&
+              ! is_testtrust_path "$1"
+          }
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            base_ref="origin/$BASE_REF"
+          else
+            base_ref=""
+            if [[ -n "${EVENT_BEFORE:-}" && ! "$EVENT_BEFORE" =~ ^0+$ ]]; then
+              if git cat-file -e "$EVENT_BEFORE^{commit}" 2>/dev/null &&
+                git merge-base --is-ancestor "$EVENT_BEFORE" HEAD; then
+                base_ref="$EVENT_BEFORE"
+              else
+                echo "::notice::Push 'before' SHA $EVENT_BEFORE is unreachable or not an ancestor of HEAD (force-push or rebase); using the default-branch merge-base."
+              fi
+            fi
+            if [[ -z "$base_ref" ]]; then
+              base_ref="$(git merge-base "origin/${DEFAULT_BRANCH:-main}" HEAD 2>/dev/null || true)"
+            fi
+            if [[ -z "$base_ref" || "$base_ref" == "$(git rev-parse HEAD)" ]]; then
+              echo '::notice::No divergent merge-base with the default branch; diffing against the empty tree so every test file is scanned.'
+              base_ref="$(git hash-object -t tree /dev/null)"
+            fi
+          fi
+          if ! git cat-file -e "$base_ref" 2>/dev/null; then
+            echo "::error::Unable to resolve diff base '$base_ref' for changed-test detection"
+            exit 1
+          fi
+          git diff --name-status -z --find-renames "$base_ref" HEAD > "$RUNNER_TEMP/testtrust-changes"
+          mapfile -d '' -t change_records < "$RUNNER_TEMP/testtrust-changes"
+          changed_unit_tests=()
+          deleted_test_paths=()
+          uncollected_test_paths=()
+          renamed_test_out_of_scope_count=0
+          record_index=0
+          while ((record_index < ${#change_records[@]})); do
+            status="${change_records[record_index]}"
+            ((record_index += 1))
+            case "$status" in
+              R*|C*)
+                if ((record_index + 1 >= ${#change_records[@]})); then
+                  echo '::error::Git returned an incomplete rename/copy record'
+                  exit 1
+                fi
+                old_path="${change_records[record_index]}"
+                new_path="${change_records[record_index + 1]}"
+                ((record_index += 2))
+                if is_testtrust_path "$new_path"; then
+                  changed_unit_tests+=("$new_path")
+                fi
+                if is_uncollected_test_path "$new_path"; then
+                  uncollected_test_paths+=("$new_path")
+                fi
+                if [[ "$status" == R* ]] && is_test_path "$old_path" && ! is_test_path "$new_path"; then
+                  ((renamed_test_out_of_scope_count += 1))
+                fi
+                ;;
+              D)
+                path="${change_records[record_index]}"
+                ((record_index += 1))
+                if is_test_path "$path"; then
+                  deleted_test_paths+=("$path")
+                fi
+                ;;
+              *)
+                path="${change_records[record_index]}"
+                ((record_index += 1))
+                if is_testtrust_path "$path"; then
+                  changed_unit_tests+=("$path")
+                fi
+                if is_uncollected_test_path "$path"; then
+                  uncollected_test_paths+=("$path")
+                fi
+                ;;
+            esac
+          done
+          : > "$RUNNER_TEMP/testtrust-changed-tests"
+          if ((${#changed_unit_tests[@]} > 0)); then
+            printf '%s\0' "${changed_unit_tests[@]}" > "$RUNNER_TEMP/testtrust-changed-tests"
+          fi
+          echo "count=${#changed_unit_tests[@]}" >> "$GITHUB_OUTPUT"
+          echo "deleted_test_paths=${#deleted_test_paths[@]}" >> "$GITHUB_OUTPUT"
+          echo "renamed_test_out_of_scope=${renamed_test_out_of_scope_count}" >> "$GITHUB_OUTPUT"
+          echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
+          if ((${#deleted_test_paths[@]} > 0)); then
+            echo "::notice::Detected ${#deleted_test_paths[@]} deleted test path(s); Overlock evaluates deletions. TestTrust scans surviving changed unit tests only."
+          fi
+          if ((renamed_test_out_of_scope_count > 0)); then
+            echo "::error::Detected $renamed_test_out_of_scope_count test file(s) renamed outside a recognized test path. Keep tests in recognized test paths or retain replacement tests so they remain collected."
+            exit 1
+          fi
+          if ((${#uncollected_test_paths[@]} > 0)); then
+            printf '::error file=%s::Test-named file is not collected by Vitest (src/tests *.test.ts outside tests/e2e) or Playwright (tests/e2e). Move or rename it into a collected pattern, or remove it.\n' "${uncollected_test_paths[@]}"
+            exit 1
+          fi
+          if ((${#changed_unit_tests[@]} == 0)); then
+            echo 'has_tests=false' >> "$GITHUB_OUTPUT"
+            if ((${#deleted_test_paths[@]} > 0)); then
+              echo 'Only deleted tests changed; Overlock handles removals and TestTrust will be skipped.'
+            else
+              echo 'No changed Jest/Vitest-style unit tests; TestTrust will be skipped.'
+            fi
+          else
+            echo 'has_tests=true' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Check out TestTrust source at the reviewed commit
+        if: ${{ always() && steps.changed_unit_tests.outputs.has_tests == 'true' }}
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: corgu1995/testtrust
+          ref: 5f468c50285cab751f7756f76e4b8f305c50e2de # v0.1.9
+          path: .integrity-tools/testtrust-${{ github.run_id }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Check changed unit tests with TestTrust
+        if: ${{ always() && steps.changed_unit_tests.outputs.has_tests == 'true' }}
+        env:
+          TESTTRUST_BASE_REF: ${{ steps.changed_unit_tests.outputs.base_ref }}
+          TESTTRUST_EXPECTED_FILES: ${{ steps.changed_unit_tests.outputs.count }}
+          TESTTRUST_DIR: ${{ github.workspace }}/.integrity-tools/testtrust-${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          trap 'rm -rf "$TESTTRUST_DIR"' EXIT
+          mapfile -d '' -t changed_unit_tests < "$RUNNER_TEMP/testtrust-changed-tests"
+          if ((${#changed_unit_tests[@]} != TESTTRUST_EXPECTED_FILES)); then
+            echo '::error::Changed test list does not match its recorded file count'
+            exit 1
+          fi
+          (
+            cd "$TESTTRUST_DIR"
+            npm ci --ignore-scripts
+            npm run build
+          )
+          report_path="$RUNNER_TEMP/testtrust-report.json"
+          stderr_path="$RUNNER_TEMP/testtrust-stderr.log"
+          set +e
+          node "$TESTTRUST_DIR/bin/testtrust.mjs" \
+            --base "$TESTTRUST_BASE_REF" \
+            --format json \
+            --fail-under 60 \
+            "${changed_unit_tests[@]}" > "$report_path" 2> "$stderr_path"
+          cli_status=$?
+          set -e
+          cat "$stderr_path" >&2
+          if ((cli_status != 0)); then
+            echo "::error::TestTrust CLI failed with exit code $cli_status"
+            exit "$cli_status"
+          fi
+          node scripts/validate-testtrust-report.mjs \
+            "$report_path" \
+            "$TESTTRUST_BASE_REF" \
+            "${#changed_unit_tests[@]}" \
+            "$cli_status" \
+            60
+          rm -rf "$TESTTRUST_DIR"
+      - name: Check merge evidence without rerunning Vitest
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        uses: axigatelabs/merge-evidence-gate@bee226c890ee0115ab8222c2f1c0262c176df8c2 # v0.11.0
+        with:
+          agents-only: 'false'
+          fail-on: fail
+          evidence: report
+          report-path: .ci-reports/vitest.json
+          report-format: vitest
+          report-command: npm test -- --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
+          comment: 'true'
+          upload-receipt: 'true'
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: failure()
         with:
           name: synthetic-test-failure-${{ github.sha }}
-          path: test-results/
+          path: |
+            .ci-reports/
+            test-results/
           if-no-files-found: ignore
           retention-days: 3
 
