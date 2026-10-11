@@ -71,6 +71,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           EVENT_BEFORE: ${{ github.event.before }}
           BASE_REF: ${{ github.base_ref }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
         run: |
           set -euo pipefail
           is_test_path() {
@@ -82,12 +83,28 @@ jobs:
           }
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
             base_ref="origin/$BASE_REF"
-          elif [[ -n "${EVENT_BEFORE:-}" && ! "$EVENT_BEFORE" =~ ^0+$ ]]; then
-            base_ref="$EVENT_BEFORE"
           else
-            base_ref="HEAD^"
+            base_ref=""
+            if [[ -n "${EVENT_BEFORE:-}" && ! "$EVENT_BEFORE" =~ ^0+$ ]]; then
+              if git cat-file -e "$EVENT_BEFORE^{commit}" 2>/dev/null; then
+                base_ref="$EVENT_BEFORE"
+              else
+                echo "::notice::Push 'before' SHA $EVENT_BEFORE is unreachable (force-push or rebase); using the default-branch merge-base."
+              fi
+            fi
+            if [[ -z "$base_ref" ]]; then
+              base_ref="$(git merge-base "origin/${DEFAULT_BRANCH:-main}" HEAD 2>/dev/null || true)"
+            fi
+            if [[ -z "$base_ref" || "$base_ref" == "$(git rev-parse HEAD)" ]]; then
+              echo '::notice::No divergent merge-base with the default branch; diffing against the empty tree so every test file is scanned.'
+              base_ref="$(git hash-object -t tree /dev/null)"
+            fi
           fi
-          git diff --name-status -z --find-renames "$base_ref...HEAD" > "$RUNNER_TEMP/testtrust-changes"
+          if ! git cat-file -e "$base_ref" 2>/dev/null; then
+            echo "::error::Unable to resolve diff base '$base_ref' for changed-test detection"
+            exit 1
+          fi
+          git diff --name-status -z --find-renames "$base_ref" HEAD > "$RUNNER_TEMP/testtrust-changes"
           mapfile -d '' -t change_records < "$RUNNER_TEMP/testtrust-changes"
           changed_unit_tests=()
           deleted_test_paths=()
