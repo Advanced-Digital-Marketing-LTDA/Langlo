@@ -1,0 +1,8 @@
+version: 1
+
+# Verification-layer edits (workflows, AGENTS.md, coverage configs,
+# conftest.py, suppression tokens) flag the receipt for human review instead
+# of failing the job; .github/CODEOWNERS owns this file and those paths, so
+# the flag cannot be self-lowered without code-owner review.
+severity:
+  C4: needs-human
