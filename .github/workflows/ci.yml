@@ -79,34 +79,23 @@ jobs:
               [[ "$1" =~ ^(src|tests)/(.*/)?__tests?__/.*\.[cm]?[jt]sx?$ ]]
           }
           is_testtrust_path() {
-<<<<<<< /var/home/user/Documents/Langlo/.github/workflows/ci.yml
-            [[ "$1" != tests/e2e/* && "$1" =~ ^(src|tests)/.*\.test\.[cm]?[jt]sx?$ ]]
-=======
             [[ "$1" != tests/e2e/* && "$1" =~ ^(src|tests)/.*\.test\.ts$ ]]
           }
           is_uncollected_test_path() {
             [[ "$1" =~ ^(src|tests)/.*\.(test|spec)\.[cm]?[jt]sx?$ ]] &&
               [[ "$1" != tests/e2e/* ]] &&
               ! is_testtrust_path "$1"
->>>>>>> /home/user/.local/share/distrobox-homes/devin-f44/.windsurf/worktrees/Langlo/Langlo-brass-turing/.github/workflows/ci.yml
           }
           if [[ "$EVENT_NAME" == "pull_request" ]]; then
             base_ref="origin/$BASE_REF"
           else
             base_ref=""
             if [[ -n "${EVENT_BEFORE:-}" && ! "$EVENT_BEFORE" =~ ^0+$ ]]; then
-<<<<<<< /var/home/user/Documents/Langlo/.github/workflows/ci.yml
-              if git cat-file -e "$EVENT_BEFORE^{commit}" 2>/dev/null; then
-                base_ref="$EVENT_BEFORE"
-              else
-                echo "::notice::Push 'before' SHA $EVENT_BEFORE is unreachable (force-push or rebase); using the default-branch merge-base."
-=======
               if git cat-file -e "$EVENT_BEFORE^{commit}" 2>/dev/null &&
                 git merge-base --is-ancestor "$EVENT_BEFORE" HEAD; then
                 base_ref="$EVENT_BEFORE"
               else
                 echo "::notice::Push 'before' SHA $EVENT_BEFORE is unreachable or not an ancestor of HEAD (force-push or rebase); using the default-branch merge-base."
->>>>>>> /home/user/.local/share/distrobox-homes/devin-f44/.windsurf/worktrees/Langlo/Langlo-brass-turing/.github/workflows/ci.yml
               fi
             fi
             if [[ -z "$base_ref" ]]; then
@@ -125,10 +114,7 @@ jobs:
           mapfile -d '' -t change_records < "$RUNNER_TEMP/testtrust-changes"
           changed_unit_tests=()
           deleted_test_paths=()
-<<<<<<< /var/home/user/Documents/Langlo/.github/workflows/ci.yml
-=======
           uncollected_test_paths=()
->>>>>>> /home/user/.local/share/distrobox-homes/devin-f44/.windsurf/worktrees/Langlo/Langlo-brass-turing/.github/workflows/ci.yml
           renamed_test_out_of_scope_count=0
           record_index=0
           while ((record_index < ${#change_records[@]})); do
@@ -146,12 +132,9 @@ jobs:
                 if is_testtrust_path "$new_path"; then
                   changed_unit_tests+=("$new_path")
                 fi
-<<<<<<< /var/home/user/Documents/Langlo/.github/workflows/ci.yml
-=======
                 if is_uncollected_test_path "$new_path"; then
                   uncollected_test_paths+=("$new_path")
                 fi
->>>>>>> /home/user/.local/share/distrobox-homes/devin-f44/.windsurf/worktrees/Langlo/Langlo-brass-turing/.github/workflows/ci.yml
                 if [[ "$status" == R* ]] && is_test_path "$old_path" && ! is_test_path "$new_path"; then
                   ((renamed_test_out_of_scope_count += 1))
                 fi
@@ -169,12 +152,9 @@ jobs:
                 if is_testtrust_path "$path"; then
                   changed_unit_tests+=("$path")
                 fi
-<<<<<<< /var/home/user/Documents/Langlo/.github/workflows/ci.yml
-=======
                 if is_uncollected_test_path "$path"; then
                   uncollected_test_paths+=("$path")
                 fi
->>>>>>> /home/user/.local/share/distrobox-homes/devin-f44/.windsurf/worktrees/Langlo/Langlo-brass-turing/.github/workflows/ci.yml
                 ;;
             esac
           done
@@ -193,13 +173,10 @@ jobs:
             echo "::error::Detected $renamed_test_out_of_scope_count test file(s) renamed outside a recognized test path. Keep tests in recognized test paths or retain replacement tests so they remain collected."
             exit 1
           fi
-<<<<<<< /var/home/user/Documents/Langlo/.github/workflows/ci.yml
-=======
           if ((${#uncollected_test_paths[@]} > 0)); then
             printf '::error file=%s::Test-named file is not collected by Vitest (src/tests *.test.ts outside tests/e2e) or Playwright (tests/e2e). Move or rename it into a collected pattern, or remove it.\n' "${uncollected_test_paths[@]}"
             exit 1
           fi
->>>>>>> /home/user/.local/share/distrobox-homes/devin-f44/.windsurf/worktrees/Langlo/Langlo-brass-turing/.github/workflows/ci.yml
           if ((${#changed_unit_tests[@]} == 0)); then
             echo 'has_tests=false' >> "$GITHUB_OUTPUT"
             if ((${#deleted_test_paths[@]} > 0)); then

@@ -109,8 +109,6 @@ Latest heads: `8046d4d` (SonarCloud green, Codacy 24 residual findings),
 - Codacy fs-sink findings and the Lizard complexity/length minors remain with
   the maintainer for acceptance; the Merge-Evidence Gate C4 flags stay red on
   this PR by design and require maintainer resolution.
-<<<<<<< /var/home/user/Documents/Langlo/docs/evidence/PR10-triage.md
-=======
 
 ## Codex P2 round — 2026-10-11 (head `2f7fa37`)
 
@@ -165,4 +163,3 @@ out-of-scope error, deletion recording for Overlock).
 - Merge remains `BLOCKED` on human ruleset requirements (approving review,
   code-owner review, approval by a non-pusher): the sole code owner is the PR
   author, so a second reviewer or ruleset/admin action is required.
->>>>>>> /home/user/.local/share/distrobox-homes/devin-f44/.windsurf/worktrees/Langlo/Langlo-brass-turing/docs/evidence/PR10-triage.md
