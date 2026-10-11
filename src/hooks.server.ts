@@ -70,6 +70,35 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
     const authResponse = await auth.handler(event.request);
     const output = new Response(authResponse.body, authResponse);
+    if (
+      path.startsWith('/api/auth/reset-password/') &&
+      output.status >= 300 &&
+      output.status < 400
+    ) {
+      // The email link must carry the token once, but it must not persist in
+      // the /reset page URL (browser history, referers, re-navigation). Hand
+      // it to the page through a short-lived HttpOnly cookie instead.
+      try {
+        const target = new URL(
+          output.headers.get('location') ?? '',
+          event.url.origin
+        );
+        const token = target.searchParams.get('token');
+        if (token && target.pathname === '/reset') {
+          target.searchParams.delete('token');
+          output.headers.set('location', `${target.pathname}${target.search}`);
+          const secure = event.locals.config?.origin.startsWith('https:')
+            ? '; Secure'
+            : '';
+          output.headers.append(
+            'set-cookie',
+            `langlo_reset_token=${token}; HttpOnly; SameSite=Lax; Path=/reset; Max-Age=1800${secure}`
+          );
+        }
+      } catch {
+        /* leave the framework redirect untouched */
+      }
+    }
     for (const [key, value] of Object.entries(headers))
       output.headers.set(key, value);
     return output;

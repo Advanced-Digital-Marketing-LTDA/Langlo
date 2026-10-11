@@ -5,8 +5,8 @@ import { authFormRequest } from '../../lib/server/auth-request';
 
 const invalid = 'This reset link is invalid or has expired. Request a new one.';
 
-export const load: PageServerLoad = ({ url }) => ({
-  token: url.searchParams.get('token') ?? ''
+export const load: PageServerLoad = ({ cookies }) => ({
+  token: cookies.get('langlo_reset_token') ?? ''
 });
 
 export const actions: Actions = {

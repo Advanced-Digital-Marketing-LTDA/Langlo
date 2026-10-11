@@ -208,9 +208,21 @@ test('recovery mails a link that resets the password once', async () => {
   const validate = await ctx.get(link, { maxRedirects: 0 });
   expect(validate.status()).toBe(302);
   const location = validate.headers()['location'];
-  expect(location).toContain('/reset?token=');
-  const token = new URL(location, base).searchParams.get('token') ?? '';
+  // The token leaves the URL at the redirect: the page carries it through a
+  // short-lived HttpOnly cookie so it cannot linger in history or referers.
+  expect(location).toBe('/reset');
+  const setCookie = validate
+    .headersArray()
+    .filter((header) => header.name.toLowerCase() === 'set-cookie')
+    .map((header) => header.value)
+    .join('; ');
+  expect(setCookie).toContain('langlo_reset_token=');
+  expect(setCookie).toContain('HttpOnly');
+  const token = new URL(link).pathname.split('/').pop() ?? '';
   expect(token.length).toBeGreaterThan(10);
+  const page = await ctx.get('/reset');
+  expect(page.status()).toBe(200);
+  expect(await page.text()).toContain(`value="${token}"`);
 
   const reset = await ctx.post(
     '/reset',
