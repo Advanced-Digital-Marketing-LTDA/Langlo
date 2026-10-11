@@ -232,10 +232,9 @@ const classifyRename = (
  * @param {string[]} buckets.uncollectedTestPaths
  * @param {{ count: number }} buckets.renamed
  */
-const classifyEntry = (
-  entry,
-  { changedUnitTests, deletedTestPaths, uncollectedTestPaths, renamed }
-) => {
+const classifyEntry = (entry, buckets) => {
+  const { changedUnitTests, deletedTestPaths, uncollectedTestPaths, renamed } =
+    buckets;
   if (entry.newPath !== undefined) {
     classifyRename(entry, { changedUnitTests, uncollectedTestPaths, renamed });
   } else if (entry.status === 'D') {
@@ -374,6 +373,39 @@ const appendOutputs = (outputFile, lines, cwd) => {
 };
 
 /**
+ * @param {{ renamedTestOutOfScope: number, uncollectedTestPaths: string[], changedUnitTests: string[], deletedTestPaths: string[] }} result
+ * @param {string[]} outputLines
+ * @returns {number}
+ */
+function reportGate(result, outputLines) {
+  if (result.renamedTestOutOfScope > 0) {
+    console.log(
+      `::error::Detected ${result.renamedTestOutOfScope} test file(s) renamed outside a recognized test path. Keep tests in recognized test paths or retain replacement tests so they remain collected.`
+    );
+    return 1;
+  }
+  if (result.uncollectedTestPaths.length > 0) {
+    for (const path of result.uncollectedTestPaths) {
+      console.log(
+        `::error file=${path}::Test-named file is not collected by Vitest (src/tests *.test.ts outside tests/e2e) or Playwright (tests/e2e). Move or rename it into a collected pattern, or remove it.`
+      );
+    }
+    return 1;
+  }
+  if (result.changedUnitTests.length === 0) {
+    outputLines.push('has_tests=false');
+    console.log(
+      result.deletedTestPaths.length > 0
+        ? 'Only deleted tests changed; Overlock handles removals and TestTrust will be skipped.'
+        : 'No changed Jest/Vitest-style unit tests; TestTrust will be skipped.'
+    );
+  } else {
+    outputLines.push('has_tests=true');
+  }
+  return 0;
+}
+
+/**
  * @param {NodeJS.ProcessEnv} env
  * @param {string} [cwd]
  * @returns {number} process exit code
@@ -415,39 +447,6 @@ export function main(env = process.env, cwd = process.cwd()) {
   const exitCode = reportGate(result, outputLines);
   appendOutputs(env.GITHUB_OUTPUT, outputLines, cwd);
   return exitCode;
-}
-
-/**
- * @param {{ renamedTestOutOfScope: number, uncollectedTestPaths: string[], changedUnitTests: string[], deletedTestPaths: string[] }} result
- * @param {string[]} outputLines
- * @returns {number}
- */
-function reportGate(result, outputLines) {
-  if (result.renamedTestOutOfScope > 0) {
-    console.log(
-      `::error::Detected ${result.renamedTestOutOfScope} test file(s) renamed outside a recognized test path. Keep tests in recognized test paths or retain replacement tests so they remain collected.`
-    );
-    return 1;
-  }
-  if (result.uncollectedTestPaths.length > 0) {
-    for (const path of result.uncollectedTestPaths) {
-      console.log(
-        `::error file=${path}::Test-named file is not collected by Vitest (src/tests *.test.ts outside tests/e2e) or Playwright (tests/e2e). Move or rename it into a collected pattern, or remove it.`
-      );
-    }
-    return 1;
-  }
-  if (result.changedUnitTests.length === 0) {
-    outputLines.push('has_tests=false');
-    console.log(
-      result.deletedTestPaths.length > 0
-        ? 'Only deleted tests changed; Overlock handles removals and TestTrust will be skipped.'
-        : 'No changed Jest/Vitest-style unit tests; TestTrust will be skipped.'
-    );
-  } else {
-    outputLines.push('has_tests=true');
-  }
-  return 0;
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
