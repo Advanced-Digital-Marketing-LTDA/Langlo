@@ -36,7 +36,12 @@ was intentionally left unchanged in this round; the base-ref hardening
   documented contract that test failures remain valid evidence.
 - SonarCloud S8707 (argv path → `readFileSync`) — fixed by
   `scripts/report-path.mjs`, which canonicalizes the target and requires it
-  under the working directory, `os.tmpdir()`, or `RUNNER_TEMP`/`TMPDIR`.
+  under the working directory or `RUNNER_TEMP`/`TMPDIR`.
+- SonarCloud S5443 (publicly writable temp dirs as roots) — the `os.tmpdir()`
+  fallback root was removed; only per-job CI temp roots exposed through
+  `RUNNER_TEMP`/`TMPDIR` remain, flagged lines carry `// NOSONAR`
+  justifications, and every target is canonicalized and contents strictly
+  validated after read.
 - SonarCloud S8689 (error message → log) — filesystem details are wrapped in
   fixed messages before reaching the CLI error path.
 - Codacy/SonarCloud complexity and style findings — fixed by splitting both
@@ -75,18 +80,32 @@ test), below the `fail-on: high` threshold.
 
 CodeAnt went green (0 antipatterns, 0 complex functions). SonarCloud narrowed
 to a single S8707 on `readFileSync` inside `report-path.mjs`; the containment
-helper is the mitigation, so the line carries a `// NOSONAR jssecurity:S8707`
-justification. Codacy's remaining security findings are the three intrinsic fs
+helper is the mitigation, so the line carries a `// NOSONAR` justification.
+Codacy's remaining security findings are the three intrinsic fs
 sinks in the path helper itself (`realpathSync` ×2, `readFileSync` ×1); a path
 validator cannot resolve paths without them, so they need maintainer
 acceptance in Codacy. `process.env[name]` computed access was replaced with
 explicit variables, and helpers were reordered ahead of their callers to clear
 the remaining warning-class findings.
 
+A stray `eslint-disable-next-line security/detect-non-literal-fs-filename`
+broke `npm run lint` (the repo's ESLint flat config does not load the security
+plugin); it was removed in `fada48c`. After `69298b2`, SonarCloud reported a
+new S5443 on the `os.tmpdir()` fallback root; `8046d4d` removed `tmpdir()`
+entirely and moved the `// NOSONAR` markers onto the flagged lines (env-var
+temp roots and the post-containment `readFileSync`). SonarCloud Code Analysis
+then passed with zero open issues on the PR. A final Codacy round still
+flagged `process` as undefined in `tests/report-path.test.ts` under oxlint,
+fixed in `7a292dc` with the same `node:process` explicit import used by the
+validators.
+
+Latest heads: `8046d4d` (SonarCloud green, Codacy 24 residual findings),
+`7a292dc` (Codacy `no-undef` fix; scan results pending at doc time).
+
 ## Pending
 
 - `ci.yml` base-ref guard + merge-base fallback — landed via maintainer commit
   `41f8b7d`.
-- Codacy fs-sink findings and SonarCloud/Codacy gate acceptance remain with
-  the maintainer; the Merge-Evidence Gate C4 flags stay red on this PR by
-  design and require maintainer resolution.
+- Codacy fs-sink findings and the Lizard complexity/length minors remain with
+  the maintainer for acceptance; the Merge-Evidence Gate C4 flags stay red on
+  this PR by design and require maintainer resolution.
