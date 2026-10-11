@@ -20,7 +20,6 @@ function allowedRoots() {
   const canonical = [];
   for (const root of roots) {
     try {
-      // eslint-disable-next-line security/detect-non-literal-fs-filename
       canonical.push(realpathSync(root));
     } catch {
       // Unreadable roots are not valid report locations.
