@@ -273,3 +273,27 @@ test('sign-in endpoint enforces the configured rate limit over HTTP', async () =
     statuses.filter((status) => status === 429).length
   ).toBeGreaterThanOrEqual(2);
 });
+
+test('login form action applies the same rate limit as the endpoint', async () => {
+  const client = createClient({ url: `file://${dbFile}` });
+  try {
+    await client.execute('DELETE FROM rate_limits');
+  } finally {
+    client.close();
+  }
+  const statuses: number[] = [];
+  for (let attempt = 0; attempt < 7; attempt += 1) {
+    statuses.push(
+      (
+        await ctx.post('/login', {
+          form: { email: 'e2e@example.test', password: 'e2e-rotated-0000' },
+          headers: { origin: base },
+          maxRedirects: 0
+        })
+      ).status()
+    );
+  }
+  expect(
+    statuses.filter((status) => status === 429).length
+  ).toBeGreaterThanOrEqual(2);
+});

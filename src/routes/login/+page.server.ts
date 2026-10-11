@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { resolveAuth } from '../../lib/server/auth-runtime';
 import { applyAuthCookies } from '../../lib/server/auth-cookies';
+import { authFormRequest } from '../../lib/server/auth-request';
 
 export const load: PageServerLoad = ({ locals }) => {
   if (locals.user) redirect(303, '/app');
@@ -19,12 +20,8 @@ export const actions: Actions = {
     if (!auth) {
       return fail(503, { email, message: 'Accounts are not ready yet.' });
     }
-    const response = await auth.api
-      .signInEmail({
-        body: { email, password },
-        headers: event.request.headers,
-        asResponse: true
-      })
+    const response = await auth
+      .handler(authFormRequest(event, 'sign-in/email', { email, password }))
       .catch(() => null);
     if (!response) {
       return fail(503, { email, message: 'Accounts are not ready yet.' });

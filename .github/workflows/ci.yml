@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 concurrency:
   group: quality-${{ github.workflow }}-${{ github.ref }}
@@ -237,8 +236,36 @@ jobs:
             "$cli_status" \
             60
           rm -rf "$TESTTRUST_DIR"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: failure()
+        with:
+          name: synthetic-test-failure-${{ github.sha }}
+          path: |
+            .ci-reports/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 3
+
+  merge-evidence-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: foundation
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.19.0
+          cache: npm
+      - run: npm install --global --ignore-scripts npm@11.9.0
+      - run: npm ci --ignore-scripts
       - name: Check merge evidence without rerunning Vitest
-        if: ${{ always() && github.event_name == 'pull_request' }}
         uses: axigatelabs/merge-evidence-gate@bee226c890ee0115ab8222c2f1c0262c176df8c2 # v0.11.0
         with:
           agents-only: 'false'
@@ -249,15 +276,6 @@ jobs:
           report-command: npm test -- --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
           comment: 'true'
           upload-receipt: 'true'
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        if: failure()
-        with:
-          name: synthetic-test-failure-${{ github.sha }}
-          path: |
-            .ci-reports/
-            test-results/
-          if-no-files-found: ignore
-          retention-days: 3
 
 # No production secrets, privileged PR triggers, publishing, deployment or migrations.
 # Branch protection and an actual remote run remain separately verified operator gates.
