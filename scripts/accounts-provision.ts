@@ -47,17 +47,12 @@ const readPassword = async (): Promise<string> => {
     write: (_chunk, _encoding, callback) => callback()
   });
   const rl = createInterface({ input, output: sink, terminal: true });
-  let password = '';
   try {
-    for await (const line of rl) {
-      password = line;
-      break;
-    }
+    return (await rl.question('')).trim();
   } finally {
     rl.close();
     output.write('\n');
   }
-  return password.trim();
 };
 
 const main = async () => {
