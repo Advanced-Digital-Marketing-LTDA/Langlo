@@ -28,3 +28,7 @@ Open-source alternatives were researched. No migration to an alternative and no 
 ## Anki profile setup
 
 Retain a later per-learner way to connect to Anki profiles. The application must not create profiles. Do not connect profiles during this scope review or make Anki setup a blocker. Profile identity checks and delivery validation remain implementation-phase gates.
+
+## T010a authentication contract — 2026-10-10
+
+Owner approved early execution of T010a (recorded schedule: October 13) and selected **Better Auth 1.7.x** (Drizzle adapter on the existing libSQL client, Nodemailer behind a `Mailer` interface for the Proton SMTP path) over a hand-rolled `node:crypto` contract. The full contract, rejected alternatives, and T010b/T010c boundaries are recorded in [auth.md](auth.md); evidence in [evidence/T010.md](evidence/T010.md). This records the selection only — no implementation, provisioning, live email, or release is authorized by it.

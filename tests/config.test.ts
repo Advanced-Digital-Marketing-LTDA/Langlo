@@ -60,7 +60,8 @@ describe('runtime configuration', () => {
     expect(
       parseRuntimeConfig({
         DATA_ENABLED: 'true',
-        DATABASE_URL: 'file:./.fixtures/local.db'
+        DATABASE_URL: 'file:./.fixtures/local.db',
+        BETTER_AUTH_SECRET: 'a'.repeat(40)
       }).dataEnabled
     ).toBe(true);
   });
@@ -69,7 +70,8 @@ describe('runtime configuration', () => {
       parseRuntimeConfig({
         DATA_ENABLED: 'true',
         DATABASE_URL: 'file:./.fixtures/local.db',
-        TURSO_AUTH_TOKEN: 'synthetic-unused-token'
+        TURSO_AUTH_TOKEN: 'synthetic-unused-token',
+        BETTER_AUTH_SECRET: 'a'.repeat(40)
       }).databaseToken
     ).toBeUndefined();
   });
@@ -80,7 +82,8 @@ describe('runtime configuration', () => {
         APP_ORIGIN: 'https://langlo.app',
         DATA_ENABLED: 'true',
         DATABASE_URL: 'libsql://dedicated.example',
-        TURSO_AUTH_TOKEN: '  synthetic-remote-token\n'
+        TURSO_AUTH_TOKEN: '  synthetic-remote-token\n',
+        BETTER_AUTH_SECRET: 'b'.repeat(40)
       }).databaseToken
     ).toBe('synthetic-remote-token');
   });

@@ -3,7 +3,7 @@ const uuidPattern =
 
 /** Project only operation, error category and a valid request UUID; never copy exception payloads. */
 export function safeDiagnostic(
-  operation: 'request' | 'configuration',
+  operation: 'request' | 'configuration' | 'auth',
   error: unknown,
   correlationId: string
 ) {
