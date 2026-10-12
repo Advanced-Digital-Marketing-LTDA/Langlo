@@ -1,6 +1,6 @@
 # Docker Compose deployment
 
-The repository builds the adapter-node app into a non-root Node 24.19.0 image. `compose.yaml` defines one `web` service and exposes container port 3000 to Coolify's proxy without publishing a host port. Turso and Proton SMTP remain external services. The image and startup command do not run migrations.
+The repository builds the adapter-node app into a non-root Node 24.19.0 image. The image health check calls `GET /health/live`, and Compose inherits it. `compose.yaml` defines one `web` service and exposes container port 3000 to Coolify's proxy without publishing a host port. Turso and Proton SMTP remain external services. The image and startup command do not run migrations.
 
 ## Coolify settings
 
