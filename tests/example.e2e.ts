@@ -3,5 +3,5 @@ import { expect } from 'e2e';
 
 test('app opens', async ({ app, browser }) => {
   await app.open('/');
-  await expect(browser.locator('body')).toBeVisible();
+  await expect(browser.locator('h1')).toHaveText('Language Grammar Coach');
 });

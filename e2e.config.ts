@@ -1,6 +1,11 @@
 import type { E2EConfig } from 'e2e';
 import { web } from '@e2e-dev/web';
 import { chatgpt } from 'e2e/oauth/chatgpt';
+import {
+  e2eAuthOrigin,
+  e2eAuthPort,
+  mailCaptureDirectory
+} from './tests/fixtures/e2e-auth-mail.ts';
 
 export default {
   agents: {
@@ -13,15 +18,16 @@ export default {
     {
       engine: web(),
       app: {
-        url: 'http://localhost:4173',
+        url: e2eAuthOrigin,
         command: {
           executable: 'node',
           args: ['tests/fixtures/e2e-auth-server.ts'],
           env: {
             HOST: '127.0.0.1',
-            PORT: '4173',
+            PORT: e2eAuthPort,
             APP_ENV: 'test',
-            APP_ORIGIN: 'http://localhost:4173'
+            APP_ORIGIN: e2eAuthOrigin,
+            MAIL_CAPTURE_DIR: mailCaptureDirectory
           },
           log: '.e2e/logs/app.log'
         }

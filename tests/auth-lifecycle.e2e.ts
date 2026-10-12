@@ -1,5 +1,76 @@
-import { test } from '@e2e-dev/web';
-import { credentials, expect } from 'e2e';
+import { readdir, readFile, watch } from 'node:fs/promises';
+import { join } from 'node:path';
+import { test, type Browser } from '@e2e-dev/web';
+import { credentials, expect, type Agent, type App, type Screen } from 'e2e';
+import { mailCaptureDirectory } from './fixtures/e2e-auth-mail.ts';
+
+type AuthUi = { app: App; agent: Agent; browser: Browser; screen: Screen };
+type Learner = ReturnType<typeof credentials.user>;
+
+async function mailFiles(): Promise<string[]> {
+  return (await readdir(mailCaptureDirectory)).filter((name) =>
+    name.endsWith('.json')
+  );
+}
+
+async function capturedMailFile(): Promise<string> {
+  const watcher = watch(mailCaptureDirectory, {
+    signal: AbortSignal.timeout(5000)
+  });
+  try {
+    while (true) {
+      const [file] = await mailFiles();
+      if (file) return file;
+      await watcher.next();
+    }
+  } finally {
+    await watcher.return?.();
+  }
+}
+
+async function capturedResetMail(): Promise<{ to: string; text: string }> {
+  return JSON.parse(
+    await readFile(join(mailCaptureDirectory, await capturedMailFile()), 'utf8')
+  ) as {
+    to: string;
+    text: string;
+  };
+}
+
+async function signIn(ui: AuthUi, learner: Learner): Promise<void> {
+  await ui.app.open('/login');
+  await expect(ui.screen.getByRole('heading', 'Sign in')).toBeVisible();
+  await expect(ui.browser.locator('body')).toContainText(
+    'Accounts are provisioned by the operator.'
+  );
+  await expect(ui.screen.getByRole('link', 'Sign up')).not.toBeVisible();
+  await ui.agent.act('Sign in with the provided learner credentials.', {
+    params: { username: learner.username, password: learner.password }
+  });
+  await expect(ui.browser).toHaveURL('/app');
+  await expect(ui.browser.locator('body')).toContainText('E2E Learner');
+}
+
+async function signOut(ui: Pick<AuthUi, 'browser' | 'screen'>): Promise<void> {
+  await ui.screen.getByRole('button', 'Sign out').click();
+  await expect(ui.browser).toHaveURL('/login');
+}
+
+async function requestRecovery(
+  ui: Pick<AuthUi, 'app' | 'agent' | 'screen'>,
+  email: string
+): Promise<void> {
+  await ui.app.open('/recover');
+  await ui.agent.act(
+    'Request a password reset for the provided learner email.',
+    {
+      params: { email }
+    }
+  );
+  await expect(ui.screen.getByRole('status')).toContainText(
+    'If this email exists in our system, check your email for the reset link.'
+  );
+}
 
 test('private learner can sign in, sign out, and request account recovery', async ({
   app,
@@ -8,70 +79,10 @@ test('private learner can sign in, sign out, and request account recovery', asyn
   screen
 }) => {
   const learner = credentials.user('learner');
-  await app.open('/login');
-  await expect(screen.getByRole('heading', 'Sign in')).toBeVisible();
-  await expect(browser.locator('body')).toContainText(
-    'Accounts are provisioned by the operator.'
-  );
-  await expect(screen.getByRole('link', 'Sign up')).not.toBeVisible();
-  await agent.act(
-    'Enter the provided learner credentials and leave the form ready to submit.',
-    {
-      params: { username: learner.username, password: learner.password }
-    }
-  );
-  // The e2e proxy omits Origin on form POSTs; keep the app CSRF check intact
-  // and submit through Better Auth's JSON endpoint in this browser context.
-  const signInStatus = await browser.evaluate(async () => {
-    // eslint-disable-next-line no-restricted-globals -- This callback runs in the browser page.
-    const form = globalThis['document'].querySelector('form');
-    if (!form) return 0;
-    const data = new FormData(form);
-    const response = await fetch('/api/auth/sign-in/email', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        email: data.get('email'),
-        password: data.get('password')
-      })
-    });
-    return response.status;
-  });
-  expect(signInStatus).toBe(200);
-  expect((await browser.cookies()).map(({ name }) => name)).toContain(
-    'better-auth.session_token'
-  );
-  await app.open('/app');
-  await expect(browser).toHaveURL('/app');
-  await expect(browser.locator('body')).toContainText('E2E Learner');
-
-  const signOutStatus = await browser.evaluate(async () => {
-    const response = await fetch('/api/auth/sign-out', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: '{}'
-    });
-    return response.status;
-  });
-  expect(signOutStatus).toBe(200);
-  await app.open('/app');
-  await expect(browser).toHaveURL('/login');
-
-  await app.open('/recover');
-  await agent.act('Enter the provided learner email in the recovery form.', {
-    params: { email: learner.username }
-  });
-  const recoveryStatus = await browser.evaluate(async () => {
-    // eslint-disable-next-line no-restricted-globals -- This callback runs in the browser page.
-    const form = globalThis['document'].querySelector('form');
-    if (!form) return 0;
-    const data = new FormData(form);
-    const response = await fetch('/api/auth/request-password-reset', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ email: data.get('email'), redirectTo: '/reset' })
-    });
-    return response.status;
-  });
-  expect(recoveryStatus).toBe(200);
+  await signIn({ app, agent, browser, screen }, learner);
+  await signOut({ browser, screen });
+  await requestRecovery({ app, agent, screen }, learner.username);
+  const message = await capturedResetMail();
+  expect(message.to).toBe(learner.username);
+  expect(message.text).toMatch(/\/api\/auth\/reset-password\//u);
 });

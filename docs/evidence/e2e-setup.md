@@ -8,12 +8,15 @@ Date: 2026-10-12
   registrations, and the Vercel AI Gateway defaults.
 - Selected ChatGPT and configured `chatgpt('gpt-6-luna')` through
   `e2e/oauth/chatgpt`; `e2e models` listed that model after login.
-- The target starts the built Node server at `127.0.0.1:4173` with
-  `APP_ENV=test`. The flow uses the `/prototype` screens and their synthetic
-  in-memory data; it does not create a database or contact a product provider.
-- The generated smoke test is `tests/example.e2e.ts`. The learner flow is
-  `tests/prototype-practice.e2e.ts`. Run the latter with
-  `npm run test:e2e:agent -- tests/prototype-practice.e2e.ts`.
+- The target starts the built Node server on `127.0.0.1:4175` behind a local
+  test proxy at `localhost:4174`, with `APP_ENV=test`. The proxy restores a
+  same-origin header only for sandboxed browser form posts whose Origin is
+  opaque (`null`); application CSRF checks remain enabled.
+- `tests/auth-lifecycle.e2e.ts` provisions a synthetic learner in a disposable
+  SQLite fixture, submits the actual login, sign-out, and recovery forms, and
+  verifies the captured reset email. `tests/prototype-practice.e2e.ts` completes
+  the recommended subject-pronoun lesson. The smoke test is
+  `tests/example.e2e.ts`.
 - `playwright.config.ts` now starts `node build` directly so its `PORT` and
   `HOST` test settings reach the built Node server.
 - npm 11.9.0 was invoked through `pnpm dlx npm@11.9.0` because the container's
@@ -29,18 +32,20 @@ Date: 2026-10-12
 
 ## Local checks
 
-| Check                   | Result                                                             |
-| ----------------------- | ------------------------------------------------------------------ |
-| `npm ci`                | Passed; 280 packages installed, zero reported vulnerabilities      |
-| `npm run check`         | Passed; 0 errors and 0 warnings                                    |
-| `npm run lint`          | Passed                                                             |
-| `npm run format:check`  | Passed                                                             |
-| `npm run build`         | Passed                                                             |
-| `npm test`              | Passed with subprocess permission; 282 tests passed                |
-| `npm run test:property` | Passed; 3 tests passed                                             |
-| e2e smoke test          | Passed; 1 test                                                     |
-| e2e learner flow        | Passed; 2 ChatGPT agent steps, 4 correct answers, results verified |
-| `npm run test:e2e`      | Passed; 56 desktop and mobile tests                                |
+| Check                    | Result                                                             |
+| ------------------------ | ------------------------------------------------------------------ |
+| `npm ci`                 | Passed; 280 packages installed, zero reported vulnerabilities      |
+| `npm run check`          | Passed; 0 errors and 0 warnings                                    |
+| `npm run lint`           | Passed                                                             |
+| `npm run format:check`   | Passed                                                             |
+| `npm run build`          | Passed                                                             |
+| `npm test`               | Passed with subprocess permission; 282 tests passed                |
+| `npm run test:property`  | Passed; 3 tests passed                                             |
+| `npm run test:e2e:agent` | Passed; 3 browser tests                                            |
+| e2e smoke test           | Passed; 1 test                                                     |
+| e2e learner flow         | Passed; 2 ChatGPT agent steps, 4 correct answers, results verified |
+| e2e auth flow            | Passed; form redirects, logout, confirmation, and captured mail    |
+| `npm run test:e2e`       | Passed; 56 desktop and mobile tests                                |
 
 Initial browser runs failed because Chromium libraries were missing. After
 installing the Fedora packages, Chromium exposed an incompatible mounted

@@ -13,11 +13,16 @@ The server ships with `e2e`. `e2e init` offers to register it; by hand:
 claude mcp add e2e -- npx e2e mcp   # Claude Code
 ```
 
-Or declare it in the client's project config (`.mcp.json` for Claude Code,
-`.cursor/mcp.json` for Cursor, `.vscode/mcp.json` for VS Code):
+For Claude Code and Cursor, declare it in the portable project config:
 
 ```json
 { "mcpServers": { "e2e": { "command": "npx", "args": ["e2e", "mcp"] } } }
+```
+
+For VS Code, use `.vscode/mcp.json` with its `servers` format:
+
+```json
+{ "servers": { "e2e": { "type": "stdio", "command": "npx", "args": ["e2e", "mcp"] } } }
 ```
 
 No model is needed: without the optional `ai` package, sessions open and the
