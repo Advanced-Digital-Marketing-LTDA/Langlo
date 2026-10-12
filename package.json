@@ -18,6 +18,7 @@
     "test": "svelte-kit sync && vitest run",
     "test:property": "svelte-kit sync && vitest run .pbt.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:agent": "e2e run",
     "validate:curriculum": "node scripts/curriculum-contract.mjs",
     "build": "vite build",
     "start": "node build",
@@ -47,13 +48,17 @@
     }
   },
   "devDependencies": {
+    "@ai-sdk/openai": "4.0.91",
+    "@e2e-dev/web": "^0.14.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.63.0",
     "@sveltejs/adapter-node": "6.0.0",
     "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "24.19.1",
+    "ai": "^7.0.0",
     "drizzle-kit": "0.31.11",
+    "e2e": "^0.19.0",
     "eslint": "10.12.0",
     "eslint-plugin-svelte": "3.23.0",
     "fast-check": "4.10.2",
@@ -66,6 +71,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.1",
     "vite": "8.3.3",
-    "vitest": "5.0.3"
+    "vitest": "5.0.3",
+    "zod": "^4.1.8"
   }
 }
