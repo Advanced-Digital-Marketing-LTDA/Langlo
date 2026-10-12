@@ -1,0 +1,7 @@
+services:
+  web:
+    environment:
+      APP_ENV: development
+      APP_ORIGIN: http://localhost:3000
+    ports:
+      - "127.0.0.1:3000:3000"
