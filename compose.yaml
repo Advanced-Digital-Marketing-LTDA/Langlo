@@ -1,0 +1,26 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 35s
+    expose:
+      - '3000'
+    environment:
+      HOST: 0.0.0.0
+      PORT: '3000'
+      APP_ENV: ${APP_ENV:-production}
+      APP_ORIGIN: ${APP_ORIGIN:?Set APP_ORIGIN to the public HTTPS origin}
+      DATA_ENABLED: ${DATA_ENABLED:-false}
+      APP_BUILD_SHA: ${APP_BUILD_SHA:-unknown}
+      DATABASE_URL: ${DATABASE_URL:-}
+      TURSO_AUTH_TOKEN: ${TURSO_AUTH_TOKEN:-}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-}
+      MAIL_TRANSPORT: ${MAIL_TRANSPORT:-capture}
+      MAIL_FROM: ${MAIL_FROM:-}
+      PROTON_SMTP_TOKEN: ${PROTON_SMTP_TOKEN:-}
+      SMTP_HOST: ${SMTP_HOST:-smtp.protonmail.ch}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-524288}
