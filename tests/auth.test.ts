@@ -67,13 +67,21 @@ interface Reply {
 function call(
   auth: Auth,
   path: string,
-  init?: { method?: string; body?: unknown; cookie?: string }
+  init?: {
+    method?: string;
+    body?: unknown;
+    cookie?: string;
+    clientAddress?: string;
+  }
 ): Promise<Reply> {
   return auth
     .handler(
       new Request(`${ORIGIN}/api/auth${path}`, {
         method: init?.method ?? 'GET',
         headers: {
+          ...(init?.clientAddress
+            ? { 'x-langlo-client-address': init.clientAddress }
+            : {}),
           ...(init?.body !== undefined
             ? { 'content-type': 'application/json' }
             : {}),
@@ -124,7 +132,7 @@ const resetTokenFromMail = (mailer: CaptureMailer, index = 0): string =>
 const clearRateLimits = (rig: Rig) =>
   rig.client.execute('DELETE FROM rate_limits');
 
-describe('sign-up closure and credential login', () => {
+describe('public sign-up and credential login', () => {
   let fixture: Rig;
   beforeAll(async () => {
     fixture = await rig();
@@ -139,20 +147,60 @@ describe('sign-up closure and credential login', () => {
     await disposeDisposableFixture(fixture.target);
   });
 
-  it('rejects public registration with no account side effects', async () => {
+  it('creates a database account and verified session through public registration', async () => {
     const reply = await call(fixture.auth, '/sign-up/email', {
       method: 'POST',
       body: {
-        email: 'intruder@example.test',
-        password: 'attacker-chosen-1',
-        name: 'Intruder'
+        email: 'new-learner@example.test',
+        password: 'new-learner-password-1',
+        name: 'New Learner'
       }
     });
-    expect(reply.status).toBe(400);
-    const users = await fixture.client.execute(
-      "SELECT id FROM users WHERE email = 'intruder@example.test'"
+    expect(reply.status).toBe(200);
+    const cookie = sessionCookie(reply);
+    expect(cookie).toContain('better-auth.session_token=');
+    const session = await call(fixture.auth, '/get-session', {
+      cookie
+    });
+    expect(session.status).toBe(200);
+    expect((session.json as { user: { email: string } }).user.email).toBe(
+      'new-learner@example.test'
     );
-    expect(users.rows).toEqual([]);
+    const users = await fixture.client.execute(
+      "SELECT id FROM users WHERE email = 'new-learner@example.test'"
+    );
+    expect(users.rows).toHaveLength(1);
+  });
+
+  it('rate-limits public registration by client address', async () => {
+    await clearRateLimits(fixture);
+    const replies = [];
+    for (let index = 0; index < 7; index += 1) {
+      replies.push(
+        await call(fixture.auth, '/sign-up/email', {
+          method: 'POST',
+          clientAddress: '192.0.2.10',
+          body: {
+            email: `rate-limit-${index}@example.test`,
+            password: 'rate-limit-password-1',
+            name: 'Rate Limited'
+          }
+        })
+      );
+    }
+    expect(replies.map((reply) => reply.status)).toEqual([
+      200, 200, 200, 200, 200, 429, 429
+    ]);
+    const otherClient = await call(fixture.auth, '/sign-up/email', {
+      method: 'POST',
+      clientAddress: '192.0.2.11',
+      body: {
+        email: 'another-client@example.test',
+        password: 'rate-limit-password-1',
+        name: 'Another Client'
+      }
+    });
+    expect(otherClient.status).toBe(200);
   });
 
   it('returns the same credential failure for unknown email and wrong password', async () => {
@@ -176,6 +224,7 @@ describe('sign-up closure and credential login', () => {
 
   it('creates a database session with hardened cookie attributes on success', async () => {
     await clearRateLimits(fixture);
+    await fixture.client.execute('DELETE FROM sessions');
     const reply = await signIn(
       fixture.auth,
       'a@example.test',
@@ -424,6 +473,55 @@ describe('recovery lifecycle', () => {
     expect(fixture.mailer.messages[0].to).toBe('a@example.test');
   });
 
+  it('finishes recovery requests while mail delivery remains pending', async () => {
+    const isolated = await rig();
+    let releaseDelivery = () => {};
+    let deliveryStarted = () => {};
+    const blockedDelivery = new Promise<void>((resolve) => {
+      releaseDelivery = resolve;
+    });
+    const started = new Promise<void>((resolve) => {
+      deliveryStarted = resolve;
+    });
+    const mailer = new CaptureMailer();
+    mailer.send = () => {
+      deliveryStarted();
+      return blockedDelivery;
+    };
+    const auth = createAuth(config(isolated.target.databaseUrl), {
+      db: isolated.db,
+      mailer
+    });
+    let response: Promise<Reply> | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await provisionAccount(auth, {
+        email: 'pending@example.test',
+        name: 'Pending Delivery Learner',
+        password: 'pending-delivery-password'
+      });
+      response = call(auth, '/request-password-reset', {
+        method: 'POST',
+        body: { email: 'pending@example.test' }
+      });
+      await started;
+      const result = await Promise.race([
+        response,
+        new Promise<null>((resolve) => {
+          timeout = setTimeout(() => resolve(null), 1000);
+        })
+      ]);
+      expect(result).not.toBeNull();
+      expect(result?.status).toBe(200);
+    } finally {
+      clearTimeout(timeout);
+      releaseDelivery();
+      await response;
+      isolated.close();
+      await disposeDisposableFixture(isolated.target);
+    }
+  });
+
   it('stores the verification identifier hashed, never the raw token', async () => {
     const token = resetTokenFromMail(fixture.mailer);
     expect(token.length).toBeGreaterThan(10);
@@ -603,10 +701,23 @@ describe('rate limiting and logging', () => {
         'proton-token',
         'minted-'
       ];
-      await call(authWithFailingMail, '/request-password-reset', {
-        method: 'POST',
-        body: { email: 'a@example.test' }
-      });
+      const failedKnown = await call(
+        authWithFailingMail,
+        '/request-password-reset',
+        {
+          method: 'POST',
+          body: { email: 'a@example.test' }
+        }
+      );
+      const failedUnknown = await call(
+        authWithFailingMail,
+        '/request-password-reset',
+        {
+          method: 'POST',
+          body: { email: 'unknown@example.test' }
+        }
+      );
+      expect(failedUnknown.status).toBe(failedKnown.status);
       await signIn(fixture.auth, 'a@example.test', 'rate-limit-password-1');
       const minted = await mintResetToken(
         fixture.auth,

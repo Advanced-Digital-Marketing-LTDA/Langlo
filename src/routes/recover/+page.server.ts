@@ -1,28 +1,52 @@
+import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { resolveAuth } from '../../lib/server/auth-runtime';
-import { authFormRequest } from '../../lib/server/auth-request';
+import { safeDiagnostic } from '../../lib/server/diagnostics';
+import { runAuthRequest } from '../../lib/server/auth-operation';
 
 const confirmation =
   'If this email exists in our system, check your email for the reset link.';
+const unavailable = () =>
+  fail(503, {
+    message: 'Password recovery is temporarily unavailable. Try again.'
+  });
 
 export const actions: Actions = {
+  /** Submit enumeration-resistant recovery when data/auth and mail are configured. */
   default: async (event) => {
     const data = await event.request.formData();
     const email = String(data.get('email') ?? '');
-    const auth = event.locals.config
-      ? await resolveAuth(event.locals.config).catch(() => null)
-      : null;
-    if (auth) {
-      // Outcome is never surfaced: the response is identical for known and
-      // unknown addresses, and delivery runs off the response path.
-      await auth
-        .handler(
-          authFormRequest(event, 'request-password-reset', {
-            email,
-            redirectTo: '/reset'
-          })
+    const runtime = event.locals.config;
+    if (!runtime?.auth) {
+      return unavailable();
+    }
+    if (runtime.auth.mailError) {
+      console.warn(
+        JSON.stringify(
+          safeDiagnostic(
+            'auth',
+            runtime.auth.mailError,
+            event.locals.correlationId
+          )
         )
-        .catch(() => null);
+      );
+      return unavailable();
+    }
+    const response = await runAuthRequest(event, 'request-password-reset', {
+      email,
+      redirectTo: '/reset'
+    });
+    if (!response || response.status >= 500) {
+      console.warn(
+        JSON.stringify(
+          safeDiagnostic('auth', undefined, event.locals.correlationId)
+        )
+      );
+      return unavailable();
+    }
+    if (response.status === 429) {
+      return fail(429, {
+        message: 'Too many attempts. Please try again later.'
+      });
     }
     return { message: confirmation };
   }

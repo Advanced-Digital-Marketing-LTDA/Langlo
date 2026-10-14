@@ -10,6 +10,48 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { createClient } from '@libsql/client/sqlite3';
+import { createServer } from 'node:net';
+
+/** Find a free loopback port by opening and closing a TCP probe. */
+async function reservePort(): Promise<number> {
+  const probe = createServer();
+  return new Promise((resolve, reject) => {
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const address = probe.address();
+      probe.close(() =>
+        resolve(typeof address === 'object' && address ? address.port : 0)
+      );
+    });
+  });
+}
+
+/** Wait up to ten seconds for the synthetic server's liveness endpoint. */
+async function waitForLive(origin: string): Promise<void> {
+  const deadline = Date.now() + 10000;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(`${origin}/health/live`, {
+        signal: AbortSignal.timeout(500)
+      });
+      if (response.ok) return;
+    } catch {
+      /* Startup is bounded by the deadline. */
+    }
+    await setTimeout(30);
+  }
+  throw new Error('Auth fixture server did not start');
+}
+
+/** Clear the supplied fixture's auth counters between independent limit checks. */
+async function resetRateLimits(databaseFile: string): Promise<void> {
+  const client = createClient({ url: `file://${databaseFile}` });
+  try {
+    await client.execute('DELETE FROM rate_limits');
+  } finally {
+    client.close();
+  }
+}
 
 const run = (args: string[], input?: string, env?: NodeJS.ProcessEnv) => {
   const result = spawnSync('node', args, {
@@ -43,17 +85,7 @@ const provisionEnv = () => ({
 
 test.beforeAll(async () => {
   // Dynamic port: avoids colliding with any already-running server.
-  const { createServer } = await import('node:net');
-  const port = await new Promise<number>((resolve, reject) => {
-    const probe = createServer();
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const address = probe.address();
-      probe.close(() =>
-        resolve(typeof address === 'object' && address ? address.port : 0)
-      );
-    });
-  });
+  const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
   const init = JSON.parse(run(['tests/fixtures/cli.ts', 'init'])) as {
     fixtureRoot: string;
@@ -102,16 +134,7 @@ test.beforeAll(async () => {
     },
     stdio: 'ignore'
   });
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    try {
-      const probe = await fetch(`${base}/health/live`);
-      if (probe.ok) break;
-    } catch {
-      /* not up yet */
-    }
-    await setTimeout(100);
-    if (attempt === 99) throw new Error('auth e2e server did not start');
-  }
+  await waitForLive(base);
   ctx = await request.newContext({
     baseURL: base,
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
@@ -269,39 +292,164 @@ test('reset form reports mismatched and out-of-bounds passwords distinctly', asy
   expect(await tooLong.text()).toContain('12–128 characters');
 });
 
-test('no registration endpoint and unauthenticated /app requests are denied', async () => {
-  const signup = await ctx.post('/api/auth/sign-up/email', {
-    data: {
-      email: 'new@example.test',
-      password: 'whatever-password-1',
-      name: 'x'
-    },
-    maxRedirects: 0,
-    headers: { origin: base }
-  });
-  expect(signup.status()).toBe(400);
-
+test('public signup creates a session while private routes still deny anon users', async () => {
   const anon = await request.newContext({
     baseURL: base,
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
   });
   try {
-    const get = await anon.get('/app', { maxRedirects: 0 });
-    expect(get.status()).toBe(303);
-    const post = await anon.post('/app/cards', { data: {}, maxRedirects: 0 });
-    expect(post.status()).toBe(401);
+    expect((await anon.get('/signup')).status()).toBe(200);
+    const signup = await anon.post(
+      '/signup',
+      form({
+        name: 'New Learner',
+        email: 'new@example.test',
+        password: 'new-learner-password-0000'
+      })
+    );
+    expect(signup.status()).toBe(303);
+    expect(signup.headers()['location']).toBe('/app');
+    const session = await anon.get('/api/auth/get-session');
+    expect(session.status()).toBe(200);
+    expect((await session.json()).user.email).toBe('new@example.test');
+    const signedInSignup = await anon.get('/signup', { maxRedirects: 0 });
+    expect(signedInSignup.status()).toBe(303);
+    expect(signedInSignup.headers()['location']).toBe('/app');
+    const staleSignup = await anon.post(
+      '/signup',
+      form({
+        name: 'Second Account',
+        email: 'stale-signup@example.test',
+        password: 'stale-signup-password'
+      })
+    );
+    expect(staleSignup.status()).toBe(303);
+    const retainedSession = await anon.get('/api/auth/get-session');
+    expect((await retainedSession.json()).user.email).toBe('new@example.test');
+
+    const anonymous = await request.newContext({
+      baseURL: base,
+      extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+    });
+    try {
+      const get = await anonymous.get('/app', { maxRedirects: 0 });
+      expect(get.status()).toBe(303);
+      const post = await anonymous.post('/app/cards', {
+        data: {},
+        maxRedirects: 0
+      });
+      expect(post.status()).toBe(401);
+    } finally {
+      await anonymous.dispose();
+    }
   } finally {
     await anon.dispose();
   }
 });
 
-test('sign-in endpoint enforces the configured rate limit over HTTP', async () => {
-  const client = createClient({ url: `file://${dbFile}` });
+test('public sign-up endpoint enforces the configured rate limit', async () => {
+  await resetRateLimits(dbFile);
+  const anon = await request.newContext({
+    baseURL: base,
+    extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+  });
   try {
-    await client.execute('DELETE FROM rate_limits');
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      statuses.push(
+        (
+          await anon.post('/api/auth/sign-up/email', {
+            data: {
+              email: `signup-${attempt}@example.test`,
+              password: 'signup-rate-limit-password',
+              name: 'Rate Limited Learner'
+            },
+            headers: {
+              origin: base,
+              'x-forwarded-for': `192.0.2.${attempt + 1}`,
+              'x-langlo-client-address': `198.51.100.${attempt + 1}`
+            }
+          })
+        ).status()
+      );
+    }
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 429, 429]);
   } finally {
-    client.close();
+    await anon.dispose();
   }
+});
+
+test('invalid SMTP config leaves public pages and registration available', async () => {
+  await resetRateLimits(dbFile);
+  const port = await reservePort();
+  const alternateBase = `http://127.0.0.1:${port}`;
+  const featureServer = spawn('node', ['build'], {
+    cwd: process.cwd(),
+    env: {
+      ...provisionEnv(),
+      APP_ORIGIN: alternateBase,
+      HOST: '127.0.0.1',
+      PORT: String(port),
+      ORIGIN: alternateBase,
+      MAIL_TRANSPORT: 'smtp',
+      MAIL_FROM: 'Langlo <ops@langlo.app>',
+      PROTON_SMTP_TOKEN: 'synthetic-smtp-token'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let logs = '';
+  featureServer.stdout.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  featureServer.stderr.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  const client = await request.newContext({
+    baseURL: alternateBase,
+    extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+  });
+  try {
+    await waitForLive(alternateBase);
+    expect((await client.get('/')).status()).toBe(200);
+    expect((await client.get('/prototype')).status()).toBe(200);
+    expect((await client.get('/signup')).status()).toBe(200);
+    const signup = await client.post('/api/auth/sign-up/email', {
+      data: {
+        name: 'SMTP Independent Learner',
+        email: 'smtp-independent@example.test',
+        password: 'smtp-independent-password'
+      },
+      headers: { origin: alternateBase }
+    });
+    expect(signup.status()).toBe(200);
+    const recoveryApi = await client.post('/api/auth/request-password-reset', {
+      data: { email: 'smtp-independent@example.test' },
+      headers: { origin: alternateBase }
+    });
+    expect(recoveryApi.status()).toBe(503);
+    const responseBody = await recoveryApi.json();
+    expect(responseBody.correlationId).toBe(
+      recoveryApi.headers()['x-correlation-id']
+    );
+    expect(JSON.stringify(responseBody)).not.toMatch(
+      /smtp-independent@example\.test|synthetic-smtp-token|MAIL_FROM/u
+    );
+    expect(logs).toContain('"variable":"MAIL_FROM"');
+    expect(logs).not.toContain('synthetic-smtp-token');
+    expect(logs).not.toContain('smtp-independent@example.test');
+  } finally {
+    await client.dispose();
+    featureServer.kill('SIGTERM');
+    await new Promise<void>((resolve) => {
+      if (featureServer.exitCode !== null || featureServer.signalCode !== null)
+        resolve();
+      else featureServer.once('exit', () => resolve());
+    });
+  }
+});
+
+test('sign-in endpoint enforces the configured rate limit over HTTP', async () => {
+  await resetRateLimits(dbFile);
   const statuses: number[] = [];
   for (let attempt = 0; attempt < 7; attempt += 1) {
     statuses.push(
@@ -319,19 +467,18 @@ test('sign-in endpoint enforces the configured rate limit over HTTP', async () =
 });
 
 test('login form action applies the same rate limit as the endpoint', async () => {
-  const client = createClient({ url: `file://${dbFile}` });
-  try {
-    await client.execute('DELETE FROM rate_limits');
-  } finally {
-    client.close();
-  }
+  await resetRateLimits(dbFile);
   const statuses: number[] = [];
   for (let attempt = 0; attempt < 7; attempt += 1) {
     statuses.push(
       (
         await ctx.post('/login', {
           form: { email: 'e2e@example.test', password: 'e2e-rotated-0000' },
-          headers: { origin: base },
+          headers: {
+            origin: base,
+            'x-forwarded-for': `192.0.2.${attempt + 1}`,
+            'x-langlo-client-address': `198.51.100.${attempt + 1}`
+          },
           maxRedirects: 0
         })
       ).status()
@@ -340,4 +487,108 @@ test('login form action applies the same rate limit as the endpoint', async () =
   expect(
     statuses.filter((status) => status === 429).length
   ).toBeGreaterThanOrEqual(2);
+});
+
+test('direct proxy policy isolates rate limits and fails auth safely on missing identity', async () => {
+  await resetRateLimits(dbFile);
+  const port = await reservePort();
+  const proxyBase = `http://127.0.0.1:${port}`;
+  const proxyServer = spawn('node', ['build'], {
+    env: {
+      ...provisionEnv(),
+      APP_ORIGIN: proxyBase,
+      HOST: '127.0.0.1',
+      PORT: String(port),
+      ADDRESS_HEADER: 'x-forwarded-for',
+      XFF_DEPTH: '1',
+      PROTOCOL_HEADER: 'x-forwarded-proto'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let logs = '';
+  proxyServer.stdout.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  proxyServer.stderr.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  const client = await request.newContext({
+    baseURL: proxyBase,
+    extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+  });
+  try {
+    await waitForLive(proxyBase);
+    for (const path of [
+      '/',
+      '/prototype',
+      '/health/live',
+      '/signup',
+      '/login'
+    ]) {
+      expect((await client.get(path)).status()).toBe(200);
+    }
+    const invalidHeaders: Record<string, string>[] = [
+      {},
+      { 'x-forwarded-for': 'synthetic-invalid-address' }
+    ];
+    for (const headers of invalidHeaders) {
+      const blocked = await client.get('/api/auth/get-session', { headers });
+      expect(blocked.status()).toBe(503);
+      const body = await blocked.json();
+      expect(body.correlationId).toBe(blocked.headers()['x-correlation-id']);
+      expect(JSON.stringify(body)).not.toMatch(
+        /synthetic-invalid-address|ADDRESS_HEADER|stack/
+      );
+      for (const path of ['/signup', '/login', '/recover', '/reset']) {
+        const formResponse = await client.post(path, {
+          headers: { ...headers, origin: proxyBase },
+          form: {
+            name: 'Fixture',
+            email: 'proxy-fixture@example.test',
+            password: 'fixture-password-0000',
+            confirm: 'fixture-password-0000',
+            token: 'synthetic-reset-token'
+          },
+          maxRedirects: 0
+        });
+        expect(formResponse.status()).toBe(503);
+      }
+    }
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const response = await client.post('/api/auth/sign-up/email', {
+        // Simulate the trusted last proxy appending the actual peer after forged input.
+        headers: {
+          origin: proxyBase,
+          'x-forwarded-for': `192.0.2.${attempt + 1}, 198.51.100.10`,
+          'x-langlo-client-address': `203.0.113.${attempt + 1}`
+        },
+        data: {
+          name: 'Fixture',
+          email: `proxy-${attempt}@example.test`,
+          password: 'fixture-password-0000'
+        }
+      });
+      expect(response.status()).toBe(attempt < 5 ? 200 : 429);
+    }
+    const distinct = await client.post('/api/auth/sign-up/email', {
+      headers: { origin: proxyBase, 'x-forwarded-for': '198.51.100.11' },
+      data: {
+        name: 'Fixture',
+        email: 'proxy-distinct@example.test',
+        password: 'fixture-password-0000'
+      }
+    });
+    expect(distinct.status()).toBe(200);
+    expect(logs).not.toMatch(
+      /synthetic-invalid-address|fixture-password-0000|Address header was specified/
+    );
+  } finally {
+    await client.dispose();
+    proxyServer.kill('SIGTERM');
+    await new Promise<void>((resolve) => {
+      if (proxyServer.exitCode !== null || proxyServer.signalCode !== null)
+        resolve();
+      else proxyServer.once('exit', () => resolve());
+    });
+  }
 });

@@ -1,7 +1,7 @@
 import { createAuth, type Auth } from './auth.ts';
 import { openAppDatabase } from './db/app.ts';
 import { createMailer } from './mail.ts';
-import type { RuntimeConfig } from './config.ts';
+import { ConfigError, type RuntimeConfig } from './config.ts';
 
 let cached: { key: string; auth: Promise<Auth> } | undefined;
 
@@ -19,8 +19,18 @@ export async function resolveAuth(config: RuntimeConfig): Promise<Auth | null> {
   const key = keyOf(config);
   if (cached?.key === key) return cached.auth;
   const authConfig = config.auth;
+  const mailer = authConfig.mail
+    ? createMailer(authConfig.mail)
+    : {
+        /** Reject delivery when recovery configuration is unavailable. */
+        send() {
+          return Promise.reject(
+            authConfig.mailError ?? new ConfigError('MAIL_TRANSPORT')
+          );
+        }
+      };
   const auth = openAppDatabase(config).then(({ db }) =>
-    createAuth(config, { db, mailer: createMailer(authConfig.mail) })
+    createAuth(config, { db, mailer })
   );
   cached = { key, auth };
   try {

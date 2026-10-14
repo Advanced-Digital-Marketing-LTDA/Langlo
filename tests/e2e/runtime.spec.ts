@@ -42,20 +42,42 @@ test('invalid runtime config fails safely while liveness remains independent', a
       await delay(30);
     }
     expect(started).toBe(true);
+    expect((await request.get('http://127.0.0.1:4329/')).status()).toBe(200);
+    expect(
+      (await request.get('http://127.0.0.1:4329/prototype')).status()
+    ).toBe(200);
+    expect((await request.get('http://127.0.0.1:4329/signup')).status()).toBe(
+      200
+    );
     const unavailable = await request.get(
       'http://127.0.0.1:4329/health/ready?answer=private-answer'
     );
     expect(unavailable.status()).toBe(503);
     const body = await unavailable.json();
-    expect(body.message).toBe('Configuration unavailable. Please try again.');
-    expect(body.correlationId).toBe(unavailable.headers()['x-correlation-id']);
+    expect(body.status).toBe('not-ready');
+    expect(logs).toContain('"variable":"DATA_ENABLED"');
     expect(JSON.stringify(body)).not.toMatch(
-      /synthetic-secret|private-answer|stack|DATA_ENABLED/
+      /synthetic-secret|private-answer|stack/u
     );
     await delay(30);
     expect(logs).toContain('configuration');
+    const authUnavailable = await request.get(
+      'http://127.0.0.1:4329/api/auth/get-session'
+    );
+    expect(authUnavailable.status()).toBe(503);
+    const authBody = await authUnavailable.json();
+    expect(authBody.correlationId).toBe(
+      authUnavailable.headers()['x-correlation-id']
+    );
+    await expect
+      .poll(() => logs)
+      .toContain(`"correlationId":"${authBody.correlationId}"`);
+    expect(JSON.stringify(authBody)).not.toMatch(
+      /synthetic-secret|private-answer|DATA_ENABLED/u
+    );
+    expect((await request.get('http://127.0.0.1:4329/app')).status()).toBe(503);
     expect(logs).not.toMatch(
-      /synthetic-secret|private-answer|stack|DATA_ENABLED/
+      /synthetic-secret|private-answer|stack|synthetic-secret-invalid-flag/u
     );
   } finally {
     process.kill('SIGTERM');
