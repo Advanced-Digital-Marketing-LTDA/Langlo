@@ -44,7 +44,7 @@ const messages = new Map<RemoteMigrationErrorCode, string>(
     PLAN_CHANGED:
       'the database or migrations changed since the reviewed plan; run plan again',
     APPLY_FAILED:
-      'the migration batch failed and was rolled back; nothing was applied'
+      'the migration batch did not report success; a failed batch rolls back, but a connection lost after commit can leave it applied, so run status before retrying'
   }) as [RemoteMigrationErrorCode, string][]
 );
 

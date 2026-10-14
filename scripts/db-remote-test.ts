@@ -67,6 +67,9 @@ export async function runRemoteTestCli(
     const migrations = loadMigrations();
     try {
       client = await open(target);
+      // Remote clients connect lazily; probe now so DNS, auth and socket
+      // failures report as CONNECTION_FAILED rather than UNEXPECTED.
+      await client.execute('SELECT 1');
     } catch {
       write(
         'Remote-test migration failed. CONNECTION_FAILED: could not open the target'

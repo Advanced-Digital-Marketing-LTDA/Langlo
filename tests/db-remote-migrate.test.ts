@@ -641,6 +641,50 @@ describe('remote-test CLI', () => {
     expect(out.lines.join('\n')).not.toContain('leaked-secret');
     expect(out.lines.join('\n')).toContain('CONNECTION_FAILED');
   });
+
+  it('reports CONNECTION_FAILED when a lazy client fails on its first query', async () => {
+    const out = capture();
+    const lazy = {
+      execute: async () => {
+        throw new Error(`401 for libsql://${host} token leaked-secret`);
+      },
+      close: () => {}
+    } as unknown as Client;
+    const code = await runRemoteTestCli(
+      ['status'],
+      safeEnv,
+      out.write,
+      async () => lazy
+    );
+    expect(code).toBe(1);
+    expect(out.lines.join('\n')).not.toContain('leaked-secret');
+    expect(out.lines.join('\n')).toContain('CONNECTION_FAILED');
+  });
+
+  it('reports an unknown apply outcome and asks for status when the batch errors', async () => {
+    const client = await scratchDatabase();
+    const all = loadMigrations();
+    const { planId } = await readMigrationState(client, all);
+    const dropped = new Proxy(client, {
+      get(target, key, receiver) {
+        if (key === 'migrate')
+          return async (statements: unknown[]) => {
+            await target.migrate(statements as never);
+            throw new Error('connection reset after commit');
+          };
+        const value = Reflect.get(target, key, receiver);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+    });
+    const error = await applyRemoteTestPlan(dropped, all, {
+      host,
+      confirmHost: host,
+      planId
+    }).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(RemoteMigrationError);
+    expect((error as Error).message).toContain('run status');
+    expect((error as Error).message).not.toContain('nothing was applied');
+  });
 });
 
 describe('fixture migrator stays fixture-only', () => {
