@@ -276,7 +276,8 @@ export async function recordAttempt(
     await tx.commit();
     return { id, duplicate: false };
   } catch (error) {
-    await tx.rollback();
+    // A failed rollback must not replace the error that caused it.
+    await tx.rollback().catch(() => undefined);
     throw error;
   } finally {
     tx.close();
