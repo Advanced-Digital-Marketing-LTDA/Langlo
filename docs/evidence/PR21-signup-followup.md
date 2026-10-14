@@ -2,7 +2,7 @@
 
 ## Scope and baseline
 
-Fetched `origin/main` at `40716f19cbba810957dc7b1af24def7d8eb5e1af` (PR21 merge). Changes are isolated in local branch `fix/signup-session-boundary`, worktree `/workspace/langlo-signup-fixes`. The closed PR21 branch is untouched. Read repository `AGENTS.md`, `docs/auth.md`, and existing proxy-policy evidence. No remote publication, production access, provider call, topology change, or new environment variable.
+Fetched `origin/main` at `40716f19cbba810957dc7b1af24def7d8eb5e1af` (PR21 merge). Changes are published in branch `fix/signup-session-boundary`, [PR23](https://github.com/Bonobo791/Langlo/pull/23), at head `958d99d4682e25c0692ddc4f9f65213e896002b8`. The closed PR21 branch is untouched. Read repository `AGENTS.md`, `docs/auth.md`, and existing proxy-policy evidence. The owner authorized publication after local validation. No production access, provider call, topology change, or new environment variable.
 
 ## Findings
 
@@ -34,7 +34,7 @@ Full required results:
 | `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e` | 62/62 desktop/mobile tests passed   |
 | `git diff --check`                                                       | Pass                                |
 
-The initial browser run used the absent bundled Chromium and failed browser-launch cases; auth/request cases passed. The rerun used installed system Chromium and passed the complete suite. Type, lint, and formatting checks were repeated after the final E2E assertions were added. All fixture databases and servers are disposable/local. Local checks do not prove live SMTP, production proxy topology, CI, deployment, or release acceptance. Publication remains pending approval.
+The initial browser run used the absent bundled Chromium and failed browser-launch cases; auth/request cases passed. The rerun used installed system Chromium and passed the complete suite. Type, lint, and formatting checks were repeated after the final E2E assertions were added. All fixture databases and servers are disposable/local. Local checks do not prove live SMTP, production proxy topology, CI, deployment, or release acceptance. The validated signup fixes were published separately in PR23 with owner approval; further pushes and PR updates require approval.
 
 ## Read-only PR22 inspection
 
@@ -42,6 +42,6 @@ Owner reported PR22 while validation was running. Connected GitHub metadata and 
 
 The exact-head pull-request workflows reported Dependency review, ESLint, and OSSAR successful, and Quality failed. Quality's `foundation` job passed type/lint/format/unit/property/build/E2E steps but failed `Check test integrity with Overlock`; its `merge-evidence-gate` job also failed. The posted evidence-gate receipt identifies deletion of `tests/auth-request.test.ts`. These are PR22's remote results, not this branch's results. Active review comments exist on PR22; authorship does not establish permission to edit that branch.
 
-Leave PR22 with its owner. Stop publication of this branch pending the owner's scope decision; preserve the local changes and checks. If public signup remains desired, these fixes remain applicable to current main and should not be transferred into a full revert without an explicit decision. If the owner intentionally chooses private provisioning, registration-specific fixes become inapplicable, while the proxy security protections should still be retained. No PR was created or updated and no remote branch was written.
+PR22 remains with its owner. The owner subsequently chose to keep PR21 and publish these scoped public-signup fixes separately in PR23. The remote branch and draft PR were created at `958d99d4682e25c0692ddc4f9f65213e896002b8`; PR22 was neither changed nor closed. PR22 and PR23 are mutually exclusive implementation directions: PR22 reverts the PR21 behavior on which PR23 builds. PR23 preserves the proxy security protections. Do not merge the revert and expect this follow-up to remain applicable. No merge, deployment, production access, or readiness change was performed by this worker.
 
 Local `gh pr view` and `gh api` metadata reads returned HTTP Forbidden; no mutation or escalation was attempted. The connected GitHub read-only tools successfully supplied metadata, diff, and workflow/job results, so PR inspection is not blocked.
