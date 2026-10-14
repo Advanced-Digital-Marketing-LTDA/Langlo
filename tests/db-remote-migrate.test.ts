@@ -215,6 +215,17 @@ describe('remote-test target validation', () => {
     ).toBe('TARGET_INVALID');
   });
 
+  it.each([
+    'libsql://database.turso.io.attacker.example',
+    'libsql://langlo-pilot-test.example.com',
+    'libsql://evilturso.io',
+    'libsql://turso.io'
+  ])('rejects non-Turso host %s before the token is sent', (url) => {
+    expect(
+      codeOf(() => parseRemoteTestTarget({ ...safeEnv, DATABASE_URL: url }))
+    ).toBe('TARGET_INVALID');
+  });
+
   it('never includes the supplied URL or token in rejection messages', () => {
     const env = {
       ...safeEnv,

@@ -28,7 +28,7 @@ const messages = new Map<RemoteMigrationErrorCode, string>(
   Object.entries({
     TARGET_MISSING: 'DATABASE_URL is not set',
     TARGET_INVALID:
-      'DATABASE_URL must be a bare libsql://host remote URL without credentials, query or path',
+      'DATABASE_URL must be a bare libsql://<name>.turso.io URL without credentials, query or path',
     TARGET_PRODUCTION: 'DATABASE_URL names a production database',
     TOKEN_MISSING: 'TURSO_AUTH_TOKEN is not set in the runtime environment',
     TARGET_CLASS_REQUIRED:
@@ -81,13 +81,16 @@ function isDnsHost(hostname: string): boolean {
   );
 }
 
-/** A libsql:// DNS host with no port, credentials, query, fragment or path. */
+/**
+ * A libsql:// Turso host with no port, credentials, query, fragment or path.
+ * The token is sent on connect, so any other domain is refused before then.
+ */
 function isBareRemoteUrl(url: URL): boolean {
   const hostname = url.hostname.toLowerCase();
   return (
     url.protocol === 'libsql:' &&
     isDnsHost(hostname) &&
-    !hostname.endsWith('.localhost') &&
+    hostname.endsWith('.turso.io') &&
     !url.port &&
     !url.username &&
     !url.password &&
