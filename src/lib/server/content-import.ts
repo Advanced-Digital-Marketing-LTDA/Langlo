@@ -14,6 +14,8 @@ import { beginWrite } from './flashcards';
 
 const languages = ['fr', 'de', 'en'] as const;
 const levels = ['A1', 'A2'] as const;
+// The contract's five tracks; French A2 is out of scope.
+const tracks = new Set(['fr A1', 'de A1', 'de A2', 'en A1', 'en A2']);
 const formats = [
   'multiple-choice',
   'typed-blank',
@@ -109,6 +111,7 @@ function validateSkills(pkg: ContentPackage) {
       ids.has(skill.id) ||
       !languages.includes(skill.language) ||
       !levels.includes(skill.level) ||
+      !tracks.has(`${skill.language} ${skill.level}`) ||
       !Array.isArray(skill.prerequisites) ||
       !skill.prerequisites.every((id) => isText(id)) ||
       new Set(skill.prerequisites).size !== skill.prerequisites.length

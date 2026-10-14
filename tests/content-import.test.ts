@@ -181,6 +181,18 @@ describe('content import rejects the whole package', () => {
     }
   });
 
+  it('when a skill is outside the supported tracks', async () => {
+    const pkg = approvedPackage();
+    pkg.skills.push({
+      id: 'fr-a2-001',
+      language: 'fr',
+      level: 'A2',
+      review: 'approved',
+      prerequisites: []
+    });
+    await rejects(pkg, 'INVALID_PACKAGE');
+  });
+
   it('when a skill lists the same prerequisite twice', async () => {
     const pkg = approvedPackage();
     pkg.skills[2].prerequisites = ['fr-a1-001', 'fr-a1-001'];
@@ -237,14 +249,22 @@ describe('content import rejects the whole package', () => {
     });
     await rejects(cross, 'INVALID_PREREQUISITE');
     const level = approvedPackage();
-    level.skills.push({
-      id: 'fr-a2-001',
-      language: 'fr',
-      level: 'A2',
-      review: 'approved',
-      prerequisites: []
-    });
-    level.skills[0].prerequisites = ['fr-a2-001'];
+    level.skills.push(
+      {
+        id: 'de-a1-001',
+        language: 'de',
+        level: 'A1',
+        review: 'approved',
+        prerequisites: ['de-a2-001']
+      },
+      {
+        id: 'de-a2-001',
+        language: 'de',
+        level: 'A2',
+        review: 'approved',
+        prerequisites: []
+      }
+    );
     await rejects(level, 'INVALID_PREREQUISITE');
   });
 
@@ -283,9 +303,10 @@ describe('content import rejects the whole package', () => {
   it('when it would rewrite a stored skill, version or question', async () => {
     await importContent(client, approvedPackage());
     const skill = approvedPackage();
-    skill.skills[0].level = 'A2';
-    skill.skills[1].level = 'A2';
-    skill.skills[2].level = 'A2';
+    skill.skills[0].language = 'de';
+    skill.skills[1].language = 'de';
+    skill.skills[2].language = 'de';
+    skill.versions = [];
     await rejects(skill, 'CONTENT_CONFLICT');
     const question = approvedPackage();
     question.versions[0].questions[1].format = 'translation';
