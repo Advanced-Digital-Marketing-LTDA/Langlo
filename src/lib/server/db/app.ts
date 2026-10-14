@@ -15,7 +15,9 @@ export async function openAppDatabase(config: RuntimeConfig) {
   });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
-    await client.execute('PRAGMA busy_timeout = 5000');
+    // Remote libSQL (Turso) rejects busy_timeout; it only applies to local files.
+    if (config.databaseUrl.startsWith('file:'))
+      await client.execute('PRAGMA busy_timeout = 5000');
     const [{ drizzle }, schema] = await Promise.all([
       import('drizzle-orm/libsql'),
       import('./schema.ts')
