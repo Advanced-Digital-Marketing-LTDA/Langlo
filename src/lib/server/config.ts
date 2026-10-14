@@ -52,6 +52,7 @@ export class ConfigError extends Error {
   /** Name the invalid variable, never its supplied value; parser callers use fixed names. */
   readonly variable: ConfigVariable | undefined;
 
+  /** Keep fixed variable identifiers and replace forged names with generic text. */
   constructor(variable: string) {
     const validVariable = configVariableSet.has(variable)
       ? (variable as ConfigVariable)
@@ -133,7 +134,7 @@ function parseSmtpPort(env: Record<string, string | undefined>): number {
   return smtpPort;
 }
 
-/** Auth exists only when data is enabled; secret/mail rules follow the selected transport. */
+/** Validate the selected recovery transport and the credentials it uses. */
 function parseMailConfig(
   env: Record<string, string | undefined>,
   environment: string
@@ -162,6 +163,7 @@ function parseMailConfig(
   return mail;
 }
 
+/** Validate signing while retaining mail failures as recovery-only diagnostics. */
 function parseAuthConfig(
   env: Record<string, string | undefined>,
   environment: string

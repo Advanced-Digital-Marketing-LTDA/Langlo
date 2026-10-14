@@ -22,6 +22,7 @@ export async function resolveAuth(config: RuntimeConfig): Promise<Auth | null> {
   const mailer = authConfig.mail
     ? createMailer(authConfig.mail)
     : {
+        /** Reject delivery when recovery configuration is unavailable. */
         send() {
           return Promise.reject(
             authConfig.mailError ?? new ConfigError('MAIL_TRANSPORT')

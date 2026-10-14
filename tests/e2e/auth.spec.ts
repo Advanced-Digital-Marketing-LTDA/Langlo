@@ -12,6 +12,7 @@ import { setTimeout } from 'node:timers/promises';
 import { createClient } from '@libsql/client/sqlite3';
 import { createServer } from 'node:net';
 
+/** Find a free loopback port by opening and closing a TCP probe. */
 async function reservePort(): Promise<number> {
   const probe = createServer();
   return new Promise((resolve, reject) => {
@@ -25,6 +26,7 @@ async function reservePort(): Promise<number> {
   });
 }
 
+/** Wait up to ten seconds for the synthetic server's liveness endpoint. */
 async function waitForLive(origin: string): Promise<void> {
   const deadline = Date.now() + 10000;
   while (Date.now() < deadline) {
@@ -41,6 +43,7 @@ async function waitForLive(origin: string): Promise<void> {
   throw new Error('Auth fixture server did not start');
 }
 
+/** Clear the supplied fixture's auth counters between independent limit checks. */
 async function resetRateLimits(databaseFile: string): Promise<void> {
   const client = createClient({ url: `file://${databaseFile}` });
   try {

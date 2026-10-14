@@ -3,12 +3,14 @@ import type { Actions, PageServerLoad } from './$types';
 import { applyAuthCookies } from '../../lib/server/auth-cookies';
 import { runAuthRequest } from '../../lib/server/auth-operation';
 
+/** Keep signed-in learners on their existing account rather than registration. */
 export const load: PageServerLoad = ({ locals }) => {
   if (locals.user) redirect(303, '/app');
   return {};
 };
 
 export const actions: Actions = {
+  /** Create a session through rate-limited auth and return safe dependency errors. */
   default: async (event) => {
     if (event.locals.user) redirect(303, '/app');
     const data = await event.request.formData();
