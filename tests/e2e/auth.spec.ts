@@ -41,8 +41,8 @@ async function waitForLive(origin: string): Promise<void> {
   throw new Error('Auth fixture server did not start');
 }
 
-async function resetRateLimits(): Promise<void> {
-  const client = createClient({ url: `file://${dbFile}` });
+async function resetRateLimits(databaseFile: string): Promise<void> {
+  const client = createClient({ url: `file://${databaseFile}` });
   try {
     await client.execute('DELETE FROM rate_limits');
   } finally {
@@ -345,7 +345,7 @@ test('public signup creates a session while private routes still deny anon users
 });
 
 test('public sign-up endpoint enforces the configured rate limit', async () => {
-  await resetRateLimits();
+  await resetRateLimits(dbFile);
   const anon = await request.newContext({
     baseURL: base,
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
@@ -377,7 +377,7 @@ test('public sign-up endpoint enforces the configured rate limit', async () => {
 });
 
 test('invalid SMTP config leaves public pages and registration available', async () => {
-  await resetRateLimits();
+  await resetRateLimits(dbFile);
   const port = await reservePort();
   const alternateBase = `http://127.0.0.1:${port}`;
   const featureServer = spawn('node', ['build'], {
@@ -446,7 +446,7 @@ test('invalid SMTP config leaves public pages and registration available', async
 });
 
 test('sign-in endpoint enforces the configured rate limit over HTTP', async () => {
-  await resetRateLimits();
+  await resetRateLimits(dbFile);
   const statuses: number[] = [];
   for (let attempt = 0; attempt < 7; attempt += 1) {
     statuses.push(
@@ -464,7 +464,7 @@ test('sign-in endpoint enforces the configured rate limit over HTTP', async () =
 });
 
 test('login form action applies the same rate limit as the endpoint', async () => {
-  await resetRateLimits();
+  await resetRateLimits(dbFile);
   const statuses: number[] = [];
   for (let attempt = 0; attempt < 7; attempt += 1) {
     statuses.push(
