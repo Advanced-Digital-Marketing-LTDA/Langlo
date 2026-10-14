@@ -20,7 +20,7 @@ The command refuses `file:`, in-memory, `http(s):`, IP-address hosts, `localhost
 2. `npm run db:remote-test -- status`. Read-only. Prints the host, whether the ledger exists, table names, applied and pending migrations.
 3. If status reports tables you did not expect, stop and preserve the data.
 4. `npm run db:remote-test -- plan`. Read-only dry run. Lists each pending migration, its statement count and checksum prefix, and a plan id.
-5. `npm run db:remote-test -- apply --confirm-host <host> --plan-id <id>` using the host and id printed by step 4. Apply refuses to run without both, if the host differs, or if the database or migration files changed since the plan (`PLAN_CHANGED`; run `plan` again).
+5. `npm run db:remote-test -- apply --confirm-host <host> --plan-id <id>` using the host and id printed by step 4. Apply refuses to run without both, if the host differs, or if the migration ledger, the list of table names or the migration files changed since the plan (`PLAN_CHANGED`; run `plan` again). The plan id does not cover table columns or row data, so do not run other schema changes or writes against the database between `plan` and `apply`.
 6. Run `status` again and confirm `pending: 0`.
 
 Expected output on an empty database (host is an example):
