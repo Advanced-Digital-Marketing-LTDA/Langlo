@@ -1,7 +1,8 @@
 import { timingSafeEqual } from 'node:crypto';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { runAuthRequest } from '../../lib/server/auth-operation';
+import { resolveAuth } from '../../lib/server/auth-runtime';
+import { authFormRequest } from '../../lib/server/auth-request';
 
 const invalid = 'This reset link is invalid or has expired. Request a new one.';
 const utf8 = new TextEncoder();
@@ -33,10 +34,20 @@ export const actions: Actions = {
     if (!sameValue(password, confirm)) {
       return fail(400, { token, message: 'Passwords do not match.' });
     }
-    const response = await runAuthRequest(event, 'reset-password', {
-      newPassword: password,
-      token
-    });
+    const auth = event.locals.config
+      ? await resolveAuth(event.locals.config).catch(() => null)
+      : null;
+    if (!auth) {
+      return fail(503, { token, message: 'Accounts are not ready yet.' });
+    }
+    const response = await auth
+      .handler(
+        authFormRequest(event, 'reset-password', {
+          newPassword: password,
+          token
+        })
+      )
+      .catch(() => null);
     if (response === null) {
       return fail(503, {
         token,

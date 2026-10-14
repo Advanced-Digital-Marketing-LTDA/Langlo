@@ -9,6 +9,8 @@
 </svelte:head>
 
 <h1>Sign in</h1>
+<p>Langlo is a private pilot. Accounts are provisioned by the operator.</p>
+
 {#if form?.message}
   <p role="alert">{form.message}</p>
 {/if}
@@ -39,4 +41,3 @@
 </form>
 
 <p><a href="/recover">Forgot your password?</a></p>
-<p><a href="/signup">Create an account</a></p>

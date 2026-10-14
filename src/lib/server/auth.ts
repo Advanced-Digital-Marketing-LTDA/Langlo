@@ -2,9 +2,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { RuntimeConfig } from './config.ts';
-import { safeDiagnostic } from './diagnostics.ts';
 import type { Mailer } from './mail.ts';
-import { currentCorrelationId } from './request-context.ts';
 import * as schema from './db/schema.ts';
 
 export interface AuthDeps {
@@ -24,8 +22,8 @@ const resetMessage = (url: string) => ({
 });
 
 /**
- * Contract implementation (docs/auth.md): email+password with public
- * registration, database sessions with immediate revocation, hashed verification
+ * Contract implementation (docs/auth.md): email+password only, no sign-up
+ * path, database sessions with immediate revocation, hashed verification
  * identifiers, database-backed rate limits, framework logging disabled —
  * diagnostics stay on the safe allowlist at our own boundary.
  */
@@ -39,7 +37,6 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
     telemetry: { enabled: false },
     logger: { disabled: true },
     advanced: {
-      ipAddress: { ipAddressHeaders: ['x-langlo-client-address'] },
       defaultCookieAttributes: {
         secure: config.origin.startsWith('https:')
       }
@@ -63,32 +60,31 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
       storage: 'database',
       customRules: {
         '/sign-in/email': { window: 300, max: 5 },
-        '/sign-up/email': { window: 3600, max: 5 },
         '/request-password-reset': { window: 600, max: 3 },
         '/reset-password': { window: 600, max: 5 }
       }
     },
     emailAndPassword: {
       enabled: true,
-      disableSignUp: false,
+      disableSignUp: true,
       requireEmailVerification: false,
       minPasswordLength: 12,
       maxPasswordLength: 128,
       resetPasswordTokenExpiresIn: 1800,
       revokeSessionsOnPasswordReset: true,
-      sendResetPassword: ({ user, url }) => {
-        const correlationId = currentCorrelationId();
-        // SMTP latency must not reveal whether the submitted account exists.
-        void Promise.resolve()
-          .then(() =>
-            deps.mailer.send({ to: user.email, ...resetMessage(url) })
-          )
-          .catch((error: unknown) => {
+      sendResetPassword: async ({ user, url }) => {
+        // Deliberately not awaited: delivery time must not leak account
+        // existence through the response path (docs/auth.md §4).
+        void deps.mailer
+          .send({ to: user.email, ...resetMessage(url) })
+          .catch(() => {
             console.warn(
-              JSON.stringify(safeDiagnostic('auth', error, correlationId))
+              JSON.stringify({
+                operation: 'auth',
+                kind: 'mail-delivery'
+              })
             );
           });
-        return Promise.resolve();
       }
     }
   });

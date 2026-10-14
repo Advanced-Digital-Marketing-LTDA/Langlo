@@ -7,12 +7,6 @@ disposable fixtures, with observed behavior recorded in
 `docs/evidence/T010.md`. T010c route-level acceptance remains pending; no live
 provider, production database, or real account has been touched.
 
-**Owner direction revised 2026-10-13:** public self-service email/password
-registration is now in scope. This supersedes the earlier two-private-pilot
-and no-public-registration restriction recorded below and in historical T010
-evidence. Signup still requires valid data/auth configuration; SMTP is only a
-recovery dependency.
-
 ## Selection
 
 Selected by owner decision on 2026-10-10: **Better Auth 1.7.x** with its Drizzle
@@ -41,7 +35,7 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
 | Better Auth 1.7.x                                                                                                        | **Selected.** Maintained internals for hashing, sessions, reset flow, and rate limiting; official SvelteKit integration; Drizzle adapter on our existing libSQL client. Cost: larger dependency surface and framework-owned schema/routes/internals. |
 | `lucia` v3 + `@oslojs/*`                                                                                                 | Rejected — Lucia deprecated March 2025; all `@oslojs/*` packages except `@oslojs/encoding` deprecated July 2026.                                                                                                                                     |
 | Auth.js / `@auth/sveltekit`                                                                                              | Rejected — project in maintenance mode under the Better Auth team since 2025-09-22; SvelteKit package experimental; credentials+database sessions are its weakest path.                                                                              |
-| Hosted identity (Clerk, Supabase Auth, Keycloak, …)                                                                      | Rejected — external identity dependency; conflicts with the selected Langlo-native account model.                                                                                                                                                    |
+| Hosted identity (Clerk, Supabase Auth, Keycloak, …)                                                                      | Rejected — external identity dependency; conflicts with own learner accounts, private provisioning, and the no-public-registration requirement.                                                                                                      |
 
 ### Sources inspected 2026-10-10
 
@@ -58,16 +52,14 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
 
 ## Contract by requirement
 
-### 1. Public registration and credentials
+### 1. Privately provisioned accounts; no registration
 
-- `emailAndPassword.enabled: true` with `emailAndPassword.disableSignUp: false`.
-  The `/signup` form and Better Auth `/api/auth/sign-up/email` endpoint create
-  accounts. Rate limiting is database-backed: at most five attempts per hour
-  per client address. Password length is 12–128 characters.
-- Signup does not require SMTP or email verification. A healthy data database
-  and `BETTER_AUTH_SECRET` are required; successful signup establishes the
-  ordinary server-backed session.
-- No social/OAuth provider, passkey, 2FA, or organization signup is enabled.
+- `emailAndPassword.enabled: true` with `emailAndPassword.disableSignUp: true`.
+  No public or alternate registration path may exist: no sign-up route, no
+  reachable sign-up endpoint, no social/OAuth provider configuration.
+- Account creation is a server-only provisioning operation (see §6), never an
+  HTTP endpoint.
+- T010c must prove that every sign-up path exposed by the framework rejects.
 
 ### 2. Sessions: creation, expiry, logout, revocation, request protections
 
@@ -101,12 +93,6 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
 
 - `emailAndPassword.sendResetPassword` delivers the reset link through the
   `Mailer` interface (§6); `resetPasswordTokenExpiresIn: 1800` (30 minutes).
-  Bad or unavailable SMTP affects recovery only: signup, sign-in, and public
-  routes remain available. Invalid mail configuration returns a safe
-  unavailable response. Better Auth catches actual delivery exceptions; the
-  server records a safe diagnostic and keeps the same reset-request response
-  for known and unknown addresses. A client-visible send-failure response
-  needs a delivery design that preserves that enumeration guarantee.
 - `verification.storeIdentifier: 'hashed'` exists in the pinned release and
   is configured — `verifications.identifier` holds a hash of
   `reset-password:<token>` while `value` holds the user id. Raw reset tokens
@@ -134,7 +120,6 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   allowlisted safe diagnostics.
 - Rate limits (as configured; observed deterministic 429s in T010b; T010c
   re-asserts at route level):
-  - `/api/auth/sign-up/email`: 5 per 3600 seconds per client.
   - `/api/auth/sign-in/email`: 5 per 300 seconds per client.
   - `/api/auth/request-password-reset`: 3 per 600 seconds per client.
   - `/api/auth/reset-password`: 5 per 600 seconds per client.
@@ -143,12 +128,6 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
     environment, since the framework default only enforces in production.
     Observed: `rate_limits` rows persist in SQLite across restarts, and the
     counter saturates at `max` rather than growing on rejected requests.
-- Both auth API requests and form actions overwrite the internal
-  `x-langlo-client-address` header with `event.getClientAddress()`. Better Auth
-  uses only that header for rate-limit identity, so client-supplied forwarded
-  address headers cannot create new buckets. Adapter proxy trust remains an
-  operator configuration requirement; without trusted proxy forwarding,
-  requests behind the same proxy conservatively share its address.
 
 ### 5. Learner ownership across sessions
 
@@ -170,8 +149,8 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
 - **Provisioning** (`npm run accounts:provision`, server-only): an operator CLI
   in the style of `tests/fixtures/cli.ts` — explicit targets, guarded against
   ambient env, no credential logging, password read from stdin. Verified path
-  in T010b: provisioning uses Better Auth's internals —
-  `ctx.password.hash(password)` (the
+  in T010b: `disableSignUp` also blocks the public sign-up API, so provisioning
+  uses Better Auth's internals — `ctx.password.hash(password)` (the
   framework's scrypt hasher, single source of truth),
   `ctx.context.internalAdapter.createUser(...)` with the admin provisioning
   source, and `linkAccount` creating the `credential`-provider account row
@@ -194,11 +173,6 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   `langlo-app` SMTP token; place it in the operator secret store as
   `PROTON_SMTP_TOKEN`; send a real recovery email end-to-end (a live-provider
   acceptance gate, not provable locally).
-- **Delivery-failure limitation:** no durable mail outbox or retry worker exists.
-  Invalid configuration is detected before reset requests are handled, but an
-  SMTP failure after a request begins is logged without changing the generic
-  response. Do not present that response as proof of delivery. A future
-  outbox/status design must preserve unknown-vs-known account equivalence.
 
 ### 7. Safe logging
 
@@ -249,12 +223,11 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   `SmtpMailer` (Nodemailer; `secure: false`, `requireTLS: true`).
 - `src/lib/server/accounts.ts` + `scripts/accounts-provision.ts` +
   `npm run accounts:provision` — guarded operator CLI.
-- `hooks.server.ts` — correlation ID, security headers, feature-specific config
-  handling,
+- `hooks.server.ts` — correlation ID, security headers, config validation,
   `/api/auth/**` handled by `auth.handler`, session resolution for
   `/app/**` + `/login`, deny-by-default guard preserved.
 - `src/app.d.ts` — `Locals.user`/`session`/`correlationId` typing.
-- Routes `/login`, `/signup`, `/recover`, `/reset`, and a minimal `/app` landing with
+- Routes `/login`, `/recover`, `/reset`, and a minimal `/app` landing with
   sign-out — real forms replacing placeholders; `private, no-store` +
   `noindex` headers preserved.
 - `src/env.ts` + `docs/environment.md` additions registered:
@@ -271,8 +244,8 @@ e2e behavior tests written for implemented behavior; observed framework
 behavior (cookie flags, token storage, error shapes, rate-limit counters)
 recorded in `docs/evidence/T010.md`.
 
-Must not: provision real accounts or call live SMTP/Turso; change the
-`LearnerSession` service seam or
+Must not: provision real accounts or call live SMTP/Turso; add any public or
+alternate registration path; change the `LearnerSession` service seam or
 owner-scoped queries; weaken existing guards, assertions, or headers;
 introduce OAuth/social providers, passkeys, 2FA, email verification flows, or
 admin/organization plugins (out of pilot scope); merge, push, or deploy
@@ -283,9 +256,8 @@ without explicit authorization.
 Behavior tests against real routes, real session persistence on disposable
 fixture databases, and the capture mailer — no live email claims:
 
-1. **Public registration**: the `/signup` form and `/api/auth/sign-up/email`
-   create an account/session with valid data/auth configuration; invalid
-   configuration fails safely, and signup rate limits are enforced.
+1. **No registration**: every sign-up path the framework exposes (form POSTs
+   and `/api/auth` sign-up endpoints) rejects; no account row is created.
 2. **Cross-learner isolation**: learner A's valid session cannot read or
    mutate learner B's decks, notes, cards, drafts, sessions, attempts, or
    review history — at route level and service level.

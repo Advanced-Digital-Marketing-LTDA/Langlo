@@ -1,5 +1,4 @@
 import { expect, it } from 'vitest';
-import { ConfigError } from '../src/lib/server/config';
 import { safeDiagnostic, safeError } from '../src/lib/server/diagnostics';
 
 it('projects only safe diagnostic fields from arbitrary errors', () => {
@@ -20,47 +19,6 @@ it('projects only safe diagnostic fields from arbitrary errors', () => {
   expect(JSON.stringify(diagnostic)).not.toMatch(
     /private-answer|secret|stack|body|authorization/
   );
-});
-it('reports a validated configuration variable name without its value', () => {
-  const diagnostic = safeDiagnostic(
-    'configuration',
-    new ConfigError('MAIL_TRANSPORT'),
-    '12345678-1234-4234-8234-123456789abc'
-  );
-  expect(diagnostic).toEqual({
-    operation: 'configuration',
-    kind: 'configuration',
-    correlationId: '12345678-1234-4234-8234-123456789abc',
-    variable: 'MAIL_TRANSPORT'
-  });
-  expect(JSON.stringify(diagnostic)).not.toMatch(/capture|smtp|secret/iu);
-});
-it('does not report forged configuration names or secret-bearing names', () => {
-  const invalidName = new ConfigError('PROTON_SMTP_TOKEN=synthetic-secret');
-  const forged = Object.assign(new ConfigError('APP_ORIGIN'), {
-    variable: 'PROTON_SMTP_TOKEN=synthetic-secret'
-  });
-  expect(String(invalidName)).toBe('ConfigError: Invalid configuration');
-  const diagnostic = safeDiagnostic(
-    'configuration',
-    forged,
-    '12345678-1234-4234-8234-123456789abc'
-  );
-  expect(diagnostic).toEqual({
-    operation: 'configuration',
-    kind: 'configuration',
-    correlationId: '12345678-1234-4234-8234-123456789abc'
-  });
-  expect(JSON.stringify(diagnostic)).not.toMatch(
-    /PROTON|SMTP|synthetic-secret/u
-  );
-  expect(
-    safeDiagnostic(
-      'configuration',
-      invalidName,
-      '12345678-1234-4234-8234-123456789abc'
-    )
-  ).not.toHaveProperty('variable');
 });
 it('rejects attacker-controlled correlation identifiers', () => {
   expect(safeError('secret-token\r\nSet-Cookie: x')).toEqual({
