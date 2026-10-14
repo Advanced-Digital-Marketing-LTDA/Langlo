@@ -61,7 +61,10 @@ export interface RemoteTestTarget {
 }
 
 const productionMarker = /(^|[^a-z0-9])prod(uction)?([^a-z0-9]|$)/i;
-const localHost = /^(localhost|127\.|0\.0\.0\.0|\[::1?\])/i;
+// Turso targets are DNS names. Requiring dotted labels ending in an alphabetic
+// TLD rejects every IP literal (IPv6, dotted, short or numeric IPv4), which
+// `new URL` does not normalise for the non-special libsql: scheme.
+const dnsHost = /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/;
 
 /** Validate the explicit remote-test target from the runtime environment before any connection. */
 export function parseRemoteTestTarget(
@@ -79,21 +82,22 @@ export function parseRemoteTestTarget(
   }
   if (
     url.protocol !== 'libsql:' ||
-    !url.hostname ||
+    !dnsHost.test(url.hostname.toLowerCase()) ||
+    url.hostname.toLowerCase().endsWith('.localhost') ||
     url.port ||
     url.username ||
     url.password ||
     url.search ||
     url.hash ||
-    (url.pathname !== '' && url.pathname !== '/') ||
-    localHost.test(url.hostname)
+    (url.pathname !== '' && url.pathname !== '/')
   )
     throw new RemoteMigrationError('TARGET_INVALID');
-  if (productionMarker.test(url.hostname))
+  const hostname = url.hostname.toLowerCase();
+  if (productionMarker.test(hostname))
     throw new RemoteMigrationError('TARGET_PRODUCTION');
   const authToken = env.TURSO_AUTH_TOKEN?.trim();
   if (!authToken) throw new RemoteMigrationError('TOKEN_MISSING');
-  return { url: `libsql://${url.hostname}`, host: url.hostname, authToken };
+  return { url: `libsql://${hostname}`, host: hostname, authToken };
 }
 
 export interface MigrationFile {

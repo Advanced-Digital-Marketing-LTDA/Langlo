@@ -186,6 +186,21 @@ describe('remote-test target validation', () => {
     expect(codeOf(() => parseRemoteTestTarget(env))).toBe(code);
   });
 
+  it.each([
+    'libsql://[0:0:0:0:0:0:0:1]',
+    'libsql://[::ffff:127.0.0.1]',
+    'libsql://2130706433',
+    'libsql://127.1',
+    'libsql://0x7f.1',
+    'libsql://LOCALHOST',
+    'libsql://db.localhost',
+    'libsql://10.0.0.5'
+  ])('rejects IP-literal or local host %s before any connection', (url) => {
+    expect(
+      codeOf(() => parseRemoteTestTarget({ ...safeEnv, DATABASE_URL: url }))
+    ).toBe('TARGET_INVALID');
+  });
+
   it('never includes the supplied URL or token in rejection messages', () => {
     const env = {
       ...safeEnv,
