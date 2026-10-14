@@ -19,7 +19,7 @@ export const handle: Handle = async ({ event, resolve }) => {
     'x-correlation-id': correlationId,
     'cache-control': privateRoute ? 'private, no-store' : 'no-store',
     'x-content-type-options': 'nosniff',
-    'referrer-policy': 'no-referrer'
+    'referrer-policy': 'same-origin'
   };
   const prototypeRoute =
     path === '/prototype' || path.startsWith('/prototype/');
