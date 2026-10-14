@@ -2,10 +2,14 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { resolveAuth } from '../../lib/server/auth-runtime';
 import { applyAuthCookies } from '../../lib/server/auth-cookies';
+import { requireLearnerPage } from '../../lib/server/learner-session';
 
-export const load: PageServerLoad = ({ locals }) => {
-  if (!locals.user) redirect(303, '/login');
-  return { user: { name: locals.user.name, email: locals.user.email } };
+export const load: PageServerLoad = (event) => {
+  // Learner data must be loaded with the session this returns, never with a
+  // learner ID taken from params, query or form data.
+  requireLearnerPage(event);
+  const user = event.locals.user;
+  return { user: { name: user?.name ?? '', email: user?.email ?? '' } };
 };
 
 export const actions: Actions = {

@@ -48,7 +48,7 @@ function exceedsCodePointLimit(value: string, limit: number): boolean {
   return false;
 }
 
-async function beginWrite(client: Client) {
+export async function beginWrite(client: Client) {
   for (let attempt = 0; ; attempt += 1) {
     try {
       return await client.transaction('write');
@@ -314,6 +314,51 @@ export async function createNote(
   } finally {
     tx.close();
   }
+}
+
+export async function listDecks(client: Client, session: LearnerSession) {
+  const result = await client.execute({
+    sql: 'SELECT id, name, created_at FROM native_flashcard_decks WHERE owner_id = ? ORDER BY created_at, id',
+    args: [session.userId]
+  });
+  return result.rows.map((row) => ({
+    id: String(row.id),
+    name: String(row.name),
+    createdAt: Number(row.created_at)
+  }));
+}
+
+/** Immutable review history for one of the caller's own cards. */
+export async function listReviewEvents(
+  client: Client,
+  session: LearnerSession,
+  cardId: string
+) {
+  const [card, events] = await client.batch(
+    [
+      {
+        sql: 'SELECT 1 FROM native_flashcards WHERE id = ? AND owner_id = ?',
+        args: [cardId, session.userId]
+      },
+      {
+        sql: 'SELECT id, expected_revision, rating, reviewed_at, scheduler_version, result_json FROM native_flashcard_review_events WHERE owner_id = ? AND card_id = ? ORDER BY reviewed_at, id',
+        args: [session.userId, cardId]
+      }
+    ],
+    'read'
+  );
+  if (!card.rows[0]) throw new FlashcardError('NOT_FOUND');
+  return events.rows.map((row) => ({
+    id: String(row.id),
+    expectedRevision: Number(row.expected_revision),
+    rating: String(row.rating),
+    reviewedAt: Number(row.reviewed_at),
+    schedulerVersion: String(row.scheduler_version),
+    result: JSON.parse(String(row.result_json)) as {
+      revision: number;
+      dueAt: number;
+    }
+  }));
 }
 
 export async function approveNote(
