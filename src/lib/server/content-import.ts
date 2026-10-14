@@ -69,9 +69,9 @@ export type ImportResult = {
 export class ContentImportError extends Error {
   constructor(
     readonly code: string,
-    readonly detail = ''
+    readonly detail: string
   ) {
-    super(detail ? `${code}: ${detail}` : code);
+    super(`${code}: ${detail}`);
   }
 }
 
@@ -79,7 +79,7 @@ type SkillInfo = { language: string; level: string };
 type Edge = { skillId: string; prerequisiteId: string };
 type NewEdge = Edge & { language: string };
 
-function fail(code: string, detail = ''): never {
+function fail(code: string, detail: string): never {
   throw new ContentImportError(code, detail);
 }
 
@@ -89,7 +89,8 @@ const stableVersion =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/u;
 
 function validatePackageHeader(pkg: ContentPackage) {
-  if (pkg?.publicationStatus !== 'approved') fail('NOT_APPROVED');
+  if (pkg?.publicationStatus !== 'approved')
+    fail('NOT_APPROVED', 'publication status');
   // The contract requires a stable semantic version for an approved bundle.
   if (!stableVersion.test(String(pkg.curriculumVersion)))
     fail('NOT_APPROVED', 'curriculum version');
@@ -143,7 +144,8 @@ function validateShape(pkg: ContentPackage) {
     pkg.versions.map((version) => version.id),
     pkg.versions.flatMap((version) => version.questions.map((q) => q.id))
   ];
-  if (ids.some(hasDuplicates)) fail('INVALID_PACKAGE', 'duplicate id');
+  if (ids.some((list) => hasDuplicates(list)))
+    fail('INVALID_PACKAGE', 'duplicate id');
 }
 
 function validateReviews(pkg: ContentPackage) {
