@@ -56,6 +56,7 @@ export type ContentPackage = {
 };
 
 type PackageVersion = ContentPackage['versions'][number];
+type PackageSkill = ContentPackage['skills'][number];
 
 export type ImportResult = {
   skills: number;
@@ -103,18 +104,30 @@ function validatePackageHeader(pkg: ContentPackage) {
     fail('INVALID_PACKAGE', 'skills and versions');
 }
 
+function inTrack(skill: PackageSkill) {
+  return (
+    languages.includes(skill.language) &&
+    levels.includes(skill.level) &&
+    tracks.has(`${skill.language} ${skill.level}`)
+  );
+}
+
+function validPrerequisites(ids: unknown) {
+  return (
+    Array.isArray(ids) &&
+    ids.every((id) => isText(id)) &&
+    new Set(ids).size === ids.length
+  );
+}
+
 function validateSkills(pkg: ContentPackage) {
   const ids = new Set<string>();
   for (const skill of pkg.skills) {
     if (
       !isText(skill?.id) ||
       ids.has(skill.id) ||
-      !languages.includes(skill.language) ||
-      !levels.includes(skill.level) ||
-      !tracks.has(`${skill.language} ${skill.level}`) ||
-      !Array.isArray(skill.prerequisites) ||
-      !skill.prerequisites.every((id) => isText(id)) ||
-      new Set(skill.prerequisites).size !== skill.prerequisites.length
+      !inTrack(skill) ||
+      !validPrerequisites(skill.prerequisites)
     )
       fail('INVALID_PACKAGE', `skill ${String(skill?.id)}`);
     ids.add(skill.id);
