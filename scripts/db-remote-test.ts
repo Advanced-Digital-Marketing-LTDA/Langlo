@@ -91,7 +91,7 @@ export async function runRemoteTestCli(
       );
       return 0;
     }
-    const state = await readMigrationState(client, migrations);
+    const state = await readMigrationState(client, migrations, target.host);
     write(`target host: ${target.host}`);
     write(`ledger: ${state.ledgerPresent ? 'present' : 'absent'}`);
     write(

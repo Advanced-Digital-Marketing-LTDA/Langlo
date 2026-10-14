@@ -174,10 +174,15 @@ export interface MigrationState {
 
 const ledgerTable = '__drizzle_migrations';
 
-/** Read-only: classify the target and derive the plan the operator must confirm. */
+/**
+ * Read-only: classify the target and derive the plan the operator must
+ * confirm. The plan id covers the host, so a plan reviewed on one database
+ * cannot be applied to another in the same state.
+ */
 export async function readMigrationState(
   client: Client,
-  migrations: MigrationFile[]
+  migrations: MigrationFile[],
+  host: string
 ): Promise<MigrationState> {
   const tables = await client.execute(
     "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name"
@@ -216,6 +221,7 @@ export async function readMigrationState(
   const planId = createHash('sha256')
     .update(
       JSON.stringify({
+        host,
         ledgerPresent,
         userTables,
         applied: applied.map((m) => [m.hash, m.when]),
@@ -250,7 +256,7 @@ export async function applyRemoteTestPlan(
     throw new RemoteMigrationError('CONFIRMATION_REQUIRED');
   if (confirmation.confirmHost !== confirmation.host)
     throw new RemoteMigrationError('CONFIRMATION_MISMATCH');
-  const state = await readMigrationState(client, migrations);
+  const state = await readMigrationState(client, migrations, confirmation.host);
   if (state.planId !== confirmation.planId)
     throw new RemoteMigrationError('PLAN_CHANGED');
   if (state.pending.length === 0) return { applied: [] };

@@ -271,7 +271,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
   it('reports an empty target with every migration pending', async () => {
     const client = await scratchDatabase();
     const migrations = loadMigrations();
-    const state = await readMigrationState(client, migrations);
+    const state = await readMigrationState(client, migrations, host);
     expect(state.ledgerPresent).toBe(false);
     expect(state.userTables).toEqual([]);
     expect(state.applied).toEqual([]);
@@ -284,7 +284,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
   it('applies pending migrations in order and a rerun is a no-op', async () => {
     const client = await scratchDatabase();
     const migrations = loadMigrations();
-    const before = await readMigrationState(client, migrations);
+    const before = await readMigrationState(client, migrations, host);
     const result = await applyRemoteTestPlan(client, migrations, {
       host,
       confirmHost: host,
@@ -299,7 +299,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       migrations.map((m) => [m.hash, m.when])
     );
 
-    const after = await readMigrationState(client, migrations);
+    const after = await readMigrationState(client, migrations, host);
     expect(after.pending).toEqual([]);
     expect(after.userTables).toContain('users');
     const rerun = await applyRemoteTestPlan(client, migrations, {
@@ -324,7 +324,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     await writeFile(journalPath, JSON.stringify(journal));
     await migrate(drizzle(client), { migrationsFolder: folder });
 
-    const state = await readMigrationState(client, all);
+    const state = await readMigrationState(client, all, host);
     expect(state.applied.map((m) => m.tag)).toEqual(
       all.slice(0, 4).map((m) => m.tag)
     );
@@ -346,14 +346,14 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
   it('treats a target already migrated by Drizzle as up to date', async () => {
     const client = await scratchDatabase();
     await migrate(drizzle(client), { migrationsFolder: 'drizzle' });
-    const state = await readMigrationState(client, loadMigrations());
+    const state = await readMigrationState(client, loadMigrations(), host);
     expect(state.pending).toEqual([]);
   });
 
   it('fails on a checksum mismatch in the applied ledger', async () => {
     const client = await scratchDatabase();
     const migrations = loadMigrations();
-    const first = await readMigrationState(client, migrations);
+    const first = await readMigrationState(client, migrations, host);
     await applyRemoteTestPlan(client, migrations, {
       host,
       confirmHost: host,
@@ -364,7 +364,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       args: ['0'.repeat(64), migrations[2].when]
     });
     expect(
-      await asyncCodeOf(() => readMigrationState(client, migrations))
+      await asyncCodeOf(() => readMigrationState(client, migrations, host))
     ).toBe('LEDGER_DRIFT');
   });
 
@@ -379,7 +379,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     );
     expect(
       await asyncCodeOf(() =>
-        readMigrationState(client, loadMigrations(folder))
+        readMigrationState(client, loadMigrations(folder), host)
       )
     ).toBe('LEDGER_DRIFT');
   });
@@ -392,7 +392,9 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       args: ['f'.repeat(64), 9_999_999_999_999]
     });
     expect(
-      await asyncCodeOf(() => readMigrationState(client, loadMigrations()))
+      await asyncCodeOf(() =>
+        readMigrationState(client, loadMigrations(), host)
+      )
     ).toBe('LEDGER_DRIFT');
   });
 
@@ -400,14 +402,38 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     const client = await scratchDatabase();
     await client.execute('CREATE TABLE unrelated (id integer primary key)');
     expect(
-      await asyncCodeOf(() => readMigrationState(client, loadMigrations()))
+      await asyncCodeOf(() =>
+        readMigrationState(client, loadMigrations(), host)
+      )
     ).toBe('AMBIGUOUS_STATE');
+  });
+
+  it('binds the plan id to the target host', async () => {
+    const client = await scratchDatabase();
+    const migrations = loadMigrations();
+    const other = 'langlo-other-test.aws-eu-west-1.turso.io';
+    const { planId } = await readMigrationState(client, migrations, other);
+    expect(
+      (await readMigrationState(client, migrations, host)).planId
+    ).not.toBe(planId);
+    expect(
+      await asyncCodeOf(() =>
+        applyRemoteTestPlan(client, migrations, {
+          host,
+          confirmHost: host,
+          planId
+        })
+      )
+    ).toBe('PLAN_CHANGED');
+    expect(
+      (await readMigrationState(client, migrations, host)).applied
+    ).toEqual([]);
   });
 
   it('refuses to apply without matching operator confirmation', async () => {
     const client = await scratchDatabase();
     const migrations = loadMigrations();
-    const { planId } = await readMigrationState(client, migrations);
+    const { planId } = await readMigrationState(client, migrations, host);
     expect(
       await asyncCodeOf(() =>
         applyRemoteTestPlan(client, migrations, {
@@ -461,7 +487,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
         '\n--> statement-breakpoint\nCREATE TABLE users (broken integer);'
     );
     const broken = loadMigrations(folder);
-    const first = await readMigrationState(client, broken);
+    const first = await readMigrationState(client, broken, host);
     expect(
       await asyncCodeOf(() =>
         applyRemoteTestPlan(client, broken, {
@@ -477,7 +503,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     expect(tables.rows).toEqual([]);
 
     const fixed = loadMigrations();
-    const retry = await readMigrationState(client, fixed);
+    const retry = await readMigrationState(client, fixed, host);
     expect(retry.pending).toHaveLength(fixed.length);
     const result = await applyRemoteTestPlan(client, fixed, {
       host,
@@ -505,7 +531,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       journal.entries = journal.entries.slice(0, 4);
       await writeFile(journalPath, JSON.stringify(journal));
       await migrate(drizzle(client), { migrationsFolder: folder });
-      const { planId } = await readMigrationState(client, all);
+      const { planId } = await readMigrationState(client, all, host);
       const racing = wrapMigrate(client, async (statements) => {
         await client.execute(mutation);
         await client.migrate(statements);
@@ -525,19 +551,27 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
   it('changes the plan id when a pending migration timestamp changes', async () => {
     const client = await scratchDatabase();
     const folder = await copyMigrations();
-    const before = await readMigrationState(client, loadMigrations(folder));
+    const before = await readMigrationState(
+      client,
+      loadMigrations(folder),
+      host
+    );
     const journalPath = join(folder, 'meta/_journal.json');
     const journal = JSON.parse(await readFile(journalPath, 'utf8'));
     journal.entries[5].when += 1;
     await writeFile(journalPath, JSON.stringify(journal));
-    const after = await readMigrationState(client, loadMigrations(folder));
+    const after = await readMigrationState(
+      client,
+      loadMigrations(folder),
+      host
+    );
     expect(after.planId).not.toBe(before.planId);
   });
 
   it('refuses a stale plan when the ledger changed after review', async () => {
     const client = await scratchDatabase();
     const migrations: MigrationFile[] = loadMigrations();
-    const reviewed = await readMigrationState(client, migrations);
+    const reviewed = await readMigrationState(client, migrations, host);
     await migrate(drizzle(client), { migrationsFolder: 'drizzle' });
     expect(
       await asyncCodeOf(() =>
@@ -612,7 +646,7 @@ describe('remote-test CLI', () => {
     );
     expect(denied.lines.join('\n')).toContain('CONFIRMATION_REQUIRED');
 
-    const { planId } = await readMigrationState(client, loadMigrations());
+    const { planId } = await readMigrationState(client, loadMigrations(), host);
     const ok = capture();
     expect(
       await runRemoteTestCli(
@@ -682,7 +716,7 @@ describe('remote-test CLI', () => {
   it('reports an unknown apply outcome and asks for status when the batch errors', async () => {
     const client = await scratchDatabase();
     const all = loadMigrations();
-    const { planId } = await readMigrationState(client, all);
+    const { planId } = await readMigrationState(client, all, host);
     const dropped = wrapMigrate(client, async (statements) => {
       await client.migrate(statements);
       throw new Error('connection reset after commit');
