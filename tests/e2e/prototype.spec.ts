@@ -1,4 +1,19 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test as base, type Page } from '@playwright/test';
+
+// Every prototype navigation waits for hydration: a click on a server-rendered
+// button before its handler attaches is silently lost.
+const test = base.extend({
+  page: async ({ page }, use) => {
+    const goto = page.goto.bind(page);
+    page.goto = async (url, options) => {
+      const response = await goto(url, options);
+      if (url.startsWith('/prototype'))
+        await page.locator('.prototype[data-hydrated]').waitFor();
+      return response;
+    };
+    await use(page);
+  }
+});
 
 // Two incorrect typed answers ('es', 'je mange') out of four items.
 const TWO_MISS_RESPONSES = ['es', 'allons', 'je mange', 'je vais au marché'];
@@ -219,14 +234,7 @@ test('a re-entered practice run replaces the recorded answers', async ({
 
 test('kept mistake becomes an approvable draft in decks', async ({ page }) => {
   await page.goto('/prototype/results');
-  // A click on the server-rendered button before hydration is a no-op, so
-  // retry until the draft is announced.
-  await expect(async () => {
-    await page.getByRole('button', { name: 'Keep as flashcard' }).click();
-    await expect(page.getByRole('status')).toContainText('Draft card created', {
-      timeout: 1000
-    });
-  }).toPass();
+  await page.getByRole('button', { name: 'Keep as flashcard' }).click();
   await page.getByRole('link', { name: 'See card drafts' }).click();
   await expect(
     page.getByText('« Elle ___ fatiguée » — est, not es', { exact: true })
