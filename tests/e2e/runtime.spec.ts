@@ -57,7 +57,7 @@ test('invalid runtime config fails safely while liveness remains independent', a
     expect(body.status).toBe('not-ready');
     expect(logs).toContain('"variable":"DATA_ENABLED"');
     expect(JSON.stringify(body)).not.toMatch(
-      /synthetic-secret|private-answer|stack/
+      /synthetic-secret|private-answer|stack/u
     );
     await delay(30);
     expect(logs).toContain('configuration');
@@ -69,13 +69,15 @@ test('invalid runtime config fails safely while liveness remains independent', a
     expect(authBody.correlationId).toBe(
       authUnavailable.headers()['x-correlation-id']
     );
-    expect(logs).toContain(`"correlationId":"${authBody.correlationId}"`);
+    await expect
+      .poll(() => logs)
+      .toContain(`"correlationId":"${authBody.correlationId}"`);
     expect(JSON.stringify(authBody)).not.toMatch(
-      /synthetic-secret|private-answer|DATA_ENABLED/
+      /synthetic-secret|private-answer|DATA_ENABLED/u
     );
     expect((await request.get('http://127.0.0.1:4329/app')).status()).toBe(503);
     expect(logs).not.toMatch(
-      /synthetic-secret|private-answer|stack|synthetic-secret-invalid-flag/
+      /synthetic-secret|private-answer|stack|synthetic-secret-invalid-flag/u
     );
   } finally {
     process.kill('SIGTERM');

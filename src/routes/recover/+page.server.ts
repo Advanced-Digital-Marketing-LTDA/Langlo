@@ -63,11 +63,9 @@ export const actions: Actions = {
       });
     if (!response || response.status >= 500) {
       console.warn(
-        JSON.stringify({
-          operation: 'auth',
-          kind: 'recovery-unavailable',
-          correlationId: event.locals.correlationId
-        })
+        JSON.stringify(
+          safeDiagnostic('auth', undefined, event.locals.correlationId)
+        )
       );
       return fail(503, {
         message: 'Password recovery is temporarily unavailable. Try again.'

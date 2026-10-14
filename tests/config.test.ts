@@ -117,6 +117,18 @@ describe('runtime configuration', () => {
       }).auth?.mail?.transport
     ).toBe('capture');
   });
+  it('ignores SMTP-only settings when recovery uses capture', () => {
+    const config = parseRuntimeConfig({
+      DATA_ENABLED: 'true',
+      DATABASE_URL: 'file:./.fixtures/local.db',
+      BETTER_AUTH_SECRET: 'a'.repeat(40),
+      MAIL_TRANSPORT: 'capture',
+      SMTP_HOST: 'synthetic-user:synthetic-secret@bad-host',
+      SMTP_PORT: 'invalid-port'
+    });
+    expect(config.auth?.mail?.transport).toBe('capture');
+    expect(config.auth?.mailError).toBeUndefined();
+  });
   it('keeps auth available when production SMTP configuration is incomplete', () => {
     const production = {
       APP_ENV: 'production',

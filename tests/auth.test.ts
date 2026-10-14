@@ -67,13 +67,21 @@ interface Reply {
 function call(
   auth: Auth,
   path: string,
-  init?: { method?: string; body?: unknown; cookie?: string }
+  init?: {
+    method?: string;
+    body?: unknown;
+    cookie?: string;
+    clientAddress?: string;
+  }
 ): Promise<Reply> {
   return auth
     .handler(
       new Request(`${ORIGIN}/api/auth${path}`, {
         method: init?.method ?? 'GET',
         headers: {
+          ...(init?.clientAddress
+            ? { 'x-forwarded-for': init.clientAddress }
+            : {}),
           ...(init?.body !== undefined
             ? { 'content-type': 'application/json' }
             : {}),
@@ -171,6 +179,7 @@ describe('public sign-up and credential login', () => {
       replies.push(
         await call(fixture.auth, '/sign-up/email', {
           method: 'POST',
+          clientAddress: '192.0.2.10',
           body: {
             email: `rate-limit-${index}@example.test`,
             password: 'rate-limit-password-1',
@@ -179,7 +188,19 @@ describe('public sign-up and credential login', () => {
         })
       );
     }
-    expect(replies.some((reply) => reply.status === 429)).toBe(true);
+    expect(replies.map((reply) => reply.status)).toEqual([
+      200, 200, 200, 200, 200, 429, 429
+    ]);
+    const otherClient = await call(fixture.auth, '/sign-up/email', {
+      method: 'POST',
+      clientAddress: '192.0.2.11',
+      body: {
+        email: 'another-client@example.test',
+        password: 'rate-limit-password-1',
+        name: 'Another Client'
+      }
+    });
+    expect(otherClient.status).toBe(200);
   });
 
   it('returns the same credential failure for unknown email and wrong password', async () => {
@@ -450,6 +471,55 @@ describe('recovery lifecycle', () => {
     // Exactly one delivery was attempted, to the real account only.
     expect(fixture.mailer.messages).toHaveLength(1);
     expect(fixture.mailer.messages[0].to).toBe('a@example.test');
+  });
+
+  it('finishes recovery requests while mail delivery remains pending', async () => {
+    const isolated = await rig();
+    let releaseDelivery = () => {};
+    let deliveryStarted = () => {};
+    const blockedDelivery = new Promise<void>((resolve) => {
+      releaseDelivery = resolve;
+    });
+    const started = new Promise<void>((resolve) => {
+      deliveryStarted = resolve;
+    });
+    const mailer = new CaptureMailer();
+    mailer.send = () => {
+      deliveryStarted();
+      return blockedDelivery;
+    };
+    const auth = createAuth(config(isolated.target.databaseUrl), {
+      db: isolated.db,
+      mailer
+    });
+    let response: Promise<Reply> | undefined;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await provisionAccount(auth, {
+        email: 'pending@example.test',
+        name: 'Pending Delivery Learner',
+        password: 'pending-delivery-password'
+      });
+      response = call(auth, '/request-password-reset', {
+        method: 'POST',
+        body: { email: 'pending@example.test' }
+      });
+      await started;
+      const result = await Promise.race([
+        response,
+        new Promise<null>((resolve) => {
+          timeout = setTimeout(() => resolve(null), 1000);
+        })
+      ]);
+      expect(result).not.toBeNull();
+      expect(result?.status).toBe(200);
+    } finally {
+      clearTimeout(timeout);
+      releaseDelivery();
+      await response;
+      isolated.close();
+      await disposeDisposableFixture(isolated.target);
+    }
   });
 
   it('stores the verification identifier hashed, never the raw token', async () => {

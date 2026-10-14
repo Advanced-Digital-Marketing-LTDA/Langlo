@@ -289,19 +289,36 @@ test('public signup creates a session while private routes still deny anon users
     const session = await anon.get('/api/auth/get-session');
     expect(session.status()).toBe(200);
     expect((await session.json()).user.email).toBe('new@example.test');
+    const signedInSignup = await anon.get('/signup', { maxRedirects: 0 });
+    expect(signedInSignup.status()).toBe(303);
+    expect(signedInSignup.headers()['location']).toBe('/app');
+    const staleSignup = await anon.post(
+      '/signup',
+      form({
+        name: 'Second Account',
+        email: 'stale-signup@example.test',
+        password: 'stale-signup-password'
+      })
+    );
+    expect(staleSignup.status()).toBe(303);
+    const retainedSession = await anon.get('/api/auth/get-session');
+    expect((await retainedSession.json()).user.email).toBe('new@example.test');
 
     const anonymous = await request.newContext({
       baseURL: base,
       extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
     });
-    const get = await anonymous.get('/app', { maxRedirects: 0 });
-    expect(get.status()).toBe(303);
-    const post = await anonymous.post('/app/cards', {
-      data: {},
-      maxRedirects: 0
-    });
-    expect(post.status()).toBe(401);
-    await anonymous.dispose();
+    try {
+      const get = await anonymous.get('/app', { maxRedirects: 0 });
+      expect(get.status()).toBe(303);
+      const post = await anonymous.post('/app/cards', {
+        data: {},
+        maxRedirects: 0
+      });
+      expect(post.status()).toBe(401);
+    } finally {
+      await anonymous.dispose();
+    }
   } finally {
     await anon.dispose();
   }
@@ -424,7 +441,7 @@ test('invalid SMTP config leaves public pages and registration available', async
       recoveryApi.headers()['x-correlation-id']
     );
     expect(JSON.stringify(responseBody)).not.toMatch(
-      /smtp-independent@example\.test|synthetic-smtp-token|MAIL_FROM/
+      /smtp-independent@example\.test|synthetic-smtp-token|MAIL_FROM/u
     );
     expect(logs).toContain('"variable":"MAIL_FROM"');
     expect(logs).not.toContain('synthetic-smtp-token');

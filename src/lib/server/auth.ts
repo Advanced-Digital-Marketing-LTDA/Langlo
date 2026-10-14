@@ -75,18 +75,19 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
       maxPasswordLength: 128,
       resetPasswordTokenExpiresIn: 1800,
       revokeSessionsOnPasswordReset: true,
-      sendResetPassword: async ({ user, url }) => {
-        try {
-          await deps.mailer.send({ to: user.email, ...resetMessage(url) });
-        } catch (error) {
-          // Better Auth intentionally normalizes reset-request outcomes.
-          // Keep that enumeration protection while recording a safe failure.
-          console.warn(
-            JSON.stringify(
-              safeDiagnostic('auth', error, currentCorrelationId())
-            )
-          );
-        }
+      sendResetPassword: ({ user, url }) => {
+        const correlationId = currentCorrelationId();
+        // SMTP latency must not reveal whether the submitted account exists.
+        void Promise.resolve()
+          .then(() =>
+            deps.mailer.send({ to: user.email, ...resetMessage(url) })
+          )
+          .catch((error: unknown) => {
+            console.warn(
+              JSON.stringify(safeDiagnostic('auth', error, correlationId))
+            );
+          });
+        return Promise.resolve();
       }
     }
   });

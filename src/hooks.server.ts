@@ -59,14 +59,13 @@ export const handle: Handle = async ({ event, resolve }) => {
     );
   }
   const appPath = path === '/app' || path.startsWith('/app/');
-  const authNeeded = authPath || appPath || path === '/login';
+  const accountPage = path === '/login' || path === '/signup';
+  const authNeeded = authPath || appPath || accountPage;
   let auth: Awaited<ReturnType<typeof resolveAuth>> = null;
-  let authFailed = false;
   if (authNeeded && event.locals.config) {
     try {
       auth = await resolveAuth(event.locals.config);
     } catch (error) {
-      authFailed = true;
       console.warn(
         JSON.stringify(safeDiagnostic('auth', error, correlationId))
       );
@@ -118,7 +117,7 @@ export const handle: Handle = async ({ event, resolve }) => {
       output.headers.set(key, value);
     return output;
   }
-  if (auth && (appPath || path === '/login')) {
+  if (auth && (appPath || accountPage)) {
     let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
     try {
       session = await auth.api.getSession({
@@ -154,14 +153,9 @@ export const handle: Handle = async ({ event, resolve }) => {
           headers: { ...headers, location: '/login' }
         });
       }
-      const message = authFailed
-        ? 'Service unavailable. Please try again.'
-        : auth
-          ? 'Sign in required.'
-          : 'Accounts are not ready yet.';
       return Response.json(
-        { message, correlationId },
-        { status: auth ? 401 : 503, headers }
+        { message: 'Sign in required.', correlationId },
+        { status: 401, headers }
       );
     }
   }

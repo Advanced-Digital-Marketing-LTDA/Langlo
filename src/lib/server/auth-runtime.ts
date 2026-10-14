@@ -22,8 +22,10 @@ export async function resolveAuth(config: RuntimeConfig): Promise<Auth | null> {
   const mailer = authConfig.mail
     ? createMailer(authConfig.mail)
     : {
-        async send() {
-          throw authConfig.mailError ?? new ConfigError('MAIL_TRANSPORT');
+        send() {
+          return Promise.reject(
+            authConfig.mailError ?? new ConfigError('MAIL_TRANSPORT')
+          );
         }
       };
   const auth = openAppDatabase(config).then(({ db }) =>

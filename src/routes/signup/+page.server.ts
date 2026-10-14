@@ -12,6 +12,7 @@ export const load: PageServerLoad = ({ locals }) => {
 
 export const actions: Actions = {
   default: async (event) => {
+    if (event.locals.user) redirect(303, '/app');
     const data = await event.request.formData();
     const name = String(data.get('name') ?? '');
     const email = String(data.get('email') ?? '');

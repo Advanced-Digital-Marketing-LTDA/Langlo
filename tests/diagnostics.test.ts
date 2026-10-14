@@ -33,7 +33,7 @@ it('reports a validated configuration variable name without its value', () => {
     correlationId: '12345678-1234-4234-8234-123456789abc',
     variable: 'MAIL_TRANSPORT'
   });
-  expect(JSON.stringify(diagnostic)).not.toMatch(/capture|smtp|secret/i);
+  expect(JSON.stringify(diagnostic)).not.toMatch(/capture|smtp|secret/iu);
 });
 it('does not report forged configuration names or secret-bearing names', () => {
   const invalidName = new ConfigError('PROTON_SMTP_TOKEN=synthetic-secret');
@@ -52,7 +52,7 @@ it('does not report forged configuration names or secret-bearing names', () => {
     correlationId: '12345678-1234-4234-8234-123456789abc'
   });
   expect(JSON.stringify(diagnostic)).not.toMatch(
-    /PROTON|SMTP|synthetic-secret/
+    /PROTON|SMTP|synthetic-secret/u
   );
   expect(
     safeDiagnostic(

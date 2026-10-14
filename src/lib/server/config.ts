@@ -138,10 +138,11 @@ function parseMailConfig(
   env: Record<string, string | undefined>,
   environment: string
 ): AuthMailConfig {
+  const transport = parseMailTransport(env, environment);
   const mail: AuthMailConfig = {
-    transport: parseMailTransport(env, environment),
-    smtpHost: parseSmtpHost(env),
-    smtpPort: parseSmtpPort(env)
+    transport,
+    smtpHost: transport === 'smtp' ? parseSmtpHost(env) : 'smtp.protonmail.ch',
+    smtpPort: transport === 'smtp' ? parseSmtpPort(env) : 587
   };
   if (mail.transport === 'smtp') {
     const from = env.MAIL_FROM?.trim();

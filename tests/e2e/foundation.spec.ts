@@ -27,7 +27,7 @@ test('private routes fail safely while data and auth are unavailable', async ({
   const body = await response.json();
   expect(body.correlationId).toBe(response.headers()['x-correlation-id']);
   expect(JSON.stringify(body)).not.toMatch(
-    /ownerId|someone-else|private-answer/
+    /ownerId|someone-else|private-answer/u
   );
   expect(response.headers()['cache-control']).toBe('private, no-store');
   expect(response.headers()['x-robots-tag']).toBe('noindex, nofollow');
