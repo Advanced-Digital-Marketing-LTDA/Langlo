@@ -85,14 +85,17 @@ function fail(code: string, detail: string): never {
 
 const normalized = (value: string) => value.trim().toLowerCase();
 
-const stableVersion =
-  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/u;
+const stableVersion = z
+  .string()
+  .regex(
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/u
+  );
 
 function validatePackageHeader(pkg: ContentPackage) {
   if (pkg?.publicationStatus !== 'approved')
     fail('NOT_APPROVED', 'publication status');
   // The contract requires a stable semantic version for an approved bundle.
-  if (!stableVersion.test(String(pkg.curriculumVersion)))
+  if (!stableVersion.safeParse(pkg.curriculumVersion).success)
     fail('NOT_APPROVED', 'curriculum version');
 }
 

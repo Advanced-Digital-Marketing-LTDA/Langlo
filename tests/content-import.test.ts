@@ -179,6 +179,9 @@ describe('content import rejects the whole package', () => {
       pkg.curriculumVersion = version;
       await rejects(pkg, 'NOT_APPROVED');
     }
+    const coerced = approvedPackage();
+    (coerced as { curriculumVersion: unknown }).curriculumVersion = ['1.0.0'];
+    await rejects(coerced, 'NOT_APPROVED');
   });
 
   it('when a skill is outside the supported tracks', async () => {
