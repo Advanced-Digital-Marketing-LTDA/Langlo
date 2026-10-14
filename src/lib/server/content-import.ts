@@ -385,6 +385,8 @@ async function importVersions(
   for (const version of pkg.versions) {
     const skill = known.get(version.skillId);
     if (!skill) fail('MISSING_REFERENCE', `version ${version.id}`);
+    if (!tracks.has(`${skill.language} ${skill.level}`))
+      fail('INVALID_PACKAGE', `version ${version.id} track`);
     const status = await storedVersion(tx, version);
     if (status === undefined) {
       await insertVersion(tx, version, skill.language);

@@ -196,6 +196,17 @@ describe('content import rejects the whole package', () => {
     await rejects(pkg, 'INVALID_PACKAGE');
   });
 
+  it('when a version targets a stored skill outside the supported tracks', async () => {
+    await client.execute(
+      "INSERT INTO skills (id, language, level) VALUES ('fr-a2-001', 'fr', 'A2')"
+    );
+    const pkg = approvedPackage();
+    pkg.versions[1].id = 'fr-a2-001@1';
+    pkg.versions[1].skillId = 'fr-a2-001';
+    pkg.versions[1].questions[0].id = 'fr-a2-001@1:q1';
+    await rejects(pkg, 'INVALID_PACKAGE');
+  });
+
   it('when a skill lists the same prerequisite twice', async () => {
     const pkg = approvedPackage();
     pkg.skills[2].prerequisites = ['fr-a1-001', 'fr-a1-001'];
