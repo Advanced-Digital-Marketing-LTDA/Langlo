@@ -14,12 +14,12 @@ import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 // in one disposable fixture database.
 
 const graph = fc
-  .integer({ min: 1, max: 8 })
+  .integer({ min: 2, max: 8 })
   .chain((size) =>
     fc.tuple(
       fc.constant(size),
       fc.array(fc.tuple(fc.nat(size - 1), fc.nat(size - 1)), { maxLength: 16 }),
-      fc.tuple(fc.nat(size - 1), fc.nat(size - 1))
+      fc.tuple(fc.nat(size - 2), fc.nat(size - 2))
     )
   );
 
@@ -78,8 +78,10 @@ it('acyclic packages import idempotently and loops are always rejected', async (
       fc.asyncProperty(graph, async ([size, pairs, [low, high]]) => {
         run += 1;
         const looped = packageFor(`loop${run}`, size, pairs);
-        // Close a loop: the lower skill now also follows the higher one.
-        const [from, to] = low <= high ? [low, high] : [high, low];
+        // Close a loop through at least two skills (self-edges are unit-tested):
+        // the lower skill now also follows a strictly higher one.
+        const from = Math.min(low, high);
+        const to = Math.max(low, high) + 1;
         looped.skills[from].prerequisites.push(looped.skills[to].id);
         const error = await importContent(client, looped).catch((e) => e);
         expect(error).toBeInstanceOf(ContentImportError);

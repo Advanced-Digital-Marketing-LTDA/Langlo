@@ -53,6 +53,8 @@ export type ContentPackage = {
   }[];
 };
 
+type PackageVersion = ContentPackage['versions'][number];
+
 export type ImportResult = {
   skills: number;
   prerequisites: number;
@@ -101,7 +103,7 @@ function validateSkills(pkg: ContentPackage) {
       !languages.includes(skill.language) ||
       !levels.includes(skill.level) ||
       !Array.isArray(skill.prerequisites) ||
-      !skill.prerequisites.every(isText)
+      !skill.prerequisites.every((id) => isText(id))
     )
       fail('INVALID_PACKAGE', `skill ${String(skill?.id)}`);
     ids.add(skill.id);
@@ -116,9 +118,12 @@ function validateAlternatives(question: ContentQuestion) {
       fail('INVALID_ALTERNATIVES', question.id);
     return;
   }
-  if (!Array.isArray(alternatives) || !alternatives.every(isText))
+  if (
+    !Array.isArray(alternatives) ||
+    !alternatives.every((text) => isText(text))
+  )
     fail('INVALID_ALTERNATIVES', question.id);
-  const unique = new Set(alternatives.map(normalized));
+  const unique = new Set(alternatives.map((text) => normalized(text)));
   const answer = normalized(question.answer);
   const valid =
     unique.size === alternatives.length &&
@@ -128,35 +133,42 @@ function validateAlternatives(question: ContentQuestion) {
   if (!valid) fail('INVALID_ALTERNATIVES', question.id);
 }
 
+function validateQuestion(question: ContentQuestion, seen: Set<string>) {
+  if (
+    !isText(question?.id) ||
+    seen.has(question.id) ||
+    !formats.includes(question.format) ||
+    !isText(question.prompt) ||
+    !isText(question.answer)
+  )
+    fail('INVALID_PACKAGE', `question ${String(question?.id)}`);
+  seen.add(question.id);
+  validateAlternatives(question);
+}
+
+function validateVersion(version: PackageVersion, seen: Set<string>) {
+  if (
+    !isText(version?.id) ||
+    seen.has(version.id) ||
+    !isText(version.skillId) ||
+    !Number.isSafeInteger(version.version) ||
+    version.version < 1 ||
+    !Array.isArray(version.questions) ||
+    version.questions.length === 0
+  )
+    fail('INVALID_PACKAGE', `version ${String(version?.id)}`);
+  seen.add(version.id);
+  if (version.review !== 'approved' && version.review !== 'quarantined')
+    fail('UNREVIEWED', version.id);
+}
+
 function validateVersions(pkg: ContentPackage) {
   const versionIds = new Set<string>();
   const questionIds = new Set<string>();
   for (const version of pkg.versions) {
-    if (
-      !isText(version?.id) ||
-      versionIds.has(version.id) ||
-      !isText(version.skillId) ||
-      !Number.isSafeInteger(version.version) ||
-      version.version < 1 ||
-      !Array.isArray(version.questions) ||
-      version.questions.length === 0
-    )
-      fail('INVALID_PACKAGE', `version ${String(version?.id)}`);
-    versionIds.add(version.id);
-    if (version.review !== 'approved' && version.review !== 'quarantined')
-      fail('UNREVIEWED', version.id);
-    for (const question of version.questions) {
-      if (
-        !isText(question?.id) ||
-        questionIds.has(question.id) ||
-        !formats.includes(question.format) ||
-        !isText(question.prompt) ||
-        !isText(question.answer)
-      )
-        fail('INVALID_PACKAGE', `question ${String(question?.id)}`);
-      questionIds.add(question.id);
-      validateAlternatives(question);
-    }
+    validateVersion(version, versionIds);
+    for (const question of version.questions)
+      validateQuestion(question, questionIds);
   }
 }
 
@@ -288,8 +300,6 @@ async function insertEdges(
   return count;
 }
 
-type PackageVersion = ContentPackage['versions'][number];
-
 async function storedVersion(tx: Transaction, version: PackageVersion) {
   const rows = await tx.execute({
     sql: 'SELECT id, skill_id, version, status FROM content_versions WHERE id = ? OR (skill_id = ? AND version = ?)',
@@ -307,17 +317,22 @@ async function storedVersion(tx: Transaction, version: PackageVersion) {
   return String(row.status);
 }
 
+// Both sides are keyed and sorted the same way in JS; SQL collation order is
+// not relied on.
+const questionKeys = (pairs: Array<[unknown, unknown]>) =>
+  pairs
+    .map(([id, format]) => `${String(id)}\u0000${String(format)}`)
+    .sort((a, b) => Number(a > b) - Number(a < b));
+
 async function sameQuestions(tx: Transaction, version: PackageVersion) {
   const rows = await tx.execute({
-    sql: 'SELECT id, format FROM questions WHERE content_version_id = ? ORDER BY id',
+    sql: 'SELECT id, format FROM questions WHERE content_version_id = ?',
     args: [version.id]
   });
-  const stored = rows.rows.map(
-    (row) => `${String(row.id)}\u0000${String(row.format)}`
+  const stored = questionKeys(rows.rows.map((row) => [row.id, row.format]));
+  const incoming = questionKeys(
+    version.questions.map((question) => [question.id, question.format])
   );
-  const incoming = version.questions
-    .map((question) => `${question.id}\u0000${question.format}`)
-    .sort((a, b) => a.localeCompare(b));
   return JSON.stringify(stored) === JSON.stringify(incoming);
 }
 

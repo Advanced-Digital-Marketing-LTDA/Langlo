@@ -98,6 +98,15 @@ describe('content import', () => {
     expect(await sharedContent()).toEqual(after);
   });
 
+  it('re-imports a version whose question IDs differ only in case', async () => {
+    // Binary (SQLite) and locale order disagree on these IDs.
+    const pkg = approvedPackage();
+    pkg.versions[0].questions[0].id = 'Q-b';
+    pkg.versions[0].questions[1].id = 'q-a';
+    await importContent(client, pkg);
+    expect((await importContent(client, pkg)).versions).toBe(0);
+  });
+
   it('preserves existing prerequisites when a later package omits them', async () => {
     await importContent(client, approvedPackage());
     const later = approvedPackage();
