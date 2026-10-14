@@ -1,7 +1,14 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { page } from '$app/state';
+  import { onMount } from 'svelte';
   let { children } = $props();
+  // Marks the shell interactive, so browser tests never click server-rendered
+  // controls before their handlers are attached.
+  let hydrated = $state(false);
+  onMount(() => {
+    hydrated = true;
+  });
   const tabs = [
     { href: '/prototype', label: 'Home' },
     { href: '/prototype/map', label: 'Map' },
@@ -20,7 +27,7 @@
   <title>Langlo | Design prototype</title>
 </svelte:head>
 
-<div class="prototype">
+<div class="prototype" data-hydrated={hydrated || undefined}>
   <p class="banner" role="note">
     Design prototype — synthetic data · no real account or saved progress
   </p>

@@ -1,4 +1,19 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test as base, type Page } from '@playwright/test';
+
+// Every prototype navigation waits for hydration: a click on a server-rendered
+// button before its handler attaches is silently lost.
+const test = base.extend({
+  page: async ({ page }, use) => {
+    const goto = page.goto.bind(page);
+    page.goto = async (url, options) => {
+      const response = await goto(url, options);
+      if (url.startsWith('/prototype'))
+        await page.locator('.prototype[data-hydrated]').waitFor();
+      return response;
+    };
+    await use(page);
+  }
+});
 
 // Two incorrect typed answers ('es', 'je mange') out of four items.
 const TWO_MISS_RESPONSES = ['es', 'allons', 'je mange', 'je vais au marché'];
