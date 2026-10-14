@@ -38,7 +38,7 @@ plan id: b869f84d817a
 to apply: npm run db:remote-test -- apply --confirm-host langlo-pilot-test-example.aws-eu-west-1.turso.io --plan-id b869f84d817a
 ```
 
-Output never contains the URL scheme, token or driver error text. Failures print one fixed code: `TARGET_MISSING`, `TARGET_INVALID`, `TARGET_PRODUCTION`, `TOKEN_MISSING`, `TARGET_CLASS_REQUIRED`, `CONNECTION_FAILED`, `JOURNAL_INVALID`, `LEDGER_DRIFT`, `AMBIGUOUS_STATE`, `CONFIRMATION_REQUIRED`, `CONFIRMATION_MISMATCH`, `PLAN_CHANGED` or `APPLY_FAILED`.
+Output never contains the URL scheme, token or driver error text. Failures print one fixed code: `TARGET_MISSING`, `TARGET_INVALID`, `TARGET_PRODUCTION`, `TOKEN_MISSING`, `TARGET_CLASS_REQUIRED`, `CONNECTION_FAILED`, `JOURNAL_INVALID`, `LEDGER_DRIFT`, `AMBIGUOUS_STATE`, `CONFIRMATION_REQUIRED`, `CONFIRMATION_MISMATCH`, `PLAN_CHANGED` or `APPLY_FAILED`. Any other failure after connecting, such as the connection dropping during a `status` or `plan` read, prints `UNEXPECTED: no changes were confirmed`; those commands are read-only, so rerun them.
 
 ## State rules
 
