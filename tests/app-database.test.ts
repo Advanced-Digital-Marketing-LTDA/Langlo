@@ -4,11 +4,11 @@ import type { RuntimeConfig } from '../src/lib/server/config';
 const executed: string[] = [];
 
 vi.mock('@libsql/client', () => ({
-  createClient: () => ({
+  createClient: ({ url }: { url: string }) => ({
     // Turso's remote endpoint rejects connection-local pragmas such as busy_timeout.
     execute: (sql: string) => {
       executed.push(sql);
-      if (sql.startsWith('PRAGMA busy_timeout'))
+      if (url.startsWith('libsql:') && sql.startsWith('PRAGMA busy_timeout'))
         return Promise.reject(new Error('SQL not allowed statement'));
       return Promise.resolve({ rows: [] });
     },
@@ -39,13 +39,12 @@ describe('openAppDatabase', () => {
   });
 
   it('keeps the busy_timeout pragma for local file databases', async () => {
-    await expect(
-      openAppDatabase({
-        ...remote,
-        environment: 'test',
-        databaseUrl: 'file:./.fixtures/app.db'
-      })
-    ).rejects.toThrow('SQL not allowed statement');
+    const { close } = await openAppDatabase({
+      ...remote,
+      environment: 'test',
+      databaseUrl: 'file:./.fixtures/app.db'
+    });
+    close();
     expect(executed).toEqual([
       'PRAGMA foreign_keys = ON',
       'PRAGMA busy_timeout = 5000'
