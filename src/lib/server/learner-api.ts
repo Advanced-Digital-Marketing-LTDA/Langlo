@@ -48,12 +48,12 @@ export async function learnerApi(
   const { client, close } = await openAppDatabase(config);
   try {
     return json(await run(client, learner), { status });
-  } catch (thrown) {
-    if (thrown instanceof FlashcardError || thrown instanceof StudyError) {
-      const code = httpStatusFor(thrown.code);
+  } catch (error_) {
+    if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
+      const code = httpStatusFor(error_.code);
       if (code) error(code, { message: messageFor[code] });
     }
-    throw thrown;
+    throw error_;
   } finally {
     close();
   }

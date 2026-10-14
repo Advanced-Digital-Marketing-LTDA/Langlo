@@ -22,20 +22,21 @@ export async function reservePort(): Promise<number> {
 }
 
 /** Wait up to ten seconds for the synthetic server's liveness endpoint. */
-export async function waitForLive(origin: string): Promise<void> {
-  const deadline = Date.now() + 10000;
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(`${origin}/health/live`, {
-        signal: AbortSignal.timeout(500)
-      });
-      if (response.ok) return;
-    } catch {
-      /* Startup is bounded by the deadline. */
-    }
-    await setTimeout(30);
+export async function waitForLive(
+  origin: string,
+  deadline = Date.now() + 10000
+): Promise<void> {
+  try {
+    const response = await fetch(`${origin}/health/live`, {
+      signal: AbortSignal.timeout(500)
+    });
+    if (response.ok) return;
+  } catch {
+    /* Startup is bounded by the deadline. */
   }
-  throw new Error('Fixture server did not start');
+  if (Date.now() >= deadline) throw new Error('Fixture server did not start');
+  await setTimeout(30);
+  return waitForLive(origin, deadline);
 }
 
 /** Run a Node script from the repository root; throw with stderr on failure. */
@@ -44,7 +45,7 @@ export function runNode(
   input?: string,
   env?: NodeJS.ProcessEnv
 ): string {
-  const result = spawnSync('node', args, {
+  const result = spawnSync(process.execPath, args, {
     cwd: process.cwd(),
     env: env ?? process.env,
     input: input === undefined ? undefined : `${input}\n`,

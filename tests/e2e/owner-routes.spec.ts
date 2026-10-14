@@ -90,7 +90,7 @@ test.beforeAll(async () => {
       password,
       appEnv()
     );
-  server = spawn('node', ['build'], {
+  server = spawn(process.execPath, ['build'], {
     cwd: process.cwd(),
     env: {
       ...appEnv(),
