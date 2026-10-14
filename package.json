@@ -29,6 +29,7 @@
     "db:seed:test": "node tests/fixtures/cli.ts seed",
     "db:test:reset": "node tests/fixtures/cli.ts reset",
     "db:fixture:dispose": "node tests/fixtures/cli.ts dispose",
+    "db:remote-test": "node scripts/db-remote-test.ts",
     "accounts:provision": "node scripts/accounts-provision.ts"
   },
   "dependencies": {
