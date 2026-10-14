@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
-import { expect, test } from '@playwright/test';
+import { type BrowserContext, expect, test } from '@playwright/test';
 
 // A real browser derives the form POST Origin header from the page's
 // Referrer-Policy; request-context tests set it by hand and cannot see this.
@@ -20,10 +20,11 @@ test('native signup form submission passes the same-origin check', async ({
     },
     stdio: 'ignore'
   });
-  const context = await browser.newContext({
-    extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
-  });
+  let context: BrowserContext | undefined;
   try {
+    context = await browser.newContext({
+      extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+    });
     const deadline = Date.now() + 4000;
     while (Date.now() < deadline) {
       try {
@@ -47,7 +48,7 @@ test('native signup form submission passes the same-origin check', async ({
     expect(response.status()).not.toBe(403);
     await expect(page.locator('body')).not.toContainText('Cross-site');
   } finally {
-    await context.close();
+    await context?.close();
     server.kill();
   }
 });
