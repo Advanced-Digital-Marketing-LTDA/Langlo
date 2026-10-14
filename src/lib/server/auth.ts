@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { RuntimeConfig } from './config.ts';
@@ -48,6 +49,16 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
       provider: 'sqlite',
       schema
     }),
+    hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (
+          ctx.path === '/sign-up/email' &&
+          (typeof ctx.body?.name !== 'string' || !ctx.body.name.trim())
+        ) {
+          throw new APIError('BAD_REQUEST', { message: 'A name is required.' });
+        }
+      })
+    },
     user: { modelName: 'users' },
     session: {
       modelName: 'sessions',

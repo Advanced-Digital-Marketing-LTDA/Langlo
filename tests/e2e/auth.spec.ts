@@ -299,6 +299,30 @@ test('public signup creates a session while private routes still deny anon users
   });
   try {
     expect((await anon.get('/signup')).status()).toBe(200);
+    for (const path of ['/signup', '/api/auth/sign-up/email']) {
+      const details = {
+        name: '   ',
+        email: 'blank-signup@example.test',
+        password: 'blank-signup-password-1'
+      };
+      const invalid = await anon.post(
+        path,
+        path === '/signup'
+          ? form(details)
+          : { headers: { origin: base }, data: details }
+      );
+      expect(invalid.status()).toBe(400);
+      expect(invalid.headers()['set-cookie']).toBeUndefined();
+    }
+    const blankDatabase = createClient({ url: `file://${dbFile}` });
+    try {
+      const users = await blankDatabase.execute(
+        "SELECT id FROM users WHERE email = 'blank-signup@example.test'"
+      );
+      expect(users.rows).toHaveLength(0);
+    } finally {
+      blankDatabase.close();
+    }
     const signup = await anon.post(
       '/signup',
       form({
@@ -324,6 +348,25 @@ test('public signup creates a session while private routes still deny anon users
       })
     );
     expect(staleSignup.status()).toBe(303);
+    const apiSignup = await anon.post('/api/auth/sign-up/email', {
+      headers: { origin: base },
+      data: {
+        name: 'Second Account',
+        email: 'api-second@example.test',
+        password: 'api-second-password-1'
+      }
+    });
+    expect(apiSignup.status()).toBe(409);
+    expect(apiSignup.headers()['set-cookie']).toBeUndefined();
+    const database = createClient({ url: `file://${dbFile}` });
+    try {
+      const users = await database.execute(
+        "SELECT id FROM users WHERE email IN ('stale-signup@example.test', 'api-second@example.test')"
+      );
+      expect(users.rows).toHaveLength(0);
+    } finally {
+      database.close();
+    }
     const retainedSession = await anon.get('/api/auth/get-session');
     expect((await retainedSession.json()).user.email).toBe('new@example.test');
 
@@ -365,6 +408,8 @@ test('public sign-up endpoint enforces the configured rate limit', async () => {
               name: 'Rate Limited Learner'
             },
             headers: {
+              // Each attempt represents an anonymous learner on the shared network.
+              cookie: '',
               origin: base,
               'x-forwarded-for': `192.0.2.${attempt + 1}`,
               'x-langlo-client-address': `198.51.100.${attempt + 1}`
@@ -537,7 +582,7 @@ test('direct proxy policy isolates rate limits and fails auth safely on missing 
       const body = await blocked.json();
       expect(body.correlationId).toBe(blocked.headers()['x-correlation-id']);
       expect(JSON.stringify(body)).not.toMatch(
-        /synthetic-invalid-address|ADDRESS_HEADER|stack/
+        /synthetic-invalid-address|ADDRESS_HEADER|stack/u
       );
       for (const path of ['/signup', '/login', '/recover', '/reset']) {
         const formResponse = await client.post(path, {
@@ -558,6 +603,7 @@ test('direct proxy policy isolates rate limits and fails auth safely on missing 
       const response = await client.post('/api/auth/sign-up/email', {
         // Simulate the trusted last proxy appending the actual peer after forged input.
         headers: {
+          cookie: '',
           origin: proxyBase,
           'x-forwarded-for': `192.0.2.${attempt + 1}, 198.51.100.10`,
           'x-langlo-client-address': `203.0.113.${attempt + 1}`
@@ -571,7 +617,11 @@ test('direct proxy policy isolates rate limits and fails auth safely on missing 
       expect(response.status()).toBe(attempt < 5 ? 200 : 429);
     }
     const distinct = await client.post('/api/auth/sign-up/email', {
-      headers: { origin: proxyBase, 'x-forwarded-for': '198.51.100.11' },
+      headers: {
+        cookie: '',
+        origin: proxyBase,
+        'x-forwarded-for': '198.51.100.11'
+      },
       data: {
         name: 'Fixture',
         email: 'proxy-distinct@example.test',
@@ -580,7 +630,7 @@ test('direct proxy policy isolates rate limits and fails auth safely on missing 
     });
     expect(distinct.status()).toBe(200);
     expect(logs).not.toMatch(
-      /synthetic-invalid-address|fixture-password-0000|Address header was specified/
+      /synthetic-invalid-address|fixture-password-0000|Address header was specified/u
     );
   } finally {
     await client.dispose();

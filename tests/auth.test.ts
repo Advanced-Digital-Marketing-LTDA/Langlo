@@ -172,6 +172,27 @@ describe('public sign-up and credential login', () => {
     expect(users.rows).toHaveLength(1);
   });
 
+  it.each(['', '   ', '\t\n'])(
+    'rejects blank registration name %j without creating records',
+    async (name) => {
+      const reply = await call(fixture.auth, '/sign-up/email', {
+        method: 'POST',
+        body: {
+          name,
+          email: `blank-name-${name.length}@example.test`,
+          password: 'blank-name-password-1'
+        }
+      });
+      expect(reply.status).toBe(400);
+      expect(reply.setCookies).toEqual([]);
+      const users = await fixture.client.execute(
+        'SELECT id FROM users WHERE email = ?',
+        [`blank-name-${name.length}@example.test`]
+      );
+      expect(users.rows).toHaveLength(0);
+    }
+  );
+
   it('rate-limits public registration by client address', async () => {
     await clearRateLimits(fixture);
     const replies = [];

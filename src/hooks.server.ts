@@ -72,7 +72,39 @@ export const handle: Handle = async ({ event, resolve }) => {
       );
     }
   }
+  const signupApi = path === '/api/auth/sign-up/email';
   let sessionLookupFailed = false;
+  if (auth && (appPath || accountPage || signupApi)) {
+    let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
+    try {
+      session = await auth.api.getSession({
+        headers: event.request.headers
+      });
+    } catch {
+      // A backend outage is not a missing session; reporting it as one
+      // would convert 503 service failures into misleading 401s/redirects.
+      sessionLookupFailed = true;
+    }
+    if (session) {
+      event.locals.user = session.user as App.Locals['user'];
+      event.locals.session = session.session as App.Locals['session'];
+    }
+  }
+  if (sessionLookupFailed && (path === '/signup' || signupApi)) {
+    return Response.json(
+      { message: 'Service unavailable. Please try again.', correlationId },
+      { status: 503, headers }
+    );
+  }
+  if (signupApi && event.locals.user) {
+    return Response.json(
+      {
+        message: 'Sign out before registering another account.',
+        correlationId
+      },
+      { status: 409, headers }
+    );
+  }
   if (authPath) {
     if (!auth) {
       return Response.json(
@@ -129,22 +161,6 @@ export const handle: Handle = async ({ event, resolve }) => {
     for (const [key, value] of Object.entries(headers))
       output.headers.set(key, value);
     return output;
-  }
-  if (auth && (appPath || accountPage)) {
-    let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
-    try {
-      session = await auth.api.getSession({
-        headers: event.request.headers
-      });
-    } catch {
-      // A backend outage is not a missing session; reporting it as one
-      // would convert 503 service failures into misleading 401s/redirects.
-      sessionLookupFailed = true;
-    }
-    if (session) {
-      event.locals.user = session.user as App.Locals['user'];
-      event.locals.session = session.session as App.Locals['session'];
-    }
   }
   if (appPath) {
     if (!auth) {
