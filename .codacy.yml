@@ -1,0 +1,5 @@
+---
+# Codacy's PR complexity and duplication budgets are meant for product code.
+# Test files are reviewed by ESLint, CodeQL and the other scanners instead.
+exclude_paths:
+  - 'tests/**'

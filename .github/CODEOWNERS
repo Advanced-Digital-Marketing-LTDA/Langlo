@@ -29,6 +29,7 @@
 /.prettierignore                 @Bonobo791
 /.node-version                   @Bonobo791
 /.gitignore                      @Bonobo791
+/.codacy.yml                     @Bonobo791
 
 # Schema
 /drizzle/                        @Bonobo791
