@@ -219,7 +219,14 @@ test('a re-entered practice run replaces the recorded answers', async ({
 
 test('kept mistake becomes an approvable draft in decks', async ({ page }) => {
   await page.goto('/prototype/results');
-  await page.getByRole('button', { name: 'Keep as flashcard' }).click();
+  // A click on the server-rendered button before hydration is a no-op, so
+  // retry until the draft is announced.
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Keep as flashcard' }).click();
+    await expect(page.getByRole('status')).toContainText('Draft card created', {
+      timeout: 1000
+    });
+  }).toPass();
   await page.getByRole('link', { name: 'See card drafts' }).click();
   await expect(
     page.getByText('« Elle ___ fatiguée » — est, not es', { exact: true })
