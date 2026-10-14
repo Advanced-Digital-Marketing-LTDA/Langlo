@@ -462,6 +462,59 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     expect(result.applied).toHaveLength(fixed.length);
   });
 
+  it.each([
+    [
+      'a ledger row is rewritten',
+      `UPDATE __drizzle_migrations SET hash = '${'0'.repeat(64)}' WHERE rowid = 1`
+    ],
+    ['a table is added', 'CREATE TABLE concurrent_writer (id integer)']
+  ])(
+    'aborts the batch when %s between the plan check and the transaction',
+    async (_name, mutation) => {
+      const client = await scratchDatabase();
+      const all = loadMigrations();
+      const folder = await copyMigrations();
+      const journalPath = join(folder, 'meta/_journal.json');
+      const journal = JSON.parse(await readFile(journalPath, 'utf8'));
+      journal.entries = journal.entries.slice(0, 4);
+      await writeFile(journalPath, JSON.stringify(journal));
+      await migrate(drizzle(client), { migrationsFolder: folder });
+      const { planId } = await readMigrationState(client, all);
+      const racing = new Proxy(client, {
+        get(target, key, receiver) {
+          if (key === 'migrate')
+            return async (statements: unknown[]) => {
+              await target.execute(mutation);
+              return target.migrate(statements as never);
+            };
+          const value = Reflect.get(target, key, receiver);
+          return typeof value === 'function' ? value.bind(target) : value;
+        }
+      });
+      expect(
+        await asyncCodeOf(() =>
+          applyRemoteTestPlan(racing, all, { host, confirmHost: host, planId })
+        )
+      ).toBe('APPLY_FAILED');
+      const ledger = await client.execute(
+        'SELECT count(*) AS n FROM __drizzle_migrations'
+      );
+      expect(Number(ledger.rows[0].n)).toBe(4);
+    }
+  );
+
+  it('changes the plan id when a pending migration timestamp changes', async () => {
+    const client = await scratchDatabase();
+    const folder = await copyMigrations();
+    const before = await readMigrationState(client, loadMigrations(folder));
+    const journalPath = join(folder, 'meta/_journal.json');
+    const journal = JSON.parse(await readFile(journalPath, 'utf8'));
+    journal.entries[5].when += 1;
+    await writeFile(journalPath, JSON.stringify(journal));
+    const after = await readMigrationState(client, loadMigrations(folder));
+    expect(after.planId).not.toBe(before.planId);
+  });
+
   it('refuses a stale plan when the ledger changed after review', async () => {
     const client = await scratchDatabase();
     const migrations: MigrationFile[] = loadMigrations();
@@ -551,6 +604,24 @@ describe('remote-test CLI', () => {
       )
     ).toBe(0);
     expect(ok.lines.join('\n')).toContain('applied 6 migration(s)');
+  });
+
+  it('prints table names from the target without control characters', async () => {
+    const url = await scratchUrl();
+    const setup = track(createClient({ url }));
+    await migrate(drizzle(setup), { migrationsFolder: 'drizzle' });
+    await setup.execute(
+      'CREATE TABLE "evil\nledger: present\u001b[2J" (id integer)'
+    );
+    const out = capture();
+    await runRemoteTestCli(['status'], safeEnv, out.write, async () =>
+      createClient({ url })
+    );
+    const text = out.lines.join('\n');
+    expect(text).not.toContain('\u001b');
+    expect(
+      text.split('\n').filter((line) => line.startsWith('ledger:'))
+    ).toHaveLength(1);
   });
 
   it('reports a fixed message when the connection fails, without wrapped error text', async () => {

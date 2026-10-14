@@ -14,6 +14,9 @@ const usage =
 
 type Open = (target: RemoteTestTarget) => Promise<Client>;
 
+/** Table names come from the target database; never let them inject lines or terminal escapes. */
+const printable = (name: string) => name.replace(/[^\w.-]/g, '?');
+
 /** Real connection; only reached after the target guard passed. */
 const openRemote: Open = async (target) => {
   const { createClient } = await import('@libsql/client');
@@ -87,7 +90,7 @@ export async function runRemoteTestCli(
     write(`target host: ${target.host}`);
     write(`ledger: ${state.ledgerPresent ? 'present' : 'absent'}`);
     write(
-      `tables: ${state.userTables.length}${state.userTables.length ? ` (${state.userTables.join(', ')})` : ''}`
+      `tables: ${state.userTables.length}${state.userTables.length ? ` (${state.userTables.map(printable).join(', ')})` : ''}`
     );
     write(
       `applied: ${state.applied.length}/${migrations.length}${state.applied.length ? ` (${state.applied.map((m) => m.tag).join(', ')})` : ''}`

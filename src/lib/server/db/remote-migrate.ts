@@ -195,8 +195,8 @@ export async function readMigrationState(
       JSON.stringify({
         ledgerPresent,
         userTables,
-        applied: applied.map((m) => m.hash),
-        pending: pending.map((m) => m.hash)
+        applied: applied.map((m) => [m.hash, m.when]),
+        pending: pending.map((m) => [m.hash, m.when])
       })
     )
     .digest('hex')
@@ -234,10 +234,18 @@ export async function applyRemoteTestPlan(
 
   const batch: InStatement[] = [
     `CREATE TABLE IF NOT EXISTS ${ledgerTable} (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)`,
-    // abs(-9223372036854775808) raises "integer overflow", aborting the transaction.
+    // Re-check the reviewed state inside the transaction: the exact ledger rows
+    // and the user-table count. abs(-9223372036854775808) raises "integer
+    // overflow", aborting the whole batch when anything changed.
     {
-      sql: `SELECT CASE WHEN (SELECT count(*) FROM ${ledgerTable}) = ? THEN 1 ELSE abs(-9223372036854775808) END`,
-      args: [state.applied.length]
+      sql: `SELECT CASE WHEN
+          coalesce((SELECT group_concat(entry, ',') FROM (SELECT hash || ':' || created_at AS entry FROM ${ledgerTable} ORDER BY created_at, id)), '') = ?
+          AND (SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name <> '${ledgerTable}' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name NOT LIKE '\\_litestream%' ESCAPE '\\') = ?
+        THEN 1 ELSE abs(-9223372036854775808) END`,
+      args: [
+        state.applied.map((m) => `${m.hash}:${m.when}`).join(','),
+        state.userTables.length
+      ]
     }
   ];
   for (const migration of state.pending) {

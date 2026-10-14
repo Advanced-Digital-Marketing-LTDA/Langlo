@@ -34,8 +34,8 @@ applied: 0/6
 pending: 6 (0000_initial_study, 0001_card_delivery_identity, 0002_harden_persisted_invariants, 0003_review_invariants, 0004_material_sway, 0005_auth_contract)
   would apply 0000_initial_study (24 statement(s), sha256 ef3c4b9fc535)
   ...
-plan id: bbe557136aca
-to apply: npm run db:remote-test -- apply --confirm-host langlo-pilot-test-example.aws-eu-west-1.turso.io --plan-id bbe557136aca
+plan id: b869f84d817a
+to apply: npm run db:remote-test -- apply --confirm-host langlo-pilot-test-example.aws-eu-west-1.turso.io --plan-id b869f84d817a
 ```
 
 Output never contains the URL scheme, token or driver error text. Failures print one fixed code: `TARGET_MISSING`, `TARGET_INVALID`, `TARGET_PRODUCTION`, `TOKEN_MISSING`, `TARGET_CLASS_REQUIRED`, `CONNECTION_FAILED`, `JOURNAL_INVALID`, `LEDGER_DRIFT`, `AMBIGUOUS_STATE`, `CONFIRMATION_REQUIRED`, `CONFIRMATION_MISMATCH`, `PLAN_CHANGED` or `APPLY_FAILED`.
@@ -48,6 +48,6 @@ Output never contains the URL scheme, token or driver error text. Failures print
 
 ## Atomicity, retry and rollback limits
 
-Apply sends every pending statement plus the ledger inserts as one `client.migrate` batch. In the installed `@libsql/client` 0.18.0 that batch is `BEGIN` … `COMMIT` with a conditional `ROLLBACK` step, so SQLite's transaction makes it all-or-nothing; a guard statement at the start of the batch re-checks the ledger count so a concurrent apply aborts. After `APPLY_FAILED`, run `status` to confirm nothing changed, fix the cause, then `plan` and `apply` again.
+Apply sends every pending statement plus the ledger inserts as one `client.migrate` batch. In the installed `@libsql/client` 0.18.0 that batch is `BEGIN` … `COMMIT` with a conditional `ROLLBACK` step, so SQLite's transaction makes it all-or-nothing; a guard statement at the start of the batch re-checks the exact ledger rows and table count, so a concurrent change or apply aborts it. After `APPLY_FAILED`, run `status` to confirm nothing changed, fix the cause, then `plan` and `apply` again.
 
 There is no down migration, destructive reset or automatic rollback. Recovery from a bad but committed migration is roll-forward with a new migration, or restore from a Turso backup/PITR, which is unverified (LANGLO-58). Any future destructive migration needs a verified backup and explicit owner review before apply.
