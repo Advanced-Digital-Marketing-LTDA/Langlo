@@ -63,12 +63,12 @@ export interface RemoteTestTarget {
   authToken: string;
 }
 
-const productionMarker = /(^|[^a-z0-9])prod(uction)?([^a-z0-9]|$)/i;
+const productionMarker = /(^|[^a-z0-9])prod(uction)?([^a-z0-9]|$)/iu;
 // Turso targets are DNS names. Requiring dotted labels ending in an alphabetic
 // TLD rejects every IP literal (IPv6, dotted, short or numeric IPv4), which
 // `new URL` does not normalise for the non-special libsql: scheme.
-const dnsLabel = /^[a-z0-9-]{1,63}$/;
-const topLevelLabel = /^[a-z]{2,63}$/;
+const dnsLabel = /^[a-z0-9-]{1,63}$/u;
+const topLevelLabel = /^[a-z]{2,63}$/u;
 function isDnsHost(hostname: string): boolean {
   const labels = hostname.split('.');
   return (
@@ -78,6 +78,22 @@ function isDnsHost(hostname: string): boolean {
         dnsLabel.test(label) && !label.startsWith('-') && !label.endsWith('-')
     ) &&
     topLevelLabel.test(labels.at(-1) ?? '')
+  );
+}
+
+/** A libsql:// DNS host with no port, credentials, query, fragment or path. */
+function isBareRemoteUrl(url: URL): boolean {
+  const hostname = url.hostname.toLowerCase();
+  return (
+    url.protocol === 'libsql:' &&
+    isDnsHost(hostname) &&
+    !hostname.endsWith('.localhost') &&
+    !url.port &&
+    !url.username &&
+    !url.password &&
+    !url.search &&
+    !url.hash &&
+    (url.pathname === '' || url.pathname === '/')
   );
 }
 
@@ -95,18 +111,7 @@ export function parseRemoteTestTarget(
   } catch {
     throw new RemoteMigrationError('TARGET_INVALID');
   }
-  if (
-    url.protocol !== 'libsql:' ||
-    !isDnsHost(url.hostname.toLowerCase()) ||
-    url.hostname.toLowerCase().endsWith('.localhost') ||
-    url.port ||
-    url.username ||
-    url.password ||
-    url.search ||
-    url.hash ||
-    (url.pathname !== '' && url.pathname !== '/')
-  )
-    throw new RemoteMigrationError('TARGET_INVALID');
+  if (!isBareRemoteUrl(url)) throw new RemoteMigrationError('TARGET_INVALID');
   const hostname = url.hostname.toLowerCase();
   if (productionMarker.test(hostname))
     throw new RemoteMigrationError('TARGET_PRODUCTION');
@@ -134,7 +139,7 @@ export function loadMigrations(folder = 'drizzle'): MigrationFile[] {
     return journal.entries.map((entry) => {
       if (
         typeof entry.tag !== 'string' ||
-        !/^\d{4}_[a-z0-9_]+$/.test(entry.tag) ||
+        !/^\d{4}_[a-z0-9_]+$/u.test(entry.tag) ||
         typeof entry.when !== 'number' ||
         !Number.isSafeInteger(entry.when) ||
         entry.when <= previous

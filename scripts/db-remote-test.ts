@@ -15,7 +15,7 @@ const usage =
 type Open = (target: RemoteTestTarget) => Promise<Client>;
 
 /** Table names come from the target database; never let them inject lines or terminal escapes. */
-const printable = (name: string) => name.replace(/[^\w.-]/g, '?');
+const printable = (name: string) => name.replace(/[^\w.-]/gu, '?');
 
 /** Real connection; only reached after the target guard passed. */
 const openRemote: Open = async (target) => {
@@ -30,7 +30,8 @@ function parseApplyFlags(
   const flags: { confirmHost?: string; planId?: string } = {};
   const rest = [...args];
   while (rest.length > 0) {
-    const [flag, value] = rest.splice(0, 2);
+    const flag = rest.shift();
+    const value = rest.shift();
     if (value === undefined || value.startsWith('--')) return null;
     if (flag === '--confirm-host' && flags.confirmHost === undefined)
       flags.confirmHost = value;

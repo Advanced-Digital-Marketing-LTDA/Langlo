@@ -243,7 +243,7 @@ describe('migration inventory', () => {
     ]);
     const whens = migrations.map((m) => m.when);
     expect([...whens].sort((a, b) => a - b)).toEqual(whens);
-    expect(migrations.every((m) => /^[0-9a-f]{64}$/.test(m.hash))).toBe(true);
+    expect(migrations.every((m) => /^[0-9a-f]{64}$/u.test(m.hash))).toBe(true);
   });
 
   it('rejects a journal whose timestamps are not strictly increasing', async () => {
@@ -267,7 +267,7 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     expect(state.pending.map((m) => m.tag)).toEqual(
       migrations.map((m) => m.tag)
     );
-    expect(state.planId).toMatch(/^[0-9a-f]{12}$/);
+    expect(state.planId).toMatch(/^[0-9a-f]{12}$/u);
   });
 
   it('applies pending migrations in order and a rerun is a no-op', async () => {
@@ -582,7 +582,7 @@ describe('remote-test CLI', () => {
     const text = [...status.lines, ...plan.lines].join('\n');
     expect(text).toContain(host);
     expect(text).toContain('0005_auth_contract');
-    expect(text).toMatch(/plan id: [0-9a-f]{12}/);
+    expect(text).toMatch(/plan id: [0-9a-f]{12}/u);
     expect(text).not.toContain('synthetic-token-not-a-secret');
     expect(text).not.toContain('libsql://');
     const tables = await client.execute(
