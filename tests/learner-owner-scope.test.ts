@@ -32,7 +32,7 @@ const ownerA = testSession('learner-a');
 const ownerB = testSession('learner-b');
 
 let client: Client;
-let close: () => void;
+let close: (() => void) | undefined;
 
 beforeEach(async () => {
   const target = await fixture();
@@ -56,7 +56,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  close();
+  close?.();
+  close = undefined;
   await disposeFlashcardFixtures();
 });
 
@@ -234,6 +235,23 @@ describe('forged identifiers yield zero cross-owner reads and writes', () => {
         answer: 'un'
       })
     ).rejects.toThrow('NOT_FOUND');
+    expect(await privateState(client)).toEqual(before);
+  });
+
+  it('a question from quarantined content records no attempt', async () => {
+    await client.execute(
+      "UPDATE content_versions SET status = 'quarantined' WHERE id = 'content-v1'"
+    );
+    const before = await privateState(client);
+    await expect(
+      recordAttempt(client, ownerA, {
+        studySessionId: 'study-a',
+        questionId: 'question-1',
+        submissionKey: 'quarantined',
+        evidenceKind: 'independent',
+        answer: 'un'
+      })
+    ).rejects.toThrow('CONTENT_UNAVAILABLE');
     expect(await privateState(client)).toEqual(before);
   });
 

@@ -33,7 +33,7 @@ type Handler = (event: never) => Promise<Response>;
 
 let target: FixtureTarget;
 let client: Client;
-let close: () => void;
+let close: (() => void) | undefined;
 
 beforeEach(async () => {
   target = await fixture();
@@ -57,7 +57,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
-  close();
+  close?.();
+  close = undefined;
   await disposeFlashcardFixtures();
 });
 

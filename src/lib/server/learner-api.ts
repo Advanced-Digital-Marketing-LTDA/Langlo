@@ -15,7 +15,8 @@ const statusFor: Record<string, number> = {
   STALE_REVIEW: 409,
   NOT_APPROVED: 409,
   SUSPENDED: 409,
-  SESSION_NOT_ACTIVE: 409
+  SESSION_NOT_ACTIVE: 409,
+  CONTENT_UNAVAILABLE: 409
 };
 
 const messageFor: Record<number, string> = {

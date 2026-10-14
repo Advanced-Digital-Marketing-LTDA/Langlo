@@ -29,7 +29,11 @@ import { privateState } from './fixtures/owner-scope';
 // Every read is NOT_FOUND and every write leaves all private rows unchanged.
 it('guessed identifiers give another owner zero reads and zero writes', async () => {
   const target = await fixture();
-  const { client, close } = await openFixtureDatabase(target);
+  const opened = await openFixtureDatabase(target).catch(async (error) => {
+    await disposeFlashcardFixtures();
+    throw error;
+  });
+  const { client, close } = opened;
   try {
     const ownerA = testSession('learner-a');
     const ownerB = testSession('learner-b');

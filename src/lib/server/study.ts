@@ -2,9 +2,11 @@ import { randomUUID } from 'node:crypto';
 import type { Client, Row } from '@libsql/client';
 import { beginWrite, type LearnerSession } from './flashcards';
 
-// Owner-scoped grammar study repository. Every statement binds owner_id to the
-// learner derived from the verified session; IDs supplied by a client only
-// select among that learner's own rows, and anything else is NOT_FOUND.
+// Owner-scoped grammar study repository. Every statement on a learner table
+// binds owner_id to the learner derived from the verified session; IDs
+// supplied by a client only select among that learner's own rows, and
+// anything else is NOT_FOUND. Questions and content versions are shared,
+// unowned content and are read only to validate an attempt.
 
 type EvidenceKind = 'independent' | 'assisted';
 const evidenceKinds: readonly string[] = ['independent', 'assisted'];
@@ -217,11 +219,14 @@ export async function recordAttempt(
     if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
 
     const question = await tx.execute({
-      sql: 'SELECT content_version_id, skill_id FROM questions WHERE id = ? AND language = ?',
+      sql: 'SELECT q.content_version_id, q.skill_id, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
       args: [input.questionId, studyRow.language]
     });
     const questionRow = question.rows[0];
     if (!questionRow) throw new StudyError('NOT_FOUND');
+    // Quarantined content is withdrawn: no new learner history may cite it.
+    if (questionRow.status === 'quarantined')
+      throw new StudyError('CONTENT_UNAVAILABLE');
 
     const id = randomUUID();
     await tx.execute({
