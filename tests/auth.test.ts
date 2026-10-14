@@ -80,7 +80,7 @@ function call(
         method: init?.method ?? 'GET',
         headers: {
           ...(init?.clientAddress
-            ? { 'x-forwarded-for': init.clientAddress }
+            ? { 'x-langlo-client-address': init.clientAddress }
             : {}),
           ...(init?.body !== undefined
             ? { 'content-type': 'application/json' }

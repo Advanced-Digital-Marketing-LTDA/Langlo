@@ -134,6 +134,7 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   allowlisted safe diagnostics.
 - Rate limits (as configured; observed deterministic 429s in T010b; T010c
   re-asserts at route level):
+  - `/api/auth/sign-up/email`: 5 per 3600 seconds per client.
   - `/api/auth/sign-in/email`: 5 per 300 seconds per client.
   - `/api/auth/request-password-reset`: 3 per 600 seconds per client.
   - `/api/auth/reset-password`: 5 per 600 seconds per client.
@@ -142,6 +143,12 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
     environment, since the framework default only enforces in production.
     Observed: `rate_limits` rows persist in SQLite across restarts, and the
     counter saturates at `max` rather than growing on rejected requests.
+- Both auth API requests and form actions overwrite the internal
+  `x-langlo-client-address` header with `event.getClientAddress()`. Better Auth
+  uses only that header for rate-limit identity, so client-supplied forwarded
+  address headers cannot create new buckets. Adapter proxy trust remains an
+  operator configuration requirement; without trusted proxy forwarding,
+  requests behind the same proxy conservatively share its address.
 
 ### 5. Learner ownership across sessions
 

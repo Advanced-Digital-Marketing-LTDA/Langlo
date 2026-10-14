@@ -1,9 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { applyAuthCookies } from '../../lib/server/auth-cookies';
-import { resolveAuth } from '../../lib/server/auth-runtime';
-import { safeDiagnostic } from '../../lib/server/diagnostics';
-import { authFormRequest } from '../../lib/server/auth-request';
+import { runAuthRequest } from '../../lib/server/auth-operation';
 
 export const load: PageServerLoad = ({ locals }) => {
   if (locals.user) redirect(303, '/app');
@@ -17,31 +15,11 @@ export const actions: Actions = {
     const name = String(data.get('name') ?? '');
     const email = String(data.get('email') ?? '');
     const password = String(data.get('password') ?? '');
-    const auth = event.locals.config
-      ? await resolveAuth(event.locals.config).catch((error: unknown) => {
-          console.warn(
-            JSON.stringify(
-              safeDiagnostic('auth', error, event.locals.correlationId)
-            )
-          );
-          return null;
-        })
-      : null;
-    if (!auth) {
-      return fail(503, { email, message: 'Accounts are not ready yet.' });
-    }
-    const response = await auth
-      .handler(
-        authFormRequest(event, 'sign-up/email', { name, email, password })
-      )
-      .catch((error: unknown) => {
-        console.warn(
-          JSON.stringify(
-            safeDiagnostic('auth', error, event.locals.correlationId)
-          )
-        );
-        return null;
-      });
+    const response = await runAuthRequest(event, 'sign-up/email', {
+      name,
+      email,
+      password
+    });
     if (!response || response.status >= 500) {
       return fail(503, {
         email,

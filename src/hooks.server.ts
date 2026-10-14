@@ -5,6 +5,7 @@ import { parseRuntimeConfig } from './lib/server/config';
 import { safeDiagnostic, safeError } from './lib/server/diagnostics';
 import { resolveAuth } from './lib/server/auth-runtime';
 import { withCorrelationId } from './lib/server/request-context';
+import { authRequestHeaders } from './lib/server/auth-request';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const correlationId = randomUUID();
@@ -80,7 +81,9 @@ export const handle: Handle = async ({ event, resolve }) => {
       );
     }
     const authResponse = await withCorrelationId(correlationId, () =>
-      auth.handler(event.request)
+      auth.handler(
+        new Request(event.request, { headers: authRequestHeaders(event) })
+      )
     );
     const output = new Response(authResponse.body, authResponse);
     if (

@@ -1,11 +1,14 @@
 import { fail } from '@sveltejs/kit';
 import type { Actions } from './$types';
-import { resolveAuth } from '../../lib/server/auth-runtime';
 import { safeDiagnostic } from '../../lib/server/diagnostics';
-import { authFormRequest } from '../../lib/server/auth-request';
+import { runAuthRequest } from '../../lib/server/auth-operation';
 
 const confirmation =
   'If this email exists in our system, check your email for the reset link.';
+const unavailable = () =>
+  fail(503, {
+    message: 'Password recovery is temporarily unavailable. Try again.'
+  });
 
 export const actions: Actions = {
   default: async (event) => {
@@ -13,9 +16,7 @@ export const actions: Actions = {
     const email = String(data.get('email') ?? '');
     const runtime = event.locals.config;
     if (!runtime?.auth) {
-      return fail(503, {
-        message: 'Password recovery is temporarily unavailable. Try again.'
-      });
+      return unavailable();
     }
     if (runtime.auth.mailError) {
       console.warn(
@@ -27,49 +28,19 @@ export const actions: Actions = {
           )
         )
       );
-      return fail(503, {
-        message: 'Password recovery is temporarily unavailable. Try again.'
-      });
+      return unavailable();
     }
-    const auth = event.locals.config
-      ? await resolveAuth(event.locals.config).catch((error: unknown) => {
-          console.warn(
-            JSON.stringify(
-              safeDiagnostic('auth', error, event.locals.correlationId)
-            )
-          );
-          return null;
-        })
-      : null;
-    if (!auth) {
-      return fail(503, {
-        message: 'Password recovery is temporarily unavailable. Try again.'
-      });
-    }
-    const response = await auth
-      .handler(
-        authFormRequest(event, 'request-password-reset', {
-          email,
-          redirectTo: '/reset'
-        })
-      )
-      .catch((error: unknown) => {
-        console.warn(
-          JSON.stringify(
-            safeDiagnostic('auth', error, event.locals.correlationId)
-          )
-        );
-        return null;
-      });
+    const response = await runAuthRequest(event, 'request-password-reset', {
+      email,
+      redirectTo: '/reset'
+    });
     if (!response || response.status >= 500) {
       console.warn(
         JSON.stringify(
           safeDiagnostic('auth', undefined, event.locals.correlationId)
         )
       );
-      return fail(503, {
-        message: 'Password recovery is temporarily unavailable. Try again.'
-      });
+      return unavailable();
     }
     if (response.status === 429) {
       return fail(429, {

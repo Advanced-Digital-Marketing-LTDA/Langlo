@@ -39,6 +39,7 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
     telemetry: { enabled: false },
     logger: { disabled: true },
     advanced: {
+      ipAddress: { ipAddressHeaders: ['x-langlo-client-address'] },
       defaultCookieAttributes: {
         secure: config.origin.startsWith('https:')
       }

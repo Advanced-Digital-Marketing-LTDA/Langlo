@@ -10,6 +10,45 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout } from 'node:timers/promises';
 import { createClient } from '@libsql/client/sqlite3';
+import { createServer } from 'node:net';
+
+async function reservePort(): Promise<number> {
+  const probe = createServer();
+  return new Promise((resolve, reject) => {
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const address = probe.address();
+      probe.close(() =>
+        resolve(typeof address === 'object' && address ? address.port : 0)
+      );
+    });
+  });
+}
+
+async function waitForLive(origin: string): Promise<void> {
+  const deadline = Date.now() + 10000;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(`${origin}/health/live`, {
+        signal: AbortSignal.timeout(500)
+      });
+      if (response.ok) return;
+    } catch {
+      /* Startup is bounded by the deadline. */
+    }
+    await setTimeout(30);
+  }
+  throw new Error('Auth fixture server did not start');
+}
+
+async function resetRateLimits(): Promise<void> {
+  const client = createClient({ url: `file://${dbFile}` });
+  try {
+    await client.execute('DELETE FROM rate_limits');
+  } finally {
+    client.close();
+  }
+}
 
 const run = (args: string[], input?: string, env?: NodeJS.ProcessEnv) => {
   const result = spawnSync('node', args, {
@@ -43,17 +82,7 @@ const provisionEnv = () => ({
 
 test.beforeAll(async () => {
   // Dynamic port: avoids colliding with any already-running server.
-  const { createServer } = await import('node:net');
-  const port = await new Promise<number>((resolve, reject) => {
-    const probe = createServer();
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const address = probe.address();
-      probe.close(() =>
-        resolve(typeof address === 'object' && address ? address.port : 0)
-      );
-    });
-  });
+  const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
   const init = JSON.parse(run(['tests/fixtures/cli.ts', 'init'])) as {
     fixtureRoot: string;
@@ -102,16 +131,7 @@ test.beforeAll(async () => {
     },
     stdio: 'ignore'
   });
-  for (let attempt = 0; attempt < 100; attempt += 1) {
-    try {
-      const probe = await fetch(`${base}/health/live`);
-      if (probe.ok) break;
-    } catch {
-      /* not up yet */
-    }
-    await setTimeout(100);
-    if (attempt === 99) throw new Error('auth e2e server did not start');
-  }
+  await waitForLive(base);
   ctx = await request.newContext({
     baseURL: base,
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
@@ -325,12 +345,7 @@ test('public signup creates a session while private routes still deny anon users
 });
 
 test('public sign-up endpoint enforces the configured rate limit', async () => {
-  const client = createClient({ url: `file://${dbFile}` });
-  try {
-    await client.execute('DELETE FROM rate_limits');
-  } finally {
-    client.close();
-  }
+  await resetRateLimits();
   const anon = await request.newContext({
     baseURL: base,
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
@@ -346,37 +361,24 @@ test('public sign-up endpoint enforces the configured rate limit', async () => {
               password: 'signup-rate-limit-password',
               name: 'Rate Limited Learner'
             },
-            headers: { origin: base }
+            headers: {
+              origin: base,
+              'x-forwarded-for': `192.0.2.${attempt + 1}`,
+              'x-langlo-client-address': `198.51.100.${attempt + 1}`
+            }
           })
         ).status()
       );
     }
-    expect(statuses.filter((status) => status === 429).length).toBeGreaterThan(
-      0
-    );
+    expect(statuses).toEqual([200, 200, 200, 200, 200, 429, 429]);
   } finally {
     await anon.dispose();
   }
 });
 
 test('invalid SMTP config leaves public pages and registration available', async () => {
-  const rateLimitClient = createClient({ url: `file://${dbFile}` });
-  try {
-    await rateLimitClient.execute('DELETE FROM rate_limits');
-  } finally {
-    rateLimitClient.close();
-  }
-  const { createServer } = await import('node:net');
-  const probe = createServer();
-  const port = await new Promise<number>((resolve, reject) => {
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const address = probe.address();
-      probe.close(() =>
-        resolve(typeof address === 'object' && address ? address.port : 0)
-      );
-    });
-  });
+  await resetRateLimits();
+  const port = await reservePort();
   const alternateBase = `http://127.0.0.1:${port}`;
   const featureServer = spawn('node', ['build'], {
     cwd: process.cwd(),
@@ -404,21 +406,7 @@ test('invalid SMTP config leaves public pages and registration available', async
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
   });
   try {
-    const deadline = Date.now() + 5000;
-    let started = false;
-    while (Date.now() < deadline) {
-      try {
-        const live = await client.get('/health/live', { timeout: 500 });
-        if (live.status() === 200) {
-          started = true;
-          break;
-        }
-      } catch {
-        /* Startup is bounded by the deadline. */
-      }
-      await setTimeout(30);
-    }
-    expect(started).toBe(true);
+    await waitForLive(alternateBase);
     expect((await client.get('/')).status()).toBe(200);
     expect((await client.get('/prototype')).status()).toBe(200);
     expect((await client.get('/signup')).status()).toBe(200);
@@ -458,12 +446,7 @@ test('invalid SMTP config leaves public pages and registration available', async
 });
 
 test('sign-in endpoint enforces the configured rate limit over HTTP', async () => {
-  const client = createClient({ url: `file://${dbFile}` });
-  try {
-    await client.execute('DELETE FROM rate_limits');
-  } finally {
-    client.close();
-  }
+  await resetRateLimits();
   const statuses: number[] = [];
   for (let attempt = 0; attempt < 7; attempt += 1) {
     statuses.push(
@@ -481,19 +464,18 @@ test('sign-in endpoint enforces the configured rate limit over HTTP', async () =
 });
 
 test('login form action applies the same rate limit as the endpoint', async () => {
-  const client = createClient({ url: `file://${dbFile}` });
-  try {
-    await client.execute('DELETE FROM rate_limits');
-  } finally {
-    client.close();
-  }
+  await resetRateLimits();
   const statuses: number[] = [];
   for (let attempt = 0; attempt < 7; attempt += 1) {
     statuses.push(
       (
         await ctx.post('/login', {
           form: { email: 'e2e@example.test', password: 'e2e-rotated-0000' },
-          headers: { origin: base },
+          headers: {
+            origin: base,
+            'x-forwarded-for': `192.0.2.${attempt + 1}`,
+            'x-langlo-client-address': `198.51.100.${attempt + 1}`
+          },
           maxRedirects: 0
         })
       ).status()
