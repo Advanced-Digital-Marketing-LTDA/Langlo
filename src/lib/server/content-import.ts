@@ -85,7 +85,7 @@ const isText = (value: unknown): value is string =>
 const normalized = (value: string) => value.trim().toLowerCase();
 
 const stableVersion =
-  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/;
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/u;
 
 function validatePackageHeader(pkg: ContentPackage) {
   if (pkg?.publicationStatus !== 'approved') fail('NOT_APPROVED');
