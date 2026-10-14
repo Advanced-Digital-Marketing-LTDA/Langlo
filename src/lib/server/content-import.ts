@@ -1,4 +1,5 @@
 import type { Client, Transaction } from '@libsql/client';
+import { z } from 'zod';
 import { beginWrite } from './flashcards';
 
 // Checked grammar-content import (T012). Writes only the shared, unowned
@@ -56,7 +57,6 @@ export type ContentPackage = {
 };
 
 type PackageVersion = ContentPackage['versions'][number];
-type PackageSkill = ContentPackage['skills'][number];
 
 export type ImportResult = {
   skills: number;
@@ -77,13 +77,11 @@ export class ContentImportError extends Error {
 
 type SkillInfo = { language: string; level: string };
 type Edge = { skillId: string; prerequisiteId: string };
+type NewEdge = Edge & { language: string };
 
 function fail(code: string, detail = ''): never {
   throw new ContentImportError(code, detail);
 }
-
-const isText = (value: unknown): value is string =>
-  typeof value === 'string' && value.trim().length > 0;
 
 const normalized = (value: string) => value.trim().toLowerCase();
 
@@ -93,46 +91,68 @@ const stableVersion =
 function validatePackageHeader(pkg: ContentPackage) {
   if (pkg?.publicationStatus !== 'approved') fail('NOT_APPROVED');
   // The contract requires a stable semantic version for an approved bundle.
-  if (
-    typeof pkg.curriculumVersion !== 'string' ||
-    !stableVersion.test(pkg.curriculumVersion)
-  )
+  if (!stableVersion.test(String(pkg.curriculumVersion)))
     fail('NOT_APPROVED', 'curriculum version');
-  if (pkg.dependencySemantics !== 'recommended_teaching_order')
-    fail('INVALID_PACKAGE', 'dependency semantics');
-  if (!Array.isArray(pkg.skills) || !Array.isArray(pkg.versions))
-    fail('INVALID_PACKAGE', 'skills and versions');
 }
 
-function inTrack(skill: PackageSkill) {
-  return (
-    languages.includes(skill.language) &&
-    levels.includes(skill.level) &&
-    tracks.has(`${skill.language} ${skill.level}`)
+// Structure only. Reviews and alternatives are checked afterwards so that they
+// keep their own error codes.
+const text = z.string().regex(/\S/u);
+
+const skillShape = z
+  .object({
+    id: text,
+    language: z.enum(languages),
+    level: z.enum(levels),
+    review: z.unknown().optional(),
+    prerequisites: z
+      .array(text)
+      .refine((ids) => new Set(ids).size === ids.length, 'duplicate')
+  })
+  .refine((skill) => tracks.has(`${skill.language} ${skill.level}`), 'track');
+
+const questionShape = z.object({
+  id: text,
+  format: z.enum(formats),
+  prompt: text,
+  answer: text,
+  alternatives: z.unknown().optional()
+});
+
+const packageShape = z.object({
+  dependencySemantics: z.literal('recommended_teaching_order'),
+  skills: z.array(skillShape),
+  versions: z.array(
+    z.object({
+      id: text,
+      skillId: text,
+      version: z.int().min(1),
+      review: z.unknown().optional(),
+      questions: z.array(questionShape).min(1)
+    })
+  )
+});
+
+const hasDuplicates = (ids: string[]) => new Set(ids).size !== ids.length;
+
+function validateShape(pkg: ContentPackage) {
+  const parsed = packageShape.safeParse(pkg);
+  if (!parsed.success) fail('INVALID_PACKAGE', z.prettifyError(parsed.error));
+  const ids = [
+    pkg.skills.map((skill) => skill.id),
+    pkg.versions.map((version) => version.id),
+    pkg.versions.flatMap((version) => version.questions.map((q) => q.id))
+  ];
+  if (ids.some(hasDuplicates)) fail('INVALID_PACKAGE', 'duplicate id');
+}
+
+function validateReviews(pkg: ContentPackage) {
+  const skill = pkg.skills.find((item) => item.review !== 'approved');
+  if (skill) fail('UNREVIEWED', skill.id);
+  const version = pkg.versions.find(
+    (item) => item.review !== 'approved' && item.review !== 'quarantined'
   );
-}
-
-function validPrerequisites(ids: unknown) {
-  return (
-    Array.isArray(ids) &&
-    ids.every((id) => isText(id)) &&
-    new Set(ids).size === ids.length
-  );
-}
-
-function validateSkills(pkg: ContentPackage) {
-  const ids = new Set<string>();
-  for (const skill of pkg.skills) {
-    if (
-      !isText(skill?.id) ||
-      ids.has(skill.id) ||
-      !inTrack(skill) ||
-      !validPrerequisites(skill.prerequisites)
-    )
-      fail('INVALID_PACKAGE', `skill ${String(skill?.id)}`);
-    ids.add(skill.id);
-    if (skill.review !== 'approved') fail('UNREVIEWED', skill.id);
-  }
+  if (version) fail('UNREVIEWED', version.id);
 }
 
 function validateAlternatives(question: ContentQuestion) {
@@ -142,12 +162,9 @@ function validateAlternatives(question: ContentQuestion) {
       fail('INVALID_ALTERNATIVES', question.id);
     return;
   }
-  if (
-    !Array.isArray(alternatives) ||
-    !alternatives.every((text) => isText(text))
-  )
+  if (!z.array(text).safeParse(alternatives).success)
     fail('INVALID_ALTERNATIVES', question.id);
-  const unique = new Set(alternatives.map((text) => normalized(text)));
+  const unique = new Set(alternatives.map((item) => normalized(item)));
   const answer = normalized(question.answer);
   const valid =
     unique.size === alternatives.length &&
@@ -157,43 +174,12 @@ function validateAlternatives(question: ContentQuestion) {
   if (!valid) fail('INVALID_ALTERNATIVES', question.id);
 }
 
-function validateQuestion(question: ContentQuestion, seen: Set<string>) {
-  if (
-    !isText(question?.id) ||
-    seen.has(question.id) ||
-    !formats.includes(question.format) ||
-    !isText(question.prompt) ||
-    !isText(question.answer)
-  )
-    fail('INVALID_PACKAGE', `question ${String(question?.id)}`);
-  seen.add(question.id);
-  validateAlternatives(question);
-}
-
-function validateVersion(version: PackageVersion, seen: Set<string>) {
-  if (
-    !isText(version?.id) ||
-    seen.has(version.id) ||
-    !isText(version.skillId) ||
-    !Number.isSafeInteger(version.version) ||
-    version.version < 1 ||
-    !Array.isArray(version.questions) ||
-    version.questions.length === 0
-  )
-    fail('INVALID_PACKAGE', `version ${String(version?.id)}`);
-  seen.add(version.id);
-  if (version.review !== 'approved' && version.review !== 'quarantined')
-    fail('UNREVIEWED', version.id);
-}
-
-function validateVersions(pkg: ContentPackage) {
-  const versionIds = new Set<string>();
-  const questionIds = new Set<string>();
-  for (const version of pkg.versions) {
-    validateVersion(version, versionIds);
-    for (const question of version.questions)
-      validateQuestion(question, questionIds);
-  }
+function validatePackage(pkg: ContentPackage) {
+  validatePackageHeader(pkg);
+  validateShape(pkg);
+  validateReviews(pkg);
+  for (const version of pkg.versions)
+    for (const question of version.questions) validateAlternatives(question);
 }
 
 async function storedSkills(tx: Transaction) {
@@ -220,12 +206,10 @@ function mergeSkills(pkg: ContentPackage, stored: Map<string, SkillInfo>) {
   const known = new Map(stored);
   for (const skill of pkg.skills) {
     const existing = stored.get(skill.id);
-    if (
-      existing &&
-      (existing.language !== skill.language || existing.level !== skill.level)
-    )
+    const info = { language: skill.language, level: skill.level };
+    if (existing && JSON.stringify(existing) !== JSON.stringify(info))
       fail('CONTENT_CONFLICT', `skill ${skill.id}`);
-    known.set(skill.id, { language: skill.language, level: skill.level });
+    known.set(skill.id, info);
   }
   return known;
 }
@@ -278,7 +262,8 @@ function validateGraph(
   const edges = pkg.skills.flatMap((skill) =>
     skill.prerequisites.map((prerequisiteId) => ({
       skillId: skill.id,
-      prerequisiteId
+      prerequisiteId,
+      language: skill.language
     }))
   );
   for (const edge of edges) checkEdge(edge, known);
@@ -304,20 +289,12 @@ async function insertSkills(
   return count;
 }
 
-async function insertEdges(
-  tx: Transaction,
-  edges: Edge[],
-  known: Map<string, SkillInfo>
-) {
+async function insertEdges(tx: Transaction, edges: NewEdge[]) {
   let count = 0;
   for (const edge of edges) {
     const result = await tx.execute({
       sql: 'INSERT OR IGNORE INTO prerequisites (skill_id, prerequisite_id, language) VALUES (?, ?, ?)',
-      args: [
-        edge.skillId,
-        edge.prerequisiteId,
-        known.get(edge.skillId)?.language ?? ''
-      ]
+      args: [edge.skillId, edge.prerequisiteId, edge.language]
     });
     count += result.rowsAffected;
   }
@@ -330,12 +307,12 @@ async function storedVersion(tx: Transaction, version: PackageVersion) {
     args: [version.id, version.skillId, version.version]
   });
   if (rows.rows.length === 0) return undefined;
-  const row = rows.rows[0];
+  const [row] = rows.rows;
+  const found = [String(row.id), String(row.skill_id), Number(row.version)];
+  const expected = [version.id, version.skillId, version.version];
   if (
     rows.rows.length > 1 ||
-    String(row.id) !== version.id ||
-    String(row.skill_id) !== version.skillId ||
-    Number(row.version) !== version.version
+    JSON.stringify(found) !== JSON.stringify(expected)
   )
     fail('CONTENT_CONFLICT', `version ${version.id}`);
   return String(row.status);
@@ -408,7 +385,7 @@ async function importVersions(
       await insertVersion(tx, version, skill.language);
       result.versions += 1;
       result.questions += version.questions.length;
-      if (version.review === 'quarantined') result.quarantined += 1;
+      result.quarantined += Number(version.review === 'quarantined');
       continue;
     }
     if (!(await sameQuestions(tx, version)))
@@ -428,9 +405,7 @@ export async function importContent(
   client: Client,
   pkg: ContentPackage
 ): Promise<ImportResult> {
-  validatePackageHeader(pkg);
-  validateSkills(pkg);
-  validateVersions(pkg);
+  validatePackage(pkg);
   const tx = await beginWrite(client);
   try {
     const stored = await storedSkills(tx);
@@ -438,7 +413,7 @@ export async function importContent(
     const edges = validateGraph(pkg, known, await storedEdges(tx));
     const result: ImportResult = {
       skills: await insertSkills(tx, pkg, stored),
-      prerequisites: await insertEdges(tx, edges, known),
+      prerequisites: await insertEdges(tx, edges),
       versions: 0,
       questions: 0,
       quarantined: 0
