@@ -28,12 +28,13 @@ function parseApplyFlags(
   args: string[]
 ): { confirmHost?: string; planId?: string } | null {
   const flags: { confirmHost?: string; planId?: string } = {};
-  for (let i = 0; i < args.length; i += 2) {
-    const value = args[i + 1];
+  const rest = [...args];
+  while (rest.length > 0) {
+    const [flag, value] = rest.splice(0, 2);
     if (value === undefined || value.startsWith('--')) return null;
-    if (args[i] === '--confirm-host' && flags.confirmHost === undefined)
+    if (flag === '--confirm-host' && flags.confirmHost === undefined)
       flags.confirmHost = value;
-    else if (args[i] === '--plan-id' && flags.planId === undefined)
+    else if (flag === '--plan-id' && flags.planId === undefined)
       flags.planId = value;
     else return null;
   }

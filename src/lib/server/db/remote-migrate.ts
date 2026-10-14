@@ -24,32 +24,35 @@ export type RemoteMigrationErrorCode =
   | 'PLAN_CHANGED'
   | 'APPLY_FAILED';
 
-const messages: Record<RemoteMigrationErrorCode, string> = {
-  TARGET_MISSING: 'DATABASE_URL is not set',
-  TARGET_INVALID:
-    'DATABASE_URL must be a bare libsql://host remote URL without credentials, query or path',
-  TARGET_PRODUCTION: 'DATABASE_URL names a production database',
-  TOKEN_MISSING: 'TURSO_AUTH_TOKEN is not set in the runtime environment',
-  TARGET_CLASS_REQUIRED:
-    'set LANGLO_MIGRATION_TARGET=remote-test to confirm the target class',
-  JOURNAL_INVALID: 'the migration journal or a migration file is invalid',
-  LEDGER_DRIFT:
-    'applied migrations do not match the checked-in migration files',
-  AMBIGUOUS_STATE: 'the database has tables but no migration ledger',
-  CONFIRMATION_REQUIRED:
-    'apply requires --confirm-host HOST and --plan-id ID from plan',
-  CONFIRMATION_MISMATCH: '--confirm-host does not match the DATABASE_URL host',
-  PLAN_CHANGED:
-    'the database or migrations changed since the reviewed plan; run plan again',
-  APPLY_FAILED:
-    'the migration batch failed and was rolled back; nothing was applied'
-};
+const messages = new Map<RemoteMigrationErrorCode, string>(
+  Object.entries({
+    TARGET_MISSING: 'DATABASE_URL is not set',
+    TARGET_INVALID:
+      'DATABASE_URL must be a bare libsql://host remote URL without credentials, query or path',
+    TARGET_PRODUCTION: 'DATABASE_URL names a production database',
+    TOKEN_MISSING: 'TURSO_AUTH_TOKEN is not set in the runtime environment',
+    TARGET_CLASS_REQUIRED:
+      'set LANGLO_MIGRATION_TARGET=remote-test to confirm the target class',
+    JOURNAL_INVALID: 'the migration journal or a migration file is invalid',
+    LEDGER_DRIFT:
+      'applied migrations do not match the checked-in migration files',
+    AMBIGUOUS_STATE: 'the database has tables but no migration ledger',
+    CONFIRMATION_REQUIRED:
+      'apply requires --confirm-host HOST and --plan-id ID from plan',
+    CONFIRMATION_MISMATCH:
+      '--confirm-host does not match the DATABASE_URL host',
+    PLAN_CHANGED:
+      'the database or migrations changed since the reviewed plan; run plan again',
+    APPLY_FAILED:
+      'the migration batch failed and was rolled back; nothing was applied'
+  }) as [RemoteMigrationErrorCode, string][]
+);
 
 /** Fixed, credential-free failure. Never carries supplied URLs, tokens or wrapped driver errors. */
 export class RemoteMigrationError extends Error {
   readonly code: RemoteMigrationErrorCode;
   constructor(code: RemoteMigrationErrorCode) {
-    super(`${code}: ${messages[code]}`);
+    super(`${code}: ${messages.get(code)}`);
     this.code = code;
   }
 }
@@ -64,7 +67,19 @@ const productionMarker = /(^|[^a-z0-9])prod(uction)?([^a-z0-9]|$)/i;
 // Turso targets are DNS names. Requiring dotted labels ending in an alphabetic
 // TLD rejects every IP literal (IPv6, dotted, short or numeric IPv4), which
 // `new URL` does not normalise for the non-special libsql: scheme.
-const dnsHost = /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,63}$/;
+const dnsLabel = /^[a-z0-9-]{1,63}$/;
+const topLevelLabel = /^[a-z]{2,63}$/;
+function isDnsHost(hostname: string): boolean {
+  const labels = hostname.split('.');
+  return (
+    labels.length >= 2 &&
+    labels.every(
+      (label) =>
+        dnsLabel.test(label) && !label.startsWith('-') && !label.endsWith('-')
+    ) &&
+    topLevelLabel.test(labels.at(-1) ?? '')
+  );
+}
 
 /** Validate the explicit remote-test target from the runtime environment before any connection. */
 export function parseRemoteTestTarget(
@@ -82,7 +97,7 @@ export function parseRemoteTestTarget(
   }
   if (
     url.protocol !== 'libsql:' ||
-    !dnsHost.test(url.hostname.toLowerCase()) ||
+    !isDnsHost(url.hostname.toLowerCase()) ||
     url.hostname.toLowerCase().endsWith('.localhost') ||
     url.port ||
     url.username ||
@@ -182,8 +197,8 @@ export async function readMigrationState(
   if (rows.length > migrations.length)
     throw new RemoteMigrationError('LEDGER_DRIFT');
   rows.forEach((row, index) => {
-    const expected = migrations[index];
-    if (row.hash !== expected.hash || row.createdAt !== expected.when)
+    const expected = migrations.at(index);
+    if (row.hash !== expected?.hash || row.createdAt !== expected.when)
       throw new RemoteMigrationError('LEDGER_DRIFT');
   });
   if (ledgerPresent && rows.length === 0 && userTables.length > 0)
