@@ -14,6 +14,8 @@ Received: "null"
 1 failed
 ```
 
-**Green (after fix):** `2 passed` (desktop, mobile). Local `npm run check`, `lint`, `format:check`, `test` and full `test:e2e` (64 passed) pass.
+**Green (after fix):** `2 passed` (desktop, mobile). After a fresh `npm ci --ignore-scripts` and `npm run build`, local `npm run check`, `lint`, `format:check`, `test`, `test:property` (3 passed) and full `test:e2e` (64 passed) pass.
+
+**Toolchain deviation:** these local runs used Node 22.22.0 and npm 10.9.4, not the pinned Node 24.19.0 / npm 11.9.0. CI on the pinned toolchain is the authoritative check.
 
 **Pending acceptance:** a production signup after redeploy. Local checks do not prove the deployed proxy configuration.
