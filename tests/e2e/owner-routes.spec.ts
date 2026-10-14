@@ -4,11 +4,8 @@ import {
   type APIRequestContext,
   request
 } from '@playwright/test';
-import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import { rm } from 'node:fs/promises';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
-import { setTimeout } from 'node:timers/promises';
-import { createServer } from 'node:net';
 import { createClient, type Client } from '@libsql/client/sqlite3';
 import {
   approveNote,
@@ -16,50 +13,16 @@ import {
   createNote
 } from '../../src/lib/server/flashcards';
 import { privateState } from '../fixtures/owner-scope';
+import {
+  createFixtureDatabase,
+  disposeFixtureDatabase,
+  reservePort,
+  runNode as run,
+  waitForLive
+} from './fixture-server';
 
 // Real-session acceptance for LANGLO-32: two accounts sign in through the
 // built server, and each guesses the other's IDs on every private route.
-
-async function reservePort(): Promise<number> {
-  const probe = createServer();
-  return new Promise((resolve, reject) => {
-    probe.once('error', reject);
-    probe.listen(0, '127.0.0.1', () => {
-      const address = probe.address();
-      probe.close(() =>
-        resolve(typeof address === 'object' && address ? address.port : 0)
-      );
-    });
-  });
-}
-
-async function waitForLive(origin: string): Promise<void> {
-  const deadline = Date.now() + 10000;
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(`${origin}/health/live`, {
-        signal: AbortSignal.timeout(500)
-      });
-      if (response.ok) return;
-    } catch {
-      /* Startup is bounded by the deadline. */
-    }
-    await setTimeout(30);
-  }
-  throw new Error('Owner-route fixture server did not start');
-}
-
-const run = (args: string[], input?: string, env?: NodeJS.ProcessEnv) => {
-  const result = spawnSync('node', args, {
-    cwd: process.cwd(),
-    env: env ?? process.env,
-    input: input === undefined ? undefined : `${input}\n`,
-    encoding: 'utf8'
-  });
-  if (result.status !== 0)
-    throw new Error(`Command failed: node ${args.join(' ')}\n${result.stderr}`);
-  return result.stdout.trim();
-};
 
 const password = 'owner-route-password-0';
 let server: ChildProcess;
@@ -110,21 +73,7 @@ async function withDatabase<T>(work: (client: Client) => Promise<T>) {
 test.beforeAll(async () => {
   const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
-  const init = JSON.parse(run(['tests/fixtures/cli.ts', 'init'])) as {
-    fixtureRoot: string;
-    databaseUrl: string;
-  };
-  fixtureRoot = init.fixtureRoot;
-  for (const step of ['migrate', 'seed'])
-    run([
-      'tests/fixtures/cli.ts',
-      step,
-      '--fixture-root',
-      fixtureRoot,
-      '--database-url',
-      init.databaseUrl
-    ]);
-  dbFile = join(fixtureRoot, 'test.sqlite');
+  ({ fixtureRoot, dbFile } = createFixtureDatabase());
   for (const [email, name] of [
     ['alice@example.test', 'Alice'],
     ['bob@example.test', 'Bob']
@@ -191,19 +140,7 @@ test.afterAll(async () => {
   await alice?.dispose();
   await bob?.dispose();
   server?.kill();
-  if (!fixtureRoot) return;
-  try {
-    run([
-      'tests/fixtures/cli.ts',
-      'dispose',
-      '--fixture-root',
-      fixtureRoot,
-      '--database-url',
-      `file://${dbFile}`
-    ]);
-  } catch {
-    await rm(fixtureRoot, { recursive: true, force: true });
-  }
+  await disposeFixtureDatabase(fixtureRoot, dbFile);
 });
 
 const json = (data: unknown) => ({

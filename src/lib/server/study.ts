@@ -9,7 +9,10 @@ import { beginWrite, type LearnerSession } from './flashcards';
 // unowned content and are read only to validate an attempt.
 
 type EvidenceKind = 'independent' | 'assisted';
-const evidenceKinds: readonly string[] = ['independent', 'assisted'];
+const evidenceKinds: ReadonlySet<unknown> = new Set([
+  'independent',
+  'assisted'
+]);
 
 export class StudyError extends Error {
   constructor(readonly code: string) {
@@ -160,28 +163,20 @@ function isBoundedText(value: unknown, limit: number): value is string {
   );
 }
 
-/**
- * Record an answer in the caller's own active study session. The submission
- * key is idempotent per owner: a replay with the same payload returns the
- * original attempt, and a different payload is IDEMPOTENCY_CONFLICT.
- */
-export async function recordAttempt(
-  client: Client,
-  session: LearnerSession,
-  input: {
-    studySessionId: string;
-    questionId: string;
-    submissionKey: string;
-    evidenceKind: EvidenceKind;
-    answer: string;
-  }
-) {
+type AttemptInput = {
+  studySessionId: string;
+  questionId: string;
+  submissionKey: string;
+  evidenceKind: EvidenceKind;
+  answer: string;
+};
+type WriteTransaction = Awaited<ReturnType<typeof beginWrite>>;
+
+/** Reject malformed input before any statement runs. */
+function validateAttemptInput(input: AttemptInput) {
   if (!isBoundedText(input.submissionKey, 256) || !input.submissionKey.trim())
     throw new StudyError('INVALID_SUBMISSION_KEY');
-  if (
-    typeof input.evidenceKind !== 'string' ||
-    !evidenceKinds.includes(input.evidenceKind)
-  )
+  if (!evidenceKinds.has(input.evidenceKind))
     throw new StudyError('INVALID_EVIDENCE_KIND');
   if (!isBoundedText(input.answer, 4096))
     throw new StudyError('INVALID_ANSWER');
@@ -190,44 +185,78 @@ export async function recordAttempt(
     typeof input.questionId !== 'string'
   )
     throw new StudyError('NOT_FOUND');
+}
 
+/** The caller's earlier attempt under this submission key, if any. */
+async function replayAttempt(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput
+) {
+  const previous = await tx.execute({
+    sql: 'SELECT id, study_session_id, question_id, evidence_kind, answer FROM attempts WHERE owner_id = ? AND submission_key = ?',
+    args: [session.userId, input.submissionKey]
+  });
+  const prior = previous.rows[0];
+  if (!prior) return null;
+  const samePayload =
+    prior.study_session_id === input.studySessionId &&
+    prior.question_id === input.questionId &&
+    prior.evidence_kind === input.evidenceKind &&
+    prior.answer === input.answer;
+  if (!samePayload) throw new StudyError('IDEMPOTENCY_CONFLICT');
+  return { id: String(prior.id), duplicate: true };
+}
+
+/** The caller's active session and an available question in its language. */
+async function attemptSource(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput
+) {
+  const study = await tx.execute({
+    sql: 'SELECT language, state FROM study_sessions WHERE id = ? AND owner_id = ?',
+    args: [input.studySessionId, session.userId]
+  });
+  const studyRow = study.rows[0];
+  if (!studyRow) throw new StudyError('NOT_FOUND');
+  if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
+
+  const question = await tx.execute({
+    sql: 'SELECT q.content_version_id, q.skill_id, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    args: [input.questionId, studyRow.language]
+  });
+  const questionRow = question.rows[0];
+  if (!questionRow) throw new StudyError('NOT_FOUND');
+  // Quarantined content is withdrawn: no new learner history may cite it.
+  if (questionRow.status === 'quarantined')
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  return {
+    contentVersionId: String(questionRow.content_version_id),
+    skillId: String(questionRow.skill_id),
+    language: String(studyRow.language)
+  };
+}
+
+/**
+ * Record an answer in the caller's own active study session. The submission
+ * key is idempotent per owner: a replay with the same payload returns the
+ * original attempt, and a different payload is IDEMPOTENCY_CONFLICT.
+ */
+export async function recordAttempt(
+  client: Client,
+  session: LearnerSession,
+  input: AttemptInput
+) {
+  validateAttemptInput(input);
   const tx = await beginWrite(client);
   try {
-    const previous = await tx.execute({
-      sql: 'SELECT id, study_session_id, question_id, evidence_kind, answer FROM attempts WHERE owner_id = ? AND submission_key = ?',
-      args: [session.userId, input.submissionKey]
-    });
-    const prior = previous.rows[0];
-    if (prior) {
-      if (
-        prior.study_session_id !== input.studySessionId ||
-        prior.question_id !== input.questionId ||
-        prior.evidence_kind !== input.evidenceKind ||
-        prior.answer !== input.answer
-      )
-        throw new StudyError('IDEMPOTENCY_CONFLICT');
+    const replay = await replayAttempt(tx, session, input);
+    if (replay) {
       await tx.commit();
-      return { id: String(prior.id), duplicate: true };
+      return replay;
     }
-
-    const study = await tx.execute({
-      sql: 'SELECT language, state FROM study_sessions WHERE id = ? AND owner_id = ?',
-      args: [input.studySessionId, session.userId]
-    });
-    const studyRow = study.rows[0];
-    if (!studyRow) throw new StudyError('NOT_FOUND');
-    if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
-
-    const question = await tx.execute({
-      sql: 'SELECT q.content_version_id, q.skill_id, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
-      args: [input.questionId, studyRow.language]
-    });
-    const questionRow = question.rows[0];
-    if (!questionRow) throw new StudyError('NOT_FOUND');
-    // Quarantined content is withdrawn: no new learner history may cite it.
-    if (questionRow.status === 'quarantined')
-      throw new StudyError('CONTENT_UNAVAILABLE');
-
+    const source = await attemptSource(tx, session, input);
     const id = randomUUID();
     await tx.execute({
       sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -236,9 +265,9 @@ export async function recordAttempt(
         session.userId,
         input.studySessionId,
         input.questionId,
-        String(questionRow.content_version_id),
-        String(questionRow.skill_id),
-        String(studyRow.language),
+        source.contentVersionId,
+        source.skillId,
+        source.language,
         input.submissionKey,
         input.evidenceKind,
         input.answer

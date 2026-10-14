@@ -9,6 +9,6 @@ export const GET: RequestHandler = (event) =>
   learnerApi(event, async (client, learner) => ({
     studySession: await getStudySession(client, learner, event.params.id),
     attempts: (await listAttempts(client, learner, event.params.id)).map(
-      withoutOwner
+      (row) => withoutOwner(row)
     )
   }));

@@ -19,6 +19,12 @@ const statusFor: Record<string, number> = {
   CONTENT_UNAVAILABLE: 409
 };
 
+function httpStatusFor(code: string): number | undefined {
+  if (Object.hasOwn(statusFor, code)) return statusFor[code];
+  if (code.startsWith('INVALID')) return 400;
+  return undefined;
+}
+
 const messageFor: Record<number, string> = {
   400: 'Invalid request.',
   404: 'Not found.',
@@ -44,8 +50,7 @@ export async function learnerApi(
     return json(await run(client, learner), { status });
   } catch (thrown) {
     if (thrown instanceof FlashcardError || thrown instanceof StudyError) {
-      const code =
-        statusFor[thrown.code] ?? (thrown.code.startsWith('INVALID') ? 400 : 0);
+      const code = httpStatusFor(thrown.code);
       if (code) error(code, { message: messageFor[code] });
     }
     throw thrown;
