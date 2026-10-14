@@ -382,11 +382,16 @@ async function importVersions(
   known: Map<string, SkillInfo>,
   result: ImportResult
 ) {
+  // A version may only target a skill this package declares and reviews;
+  // stored skills carry no review state.
+  const declared = new Map(pkg.skills.map((skill) => [skill.id, skill]));
   for (const version of pkg.versions) {
-    const skill = known.get(version.skillId);
-    if (!skill) fail('MISSING_REFERENCE', `version ${version.id}`);
-    if (!tracks.has(`${skill.language} ${skill.level}`))
-      fail('INVALID_PACKAGE', `version ${version.id} track`);
+    const skill = declared.get(version.skillId);
+    if (!skill)
+      fail(
+        known.has(version.skillId) ? 'UNREVIEWED' : 'MISSING_REFERENCE',
+        `version ${version.id}`
+      );
     const status = await storedVersion(tx, version);
     if (status === undefined) {
       await insertVersion(tx, version, skill.language);
@@ -397,12 +402,12 @@ async function importVersions(
     }
     if (!(await sameQuestions(tx, version)))
       fail('CONTENT_CONFLICT', `version ${version.id}`);
-    if (version.review === 'quarantined' && status !== 'quarantined') {
-      await tx.execute({
-        sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ?",
+    if (version.review === 'quarantined') {
+      const update = await tx.execute({
+        sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
         args: [version.id]
       });
-      result.quarantined += 1;
+      result.quarantined += update.rowsAffected;
     }
   }
 }
