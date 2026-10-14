@@ -1,11 +1,24 @@
+import { isIP } from 'node:net';
 import type { RequestEvent } from '@sveltejs/kit';
 
 /** Only the adapter's address is trusted for authentication rate limits. */
 export function authRequestHeaders(
   event: Pick<RequestEvent, 'request' | 'getClientAddress'>
 ): Headers {
+  // Repository deployment policy: browser -> direct Traefik -> adapter-node.
+  // Keep development/test socket addressing; production auth needs the fixed policy.
+  if (
+    process.env.APP_ENV === 'production' &&
+    (process.env.ADDRESS_HEADER !== 'x-forwarded-for' ||
+      process.env.XFF_DEPTH !== '1')
+  ) {
+    throw new Error('Authentication client-address policy unavailable');
+  }
+  const address = event.getClientAddress();
+  if (!isIP(address))
+    throw new Error('Authentication client address unavailable');
   const headers = new Headers(event.request.headers);
-  headers.set('x-langlo-client-address', event.getClientAddress());
+  headers.set('x-langlo-client-address', address);
   return headers;
 }
 

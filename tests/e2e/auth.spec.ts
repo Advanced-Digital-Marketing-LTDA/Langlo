@@ -488,3 +488,107 @@ test('login form action applies the same rate limit as the endpoint', async () =
     statuses.filter((status) => status === 429).length
   ).toBeGreaterThanOrEqual(2);
 });
+
+test('direct proxy policy isolates rate limits and fails auth safely on missing identity', async () => {
+  await resetRateLimits(dbFile);
+  const port = await reservePort();
+  const proxyBase = `http://127.0.0.1:${port}`;
+  const proxyServer = spawn('node', ['build'], {
+    env: {
+      ...provisionEnv(),
+      APP_ORIGIN: proxyBase,
+      HOST: '127.0.0.1',
+      PORT: String(port),
+      ADDRESS_HEADER: 'x-forwarded-for',
+      XFF_DEPTH: '1',
+      PROTOCOL_HEADER: 'x-forwarded-proto'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let logs = '';
+  proxyServer.stdout.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  proxyServer.stderr.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  const client = await request.newContext({
+    baseURL: proxyBase,
+    extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+  });
+  try {
+    await waitForLive(proxyBase);
+    for (const path of [
+      '/',
+      '/prototype',
+      '/health/live',
+      '/signup',
+      '/login'
+    ]) {
+      expect((await client.get(path)).status()).toBe(200);
+    }
+    const invalidHeaders: Record<string, string>[] = [
+      {},
+      { 'x-forwarded-for': 'synthetic-invalid-address' }
+    ];
+    for (const headers of invalidHeaders) {
+      const blocked = await client.get('/api/auth/get-session', { headers });
+      expect(blocked.status()).toBe(503);
+      const body = await blocked.json();
+      expect(body.correlationId).toBe(blocked.headers()['x-correlation-id']);
+      expect(JSON.stringify(body)).not.toMatch(
+        /synthetic-invalid-address|ADDRESS_HEADER|stack/
+      );
+      for (const path of ['/signup', '/login', '/recover', '/reset']) {
+        const formResponse = await client.post(path, {
+          headers: { ...headers, origin: proxyBase },
+          form: {
+            name: 'Fixture',
+            email: 'proxy-fixture@example.test',
+            password: 'fixture-password-0000',
+            confirm: 'fixture-password-0000',
+            token: 'synthetic-reset-token'
+          },
+          maxRedirects: 0
+        });
+        expect(formResponse.status()).toBe(503);
+      }
+    }
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      const response = await client.post('/api/auth/sign-up/email', {
+        // Simulate the trusted last proxy appending the actual peer after forged input.
+        headers: {
+          origin: proxyBase,
+          'x-forwarded-for': `192.0.2.${attempt + 1}, 198.51.100.10`,
+          'x-langlo-client-address': `203.0.113.${attempt + 1}`
+        },
+        data: {
+          name: 'Fixture',
+          email: `proxy-${attempt}@example.test`,
+          password: 'fixture-password-0000'
+        }
+      });
+      expect(response.status()).toBe(attempt < 5 ? 200 : 429);
+    }
+    const distinct = await client.post('/api/auth/sign-up/email', {
+      headers: { origin: proxyBase, 'x-forwarded-for': '198.51.100.11' },
+      data: {
+        name: 'Fixture',
+        email: 'proxy-distinct@example.test',
+        password: 'fixture-password-0000'
+      }
+    });
+    expect(distinct.status()).toBe(200);
+    expect(logs).not.toMatch(
+      /synthetic-invalid-address|fixture-password-0000|Address header was specified/
+    );
+  } finally {
+    await client.dispose();
+    proxyServer.kill('SIGTERM');
+    await new Promise<void>((resolve) => {
+      if (proxyServer.exitCode !== null || proxyServer.signalCode !== null)
+        resolve();
+      else proxyServer.once('exit', () => resolve());
+    });
+  }
+});

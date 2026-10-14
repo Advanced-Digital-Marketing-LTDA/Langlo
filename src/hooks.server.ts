@@ -80,10 +80,20 @@ export const handle: Handle = async ({ event, resolve }) => {
         { status: 503, headers }
       );
     }
+    let authHeaders: Headers;
+    try {
+      authHeaders = authRequestHeaders(event);
+    } catch (error) {
+      console.warn(
+        JSON.stringify(safeDiagnostic('auth', error, correlationId))
+      );
+      return Response.json(
+        { message: 'Accounts are not ready yet.', correlationId },
+        { status: 503, headers }
+      );
+    }
     const authResponse = await withCorrelationId(correlationId, () =>
-      auth.handler(
-        new Request(event.request, { headers: authRequestHeaders(event) })
-      )
+      auth.handler(new Request(event.request, { headers: authHeaders }))
     );
     const output = new Response(authResponse.body, authResponse);
     if (
