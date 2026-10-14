@@ -37,13 +37,15 @@ jobs:
         run: |
           npm install --global --ignore-scripts npm@11.9.0
           npm ci --ignore-scripts
-          npm install --ignore-scripts --no-save --package-lock=false @microsoft/eslint-formatter-sarif@3.1.0
+          # Separate prefix: a lockfile-free install in the project re-resolves
+          # the whole tree and fails on newer peer releases (ERESOLVE).
+          npm install --prefix "$RUNNER_TEMP/sarif" --ignore-scripts --no-audit --no-fund @microsoft/eslint-formatter-sarif@3.1.0
 
       - name: Run ESLint
         env:
           SARIF_ESLINT_IGNORE_SUPPRESSED: 'true'
         run: npm run lint --
-          --format @microsoft/eslint-formatter-sarif
+          --format "$RUNNER_TEMP/sarif/node_modules/@microsoft/eslint-formatter-sarif/sarif.js"
           --output-file eslint-results.sarif
         continue-on-error: true
 
