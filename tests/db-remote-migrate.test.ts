@@ -10,7 +10,7 @@ import {
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createClient, type Client } from '@libsql/client';
+import { createClient, type Client, type InStatement } from '@libsql/client';
 import { migrate } from 'drizzle-orm/libsql/migrator';
 import { drizzle } from 'drizzle-orm/libsql';
 import {
@@ -48,6 +48,20 @@ async function scratchUrl(): Promise<string> {
 function track(client: Client): Client {
   clients.push(client);
   return client;
+}
+
+/** The same client, with `migrate` replaced to simulate races and lost responses. */
+function wrapMigrate(
+  client: Client,
+  migrate: (statements: InStatement[]) => Promise<void>
+): Client {
+  return new Proxy(client, {
+    get(target, key, receiver) {
+      if (key === 'migrate') return migrate;
+      const value = Reflect.get(target, key, receiver);
+      return typeof value === 'function' ? value.bind(target) : value;
+    }
+  });
 }
 
 async function scratchDatabase(): Promise<Client> {
@@ -481,16 +495,9 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       await writeFile(journalPath, JSON.stringify(journal));
       await migrate(drizzle(client), { migrationsFolder: folder });
       const { planId } = await readMigrationState(client, all);
-      const racing = new Proxy(client, {
-        get(target, key, receiver) {
-          if (key === 'migrate')
-            return async (statements: unknown[]) => {
-              await target.execute(mutation);
-              return target.migrate(statements as never);
-            };
-          const value = Reflect.get(target, key, receiver);
-          return typeof value === 'function' ? value.bind(target) : value;
-        }
+      const racing = wrapMigrate(client, async (statements) => {
+        await client.execute(mutation);
+        await client.migrate(statements);
       });
       expect(
         await asyncCodeOf(() =>
@@ -665,16 +672,9 @@ describe('remote-test CLI', () => {
     const client = await scratchDatabase();
     const all = loadMigrations();
     const { planId } = await readMigrationState(client, all);
-    const dropped = new Proxy(client, {
-      get(target, key, receiver) {
-        if (key === 'migrate')
-          return async (statements: unknown[]) => {
-            await target.migrate(statements as never);
-            throw new Error('connection reset after commit');
-          };
-        const value = Reflect.get(target, key, receiver);
-        return typeof value === 'function' ? value.bind(target) : value;
-      }
+    const dropped = wrapMigrate(client, async (statements) => {
+      await client.migrate(statements);
+      throw new Error('connection reset after commit');
     });
     const error = await applyRemoteTestPlan(dropped, all, {
       host,
