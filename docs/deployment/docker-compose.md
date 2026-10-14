@@ -22,7 +22,7 @@ The repository owns the client-address policy for the documented direct browser 
 
 This policy requires Traefik to append its observed peer address and to be the only ingress to port 3000. Do not enable an option that suppresses that append or add a middleware that replaces the selected address with arbitrary incoming data. No host port is published by this repository. A CDN, additional ingress hop, direct container access, or an altered Traefik forwarding policy needs a separate trust design; this setting does not prove that production isolation or sanitization is correct. Production topology and forged-header behavior remain acceptance checks, not claims established by local tests.
 
-Do not set `DATA_ENABLED=true` until LANGLO-124 / T039 (internal issue 1093) verifies the test database's identity, contents, and schema state and completes its separate migration work; the pending auth and query-authorization gates are accepted; and the owner authorizes enabling real pilot accounts. This container task does not connect to or migrate any database.
+Do not set `DATA_ENABLED=true` until LANGLO-124 / T039 (internal issue 1093) verifies the test database's identity, contents, and schema state and completes its separate migration work ([remote-test-migrations.md](remote-test-migrations.md)); the pending auth and query-authorization gates are accepted; and the owner authorizes enabling real pilot accounts. This container task does not connect to or migrate any database.
 
 ## Local synthetic preview
 
