@@ -114,10 +114,10 @@ describe('runtime configuration', () => {
         DATA_ENABLED: 'true',
         DATABASE_URL: 'file:./.fixtures/local.db',
         BETTER_AUTH_SECRET: 'a'.repeat(40)
-      }).auth?.mail.transport
+      }).auth?.mail?.transport
     ).toBe('capture');
   });
-  it('requires explicit SMTP transport in production', () => {
+  it('keeps auth available when production SMTP configuration is incomplete', () => {
     const production = {
       APP_ENV: 'production',
       APP_ORIGIN: 'https://langlo.app',
@@ -126,19 +126,20 @@ describe('runtime configuration', () => {
       TURSO_AUTH_TOKEN: 'synthetic-remote-token',
       BETTER_AUTH_SECRET: 'b'.repeat(40)
     };
-    expect(() => parseRuntimeConfig(production)).toThrow(
-      'Invalid MAIL_TRANSPORT'
+    expect(parseRuntimeConfig(production).auth?.mailError?.variable).toBe(
+      'MAIL_TRANSPORT'
     );
-    expect(() =>
-      parseRuntimeConfig({ ...production, MAIL_TRANSPORT: 'capture' })
-    ).toThrow('Invalid MAIL_TRANSPORT');
+    expect(
+      parseRuntimeConfig({ ...production, MAIL_TRANSPORT: 'capture' }).auth
+        ?.mailError?.variable
+    ).toBe('MAIL_TRANSPORT');
     expect(
       parseRuntimeConfig({
         ...production,
         MAIL_TRANSPORT: 'smtp',
         MAIL_FROM: 'ops@langlo.app',
         PROTON_SMTP_TOKEN: 'synthetic-smtp-token'
-      }).auth?.mail.transport
+      }).auth?.mail?.transport
     ).toBe('smtp');
     expect(
       parseRuntimeConfig({
@@ -147,7 +148,24 @@ describe('runtime configuration', () => {
         MAIL_FROM: 'ops@langlo.app',
         PROTON_SMTP_TOKEN: 'synthetic-smtp-token',
         SMTP_HOST: 'SMTP.ProtonMail.ch'
-      }).auth?.mail.smtpHost
+      }).auth?.mail?.smtpHost
     ).toBe('SMTP.ProtonMail.ch');
+  });
+  it('isolates bad SMTP settings to recovery while retaining validated data and auth', () => {
+    const config = parseRuntimeConfig({
+      APP_ENV: 'production',
+      APP_ORIGIN: 'https://langlo.app',
+      DATA_ENABLED: 'true',
+      DATABASE_URL: 'libsql://dedicated.example',
+      TURSO_AUTH_TOKEN: 'synthetic-remote-token',
+      BETTER_AUTH_SECRET: 'b'.repeat(40),
+      MAIL_TRANSPORT: 'smtp',
+      MAIL_FROM: 'Langlo <ops@langlo.app>',
+      PROTON_SMTP_TOKEN: 'synthetic-smtp-token'
+    });
+    expect(config.dataEnabled).toBe(true);
+    expect(config.auth?.secret).toBe('b'.repeat(40));
+    expect(config.auth?.mail).toBeUndefined();
+    expect(config.auth?.mailError?.variable).toBe('MAIL_FROM');
   });
 });

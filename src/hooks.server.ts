@@ -4,6 +4,7 @@ import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
 import { parseRuntimeConfig } from './lib/server/config';
 import { safeDiagnostic, safeError } from './lib/server/diagnostics';
 import { resolveAuth } from './lib/server/auth-runtime';
+import { withCorrelationId } from './lib/server/request-context';
 
 export const handle: Handle = async ({ event, resolve }) => {
   const correlationId = randomUUID();
@@ -12,7 +13,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   const privateRoute =
     path === '/app' ||
     path.startsWith('/app/') ||
-    ['/login', '/recover', '/reset'].includes(path);
+    ['/login', '/signup', '/recover', '/reset'].includes(path);
   const headers: Record<string, string> = {
     'x-correlation-id': correlationId,
     'cache-control': privateRoute ? 'private, no-store' : 'no-store',
@@ -37,16 +38,26 @@ export const handle: Handle = async ({ event, resolve }) => {
       console.warn(
         JSON.stringify(safeDiagnostic('configuration', error, correlationId))
       );
-      return Response.json(
-        {
-          message: 'Configuration unavailable. Please try again.',
-          correlationId
-        },
-        { status: 503, headers }
-      );
+      // Public and synthetic routes do not require data/auth configuration.
+      // Feature routes below return their own safe unavailable response.
+      event.locals.config = undefined;
     }
   }
   const authPath = path === '/api/auth' || path.startsWith('/api/auth/');
+  if (
+    path === '/api/auth/request-password-reset' &&
+    event.locals.config?.auth?.mailError
+  ) {
+    const error = event.locals.config.auth.mailError;
+    console.warn(JSON.stringify(safeDiagnostic('auth', error, correlationId)));
+    return Response.json(
+      {
+        message: 'Password recovery is temporarily unavailable.',
+        correlationId
+      },
+      { status: 503, headers }
+    );
+  }
   const appPath = path === '/app' || path.startsWith('/app/');
   const authNeeded = authPath || appPath || path === '/login';
   let auth: Awaited<ReturnType<typeof resolveAuth>> = null;
@@ -69,7 +80,9 @@ export const handle: Handle = async ({ event, resolve }) => {
         { status: 503, headers }
       );
     }
-    const authResponse = await auth.handler(event.request);
+    const authResponse = await withCorrelationId(correlationId, () =>
+      auth.handler(event.request)
+    );
     const output = new Response(authResponse.body, authResponse);
     if (
       path.startsWith('/api/auth/reset-password/') &&
@@ -122,6 +135,12 @@ export const handle: Handle = async ({ event, resolve }) => {
     }
   }
   if (appPath) {
+    if (!auth) {
+      return Response.json(
+        { message: 'Accounts are not ready yet.', correlationId },
+        { status: 503, headers }
+      );
+    }
     if (!event.locals.user) {
       if (sessionLookupFailed) {
         return Response.json(
@@ -146,7 +165,7 @@ export const handle: Handle = async ({ event, resolve }) => {
       );
     }
   }
-  const response = await resolve(event);
+  const response = await withCorrelationId(correlationId, () => resolve(event));
   const output = new Response(response.body, response);
   for (const [key, value] of Object.entries(headers))
     output.headers.set(key, value);

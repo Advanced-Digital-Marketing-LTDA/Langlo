@@ -124,7 +124,7 @@ const resetTokenFromMail = (mailer: CaptureMailer, index = 0): string =>
 const clearRateLimits = (rig: Rig) =>
   rig.client.execute('DELETE FROM rate_limits');
 
-describe('sign-up closure and credential login', () => {
+describe('public sign-up and credential login', () => {
   let fixture: Rig;
   beforeAll(async () => {
     fixture = await rig();
@@ -139,20 +139,47 @@ describe('sign-up closure and credential login', () => {
     await disposeDisposableFixture(fixture.target);
   });
 
-  it('rejects public registration with no account side effects', async () => {
+  it('creates a database account and verified session through public registration', async () => {
     const reply = await call(fixture.auth, '/sign-up/email', {
       method: 'POST',
       body: {
-        email: 'intruder@example.test',
-        password: 'attacker-chosen-1',
-        name: 'Intruder'
+        email: 'new-learner@example.test',
+        password: 'new-learner-password-1',
+        name: 'New Learner'
       }
     });
-    expect(reply.status).toBe(400);
-    const users = await fixture.client.execute(
-      "SELECT id FROM users WHERE email = 'intruder@example.test'"
+    expect(reply.status).toBe(200);
+    const cookie = sessionCookie(reply);
+    expect(cookie).toContain('better-auth.session_token=');
+    const session = await call(fixture.auth, '/get-session', {
+      cookie
+    });
+    expect(session.status).toBe(200);
+    expect((session.json as { user: { email: string } }).user.email).toBe(
+      'new-learner@example.test'
     );
-    expect(users.rows).toEqual([]);
+    const users = await fixture.client.execute(
+      "SELECT id FROM users WHERE email = 'new-learner@example.test'"
+    );
+    expect(users.rows).toHaveLength(1);
+  });
+
+  it('rate-limits public registration by client address', async () => {
+    await clearRateLimits(fixture);
+    const replies = [];
+    for (let index = 0; index < 7; index += 1) {
+      replies.push(
+        await call(fixture.auth, '/sign-up/email', {
+          method: 'POST',
+          body: {
+            email: `rate-limit-${index}@example.test`,
+            password: 'rate-limit-password-1',
+            name: 'Rate Limited'
+          }
+        })
+      );
+    }
+    expect(replies.some((reply) => reply.status === 429)).toBe(true);
   });
 
   it('returns the same credential failure for unknown email and wrong password', async () => {
@@ -176,6 +203,7 @@ describe('sign-up closure and credential login', () => {
 
   it('creates a database session with hardened cookie attributes on success', async () => {
     await clearRateLimits(fixture);
+    await fixture.client.execute('DELETE FROM sessions');
     const reply = await signIn(
       fixture.auth,
       'a@example.test',
@@ -603,10 +631,23 @@ describe('rate limiting and logging', () => {
         'proton-token',
         'minted-'
       ];
-      await call(authWithFailingMail, '/request-password-reset', {
-        method: 'POST',
-        body: { email: 'a@example.test' }
-      });
+      const failedKnown = await call(
+        authWithFailingMail,
+        '/request-password-reset',
+        {
+          method: 'POST',
+          body: { email: 'a@example.test' }
+        }
+      );
+      const failedUnknown = await call(
+        authWithFailingMail,
+        '/request-password-reset',
+        {
+          method: 'POST',
+          body: { email: 'unknown@example.test' }
+        }
+      );
+      expect(failedUnknown.status).toBe(failedKnown.status);
       await signIn(fixture.auth, 'a@example.test', 'rate-limit-password-1');
       const minted = await mintResetToken(
         fixture.auth,

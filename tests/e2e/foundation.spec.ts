@@ -19,12 +19,16 @@ test('public shell works with keyboard navigation and browser history', async ({
   await expect(page).toHaveURL(/\/help$/);
 });
 
-test('private routes deny access before accounts are implemented', async ({
+test('private routes fail safely while data and auth are unavailable', async ({
   request
 }) => {
   const response = await request.get('/app/cards', { maxRedirects: 0 });
-  expect(response.status()).toBe(303);
-  expect(response.headers().location).toBe('/login');
+  expect(response.status()).toBe(503);
+  const body = await response.json();
+  expect(body.correlationId).toBe(response.headers()['x-correlation-id']);
+  expect(JSON.stringify(body)).not.toMatch(
+    /ownerId|someone-else|private-answer/
+  );
   expect(response.headers()['cache-control']).toBe('private, no-store');
   expect(response.headers()['x-robots-tag']).toBe('noindex, nofollow');
   const posted = await request.post('/app/cards', {

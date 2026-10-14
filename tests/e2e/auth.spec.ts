@@ -269,29 +269,174 @@ test('reset form reports mismatched and out-of-bounds passwords distinctly', asy
   expect(await tooLong.text()).toContain('12–128 characters');
 });
 
-test('no registration endpoint and unauthenticated /app requests are denied', async () => {
-  const signup = await ctx.post('/api/auth/sign-up/email', {
-    data: {
-      email: 'new@example.test',
-      password: 'whatever-password-1',
-      name: 'x'
-    },
-    maxRedirects: 0,
-    headers: { origin: base }
-  });
-  expect(signup.status()).toBe(400);
-
+test('public signup creates a session while private routes still deny anon users', async () => {
   const anon = await request.newContext({
     baseURL: base,
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
   });
   try {
-    const get = await anon.get('/app', { maxRedirects: 0 });
+    expect((await anon.get('/signup')).status()).toBe(200);
+    const signup = await anon.post(
+      '/signup',
+      form({
+        name: 'New Learner',
+        email: 'new@example.test',
+        password: 'new-learner-password-0000'
+      })
+    );
+    expect(signup.status()).toBe(303);
+    expect(signup.headers()['location']).toBe('/app');
+    const session = await anon.get('/api/auth/get-session');
+    expect(session.status()).toBe(200);
+    expect((await session.json()).user.email).toBe('new@example.test');
+
+    const anonymous = await request.newContext({
+      baseURL: base,
+      extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+    });
+    const get = await anonymous.get('/app', { maxRedirects: 0 });
     expect(get.status()).toBe(303);
-    const post = await anon.post('/app/cards', { data: {}, maxRedirects: 0 });
+    const post = await anonymous.post('/app/cards', {
+      data: {},
+      maxRedirects: 0
+    });
     expect(post.status()).toBe(401);
+    await anonymous.dispose();
   } finally {
     await anon.dispose();
+  }
+});
+
+test('public sign-up endpoint enforces the configured rate limit', async () => {
+  const client = createClient({ url: `file://${dbFile}` });
+  try {
+    await client.execute('DELETE FROM rate_limits');
+  } finally {
+    client.close();
+  }
+  const anon = await request.newContext({
+    baseURL: base,
+    extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+  });
+  try {
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt < 7; attempt += 1) {
+      statuses.push(
+        (
+          await anon.post('/api/auth/sign-up/email', {
+            data: {
+              email: `signup-${attempt}@example.test`,
+              password: 'signup-rate-limit-password',
+              name: 'Rate Limited Learner'
+            },
+            headers: { origin: base }
+          })
+        ).status()
+      );
+    }
+    expect(statuses.filter((status) => status === 429).length).toBeGreaterThan(
+      0
+    );
+  } finally {
+    await anon.dispose();
+  }
+});
+
+test('invalid SMTP config leaves public pages and registration available', async () => {
+  const rateLimitClient = createClient({ url: `file://${dbFile}` });
+  try {
+    await rateLimitClient.execute('DELETE FROM rate_limits');
+  } finally {
+    rateLimitClient.close();
+  }
+  const { createServer } = await import('node:net');
+  const probe = createServer();
+  const port = await new Promise<number>((resolve, reject) => {
+    probe.once('error', reject);
+    probe.listen(0, '127.0.0.1', () => {
+      const address = probe.address();
+      probe.close(() =>
+        resolve(typeof address === 'object' && address ? address.port : 0)
+      );
+    });
+  });
+  const alternateBase = `http://127.0.0.1:${port}`;
+  const featureServer = spawn('node', ['build'], {
+    cwd: process.cwd(),
+    env: {
+      ...provisionEnv(),
+      APP_ORIGIN: alternateBase,
+      HOST: '127.0.0.1',
+      PORT: String(port),
+      ORIGIN: alternateBase,
+      MAIL_TRANSPORT: 'smtp',
+      MAIL_FROM: 'Langlo <ops@langlo.app>',
+      PROTON_SMTP_TOKEN: 'synthetic-smtp-token'
+    },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  let logs = '';
+  featureServer.stdout.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  featureServer.stderr.on('data', (chunk) => {
+    logs += String(chunk);
+  });
+  const client = await request.newContext({
+    baseURL: alternateBase,
+    extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
+  });
+  try {
+    const deadline = Date.now() + 5000;
+    let started = false;
+    while (Date.now() < deadline) {
+      try {
+        const live = await client.get('/health/live', { timeout: 500 });
+        if (live.status() === 200) {
+          started = true;
+          break;
+        }
+      } catch {
+        /* Startup is bounded by the deadline. */
+      }
+      await setTimeout(30);
+    }
+    expect(started).toBe(true);
+    expect((await client.get('/')).status()).toBe(200);
+    expect((await client.get('/prototype')).status()).toBe(200);
+    expect((await client.get('/signup')).status()).toBe(200);
+    const signup = await client.post('/api/auth/sign-up/email', {
+      data: {
+        name: 'SMTP Independent Learner',
+        email: 'smtp-independent@example.test',
+        password: 'smtp-independent-password'
+      },
+      headers: { origin: alternateBase }
+    });
+    expect(signup.status()).toBe(200);
+    const recoveryApi = await client.post('/api/auth/request-password-reset', {
+      data: { email: 'smtp-independent@example.test' },
+      headers: { origin: alternateBase }
+    });
+    expect(recoveryApi.status()).toBe(503);
+    const responseBody = await recoveryApi.json();
+    expect(responseBody.correlationId).toBe(
+      recoveryApi.headers()['x-correlation-id']
+    );
+    expect(JSON.stringify(responseBody)).not.toMatch(
+      /smtp-independent@example\.test|synthetic-smtp-token|MAIL_FROM/
+    );
+    expect(logs).toContain('"variable":"MAIL_FROM"');
+    expect(logs).not.toContain('synthetic-smtp-token');
+    expect(logs).not.toContain('smtp-independent@example.test');
+  } finally {
+    await client.dispose();
+    featureServer.kill('SIGTERM');
+    await new Promise<void>((resolve) => {
+      if (featureServer.exitCode !== null || featureServer.signalCode !== null)
+        resolve();
+      else featureServer.once('exit', () => resolve());
+    });
   }
 });
 

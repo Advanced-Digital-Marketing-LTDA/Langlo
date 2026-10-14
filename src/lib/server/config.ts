@@ -3,6 +3,25 @@ import { isAbsolute, resolve, sep } from 'node:path';
 
 const temporaryRoot = resolve(tmpdir());
 
+export const configVariables = [
+  'APP_ENV',
+  'APP_ORIGIN',
+  'DATA_ENABLED',
+  'DATABASE_URL',
+  'TURSO_AUTH_TOKEN',
+  'BETTER_AUTH_SECRET',
+  'MAIL_TRANSPORT',
+  'SMTP_HOST',
+  'SMTP_PORT',
+  'MAIL_FROM',
+  'PROTON_SMTP_TOKEN',
+  'MAIL_CAPTURE_DIR',
+  'APP_BUILD_SHA'
+] as const;
+
+export type ConfigVariable = (typeof configVariables)[number];
+const configVariableSet: ReadonlySet<string> = new Set(configVariables);
+
 /** Absolute, already-resolved path strictly inside the system temporary directory. */
 const isContainedTemporaryPath = (value: string) =>
   isAbsolute(value) &&
@@ -31,9 +50,15 @@ const isTemporaryFileUrl = (value: string) => {
 
 export class ConfigError extends Error {
   /** Name the invalid variable, never its supplied value; parser callers use fixed names. */
+  readonly variable: ConfigVariable | undefined;
+
   constructor(variable: string) {
-    super(`Invalid ${variable}`);
+    const validVariable = configVariableSet.has(variable)
+      ? (variable as ConfigVariable)
+      : undefined;
+    super(validVariable ? `Invalid ${validVariable}` : 'Invalid configuration');
     this.name = 'ConfigError';
+    this.variable = validVariable;
   }
 }
 
@@ -48,7 +73,8 @@ export interface AuthMailConfig {
 
 export interface AuthRuntimeConfig {
   secret: string;
-  mail: AuthMailConfig;
+  mail?: AuthMailConfig;
+  mailError?: ConfigError;
 }
 
 export interface RuntimeConfig {
@@ -108,13 +134,10 @@ function parseSmtpPort(env: Record<string, string | undefined>): number {
 }
 
 /** Auth exists only when data is enabled; secret/mail rules follow the selected transport. */
-function parseAuthConfig(
+function parseMailConfig(
   env: Record<string, string | undefined>,
   environment: string
-): AuthRuntimeConfig {
-  const secret = env.BETTER_AUTH_SECRET?.trim();
-  if (!secret || secret.length < 32)
-    throw new ConfigError('BETTER_AUTH_SECRET');
+): AuthMailConfig {
   const mail: AuthMailConfig = {
     transport: parseMailTransport(env, environment),
     smtpHost: parseSmtpHost(env),
@@ -135,7 +158,22 @@ function parseAuthConfig(
       mail.captureDir = captureDir;
     }
   }
-  return { secret, mail };
+  return mail;
+}
+
+function parseAuthConfig(
+  env: Record<string, string | undefined>,
+  environment: string
+): AuthRuntimeConfig {
+  const secret = env.BETTER_AUTH_SECRET?.trim();
+  if (!secret || secret.length < 32)
+    throw new ConfigError('BETTER_AUTH_SECRET');
+  try {
+    return { secret, mail: parseMailConfig(env, environment) };
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    return { secret, mailError: error };
+  }
 }
 
 export function parseRuntimeConfig(
