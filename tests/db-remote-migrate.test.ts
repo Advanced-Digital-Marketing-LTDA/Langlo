@@ -467,7 +467,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       'a ledger row is rewritten',
       `UPDATE __drizzle_migrations SET hash = '${'0'.repeat(64)}' WHERE rowid = 1`
     ],
-    ['a table is added', 'CREATE TABLE concurrent_writer (id integer)']
+    ['a table is added', 'CREATE TABLE concurrent_writer (id integer)'],
+    ['a table is renamed', 'ALTER TABLE attempts RENAME TO attempts_moved']
   ])(
     'aborts the batch when %s between the plan check and the transaction',
     async (_name, mutation) => {

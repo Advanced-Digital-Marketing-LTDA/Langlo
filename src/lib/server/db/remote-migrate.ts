@@ -179,8 +179,8 @@ export async function readMigrationState(
   const userTables = names.filter(
     (name) =>
       name !== ledgerTable &&
-      !name.startsWith('sqlite_') &&
-      !name.startsWith('_litestream')
+      !name.toLowerCase().startsWith('sqlite_') &&
+      !name.toLowerCase().startsWith('_litestream')
   );
   let rows: { hash: string; createdAt: number }[] = [];
   if (ledgerPresent) {
@@ -230,8 +230,8 @@ export interface ApplyConfirmation {
  * @libsql/client (0.18.0) sends that batch as BEGIN … COMMIT with a ROLLBACK
  * step on any failure, for both the remote (Hrana) and local sqlite3 clients,
  * so SQLite's own transaction makes the batch all-or-nothing. A guard at the
- * start of the batch re-checks the ledger count inside the transaction so a
- * concurrent apply fails instead of applying twice.
+ * start of the batch re-checks the ledger rows and table names inside the
+ * transaction so a concurrent apply or schema change fails the batch.
  */
 export async function applyRemoteTestPlan(
   client: Client,
@@ -250,16 +250,21 @@ export async function applyRemoteTestPlan(
   const batch: InStatement[] = [
     `CREATE TABLE IF NOT EXISTS ${ledgerTable} (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at numeric)`,
     // Re-check the reviewed state inside the transaction: the exact ledger rows
-    // and the user-table count. abs(-9223372036854775808) raises "integer
-    // overflow", aborting the whole batch when anything changed.
+    // and the exact user-table names (hex-encoded, in name order).
+    // abs(-9223372036854775808) raises "integer overflow", aborting the whole
+    // batch when anything changed.
     {
       sql: `SELECT CASE WHEN
           coalesce((SELECT group_concat(entry, ',') FROM (SELECT hash || ':' || created_at AS entry FROM ${ledgerTable} ORDER BY created_at, id)), '') = ?
-          AND (SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name <> '${ledgerTable}' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name NOT LIKE '\\_litestream%' ESCAPE '\\') = ?
+          AND coalesce((SELECT group_concat(hex(name), ',') FROM (SELECT name FROM sqlite_master WHERE type = 'table' AND name <> '${ledgerTable}' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name NOT LIKE '\\_litestream%' ESCAPE '\\' ORDER BY name)), '') = ?
         THEN 1 ELSE abs(-9223372036854775808) END`,
       args: [
         state.applied.map((m) => `${m.hash}:${m.when}`).join(','),
-        state.userTables.length
+        state.userTables
+          .map((name) =>
+            Buffer.from(name, 'utf8').toString('hex').toUpperCase()
+          )
+          .join(',')
       ]
     }
   ];
