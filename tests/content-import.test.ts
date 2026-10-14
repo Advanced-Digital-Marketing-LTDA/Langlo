@@ -173,6 +173,20 @@ describe('content import rejects the whole package', () => {
     await rejects(pkg, 'NOT_APPROVED');
   });
 
+  it('when the curriculum version is not a stable semantic version', async () => {
+    for (const version of ['draft', '1.0.0-beta.1', '01.0.0', '1.0', '']) {
+      const pkg = approvedPackage();
+      pkg.curriculumVersion = version;
+      await rejects(pkg, 'NOT_APPROVED');
+    }
+  });
+
+  it('when a skill lists the same prerequisite twice', async () => {
+    const pkg = approvedPackage();
+    pkg.skills[2].prerequisites = ['fr-a1-001', 'fr-a1-001'];
+    await rejects(pkg, 'INVALID_PACKAGE');
+  });
+
   it('when edges are given another meaning than teaching order', async () => {
     const pkg = approvedPackage();
     pkg.dependencySemantics = 'mastery_gate';

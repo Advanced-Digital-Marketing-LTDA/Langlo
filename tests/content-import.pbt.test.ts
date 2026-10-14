@@ -44,7 +44,7 @@ function packageFor(
     ]
   }));
   return {
-    curriculumVersion: '0.1.0-synthetic.1',
+    curriculumVersion: '0.1.0',
     publicationStatus: 'approved',
     dependencySemantics: 'recommended_teaching_order',
     skills,

@@ -84,12 +84,19 @@ const isText = (value: unknown): value is string =>
 
 const normalized = (value: string) => value.trim().toLowerCase();
 
+const stableVersion =
+  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$/;
+
 function validatePackageHeader(pkg: ContentPackage) {
   if (pkg?.publicationStatus !== 'approved') fail('NOT_APPROVED');
+  // The contract requires a stable semantic version for an approved bundle.
+  if (
+    typeof pkg.curriculumVersion !== 'string' ||
+    !stableVersion.test(pkg.curriculumVersion)
+  )
+    fail('NOT_APPROVED', 'curriculum version');
   if (pkg.dependencySemantics !== 'recommended_teaching_order')
     fail('INVALID_PACKAGE', 'dependency semantics');
-  if (!isText(pkg.curriculumVersion))
-    fail('INVALID_PACKAGE', 'curriculum version');
   if (!Array.isArray(pkg.skills) || !Array.isArray(pkg.versions))
     fail('INVALID_PACKAGE', 'skills and versions');
 }
@@ -103,7 +110,8 @@ function validateSkills(pkg: ContentPackage) {
       !languages.includes(skill.language) ||
       !levels.includes(skill.level) ||
       !Array.isArray(skill.prerequisites) ||
-      !skill.prerequisites.every((id) => isText(id))
+      !skill.prerequisites.every((id) => isText(id)) ||
+      new Set(skill.prerequisites).size !== skill.prerequisites.length
     )
       fail('INVALID_PACKAGE', `skill ${String(skill?.id)}`);
     ids.add(skill.id);

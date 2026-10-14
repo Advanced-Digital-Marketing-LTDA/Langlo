@@ -4,7 +4,7 @@ import type { ContentPackage } from '../../src/lib/server/content-import';
 // exercises the importer's gates against the current migration.
 export function approvedPackage(): ContentPackage {
   return {
-    curriculumVersion: '0.1.0-synthetic.1',
+    curriculumVersion: '0.1.0',
     publicationStatus: 'approved',
     dependencySemantics: 'recommended_teaching_order',
     skills: [
