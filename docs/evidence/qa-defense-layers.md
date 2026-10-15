@@ -29,4 +29,4 @@ Baselines were measured on a clean `git archive HEAD` export of the merged branc
 
 No provider call was made locally. Hosted runs of both AI review workflows are unverified until the owner adds `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY`. The ratchets' hosted run is verified by this PR's CI.
 
-On 2026-10-15 the owner added `CLAUDE_CODE_OAUTH_TOKEN` as a repository secret. A re-run of Claude review on PR #32 made a real subscription call, ran the four toolkit agents and posted a summary comment.
+Update, 2026-10-15: this supersedes the "unverified" sentence above. The owner added `CLAUDE_CODE_OAUTH_TOKEN` as a repository secret, and both hosted AI reviewers are now verified on the subscription. A re-run of Claude review on PR #32 ran the four toolkit agents and posted [a summary comment](https://github.com/Bonobo791/Langlo/pull/32#issuecomment-6199064932). Adversarial review on PR #33 ran two review passes and a verification pass, then returned APPROVE ([run 38784363566](https://github.com/Bonobo791/Langlo/actions/runs/38784363566)). Its earlier re-run on PR #32 failed only because that merged PR had an empty diff.
