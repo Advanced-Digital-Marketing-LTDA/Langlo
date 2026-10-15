@@ -30,6 +30,16 @@ jobs:
           paths: src tests scripts
           baseline-skip: '0'
           forbid-only: 'true'
+      # test-ratchet scans only *.test.ts and *.spec.ts and misses Playwright's
+      # fixme and fail markers, so this covers the *.e2e.ts and spec suites.
+      - name: Skip and focus guard (Playwright and e2e tests)
+        run: |
+          pattern='\b(it|test|describe)(\.describe)?\.(skip|only|fixme|fail|todo)\b|\bx(it|test|describe)\b'
+          if git ls-files -z -- 'tests/*.e2e.ts' 'tests/*.spec.ts' | xargs -0 -r grep -nE "$pattern"; then
+            echo '::error::Skipped, focused, fixme or expected-fail e2e tests are not allowed (baseline 0).'
+            exit 1
+          fi
+          echo 'e2e skip/focus guard: 0 found.'
       - name: Test ratchet (Python)
         uses: motchalini-llc/test-ratchet@4a8768340fc543b13542e56441b69b5532eb98f0 # v1.0.2
         with:

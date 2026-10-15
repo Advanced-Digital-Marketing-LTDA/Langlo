@@ -21,6 +21,7 @@ Baselines were measured on a clean `git archive HEAD` export of the merged branc
 - Test ratchet: TypeScript (`src tests scripts`) 0 skips and 0 `.only`; Python (`tests scripts`) 0. Exit 0.
 - Suppression ratchet: TypeScript 0, Python 0. Exit 0.
 - Type ratchet: TypeScript `any` is 1, a false positive on the comment "transaction: any failure writes nothing" in `src/lib/server/content-import.ts`, so the baseline is 1. With baseline 0 the gate exits 1, and with baseline 1 it exits 0. Python `Any` is 0.
+- A repo-local guard in the same workflow covers `tests/*.e2e.ts` and `tests/*.spec.ts`, which test-ratchet's `*.test.ts`/`*.spec.ts` scope and pattern miss, including Playwright `test.fixme`, `test.fail` and `test.describe.skip`. It found 0 on the clean tree (exit 0), and a planted `test.fixme` in `tests/example.e2e.ts` and `test.describe.skip` in `tests/e2e/auth.spec.ts` each made it exit 1. Both were reverted.
 - Red checks: a planted `it.skip` and `// eslint-disable-next-line` in a TypeScript test, a `@unittest.skip` and `# noqa` in a Python test, and a `: any` plus `// @ts-ignore` in a `src` file each made the matching gate exit 1. The planted files were removed. Test files are excluded from the TypeScript `any` count by the action's design.
 - `npm ci --ignore-scripts` from `.github/tools/ai-review` into a temporary prefix added 2 packages; the CLI binary printed `2.1.300 (Claude Code)` and `adversarial-review --help` ran.
 
