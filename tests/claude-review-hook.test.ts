@@ -50,6 +50,8 @@ describe('Haiku-only CI review configuration', () => {
       expect(workflow).not.toMatch(/--model (?:sonnet|opus|claude-sonnet|claude-opus)/u);
     }
     expect(review).toContain("classify_inline_comments: 'false'");
+    expect(review).toContain('"CLAUDE_CODE_SUBAGENT_MODEL": "haiku"');
+    expect(review).toContain('"CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"');
   });
 
   it.each([
