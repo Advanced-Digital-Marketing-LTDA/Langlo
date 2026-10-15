@@ -290,9 +290,11 @@ describe('versioned curriculum bundle contract', () => {
     const status = headers.indexOf('evidence_status');
     const lifecycle = headers.indexOf('lifecycle_status');
     const provisional = new Map(catalog);
-    const [id, row] = [...catalog.entries()].find(
+    const entry = [...catalog.entries()].find(
       ([, cells]) => cells[lifecycle] === 'active'
-    ) as [string, string[]];
+    );
+    expect(entry).toBeDefined();
+    const [id, row] = entry as [string, string[]];
     expect(row[status]).not.toBe('provisional');
     const changed = row.map((cell, index) =>
       index === status ? 'provisional' : cell
