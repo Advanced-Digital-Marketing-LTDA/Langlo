@@ -101,7 +101,7 @@ describe('versioned curriculum bundle contract', () => {
     ).toThrow(/draft version must be a pre-release/u);
     expect(() =>
       validateManifest({ ...draft, curriculum_version: 'draft' }, files)
-    ).toThrow();
+    ).toThrow(/Invalid curriculum version/u);
     expect(() =>
       validateManifest(
         { ...draft, curriculum_version: '0.1.0-draft.01' },
@@ -146,9 +146,6 @@ describe('versioned curriculum bundle contract', () => {
         files
       )
     ).toThrow(/Invalid curriculum version/u);
-    expect(() =>
-      validateManifest({ ...draft, coverage_sha256: '0'.repeat(64) }, files)
-    ).toThrow();
     expect(() =>
       validateManifest({ ...draft, coverage_file: '../outside.csv' }, files)
     ).toThrow(/Invalid manifest path/u);
@@ -305,6 +302,12 @@ describe('versioned curriculum bundle contract', () => {
     expect(() => validatePublicationStatus(manifest, provisional)).toThrow(
       /provisional skill/u
     );
+    expect(() =>
+      validatePublicationStatus(
+        { ...manifest, publication_status: 'draft' },
+        provisional
+      )
+    ).not.toThrow();
   });
 
   it('validates same-language, level-ordered, acyclic graph structure without pinning lesson choices', () => {

@@ -484,7 +484,9 @@ export function validateIdRegistry(registry, catalog, previousIds = []) {
 export function validatePublicationStatus(manifest, catalog) {
   if (manifest.publication_status !== 'approved') return;
   requireCondition(
-    [...catalog.values()].every((row) => row[7] !== 'provisional'),
+    [...catalog.values()].every(
+      (row) => row[headers.indexOf('evidence_status')] !== 'provisional'
+    ),
     'An approved bundle cannot contain a provisional skill.'
   );
 }

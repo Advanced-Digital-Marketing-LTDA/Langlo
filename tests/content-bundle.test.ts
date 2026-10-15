@@ -153,12 +153,12 @@ async function skillIds() {
   return rows.rows.map((row) => String(row.id));
 }
 
-function codeOf(run: () => unknown) {
+function failureOf(run: () => unknown) {
   try {
     run();
   } catch (error) {
     expect(error).toBeInstanceOf(ContentImportError);
-    return (error as ContentImportError).code;
+    return `${(error as ContentImportError).code}: ${(error as ContentImportError).detail}`;
   }
   return undefined;
 }
@@ -207,9 +207,12 @@ describe('content bundle import', () => {
     const pkg = bundlePackage(
       await writeBundle({ status: 'draft', version: '0.1.0-draft.1' })
     );
+    expect(pkg.publicationStatus).toBe('draft');
+    expect(pkg.skills).toHaveLength(6);
     const before = await skillIds();
     const error = await importContent(client, pkg).catch((e) => e);
     expect((error as ContentImportError).code).toBe('NOT_APPROVED');
+    expect((error as ContentImportError).detail).toBe('publication status');
     expect(await skillIds()).toEqual(before);
   });
 
@@ -282,12 +285,16 @@ describe('content bundle import', () => {
         ids: [...baseRows.map((row) => row.id), 'fr-a1-099']
       })
     );
-    expect(codeOf(() => bundlePackage(dropped))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(dropped))).toMatch(
+      /^INVALID_BUNDLE: Previously registered ID was removed/u
+    );
   });
 
   it('rejects a bundle whose files do not match the manifest hashes', async () => {
     const tampered = await writeBundle({ tamper: true });
-    expect(codeOf(() => bundlePackage(tampered))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(tampered))).toMatch(
+      /^INVALID_BUNDLE: Digest mismatch/u
+    );
   });
 
   it('rejects an approved bundle that still has a provisional skill', async () => {
@@ -295,11 +302,15 @@ describe('content bundle import', () => {
       index === 0 ? { ...row, evidence: 'provisional' } : row
     );
     const provisional = await writeBundle({ rows });
-    expect(codeOf(() => bundlePackage(provisional))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(provisional))).toMatch(
+      /^INVALID_BUNDLE: An approved bundle cannot contain a provisional skill/u
+    );
   });
 
   it('rejects an approved bundle with a pre-release version', async () => {
     const draftVersion = await writeBundle({ version: '1.0.0-rc.1' });
-    expect(codeOf(() => bundlePackage(draftVersion))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(draftVersion))).toMatch(
+      /^INVALID_BUNDLE: An approved version must be stable/u
+    );
   });
 });
