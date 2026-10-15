@@ -35,26 +35,24 @@ jobs:
         if: ${{ env.HAS_OAUTH == 'true' || env.HAS_KEY == 'true' }}
         with:
           node-version: 24.19.0
-      - name: Install pinned adversarial-review outside the project tree
+      # Tools come from a committed lockfile with integrity hashes, installed
+      # outside the project tree. Claude Code's main package needs a postinstall
+      # to place its binary, so the native linux-x64 package is locked instead.
+      - name: Install locked review tools outside the project tree
         if: ${{ env.HAS_OAUTH == 'true' || env.HAS_KEY == 'true' }}
         run: |
           npm install --global --ignore-scripts npm@11.9.0
-          npm install --prefix "$RUNNER_TEMP/adversarial-review" --ignore-scripts --no-audit --no-fund adversarial-review@2.11.1
-      # The Claude Code package needs a postinstall to place its binary, so the
-      # native linux-x64 package is installed directly instead; it ships the
-      # ready-to-run executable and needs no install scripts.
-      - name: Install pinned Claude Code CLI for the subscription path
-        if: ${{ env.HAS_OAUTH == 'true' }}
-        run: |
-          npm install --prefix "$RUNNER_TEMP/claude-cli" --ignore-scripts --no-audit --no-fund @anthropic-ai/claude-code-linux-x64@2.1.300
-          echo "$RUNNER_TEMP/claude-cli/node_modules/@anthropic-ai/claude-code-linux-x64" >> "$GITHUB_PATH"
+          mkdir -p "$RUNNER_TEMP/ai-review"
+          cp .github/tools/ai-review/package.json .github/tools/ai-review/package-lock.json "$RUNNER_TEMP/ai-review/"
+          npm ci --prefix "$RUNNER_TEMP/ai-review" --ignore-scripts --no-audit --no-fund
+          echo "$RUNNER_TEMP/ai-review/node_modules/@anthropic-ai/claude-code-linux-x64" >> "$GITHUB_PATH"
       - name: Fail on high-severity findings (subscription)
         if: ${{ env.HAS_OAUTH == 'true' }}
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          node "$RUNNER_TEMP/adversarial-review/node_modules/adversarial-review/bin/cli.js" \
+          node "$RUNNER_TEMP/ai-review/node_modules/adversarial-review/bin/cli.js" \
             --base "origin/$BASE_REF" \
             --provider claude \
             --timeout 600 \
@@ -68,7 +66,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          node "$RUNNER_TEMP/adversarial-review/node_modules/adversarial-review/bin/cli.js" \
+          node "$RUNNER_TEMP/ai-review/node_modules/adversarial-review/bin/cli.js" \
             --base "origin/$BASE_REF" \
             --provider anthropic \
             --passes 2 \
