@@ -1,9 +1,9 @@
 name: Claude review
 
 # Opt-in AI review (see AGENTS.md) with the PR Review Toolkit specialist agents.
-# Same-repository pull requests only, and only once the owner adds a
-# CLAUDE_CODE_OAUTH_TOKEN (Claude subscription, from `claude setup-token`) or
-# ANTHROPIC_API_KEY repository secret. The action runs its own internal
+# Same-repository pull requests only, using the CLAUDE_CODE_OAUTH_TOKEN
+# repository secret (Claude subscription, from `claude setup-token`);
+# ANTHROPIC_API_KEY is an optional fallback. The action runs its own internal
 # `bun install --production`; the owner accepted that as the one exception to
 # the `--ignore-scripts` rule. It posts review comments only and cannot push.
 on:
