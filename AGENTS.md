@@ -6,7 +6,7 @@ Use Node 24.19.0 and npm 11.9.0. Run npm ci, npm run check, npm run lint, npm ru
 
 Write behavior tests first, record observed red and green output, and preserve unrelated work. Document evidence and pending acceptance in docs/evidence. Local checks do not prove live provider, Windows Anki, CI or release success.
 
-Only disposable local fixture databases may be created or migrated in this phase. No real provider calls, production database, credentials, account access, paid calls, remote publication, deployment, SSH, DNS or desktop access are authorized. T001 records Bonobo791/Langlo as the repository and PolyForm Shield 1.0.0 as the selected license; license-file implementation and remote publication remain pending. Commits may be made locally; do not push.
+Only disposable local fixture databases may be created or migrated in this phase. No real provider calls, production database, credentials, account access, paid calls, remote publication, deployment, SSH, DNS or desktop access are authorized. The one exception is the owner-approved `.github/workflows/adversarial-review.yml`, which may call the Anthropic API from CI on same-repository pull requests once the owner adds an `ANTHROPIC_API_KEY` repository secret; agents must not run it or call providers locally. T001 records Bonobo791/Langlo as the repository and PolyForm Shield 1.0.0 as the selected license; license-file implementation and remote publication remain pending. Commits may be made locally; do not push.
 
 Keep generated .svelte-kit and build files, database files, real .env files and learner data out of git. Server-only modules must stay in src/lib/server. Fork CI must have no production secrets or privileged write triggers.
 

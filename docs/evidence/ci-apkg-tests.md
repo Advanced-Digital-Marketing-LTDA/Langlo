@@ -18,3 +18,9 @@ New `apkg-feasibility` job in `.github/workflows/ci.yml`, on every push and pull
 ## Pending
 
 A hosted GitHub run of the new job is unverified until the PR's CI runs. Exports go to child directories of the system temp root, per the accepted T003 policy.
+
+## Adversarial review workflow — owner-approved 2026-10-15
+
+Andrew chose adversarial-review (npm 2.11.1, published 2026-10-06) as the one paid AI PR reviewer. `.github/workflows/adversarial-review.yml` runs on pull requests from this repository only (fork PRs are skipped), with read-only permissions. The tool is installed outside the project tree with `--ignore-scripts` and run with `--provider anthropic --fail-on high --fail-on-empty`, so high-severity findings fail the check. Every step after the first is skipped, with a notice, until an `ANTHROPIC_API_KEY` secret exists. AGENTS.md records this as the only allowed provider call.
+
+Local evidence: the pinned install succeeded, and `--prompt-only` against `origin/main` built the prompt with exit 0 and no model call. Without a key, the real run failed closed with exit 1 (Anthropic 404), which is why the workflow guards every step on the secret. No provider call succeeded locally. A hosted run that makes a real call is pending until the secret is added.
