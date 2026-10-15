@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -6,15 +7,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { bundlePackage } from '../src/lib/server/content-bundle';
+import { columnIndex, parseCsv } from '../scripts/curriculum-contract.mjs';
 import {
   ContentImportError,
   importContent
 } from '../src/lib/server/content-import';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 
-// Bundle import on a disposable fixture database. The repository bundle is a
-// draft and must be refused; the approved bundles are synthetic temporary
-// copies, not checked curriculum.
+// Bundle import on a disposable fixture database: the approved repository
+// bundle, and synthetic temporary bundles for the rejection cases.
 
 let client: Client;
 let close: (() => void) | undefined;
@@ -152,27 +153,70 @@ async function skillIds() {
   return rows.rows.map((row) => String(row.id));
 }
 
-function codeOf(run: () => unknown) {
+function failureOf(run: () => unknown): string {
   try {
     run();
   } catch (error) {
-    expect(error).toBeInstanceOf(ContentImportError);
-    return (error as ContentImportError).code;
+    if (!(error instanceof ContentImportError)) throw error;
+    return `${error.code}: ${error.detail}`;
   }
-  return undefined;
+  throw new Error('Expected a ContentImportError, but nothing was thrown.');
 }
 
 describe('content bundle import', () => {
-  it('reads the repository bundle and refuses it while it is a draft', async () => {
+  it('imports the approved repository bundle once', async () => {
     const pkg = bundlePackage(process.cwd());
+    expect(pkg.publicationStatus).toBe('approved');
+    expect(pkg.curriculumVersion).toBe('1.0.0');
+    expect(pkg.skills.every((skill) => skill.review === 'approved')).toBe(true);
+    // Expected counts come from the source files, not from the package.
+    const rows = parseCsv(
+      readFileSync('docs/curriculum-coverage.csv', 'utf8')
+    ).slice(1);
+    const lifecycle = columnIndex('lifecycle_status');
+    const ids = rows
+      .filter((row) => row[lifecycle] === 'active')
+      .map((row) => row[0]);
+    const active = new Set(ids);
+    const graph = JSON.parse(
+      readFileSync('content/prerequisites.json', 'utf8')
+    ) as { nodes: { skill_id: string; prerequisites: string[] }[] };
+    const edges = graph.nodes
+      .filter((node) => active.has(node.skill_id))
+      .flatMap((node) => node.prerequisites).length;
+    expect(ids.length).toBeGreaterThan(100);
+    expect(pkg.skills.map((skill) => skill.id).sort()).toEqual([...ids].sort());
+    const result = await importContent(client, pkg);
+    expect(result.skills).toBe(ids.length);
+    expect(result.prerequisites).toBe(edges);
+    expect(await skillIds()).toEqual(expect.arrayContaining(ids));
+    const retired = rows
+      .filter((row) => row[lifecycle] === 'retired')
+      .map((row) => row[0]);
+    expect(retired.length).toBeGreaterThan(0);
+    for (const id of retired) expect(await skillIds()).not.toContain(id);
+    expect(await importContent(client, pkg)).toEqual({
+      skills: 0,
+      prerequisites: 0,
+      versions: 0,
+      questions: 0,
+      quarantined: 0
+    });
+  });
+
+  it('refuses a draft bundle', async () => {
+    const pkg = bundlePackage(
+      await writeBundle({ status: 'draft', version: '0.1.0-draft.1' })
+    );
     expect(pkg.publicationStatus).toBe('draft');
-    expect(pkg.skills.length).toBeGreaterThan(100);
+    expect(pkg.skills).toHaveLength(6);
     expect(pkg.skills.every((skill) => skill.review === 'unreviewed')).toBe(
       true
     );
     const before = await skillIds();
     const error = await importContent(client, pkg).catch((e) => e);
     expect((error as ContentImportError).code).toBe('NOT_APPROVED');
+    expect((error as ContentImportError).detail).toBe('publication status');
     expect(await skillIds()).toEqual(before);
   });
 
@@ -245,12 +289,16 @@ describe('content bundle import', () => {
         ids: [...baseRows.map((row) => row.id), 'fr-a1-099']
       })
     );
-    expect(codeOf(() => bundlePackage(dropped))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(dropped))).toMatch(
+      /^INVALID_BUNDLE: Previously registered ID was removed/u
+    );
   });
 
   it('rejects a bundle whose files do not match the manifest hashes', async () => {
     const tampered = await writeBundle({ tamper: true });
-    expect(codeOf(() => bundlePackage(tampered))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(tampered))).toMatch(
+      /^INVALID_BUNDLE: Digest mismatch/u
+    );
   });
 
   it('rejects an approved bundle that still has a provisional skill', async () => {
@@ -258,11 +306,15 @@ describe('content bundle import', () => {
       index === 0 ? { ...row, evidence: 'provisional' } : row
     );
     const provisional = await writeBundle({ rows });
-    expect(codeOf(() => bundlePackage(provisional))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(provisional))).toMatch(
+      /^INVALID_BUNDLE: An approved bundle cannot contain a provisional skill/u
+    );
   });
 
   it('rejects an approved bundle with a pre-release version', async () => {
     const draftVersion = await writeBundle({ version: '1.0.0-rc.1' });
-    expect(codeOf(() => bundlePackage(draftVersion))).toBe('INVALID_BUNDLE');
+    expect(failureOf(() => bundlePackage(draftVersion))).toMatch(
+      /^INVALID_BUNDLE: An approved version must be stable/u
+    );
   });
 });

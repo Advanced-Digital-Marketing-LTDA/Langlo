@@ -1,9 +1,9 @@
 {
   "manifest_version": 1,
-  "curriculum_version": "0.1.0-draft.1",
-  "publication_status": "draft",
+  "curriculum_version": "1.0.0",
+  "publication_status": "approved",
   "coverage_file": "docs/curriculum-coverage.csv",
-  "coverage_sha256": "d312bc79709d27c46ced5f629cfc05173ab4c3809a757b152f5c104134036a7b",
+  "coverage_sha256": "60f5280cf7d8414f516e5bf87021cbb1883294ffccc2db85dcaf61e2dfac57cb",
   "prerequisites_file": "content/prerequisites.json",
   "prerequisites_sha256": "aac369bab55b0299b6dcbb279270e82135a158f31669c142180bfd5393fad1ca",
   "id_registry_file": "content/curriculum-id-registry.json",

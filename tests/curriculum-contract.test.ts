@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Graph } from '../scripts/curriculum-contract.mjs';
 import {
+  columnIndex,
   headers,
   parseCsv,
   resolveRepositoryPath,
@@ -60,7 +61,13 @@ describe('versioned curriculum bundle contract', () => {
     );
   });
 
-  it('uses a pre-release version, separate publication status, explicit scope and file hashes', () => {
+  it('is approved at a stable version, with separate publication status, explicit scope and file hashes', () => {
+    // The draft rules are checked on a draft copy of the approved manifest.
+    const draft = {
+      ...manifest,
+      curriculum_version: '0.1.0-draft.1',
+      publication_status: 'draft'
+    };
     const files = new Map(
       [
         manifest.coverage_file,
@@ -69,46 +76,55 @@ describe('versioned curriculum bundle contract', () => {
       ].map((path) => [path, readFileSync(resolve(root, path), 'utf8')])
     );
     expect(manifest.curriculum_version).toMatch(
-      /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)-draft\.\d+$/u
+      /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/u
     );
-    expect(manifest.publication_status).toBe('draft');
+    expect(manifest.publication_status).toBe('approved');
     expect(manifest.dependency_semantics).toBe('recommended_teaching_order');
     expect(manifest.selected_subset_tracks).toContain('French A1');
     expect(() => validateManifest(manifest, files)).not.toThrow();
+    expect(() => validateManifest(draft, files)).not.toThrow();
+    for (const base of [manifest, draft]) {
+      expect(() =>
+        validateManifest(
+          { ...base, dependency_semantics: 'mastery_gate' },
+          files
+        )
+      ).toThrow(/Unsupported dependency semantics/u);
+      expect(() =>
+        validateManifest({ ...base, publication_status: 'released' }, files)
+      ).toThrow(/Invalid publication status/u);
+      expect(() =>
+        validateManifest({ ...base, coverage_sha256: '0'.repeat(64) }, files)
+      ).toThrow(/Digest mismatch/u);
+    }
     expect(() =>
-      validateManifest(
-        { ...manifest, dependency_semantics: 'mastery_gate' },
-        files
-      )
-    ).toThrow();
+      validateManifest({ ...manifest, curriculum_version: '1.1.0-rc.1' }, files)
+    ).toThrow(/approved version must be stable/u);
     expect(() =>
-      validateManifest({ ...manifest, publication_status: 'released' }, files)
-    ).toThrow();
-    expect(() =>
-      validateManifest({ ...manifest, curriculum_version: '1.0.0' }, files)
+      validateManifest({ ...draft, curriculum_version: '1.0.0' }, files)
     ).toThrow(/draft version must be a pre-release/u);
     expect(() =>
-      validateManifest({ ...manifest, curriculum_version: 'draft' }, files)
-    ).toThrow();
+      validateManifest({ ...draft, curriculum_version: 'draft' }, files)
+    ).toThrow(/Invalid curriculum version/u);
     expect(() =>
       validateManifest(
-        { ...manifest, curriculum_version: '0.1.0-draft.01' },
+        { ...draft, curriculum_version: '0.1.0-draft.01' },
         files
       )
     ).toThrow(/Invalid curriculum version/u);
     expect(() =>
       validateManifest(
-        { ...manifest, curriculum_version: '0.1.0-draft..1' },
+        { ...draft, curriculum_version: '0.1.0-draft..1' },
         files
       )
     ).toThrow(/Invalid curriculum version/u);
     expect(() =>
-      validateManifest({ ...manifest, curriculum_version: '0.1.0-0' }, files)
+      validateManifest({ ...draft, curriculum_version: '0.1.0-0' }, files)
     ).not.toThrow();
     expect(() =>
       validateManifest(
         {
-          ...manifest,
+          ...draft,
           curriculum_version: '0.1.0+build.01',
           publication_status: 'approved'
         },
@@ -118,7 +134,7 @@ describe('versioned curriculum bundle contract', () => {
     expect(() =>
       validateManifest(
         {
-          ...manifest,
+          ...draft,
           curriculum_version: '0.1.0-draft.1',
           publication_status: 'approved'
         },
@@ -126,20 +142,24 @@ describe('versioned curriculum bundle contract', () => {
       )
     ).toThrow(/approved version must be stable/u);
     expect(() =>
-      validateManifest({ ...manifest, curriculum_version: '01.1.0' }, files)
+      validateManifest({ ...draft, curriculum_version: '01.1.0' }, files)
     ).toThrow(/Invalid curriculum version/u);
     expect(() =>
       validateManifest(
-        { ...manifest, curriculum_version: '0.1.0-alpha+meta+again' },
+        { ...draft, curriculum_version: '0.1.0-alpha+meta+again' },
         files
       )
     ).toThrow(/Invalid curriculum version/u);
     expect(() =>
-      validateManifest({ ...manifest, coverage_sha256: '0'.repeat(64) }, files)
-    ).toThrow();
-    expect(() =>
-      validateManifest({ ...manifest, coverage_file: '../outside.csv' }, files)
+      validateManifest({ ...draft, coverage_file: '../outside.csv' }, files)
     ).toThrow(/Invalid manifest path/u);
+  });
+
+  it('finds coverage columns by name and rejects unknown ones', () => {
+    expect(columnIndex('evidence_status')).toBe(7);
+    expect(() => columnIndex('evidence_state')).toThrow(
+      /Unknown coverage column: evidence_state/u
+    );
   });
 
   it('rejects arbitrary CLI file paths before reading files', () => {
@@ -193,7 +213,7 @@ describe('versioned curriculum bundle contract', () => {
       expect(() =>
         validateRows(
           withRow((copy) => {
-            copy[headers.indexOf(field)] = '   ';
+            copy[columnIndex(field)] = '   ';
           })
         )
       ).toThrow(/Empty required field/u);
@@ -276,17 +296,49 @@ describe('versioned curriculum bundle contract', () => {
     ).toThrow(/Previously registered ID was removed/u);
   });
 
-  it('blocks approval while an active skill has provisional evidence', () => {
+  it('blocks approval while any catalog row, active or retired, has provisional or missing evidence', () => {
+    expect(() => validatePublicationStatus(manifest, catalog)).not.toThrow();
+    const status = columnIndex('evidence_status');
+    const lifecycle = columnIndex('lifecycle_status');
+    const provisional = new Map(catalog);
+    const entry = [...catalog.entries()].find(
+      ([, cells]) => cells[lifecycle] === 'active'
+    );
+    expect(entry).toBeDefined();
+    const [id, row] = entry as [string, string[]];
+    expect(row[status]).not.toBe('provisional');
+    const changed = row.map((cell, index) =>
+      index === status ? 'provisional' : cell
+    );
+    provisional.set(id, changed);
+    expect(provisional.get(id)?.[status]).toBe('provisional');
+    expect(() => validatePublicationStatus(manifest, provisional)).toThrow(
+      /provisional skill/u
+    );
     expect(() =>
       validatePublicationStatus(
-        {
-          ...manifest,
-          curriculum_version: '1.0.0',
-          publication_status: 'approved'
-        },
-        catalog
+        { ...manifest, publication_status: 'draft' },
+        provisional
       )
-    ).toThrow(/provisional skill/u);
+    ).not.toThrow();
+    const retiredEntry = [...catalog.entries()].find(
+      ([, cells]) => cells[lifecycle] === 'retired'
+    );
+    expect(retiredEntry).toBeDefined();
+    const [retiredId, retiredRow] = retiredEntry as [string, string[]];
+    const retired = new Map(catalog);
+    retired.set(
+      retiredId,
+      retiredRow.map((cell, index) => (index === status ? 'provisional' : cell))
+    );
+    expect(() => validatePublicationStatus(manifest, retired)).toThrow(
+      /provisional skill/u
+    );
+    const short = new Map(catalog);
+    short.set(id, row.slice(0, status));
+    expect(() => validatePublicationStatus(manifest, short)).toThrow(
+      /provisional skill/u
+    );
   });
 
   it('validates same-language, level-ordered, acyclic graph structure without pinning lesson choices', () => {

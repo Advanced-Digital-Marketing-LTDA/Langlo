@@ -480,11 +480,22 @@ export function validateIdRegistry(registry, catalog, previousIds = []) {
     );
 }
 
+/** @param {string} name @returns {number} */
+export function columnIndex(name) {
+  const index = headers.indexOf(name);
+  requireCondition(index >= 0, `Unknown coverage column: ${name}.`);
+  return index;
+}
+
 /** @param {Manifest} manifest @param {Catalog} catalog */
 export function validatePublicationStatus(manifest, catalog) {
   if (manifest.publication_status !== 'approved') return;
+  const status = columnIndex('evidence_status');
   requireCondition(
-    [...catalog.values()].every((row) => row[7] !== 'provisional'),
+    [...catalog.values()].every((row) => {
+      const value = row.at(status);
+      return typeof value === 'string' && value !== 'provisional';
+    }),
     'An approved bundle cannot contain a provisional skill.'
   );
 }
