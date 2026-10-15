@@ -245,7 +245,7 @@
           {
             "id": "fr-a1-002@1:q07",
             "format": "typed-blank",
-            "prompt": "___ aime le café. (I)",
+            "prompt": "___aime le café. (I)",
             "answer": "J'",
             "near_misses": ["Je", "J"],
             "holdout": false
