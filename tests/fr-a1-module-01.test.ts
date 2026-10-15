@@ -136,7 +136,7 @@ describe('French A1 module 01', () => {
     }
   });
 
-  it('has at least twelve practice items and three holdouts per skill, in all four formats', () => {
+  it('has exactly twelve practice items and three holdouts per skill, in all four formats', () => {
     expect(questions.length).toBe(60);
     for (const q of questions) {
       expect(typeof q.holdout, q.id).toBe('boolean');
@@ -225,6 +225,8 @@ describe('French A1 module 01', () => {
     };
     expect(accepts(q, '  j’habite   à paris ')).toBe(true);
     expect(accepts(q, "J'habite à Paris!")).toBe(true);
+    for (const mark of ['\u2018', '\u2019', '\u02bc', '\u201b'])
+      expect(accepts(q, `J${mark}habite à Paris`), mark).toBe(true);
     expect(accepts(question, 'est-ce que tu aimes la musique\u00a0?')).toBe(
       true
     );
@@ -243,6 +245,7 @@ describe('French A1 module 01', () => {
     } as Record<string, string>;
     expect(Object.keys(decision)).toContain(module.review_status);
     const evidence = read('docs/evidence/T101.md');
+    expect(evidence.match(/^Reviewer decision:/gmu)).toHaveLength(1);
     expect(evidence).toMatch(
       new RegExp(
         `^## Review\\n+Reviewer decision: ${decision[module.review_status]}\\b`,
