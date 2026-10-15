@@ -138,7 +138,10 @@ describe('French A1 module 01', () => {
 
   it('has at least twelve practice items and three holdouts per skill, in all four formats', () => {
     expect(questions.length).toBe(60);
-    for (const q of questions) expect(typeof q.holdout, q.id).toBe('boolean');
+    for (const q of questions) {
+      expect(typeof q.holdout, q.id).toBe('boolean');
+      expect(formats, q.id).toContain(q.format);
+    }
     for (const lesson of module.lessons) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
@@ -154,16 +157,26 @@ describe('French A1 module 01', () => {
     }
   });
 
-  it('no holdout repeats a practice prompt or answer in its lesson, and ids and prompts are unique', () => {
+  it('no holdout repeats a practice prompt, answer or accepted alternative in its lesson, and ids and prompts are unique', () => {
     for (const lesson of module.lessons) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
+      const typed = (q: Question) =>
+        q.format === 'multiple-choice'
+          ? [q.answer]
+          : [q.answer, ...(q.alternatives ?? [])];
       const seen = new Set(
-        practice.flatMap((q) => [normalize(q.prompt), normalize(q.answer)])
+        practice.flatMap((q) => [
+          normalize(q.prompt),
+          ...typed(q).map(normalize)
+        ])
       );
       for (const q of items.filter((item) => item.holdout)) {
         expect(seen.has(normalize(q.prompt)), q.id).toBe(false);
-        expect(seen.has(normalize(q.answer)), q.id).toBe(false);
+        for (const accepted of typed(q))
+          expect(seen.has(normalize(accepted)), `${q.id}: ${accepted}`).toBe(
+            false
+          );
       }
     }
     const ids = questions.map((q) => q.id);
@@ -202,24 +215,40 @@ describe('French A1 module 01', () => {
     const q: Question = {
       id: 'probe',
       format: 'translation',
-      prompt: 'I am French.',
+      prompt: 'I live in Paris.',
       answer: "J'habite à Paris.",
       holdout: false
     };
+    const question: Question = {
+      ...q,
+      answer: 'Est-ce que tu aimes la musique ?'
+    };
     expect(accepts(q, '  j’habite   à paris ')).toBe(true);
+    expect(accepts(q, "J'habite à Paris!")).toBe(true);
+    expect(accepts(question, 'est-ce que tu aimes la musique\u00a0?')).toBe(
+      true
+    );
+    expect(accepts(q, "J'habite a\u0300 Paris".normalize('NFD'))).toBe(true);
+    expect(
+      accepts({ ...q, format: 'multiple-choice', answer: 'Elle' }, 'elle')
+    ).toBe(false);
     expect(accepts(q, "J'habite a Paris")).toBe(false);
     expect(accepts(q, "J'habite à Paris,")).toBe(false);
   });
 
   it('keeps the module review status and the evidence decision in agreement', () => {
-    expect(['pending-owner-review', 'approved']).toContain(
-      module.review_status
-    );
+    const decision = {
+      'pending-owner-review': 'pending',
+      approved: 'approved'
+    } as Record<string, string>;
+    expect(Object.keys(decision)).toContain(module.review_status);
     const evidence = read('docs/evidence/T101.md');
-    expect(evidence).toMatch(/Reviewer decision: (pending|approved)/u);
-    if (module.review_status === 'approved')
-      expect(evidence).toMatch(/Reviewer decision: approved/u);
-    else expect(evidence).toMatch(/Reviewer decision: pending/u);
+    expect(evidence).toMatch(
+      new RegExp(
+        `^## Review\\n+Reviewer decision: ${decision[module.review_status]}\\b`,
+        'mu'
+      )
+    );
   });
 });
 
@@ -257,11 +286,21 @@ describe('French A1 module 01 import', () => {
     expect(await Promise.all(tables.map(count))).toEqual(before);
   });
 
-  it('imports together with the approved bundle into a fresh database once a review is recorded', async () => {
+  it('imports together with the approved bundle into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)', async () => {
     const before = await count('questions');
     const result = await importContent(client, modulePackage('approved'));
     expect(result.versions).toBe(4);
-    expect(result.questions).toBe(questions.length);
+    expect(result.questions).toBe(60);
+    const stored = await client.execute(
+      'SELECT id, format FROM questions ORDER BY id'
+    );
+    const expected = questions.map((q) => `${q.id}|${q.format}`).sort();
+    expect(
+      stored.rows
+        .map((row) => `${String(row.id)}|${String(row.format)}`)
+        .filter((key) => expected.includes(key))
+        .sort()
+    ).toEqual(expected);
     // The importer has no holdout flag: holdouts are stored as ordinary
     // questions, so their separation from practice lives in the module JSON.
     expect((await count('questions')) - before).toBe(questions.length);
