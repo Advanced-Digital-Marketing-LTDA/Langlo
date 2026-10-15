@@ -27,4 +27,6 @@ Baselines were measured on a clean `git archive HEAD` export of the merged branc
 
 ## Pending
 
-No provider call was made locally. Hosted runs of both AI review workflows are unverified until the owner adds `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY`. The ratchets' hosted run is verified by this PR's CI.
+No provider call was made locally. Hosted runs of both AI review workflows are unverified until the owner adds `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY` (superseded by the 2026-10-15 update below). The ratchets' hosted run is verified by this PR's CI.
+
+Update, 2026-10-15: this supersedes the "unverified" sentence above. The owner added `CLAUDE_CODE_OAUTH_TOKEN` as a repository secret, and each hosted AI reviewer has one successful subscription run. Claude review re-ran on PR #32 ([run 38745287857, attempt 2](https://github.com/Bonobo791/Langlo/actions/runs/38745287857/attempts/2)), ran the four toolkit agents and posted [a summary comment](https://github.com/Bonobo791/Langlo/pull/32#issuecomment-6199064932). Adversarial review ran on PR #33 at head `136f083` ([run 38784363566](https://github.com/Bonobo791/Langlo/actions/runs/38784363566)), made two review passes and a verification pass, and returned APPROVE. The logs of both runs show the OAuth token set and `ANTHROPIC_API_KEY` empty. The earlier adversarial re-run on PR #32 ([run 38745288044, attempt 2](https://github.com/Bonobo791/Langlo/actions/runs/38745288044/attempts/2)) exited with "Nothing to review — the target scope is empty", because that PR was already merged.
