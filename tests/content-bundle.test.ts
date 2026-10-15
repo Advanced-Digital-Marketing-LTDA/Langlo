@@ -12,9 +12,8 @@ import {
 } from '../src/lib/server/content-import';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 
-// Bundle import on a disposable fixture database. The repository bundle is a
-// draft and must be refused; the approved bundles are synthetic temporary
-// copies, not checked curriculum.
+// Bundle import on a disposable fixture database: the approved repository
+// bundle, and synthetic temporary bundles for the rejection cases.
 
 let client: Client;
 let close: (() => void) | undefined;
@@ -163,17 +162,24 @@ function codeOf(run: () => unknown) {
 }
 
 describe('content bundle import', () => {
-  it('reads the repository bundle and refuses it while it is a draft', async () => {
+  it('imports the approved repository bundle once', async () => {
     const pkg = bundlePackage(process.cwd());
-    expect(pkg.publicationStatus).toBe('draft');
-    expect(pkg.skills.length).toBeGreaterThan(100);
-    expect(pkg.skills.every((skill) => skill.review === 'unreviewed')).toBe(
-      true
+    expect(pkg.publicationStatus).toBe('approved');
+    expect(pkg.curriculumVersion).toBe('1.0.0');
+    expect(pkg.skills.every((skill) => skill.review === 'approved')).toBe(true);
+    const result = await importContent(client, pkg);
+    expect(result.skills).toBe(124);
+    expect(result.prerequisites).toBe(164);
+    expect(await importContent(client, pkg)).toEqual({
+      skills: 0,
+      prerequisites: 0,
+      versions: 0,
+      questions: 0,
+      quarantined: 0
+    });
+    expect(await skillIds()).toEqual(
+      expect.arrayContaining(['de-a2-020', 'en-a2-001', 'fr-a1-001'])
     );
-    const before = await skillIds();
-    const error = await importContent(client, pkg).catch((e) => e);
-    expect((error as ContentImportError).code).toBe('NOT_APPROVED');
-    expect(await skillIds()).toEqual(before);
   });
 
   it('imports an approved bundle once, with its active skills and edges', async () => {
