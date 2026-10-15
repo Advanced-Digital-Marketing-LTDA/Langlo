@@ -1,0 +1,52 @@
+import { validateBundle } from '../../../scripts/curriculum-contract.mjs';
+import { ContentImportError, type ContentPackage } from './content-import';
+
+// Reads the curriculum bundle (manifest, coverage CSV, prerequisite graph and
+// ID registry) through the contract validator, which checks the manifest
+// hashes, catalog, registry and graph, and turns it into an importer package.
+// Only active skills are imported: retired rows are ID tombstones. Skills are
+// reviewed only when the whole bundle is approved; the importer then applies
+// its own gates, so a draft bundle is still refused there.
+
+const languages: Record<string, 'fr' | 'de' | 'en'> = {
+  French: 'fr',
+  German: 'de',
+  English: 'en'
+};
+
+function validated(root: string) {
+  try {
+    return validateBundle(root);
+  } catch (error) {
+    throw new ContentImportError('INVALID_BUNDLE', (error as Error).message);
+  }
+}
+
+/** Read and validate the bundle at a repository root, adding optional content versions. */
+export function bundlePackage(
+  root: string,
+  versions: ContentPackage['versions'] = []
+): ContentPackage {
+  const { manifest, catalog, graph } = validated(root);
+  const review =
+    manifest.publication_status === 'approved' ? 'approved' : 'unreviewed';
+  const edges = new Map(
+    graph.nodes.map((node) => [node.skill_id, node.prerequisites])
+  );
+  const skills = [...catalog.values()]
+    .filter((row) => row[9] === 'active')
+    .map(([id, language, level]) => ({
+      id,
+      language: languages[language],
+      level: level as 'A1' | 'A2',
+      review,
+      prerequisites: edges.get(id) ?? []
+    }));
+  return {
+    curriculumVersion: manifest.curriculum_version,
+    publicationStatus: manifest.publication_status,
+    dependencySemantics: manifest.dependency_semantics,
+    skills,
+    versions
+  };
+}

@@ -32,7 +32,8 @@ async function sharedContent() {
       'SELECT id, language, level FROM skills ORDER BY id',
       'SELECT skill_id, prerequisite_id, language FROM prerequisites ORDER BY skill_id, prerequisite_id',
       'SELECT id, skill_id, language, version, status FROM content_versions ORDER BY id',
-      'SELECT id, content_version_id, skill_id, language, format FROM questions ORDER BY id'
+      'SELECT id, content_version_id, skill_id, language, format FROM questions ORDER BY id',
+      'SELECT curriculum_version, fingerprint FROM curriculum_imports ORDER BY curriculum_version'
     ],
     'read'
   );
@@ -110,6 +111,7 @@ describe('content import', () => {
   it('preserves existing prerequisites when a later package omits them', async () => {
     await importContent(client, approvedPackage());
     const later = approvedPackage();
+    later.curriculumVersion = '0.2.0';
     later.skills[2].prerequisites = ['fr-a1-002'];
     later.versions = [];
     await importContent(client, later);
@@ -120,6 +122,7 @@ describe('content import', () => {
   it('adds a new version alongside the old one instead of rewriting it', async () => {
     await importContent(client, approvedPackage());
     const next = approvedPackage();
+    next.curriculumVersion = '0.2.0';
     next.versions = [
       {
         id: 'fr-a1-001@2',
@@ -148,15 +151,35 @@ describe('content import', () => {
   it('quarantines an imported version and never un-quarantines it', async () => {
     await importContent(client, approvedPackage());
     const pulled = approvedPackage();
+    pulled.curriculumVersion = '0.2.0';
     pulled.versions[0].review = 'quarantined';
     expect((await importContent(client, pulled)).quarantined).toBe(1);
-    expect((await importContent(client, approvedPackage())).quarantined).toBe(
-      0
-    );
+    const restored = approvedPackage();
+    restored.curriculumVersion = '0.3.0';
+    expect((await importContent(client, restored)).quarantined).toBe(0);
     const [, , versions] = await sharedContent();
     expect(versions.find((row) => row.id === 'fr-a1-001@1')?.status).toBe(
       'quarantined'
     );
+  });
+
+  it('records each curriculum version once with its package fingerprint', async () => {
+    await importContent(client, approvedPackage());
+    await importContent(client, approvedPackage());
+    const [, , , , ledger] = await sharedContent();
+    expect(ledger).toHaveLength(1);
+    expect(ledger[0].curriculum_version).toBe('0.1.0');
+    expect(String(ledger[0].fingerprint)).toMatch(/^[0-9a-f]{64}$/u);
+    const later = approvedPackage();
+    later.curriculumVersion = '0.1.1';
+    later.versions = [];
+    await importContent(client, later);
+    const [, , , , both] = await sharedContent();
+    expect(both.map((row) => row.curriculum_version)).toEqual([
+      '0.1.0',
+      '0.1.1'
+    ]);
+    expect(both[0].fingerprint).not.toBe(both[1].fingerprint);
   });
 
   it('never creates cards, review history or learner progress', async () => {
@@ -323,18 +346,41 @@ describe('content import rejects the whole package', () => {
     await rejects(duplicate, 'INVALID_PACKAGE');
   });
 
+  it('when another package reuses an imported curriculum version', async () => {
+    await importContent(client, approvedPackage());
+    const changed = approvedPackage();
+    changed.versions = [];
+    await rejects(changed, 'CONTENT_CONFLICT');
+  });
+
+  it('when its curriculum version is not newer than every imported one', async () => {
+    const newer = approvedPackage();
+    newer.curriculumVersion = '0.10.0';
+    await importContent(client, newer);
+    for (const version of ['0.9.9', '0.10.0+build.2']) {
+      const older = approvedPackage();
+      older.curriculumVersion = version;
+      older.versions = [];
+      await rejects(older, 'CONTENT_CONFLICT');
+    }
+  });
+
   it('when it would rewrite a stored skill, version or question', async () => {
     await importContent(client, approvedPackage());
-    const skill = approvedPackage();
+    const bump = (pkg: ContentPackage) => {
+      pkg.curriculumVersion = '0.2.0';
+      return pkg;
+    };
+    const skill = bump(approvedPackage());
     skill.skills[0].language = 'de';
     skill.skills[1].language = 'de';
     skill.skills[2].language = 'de';
     skill.versions = [];
     await rejects(skill, 'CONTENT_CONFLICT');
-    const question = approvedPackage();
+    const question = bump(approvedPackage());
     question.versions[0].questions[1].format = 'translation';
     await rejects(question, 'CONTENT_CONFLICT');
-    const added = approvedPackage();
+    const added = bump(approvedPackage());
     added.versions[0].questions.push({
       id: 'fr-a1-001@1:q3',
       format: 'typed-blank',
@@ -342,7 +388,7 @@ describe('content import rejects the whole package', () => {
       answer: 'est'
     });
     await rejects(added, 'CONTENT_CONFLICT');
-    const renumbered = approvedPackage();
+    const renumbered = bump(approvedPackage());
     renumbered.versions[0].id = 'fr-a1-001@1b';
     renumbered.versions[0].questions = [
       {

@@ -275,6 +275,23 @@ export const contentVersions = sqliteTable(
   ]
 );
 
+// One row per imported curriculum version. The fingerprint is a SHA-256 of
+// the validated package, so a version names exactly one package.
+export const curriculumImports = sqliteTable(
+  'curriculum_imports',
+  {
+    curriculumVersion: text('curriculum_version').primaryKey(),
+    fingerprint: text('fingerprint').notNull(),
+    importedAt: createdAt()
+  },
+  (table) => [
+    check(
+      'curriculum_imports_fingerprint',
+      sql`length(${table.fingerprint}) = 64`
+    )
+  ]
+);
+
 export const questions = sqliteTable(
   'questions',
   {
