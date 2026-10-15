@@ -627,7 +627,7 @@
             "format": "translation",
             "prompt": "Translate (use the simple present): You (polite) are French.",
             "answer": "Vous êtes français.",
-            "alternatives": ["Vous êtes française.", "Vous êtes françaises."],
+            "alternatives": ["Vous êtes française."],
             "near_misses": ["Vous etes français.", "Vous avez français."],
             "holdout": true
           },

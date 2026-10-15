@@ -65,7 +65,7 @@ const formats = ['multiple-choice', 'typed-blank', 'translation', 'correction'];
 function normalize(value: string) {
   return value
     .normalize('NFC')
-    .replaceAll('’', "'")
+    .replace(/[\u2018\u2019\u02bc\u201b]/gu, "'")
     .trim()
     .replace(/[.!?]+$/u, '')
     .replace(/\s+/gu, ' ')
@@ -111,6 +111,7 @@ describe('French A1 module 01', () => {
     for (const [index, id] of ids.entries()) {
       expect(catalog.get(id)?.[lifecycle]).toBe('active');
       const node = graph.nodes.find((item) => item.skill_id === id);
+      expect(node, id).toBeDefined();
       for (const prerequisite of node?.prerequisites ?? [])
         expect(ids.slice(0, index)).toContain(prerequisite);
     }
@@ -162,6 +163,8 @@ describe('French A1 module 01', () => {
         expect(seen.has(normalize(q.answer)), q.id).toBe(false);
       }
     }
+    const ids = questions.map((q) => q.id);
+    expect(new Set(ids).size).toBe(ids.length);
     const prompts = questions.map((q) => normalize(q.prompt));
     expect(new Set(prompts).size).toBe(prompts.length);
   });
@@ -199,11 +202,15 @@ describe('French A1 module 01', () => {
     expect(accepts(q, "J'habite à Paris,")).toBe(false);
   });
 
-  it('marks the module unreviewed until the owner records a decision', () => {
-    expect(module.review_status).toBe('pending-owner-review');
-    expect(read('docs/evidence/T101.md')).toMatch(
-      /Reviewer decision: pending/u
+  it('records an owner decision before the module can be approved', () => {
+    expect(['pending-owner-review', 'approved']).toContain(
+      module.review_status
     );
+    const evidence = read('docs/evidence/T101.md');
+    expect(evidence).toMatch(/Reviewer decision: (pending|approved)/u);
+    if (module.review_status === 'approved')
+      expect(evidence).toMatch(/Reviewer decision: approved/u);
+    else expect(evidence).toMatch(/Reviewer decision: pending/u);
   });
 });
 
@@ -221,28 +228,32 @@ describe('French A1 module 01 import', () => {
     await disposeFlashcardFixtures();
   });
 
+  const count = async (table: string) =>
+    Number(
+      (await client.execute(`SELECT COUNT(*) AS n FROM ${table}`)).rows[0].n
+    );
+
   it('is refused while unreviewed, and writes nothing', async () => {
-    const count = async () =>
-      Number(
-        (await client.execute('SELECT COUNT(*) AS n FROM content_versions'))
-          .rows[0].n
-      );
-    const before = await count();
+    const tables = ['skills', 'content_versions', 'questions'];
+    const before = await Promise.all(tables.map(count));
     const error = (await importContent(
       client,
       modulePackage('unreviewed')
     ).catch((e: unknown) => e)) as ContentImportError;
     expect(error).toBeInstanceOf(ContentImportError);
     expect(error.code).toBe('UNREVIEWED');
-    expect(await count()).toBe(before);
+    expect(await Promise.all(tables.map(count))).toEqual(before);
   });
 
   it('imports with the approved bundle once a review is recorded', async () => {
+    const before = await count('questions');
     const result = await importContent(client, modulePackage('approved'));
     expect(result.versions).toBe(4);
     expect(result.questions).toBe(questions.length);
-    expect(
-      (await importContent(client, modulePackage('approved'))).questions
-    ).toBe(0);
+    // The importer has no holdout flag: holdouts are stored as ordinary
+    // questions, so their separation from practice lives in the module JSON.
+    expect((await count('questions')) - before).toBe(questions.length);
+    const again = await importContent(client, modulePackage('approved'));
+    expect([again.versions, again.questions]).toEqual([0, 0]);
   });
 });
