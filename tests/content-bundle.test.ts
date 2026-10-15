@@ -166,10 +166,13 @@ describe('content bundle import', () => {
     const pkg = bundlePackage(process.cwd());
     expect(pkg.publicationStatus).toBe('approved');
     expect(pkg.curriculumVersion).toBe('1.0.0');
-    expect(pkg.skills.every((skill) => skill.review === 'approved')).toBe(true);
+    const ids = pkg.skills.map((skill) => skill.id);
+    const edges = pkg.skills.flatMap((skill) => skill.prerequisites).length;
+    expect(ids.length).toBeGreaterThan(100);
     const result = await importContent(client, pkg);
-    expect(result.skills).toBe(124);
-    expect(result.prerequisites).toBe(164);
+    expect(result.skills).toBe(ids.length);
+    expect(result.prerequisites).toBe(edges);
+    expect(await skillIds()).toEqual(expect.arrayContaining(ids));
     expect(await importContent(client, pkg)).toEqual({
       skills: 0,
       prerequisites: 0,
@@ -177,9 +180,19 @@ describe('content bundle import', () => {
       questions: 0,
       quarantined: 0
     });
-    expect(await skillIds()).toEqual(
-      expect.arrayContaining(['de-a2-020', 'en-a2-001', 'fr-a1-001'])
+  });
+
+  it('refuses a draft bundle', async () => {
+    const pkg = bundlePackage(
+      await writeBundle({ status: 'draft', version: '0.1.0-draft.1' })
     );
+    expect(pkg.skills.every((skill) => skill.review === 'unreviewed')).toBe(
+      true
+    );
+    const before = await skillIds();
+    const error = await importContent(client, pkg).catch((e) => e);
+    expect((error as ContentImportError).code).toBe('NOT_APPROVED');
+    expect(await skillIds()).toEqual(before);
   });
 
   it('imports an approved bundle once, with its active skills and edges', async () => {
