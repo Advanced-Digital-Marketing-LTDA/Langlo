@@ -18,28 +18,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
       - name: Report a missing API key
-        if: ${{ env.ANTHROPIC_API_KEY == '' }}
+        if: ${{ env.HAS_KEY != 'true' }}
         run: echo '::notice::ANTHROPIC_API_KEY is not set; adversarial review skipped.'
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        if: ${{ env.HAS_KEY == 'true' }}
         with:
           persist-credentials: false
           fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        if: ${{ env.HAS_KEY == 'true' }}
         with:
           node-version: 24.19.0
       - name: Install pinned adversarial-review outside the project tree
-        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        if: ${{ env.HAS_KEY == 'true' }}
         run: |
           npm install --global --ignore-scripts npm@11.9.0
           npm install --prefix "$RUNNER_TEMP/adversarial-review" --ignore-scripts --no-audit --no-fund adversarial-review@2.11.1
       - name: Fail on high-severity findings
-        if: ${{ env.ANTHROPIC_API_KEY != '' }}
+        if: ${{ env.HAS_KEY == 'true' }}
         env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BASE_REF: ${{ github.base_ref }}
         run: |
           node "$RUNNER_TEMP/adversarial-review/node_modules/adversarial-review/bin/cli.js" \
