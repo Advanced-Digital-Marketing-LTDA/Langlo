@@ -123,12 +123,18 @@ describe('French A1 module 01', () => {
       expect(lesson.title.trim()).not.toBe('');
       expect(lesson.explanation.length).toBeGreaterThan(80);
       expect(lesson.examples.length).toBeGreaterThanOrEqual(3);
+      for (const example of lesson.examples) {
+        expect(example.fr.trim(), lesson.skill_id).not.toBe('');
+        expect(example.en.trim(), lesson.skill_id).not.toBe('');
+      }
       const row = catalog.get(lesson.skill_id);
       expect(row, lesson.skill_id).toBeDefined();
       const allowed = String(row?.[sources]).split(';');
       expect(lesson.references.length).toBeGreaterThan(0);
-      for (const reference of lesson.references)
+      for (const reference of lesson.references) {
+        expect(reference.trim(), lesson.skill_id).not.toBe('');
         expect(allowed).toContain(reference);
+      }
       expect(lesson.version).toMatchObject({
         id: `${lesson.skill_id}@1`,
         version: 1
@@ -149,7 +155,7 @@ describe('French A1 module 01', () => {
       expect(practice.length).toBe(12);
       expect(holdouts.length).toBe(3);
       expect(new Set(practice.map((q) => q.format))).toEqual(new Set(formats));
-      expect(new Set(holdouts.map((q) => q.format)).size).toBeGreaterThan(1);
+      expect(new Set(holdouts.map((q) => q.format)).size).toBe(3);
       for (const q of items)
         expect(
           q.id.startsWith(`${lesson.version.id}:${q.holdout ? 'h' : 'q'}`)
@@ -187,6 +193,9 @@ describe('French A1 module 01', () => {
 
   it('data consistency: typed answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
     for (const q of questions) {
+      expect(q.answer.trim(), q.id).not.toBe('');
+      for (const alternative of q.alternatives ?? [])
+        expect(alternative.trim(), q.id).not.toBe('');
       expect(accepts(q, q.answer), q.id).toBe(true);
       for (const alternative of q.format === 'multiple-choice'
         ? []
@@ -264,9 +273,12 @@ describe('French A1 module 01 import', () => {
   });
 
   afterEach(async () => {
-    close?.();
-    close = undefined;
-    await disposeFlashcardFixtures();
+    try {
+      close?.();
+    } finally {
+      close = undefined;
+      await disposeFlashcardFixtures();
+    }
   });
 
   const count = async (table: string) =>
