@@ -63,6 +63,10 @@ jobs:
                     ]
                   }
                 ]
+              },
+              "env": {
+                "CLAUDE_CODE_SUBAGENT_MODEL": "haiku",
+                "CLAUDE_CODE_SUBAGENT_MODEL_FORCE": "1"
               }
             }
           # v1.0.250's classifier hardcodes Haiku 4.5; disable it to keep all model calls on latest Haiku.
