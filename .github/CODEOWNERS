@@ -15,6 +15,7 @@
 /tests/report-path.test.ts       @Bonobo791
 /tests/db-remote-migrate.test.ts @Bonobo791
 /tests/test_t003_apkg.py         @Bonobo791
+/tests/test_t003_paths.py        @Bonobo791
 
 # Supply chain
 /package.json                    @Bonobo791

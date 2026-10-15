@@ -6,7 +6,7 @@ The Quality workflow ran every Node check but never the Python T003 suites (`tes
 
 ## Change
 
-New `apkg-feasibility` job in `.github/workflows/ci.yml`, on every push and pull request with read-only permissions and no secrets. It creates a throwaway venv under `$RUNNER_TEMP`, installs pinned genanki 0.13.1 and its four dependencies as wheels only (`--only-binary=:all: --no-deps`, the pip analogue of `--ignore-scripts`: no sdist build code runs), then runs `python -m unittest discover -s tests -p 'test_t003_*.py' -v`. `tests/test_t003_apkg.py`, the checker's test twin, is now listed explicitly in CODEOWNERS.
+New `apkg-feasibility` job in `.github/workflows/ci.yml`, on every push and pull request with read-only permissions and no secrets. It creates a throwaway venv under `$RUNNER_TEMP`, installs pinned genanki 0.13.1 and its four dependencies as wheels only (`--only-binary=:all: --no-deps`, the pip analogue of `--ignore-scripts`: no sdist build code runs), then runs `python -m unittest discover -s tests -p 'test_t003_*.py' -v`. `tests/test_t003_apkg.py` and `tests/test_t003_paths.py`, the checker and generator test twins, are now listed explicitly in CODEOWNERS.
 
 ## Local evidence (Python 3.13, same commands as the job)
 
