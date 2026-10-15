@@ -5,7 +5,6 @@ import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { bundlePackage } from '../src/lib/server/content-bundle';
 import {
-  ContentImportError,
   importContent,
   type ContentPackage
 } from '../src/lib/server/content-import';
@@ -81,10 +80,11 @@ function accepts(question: Question, response: string) {
   );
 }
 
-function modulePackage(review: string): ContentPackage {
+function modulePackage(review: string, version?: string): ContentPackage {
   const pkg = bundlePackage(root);
   return {
     ...pkg,
+    curriculumVersion: version ?? pkg.curriculumVersion,
     versions: module.lessons.map((lesson) => ({
       id: lesson.version.id,
       skillId: lesson.skill_id,
@@ -123,9 +123,9 @@ describe('French A1 module 01', () => {
       expect(lesson.title.trim()).not.toBe('');
       expect(lesson.explanation.length).toBeGreaterThan(80);
       expect(lesson.examples.length).toBeGreaterThanOrEqual(3);
-      const allowed = String(catalog.get(lesson.skill_id)?.[sources]).split(
-        ';'
-      );
+      const row = catalog.get(lesson.skill_id);
+      expect(row, lesson.skill_id).toBeDefined();
+      const allowed = String(row?.[sources]).split(';');
       expect(lesson.references.length).toBeGreaterThan(0);
       for (const reference of lesson.references)
         expect(allowed).toContain(reference);
@@ -138,6 +138,7 @@ describe('French A1 module 01', () => {
 
   it('has at least twelve practice items and three holdouts per skill, in all four formats', () => {
     expect(questions.length).toBeGreaterThanOrEqual(48);
+    for (const q of questions) expect(typeof q.holdout, q.id).toBe('boolean');
     for (const lesson of module.lessons) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
@@ -151,7 +152,7 @@ describe('French A1 module 01', () => {
     }
   });
 
-  it('keeps holdouts out of practice: no shared prompt or answer', () => {
+  it('no holdout repeats a practice prompt or answer in its lesson, and ids and prompts are unique', () => {
     for (const lesson of module.lessons) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
@@ -169,7 +170,7 @@ describe('French A1 module 01', () => {
     expect(new Set(prompts).size).toBe(prompts.length);
   });
 
-  it('accepts every answer and alternative, and rejects every near miss', () => {
+  it('data consistency: typed answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
     for (const q of questions) {
       expect(accepts(q, q.answer), q.id).toBe(true);
       for (const alternative of q.format === 'multiple-choice'
@@ -179,8 +180,12 @@ describe('French A1 module 01', () => {
       if (q.format === 'multiple-choice') {
         expect(q.alternatives, q.id).toContain(q.answer);
         expect(q.alternatives?.length, q.id).toBeGreaterThanOrEqual(3);
-        for (const option of q.alternatives ?? [])
-          if (option !== q.answer) expect(accepts(q, option), q.id).toBe(false);
+        const options = (q.alternatives ?? []).map(normalize);
+        expect(new Set(options).size, q.id).toBe(options.length);
+        expect(
+          options.filter((option) => option === normalize(q.answer)),
+          q.id
+        ).toHaveLength(1);
         continue;
       }
       expect(q.near_misses?.length, q.id).toBeGreaterThan(0);
@@ -202,7 +207,7 @@ describe('French A1 module 01', () => {
     expect(accepts(q, "J'habite à Paris,")).toBe(false);
   });
 
-  it('records an owner decision before the module can be approved', () => {
+  it('keeps the module review status and the evidence decision in agreement', () => {
     expect(['pending-owner-review', 'approved']).toContain(
       module.review_status
     );
@@ -234,14 +239,17 @@ describe('French A1 module 01 import', () => {
     );
 
   it('is refused while unreviewed, and writes nothing', async () => {
-    const tables = ['skills', 'content_versions', 'questions'];
+    const tables = [
+      'skills',
+      'prerequisites',
+      'content_versions',
+      'questions',
+      'curriculum_imports'
+    ];
     const before = await Promise.all(tables.map(count));
-    const error = (await importContent(
-      client,
-      modulePackage('unreviewed')
-    ).catch((e: unknown) => e)) as ContentImportError;
-    expect(error).toBeInstanceOf(ContentImportError);
-    expect(error.code).toBe('UNREVIEWED');
+    await expect(
+      importContent(client, modulePackage('unreviewed'))
+    ).rejects.toMatchObject({ code: 'UNREVIEWED' });
     expect(await Promise.all(tables.map(count))).toEqual(before);
   });
 
@@ -255,5 +263,20 @@ describe('French A1 module 01 import', () => {
     expect((await count('questions')) - before).toBe(questions.length);
     const again = await importContent(client, modulePackage('approved'));
     expect([again.versions, again.questions]).toEqual([0, 0]);
+  });
+
+  it('imports the approved bundle first, then the module as a newer curriculum version', async () => {
+    await importContent(client, bundlePackage(root));
+    const before = await count('questions');
+    const result = await importContent(
+      client,
+      modulePackage('approved', '1.1.0')
+    );
+    expect([result.skills, result.versions, result.questions]).toEqual([
+      0,
+      4,
+      questions.length
+    ]);
+    expect((await count('questions')) - before).toBe(questions.length);
   });
 });
