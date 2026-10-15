@@ -137,18 +137,20 @@ describe('French A1 module 01', () => {
   });
 
   it('has at least twelve practice items and three holdouts per skill, in all four formats', () => {
-    expect(questions.length).toBeGreaterThanOrEqual(48);
+    expect(questions.length).toBe(60);
     for (const q of questions) expect(typeof q.holdout, q.id).toBe('boolean');
     for (const lesson of module.lessons) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
       const holdouts = items.filter((q) => q.holdout);
-      expect(practice.length).toBeGreaterThanOrEqual(12);
-      expect(holdouts.length).toBeGreaterThanOrEqual(3);
+      expect(practice.length).toBe(12);
+      expect(holdouts.length).toBe(3);
       expect(new Set(practice.map((q) => q.format))).toEqual(new Set(formats));
       expect(new Set(holdouts.map((q) => q.format)).size).toBeGreaterThan(1);
       for (const q of items)
-        expect(q.id.startsWith(`${lesson.version.id}:`)).toBe(true);
+        expect(
+          q.id.startsWith(`${lesson.version.id}:${q.holdout ? 'h' : 'q'}`)
+        ).toBe(true);
     }
   });
 
@@ -188,6 +190,8 @@ describe('French A1 module 01', () => {
         ).toHaveLength(1);
         continue;
       }
+      const accepted = [q.answer, ...(q.alternatives ?? [])].map(normalize);
+      expect(new Set(accepted).size, q.id).toBe(accepted.length);
       expect(q.near_misses?.length, q.id).toBeGreaterThan(0);
       for (const miss of q.near_misses ?? [])
         expect(accepts(q, miss), `${q.id}: ${miss}`).toBe(false);
