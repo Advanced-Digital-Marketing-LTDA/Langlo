@@ -53,9 +53,16 @@ export function bundlePackage(
     curriculumVersion: manifest.curriculum_version,
     publicationStatus: manifest.publication_status,
     dependencySemantics: manifest.dependency_semantics,
-    // The manifest carries the hash of every bundle file.
+    // The manifest's file hashes identify the bundle content; its other
+    // fields are fixed by the contract or already in the package.
     bundleDigest: createHash('sha256')
-      .update(JSON.stringify(manifest))
+      .update(
+        [
+          manifest.coverage_sha256,
+          manifest.prerequisites_sha256,
+          manifest.id_registry_sha256
+        ].join('\n')
+      )
       .digest('hex'),
     skills,
     versions

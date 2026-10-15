@@ -68,6 +68,7 @@ async function writeBundle(
     rows?: Row[];
     tamper?: boolean;
     topic?: string;
+    reorder?: boolean;
   } = {}
 ) {
   root = await mkdtemp(join(tmpdir(), 'langlo-bundle-'));
@@ -133,7 +134,11 @@ async function writeBundle(
   );
   await writeFile(
     join(root, 'content', 'curriculum-manifest.json'),
-    JSON.stringify(manifest)
+    JSON.stringify(
+      options.reorder
+        ? Object.fromEntries(Object.entries(manifest).reverse())
+        : manifest
+    )
   );
   await writeFile(
     join(root, 'docs', 'evidence', 'T004.md'),
@@ -222,6 +227,13 @@ describe('content bundle import', () => {
     const reissued = bundlePackage(await writeBundle({ topic: 'Renamed' }));
     const error = await importContent(client, reissued).catch((e) => e);
     expect((error as ContentImportError).code).toBe('CONTENT_CONFLICT');
+  });
+
+  it('treats a manifest with reordered keys as the same bundle', async () => {
+    await importContent(client, bundlePackage(await writeBundle()));
+    await rm(root as string, { recursive: true, force: true });
+    const reordered = bundlePackage(await writeBundle({ reorder: true }));
+    expect((await importContent(client, reordered)).skills).toBe(0);
   });
 
   it('rejects a bundle whose files do not match the manifest hashes', async () => {
