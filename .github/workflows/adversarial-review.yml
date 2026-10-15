@@ -22,6 +22,9 @@ jobs:
     env:
       HAS_OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
       HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+      # Keep Claude CLI helpers on Haiku if the reviewer launches any.
+      CLAUDE_CODE_SUBAGENT_MODEL: haiku
+      CLAUDE_CODE_SUBAGENT_MODEL_FORCE: '1'
     steps:
       - name: Report a missing credential
         if: ${{ env.HAS_OAUTH != 'true' && env.HAS_KEY != 'true' }}
@@ -55,6 +58,7 @@ jobs:
           node "$RUNNER_TEMP/ai-review/node_modules/adversarial-review/bin/cli.js" \
             --base "origin/$BASE_REF" \
             --provider claude \
+            --model haiku \
             --timeout 600 \
             --passes 2 \
             --verify \
@@ -69,6 +73,7 @@ jobs:
           node "$RUNNER_TEMP/ai-review/node_modules/adversarial-review/bin/cli.js" \
             --base "origin/$BASE_REF" \
             --provider anthropic \
+            --model claude-haiku-5-5 \
             --passes 2 \
             --verify \
             --fail-on high \
