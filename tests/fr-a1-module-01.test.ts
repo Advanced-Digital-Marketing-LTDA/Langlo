@@ -258,7 +258,7 @@ describe('French A1 module 01', () => {
     expect(evidence.match(/^Reviewer decision:/gmu)).toHaveLength(1);
     expect(evidence).toMatch(
       new RegExp(
-        `^## Review\\n+Reviewer decision: ${decision[module.review_status]}\\b`,
+        `^## Review\\n+Reviewer decision: ${decision[module.review_status]}\\.`,
         'mu'
       )
     );
@@ -324,7 +324,7 @@ describe('French A1 module 01 import', () => {
         .filter((key) => key.startsWith('fr-a1-'))
         .sort()
     ).toEqual(expected);
-    // The importer has no holdout flag: holdouts are stored as ordinary
+    // The importer has no holdout flag (LANGLO-125): holdouts are stored as ordinary
     // questions, so their separation from practice lives in the module JSON.
     expect((await count('questions')) - before).toBe(questions.length);
     const again = await importContent(client, modulePackage('approved'));

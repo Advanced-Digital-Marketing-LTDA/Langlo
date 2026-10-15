@@ -152,6 +152,7 @@
             "format": "translation",
             "prompt": "Translate (use the simple present): The bus is passing.",
             "answer": "Le bus passe.",
+            "alternatives": ["L'autobus passe."],
             "near_misses": ["Le bus passer.", "Passe le bus."],
             "holdout": true
           },
@@ -424,6 +425,7 @@
             "format": "translation",
             "prompt": "Translate (use the simple present): They (men) are working today.",
             "answer": "Ils travaillent aujourd'hui.",
+            "alternatives": ["Aujourd'hui, ils travaillent."],
             "near_misses": [
               "Ils travaille aujourd'hui.",
               "Ils travaillez aujourd'hui."
@@ -435,6 +437,7 @@
             "format": "correction",
             "prompt": "Correct the sentence: Nous parlez espagnol.",
             "answer": "Nous parlons espagnol.",
+            "alternatives": ["Vous parlez espagnol."],
             "near_misses": ["Nous parlez espagnol."],
             "holdout": false
           },
@@ -443,6 +446,12 @@
             "format": "correction",
             "prompt": "Correct the sentence: Tu chante bien.",
             "answer": "Tu chantes bien.",
+            "alternatives": [
+              "Je chante bien.",
+              "Il chante bien.",
+              "Elle chante bien.",
+              "On chante bien."
+            ],
             "near_misses": ["Tu chante bien."],
             "holdout": false
           },
