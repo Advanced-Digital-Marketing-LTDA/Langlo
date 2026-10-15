@@ -182,6 +182,26 @@ describe('content import', () => {
     expect(both[0].fingerprint).not.toBe(both[1].fingerprint);
   });
 
+  it('orders curriculum versions beyond the safe integer range', async () => {
+    const first = approvedPackage();
+    first.curriculumVersion = '0.9007199254740992.0';
+    await importContent(client, first);
+    const next = approvedPackage();
+    next.curriculumVersion = '0.9007199254740993.0';
+    next.versions = [];
+    expect((await importContent(client, next)).skills).toBe(0);
+  });
+
+  it('stores only lowercase hexadecimal fingerprints', async () => {
+    const insert = (fingerprint: string) =>
+      client.execute({
+        sql: 'INSERT INTO curriculum_imports (curriculum_version, fingerprint) VALUES (?, ?)',
+        args: ['9.9.9', fingerprint]
+      });
+    await expect(insert('z'.repeat(64))).rejects.toThrow();
+    await expect(insert('A'.repeat(64))).rejects.toThrow();
+  });
+
   it('never creates cards, review history or learner progress', async () => {
     const before = await privateState(client);
     await importContent(client, approvedPackage());

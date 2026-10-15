@@ -199,15 +199,16 @@ function validatePackage(pkg: ContentPackage) {
   return fingerprint(data);
 }
 
-// Precedence of stable versions; build metadata does not count.
+// Precedence of stable versions; build metadata does not count. BigInt keeps
+// components beyond the safe integer range exact.
 const precedence = (version: string) =>
   version
     .split('+')[0]
     .split('.')
-    .map((part) => Number(part));
+    .map((part) => BigInt(part));
 
-const newer = (a: number[], b: number[]) =>
-  (a[0] - b[0] || a[1] - b[1] || a[2] - b[2]) > 0;
+const newer = (a: bigint[], b: bigint[]) =>
+  (a[0] - b[0] || a[1] - b[1] || a[2] - b[2]) > 0n;
 
 /** Record a new curriculum version, or confirm a re-import of the same package. */
 async function recordVersion(tx: Transaction, version: string, hash: string) {

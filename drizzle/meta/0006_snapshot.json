@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "6f874052-68be-4dc2-b3d4-7ec934b5d38c",
+  "id": "88377644-0885-4160-b212-de3bfdef8c42",
   "prevId": "4ead3223-3e73-40e4-9681-b11e452f26b0",
   "tables": {
     "accounts": {
@@ -524,7 +524,7 @@
       "checkConstraints": {
         "curriculum_imports_fingerprint": {
           "name": "curriculum_imports_fingerprint",
-          "value": "length(\"curriculum_imports\".\"fingerprint\") = 64"
+          "value": "length(\"curriculum_imports\".\"fingerprint\") = 64 AND \"curriculum_imports\".\"fingerprint\" NOT GLOB '*[^0-9a-f]*'"
         }
       }
     },

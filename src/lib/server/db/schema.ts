@@ -287,7 +287,7 @@ export const curriculumImports = sqliteTable(
   (table) => [
     check(
       'curriculum_imports_fingerprint',
-      sql`length(${table.fingerprint}) = 64`
+      sql`length(${table.fingerprint}) = 64 AND ${table.fingerprint} NOT GLOB '*[^0-9a-f]*'`
     )
   ]
 );
