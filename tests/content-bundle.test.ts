@@ -189,6 +189,11 @@ describe('content bundle import', () => {
     expect(result.skills).toBe(ids.length);
     expect(result.prerequisites).toBe(edges);
     expect(await skillIds()).toEqual(expect.arrayContaining(ids));
+    const retired = rows
+      .filter((row) => row[lifecycle] === 'retired')
+      .map((row) => row[0]);
+    expect(retired.length).toBeGreaterThan(0);
+    for (const id of retired) expect(await skillIds()).not.toContain(id);
     expect(await importContent(client, pkg)).toEqual({
       skills: 0,
       prerequisites: 0,
