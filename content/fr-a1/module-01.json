@@ -117,7 +117,7 @@
           {
             "id": "fr-a1-001@1:q10",
             "format": "correction",
-            "prompt": "Correct the sentence: Le train arriver.",
+            "prompt": "Correct the sentence (keep the subject): Le train arriver.",
             "answer": "Le train arrive.",
             "near_misses": ["Le train arriver."],
             "holdout": false
@@ -125,7 +125,7 @@
           {
             "id": "fr-a1-001@1:q11",
             "format": "correction",
-            "prompt": "Correct the sentence: Travaille Marc à Nice.",
+            "prompt": "Correct the sentence (keep the subject): Travaille Marc à Nice.",
             "answer": "Marc travaille à Nice.",
             "near_misses": ["Travaille Marc à Nice.", "Marc travaille a Nice."],
             "holdout": false
@@ -133,7 +133,7 @@
           {
             "id": "fr-a1-001@1:q12",
             "format": "correction",
-            "prompt": "Correct the sentence: Le professeur parler anglais.",
+            "prompt": "Correct the sentence (keep the subject): Le professeur parler anglais.",
             "answer": "Le professeur parle anglais.",
             "alternatives": ["Le professeur parle l'anglais."],
             "near_misses": ["Le professeur parler anglais."],
@@ -153,7 +153,7 @@
             "prompt": "Translate (use the simple present): The bus is passing.",
             "answer": "Le bus passe.",
             "alternatives": ["L'autobus passe."],
-            "near_misses": ["Le bus passer.", "Passe le bus."],
+            "near_misses": ["Le bus passer.", "Le passe bus."],
             "holdout": true
           },
           {
@@ -278,7 +278,7 @@
           {
             "id": "fr-a1-002@1:q11",
             "format": "correction",
-            "prompt": "Correct the sentence: Je habite à Rennes.",
+            "prompt": "Correct the sentence (keep the subject): Je habite à Rennes.",
             "answer": "J'habite à Rennes.",
             "near_misses": ["Je habite à Rennes.", "J'habite a Rennes."],
             "holdout": false
@@ -598,7 +598,7 @@
           {
             "id": "fr-a1-004@1:q10",
             "format": "correction",
-            "prompt": "Correct the sentence: Je suis 25 ans.",
+            "prompt": "Correct the sentence (keep the subject): Je suis 25 ans.",
             "answer": "J'ai 25 ans.",
             "alternatives": ["J'ai vingt-cinq ans."],
             "near_misses": ["Je suis 25 ans.", "Je ai 25 ans."],

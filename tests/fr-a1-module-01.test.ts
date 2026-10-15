@@ -346,8 +346,17 @@ describe('French A1 module 01 import', () => {
     // The importer has no holdout flag (LANGLO-125): holdouts are stored as ordinary
     // questions, so their separation from practice lives in the module JSON.
     expect((await count('questions')) - before).toBe(questions.length);
+    const tables = [
+      'skills',
+      'prerequisites',
+      'content_versions',
+      'questions',
+      'curriculum_imports'
+    ];
+    const afterFirst = await Promise.all(tables.map(count));
     const again = await importContent(client, modulePackage('approved'));
     expect([again.versions, again.questions]).toEqual([0, 0]);
+    expect(await Promise.all(tables.map(count))).toEqual(afterFirst);
   });
 
   it('refuses the module under the already imported 1.0.0 curriculum version, and writes nothing', async () => {
