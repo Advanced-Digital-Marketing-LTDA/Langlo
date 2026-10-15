@@ -28,3 +28,5 @@ Baselines were measured on a clean `git archive HEAD` export of the merged branc
 ## Pending
 
 No provider call was made locally. Hosted runs of both AI review workflows are unverified until the owner adds `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_API_KEY`. The ratchets' hosted run is verified by this PR's CI.
+
+On 2026-10-15 the owner added `CLAUDE_CODE_OAUTH_TOKEN` as a repository secret. A re-run of Claude review on PR #32 made a real subscription call, ran the four toolkit agents and posted a summary comment.
