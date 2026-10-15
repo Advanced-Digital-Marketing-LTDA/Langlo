@@ -248,6 +248,9 @@ describe('French A1 module 01', () => {
     };
     expect(accepts(q, '  j’habite   à paris ')).toBe(true);
     expect(accepts(q, "J'habite à Paris!")).toBe(true);
+    expect(accepts(q, "J'HABITE À PARIS")).toBe(true);
+    expect(accepts(q, "J'habite à Paris?!")).toBe(true);
+    expect(accepts(q, "J'habite. à Paris")).toBe(false);
     for (const mark of ['\u2018', '\u2019', '\u02bc', '\u201b'])
       expect(accepts(q, `J${mark}habite à Paris`), mark).toBe(true);
     expect(accepts(question, 'est-ce que tu aimes la musique\u00a0?')).toBe(
@@ -256,6 +259,9 @@ describe('French A1 module 01', () => {
     expect(accepts(q, "J'habite a\u0300 Paris".normalize('NFD'))).toBe(true);
     expect(
       accepts({ ...q, format: 'multiple-choice', answer: 'Elle' }, 'elle')
+    ).toBe(false);
+    expect(
+      accepts({ ...q, format: 'multiple-choice', answer: 'Elle' }, 'Elle.')
     ).toBe(false);
     expect(accepts(q, "J'habite a Paris")).toBe(false);
     expect(accepts(q, "J'habite à Paris,")).toBe(false);
