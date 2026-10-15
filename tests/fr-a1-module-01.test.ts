@@ -289,7 +289,7 @@ describe('French A1 module 01 import', () => {
     expect(await Promise.all(tables.map(count))).toEqual(before);
   });
 
-  it('imports together with the approved bundle into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)', async () => {
+  it("imports with the approved bundle's skills and prerequisites into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)", async () => {
     const before = await count('questions');
     const result = await importContent(client, modulePackage('approved'));
     expect(result.versions).toBe(4);
