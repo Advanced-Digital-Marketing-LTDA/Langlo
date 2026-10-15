@@ -58,7 +58,7 @@ describe('Haiku-only CI review configuration', () => {
     ['explicit probe', { tool_input: { confirmed: false } }, 2],
     ['string confirmation', { tool_input: { confirmed: 'true' } }, 2],
     ['null confirmation', { tool_input: { confirmed: null } }, 2]
-  ])('%s returns exit %i or the expected hook status', (_label, input, status) => {
+  ])('%s input has the expected hook exit status', (_label, input, status) => {
     const result = spawnSync('sh', ['-c', inlineCommentHookCommand(review)], {
       input: JSON.stringify(input),
       encoding: 'utf8'
