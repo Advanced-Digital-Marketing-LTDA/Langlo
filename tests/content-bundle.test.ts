@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -6,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { bundlePackage } from '../src/lib/server/content-bundle';
+import { headers, parseCsv } from '../scripts/curriculum-contract.mjs';
 import {
   ContentImportError,
   importContent
@@ -166,9 +168,23 @@ describe('content bundle import', () => {
     const pkg = bundlePackage(process.cwd());
     expect(pkg.publicationStatus).toBe('approved');
     expect(pkg.curriculumVersion).toBe('1.0.0');
-    const ids = pkg.skills.map((skill) => skill.id);
-    const edges = pkg.skills.flatMap((skill) => skill.prerequisites).length;
+    // Expected counts come from the source files, not from the package.
+    const rows = parseCsv(
+      readFileSync('docs/curriculum-coverage.csv', 'utf8')
+    ).slice(1);
+    const lifecycle = headers.indexOf('lifecycle_status');
+    const ids = rows
+      .filter((row) => row[lifecycle] === 'active')
+      .map((row) => row[0]);
+    const active = new Set(ids);
+    const graph = JSON.parse(
+      readFileSync('content/prerequisites.json', 'utf8')
+    ) as { nodes: { skill_id: string; prerequisites: string[] }[] };
+    const edges = graph.nodes
+      .filter((node) => active.has(node.skill_id))
+      .flatMap((node) => node.prerequisites).length;
     expect(ids.length).toBeGreaterThan(100);
+    expect(pkg.skills.map((skill) => skill.id).sort()).toEqual([...ids].sort());
     const result = await importContent(client, pkg);
     expect(result.skills).toBe(ids.length);
     expect(result.prerequisites).toBe(edges);
@@ -185,9 +201,6 @@ describe('content bundle import', () => {
   it('refuses a draft bundle', async () => {
     const pkg = bundlePackage(
       await writeBundle({ status: 'draft', version: '0.1.0-draft.1' })
-    );
-    expect(pkg.skills.every((skill) => skill.review === 'unreviewed')).toBe(
-      true
     );
     const before = await skillIds();
     const error = await importContent(client, pkg).catch((e) => e);

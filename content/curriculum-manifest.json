@@ -3,7 +3,7 @@
   "curriculum_version": "1.0.0",
   "publication_status": "approved",
   "coverage_file": "docs/curriculum-coverage.csv",
-  "coverage_sha256": "d7442e0d05d6bf1dddb43317de6ce1ff007e167665917f118242b57a9c169baf",
+  "coverage_sha256": "60f5280cf7d8414f516e5bf87021cbb1883294ffccc2db85dcaf61e2dfac57cb",
   "prerequisites_file": "content/prerequisites.json",
   "prerequisites_sha256": "aac369bab55b0299b6dcbb279270e82135a158f31669c142180bfd5393fad1ca",
   "id_registry_file": "content/curriculum-id-registry.json",
