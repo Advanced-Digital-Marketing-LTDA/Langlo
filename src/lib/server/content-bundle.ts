@@ -1,4 +1,7 @@
-import { validateBundle } from '../../../scripts/curriculum-contract.mjs';
+import {
+  headers,
+  validateBundle
+} from '../../../scripts/curriculum-contract.mjs';
 import { ContentImportError, type ContentPackage } from './content-import';
 
 // Reads the curriculum bundle (manifest, coverage CSV, prerequisite graph and
@@ -13,6 +16,9 @@ const languages: Record<string, 'fr' | 'de' | 'en'> = {
   German: 'de',
   English: 'en'
 };
+
+// The validator requires exactly these columns, in this order.
+const lifecycle = headers.indexOf('lifecycle_status');
 
 function validated(root: string) {
   try {
@@ -34,7 +40,7 @@ export function bundlePackage(
     graph.nodes.map((node) => [node.skill_id, node.prerequisites])
   );
   const skills = [...catalog.values()]
-    .filter((row) => row[9] === 'active')
+    .filter((row) => row[lifecycle] === 'active')
     .map(([id, language, level]) => ({
       id,
       language: languages[language],
