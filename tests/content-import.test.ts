@@ -198,8 +198,9 @@ describe('content import', () => {
         sql: 'INSERT INTO curriculum_imports (curriculum_version, fingerprint) VALUES (?, ?)',
         args: ['9.9.9', fingerprint]
       });
-    await expect(insert('z'.repeat(64))).rejects.toThrow();
-    await expect(insert('A'.repeat(64))).rejects.toThrow();
+    await expect(insert('z'.repeat(64))).rejects.toThrow(/CHECK/u);
+    await expect(insert('A'.repeat(64))).rejects.toThrow(/CHECK/u);
+    await expect(insert('a'.repeat(64))).resolves.toBeDefined();
   });
 
   it('never creates cards, review history or learner progress', async () => {

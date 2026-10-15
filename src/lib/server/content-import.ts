@@ -45,6 +45,10 @@ export type ContentPackage = {
   curriculumVersion: string;
   publicationStatus: string;
   dependencySemantics: string;
+  // Identity of the source bundle, when there is one. It is part of the
+  // version fingerprint, so a reissued bundle needs a new version even when
+  // the imported rows are unchanged.
+  bundleDigest?: string | undefined;
   skills: {
     id: string;
     language: Language;
@@ -130,6 +134,7 @@ const questionShape = z.object({
 
 const packageShape = z.object({
   dependencySemantics: z.literal('recommended_teaching_order'),
+  bundleDigest: z.string().optional(),
   skills: z.array(skillShape),
   versions: z.array(
     z.object({

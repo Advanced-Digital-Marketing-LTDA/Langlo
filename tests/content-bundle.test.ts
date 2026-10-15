@@ -67,6 +67,7 @@ async function writeBundle(
     version?: string;
     rows?: Row[];
     tamper?: boolean;
+    topic?: string;
   } = {}
 ) {
   root = await mkdtemp(join(tmpdir(), 'langlo-bundle-'));
@@ -77,7 +78,7 @@ async function writeBundle(
       [
         row.id,
         row.track,
-        'Topic',
+        options.topic ?? 'Topic',
         'Synthetic objective',
         'SRC-A',
         'Synthetic placement',
@@ -212,6 +213,15 @@ describe('content bundle import', () => {
       }
     ]);
     expect((await importContent(client, pkg)).versions).toBe(1);
+  });
+
+  it('refuses a changed bundle reissued under an imported version', async () => {
+    await importContent(client, bundlePackage(await writeBundle()));
+    await rm(root as string, { recursive: true, force: true });
+    // Only catalog text changes; the imported skills and edges are identical.
+    const reissued = bundlePackage(await writeBundle({ topic: 'Renamed' }));
+    const error = await importContent(client, reissued).catch((e) => e);
+    expect((error as ContentImportError).code).toBe('CONTENT_CONFLICT');
   });
 
   it('rejects a bundle whose files do not match the manifest hashes', async () => {

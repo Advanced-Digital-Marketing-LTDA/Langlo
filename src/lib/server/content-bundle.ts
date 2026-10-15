@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import {
   headers,
   validateBundle
@@ -52,6 +53,10 @@ export function bundlePackage(
     curriculumVersion: manifest.curriculum_version,
     publicationStatus: manifest.publication_status,
     dependencySemantics: manifest.dependency_semantics,
+    // The manifest carries the hash of every bundle file.
+    bundleDigest: createHash('sha256')
+      .update(JSON.stringify(manifest))
+      .digest('hex'),
     skills,
     versions
   };
