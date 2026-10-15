@@ -48,7 +48,7 @@
             "answer": "Le train arrive.",
             "alternatives": [
               "Le train arrive.",
-              "Arrive le train.",
+              "Le train arriver.",
               "Le arrive train."
             ],
             "holdout": false
@@ -401,7 +401,9 @@
             "alternatives": [
               "Nous regardons la télévision.",
               "On regarde la télé.",
-              "On regarde la télévision."
+              "On regarde la télévision.",
+              "Nous regardons la TV.",
+              "On regarde la TV."
             ],
             "near_misses": [
               "Nous regardez la télé.",
@@ -440,6 +442,7 @@
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Nous parlez espagnol.",
             "answer": "Nous parlons espagnol.",
+            "alternatives": ["Nous parlons l'espagnol."],
             "near_misses": ["Nous parlez espagnol."],
             "holdout": false
           },
