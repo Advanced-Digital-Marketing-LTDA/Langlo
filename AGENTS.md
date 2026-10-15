@@ -15,3 +15,13 @@ CI package installations must use `--ignore-scripts`, including the npm bootstra
 Validator scripts under scripts/ and their test twins under tests/ are verification-layer code. When .github/CODEOWNERS exists, list each validator test twin explicitly rather than relying on name globs such as `tests/*evidence*`, which drift as files are added or renamed.
 
 Accepted T003 export policy: the APKG generator may write synthetic feasibility exports to child directories under the resolved system temporary directory (`/tmp` in this environment). The temporary root itself is rejected. Child directories are allowed intentionally and do not need to be restricted to a dedicated per-run directory. Resolve paths before checking containment, as the current generator does.
+
+## Global Rules
+
+### Scope discipline
+
+Change only what I explicitly ask you to change. Never remove, restyle, or "clean up" anything else (design, images, animations, layout, code, settings). If I ask for a text rewrite, touch text only.
+
+### Confirm first
+
+For any task that modifies something (files, sites, code, settings), first list exactly what you will change and what you will leave untouched, then wait for my approval before doing it.
