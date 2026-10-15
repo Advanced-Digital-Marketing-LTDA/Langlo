@@ -148,6 +148,10 @@ describe('French A1 module 01', () => {
     for (const q of questions) {
       expect(typeof q.holdout, q.id).toBe('boolean');
       expect(formats, q.id).toContain(q.format);
+      if (q.format === 'translation')
+        expect(q.prompt, q.id).toMatch(
+          /^Translate \(use the simple present\): /u
+        );
     }
     for (const lesson of module.lessons) {
       const items = lesson.version.questions;
@@ -223,6 +227,8 @@ describe('French A1 module 01', () => {
       expect(q.near_misses?.length, q.id).toBeGreaterThan(0);
       for (const miss of q.near_misses ?? [])
         expect(accepts(q, miss), `${q.id}: ${miss}`).toBe(false);
+      for (const miss of q.near_misses ?? [])
+        expect(miss.trim(), q.id).not.toBe('');
       const misses = (q.near_misses ?? []).map(normalize);
       expect(new Set(misses).size, q.id).toBe(misses.length);
     }
@@ -312,7 +318,10 @@ describe('French A1 module 01 import', () => {
             : module.review_status
         )
       )
-    ).rejects.toMatchObject({ code: 'UNREVIEWED' });
+    ).rejects.toMatchObject({
+      code: 'UNREVIEWED',
+      detail: module.lessons[0].version.id
+    });
     expect(await Promise.all(tables.map(count))).toEqual(before);
   });
 

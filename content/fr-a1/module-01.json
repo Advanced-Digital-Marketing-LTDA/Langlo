@@ -425,7 +425,10 @@
             "format": "translation",
             "prompt": "Translate (use the simple present): They (men) are working today.",
             "answer": "Ils travaillent aujourd'hui.",
-            "alternatives": ["Aujourd'hui, ils travaillent."],
+            "alternatives": [
+              "Aujourd'hui, ils travaillent.",
+              "Aujourd'hui ils travaillent."
+            ],
             "near_misses": [
               "Ils travaille aujourd'hui.",
               "Ils travaillez aujourd'hui."
