@@ -492,7 +492,10 @@ export function validatePublicationStatus(manifest, catalog) {
   if (manifest.publication_status !== 'approved') return;
   const status = columnIndex('evidence_status');
   requireCondition(
-    [...catalog.values()].every((row) => row.at(status) !== 'provisional'),
+    [...catalog.values()].every((row) => {
+      const value = row.at(status);
+      return typeof value === 'string' && value !== 'provisional';
+    }),
     'An approved bundle cannot contain a provisional skill.'
   );
 }

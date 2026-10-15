@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { bundlePackage } from '../src/lib/server/content-bundle';
-import { headers, parseCsv } from '../scripts/curriculum-contract.mjs';
+import { columnIndex, parseCsv } from '../scripts/curriculum-contract.mjs';
 import {
   ContentImportError,
   importContent
@@ -153,14 +153,14 @@ async function skillIds() {
   return rows.rows.map((row) => String(row.id));
 }
 
-function failureOf(run: () => unknown) {
+function failureOf(run: () => unknown): string {
   try {
     run();
   } catch (error) {
-    expect(error).toBeInstanceOf(ContentImportError);
-    return `${(error as ContentImportError).code}: ${(error as ContentImportError).detail}`;
+    if (!(error instanceof ContentImportError)) throw error;
+    return `${error.code}: ${error.detail}`;
   }
-  return undefined;
+  throw new Error('Expected a ContentImportError, but nothing was thrown.');
 }
 
 describe('content bundle import', () => {
@@ -168,11 +168,12 @@ describe('content bundle import', () => {
     const pkg = bundlePackage(process.cwd());
     expect(pkg.publicationStatus).toBe('approved');
     expect(pkg.curriculumVersion).toBe('1.0.0');
+    expect(pkg.skills.every((skill) => skill.review === 'approved')).toBe(true);
     // Expected counts come from the source files, not from the package.
     const rows = parseCsv(
       readFileSync('docs/curriculum-coverage.csv', 'utf8')
     ).slice(1);
-    const lifecycle = headers.indexOf('lifecycle_status');
+    const lifecycle = columnIndex('lifecycle_status');
     const ids = rows
       .filter((row) => row[lifecycle] === 'active')
       .map((row) => row[0]);
@@ -209,6 +210,9 @@ describe('content bundle import', () => {
     );
     expect(pkg.publicationStatus).toBe('draft');
     expect(pkg.skills).toHaveLength(6);
+    expect(pkg.skills.every((skill) => skill.review === 'unreviewed')).toBe(
+      true
+    );
     const before = await skillIds();
     const error = await importContent(client, pkg).catch((e) => e);
     expect((error as ContentImportError).code).toBe('NOT_APPROVED');

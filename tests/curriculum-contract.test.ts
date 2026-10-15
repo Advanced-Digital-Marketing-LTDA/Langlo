@@ -156,10 +156,7 @@ describe('versioned curriculum bundle contract', () => {
   });
 
   it('finds coverage columns by name and rejects unknown ones', () => {
-    expect(columnIndex('evidence_status')).toBe(
-      headers.indexOf('evidence_status')
-    );
-    expect(columnIndex('evidence_status')).toBeGreaterThanOrEqual(0);
+    expect(columnIndex('evidence_status')).toBe(7);
     expect(() => columnIndex('evidence_state')).toThrow(
       /Unknown coverage column: evidence_state/u
     );
@@ -216,7 +213,7 @@ describe('versioned curriculum bundle contract', () => {
       expect(() =>
         validateRows(
           withRow((copy) => {
-            copy[headers.indexOf(field)] = '   ';
+            copy[columnIndex(field)] = '   ';
           })
         )
       ).toThrow(/Empty required field/u);
@@ -299,10 +296,10 @@ describe('versioned curriculum bundle contract', () => {
     ).toThrow(/Previously registered ID was removed/u);
   });
 
-  it('blocks approval while an active skill has provisional evidence', () => {
+  it('blocks approval while any catalog row, active or retired, has provisional or missing evidence', () => {
     expect(() => validatePublicationStatus(manifest, catalog)).not.toThrow();
-    const status = headers.indexOf('evidence_status');
-    const lifecycle = headers.indexOf('lifecycle_status');
+    const status = columnIndex('evidence_status');
+    const lifecycle = columnIndex('lifecycle_status');
     const provisional = new Map(catalog);
     const entry = [...catalog.entries()].find(
       ([, cells]) => cells[lifecycle] === 'active'
@@ -324,6 +321,24 @@ describe('versioned curriculum bundle contract', () => {
         provisional
       )
     ).not.toThrow();
+    const retiredEntry = [...catalog.entries()].find(
+      ([, cells]) => cells[lifecycle] === 'retired'
+    );
+    expect(retiredEntry).toBeDefined();
+    const [retiredId, retiredRow] = retiredEntry as [string, string[]];
+    const retired = new Map(catalog);
+    retired.set(
+      retiredId,
+      retiredRow.map((cell, index) => (index === status ? 'provisional' : cell))
+    );
+    expect(() => validatePublicationStatus(manifest, retired)).toThrow(
+      /provisional skill/u
+    );
+    const short = new Map(catalog);
+    short.set(id, row.slice(0, status));
+    expect(() => validatePublicationStatus(manifest, short)).toThrow(
+      /provisional skill/u
+    );
   });
 
   it('validates same-language, level-ordered, acyclic graph structure without pinning lesson choices', () => {
