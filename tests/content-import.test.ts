@@ -182,6 +182,23 @@ describe('content import', () => {
     expect(both[0].fingerprint).not.toBe(both[1].fingerprint);
   });
 
+  it('imports the package as it was when the import was called', async () => {
+    const pkg = approvedPackage();
+    const pending = importContent(client, pkg);
+    pkg.curriculumVersion = '9.0.0';
+    pkg.skills = [];
+    pkg.versions = [];
+    const result = await pending;
+    expect(result.skills).toBe(approvedPackage().skills.length);
+    const [, , , , ledger] = await sharedContent();
+    expect(ledger.map((row) => row.curriculum_version)).toEqual(['0.1.0']);
+  });
+
+  it('rejects a package that is not plain data', async () => {
+    const pkg = Object.assign(approvedPackage(), { load: () => undefined });
+    await rejects(pkg, 'INVALID_PACKAGE');
+  });
+
   it('orders curriculum versions beyond the safe integer range', async () => {
     const first = approvedPackage();
     first.curriculumVersion = '0.9007199254740992.0';

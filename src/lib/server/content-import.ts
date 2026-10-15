@@ -464,11 +464,22 @@ async function importVersions(
   }
 }
 
+function snapshot(pkg: ContentPackage): ContentPackage {
+  try {
+    return structuredClone(pkg);
+  } catch {
+    return fail('INVALID_PACKAGE', 'package is not plain data');
+  }
+}
+
 /** Validate and import an approved content package into the shared content tables. */
 export async function importContent(
   client: Client,
-  pkg: ContentPackage
+  input: ContentPackage
 ): Promise<ImportResult> {
+  // A private copy, so that the caller changing the package while the import
+  // awaits cannot alter what was validated and fingerprinted.
+  const pkg = snapshot(input);
   const hash = validatePackage(pkg);
   const tx = await beginWrite(client);
   try {
