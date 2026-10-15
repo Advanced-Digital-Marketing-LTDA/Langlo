@@ -156,6 +156,11 @@ describe('French A1 module 01', () => {
       expect(practice.length).toBe(12);
       expect(holdouts.length).toBe(3);
       expect(new Set(practice.map((q) => q.format))).toEqual(new Set(formats));
+      for (const format of formats)
+        expect(
+          practice.filter((q) => q.format === format).length,
+          `${lesson.skill_id} ${format}`
+        ).toBeGreaterThanOrEqual(2);
       expect(new Set(holdouts.map((q) => q.format)).size).toBe(3);
       for (const q of items)
         expect(
@@ -164,7 +169,7 @@ describe('French A1 module 01', () => {
     }
   });
 
-  it('no holdout repeats a practice prompt, answer or accepted alternative in its lesson, and ids and prompts are unique', () => {
+  it('no holdout repeats a practice prompt, typed answer or accepted alternative in its lesson (multiple-choice options are not compared), and ids and prompts are unique', () => {
     for (const lesson of module.lessons) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
@@ -218,6 +223,8 @@ describe('French A1 module 01', () => {
       expect(q.near_misses?.length, q.id).toBeGreaterThan(0);
       for (const miss of q.near_misses ?? [])
         expect(accepts(q, miss), `${q.id}: ${miss}`).toBe(false);
+      const misses = (q.near_misses ?? []).map(normalize);
+      expect(new Set(misses).size, q.id).toBe(misses.length);
     }
   });
 
@@ -344,5 +351,11 @@ describe('French A1 module 01 import', () => {
       questions.length
     ]);
     expect((await count('questions')) - before).toBe(questions.length);
+    const imports = await client.execute(
+      'SELECT curriculum_version FROM curriculum_imports ORDER BY curriculum_version'
+    );
+    const versions = imports.rows.map((row) => String(row.curriculum_version));
+    expect(versions).toContain('1.0.0');
+    expect(versions).toContain('1.1.0');
   });
 });
