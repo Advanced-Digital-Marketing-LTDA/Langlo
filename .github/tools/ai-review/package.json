@@ -1,0 +1,9 @@
+{
+  "name": "langlo-ai-review-tools",
+  "private": true,
+  "description": "Pinned CI-only tools for the AI review workflows; installed with npm ci --ignore-scripts.",
+  "dependencies": {
+    "@anthropic-ai/claude-code-linux-x64": "2.1.300",
+    "adversarial-review": "2.11.1"
+  }
+}

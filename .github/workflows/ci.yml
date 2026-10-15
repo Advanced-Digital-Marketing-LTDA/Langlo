@@ -143,6 +143,24 @@ jobs:
           if-no-files-found: ignore
           retention-days: 3
 
+  apkg-feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install pinned genanki wheels without build scripts
+        run: |
+          python3 -m venv "$RUNNER_TEMP/apkg-venv"
+          "$RUNNER_TEMP/apkg-venv/bin/pip" install --only-binary=:all: --no-deps \
+            genanki==0.13.1 cached-property==2.0.1 chevron==0.14.0 frozendict==2.4.7 pyyaml==6.0.3
+      - name: Run APKG generator, checker and path-safety tests
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: |
+          "$RUNNER_TEMP/apkg-venv/bin/python" -m unittest discover -s tests -p 'test_t003_*.py' -v
+
   merge-evidence-gate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
