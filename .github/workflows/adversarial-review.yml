@@ -1,9 +1,9 @@
 name: Adversarial review
 
 # Opt-in AI review (see AGENTS.md). It runs only on same-repository pull
-# requests and only once the owner adds a CLAUDE_CODE_OAUTH_TOKEN (Claude
-# subscription, from `claude setup-token`) or ANTHROPIC_API_KEY repository
-# secret. The subscription token is preferred when both exist.
+# requests, using the CLAUDE_CODE_OAUTH_TOKEN repository secret (Claude
+# subscription, from `claude setup-token`). ANTHROPIC_API_KEY is an optional
+# fallback; the subscription token is preferred when both exist.
 on:
   pull_request:
 
