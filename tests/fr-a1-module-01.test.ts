@@ -108,14 +108,18 @@ describe('French A1 module 01', () => {
     const ids = module.lessons.map((lesson) => lesson.skill_id);
     expect(ids).toEqual(['fr-a1-001', 'fr-a1-002', 'fr-a1-003', 'fr-a1-004']);
     const lifecycle = columnIndex('lifecycle_status');
+    let edges = 0;
     for (const [index, id] of ids.entries()) {
       expect(catalog.get(id)?.[lifecycle]).toBe('active');
       const node = graph.nodes.find((item) => item.skill_id === id);
       expect(node, id).toBeDefined();
       expect(Array.isArray(node?.prerequisites), id).toBe(true);
-      for (const prerequisite of node?.prerequisites ?? [])
+      for (const prerequisite of node?.prerequisites ?? []) {
         expect(ids.slice(0, index)).toContain(prerequisite);
+        edges += 1;
+      }
     }
+    expect(edges).toBeGreaterThan(0);
   });
 
   it('gives every lesson an English explanation, examples and catalog references', () => {
@@ -312,20 +316,16 @@ describe('French A1 module 01 import', () => {
       'curriculum_imports'
     ];
     const before = await Promise.all(tables.map(count));
-    await expect(
-      importContent(
-        client,
-        modulePackage(
-          module.review_status === 'approved'
-            ? 'unreviewed'
-            : module.review_status
-        )
-      )
-    ).rejects.toMatchObject({
-      code: 'UNREVIEWED',
-      detail: module.lessons[0].version.id
-    });
-    expect(await Promise.all(tables.map(count))).toEqual(before);
+    for (const review of ['unreviewed', 'pending-owner-review']) {
+      await expect(
+        importContent(client, modulePackage(review)),
+        review
+      ).rejects.toMatchObject({
+        code: 'UNREVIEWED',
+        detail: module.lessons[0].version.id
+      });
+      expect(await Promise.all(tables.map(count)), review).toEqual(before);
+    }
   });
 
   it("imports with the approved bundle's skills and prerequisites into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)", async () => {
@@ -361,11 +361,14 @@ describe('French A1 module 01 import', () => {
   });
 
   it('imports the approved bundle first, then the module as a newer curriculum version', async () => {
-    await importContent(client, bundlePackage(root));
+    const bundle = bundlePackage(root);
+    const [major, minor] = bundle.curriculumVersion.split('.').map(Number);
+    const newer = `${major}.${minor + 1}.0`;
+    await importContent(client, bundle);
     const before = await count('questions');
     const result = await importContent(
       client,
-      modulePackage('approved', '1.1.0')
+      modulePackage('approved', newer)
     );
     expect([result.skills, result.versions, result.questions]).toEqual([
       0,
@@ -377,7 +380,7 @@ describe('French A1 module 01 import', () => {
       'SELECT curriculum_version FROM curriculum_imports ORDER BY curriculum_version'
     );
     const versions = imports.rows.map((row) => String(row.curriculum_version));
-    expect(versions).toContain('1.0.0');
-    expect(versions).toContain('1.1.0');
+    expect(versions).toContain(bundle.curriculumVersion);
+    expect(versions).toContain(newer);
   });
 });

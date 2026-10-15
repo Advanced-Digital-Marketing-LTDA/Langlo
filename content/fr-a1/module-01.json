@@ -457,7 +457,7 @@
           {
             "id": "fr-a1-003@1:q12",
             "format": "correction",
-            "prompt": "Correct the sentence: Est-ce que vous habiter ici ?",
+            "prompt": "Correct the sentence (keep the subject): Est-ce que vous habiter ici ?",
             "answer": "Est-ce que vous habitez ici ?",
             "alternatives": ["Vous habitez ici ?"],
             "near_misses": ["Est-ce que vous habiter ici ?"],
@@ -607,7 +607,7 @@
           {
             "id": "fr-a1-004@1:q11",
             "format": "correction",
-            "prompt": "Correct the sentence: Vous êtez médecin ?",
+            "prompt": "Correct the sentence (keep the subject): Vous êtez médecin ?",
             "answer": "Vous êtes médecin ?",
             "near_misses": ["Vous êtez médecin ?", "Vous etes médecin ?"],
             "holdout": false
