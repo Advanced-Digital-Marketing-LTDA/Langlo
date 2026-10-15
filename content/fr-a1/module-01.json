@@ -268,8 +268,9 @@
           {
             "id": "fr-a1-002@1:q10",
             "format": "translation",
-            "prompt": "Translate (use the simple present): We are eating. (informal, use 'on')",
+            "prompt": "Translate (use the simple present): We are eating.",
             "answer": "On mange.",
+            "alternatives": ["Nous mangeons."],
             "near_misses": ["Nous mange.", "On mangeons."],
             "holdout": false
           },

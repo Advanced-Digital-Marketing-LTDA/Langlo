@@ -112,6 +112,7 @@ describe('French A1 module 01', () => {
       expect(catalog.get(id)?.[lifecycle]).toBe('active');
       const node = graph.nodes.find((item) => item.skill_id === id);
       expect(node, id).toBeDefined();
+      expect(Array.isArray(node?.prerequisites), id).toBe(true);
       for (const prerequisite of node?.prerequisites ?? [])
         expect(ids.slice(0, index)).toContain(prerequisite);
     }
@@ -220,7 +221,7 @@ describe('French A1 module 01', () => {
     }
   });
 
-  it('ignores case, spacing, apostrophe style and final punctuation, but not accents', () => {
+  it('local matching rule: ignores case, spacing, apostrophe style and final punctuation, but not accents', () => {
     const q: Question = {
       id: 'probe',
       format: 'translation',
@@ -296,7 +297,14 @@ describe('French A1 module 01 import', () => {
     ];
     const before = await Promise.all(tables.map(count));
     await expect(
-      importContent(client, modulePackage('unreviewed'))
+      importContent(
+        client,
+        modulePackage(
+          module.review_status === 'approved'
+            ? 'unreviewed'
+            : module.review_status
+        )
+      )
     ).rejects.toMatchObject({ code: 'UNREVIEWED' });
     expect(await Promise.all(tables.map(count))).toEqual(before);
   });
@@ -313,7 +321,7 @@ describe('French A1 module 01 import', () => {
     expect(
       stored.rows
         .map((row) => `${String(row.id)}|${String(row.format)}`)
-        .filter((key) => expected.includes(key))
+        .filter((key) => key.startsWith('fr-a1-'))
         .sort()
     ).toEqual(expected);
     // The importer has no holdout flag: holdouts are stored as ordinary
