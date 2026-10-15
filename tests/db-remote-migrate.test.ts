@@ -250,7 +250,8 @@ describe('migration inventory', () => {
       '0002_harden_persisted_invariants',
       '0003_review_invariants',
       '0004_material_sway',
-      '0005_auth_contract'
+      '0005_auth_contract',
+      '0006_content_version_ledger'
     ]);
     const whens = migrations.map((m) => m.when);
     expect([...whens].sort((a, b) => a - b)).toEqual(whens);
@@ -330,7 +331,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     );
     expect(state.pending.map((m) => m.tag)).toEqual([
       '0004_material_sway',
-      '0005_auth_contract'
+      '0005_auth_contract',
+      '0006_content_version_ledger'
     ]);
     const result = await applyRemoteTestPlan(client, all, {
       host,
@@ -339,7 +341,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
     });
     expect(result.applied).toEqual([
       '0004_material_sway',
-      '0005_auth_contract'
+      '0005_auth_contract',
+      '0006_content_version_ledger'
     ]);
   });
 
@@ -656,7 +659,7 @@ describe('remote-test CLI', () => {
         open
       )
     ).toBe(0);
-    expect(ok.lines.join('\n')).toContain('applied 6 migration(s)');
+    expect(ok.lines.join('\n')).toContain('applied 7 migration(s)');
   });
 
   it('prints table names from the target without control characters', async () => {
