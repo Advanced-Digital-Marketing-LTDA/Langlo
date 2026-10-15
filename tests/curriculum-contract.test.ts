@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Graph } from '../scripts/curriculum-contract.mjs';
 import {
+  columnIndex,
   headers,
   parseCsv,
   resolveRepositoryPath,
@@ -97,6 +98,9 @@ describe('versioned curriculum bundle contract', () => {
       ).toThrow(/Digest mismatch/u);
     }
     expect(() =>
+      validateManifest({ ...manifest, curriculum_version: '1.1.0-rc.1' }, files)
+    ).toThrow(/approved version must be stable/u);
+    expect(() =>
       validateManifest({ ...draft, curriculum_version: '1.0.0' }, files)
     ).toThrow(/draft version must be a pre-release/u);
     expect(() =>
@@ -149,6 +153,16 @@ describe('versioned curriculum bundle contract', () => {
     expect(() =>
       validateManifest({ ...draft, coverage_file: '../outside.csv' }, files)
     ).toThrow(/Invalid manifest path/u);
+  });
+
+  it('finds coverage columns by name and rejects unknown ones', () => {
+    expect(columnIndex('evidence_status')).toBe(
+      headers.indexOf('evidence_status')
+    );
+    expect(columnIndex('evidence_status')).toBeGreaterThanOrEqual(0);
+    expect(() => columnIndex('evidence_state')).toThrow(
+      /Unknown coverage column: evidence_state/u
+    );
   });
 
   it('rejects arbitrary CLI file paths before reading files', () => {

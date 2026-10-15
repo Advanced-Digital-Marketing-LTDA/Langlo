@@ -38,6 +38,7 @@ export function validateIdRegistry(
   previousIds?: string[]
 ): void;
 export function validateIdRegistryShape(value: unknown): string[];
+export function columnIndex(name: string): number;
 export function validatePublicationStatus(
   manifest: Manifest,
   catalog: Catalog
