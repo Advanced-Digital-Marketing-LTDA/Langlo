@@ -49,27 +49,6 @@ jobs:
           cp .github/tools/ai-review/package.json .github/tools/ai-review/package-lock.json "$RUNNER_TEMP/ai-review/"
           npm ci --prefix "$RUNNER_TEMP/ai-review" --ignore-scripts --no-audit --no-fund
           echo "$RUNNER_TEMP/ai-review/node_modules/@anthropic-ai/claude-code-linux-x64" >> "$GITHUB_PATH"
-      # TEMPORARY: diagnose Haiku OAuth access without printing prompts, tokens, or raw output.
-      - name: Diagnose Haiku OAuth access
-        if: ${{ env.HAS_OAUTH == 'true' }}
-        env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-        run: |
-          set +e
-          claude --model haiku --print --output-format json --max-turns 1 "Reply OK." \
-            > "$RUNNER_TEMP/haiku-smoke.json" 2> "$RUNNER_TEMP/haiku-smoke.err"
-          status=$?
-          set -e
-          node -e '
-            const fs=require("node:fs");
-            const file=process.env.RUNNER_TEMP+"/haiku-smoke.json";
-            let d={};try {d=JSON.parse(fs.readFileSync(file,"utf8"));}catch{}
-            const raw=String(d.result||d.error||"");
-            const type=/401|authenticat|invalid token|invalid oauth/i.test(raw)?"authentication":/403|permission|denied|not allowed|not permitted/i.test(raw)?"access-denied":/404|unknown model|model not found|model.*unavailable/i.test(raw)?"model-unavailable":/429|rate.limit/i.test(raw)?"rate-limit":raw?"other-error":"no-json-result";
-            console.log("Haiku OAuth diagnostic: "+JSON.stringify({is_error:d.is_error,terminal_reason:d.terminal_reason,error_status:d.error_status,api_error_status:d.api_error_status,category:type}));
-            if(d.is_error)process.exitCode=1;
-          '
-          if [ "$status" -ne 0 ]; then echo "::error::Claude CLI exit $status (raw stderr withheld)"; exit "$status"; fi
       - name: Fail on high-severity findings (subscription)
         if: ${{ env.HAS_OAUTH == 'true' }}
         env:
