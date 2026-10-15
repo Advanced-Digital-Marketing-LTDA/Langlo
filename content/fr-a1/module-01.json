@@ -96,12 +96,12 @@
           {
             "id": "fr-a1-001@1:q08",
             "format": "translation",
-            "prompt": "Translate (use the simple present): The baby is sleeping.",
-            "answer": "Le bébé dort.",
+            "prompt": "Translate (use the simple present): The baby is crying.",
+            "answer": "Le bébé pleure.",
             "near_misses": [
-              "Le bébé dormir.",
-              "Le bébé est dort.",
-              "Le bebe dort."
+              "Le bébé pleurer.",
+              "Le bébé est pleure.",
+              "Le bebe pleure."
             ],
             "holdout": false
           },
@@ -150,10 +150,9 @@
           {
             "id": "fr-a1-001@1:h02",
             "format": "translation",
-            "prompt": "Translate (use the simple present): The bus is leaving.",
-            "answer": "Le bus part.",
-            "alternatives": ["Le bus s'en va."],
-            "near_misses": ["Le bus partir.", "Part le bus."],
+            "prompt": "Translate (use the simple present): The bus is passing.",
+            "answer": "Le bus passe.",
+            "near_misses": ["Le bus passer.", "Passe le bus."],
             "holdout": true
           },
           {
