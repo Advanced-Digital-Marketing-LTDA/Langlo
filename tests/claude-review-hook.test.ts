@@ -47,7 +47,9 @@ describe('Haiku-only CI review configuration', () => {
     for (const workflow of [review, adversarial]) {
       expect(workflow).toContain('CLAUDE_CODE_SUBAGENT_MODEL: haiku');
       expect(workflow).toContain("CLAUDE_CODE_SUBAGENT_MODEL_FORCE: '1'");
-      expect(workflow).not.toMatch(/--model (?:sonnet|opus|claude-sonnet|claude-opus)/u);
+      expect(workflow).not.toMatch(
+        /--model (?:sonnet|opus|claude-sonnet|claude-opus)/u
+      );
     }
     expect(review).toContain("classify_inline_comments: 'false'");
     expect(review).toContain('"CLAUDE_CODE_SUBAGENT_MODEL": "haiku"');
