@@ -48,6 +48,8 @@ jobs:
           anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN == '' && secrets.ANTHROPIC_API_KEY || '' }}
           plugin_marketplaces: https://github.com/anthropics/claude-plugins-official.git
           plugins: pr-review-toolkit@claude-plugins-official
+          # v1.0.250's classifier hardcodes Haiku 4.5; disable it to keep all model calls on latest Haiku.
+          classify_inline_comments: 'false'
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
