@@ -1,7 +1,11 @@
 import { createHash } from 'node:crypto';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   headers,
-  validateBundle
+  resolveRepositoryPath,
+  validateBundle,
+  validateIdRegistryShape
 } from '../../../scripts/curriculum-contract.mjs';
 import { ContentImportError, type ContentPackage } from './content-import';
 
@@ -21,9 +25,19 @@ const languages: Record<string, 'fr' | 'de' | 'en'> = {
 // The validator requires exactly these columns, in this order.
 const lifecycle = headers.indexOf('lifecycle_status');
 
+// The fixed path at which CI stages the prior revision's registry, as the
+// contract CLI reads it. IDs in it must not be removed.
+const priorRegistry = '.t004-prior-registry.json';
+
+function previousIds(root: string) {
+  if (!existsSync(join(root, priorRegistry))) return [];
+  const path = resolveRepositoryPath(root, priorRegistry);
+  return validateIdRegistryShape(JSON.parse(readFileSync(path, 'utf8')));
+}
+
 function validated(root: string) {
   try {
-    return validateBundle(root);
+    return validateBundle(root, previousIds(root));
   } catch (error) {
     throw new ContentImportError('INVALID_BUNDLE', (error as Error).message);
   }

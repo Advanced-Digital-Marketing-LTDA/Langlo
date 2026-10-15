@@ -236,6 +236,18 @@ describe('content bundle import', () => {
     expect((await importContent(client, reordered)).skills).toBe(0);
   });
 
+  it('rejects a bundle that drops an ID from the prior registry snapshot', async () => {
+    const dropped = await writeBundle();
+    await writeFile(
+      join(dropped, '.t004-prior-registry.json'),
+      JSON.stringify({
+        schema_version: 1,
+        ids: [...baseRows.map((row) => row.id), 'fr-a1-099']
+      })
+    );
+    expect(codeOf(() => bundlePackage(dropped))).toBe('INVALID_BUNDLE');
+  });
+
   it('rejects a bundle whose files do not match the manifest hashes', async () => {
     const tampered = await writeBundle({ tamper: true });
     expect(codeOf(() => bundlePackage(tampered))).toBe('INVALID_BUNDLE');
