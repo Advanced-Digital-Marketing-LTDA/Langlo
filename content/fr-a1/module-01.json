@@ -438,23 +438,16 @@
           {
             "id": "fr-a1-003@1:q10",
             "format": "correction",
-            "prompt": "Correct the sentence: Nous parlez espagnol.",
+            "prompt": "Correct the sentence (keep the subject): Nous parlez espagnol.",
             "answer": "Nous parlons espagnol.",
-            "alternatives": ["Vous parlez espagnol."],
             "near_misses": ["Nous parlez espagnol."],
             "holdout": false
           },
           {
             "id": "fr-a1-003@1:q11",
             "format": "correction",
-            "prompt": "Correct the sentence: Tu chante bien.",
+            "prompt": "Correct the sentence (keep the subject): Tu chante bien.",
             "answer": "Tu chantes bien.",
-            "alternatives": [
-              "Je chante bien.",
-              "Il chante bien.",
-              "Elle chante bien.",
-              "On chante bien."
-            ],
             "near_misses": ["Tu chante bien."],
             "holdout": false
           },
@@ -618,9 +611,8 @@
           {
             "id": "fr-a1-004@1:q12",
             "format": "correction",
-            "prompt": "Correct the sentence: Ils a un appartement.",
+            "prompt": "Correct the sentence (keep the subject): Ils a un appartement.",
             "answer": "Ils ont un appartement.",
-            "alternatives": ["Il a un appartement."],
             "near_misses": [
               "Ils a un appartement.",
               "Ils sont un appartement."
