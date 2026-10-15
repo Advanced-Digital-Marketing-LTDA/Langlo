@@ -21,6 +21,10 @@
 /package.json                    @Bonobo791
 /package-lock.json               @Bonobo791
 
+# Agent configuration and vendored review skills
+/.claude/                        @Bonobo791
+/.agents/                        @Bonobo791
+
 # Gate-adjacent tool config
 /vitest.config.ts                @Bonobo791
 /playwright.config.ts            @Bonobo791

@@ -1,7 +1,9 @@
 name: Adversarial review
 
-# Opt-in paid AI review (see AGENTS.md). It runs only on same-repository pull
-# requests and only once the owner adds an ANTHROPIC_API_KEY repository secret.
+# Opt-in AI review (see AGENTS.md). It runs only on same-repository pull
+# requests and only once the owner adds a CLAUDE_CODE_OAUTH_TOKEN (Claude
+# subscription, from `claude setup-token`) or ANTHROPIC_API_KEY repository
+# secret. The subscription token is preferred when both exist.
 on:
   pull_request:
 
@@ -16,29 +18,52 @@ jobs:
   review:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     env:
+      HAS_OAUTH: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
       HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
     steps:
-      - name: Report a missing API key
-        if: ${{ env.HAS_KEY != 'true' }}
-        run: echo '::notice::ANTHROPIC_API_KEY is not set; adversarial review skipped.'
+      - name: Report a missing credential
+        if: ${{ env.HAS_OAUTH != 'true' && env.HAS_KEY != 'true' }}
+        run: echo '::notice::Neither CLAUDE_CODE_OAUTH_TOKEN nor ANTHROPIC_API_KEY is set; adversarial review skipped.'
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        if: ${{ env.HAS_KEY == 'true' }}
+        if: ${{ env.HAS_OAUTH == 'true' || env.HAS_KEY == 'true' }}
         with:
           persist-credentials: false
           fetch-depth: 0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        if: ${{ env.HAS_KEY == 'true' }}
+        if: ${{ env.HAS_OAUTH == 'true' || env.HAS_KEY == 'true' }}
         with:
           node-version: 24.19.0
       - name: Install pinned adversarial-review outside the project tree
-        if: ${{ env.HAS_KEY == 'true' }}
+        if: ${{ env.HAS_OAUTH == 'true' || env.HAS_KEY == 'true' }}
         run: |
           npm install --global --ignore-scripts npm@11.9.0
           npm install --prefix "$RUNNER_TEMP/adversarial-review" --ignore-scripts --no-audit --no-fund adversarial-review@2.11.1
-      - name: Fail on high-severity findings
-        if: ${{ env.HAS_KEY == 'true' }}
+      # The Claude Code package needs a postinstall to place its binary, so the
+      # native linux-x64 package is installed directly instead; it ships the
+      # ready-to-run executable and needs no install scripts.
+      - name: Install pinned Claude Code CLI for the subscription path
+        if: ${{ env.HAS_OAUTH == 'true' }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/claude-cli" --ignore-scripts --no-audit --no-fund @anthropic-ai/claude-code-linux-x64@2.1.300
+          echo "$RUNNER_TEMP/claude-cli/node_modules/@anthropic-ai/claude-code-linux-x64" >> "$GITHUB_PATH"
+      - name: Fail on high-severity findings (subscription)
+        if: ${{ env.HAS_OAUTH == 'true' }}
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          node "$RUNNER_TEMP/adversarial-review/node_modules/adversarial-review/bin/cli.js" \
+            --base "origin/$BASE_REF" \
+            --provider claude \
+            --timeout 600 \
+            --passes 2 \
+            --verify \
+            --fail-on high \
+            --fail-on-empty
+      - name: Fail on high-severity findings (API key)
+        if: ${{ env.HAS_OAUTH != 'true' && env.HAS_KEY == 'true' }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           BASE_REF: ${{ github.base_ref }}
@@ -46,5 +71,7 @@ jobs:
           node "$RUNNER_TEMP/adversarial-review/node_modules/adversarial-review/bin/cli.js" \
             --base "origin/$BASE_REF" \
             --provider anthropic \
+            --passes 2 \
+            --verify \
             --fail-on high \
             --fail-on-empty

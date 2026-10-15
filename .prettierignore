@@ -9,3 +9,4 @@ BOOTSTRAP-LICENSE
 README.md
 .devin/
 /.agents/skills/e2e/
+/.agents/skills/adversarial-review/
