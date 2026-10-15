@@ -82,15 +82,20 @@ describe('versioned curriculum bundle contract', () => {
     expect(manifest.selected_subset_tracks).toContain('French A1');
     expect(() => validateManifest(manifest, files)).not.toThrow();
     expect(() => validateManifest(draft, files)).not.toThrow();
-    expect(() =>
-      validateManifest(
-        { ...draft, dependency_semantics: 'mastery_gate' },
-        files
-      )
-    ).toThrow();
-    expect(() =>
-      validateManifest({ ...draft, publication_status: 'released' }, files)
-    ).toThrow();
+    for (const base of [manifest, draft]) {
+      expect(() =>
+        validateManifest(
+          { ...base, dependency_semantics: 'mastery_gate' },
+          files
+        )
+      ).toThrow(/Unsupported dependency semantics/u);
+      expect(() =>
+        validateManifest({ ...base, publication_status: 'released' }, files)
+      ).toThrow(/Invalid publication status/u);
+      expect(() =>
+        validateManifest({ ...base, coverage_sha256: '0'.repeat(64) }, files)
+      ).toThrow(/Digest mismatch/u);
+    }
     expect(() =>
       validateManifest({ ...draft, curriculum_version: '1.0.0' }, files)
     ).toThrow(/draft version must be a pre-release/u);
@@ -285,12 +290,18 @@ describe('versioned curriculum bundle contract', () => {
 
   it('blocks approval while an active skill has provisional evidence', () => {
     expect(() => validatePublicationStatus(manifest, catalog)).not.toThrow();
+    const status = headers.indexOf('evidence_status');
+    const lifecycle = headers.indexOf('lifecycle_status');
     const provisional = new Map(catalog);
-    const [id, row] = [...catalog.entries()][0];
-    provisional.set(
-      id,
-      row.map((cell, index) => (index === 7 ? 'provisional' : cell))
+    const [id, row] = [...catalog.entries()].find(
+      ([, cells]) => cells[lifecycle] === 'active'
+    ) as [string, string[]];
+    expect(row[status]).not.toBe('provisional');
+    const changed = row.map((cell, index) =>
+      index === status ? 'provisional' : cell
     );
+    provisional.set(id, changed);
+    expect(provisional.get(id)?.[status]).toBe('provisional');
     expect(() => validatePublicationStatus(manifest, provisional)).toThrow(
       /provisional skill/u
     );
