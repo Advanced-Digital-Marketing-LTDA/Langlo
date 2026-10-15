@@ -44,12 +44,12 @@
           {
             "id": "fr-a1-001@1:q02",
             "format": "multiple-choice",
-            "prompt": "Choose the correct word order for 'The train is arriving.'",
+            "prompt": "Choose the correct sentence for 'The train is arriving.'",
             "answer": "Le train arrive.",
             "alternatives": [
+              "Le arrive train.",
               "Le train arrive.",
-              "Le train arriver.",
-              "Le arrive train."
+              "Le train arriver."
             ],
             "holdout": false
           },
@@ -58,7 +58,7 @@
             "format": "multiple-choice",
             "prompt": "Which word is the verb in 'Paul mange une pomme.'?",
             "answer": "mange",
-            "alternatives": ["Paul", "mange", "pomme"],
+            "alternatives": ["pomme", "Paul", "mange"],
             "holdout": false
           },
           {
@@ -199,7 +199,7 @@
             "format": "multiple-choice",
             "prompt": "Which pronoun replaces 'Marie' in 'Marie est là.'?",
             "answer": "Elle",
-            "alternatives": ["Elle", "Il", "Ils"],
+            "alternatives": ["Ils", "Elle", "Il"],
             "holdout": false
           },
           {
@@ -207,7 +207,7 @@
             "format": "multiple-choice",
             "prompt": "Which pronoun replaces 'Paul et Luc'?",
             "answer": "Ils",
-            "alternatives": ["Ils", "Elles", "Il"],
+            "alternatives": ["Elles", "Il", "Ils"],
             "holdout": false
           },
           {
@@ -223,7 +223,7 @@
             "format": "multiple-choice",
             "prompt": "You are speaking politely to a new colleague. Which word means 'you'?",
             "answer": "vous",
-            "alternatives": ["vous", "tu", "on"],
+            "alternatives": ["on", "vous", "tu"],
             "holdout": false
           },
           {
@@ -286,7 +286,7 @@
           {
             "id": "fr-a1-002@1:q12",
             "format": "correction",
-            "prompt": "Correct the sentence: (Paul and Sophie) Elles arrivent.",
+            "prompt": "Correct the sentence (replace the pronoun): (Paul and Sophie) Elles arrivent.",
             "answer": "Ils arrivent.",
             "near_misses": ["Elles arrivent.", "Il arrivent."],
             "holdout": false
@@ -296,7 +296,7 @@
             "format": "multiple-choice",
             "prompt": "In everyday speech, which pronoun often replaces 'nous'?",
             "answer": "On",
-            "alternatives": ["On", "Il", "Vous"],
+            "alternatives": ["Il", "Vous", "On"],
             "holdout": true
           },
           {
@@ -354,7 +354,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ils ___ (regarder) un film.",
             "answer": "regardent",
-            "alternatives": ["regardent", "regardes", "regardez"],
+            "alternatives": ["regardez", "regardent", "regardes"],
             "holdout": false
           },
           {
@@ -363,9 +363,9 @@
             "prompt": "Which is a correct yes/no question?",
             "answer": "Est-ce que tu travailles ?",
             "alternatives": [
-              "Est-ce que tu travailles ?",
               "Est-ce que tu travailler ?",
-              "Est-ce tu que travailles ?"
+              "Est-ce tu que travailles ?",
+              "Est-ce que tu travailles ?"
             ],
             "holdout": false
           },
@@ -459,6 +459,7 @@
             "format": "correction",
             "prompt": "Correct the sentence: Est-ce que vous habiter ici ?",
             "answer": "Est-ce que vous habitez ici ?",
+            "alternatives": ["Vous habitez ici ?"],
             "near_misses": ["Est-ce que vous habiter ici ?"],
             "holdout": false
           },
@@ -521,7 +522,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Nous ___ étudiants.",
             "answer": "sommes",
-            "alternatives": ["sommes", "êtes", "sont"],
+            "alternatives": ["sont", "sommes", "êtes"],
             "holdout": false
           },
           {
@@ -530,9 +531,9 @@
             "prompt": "How do you say 'I am 20 years old'?",
             "answer": "J'ai vingt ans.",
             "alternatives": [
-              "J'ai vingt ans.",
               "Je suis vingt ans.",
-              "J'ai vingt."
+              "J'ai vingt.",
+              "J'ai vingt ans."
             ],
             "holdout": false
           },
@@ -644,7 +645,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Nous ___ une maison.",
             "answer": "avons",
-            "alternatives": ["avons", "sommes", "ont"],
+            "alternatives": ["ont", "avons", "sommes"],
             "holdout": true
           }
         ]

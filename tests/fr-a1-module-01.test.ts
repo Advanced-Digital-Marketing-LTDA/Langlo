@@ -350,6 +350,16 @@ describe('French A1 module 01 import', () => {
     expect([again.versions, again.questions]).toEqual([0, 0]);
   });
 
+  it('refuses the module under the already imported 1.0.0 curriculum version, and writes nothing', async () => {
+    await importContent(client, bundlePackage(root));
+    const tables = ['skills', 'content_versions', 'questions'];
+    const before = await Promise.all(tables.map(count));
+    await expect(
+      importContent(client, modulePackage('approved'))
+    ).rejects.toMatchObject({ code: 'CONTENT_CONFLICT' });
+    expect(await Promise.all(tables.map(count))).toEqual(before);
+  });
+
   it('imports the approved bundle first, then the module as a newer curriculum version', async () => {
     await importContent(client, bundlePackage(root));
     const before = await count('questions');
