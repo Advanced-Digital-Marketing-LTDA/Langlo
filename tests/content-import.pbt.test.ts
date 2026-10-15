@@ -25,6 +25,7 @@ const graph = fc
 
 function packageFor(
   prefix: string,
+  run: number,
   size: number,
   pairs: Array<[number, number]>
 ): ContentPackage {
@@ -44,7 +45,7 @@ function packageFor(
     ]
   }));
   return {
-    curriculumVersion: '0.1.0',
+    curriculumVersion: `0.${run}.0`,
     publicationStatus: 'approved',
     dependencySemantics: 'recommended_teaching_order',
     skills,
@@ -77,7 +78,7 @@ it('acyclic packages import idempotently and loops are always rejected', async (
     await fc.assert(
       fc.asyncProperty(graph, async ([size, pairs, [low, high]]) => {
         run += 1;
-        const looped = packageFor(`loop${run}`, size, pairs);
+        const looped = packageFor(`loop${run}`, run, size, pairs);
         // Close a loop through at least two skills (self-edges are unit-tested):
         // the lower skill now also follows a strictly higher one.
         const from = Math.min(low, high);
@@ -87,7 +88,7 @@ it('acyclic packages import idempotently and loops are always rejected', async (
         expect(error).toBeInstanceOf(ContentImportError);
         expect((error as ContentImportError).code).toBe('PREREQUISITE_CYCLE');
 
-        const pkg = packageFor(`dag${run}`, size, pairs);
+        const pkg = packageFor(`dag${run}`, run, size, pairs);
         const first = await importContent(client, pkg);
         expect(first.skills).toBe(size);
         expect(first.prerequisites).toBeGreaterThanOrEqual(size - 1);

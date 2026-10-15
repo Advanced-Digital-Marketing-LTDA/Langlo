@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { Client, Transaction } from '@libsql/client';
 import { z } from 'zod';
 import { beginWrite } from './flashcards';
@@ -12,6 +13,10 @@ import { beginWrite } from './flashcards';
 // no-op; a changed revision needs a new version and new question IDs.
 // Prerequisite edges are recommended teaching order, never mastery gates, and
 // are only ever added. Quarantine is one-way.
+//
+// Each curriculum version is recorded with a fingerprint of its package: a
+// version names one package, and a new version must be newer than every
+// version already imported.
 
 const languages = ['fr', 'de', 'en'] as const;
 const levels = ['A1', 'A2'] as const;
@@ -40,6 +45,10 @@ export type ContentPackage = {
   curriculumVersion: string;
   publicationStatus: string;
   dependencySemantics: string;
+  // Identity of the source bundle, when there is one. It is part of the
+  // version fingerprint, so a reissued bundle needs a new version even when
+  // the imported rows are unchanged.
+  bundleDigest?: string | undefined;
   skills: {
     id: string;
     language: Language;
@@ -125,6 +134,7 @@ const questionShape = z.object({
 
 const packageShape = z.object({
   dependencySemantics: z.literal('recommended_teaching_order'),
+  bundleDigest: z.string().optional(),
   skills: z.array(skillShape),
   versions: z.array(
     z.object({
@@ -149,6 +159,7 @@ function validateShape(pkg: ContentPackage) {
   ];
   if (ids.some((list) => hasDuplicates(list)))
     fail('INVALID_PACKAGE', 'duplicate id');
+  return parsed.data;
 }
 
 function validateReviews(pkg: ContentPackage) {
@@ -179,12 +190,53 @@ function validateAlternatives(question: ContentQuestion) {
   if (!valid) fail('INVALID_ALTERNATIVES', question.id);
 }
 
+// The parsed package has a fixed key order and no unknown keys, so equal
+// packages hash equally whatever order their source listed keys in.
+const fingerprint = (data: unknown) =>
+  createHash('sha256').update(JSON.stringify(data)).digest('hex');
+
 function validatePackage(pkg: ContentPackage) {
   validatePackageHeader(pkg);
-  validateShape(pkg);
+  const data = validateShape(pkg);
   validateReviews(pkg);
   for (const version of pkg.versions)
     for (const question of version.questions) validateAlternatives(question);
+  return fingerprint(data);
+}
+
+// Precedence of stable versions; build metadata does not count. BigInt keeps
+// components beyond the safe integer range exact.
+const precedence = (version: string) =>
+  version
+    .split('+')[0]
+    .split('.')
+    .map((part) => BigInt(part));
+
+const newer = (a: bigint[], b: bigint[]) =>
+  (a[0] - b[0] || a[1] - b[1] || a[2] - b[2]) > 0n;
+
+/** Record a new curriculum version, or confirm a re-import of the same package. */
+async function recordVersion(tx: Transaction, version: string, hash: string) {
+  const rows = await tx.execute(
+    'SELECT curriculum_version, fingerprint FROM curriculum_imports'
+  );
+  const same = rows.rows.find((row) => row.curriculum_version === version);
+  if (same) {
+    if (same.fingerprint !== hash)
+      fail('CONTENT_CONFLICT', `curriculum version ${version}`);
+    return;
+  }
+  const incoming = precedence(version);
+  if (
+    rows.rows.some(
+      (row) => !newer(incoming, precedence(String(row.curriculum_version)))
+    )
+  )
+    fail('CONTENT_CONFLICT', `curriculum version ${version} is not newer`);
+  await tx.execute({
+    sql: 'INSERT INTO curriculum_imports (curriculum_version, fingerprint) VALUES (?, ?)',
+    args: [version, hash]
+  });
 }
 
 async function storedSkills(tx: Transaction) {
@@ -412,12 +464,23 @@ async function importVersions(
   }
 }
 
+function snapshot(pkg: ContentPackage): ContentPackage {
+  try {
+    return structuredClone(pkg);
+  } catch {
+    return fail('INVALID_PACKAGE', 'package is not plain data');
+  }
+}
+
 /** Validate and import an approved content package into the shared content tables. */
 export async function importContent(
   client: Client,
-  pkg: ContentPackage
+  input: ContentPackage
 ): Promise<ImportResult> {
-  validatePackage(pkg);
+  // A private copy, so that the caller changing the package while the import
+  // awaits cannot alter what was validated and fingerprinted.
+  const pkg = snapshot(input);
+  const hash = validatePackage(pkg);
   const tx = await beginWrite(client);
   try {
     const stored = await storedSkills(tx);
@@ -431,6 +494,8 @@ export async function importContent(
       quarantined: 0
     };
     await importVersions(tx, pkg, known, result);
+    // Last, so that a content error keeps its own code.
+    await recordVersion(tx, pkg.curriculumVersion, hash);
     await tx.commit();
     return result;
   } catch (error) {
