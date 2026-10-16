@@ -343,21 +343,18 @@ export async function resumeStudySession(
   return getStudySession(client, session, studySessionId);
 }
 
-/** The newest content version of a skill, which must not be quarantined. */
-async function currentVersion(
-  client: Pick<Client, 'execute'>,
-  language: string,
-  skillId: unknown
-) {
-  if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
-  const found = await client.execute({
-    sql: 'SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1',
-    args: [skillId, language]
-  });
-  const row = found.rows[0];
+/**
+ * The newest content version of a skill, as a subquery that callers join their
+ * payload to. The status is read in the same statement as the payload, so
+ * content withdrawn by a quarantine import is never served after the check.
+ */
+const latestVersion =
+  '(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1)';
+
+/** Reject a joined version row that is missing or withdrawn. */
+function assertAvailable(row: Row | undefined): asserts row is Row {
   if (!row) throw new StudyError('NOT_FOUND');
   if (row.status === 'quarantined') throw new StudyError('CONTENT_UNAVAILABLE');
-  return String(row.id);
 }
 
 /**
@@ -375,15 +372,17 @@ export async function nextQuestion(
 ) {
   const study = await ownSession(client, session, studySessionId);
   if (study.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
-  const versionId = await currentVersion(client, study.language, skillId);
-  const rows = await client.execute({
-    sql: `SELECT q.id, q.format, q.prompt, q.alternatives,
+  if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
+  const found = await client.execute({
+    sql: `SELECT v.status, q.id, q.format, q.prompt, q.alternatives,
             EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.study_session_id = ? AND a.question_id = q.id) AS answered
-          FROM questions q
-          WHERE q.content_version_id = ? AND q.prompt IS NOT NULL AND (q.holdout = 0 OR ? = 'assessment')
+          FROM ${latestVersion} v
+          LEFT JOIN questions q ON q.content_version_id = v.id AND q.prompt IS NOT NULL AND (q.holdout = 0 OR ? = 'assessment')
           ORDER BY q.id`,
-    args: [session.userId, studySessionId, versionId, study.mode]
+    args: [session.userId, studySessionId, skillId, study.language, study.mode]
   });
+  assertAvailable(found.rows[0]);
+  const rows = { rows: found.rows.filter((row) => row.id !== null) };
   const next = rows.rows.find((row) => Number(row.answered) === 0);
   return {
     question: next
@@ -419,16 +418,19 @@ export async function getLesson(
     args: [session.userId, language]
   });
   if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
-  const versionId = await currentVersion(client, language, skillId);
+  if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
   const found = await client.execute({
-    sql: 'SELECT title, explanation, examples, refs FROM lessons WHERE content_version_id = ?',
-    args: [versionId]
+    sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs
+          FROM ${latestVersion} v
+          LEFT JOIN lessons l ON l.content_version_id = v.id`,
+    args: [skillId, language]
   });
   const row = found.rows[0];
-  if (!row) throw new StudyError('NOT_FOUND');
+  assertAvailable(row);
+  if (row.title === null) throw new StudyError('NOT_FOUND');
   return {
     skillId,
-    contentVersionId: versionId,
+    contentVersionId: String(row.version_id),
     title: String(row.title),
     explanation: String(row.explanation),
     examples: JSON.parse(String(row.examples)) as Record<string, string>[],

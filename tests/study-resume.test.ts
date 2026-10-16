@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Client } from '@libsql/client';
+import type { Client, InStatement } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import {
@@ -110,6 +110,33 @@ describe('pause and resume', () => {
   });
 });
 
+/**
+ * A client whose first read of question or lesson payload is preceded by a
+ * quarantine import committing, as when content is withdrawn between a
+ * version check and the payload query.
+ */
+function quarantinedBeforePayloadRead(): Client {
+  let withdrawn = false;
+  return new Proxy(client, {
+    get(target, property) {
+      if (property !== 'execute') {
+        const value = Reflect.get(target, property, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+      return async (statement: InStatement) => {
+        const text = typeof statement === 'string' ? statement : statement.sql;
+        if (!withdrawn && /\b(FROM|JOIN)\s+(questions|lessons)\b/i.test(text)) {
+          withdrawn = true;
+          await target.execute(
+            "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+          );
+        }
+        return target.execute(statement);
+      };
+    }
+  });
+}
+
 describe('next question', () => {
   it('returns the same item after a reload and never the answer', async () => {
     const first = await nextQuestion(client, ownerA, 'study-a', 'fr-a1-001');
@@ -168,6 +195,17 @@ describe('next question', () => {
     ).rejects.toThrow('CONTENT_UNAVAILABLE');
   });
 
+  it('does not serve content withdrawn after the version check', async () => {
+    await expect(
+      nextQuestion(
+        quarantinedBeforePayloadRead(),
+        ownerA,
+        'study-a',
+        'fr-a1-001'
+      )
+    ).rejects.toThrow('CONTENT_UNAVAILABLE');
+  });
+
   it("does not reveal another learner's session", async () => {
     await expect(
       nextQuestion(client, ownerB, 'study-a', 'fr-a1-001')
@@ -197,6 +235,12 @@ describe('lesson', () => {
       explanationLanguage: 'en',
       englishFallback: true
     });
+  });
+
+  it('does not serve a lesson withdrawn after the version check', async () => {
+    await expect(
+      getLesson(quarantinedBeforePayloadRead(), ownerA, 'fr', 'fr-a1-001')
+    ).rejects.toThrow('CONTENT_UNAVAILABLE');
   });
 
   it('is not found without an enrollment, for a skill without a lesson, and unavailable when quarantined', async () => {
