@@ -35,6 +35,14 @@ jobs:
       CLAUDE_CODE_SUBAGENT_MODEL: haiku
       CLAUDE_CODE_SUBAGENT_MODEL_FORCE: '1'
     steps:
+      - name: Require a full commit SHA for tools-ref
+        env:
+          TOOLS_REF: ${{ inputs.tools-ref }}
+        run: |
+          if ! printf '%s' "$TOOLS_REF" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::tools-ref must be a full 40-character commit SHA."
+            exit 1
+          fi
       - name: Report a missing credential
         if: ${{ env.HAS_OAUTH != 'true' && env.HAS_KEY != 'true' }}
         run: echo '::notice::Neither CLAUDE_CODE_OAUTH_TOKEN nor ANTHROPIC_API_KEY is set; adversarial review skipped.'
