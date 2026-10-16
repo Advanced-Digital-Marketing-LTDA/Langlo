@@ -24,6 +24,12 @@ import * as studySessions from '../src/routes/app/api/study-sessions/+server';
 import * as studySession from '../src/routes/app/api/study-sessions/[id]/+server';
 import * as attempts from '../src/routes/app/api/attempts/+server';
 import * as attempt from '../src/routes/app/api/attempts/[id]/+server';
+import * as pause from '../src/routes/app/api/study-sessions/[id]/pause/+server';
+import * as resume from '../src/routes/app/api/study-sessions/[id]/resume/+server';
+import * as next from '../src/routes/app/api/study-sessions/[id]/next/+server';
+import { load as lessonPage } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import { importContent } from '../src/lib/server/content-import';
+import { approvedPackage } from './fixtures/content-package';
 
 // Route handlers called the way SvelteKit calls them. The principals are the
 // synthetic fixture users; the hook-verified locals are the only identity.
@@ -300,12 +306,16 @@ describe('private learner routes', () => {
     );
     expect(stale.status).toBe(409);
 
+    // A second version-1 question: study-a already answered question-1.
+    await client.execute(
+      "INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES ('question-3', 'content-v1', 'fr-articles', 'fr', 'typed-blank')"
+    );
     const recorded = await call(
       attempts.POST as Handler,
       event('learner-a', {
         body: {
           studySessionId: 'study-a',
-          questionId: 'question-1',
+          questionId: 'question-3',
           submissionKey: 'route-attempt',
           evidenceKind: 'independent',
           answer: 'est'
@@ -322,5 +332,151 @@ describe('private learner routes', () => {
       answer: 'est'
     });
     expect(read.body.attempt).not.toHaveProperty('ownerId');
+  });
+});
+
+describe('pause, resume and next-question routes', () => {
+  const params = { id: 'study-a' };
+
+  it('reject an unauthenticated caller before touching data', async () => {
+    const before = await privateState(client);
+    for (const [handler, query] of [
+      [pause.POST, ''],
+      [resume.POST, ''],
+      [next.GET, '?skill=fr-a1-001']
+    ] as const) {
+      const body = handler === next.GET ? undefined : {};
+      expect(
+        (await call(handler as Handler, event(null, { params, body, query })))
+          .status
+      ).toBe(401);
+    }
+    expect(await privateState(client)).toEqual(before);
+  });
+
+  it("answer 404 for another learner's session and change nothing", async () => {
+    const before = await privateState(client);
+    for (const [handler, query] of [
+      [pause.POST, ''],
+      [resume.POST, ''],
+      [next.GET, '?skill=fr-a1-001']
+    ] as const) {
+      const body = handler === next.GET ? undefined : {};
+      expect(
+        (
+          await call(
+            handler as Handler,
+            event('learner-b', { params, body, query })
+          )
+        ).status
+      ).toBe(404);
+    }
+    expect(await privateState(client)).toEqual(before);
+  });
+
+  it('pause, resume and serve the next item for the owner', async () => {
+    await importContent(client, approvedPackage());
+    const paused = await call(
+      pause.POST as Handler,
+      event('learner-a', { params, body: {} })
+    );
+    expect(paused.status).toBe(200);
+    expect(paused.body.studySession).toMatchObject({ state: 'paused' });
+    expect(paused.body.studySession.pausedAt).toEqual(expect.any(Number));
+    const blocked = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-001' })
+    );
+    expect(blocked.status).toBe(409);
+    expect(blocked.body).toMatchObject({
+      message:
+        'This session is paused or finished. Only a paused session can be resumed.'
+    });
+    const resumed = await call(
+      resume.POST as Handler,
+      event('learner-a', { params, body: {} })
+    );
+    expect(resumed.body.studySession).toMatchObject({
+      state: 'active',
+      pausedAt: null
+    });
+    const served = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-001' })
+    );
+    expect(served.body.question).toMatchObject({ id: 'fr-a1-001@1:q1' });
+    expect(served.body.question).not.toHaveProperty('answer');
+  });
+
+  it('says withdrawn content is unavailable rather than a generic conflict', async () => {
+    await importContent(client, approvedPackage());
+    await client.execute(
+      "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+    );
+    const response = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-001' })
+    );
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({
+      message: 'This content is not available right now.'
+    });
+  });
+
+  it('rejects a missing skill with 400', async () => {
+    const response = await call(
+      next.GET as Handler,
+      event('learner-a', { params })
+    );
+    expect(response.status).toBe(400);
+  });
+});
+
+describe('lesson page load', () => {
+  const lesson = {
+    title: 'Être',
+    explanation: 'Use être to say who you are.',
+    examples: [{ fr: 'Je suis étudiant.', en: 'I am a student.' }],
+    references: []
+  };
+  const load = (userId: string | null, language = 'fr', skill = 'fr-a1-001') =>
+    lessonPage(
+      Object.assign(event(userId), { params: { language, skill } }) as never
+    ) as Promise<Record<string, unknown>>;
+
+  beforeEach(async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson });
+    await importContent(client, pkg);
+  });
+
+  it('redirects a signed-out visitor to sign in', async () => {
+    await expect(load(null)).rejects.toMatchObject({
+      status: 303,
+      location: '/login'
+    });
+  });
+
+  it('loads the lesson for an enrolled learner', async () => {
+    expect(await load('learner-a')).toMatchObject({
+      unavailable: false,
+      lesson: { title: 'Être', englishFallback: false }
+    });
+  });
+
+  it('answers 404 for a track the learner is not enrolled in', async () => {
+    await expect(load('learner-a', 'de')).rejects.toMatchObject({
+      status: 404
+    });
+  });
+
+  it('shows an unavailable notice for quarantined content', async () => {
+    await client.execute(
+      "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+    );
+    expect(await load('learner-a')).toMatchObject({
+      unavailable: true,
+      lesson: null
+    });
   });
 });

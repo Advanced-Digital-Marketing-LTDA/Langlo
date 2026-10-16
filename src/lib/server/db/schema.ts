@@ -335,6 +335,37 @@ export const questions = sqliteTable(
   ]
 );
 
+export const lessons = sqliteTable(
+  'lessons',
+  {
+    contentVersionId: text('content_version_id').primaryKey(),
+    skillId: text('skill_id').notNull(),
+    language: text('language').notNull(),
+    title: text('title').notNull(),
+    explanation: text('explanation').notNull(),
+    // JSON array of objects whose values are strings.
+    examples: text('examples').notNull(),
+    // JSON array of strings.
+    refs: text('refs').notNull(),
+    fingerprint: text('fingerprint').notNull()
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.contentVersionId, table.skillId, table.language],
+      foreignColumns: [
+        contentVersions.id,
+        contentVersions.skillId,
+        contentVersions.language
+      ]
+    }),
+    check(
+      'lessons_fingerprint',
+      sql`length(${table.fingerprint}) = 64 AND ${table.fingerprint} NOT GLOB '*[^0-9a-f]*'`
+    ),
+    check('lessons_title', sql`length(trim(${table.title})) > 0`)
+  ]
+);
+
 export const studySessions = sqliteTable(
   'study_sessions',
   {
@@ -350,6 +381,11 @@ export const studySessions = sqliteTable(
     state: text('state', { enum: ['active', 'paused', 'completed'] })
       .notNull()
       .default('active'),
+    // Set by the service when the learner pauses; null while active. The
+    // invariant (paused_at is set exactly when state is 'paused') is kept by
+    // pauseStudySession and resumeStudySession; SQLite cannot add a table
+    // CHECK to an existing table without a rebuild.
+    pausedAt: integer('paused_at'),
     createdAt: createdAt()
   },
   (table) => [
@@ -402,6 +438,11 @@ export const attempts = sqliteTable(
       table.ownerId,
       table.submissionKey
     ),
+    // One independent answer per question in a study session, so two tabs
+    // cannot both record evidence for it. Assisted retries are not limited.
+    uniqueIndex('attempts_session_question_independent')
+      .on(table.ownerId, table.studySessionId, table.questionId)
+      .where(sql`${table.evidenceKind} = 'independent'`),
     uniqueIndex('attempts_identity_owner').on(table.id, table.ownerId),
     uniqueIndex('attempts_identity_owner_skill_language').on(
       table.id,

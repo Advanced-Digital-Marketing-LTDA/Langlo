@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { Client, Row } from '@libsql/client';
 import { beginWrite, type LearnerSession } from './flashcards';
+import { ownSession } from './study-content';
+import { StudyError } from './study-error';
+
+export { getLesson, nextQuestion } from './study-content';
+export { StudyError };
 
 // Owner-scoped grammar study repository. Every statement on a learner table
 // binds owner_id to the learner derived from the verified session; IDs
@@ -14,12 +19,6 @@ const evidenceKinds: ReadonlySet<unknown> = new Set([
   'assisted'
 ]);
 
-export class StudyError extends Error {
-  constructor(readonly code: string) {
-    super(code);
-  }
-}
-
 function toStudySession(row: Row) {
   return {
     id: String(row.id),
@@ -27,6 +26,7 @@ function toStudySession(row: Row) {
     language: String(row.language),
     mode: String(row.mode),
     state: String(row.state),
+    pausedAt: row.paused_at === null ? null : Number(row.paused_at),
     createdAt: Number(row.created_at)
   };
 }
@@ -59,7 +59,7 @@ function toEvaluation(row: Row) {
 }
 
 const studySessionColumns =
-  'id, enrollment_id, language, mode, state, created_at';
+  'id, enrollment_id, language, mode, state, paused_at, created_at';
 
 export async function listStudySessions(
   client: Client,
@@ -208,6 +208,48 @@ async function replayAttempt(
   return { id: String(prior.id), duplicate: true };
 }
 
+/** Withdrawn content is unavailable; assessment holdouts cannot enter practice. */
+const isWithheld = (question: Row, mode: unknown) =>
+  question.status === 'quarantined' ||
+  (question.holdout === 1 && mode !== 'assessment');
+
+/** The question in the session's language, if it is available in this mode. */
+async function availableQuestion(
+  tx: WriteTransaction,
+  input: AttemptInput,
+  studyRow: Row
+) {
+  const question = await tx.execute({
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    args: [input.questionId, studyRow.language]
+  });
+  const questionRow = question.rows[0];
+  if (!questionRow) throw new StudyError('NOT_FOUND');
+  if (isWithheld(questionRow, studyRow.mode))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  return questionRow;
+}
+
+/**
+ * The first answer pins a skill to a version for the session. A tab still
+ * holding a question from another version would record evidence the resume
+ * position can no longer see.
+ */
+async function assertSessionVersion(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput,
+  questionRow: Row
+) {
+  const pinned = await tx.execute({
+    sql: 'SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1',
+    args: [session.userId, input.studySessionId, questionRow.skill_id]
+  });
+  const version = pinned.rows[0]?.content_version_id;
+  if (version !== undefined && version !== questionRow.content_version_id)
+    throw new StudyError('STALE_QUESTION');
+}
+
 /** The caller's active session and an available question in its language. */
 async function attemptSource(
   tx: WriteTransaction,
@@ -221,24 +263,30 @@ async function attemptSource(
   const studyRow = study.rows[0];
   if (!studyRow) throw new StudyError('NOT_FOUND');
   if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
-
-  const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
-    args: [input.questionId, studyRow.language]
-  });
-  const questionRow = question.rows[0];
-  if (!questionRow) throw new StudyError('NOT_FOUND');
-  // Withdrawn content is unavailable; assessment holdouts cannot enter practice.
-  if (
-    questionRow.status === 'quarantined' ||
-    (questionRow.holdout === 1 && studyRow.mode !== 'assessment')
-  )
-    throw new StudyError('CONTENT_UNAVAILABLE');
+  const questionRow = await availableQuestion(tx, input, studyRow);
+  await assertSessionVersion(tx, session, input, questionRow);
   return {
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
     language: String(studyRow.language)
   };
+}
+
+/**
+ * A question takes one independent answer per session, whichever tab sent it;
+ * the database index enforces the same rule for writes outside this service.
+ */
+async function assertNotAnswered(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput
+) {
+  if (input.evidenceKind !== 'independent') return;
+  const answered = await tx.execute({
+    sql: "SELECT 1 FROM attempts WHERE owner_id = ? AND study_session_id = ? AND question_id = ? AND evidence_kind = 'independent'",
+    args: [session.userId, input.studySessionId, input.questionId]
+  });
+  if (answered.rows[0]) throw new StudyError('QUESTION_ALREADY_ANSWERED');
 }
 
 /**
@@ -260,6 +308,7 @@ export async function recordAttempt(
       return replay;
     }
     const source = await attemptSource(tx, session, input);
+    await assertNotAnswered(tx, session, input);
     const id = randomUUID();
     await tx.execute({
       sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -285,4 +334,42 @@ export async function recordAttempt(
   } finally {
     tx.close();
   }
+}
+
+/**
+ * Pause the caller's own session. A repeat keeps the first pause time; there
+ * is no expiry, so a session can be resumed after any length of time.
+ */
+export async function pauseStudySession(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string,
+  now: number = Date.now()
+) {
+  const { state } = await ownSession(client, session, studySessionId);
+  if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
+  const paused = await client.execute({
+    sql: "UPDATE study_sessions SET state = 'paused', paused_at = COALESCE(paused_at, ?) WHERE id = ? AND owner_id = ? AND state <> 'completed'",
+    args: [now, studySessionId, session.userId]
+  });
+  // The session completed between the lookup and the write.
+  if (paused.rowsAffected === 0) throw new StudyError('SESSION_NOT_ACTIVE');
+  return getStudySession(client, session, studySessionId);
+}
+
+/** Resume the caller's own paused (or already active) session. */
+export async function resumeStudySession(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string
+) {
+  const { state } = await ownSession(client, session, studySessionId);
+  if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
+  const resumed = await client.execute({
+    sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ? AND state <> 'completed'",
+    args: [studySessionId, session.userId]
+  });
+  // The session completed between the lookup and the write.
+  if (resumed.rowsAffected === 0) throw new StudyError('SESSION_NOT_ACTIVE');
+  return getStudySession(client, session, studySessionId);
 }

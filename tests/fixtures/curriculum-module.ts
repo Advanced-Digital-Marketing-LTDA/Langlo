@@ -128,6 +128,12 @@ export function modulePackage(
       skillId: lesson.skill_id,
       version: lesson.version.version,
       review,
+      lesson: {
+        title: lesson.title,
+        explanation: lesson.explanation,
+        examples: lesson.examples,
+        references: lesson.references
+      },
       questions: lesson.version.questions.map((q) => ({
         id: q.id,
         format: q.format,
