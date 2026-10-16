@@ -1,0 +1,648 @@
+{
+  "module_id": "de-a1-module-03",
+  "track": "German A1",
+  "title": "Negation, cases, pronouns and modal verbs",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a1-006",
+      "title": "Negation: kein with nouns, nicht with clauses",
+      "explanation": "German has two main negation words. Kein negates a noun that would have ein or no article: Das ist ein Buch becomes Das ist kein Buch; Ich habe Zeit becomes Ich habe keine Zeit. Kein takes the endings of ein (kein, keine, kein). Nicht negates a verb, an adjective or a whole clause: Anna arbeitet nicht. Das Buch ist nicht neu. Do not use nicht directly in front of a noun that has no article.",
+      "examples": [
+        {
+          "de": "Das ist kein Buch.",
+          "en": "That is not a book."
+        },
+        {
+          "de": "Anna arbeitet nicht.",
+          "en": "Anna does not work."
+        },
+        {
+          "de": "Ich habe keine Zeit.",
+          "en": "I have no time."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-006@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-006@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word negates 'ein Buch' in 'Das ist ein Buch.'?",
+            "answer": "kein",
+            "alternatives": ["kein", "nicht", "nein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates the verb correctly?",
+            "answer": "Anna arbeitet nicht.",
+            "alternatives": [
+              "Anna arbeitet kein.",
+              "Anna arbeitet nicht.",
+              "Anna kein arbeitet."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates 'Ich habe Zeit.'?",
+            "answer": "Ich habe keine Zeit.",
+            "alternatives": [
+              "Ich habe nicht Zeit.",
+              "Ich habe keine Zeit.",
+              "Ich habe kein Zeit."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word negates an adjective in 'Das Buch ist neu.'?",
+            "answer": "nicht",
+            "alternatives": ["kein", "nicht", "keine"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q05",
+            "format": "typed-blank",
+            "prompt": "Das ist ___ Tisch. (not a)",
+            "answer": "kein",
+            "near_misses": ["nicht", "keine"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q06",
+            "format": "typed-blank",
+            "prompt": "Das ist ___ Lampe. (not a)",
+            "answer": "keine",
+            "near_misses": ["kein", "nicht"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q07",
+            "format": "typed-blank",
+            "prompt": "Max arbeitet ___. (not)",
+            "answer": "nicht",
+            "near_misses": ["kein", "keine"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q08",
+            "format": "translation",
+            "prompt": "Translate (negate the sentence): That is not a book.",
+            "answer": "Das ist kein Buch.",
+            "near_misses": ["Das ist nicht Buch.", "Das ist keine Buch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q09",
+            "format": "translation",
+            "prompt": "Translate (negate the sentence): Anna does not work.",
+            "answer": "Anna arbeitet nicht.",
+            "near_misses": ["Anna arbeitet kein.", "Anna nicht arbeitet."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q10",
+            "format": "translation",
+            "prompt": "Translate (negate the sentence): I have no time.",
+            "answer": "Ich habe keine Zeit.",
+            "near_misses": ["Ich habe nicht Zeit.", "Ich habe kein Zeit."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q11",
+            "format": "correction",
+            "prompt": "Correct the negation: Das ist nicht Lampe.",
+            "answer": "Das ist keine Lampe.",
+            "near_misses": ["Das ist nicht Lampe.", "Das ist kein Lampe."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:q12",
+            "format": "correction",
+            "prompt": "Correct the negation: Max arbeitet kein.",
+            "answer": "Max arbeitet nicht.",
+            "near_misses": ["Max arbeitet kein.", "Max arbeitet keine."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-006@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates 'Das ist ein Kind.'?",
+            "answer": "Das ist kein Kind.",
+            "alternatives": [
+              "Das ist nicht Kind.",
+              "Das ist kein Kind.",
+              "Das ist keine Kind."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-006@1:h02",
+            "format": "translation",
+            "prompt": "Translate (negate the sentence): Paul is not here.",
+            "answer": "Paul ist nicht hier.",
+            "near_misses": ["Paul ist kein hier.", "Paul nicht ist hier."],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-006@1:h03",
+            "format": "correction",
+            "prompt": "Correct the negation: Das ist nicht Auto.",
+            "answer": "Das ist kein Auto.",
+            "near_misses": ["Das ist nicht Auto.", "Das ist keine Auto."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-009",
+      "title": "Nominative and accusative articles",
+      "explanation": "The subject of a sentence is in the nominative; the direct object, the person or thing that receives the action, is in the accusative. Only the masculine singular changes: der becomes den and ein becomes einen. Feminine, neuter and plural forms stay the same: die Frau, das Buch, die Kinder, eine Lampe, ein Buch. Compare Der Mann sieht den Hund (subject der Mann, object den Hund).",
+      "examples": [
+        {
+          "de": "Ich sehe den Mann.",
+          "en": "I see the man."
+        },
+        {
+          "de": "Anna kauft eine Lampe.",
+          "en": "Anna buys a lamp."
+        },
+        {
+          "de": "Max hat einen Hund.",
+          "en": "Max has a dog."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-009@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-009@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which article form changes in the accusative singular?",
+            "answer": "the masculine article",
+            "alternatives": [
+              "the masculine article",
+              "the feminine article",
+              "the neuter article"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses the accusative correctly?",
+            "answer": "Ich sehe den Mann.",
+            "alternatives": [
+              "Ich sehe der Mann.",
+              "Ich sehe den Mann.",
+              "Ich sehe dem Mann."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'Max has a dog.'",
+            "answer": "Max hat einen Hund.",
+            "alternatives": [
+              "Max hat ein Hund.",
+              "Max hat einen Hund.",
+              "Max hat einem Hund."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the accusative of 'die Frau'?",
+            "answer": "die Frau",
+            "alternatives": ["den Frau", "die Frau", "der Frau"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich sehe ___ Mann. (the)",
+            "answer": "den",
+            "near_misses": ["der", "dem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q06",
+            "format": "typed-blank",
+            "prompt": "Anna kauft ___ Tisch. (a)",
+            "answer": "einen",
+            "near_misses": ["ein", "einem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich lese ___ Buch. (the)",
+            "answer": "das",
+            "near_misses": ["den", "die"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the accusative): I see the man.",
+            "answer": "Ich sehe den Mann.",
+            "near_misses": ["Ich sehe der Mann.", "Ich sehe dem Mann."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the accusative): Anna buys a lamp.",
+            "answer": "Anna kauft eine Lampe.",
+            "near_misses": ["Anna kauft einen Lampe.", "Anna kauft ein Lampe."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the accusative): Max reads a book.",
+            "answer": "Max liest ein Buch.",
+            "near_misses": ["Max liest einen Buch.", "Max liest eine Buch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q11",
+            "format": "correction",
+            "prompt": "Correct the article: Ich sehe der Hund.",
+            "answer": "Ich sehe den Hund.",
+            "near_misses": ["Ich sehe der Hund.", "Ich sehe dem Hund."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:q12",
+            "format": "correction",
+            "prompt": "Correct the article: Anna hat ein Tisch.",
+            "answer": "Anna hat einen Tisch.",
+            "near_misses": ["Anna hat ein Tisch.", "Anna hat einem Tisch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-009@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence has the right article for 'the table' as an object?",
+            "answer": "Paul kauft den Tisch.",
+            "alternatives": [
+              "Paul kauft der Tisch.",
+              "Paul kauft den Tisch.",
+              "Paul kauft dem Tisch."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-009@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use the accusative): Paul sees the dog.",
+            "answer": "Paul sieht den Hund.",
+            "near_misses": ["Paul sieht der Hund.", "Paul sehen den Hund."],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-009@1:h03",
+            "format": "correction",
+            "prompt": "Correct the article: Lisa liest einen Buch.",
+            "answer": "Lisa liest ein Buch.",
+            "near_misses": ["Lisa liest einen Buch.", "Lisa liest eine Buch."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-014",
+      "title": "Personal pronouns: nominative and selected accusative",
+      "explanation": "Personal pronouns replace nouns. Nominative (subject): ich, du, er, sie, es, wir, ihr, sie, Sie. Accusative (direct object) for frequent forms: mich, dich, ihn, sie, es, uns, euch, sie, Sie. Only some forms change: er becomes ihn, ich becomes mich, du becomes dich, wir becomes uns, ihr becomes euch; sie, es and Sie stay the same. Compare Ich kenne dich (I know you) with Du kennst mich (you know me).",
+      "examples": [
+        {
+          "de": "Ich kenne dich.",
+          "en": "I know you."
+        },
+        {
+          "de": "Er sieht mich.",
+          "en": "He sees me."
+        },
+        {
+          "de": "Wir kennen ihn.",
+          "en": "We know him."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-014@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-014@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun means 'she' as the subject?",
+            "answer": "sie",
+            "alternatives": ["sie", "er", "du"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the accusative of 'ich'?",
+            "answer": "mich",
+            "alternatives": ["mir", "mich", "mein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the accusative of 'du'?",
+            "answer": "dich",
+            "alternatives": ["dich", "dir", "du"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses the accusative pronoun correctly?",
+            "answer": "Ich sehe ihn.",
+            "alternatives": ["Ich sehe er.", "Ich sehe ihn.", "Ich sehe ihm."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ lerne Deutsch. (I)",
+            "answer": "Ich",
+            "near_misses": ["Mich", "Wir"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q06",
+            "format": "typed-blank",
+            "prompt": "Anna kennt ___. (him)",
+            "answer": "ihn",
+            "near_misses": ["er", "ihm"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q07",
+            "format": "typed-blank",
+            "prompt": "Wir sehen ___. (you, one friend)",
+            "answer": "dich",
+            "near_misses": ["du", "dir"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use a pronoun): I know you. (one friend)",
+            "answer": "Ich kenne dich.",
+            "near_misses": ["Ich kenne du.", "Ich kennst dich."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use a pronoun): He sees me.",
+            "answer": "Er sieht mich.",
+            "near_misses": ["Er sieht ich.", "Er sehen mich."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use a pronoun): Anna knows us.",
+            "answer": "Anna kennt uns.",
+            "near_misses": ["Anna kennt wir.", "Anna kennen uns."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Ich sehe er.",
+            "answer": "Ich sehe ihn.",
+            "near_misses": ["Ich sehe er.", "Ich sehe ihm."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Er kennt ich.",
+            "answer": "Er kennt mich.",
+            "near_misses": ["Er kennt ich.", "Er kennt mir."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-014@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the accusative of 'wir'?",
+            "answer": "uns",
+            "alternatives": ["uns", "wir", "unser"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-014@1:h02",
+            "format": "typed-blank",
+            "prompt": "Lisa kennt ___. (you all)",
+            "answer": "euch",
+            "near_misses": ["ihr", "eure"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-014@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use a pronoun): She knows him.",
+            "answer": "Sie kennt ihn.",
+            "near_misses": ["Sie kennt er.", "Sie kennen ihn."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-016",
+      "title": "Modal verbs with an infinitive at the end",
+      "explanation": "Modal verbs such as können (can), müssen (must), wollen (want to) and dürfen (may) are irregular in the singular: ich kann, du kannst, er kann; ich muss, du musst, er muss; ich will, du willst, er will; ich darf, du darfst, er darf. The wir and sie forms are the infinitive (wir können). The modal is the finite verb in second position and the main verb stays in its infinitive form at the very end of the clause: Ich kann heute arbeiten.",
+      "examples": [
+        {
+          "de": "Ich kann Deutsch sprechen.",
+          "en": "I can speak German."
+        },
+        {
+          "de": "Anna muss heute arbeiten.",
+          "en": "Anna has to work today."
+        },
+        {
+          "de": "Wir wollen Fußball spielen.",
+          "en": "We want to play football."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-016@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-016@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does the infinitive stand with a modal verb?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "after the subject"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'ich'? (können)",
+            "answer": "kann",
+            "alternatives": ["kann", "kannst", "können"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'du'? (müssen)",
+            "answer": "musst",
+            "alternatives": ["muss", "musst", "müsst"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence puts the infinitive in the right place?",
+            "answer": "Max will heute lernen.",
+            "alternatives": [
+              "Max will lernen heute.",
+              "Max will heute lernen.",
+              "Max lernen will heute."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q05",
+            "format": "typed-blank",
+            "prompt": "Wir ___ Fußball spielen. (wollen)",
+            "answer": "wollen",
+            "near_misses": ["will", "wollt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q06",
+            "format": "typed-blank",
+            "prompt": "Anna ___ heute arbeiten. (müssen)",
+            "answer": "muss",
+            "near_misses": ["musst", "müssen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich kann Deutsch ___. (sprechen)",
+            "answer": "sprechen",
+            "near_misses": ["spreche", "spricht"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use a modal verb): I can work today.",
+            "answer": "Ich kann heute arbeiten.",
+            "near_misses": [
+              "Ich kann heute arbeite.",
+              "Ich kann arbeiten heute."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use a modal verb): Anna must learn German.",
+            "answer": "Anna muss Deutsch lernen.",
+            "near_misses": [
+              "Anna muss lernt Deutsch.",
+              "Anna muss lernen Deutsch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use a modal verb): We want to play football.",
+            "answer": "Wir wollen Fußball spielen.",
+            "near_misses": [
+              "Wir wollen spielen Fußball.",
+              "Wir wollt Fußball spielen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Ich kann sprechen Deutsch.",
+            "answer": "Ich kann Deutsch sprechen.",
+            "near_misses": [
+              "Ich kann sprechen Deutsch.",
+              "Ich kann Deutsch spricht."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Du musst arbeitest heute.",
+            "answer": "Du musst heute arbeiten.",
+            "near_misses": [
+              "Du musst arbeitest heute.",
+              "Du musst heute arbeitest."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-016@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'er'? (wollen)",
+            "answer": "will",
+            "alternatives": ["will", "willt", "wollen"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-016@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ihr ___ heute lernen. (müssen)",
+            "answer": "müsst",
+            "near_misses": ["muss", "müssen"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-016@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use a modal verb): You can play tennis. (one friend)",
+            "answer": "Du kannst Tennis spielen.",
+            "near_misses": [
+              "Du kannst spielen Tennis.",
+              "Du kann Tennis spielen."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
