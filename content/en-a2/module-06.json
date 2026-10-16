@@ -1,0 +1,520 @@
+{
+  "module_id": "en-a2-module-06",
+  "track": "English A2",
+  "title": "Prepositions, purpose and verb + -ing",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "en-a2-021",
+      "title": "Prepositions of time and place",
+      "explanation": "Use at for clock times and exact points: at six o'clock, at the station. Use on for days and dates: on Monday, on 5 May. Use in for months, years, seasons and larger places: in July, in 2020, in winter, in London. For place, in means inside, on means touching a surface, and next to or between show position: The keys are on the table. The shop is next to the bank.",
+      "examples": [
+        {
+          "en": "The class starts at nine o'clock."
+        },
+        {
+          "en": "My birthday is on 5 May."
+        },
+        {
+          "en": "The keys are on the table."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-021@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-021@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a clock time?",
+            "answer": "at",
+            "alternatives": ["at", "on", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a day of the week?",
+            "answer": "on",
+            "alternatives": ["on", "at", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a month?",
+            "answer": "in",
+            "alternatives": ["in", "on", "at"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence says the keys touch the table's surface?",
+            "answer": "The keys are on the table.",
+            "alternatives": [
+              "The keys are on the table.",
+              "The keys are in the table.",
+              "The keys are at the table."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q05",
+            "format": "typed-blank",
+            "prompt": "The class starts ___ nine o'clock.",
+            "answer": "at",
+            "near_misses": ["on", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q06",
+            "format": "typed-blank",
+            "prompt": "My birthday is ___ 5 May.",
+            "answer": "on",
+            "near_misses": ["at", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q07",
+            "format": "typed-blank",
+            "prompt": "We go skiing ___ winter.",
+            "answer": "in",
+            "near_misses": ["on", "at"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with the right preposition: the class starts / nine o'clock",
+            "answer": "The class starts at nine o'clock.",
+            "near_misses": [
+              "The class starts on nine o'clock.",
+              "The class starts in nine o'clock."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with the right preposition: my birthday is / 5 May",
+            "answer": "My birthday is on 5 May.",
+            "near_misses": [
+              "My birthday is in 5 May.",
+              "My birthday is at 5 May."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with the right preposition: the keys are / the table (surface)",
+            "answer": "The keys are on the table.",
+            "near_misses": [
+              "The keys are in the table.",
+              "The keys are at the table."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: I was born on 2001.",
+            "answer": "I was born in 2001.",
+            "near_misses": ["I was born on 2001.", "I was born at 2001."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: See you in Monday.",
+            "answer": "See you on Monday.",
+            "near_misses": ["See you in Monday.", "See you at Monday."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-021@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence describes position next to something?",
+            "answer": "The shop is next to the bank.",
+            "alternatives": [
+              "The shop is next at the bank.",
+              "The shop is next to the bank.",
+              "The shop is next in the bank."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-021@1:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: My sister lives on Paris.",
+            "answer": "My sister lives in Paris.",
+            "near_misses": [
+              "My sister lives on Paris.",
+              "My sister lives at Paris."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-021@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with the right preposition: the film begins / half past eight",
+            "answer": "The film begins at half past eight.",
+            "near_misses": [
+              "The film begins in half past eight.",
+              "The film begins on half past eight."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-022",
+      "title": "Infinitive of purpose",
+      "explanation": "Use to plus the base verb to say why someone does something: I went to the shop to buy milk. She is studying to become a nurse. This answers the question Why? and means the same as in order to. Do not use for followed directly by a base verb: not I went to the shop for buy milk. Use for plus a noun if you like: I went to the shop for milk.",
+      "examples": [
+        {
+          "en": "I went to the shop to buy milk."
+        },
+        {
+          "en": "She is studying to become a nurse."
+        },
+        {
+          "en": "We use a map to find the way."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-022@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-022@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence explains why?",
+            "answer": "I went to the shop to buy milk.",
+            "alternatives": [
+              "I went to the shop to buy milk.",
+              "I went to the shop for buy milk.",
+              "I went to the shop buying milk."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word links an action to its purpose?",
+            "answer": "to",
+            "alternatives": ["to", "for", "with"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows the purpose 'to'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -ing form", "the past form"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word comes before a base verb to show purpose?",
+            "answer": "Why?",
+            "alternatives": ["Why?", "When?", "Where?"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q05",
+            "format": "typed-blank",
+            "prompt": "I went to the shop ___ buy milk.",
+            "answer": "to",
+            "near_misses": ["for", "at"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q06",
+            "format": "typed-blank",
+            "prompt": "She is studying to ___ a nurse. (become)",
+            "answer": "become",
+            "near_misses": ["becoming", "became"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q07",
+            "format": "typed-blank",
+            "prompt": "We use a map to ___ the way. (find)",
+            "answer": "find",
+            "near_misses": ["found", "finding"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q08",
+            "format": "translation",
+            "prompt": "Explain the purpose with to (simple past): I / go to the shop / buy milk",
+            "answer": "I went to the shop to buy milk.",
+            "near_misses": [
+              "I went to the shop for buy milk.",
+              "I went to the shop to buying milk."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q09",
+            "format": "translation",
+            "prompt": "Explain the purpose with to (present continuous): she / study / become a nurse",
+            "answer": "She is studying to become a nurse.",
+            "near_misses": [
+              "She is studying for become a nurse.",
+              "She is studying to becoming a nurse."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q10",
+            "format": "translation",
+            "prompt": "Explain the purpose with to: we / use a map / find the way",
+            "answer": "We use a map to find the way.",
+            "near_misses": [
+              "We use a map for find the way.",
+              "We use a map to finding the way."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He called for ask the price.",
+            "answer": "He called to ask the price.",
+            "near_misses": [
+              "He called for ask the price.",
+              "He called to asking the price."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: I saved money for buy a bike.",
+            "answer": "I saved money to buy a bike.",
+            "near_misses": [
+              "I saved money for buy a bike.",
+              "I saved money to buying a bike."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-022@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence gives a purpose?",
+            "answer": "They came here to learn English.",
+            "alternatives": [
+              "They came here for learn English.",
+              "They came here to learn English.",
+              "They came here learning English."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-022@1:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: She opened the window for let in some air.",
+            "answer": "She opened the window to let in some air.",
+            "near_misses": [
+              "She opened the window for let in some air.",
+              "She opened the window to letting in some air."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-022@1:h03",
+            "format": "translation",
+            "prompt": "Explain the purpose with to (simple past): he / take / a taxi / get to the airport",
+            "answer": "He took a taxi to get to the airport.",
+            "near_misses": [
+              "He took a taxi for get to the airport.",
+              "He took a taxi to getting to the airport."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-023",
+      "title": "Verb + -ing patterns",
+      "explanation": "After some verbs and after prepositions use the -ing form: I enjoy swimming. She finished writing. We are interested in learning Spanish. He is good at cooking. Enjoy and finish take -ing. Like, love, hate and start can take either -ing or a to-infinitive; stop to do something has a different meaning from stop doing it. After a preposition always use -ing: thank you for helping, before leaving. After enjoy, do not use the base verb or a to-infinitive: not I enjoy to swim.",
+      "examples": [
+        {
+          "en": "I enjoy swimming."
+        },
+        {
+          "en": "She finished writing the email."
+        },
+        {
+          "en": "He is good at cooking."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "BC-A1-A2"],
+      "version": {
+        "id": "en-a2-023@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-023@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which verb is followed by the -ing form?",
+            "answer": "enjoy",
+            "alternatives": ["enjoy", "decide", "hope"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows a preposition like 'at'?",
+            "answer": "the -ing form",
+            "alternatives": [
+              "the -ing form",
+              "the base verb",
+              "to + base verb"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "I enjoy swimming.",
+            "alternatives": [
+              "I enjoy swimming.",
+              "I enjoy to swim.",
+              "I enjoy swim."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses a preposition plus -ing?",
+            "answer": "He is good at cooking.",
+            "alternatives": [
+              "He is good at cook.",
+              "He is good at cooking.",
+              "He is good at to cook."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q05",
+            "format": "typed-blank",
+            "prompt": "I enjoy ___. (swim)",
+            "answer": "swimming",
+            "near_misses": ["swim", "to swim"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q06",
+            "format": "typed-blank",
+            "prompt": "She finished ___ the email. (write)",
+            "answer": "writing",
+            "near_misses": ["write", "wrote"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q07",
+            "format": "typed-blank",
+            "prompt": "He is good at ___. (cook)",
+            "answer": "cooking",
+            "near_misses": ["cook", "cooked"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: I / enjoy / swim",
+            "answer": "I enjoy swimming.",
+            "near_misses": ["I enjoy to swim.", "I enjoy swim."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: she / finish / write / the email",
+            "answer": "She finished writing the email.",
+            "near_misses": [
+              "She finished to write the email.",
+              "She finished write the email."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: he / be good at / cook",
+            "answer": "He is good at cooking.",
+            "alternatives": ["He's good at cooking."],
+            "near_misses": ["He is good at cook.", "He is good at to cook."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She loves to dancing.",
+            "answer": "She loves dancing.",
+            "alternatives": ["She loves to dance."],
+            "near_misses": ["She loves to dancing.", "She loves dance."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Thank you for help me.",
+            "answer": "Thank you for helping me.",
+            "near_misses": [
+              "Thank you for help me.",
+              "Thank you for to help me."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-023@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence about stopping is correct?",
+            "answer": "We stopped talking when the teacher came in.",
+            "alternatives": [
+              "We stopped talk when the teacher came in.",
+              "We stopped talking when the teacher came in.",
+              "We stopped to talking when the teacher came in."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-023@1:h02",
+            "format": "typed-blank",
+            "prompt": "He hates ___ up early. (get)",
+            "answer": "getting",
+            "near_misses": ["get", "to getting"],
+            "holdout": true,
+            "alternatives": ["to get"]
+          },
+          {
+            "id": "en-a2-023@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: they / be interested in / learn / Spanish",
+            "answer": "They are interested in learning Spanish.",
+            "alternatives": ["They're interested in learning Spanish."],
+            "near_misses": [
+              "They are interested in learn Spanish.",
+              "They are interested in to learn Spanish."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

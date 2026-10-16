@@ -1,0 +1,691 @@
+{
+  "module_id": "de-a2-module-04",
+  "track": "German A2",
+  "title": "Determiners, adjectives, comparison and quantity",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a2-013",
+      "title": "Demonstrative and interrogative determiners: dieser and welcher",
+      "explanation": "Dieser (this) and welcher (which) take the same endings as the definite article: masculine dieser/welcher (nominative) and diesen/welchen (accusative), feminine diese/welche, neuter dieses/welches, plural diese/welche. Only the masculine changes in the accusative: Ich kaufe diesen Mantel. Welchen Pullover kaufst du? Welche Lampe gefällt dir?",
+      "examples": [
+        {
+          "de": "Welchen Pullover kaufst du?",
+          "en": "Which sweater are you buying?"
+        },
+        {
+          "de": "Ich kaufe diesen Pullover.",
+          "en": "I am buying this sweater."
+        },
+        {
+          "de": "Welche Lampe gefällt dir?",
+          "en": "Which lamp do you like?"
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-013@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-013@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of 'dieser' is the accusative for 'Mantel' (masculine)?",
+            "answer": "diesen",
+            "alternatives": ["dieser", "diesen", "diesem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of 'welcher' goes with 'Frau' in the nominative?",
+            "answer": "welche",
+            "alternatives": ["welcher", "welche", "welches"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence asks which sweater you buy?",
+            "answer": "Welchen Pullover kaufst du?",
+            "alternatives": [
+              "Welcher Pullover kaufst du?",
+              "Welchen Pullover kaufst du?",
+              "Welches Pullover kaufst du?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'dieses' correctly?",
+            "answer": "Ich lese dieses Buch.",
+            "alternatives": [
+              "Ich lese diesen Buch.",
+              "Ich lese dieses Buch.",
+              "Ich lese diese Buch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich kaufe ___ Mantel. (this)",
+            "answer": "diesen",
+            "near_misses": ["dieser", "diesem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ Lampe gefällt dir? (which)",
+            "answer": "Welche",
+            "near_misses": ["Welcher", "Welches"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ Buch liest du? (which)",
+            "answer": "Welches",
+            "near_misses": ["Welche", "Welchen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use dieser or welcher): I buy this coat.",
+            "answer": "Ich kaufe diesen Mantel.",
+            "near_misses": [
+              "Ich kaufe dieser Mantel.",
+              "Ich kaufe diesem Mantel."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use dieser or welcher): Which sweater are you buying? (one friend)",
+            "answer": "Welchen Pullover kaufst du?",
+            "near_misses": [
+              "Welcher Pullover kaufst du?",
+              "Welchen Pullover kaufen du?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use dieser or welcher): I read this book.",
+            "answer": "Ich lese dieses Buch.",
+            "near_misses": ["Ich lese diesen Buch.", "Ich lese diese Buch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Ich kaufe dieser Pullover.",
+            "answer": "Ich kaufe diesen Pullover.",
+            "near_misses": [
+              "Ich kaufe dieser Pullover.",
+              "Ich kaufe dieses Pullover."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Welcher Lampe kaufst du?",
+            "answer": "Welche Lampe kaufst du?",
+            "near_misses": [
+              "Welcher Lampe kaufst du?",
+              "Welches Lampe kaufst du?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-013@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence asks which book she reads?",
+            "answer": "Welches Buch liest sie?",
+            "alternatives": [
+              "Welche Buch liest sie?",
+              "Welches Buch liest sie?",
+              "Welchen Buch liest sie?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-013@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use dieser or welcher): Which coat do you like? (one friend)",
+            "answer": "Welcher Mantel gefällt dir?",
+            "near_misses": [
+              "Welchen Mantel gefällt dir?",
+              "Welcher Mantel gefallen dir?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-013@1:h03",
+            "format": "correction",
+            "prompt": "Correct the form: Ich sehe diese Mantel.",
+            "answer": "Ich sehe diesen Mantel.",
+            "near_misses": [
+              "Ich sehe diese Mantel.",
+              "Ich sehe dieser Mantel."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-014",
+      "title": "Adjective endings after common articles",
+      "explanation": "An adjective before a noun takes an ending. After the definite article (nominative and feminine, neuter or plural accusative) the ending is -e: der große Tisch, die neue Lampe, das alte Haus. After the indefinite article the ending shows the gender: ein großer Tisch, eine neue Lampe, ein altes Haus. In the masculine accusative the ending is -en: Ich kaufe einen großen Tisch. The ending carries the case information that the article does not.",
+      "examples": [
+        {
+          "de": "Der große Tisch ist neu.",
+          "en": "The big table is new."
+        },
+        {
+          "de": "Ich kaufe eine neue Lampe.",
+          "en": "I am buying a new lamp."
+        },
+        {
+          "de": "Wir haben ein altes Haus.",
+          "en": "We have an old house."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-014@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-014@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which ending does an adjective take after 'der' (masculine nominative)?",
+            "answer": "-e",
+            "alternatives": ["-e", "-er", "-en"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence has the right adjective ending after 'ein' (neuter)?",
+            "answer": "Wir haben ein altes Haus.",
+            "alternatives": [
+              "Wir haben ein alte Haus.",
+              "Wir haben ein altes Haus.",
+              "Wir haben ein alter Haus."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which ending does an adjective take after 'einen' (masculine accusative)?",
+            "answer": "-en",
+            "alternatives": ["-e", "-es", "-en"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct for a feminine direct object?",
+            "answer": "Ich kaufe eine neue Lampe.",
+            "alternatives": [
+              "Ich kaufe eine neu Lampe.",
+              "Ich kaufe eine neue Lampe.",
+              "Ich kaufe eine neuen Lampe."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q05",
+            "format": "typed-blank",
+            "prompt": "Der ___ Tisch ist neu. (big)",
+            "answer": "große",
+            "near_misses": ["groß", "großer"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ich kaufe eine ___ Lampe. (new)",
+            "answer": "neue",
+            "near_misses": ["neu", "neuen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q07",
+            "format": "typed-blank",
+            "prompt": "Wir haben ein ___ Haus. (old)",
+            "answer": "altes",
+            "near_misses": ["alte", "alt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q08",
+            "format": "translation",
+            "prompt": "Translate (add the adjective ending): The big table is new.",
+            "answer": "Der große Tisch ist neu.",
+            "near_misses": [
+              "Der groß Tisch ist neu.",
+              "Der großer Tisch ist neu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q09",
+            "format": "translation",
+            "prompt": "Translate (add the adjective ending): I buy a new lamp.",
+            "answer": "Ich kaufe eine neue Lampe.",
+            "near_misses": [
+              "Ich kaufe eine neu Lampe.",
+              "Ich kaufe eine neuen Lampe."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q10",
+            "format": "translation",
+            "prompt": "Translate (add the adjective ending): I buy a big table.",
+            "answer": "Ich kaufe einen großen Tisch.",
+            "near_misses": [
+              "Ich kaufe einen großer Tisch.",
+              "Ich kaufe einen groß Tisch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q11",
+            "format": "correction",
+            "prompt": "Correct the ending: Wir haben ein alt Haus.",
+            "answer": "Wir haben ein altes Haus.",
+            "near_misses": [
+              "Wir haben ein alt Haus.",
+              "Wir haben ein alter Haus."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:q12",
+            "format": "correction",
+            "prompt": "Correct the ending: Ich kaufe einen neuer Mantel.",
+            "answer": "Ich kaufe einen neuen Mantel.",
+            "near_misses": [
+              "Ich kaufe einen neuer Mantel.",
+              "Ich kaufe einen neue Mantel."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-014@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which phrase is correct for 'a small child' (neuter)?",
+            "answer": "ein kleines Kind",
+            "alternatives": [
+              "ein klein Kind",
+              "ein kleines Kind",
+              "ein kleiner Kind"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-014@1:h02",
+            "format": "typed-blank",
+            "prompt": "Die ___ Lampe ist neu. (old)",
+            "answer": "alte",
+            "near_misses": ["alt", "altes"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-014@1:h03",
+            "format": "translation",
+            "prompt": "Translate (add the adjective ending): She has a small house.",
+            "answer": "Sie hat ein kleines Haus.",
+            "near_misses": [
+              "Sie hat ein klein Haus.",
+              "Sie hat ein kleiner Haus."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-015",
+      "title": "Comparatives and superlatives",
+      "explanation": "Add -er for the comparative and use als for 'than': Mein Bruder ist größer als ich. Add am ... -(e)sten for the superlative: Dieses Buch ist am besten. Many short adjectives take an umlaut: groß, größer, am größten. Irregular forms to learn: gut, besser, am besten; viel, mehr, am meisten; gern, lieber, am liebsten. Use lieber to say what you prefer: Ich trinke lieber Tee als Kaffee.",
+      "examples": [
+        {
+          "de": "Mein Bruder ist größer als ich.",
+          "en": "My brother is taller than I am."
+        },
+        {
+          "de": "Dieses Buch ist am besten.",
+          "en": "This book is the best."
+        },
+        {
+          "de": "Ich trinke lieber Tee als Kaffee.",
+          "en": "I prefer tea to coffee."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-015@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-015@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'groß'?",
+            "answer": "größer",
+            "alternatives": ["größer", "großer", "am größten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'gut'?",
+            "answer": "besser",
+            "alternatives": ["besser", "guter", "best"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word follows a comparative to mean 'than'?",
+            "answer": "als",
+            "alternatives": ["als", "wie", "denn"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the superlative of 'klein'?",
+            "answer": "am kleinsten",
+            "alternatives": ["am kleinsten", "am kleiner", "am kleinst"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q05",
+            "format": "typed-blank",
+            "prompt": "Mein Bruder ist ___ als ich. (big)",
+            "answer": "größer",
+            "near_misses": ["groß", "größten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q06",
+            "format": "typed-blank",
+            "prompt": "Dieses Buch ist am ___. (good)",
+            "answer": "besten",
+            "near_misses": ["besser", "guten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich trinke ___ Tee als Kaffee. (rather)",
+            "answer": "lieber",
+            "near_misses": ["gerner", "liebste"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the comparative or superlative): My brother is taller than I am.",
+            "answer": "Mein Bruder ist größer als ich.",
+            "near_misses": [
+              "Mein Bruder ist größer wie ich.",
+              "Mein Bruder ist groß als ich."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the comparative or superlative): This book is the best.",
+            "answer": "Dieses Buch ist am besten.",
+            "near_misses": [
+              "Dieses Buch ist am besser.",
+              "Dieses Buch ist besten."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the comparative or superlative): I prefer tea to coffee.",
+            "answer": "Ich trinke lieber Tee als Kaffee.",
+            "near_misses": [
+              "Ich trinke gerner Tee als Kaffee.",
+              "Ich trinke lieber Tee wie Kaffee."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q11",
+            "format": "correction",
+            "prompt": "Correct the comparison: Anna ist größer wie Max.",
+            "answer": "Anna ist größer als Max.",
+            "near_misses": [
+              "Anna ist größer wie Max.",
+              "Anna ist großer als Max."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:q12",
+            "format": "correction",
+            "prompt": "Correct the comparison: Das Haus ist am größer.",
+            "answer": "Das Haus ist am größten.",
+            "near_misses": ["Das Haus ist am größer.", "Das Haus ist größten."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-015@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'klein'?",
+            "answer": "kleiner",
+            "alternatives": ["kleiner", "kleinster", "am kleinsten"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-015@1:h02",
+            "format": "typed-blank",
+            "prompt": "Dieser Tisch ist ___ als der Stuhl. (new)",
+            "answer": "neuer",
+            "near_misses": ["neu", "neuste"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-015@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the comparative or superlative): Max is younger than Anna.",
+            "answer": "Max ist jünger als Anna.",
+            "near_misses": [
+              "Max ist jünger wie Anna.",
+              "Max ist jung als Anna."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-016",
+      "title": "Indefinite pronouns and quantity words",
+      "explanation": "Use niemand (nobody), jemand (somebody), nichts (nothing), etwas (something) and alles (everything) as pronouns: Niemand ist zu Hause. Ich möchte etwas trinken. They need no article. For quantity use viele (many), wenige (few), einige (some) and alle (all) with plural nouns: Viele Kinder spielen im Garten. The verb agrees with the plural noun. Man (one, people) is a general subject: Man spricht Deutsch.",
+      "examples": [
+        {
+          "de": "Niemand ist zu Hause.",
+          "en": "Nobody is at home."
+        },
+        {
+          "de": "Ich möchte etwas trinken.",
+          "en": "I would like to drink something."
+        },
+        {
+          "de": "Viele Kinder spielen im Garten.",
+          "en": "Many children play in the garden."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-016@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-016@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'nobody'?",
+            "answer": "niemand",
+            "alternatives": ["niemand", "jemand", "nichts"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'something'?",
+            "answer": "etwas",
+            "alternatives": ["etwas", "nichts", "alles"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'everything'?",
+            "answer": "alles",
+            "alternatives": ["alles", "alle", "etwas"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'Many children are playing.'?",
+            "answer": "Viele Kinder spielen.",
+            "alternatives": [
+              "Viele Kinder spielt.",
+              "Viele Kinder spielen.",
+              "Viel Kinder spielen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ ist zu Hause. (nobody)",
+            "answer": "Niemand",
+            "near_misses": ["Jemand", "Nichts"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ich möchte ___ trinken. (something)",
+            "answer": "etwas",
+            "near_misses": ["nichts", "alles"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ Kinder spielen im Garten. (many)",
+            "answer": "Viele",
+            "near_misses": ["Viel", "Wenig"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use an indefinite pronoun or quantity word): Nobody is at home.",
+            "answer": "Niemand ist zu Hause.",
+            "near_misses": [
+              "Nichts ist zu Hause.",
+              "Jemand ist nicht zu Hause."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use an indefinite pronoun or quantity word): I would like to drink something.",
+            "answer": "Ich möchte etwas trinken.",
+            "near_misses": [
+              "Ich möchte nichts trinken.",
+              "Ich möchte etwas trinkt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use an indefinite pronoun or quantity word): Many children play in the garden.",
+            "answer": "Viele Kinder spielen im Garten.",
+            "near_misses": [
+              "Viel Kinder spielen im Garten.",
+              "Viele Kinder spielt im Garten."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word: Viel Kinder spielen hier.",
+            "answer": "Viele Kinder spielen hier.",
+            "near_misses": [
+              "Viel Kinder spielen hier.",
+              "Viele Kinder spielt hier."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Alle Kinder spielt im Garten.",
+            "answer": "Alle Kinder spielen im Garten.",
+            "near_misses": [
+              "Alle Kinder spielt im Garten.",
+              "Alle Kind spielen im Garten."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-016@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'someone'?",
+            "answer": "jemand",
+            "alternatives": ["jemand", "niemand", "man"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-016@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ich verstehe ___. (nothing)",
+            "answer": "nichts",
+            "near_misses": ["nicht", "alles"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-016@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use an indefinite pronoun or quantity word): Few people live here.",
+            "answer": "Wenige Leute wohnen hier.",
+            "near_misses": [
+              "Wenig Leute wohnen hier.",
+              "Wenige Leute wohnt hier."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -195,6 +195,20 @@ function validateAlternatives(question: ContentQuestion) {
 const fingerprint = (data: unknown) =>
   createHash('sha256').update(JSON.stringify(data)).digest('hex');
 
+// Review status may change to quarantine; question payloads remain immutable.
+const versionFingerprint = (version: PackageVersion) =>
+  fingerprint(
+    version.questions
+      .map(({ id, format, prompt, answer, alternatives }) => ({
+        id,
+        format,
+        prompt,
+        answer,
+        alternatives
+      }))
+      .sort((a, b) => Number(a.id > b.id) - Number(a.id < b.id))
+  );
+
 function validatePackage(pkg: ContentPackage) {
   validatePackageHeader(pkg);
   const data = validateShape(pkg);
@@ -360,7 +374,7 @@ async function insertEdges(tx: Transaction, edges: NewEdge[]) {
 
 async function storedVersion(tx: Transaction, version: PackageVersion) {
   const rows = await tx.execute({
-    sql: 'SELECT id, skill_id, version, status FROM content_versions WHERE id = ? OR (skill_id = ? AND version = ?)',
+    sql: 'SELECT id, skill_id, version, status, fingerprint FROM content_versions WHERE id = ? OR (skill_id = ? AND version = ?)',
     args: [version.id, version.skillId, version.version]
   });
   if (rows.rows.length === 0) return undefined;
@@ -372,7 +386,7 @@ async function storedVersion(tx: Transaction, version: PackageVersion) {
     JSON.stringify(found) !== JSON.stringify(expected)
   )
     fail('CONTENT_CONFLICT', `version ${version.id}`);
-  return String(row.status);
+  return row;
 }
 
 // Both sides are keyed and sorted the same way in JS; SQL collation order is
@@ -406,13 +420,14 @@ async function insertVersion(
   if (taken.rows.length > 0)
     fail('CONTENT_CONFLICT', `question ${String(taken.rows[0].id)}`);
   await tx.execute({
-    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, ?, ?, ?)',
+    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status, fingerprint) VALUES (?, ?, ?, ?, ?, ?)',
     args: [
       version.id,
       version.skillId,
       language,
       version.version,
-      version.review === 'quarantined' ? 'quarantined' : 'schema-validated'
+      version.review === 'quarantined' ? 'quarantined' : 'schema-validated',
+      versionFingerprint(version)
     ]
   });
   for (const question of version.questions)
@@ -432,11 +447,17 @@ async function importVersions(
   tx: Transaction,
   pkg: ContentPackage,
   known: Map<string, SkillInfo>,
-  result: ImportResult
+  result: ImportResult,
+  packageHash: string
 ) {
   // A version may only target a skill this package declares and reviews;
   // stored skills carry no review state.
   const declared = new Map(pkg.skills.map((skill) => [skill.id, skill]));
+  const recorded = await tx.execute({
+    sql: 'SELECT fingerprint FROM curriculum_imports WHERE curriculum_version = ?',
+    args: [pkg.curriculumVersion]
+  });
+  const verifiedOriginal = recorded.rows[0]?.fingerprint === packageHash;
   for (const version of pkg.versions) {
     const skill = declared.get(version.skillId);
     if (!skill)
@@ -444,8 +465,8 @@ async function importVersions(
         known.has(version.skillId) ? 'UNREVIEWED' : 'MISSING_REFERENCE',
         `version ${version.id}`
       );
-    const status = await storedVersion(tx, version);
-    if (status === undefined) {
+    const stored = await storedVersion(tx, version);
+    if (stored === undefined) {
       await insertVersion(tx, version, skill.language);
       result.versions += 1;
       result.questions += version.questions.length;
@@ -453,6 +474,19 @@ async function importVersions(
       continue;
     }
     if (!(await sameQuestions(tx, version)))
+      fail('CONTENT_CONFLICT', `version ${version.id}`);
+    const hash = versionFingerprint(version);
+    if (stored.fingerprint === null) {
+      if (!verifiedOriginal)
+        fail(
+          'LEGACY_CONTENT_UNVERIFIED',
+          `version ${version.id}: re-import the recorded original package or publish a new content version with new question IDs`
+        );
+      await tx.execute({
+        sql: 'UPDATE content_versions SET fingerprint = ? WHERE id = ? AND fingerprint IS NULL',
+        args: [hash, version.id]
+      });
+    } else if (stored.fingerprint !== hash)
       fail('CONTENT_CONFLICT', `version ${version.id}`);
     if (version.review === 'quarantined') {
       const update = await tx.execute({
@@ -493,7 +527,7 @@ export async function importContent(
       questions: 0,
       quarantined: 0
     };
-    await importVersions(tx, pkg, known, result);
+    await importVersions(tx, pkg, known, result, hash);
     // Last, so that a content error keeps its own code.
     await recordVersion(tx, pkg.curriculumVersion, hash);
     await tx.commit();

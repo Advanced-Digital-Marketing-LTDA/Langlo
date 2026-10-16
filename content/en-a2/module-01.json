@@ -1,0 +1,676 @@
+{
+  "module_id": "en-a2-module-01",
+  "track": "English A2",
+  "title": "Past tenses, present perfect and going to",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "en-a2-001",
+      "title": "Past simple: statements, negatives and questions",
+      "explanation": "Use the past simple for finished actions. Regular verbs add -ed (visited); irregular verbs have special forms (bought, wrote, saw). For negatives use didn't (did not) plus the base verb: She didn't go to school. For questions use did plus the subject and the base verb: Did you see the film? After did and didn't the main verb has no past ending: not She didn't went.",
+      "examples": [
+        {
+          "en": "I visited my aunt last week."
+        },
+        {
+          "en": "She didn't go to school."
+        },
+        {
+          "en": "Did you see the film?"
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-001@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-001@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the past tense of 'buy'?",
+            "answer": "bought",
+            "alternatives": ["bought", "buyed", "boughten"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which auxiliary makes a past simple negative?",
+            "answer": "didn't",
+            "alternatives": ["didn't", "wasn't", "don't"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of the verb follows 'didn't'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the past form", "the -ing form"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question is in the past simple?",
+            "answer": "Did you see the film?",
+            "alternatives": [
+              "Do you saw the film?",
+              "Did you see the film?",
+              "Did you saw the film?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ my aunt last week. (visit)",
+            "answer": "visited",
+            "near_misses": ["visit", "visiting"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q06",
+            "format": "typed-blank",
+            "prompt": "She ___ go to school. (negative)",
+            "answer": "didn't",
+            "alternatives": ["did not"],
+            "near_misses": ["doesn't", "wasn't"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ you see the film? (question)",
+            "answer": "Did",
+            "near_misses": ["Do", "Does"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: I / visit / my aunt / last week",
+            "answer": "I visited my aunt last week.",
+            "near_misses": [
+              "I visit my aunt last week.",
+              "I visited my aunt last weeks."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: negative: she / go / to school",
+            "answer": "She didn't go to school.",
+            "alternatives": ["She did not go to school."],
+            "near_misses": [
+              "She didn't went to school.",
+              "She wasn't go to school."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: ask: you / see / the film",
+            "answer": "Did you see the film?",
+            "near_misses": ["Did you saw the film?", "Do you saw the film?"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She didn't went home.",
+            "answer": "She didn't go home.",
+            "alternatives": ["She did not go home."],
+            "near_misses": ["She didn't went home.", "She didn't goes home."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:q12",
+            "format": "correction",
+            "prompt": "Correct the question: Did he bought a bike?",
+            "answer": "Did he buy a bike?",
+            "near_misses": ["Did he bought a bike?", "Do he buy a bike?"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-001@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the past tense of 'write'?",
+            "answer": "wrote",
+            "alternatives": ["wrote", "writed", "written"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-001@1:h02",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: ask: they / visit / London",
+            "answer": "Did they visit London?",
+            "near_misses": [
+              "Did they visited London?",
+              "Do they visit London?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-001@1:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: We didn't saw the match.",
+            "answer": "We didn't see the match.",
+            "alternatives": ["We did not see the match."],
+            "near_misses": [
+              "We didn't saw the match.",
+              "We didn't sees the match."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-002",
+      "title": "Past continuous for ongoing and interrupted events",
+      "explanation": "Use was or were plus the -ing form for an action that was in progress at a past moment: They were playing football. Use was with I, he, she and it and were with you, we and they. The past continuous often describes a longer action interrupted by a shorter one in the past simple, joined by when: I was cooking when the phone rang.",
+      "examples": [
+        {
+          "en": "I was cooking when the phone rang."
+        },
+        {
+          "en": "They were playing football."
+        },
+        {
+          "en": "What were you doing at eight o'clock?"
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-002@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-002@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'I' in the past continuous?",
+            "answer": "was",
+            "alternatives": ["was", "were", "am"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'they' in the past continuous?",
+            "answer": "were",
+            "alternatives": ["was", "were", "are"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence has an interrupted past action?",
+            "answer": "I was cooking when the phone rang.",
+            "alternatives": [
+              "I cooked when the phone was ringing.",
+              "I was cooking when the phone rang.",
+              "I was cook when the phone rang."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word often joins an ongoing action to an interrupting action?",
+            "answer": "when",
+            "alternatives": ["when", "because", "or"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ cooking when the phone rang. (be)",
+            "answer": "was",
+            "near_misses": ["were", "am"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q06",
+            "format": "typed-blank",
+            "prompt": "They ___ playing football. (be)",
+            "answer": "were",
+            "near_misses": ["was", "are"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q07",
+            "format": "typed-blank",
+            "prompt": "She was ___ a book. (read)",
+            "answer": "reading",
+            "near_misses": ["read", "reads"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence in the past continuous: I / cook / when the phone rang",
+            "answer": "I was cooking when the phone rang.",
+            "near_misses": [
+              "I cooking when the phone rang.",
+              "I were cooking when the phone rang."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence in the past continuous: they / play / football",
+            "answer": "They were playing football.",
+            "near_misses": [
+              "They was playing football.",
+              "They playing football."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence in the past continuous: ask: what / you / do / at eight o'clock",
+            "answer": "What were you doing at eight o'clock?",
+            "near_misses": [
+              "What was you doing at eight o'clock?",
+              "What you were doing at eight o'clock?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: We was watching TV.",
+            "answer": "We were watching TV.",
+            "near_misses": ["We was watching TV.", "We were watch TV."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: She were reading.",
+            "answer": "She was reading.",
+            "near_misses": ["She were reading.", "She was read."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-002@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence describes an action in progress at eight o'clock?",
+            "answer": "At eight I was sleeping.",
+            "alternatives": [
+              "At eight I slept.",
+              "At eight I was sleeping.",
+              "At eight I sleeping."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-002@1:h02",
+            "format": "typed-blank",
+            "prompt": "He was ___ the car. (wash)",
+            "answer": "washing",
+            "near_misses": ["wash", "washes"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-002@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence in the past continuous: he / sleep / at midnight",
+            "answer": "He was sleeping at midnight.",
+            "near_misses": [
+              "He were sleeping at midnight.",
+              "He sleeping at midnight."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-003",
+      "title": "Present perfect for experience and recent events",
+      "explanation": "Form the present perfect with have or has plus the past participle: I have visited Paris. She has just finished. Use it for life experience and for recent events without a finished time. Frequent markers: ever (in questions), never, just, already, yet. Past participles: regular verbs add -ed; irregular ones must be learned (eaten, seen, been, gone). Do not use it with a finished time like yesterday.",
+      "examples": [
+        {
+          "en": "I have visited Paris."
+        },
+        {
+          "en": "She has just finished."
+        },
+        {
+          "en": "Have you ever eaten sushi?"
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-003@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-003@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the past participle of 'eat'?",
+            "answer": "eaten",
+            "alternatives": ["ate", "eaten", "eated"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which auxiliary goes with 'she' in the present perfect?",
+            "answer": "has",
+            "alternatives": ["has", "have", "is"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word is used to ask about life experience?",
+            "answer": "ever",
+            "alternatives": ["ever", "yesterday", "ago"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses the present perfect correctly?",
+            "answer": "I have visited Paris.",
+            "alternatives": [
+              "I have visit Paris.",
+              "I have visited Paris.",
+              "I has visited Paris."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q05",
+            "format": "typed-blank",
+            "prompt": "She ___ just finished. (have)",
+            "answer": "has",
+            "near_misses": ["have", "is"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q06",
+            "format": "typed-blank",
+            "prompt": "Have you ___ eaten sushi? (use ever to ask about life experience)",
+            "answer": "ever",
+            "near_misses": ["never", "yet"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q07",
+            "format": "typed-blank",
+            "prompt": "I have never ___ to Japan. (be)",
+            "answer": "been",
+            "near_misses": ["be", "was"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence in the present perfect: I / visit / Paris",
+            "answer": "I have visited Paris.",
+            "alternatives": ["I've visited Paris."],
+            "near_misses": ["I has visited Paris.", "I have visit Paris."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence in the present perfect: she / just / finish",
+            "answer": "She has just finished.",
+            "alternatives": ["She's just finished."],
+            "near_misses": ["She have just finished.", "She has just finish."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence in the present perfect: ask: you / ever / eat / sushi",
+            "answer": "Have you ever eaten sushi?",
+            "near_misses": [
+              "Did you ever eaten sushi?",
+              "Have you ever ate sushi?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He have visited London.",
+            "answer": "He has visited London.",
+            "alternatives": ["He's visited London."],
+            "near_misses": ["He have visited London.", "He has visit London."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:q12",
+            "format": "correction",
+            "prompt": "Correct the question: Have you ever saw a whale?",
+            "answer": "Have you ever seen a whale?",
+            "near_misses": [
+              "Have you ever saw a whale?",
+              "Did you ever seen a whale?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-003@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'at no time in your life'?",
+            "answer": "never",
+            "alternatives": ["never", "ever", "yet"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-003@1:h02",
+            "format": "typed-blank",
+            "prompt": "We have just ___ the door. (close)",
+            "answer": "closed",
+            "near_misses": ["close", "closing"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-003@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence in the present perfect: he / never / see / snow",
+            "answer": "He has never seen snow.",
+            "alternatives": ["He's never seen snow."],
+            "near_misses": [
+              "He have never seen snow.",
+              "He has never saw snow."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-004",
+      "title": "Going to for plans and predictions",
+      "explanation": "Use am, is or are plus going to and the base verb for plans and intentions: I am going to visit my aunt. Use it also for predictions based on what you can see now: Look at the clouds. It is going to rain. Questions put be first: What are you going to do? Do not drop be and do not add -s or -ing to the main verb.",
+      "examples": [
+        {
+          "en": "I am going to visit my aunt."
+        },
+        {
+          "en": "Look at the clouds. It is going to rain."
+        },
+        {
+          "en": "What are you going to do?"
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-004@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-004@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which structure expresses a plan?",
+            "answer": "be going to + base verb",
+            "alternatives": [
+              "be going to + base verb",
+              "go to + -ing",
+              "going + past form"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a prediction based on evidence?",
+            "answer": "Look at the clouds. It is going to rain.",
+            "alternatives": [
+              "Look at the clouds. It goes to rain.",
+              "Look at the clouds. It is going to rain.",
+              "Look at the clouds. It is going rain."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'we' in a going-to sentence?",
+            "answer": "are",
+            "alternatives": ["am", "is", "are"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question asks about a plan?",
+            "answer": "What are you going to do?",
+            "alternatives": [
+              "What do you going to do?",
+              "What are you going to do?",
+              "What you are going to do?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q05",
+            "format": "typed-blank",
+            "prompt": "I am ___ to visit my aunt. (going)",
+            "answer": "going",
+            "near_misses": ["go", "goes"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q06",
+            "format": "typed-blank",
+            "prompt": "It is going to ___. (rain)",
+            "answer": "rain",
+            "near_misses": ["rains", "raining"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q07",
+            "format": "typed-blank",
+            "prompt": "We ___ going to eat out. (be)",
+            "answer": "are",
+            "near_misses": ["is", "am"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with going to: I / visit / my aunt",
+            "answer": "I am going to visit my aunt.",
+            "alternatives": ["I'm going to visit my aunt."],
+            "near_misses": [
+              "I going to visit my aunt.",
+              "I am going visit my aunt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with going to: it / rain",
+            "answer": "It is going to rain.",
+            "alternatives": ["It's going to rain."],
+            "near_misses": ["It going to rain.", "It is going rain."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with going to: ask: what / you / do",
+            "answer": "What are you going to do?",
+            "near_misses": [
+              "What do you going to do?",
+              "What you are going to do?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She going to buy a bike.",
+            "answer": "She is going to buy a bike.",
+            "alternatives": ["She's going to buy a bike."],
+            "near_misses": [
+              "She going to buy a bike.",
+              "She is going buy a bike."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: We are going to eating out.",
+            "answer": "We are going to eat out.",
+            "alternatives": ["We're going to eat out."],
+            "near_misses": [
+              "We are going to eating out.",
+              "We is going to eat out."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-004@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a plan for next week?",
+            "answer": "I am going to start a course.",
+            "alternatives": [
+              "I am going start a course.",
+              "I am going to start a course.",
+              "I go to start a course."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-004@1:h02",
+            "format": "translation",
+            "prompt": "Write the sentence with going to: they / travel / in June",
+            "answer": "They are going to travel in June.",
+            "alternatives": ["They're going to travel in June."],
+            "near_misses": [
+              "They is going to travel in June.",
+              "They going to travel in June."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-004@1:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: It is going to snowing.",
+            "answer": "It is going to snow.",
+            "alternatives": ["It's going to snow."],
+            "near_misses": ["It is going to snowing.", "It is going snow."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

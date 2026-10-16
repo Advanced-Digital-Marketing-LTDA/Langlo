@@ -26,11 +26,11 @@
       ],
       "references": ["GOETHE-A1"],
       "version": {
-        "id": "de-a1-021@1",
-        "version": 1,
+        "id": "de-a1-021@2",
+        "version": 2,
         "questions": [
           {
-            "id": "de-a1-021@1:q01",
+            "id": "de-a1-021@2:q01",
             "format": "multiple-choice",
             "prompt": "Which form of möchten goes with 'ich'?",
             "answer": "möchte",
@@ -38,7 +38,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q02",
+            "id": "de-a1-021@2:q02",
             "format": "multiple-choice",
             "prompt": "Which form of möchten goes with 'du'?",
             "answer": "möchtest",
@@ -46,7 +46,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q03",
+            "id": "de-a1-021@2:q03",
             "format": "multiple-choice",
             "prompt": "Where does the infinitive stand after 'möchte'?",
             "answer": "at the end",
@@ -58,7 +58,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q04",
+            "id": "de-a1-021@2:q04",
             "format": "multiple-choice",
             "prompt": "Which sentence politely orders a coffee?",
             "answer": "Ich möchte einen Kaffee, bitte.",
@@ -70,7 +70,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q05",
+            "id": "de-a1-021@2:q05",
             "format": "typed-blank",
             "prompt": "Ich ___ einen Tee, bitte. (möchten)",
             "answer": "möchte",
@@ -78,7 +78,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q06",
+            "id": "de-a1-021@2:q06",
             "format": "typed-blank",
             "prompt": "Wir ___ Deutsch lernen. (möchten)",
             "answer": "möchten",
@@ -86,15 +86,16 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q07",
+            "id": "de-a1-021@2:q07",
             "format": "typed-blank",
             "prompt": "Ich würde ___ nach Wien fahren. (gladly)",
             "answer": "gern",
             "near_misses": ["gut", "sehr"],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["gerne"]
           },
           {
-            "id": "de-a1-021@1:q08",
+            "id": "de-a1-021@2:q08",
             "format": "translation",
             "prompt": "Translate (use a polite request): I would like a coffee, please.",
             "answer": "Ich möchte einen Kaffee, bitte.",
@@ -105,7 +106,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q09",
+            "id": "de-a1-021@2:q09",
             "format": "translation",
             "prompt": "Translate (use a polite request): We would like to learn German.",
             "answer": "Wir möchten Deutsch lernen.",
@@ -116,7 +117,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q10",
+            "id": "de-a1-021@2:q10",
             "format": "translation",
             "prompt": "Translate (use a polite request): I would gladly drive to Vienna.",
             "answer": "Ich würde gern nach Wien fahren.",
@@ -128,7 +129,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q11",
+            "id": "de-a1-021@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the meaning): Ich möchte lernen Deutsch.",
             "answer": "Ich möchte Deutsch lernen.",
@@ -139,7 +140,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:q12",
+            "id": "de-a1-021@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the meaning): Du möchte einen Tee.",
             "answer": "Du möchtest einen Tee.",
@@ -147,7 +148,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-021@1:h01",
+            "id": "de-a1-021@2:h01",
             "format": "multiple-choice",
             "prompt": "Which form of möchten goes with 'ihr'?",
             "answer": "möchtet",
@@ -155,7 +156,7 @@
             "holdout": true
           },
           {
-            "id": "de-a1-021@1:h02",
+            "id": "de-a1-021@2:h02",
             "format": "translation",
             "prompt": "Translate (use a polite request): We would gladly play tennis.",
             "answer": "Wir würden gern Tennis spielen.",
@@ -167,7 +168,7 @@
             "holdout": true
           },
           {
-            "id": "de-a1-021@1:h03",
+            "id": "de-a1-021@2:h03",
             "format": "correction",
             "prompt": "Correct the sentence (keep the meaning): Anna möchten ein Brot.",
             "answer": "Anna möchte ein Brot.",

@@ -50,6 +50,13 @@
       "when": 1792057530202,
       "tag": "0006_content_version_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1792176922194,
+      "tag": "0007_content_payload_fingerprint",
+      "breakpoints": true
     }
   ]
 }

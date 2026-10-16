@@ -1,0 +1,728 @@
+{
+  "module_id": "de-a2-module-05",
+  "track": "German A2",
+  "title": "Prepositions, connectors and zu + infinitive",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a2-017",
+      "title": "Temporal prepositions and their cases",
+      "explanation": "Frequent time prepositions have a fixed case. Seit, vor, nach, in (for 'in an hour'), von ... bis (from ... to) and bei take the dative: Ich wohne seit einem Jahr hier. Nach dem Kurs gehe ich nach Hause. In zwei Tagen beginnt der Urlaub. Für (for a period) and um (at a clock time) take the accusative or no article: Wir fahren für eine Woche nach Spanien. Learn each preposition together with its case.",
+      "examples": [
+        {
+          "de": "Ich wohne seit einem Jahr hier.",
+          "en": "I have lived here for a year."
+        },
+        {
+          "de": "Nach dem Kurs gehe ich nach Hause.",
+          "en": "After the course I go home."
+        },
+        {
+          "de": "Wir fahren für eine Woche nach Spanien.",
+          "en": "We are going to Spain for a week."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-017@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-017@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which case follows 'seit'?",
+            "answer": "dative",
+            "alternatives": ["dative", "accusative", "nominative"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which case follows 'für' in a time expression?",
+            "answer": "accusative",
+            "alternatives": ["dative", "accusative", "nominative"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'seit' correctly?",
+            "answer": "Ich wohne seit einem Jahr hier.",
+            "alternatives": [
+              "Ich wohne seit ein Jahr hier.",
+              "Ich wohne seit einem Jahr hier.",
+              "Ich wohne seit einen Jahr hier."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'nach' correctly?",
+            "answer": "Nach dem Kurs gehe ich nach Hause.",
+            "alternatives": [
+              "Nach den Kurs gehe ich nach Hause.",
+              "Nach dem Kurs gehe ich nach Hause.",
+              "Nach der Kurs gehe ich nach Hause."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich wohne seit ___ Jahr hier. (one)",
+            "answer": "einem",
+            "near_misses": ["ein", "einen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nach ___ Kurs gehe ich nach Hause. (the)",
+            "answer": "dem",
+            "near_misses": ["den", "der"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q07",
+            "format": "typed-blank",
+            "prompt": "Wir fahren für ___ Woche nach Spanien. (one)",
+            "answer": "eine",
+            "near_misses": ["einer", "einem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): I have lived here for a year.",
+            "answer": "Ich wohne seit einem Jahr hier.",
+            "near_misses": [
+              "Ich wohne seit ein Jahr hier.",
+              "Ich wohne seit einen Jahr hier."
+            ],
+            "holdout": false,
+            "alternatives": ["Seit einem Jahr wohne ich hier."]
+          },
+          {
+            "id": "de-a2-017@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): After the course I go home.",
+            "answer": "Nach dem Kurs gehe ich nach Hause.",
+            "near_misses": [
+              "Nach den Kurs gehe ich nach Hause.",
+              "Nach dem Kurs ich gehe nach Hause."
+            ],
+            "holdout": false,
+            "alternatives": ["Ich gehe nach dem Kurs nach Hause."]
+          },
+          {
+            "id": "de-a2-017@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): We drive to Spain for one week.",
+            "answer": "Wir fahren für eine Woche nach Spanien.",
+            "near_misses": [
+              "Wir fahren für einer Woche nach Spanien.",
+              "Wir fahren für eine Woche in Spanien."
+            ],
+            "holdout": false,
+            "alternatives": ["Für eine Woche fahren wir nach Spanien."]
+          },
+          {
+            "id": "de-a2-017@1:q11",
+            "format": "correction",
+            "prompt": "Correct the case: Ich wohne seit einen Jahr hier.",
+            "answer": "Ich wohne seit einem Jahr hier.",
+            "near_misses": [
+              "Ich wohne seit einen Jahr hier.",
+              "Ich wohne seit eines Jahr hier."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:q12",
+            "format": "correction",
+            "prompt": "Correct the case: Vor den Kurs esse ich.",
+            "answer": "Vor dem Kurs esse ich.",
+            "near_misses": ["Vor den Kurs esse ich.", "Vor der Kurs esse ich."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-017@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'in' for 'in one hour' correctly?",
+            "answer": "In einer Stunde fängt der Kurs an.",
+            "alternatives": [
+              "In eine Stunde fängt der Kurs an.",
+              "In einer Stunde fängt der Kurs an.",
+              "In einen Stunde fängt der Kurs an."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-017@1:h02",
+            "format": "typed-blank",
+            "prompt": "Er arbeitet von Montag ___ Freitag. (until)",
+            "answer": "bis",
+            "near_misses": ["seit", "für"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-017@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): Before dinner I work.",
+            "answer": "Vor dem Abendessen arbeite ich.",
+            "near_misses": [
+              "Vor den Abendessen arbeite ich.",
+              "Vor dem Abendessen ich arbeite."
+            ],
+            "holdout": true,
+            "alternatives": ["Ich arbeite vor dem Abendessen."]
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-018",
+      "title": "Local prepositions and their cases",
+      "explanation": "Aus, bei, mit, nach, von and zu always take the dative; durch, für, gegen, ohne and um take the accusative. Zu dem becomes zum, zu der becomes zur, bei dem becomes beim and von dem becomes vom. Examples: Ich gehe zum Arzt. Er kommt aus der Schule. Wir wohnen bei meiner Tante. Wir gehen durch den Park. Nach is used with cities and countries without an article and in nach Hause.",
+      "examples": [
+        {
+          "de": "Ich gehe zum Arzt.",
+          "en": "I am going to the doctor."
+        },
+        {
+          "de": "Er kommt aus der Schule.",
+          "en": "He comes out of the school."
+        },
+        {
+          "de": "Wir wohnen bei meiner Tante.",
+          "en": "We live at my aunt's."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-018@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-018@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which contraction means 'zu dem'?",
+            "answer": "zum",
+            "alternatives": ["zum", "zur", "zun"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which contraction means 'zu der'?",
+            "answer": "zur",
+            "alternatives": ["zum", "zur", "zun"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'aus' correctly?",
+            "answer": "Er kommt aus der Schule.",
+            "alternatives": [
+              "Er kommt aus die Schule.",
+              "Er kommt aus der Schule.",
+              "Er kommt aus den Schule."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'durch' correctly?",
+            "answer": "Wir gehen durch den Park.",
+            "alternatives": [
+              "Wir gehen durch dem Park.",
+              "Wir gehen durch den Park.",
+              "Wir gehen durch der Park."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich gehe ___ Arzt. (zu dem)",
+            "answer": "zum",
+            "near_misses": ["zur", "zu"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir wohnen bei ___ Tante. (my)",
+            "answer": "meiner",
+            "near_misses": ["meine", "meinem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q07",
+            "format": "typed-blank",
+            "prompt": "Er kommt aus ___ Schule. (the)",
+            "answer": "der",
+            "near_misses": ["die", "dem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): I go to the doctor.",
+            "answer": "Ich gehe zum Arzt.",
+            "alternatives": ["Ich gehe zu dem Arzt."],
+            "near_misses": ["Ich gehe zu Arzt.", "Ich gehe zur Arzt."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use bei and the correct case): We live at my aunt's.",
+            "answer": "Wir wohnen bei meiner Tante.",
+            "near_misses": [
+              "Wir wohnen bei meine Tante.",
+              "Wir wohnen bei meinem Tante."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): We walk through the park.",
+            "answer": "Wir gehen durch den Park.",
+            "near_misses": [
+              "Wir gehen durch dem Park.",
+              "Wir gehen durch der Park."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q11",
+            "format": "correction",
+            "prompt": "Correct the contraction: Ich gehe zur Arzt.",
+            "answer": "Ich gehe zum Arzt.",
+            "alternatives": ["Ich gehe zu dem Arzt."],
+            "near_misses": ["Ich gehe zur Arzt.", "Ich gehe zun Arzt."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:q12",
+            "format": "correction",
+            "prompt": "Correct the case: Er kommt aus die Schule.",
+            "answer": "Er kommt aus der Schule.",
+            "near_misses": [
+              "Er kommt aus die Schule.",
+              "Er kommt aus dem Schule."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-018@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which contraction means 'bei dem'?",
+            "answer": "beim",
+            "alternatives": ["beim", "bei", "beime"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-018@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): She goes to the teacher.",
+            "answer": "Sie geht zur Lehrerin.",
+            "alternatives": ["Sie geht zu der Lehrerin."],
+            "near_misses": ["Sie geht zum Lehrerin.", "Sie geht zu Lehrerin."],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-018@1:h03",
+            "format": "correction",
+            "prompt": "Correct the case: Wir laufen durch dem Haus.",
+            "answer": "Wir laufen durch das Haus.",
+            "near_misses": [
+              "Wir laufen durch dem Haus.",
+              "Wir laufen durch den Haus."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-019",
+      "title": "Temporal and reason connectors: wenn, bevor, deshalb",
+      "explanation": "Wenn (if, whenever) and bevor (before) introduce subordinate clauses with the finite verb at the end. When the subordinate clause comes first, the main clause starts with its verb: Wenn ich müde bin, trinke ich Kaffee. Deshalb (therefore) is an adverb, not a conjunction, so the verb stays in second position after it: Ich bin müde, deshalb bleibe ich zu Hause. Put a comma between the clauses in both cases.",
+      "examples": [
+        {
+          "de": "Wenn ich müde bin, trinke ich Kaffee.",
+          "en": "When I am tired, I drink coffee."
+        },
+        {
+          "de": "Bevor ich arbeite, trinke ich Kaffee.",
+          "en": "Before I work, I drink coffee."
+        },
+        {
+          "de": "Ich bin müde, deshalb bleibe ich zu Hause.",
+          "en": "I am tired, so I stay at home."
+        }
+      ],
+      "references": [
+        "GOETHE-A2-FIT",
+        "COE-CV20",
+        "GOETHE-A2-ADULT",
+        "GOETHE-DO-A2"
+      ],
+      "version": {
+        "id": "de-a2-019@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-019@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does the finite verb stand in a wenn clause?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "right after wenn"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which connector means 'before'?",
+            "answer": "bevor",
+            "alternatives": ["bevor", "nachdem", "weil"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'deshalb' correctly?",
+            "answer": "Ich bin müde, deshalb bleibe ich zu Hause.",
+            "alternatives": [
+              "Ich bin müde, deshalb ich bleibe zu Hause.",
+              "Ich bin müde, deshalb bleibe ich zu Hause.",
+              "Ich bin müde, deshalb zu Hause bleibe ich."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'wenn' correctly?",
+            "answer": "Wenn ich müde bin, trinke ich Kaffee.",
+            "alternatives": [
+              "Wenn ich bin müde, trinke ich Kaffee.",
+              "Wenn ich müde bin, trinke ich Kaffee.",
+              "Wenn ich müde bin, ich trinke Kaffee."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ ich müde bin, trinke ich Kaffee. (if/whenever)",
+            "answer": "Wenn",
+            "near_misses": ["Weil", "Dass"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ ich arbeite, trinke ich Kaffee. (before)",
+            "answer": "Bevor",
+            "near_misses": ["Nachdem", "Wenn"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich bin müde, ___ bleibe ich zu Hause. (therefore)",
+            "answer": "deshalb",
+            "near_misses": ["denn", "weil"],
+            "holdout": false,
+            "alternatives": ["darum", "daher", "deswegen"]
+          },
+          {
+            "id": "de-a2-019@1:q08",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): When I am tired, I drink coffee.",
+            "answer": "Wenn ich müde bin, trinke ich Kaffee.",
+            "near_misses": [
+              "Wenn ich bin müde, trinke ich Kaffee.",
+              "Wenn ich müde bin, ich trinke Kaffee."
+            ],
+            "holdout": false,
+            "alternatives": ["Ich trinke Kaffee, wenn ich müde bin."]
+          },
+          {
+            "id": "de-a2-019@1:q09",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): Before I work, I drink tea.",
+            "answer": "Bevor ich arbeite, trinke ich Tee.",
+            "near_misses": [
+              "Bevor ich arbeite, ich trinke Tee.",
+              "Bevor ich arbeite, trinke Tee ich."
+            ],
+            "holdout": false,
+            "alternatives": ["Ich trinke Tee, bevor ich arbeite."]
+          },
+          {
+            "id": "de-a2-019@1:q10",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): I am tired, therefore I stay at home.",
+            "answer": "Ich bin müde, deshalb bleibe ich zu Hause.",
+            "near_misses": [
+              "Ich bin müde, deshalb ich bleibe zu Hause.",
+              "Ich bin müde, deshalb bleibe zu Hause ich."
+            ],
+            "holdout": false,
+            "alternatives": ["Ich bin müde, darum bleibe ich zu Hause."]
+          },
+          {
+            "id": "de-a2-019@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Wenn ich arbeite, ich trinke Kaffee.",
+            "answer": "Wenn ich arbeite, trinke ich Kaffee.",
+            "near_misses": [
+              "Wenn ich arbeite, ich trinke Kaffee.",
+              "Wenn ich arbeite, trinkt ich Kaffee."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word order: Er ist krank, deshalb er bleibt hier.",
+            "answer": "Er ist krank, deshalb bleibt er hier.",
+            "near_misses": [
+              "Er ist krank, deshalb er bleibt hier.",
+              "Er ist krank, deshalb bleibt hier er."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-019@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'bevor' correctly?",
+            "answer": "Bevor wir gehen, trinken wir Tee.",
+            "alternatives": [
+              "Bevor wir gehen, wir trinken Tee.",
+              "Bevor wir gehen, trinken wir Tee.",
+              "Bevor wir gehen, trinken Tee wir."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-019@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ich lerne Deutsch, ___ ich in Wien wohne. (because)",
+            "answer": "weil",
+            "near_misses": ["wenn", "dass"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-019@1:h03",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): If it is cold, I stay at home.",
+            "answer": "Wenn es kalt ist, bleibe ich zu Hause.",
+            "near_misses": [
+              "Wenn es kalt ist, ich bleibe zu Hause.",
+              "Wenn es ist kalt, bleibe ich zu Hause."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-020",
+      "title": "Zu + infinitive in frequent verb patterns",
+      "explanation": "After verbs and phrases such as versuchen, vergessen, anfangen, Lust haben and es ist wichtig, the second verb is an infinitive with zu, usually at the end of its clause and separated by a comma: Es ist wichtig, Deutsch zu lernen. With a separable verb, zu stands between the prefix and the stem and everything is written as one word: Ich versuche, früh aufzustehen. After modal verbs there is no zu: Ich kann Deutsch lernen.",
+      "examples": [
+        {
+          "de": "Ich habe keine Lust, heute zu arbeiten.",
+          "en": "I do not feel like working today."
+        },
+        {
+          "de": "Es ist wichtig, Deutsch zu lernen.",
+          "en": "It is important to learn German."
+        },
+        {
+          "de": "Er hat vergessen, mich anzurufen.",
+          "en": "He forgot to call me."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-020@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-020@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does 'zu' stand before a simple infinitive?",
+            "answer": "right before the infinitive",
+            "alternatives": [
+              "right before the infinitive",
+              "after the infinitive",
+              "at the start of the clause"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses zu + infinitive correctly?",
+            "answer": "Es ist wichtig, Deutsch zu lernen.",
+            "alternatives": [
+              "Es ist wichtig, Deutsch lernen zu.",
+              "Es ist wichtig, Deutsch zu lernen.",
+              "Es ist wichtig, zu Deutsch lernen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb needs no 'zu' before the infinitive?",
+            "answer": "können",
+            "alternatives": ["können", "versuchen", "vergessen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Where does 'zu' go with a separable verb?",
+            "answer": "between the prefix and the stem",
+            "alternatives": [
+              "between the prefix and the stem",
+              "before the prefix",
+              "after the stem"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q05",
+            "format": "typed-blank",
+            "prompt": "Es ist wichtig, Deutsch ___ lernen. (to)",
+            "answer": "zu",
+            "near_misses": ["zum", "zur"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ich versuche, früh ___. (aufstehen with zu)",
+            "answer": "aufzustehen",
+            "near_misses": ["zu aufstehen", "aufstehen zu"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q07",
+            "format": "typed-blank",
+            "prompt": "Er hat vergessen, mich ___. (anrufen with zu)",
+            "answer": "anzurufen",
+            "near_misses": ["zu anrufen", "anrufen zu"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use zu + infinitive): It is important to learn German.",
+            "answer": "Es ist wichtig, Deutsch zu lernen.",
+            "near_misses": [
+              "Es ist wichtig, Deutsch lernen zu.",
+              "Es ist wichtig, zu Deutsch lernen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use zu + infinitive): I try to get up early.",
+            "answer": "Ich versuche, früh aufzustehen.",
+            "near_misses": [
+              "Ich versuche, früh zu aufstehen.",
+              "Ich versuche, früh aufstehen zu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use zu + infinitive): I do not feel like working today.",
+            "answer": "Ich habe keine Lust, heute zu arbeiten.",
+            "near_misses": [
+              "Ich habe keine Lust, heute arbeiten zu.",
+              "Ich habe keine Lust, zu heute arbeiten."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: Es ist wichtig, Deutsch lernen.",
+            "answer": "Es ist wichtig, Deutsch zu lernen.",
+            "near_misses": [
+              "Es ist wichtig, Deutsch lernen.",
+              "Es ist wichtig, Deutsch zu lernt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Er hat vergessen, mich zu anrufen.",
+            "answer": "Er hat vergessen, mich anzurufen.",
+            "near_misses": [
+              "Er hat vergessen, mich zu anrufen.",
+              "Er hat vergessen, mich anrufen zu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-020@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence puts zu correctly before a normal infinitive?",
+            "answer": "Ich habe Lust, Tennis zu spielen.",
+            "alternatives": [
+              "Ich habe Lust, Tennis spielen zu.",
+              "Ich habe Lust, Tennis zu spielen.",
+              "Ich habe Lust, zu Tennis spielen."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-020@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use zu + infinitive): I forgot to buy bread.",
+            "answer": "Ich habe vergessen, Brot zu kaufen.",
+            "near_misses": [
+              "Ich habe vergessen, Brot kaufen zu.",
+              "Ich habe vergessen, zu Brot kaufen."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-020@1:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: Ich versuche, morgen zu aufräumen.",
+            "answer": "Ich versuche, morgen aufzuräumen.",
+            "near_misses": [
+              "Ich versuche, morgen zu aufräumen.",
+              "Ich versuche, morgen aufräumen zu."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

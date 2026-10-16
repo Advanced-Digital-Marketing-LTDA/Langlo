@@ -1,5 +1,9 @@
 import { bundlePackage } from '../../src/lib/server/content-bundle';
 import type { ContentPackage } from '../../src/lib/server/content-import';
+import type { Client } from '@libsql/client';
+import { afterEach, beforeEach, expect } from 'vitest';
+import { openFixtureDatabase } from '../../src/lib/server/db/connection';
+import { disposeFlashcardFixtures, fixture } from './flashcards';
 
 // Shared by the authored-module tests: module JSON types, the local
 // answer-matching rule the modules declare, and the import package builder.
@@ -67,11 +71,52 @@ export const typedAnswers = (q: Question) =>
     ? [q.answer]
     : [q.answer, ...(q.alternatives ?? [])];
 
+export function assertUniqueQuestions(questions: Question[]) {
+  const ids = questions.map((q) => q.id);
+  expect(new Set(ids).size).toBe(ids.length);
+  const prompts = questions.map((q) => normalize(q.prompt));
+  expect(new Set(prompts).size).toBe(prompts.length);
+}
+
+/** Each import test gets a real, disposable database and guaranteed cleanup. */
+export function moduleImportFixture() {
+  let client: Client;
+  let close: (() => void) | undefined;
+  beforeEach(async () => {
+    ({ client, close } = await openFixtureDatabase(await fixture()));
+  });
+  afterEach(async () => {
+    try {
+      close?.();
+    } finally {
+      close = undefined;
+      await disposeFlashcardFixtures();
+    }
+  });
+  return {
+    get client() {
+      return client;
+    },
+    async count(
+      table:
+        | 'skills'
+        | 'prerequisites'
+        | 'content_versions'
+        | 'questions'
+        | 'curriculum_imports'
+    ) {
+      return Number(
+        (await client.execute(`SELECT COUNT(*) AS n FROM ${table}`)).rows[0].n
+      );
+    }
+  };
+}
+
 /** The approved bundle plus this module's lessons, for the importer. */
 export function modulePackage(
   root: string,
   module: Module,
-  review: string,
+  review = module.review_status,
   version?: string
 ): ContentPackage {
   const pkg = bundlePackage(root);
