@@ -238,6 +238,52 @@ describe('forged identifiers yield zero cross-owner reads and writes', () => {
     expect(await privateState(client)).toEqual(before);
   });
 
+  it.each(['practice', 'mixed-review'])(
+    'holdouts cannot create attempts in %s',
+    async (mode) => {
+      await client.execute(
+        "UPDATE questions SET holdout = 1 WHERE id = 'question-1'"
+      );
+      await client.execute({
+        sql: "UPDATE study_sessions SET mode = ? WHERE id = 'study-a'",
+        args: [mode]
+      });
+      const before = await privateState(client);
+      await expect(
+        recordAttempt(client, ownerA, {
+          studySessionId: 'study-a',
+          questionId: 'question-1',
+          submissionKey: 'holdout',
+          evidenceKind: 'independent',
+          answer: 'un'
+        })
+      ).rejects.toThrow('CONTENT_UNAVAILABLE');
+      expect(await privateState(client)).toEqual(before);
+    }
+  );
+
+  it('assessment can record a holdout with idempotent replay', async () => {
+    await client.execute(
+      "UPDATE questions SET holdout = 1 WHERE id = 'question-1'"
+    );
+    await client.execute(
+      "UPDATE study_sessions SET mode = 'assessment' WHERE id = 'study-a'"
+    );
+    const input = {
+      studySessionId: 'study-a',
+      questionId: 'question-1',
+      submissionKey: 'holdout',
+      evidenceKind: 'independent' as const,
+      answer: 'un'
+    };
+    const result = await recordAttempt(client, ownerA, input);
+    expect(result.duplicate).toBe(false);
+    expect(await recordAttempt(client, ownerA, input)).toEqual({
+      id: result.id,
+      duplicate: true
+    });
+  });
+
   it('a question from quarantined content records no attempt', async () => {
     await client.execute(
       "UPDATE content_versions SET status = 'quarantined' WHERE id = 'content-v1'"

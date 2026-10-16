@@ -32,7 +32,7 @@ async function sharedContent() {
       'SELECT id, language, level FROM skills ORDER BY id',
       'SELECT skill_id, prerequisite_id, language FROM prerequisites ORDER BY skill_id, prerequisite_id',
       'SELECT id, skill_id, language, version, status, fingerprint FROM content_versions ORDER BY id',
-      'SELECT id, content_version_id, skill_id, language, format FROM questions ORDER BY id',
+      'SELECT id, content_version_id, skill_id, language, format, holdout FROM questions ORDER BY id',
       'SELECT curriculum_version, fingerprint FROM curriculum_imports ORDER BY curriculum_version'
     ],
     'read'
@@ -49,6 +49,49 @@ async function rejects(pkg: ContentPackage, code: string) {
 }
 
 describe('content import', () => {
+  it('stores holdouts separately and rejects reclassification of an immutable version', async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0].questions[0], { holdout: true });
+    await importContent(client, pkg);
+    const rows = await client.execute(
+      "SELECT id, holdout FROM questions WHERE id LIKE 'fr-a1-%' ORDER BY id"
+    );
+    expect(rows.rows).toEqual([
+      { id: 'fr-a1-001@1:q1', holdout: 1 },
+      { id: 'fr-a1-001@1:q2', holdout: 0 },
+      { id: 'fr-a1-002@1:q1', holdout: 0 }
+    ]);
+    expect((await importContent(client, pkg)).questions).toBe(0);
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0].questions[0], { holdout: false });
+    await rejects(pkg, 'CONTENT_CONFLICT');
+  });
+
+  it.each(['true', 1, null])(
+    'rejects malformed holdout %s without writes',
+    async (holdout) => {
+      const pkg = approvedPackage();
+      Object.assign(pkg.versions[0].questions[0], { holdout });
+      await rejects(pkg, 'INVALID_PACKAGE');
+    }
+  );
+
+  it('includes explicit holdout flags in the immutable version fingerprint', async () => {
+    const pkg = approvedPackage();
+    await importContent(client, pkg);
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0].questions[0], { holdout: false });
+    await rejects(pkg, 'CONTENT_CONFLICT');
+  });
+
+  it('includes holdouts in the curriculum fingerprint', async () => {
+    const pkg = approvedPackage();
+    await importContent(client, pkg);
+    await client.execute('UPDATE content_versions SET fingerprint = NULL');
+    Object.assign(pkg.versions[0].questions[0], { holdout: false });
+    await rejects(pkg, 'LEGACY_CONTENT_UNVERIFIED');
+  });
+
   it('imports approved skills, prerequisites, versions and questions', async () => {
     const result = await importContent(client, approvedPackage());
     expect(result).toEqual({
@@ -83,7 +126,8 @@ describe('content import', () => {
       content_version_id: 'fr-a1-001@1',
       skill_id: 'fr-a1-001',
       language: 'fr',
-      format: 'multiple-choice'
+      format: 'multiple-choice',
+      holdout: 0
     });
   });
 

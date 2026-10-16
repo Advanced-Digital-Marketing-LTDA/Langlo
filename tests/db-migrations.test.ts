@@ -74,6 +74,12 @@ describe('disposable libSQL migrations', () => {
         expect((await client.execute('SELECT * FROM attempts')).rows).toEqual(
           attempts
         );
+        expect(
+          (await client.execute('SELECT DISTINCT holdout FROM questions')).rows
+        ).toEqual([{ holdout: 0 }]);
+        expect((await client.execute('PRAGMA foreign_key_check')).rows).toEqual(
+          []
+        );
         expect((await client.execute(objectsSql)).rows).toEqual(objects);
         expect(
           (
@@ -335,7 +341,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT count(*) AS count FROM __drizzle_migrations'
           )
         ).rows[0].count
-      ).toBe(8);
+      ).toBe(9);
     } finally {
       close();
     }
