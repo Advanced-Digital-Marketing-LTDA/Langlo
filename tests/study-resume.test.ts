@@ -56,7 +56,7 @@ const attempt = (key: string, questionId: string, studySessionId = 'study-a') =>
   });
 
 describe('pause and resume', () => {
-  it('pauses with the supplied time and resumes after more than 30 minutes', async () => {
+  it('pauses with the supplied time and resumes a paused session with no expiry', async () => {
     const pausedAt = 1_800_000_000_000;
     await pauseStudySession(client, ownerA, 'study-a', pausedAt);
     expect(await getStudySession(client, ownerA, 'study-a')).toMatchObject({
@@ -74,6 +74,15 @@ describe('pause and resume', () => {
     await expect(attempt('k-resumed', 'fr-a1-001@1:q1')).resolves.toMatchObject(
       { duplicate: false }
     );
+  });
+
+  it('reports a session that completed during the write as not active', async () => {
+    await expect(
+      pauseStudySession(completedBeforeUpdate(), ownerA, 'study-a')
+    ).rejects.toThrow('SESSION_NOT_ACTIVE');
+    await expect(
+      resumeStudySession(completedBeforeUpdate(), ownerA, 'study-a')
+    ).rejects.toThrow('SESSION_NOT_ACTIVE');
   });
 
   it('pausing twice keeps the first pause time', async () => {
@@ -109,6 +118,29 @@ describe('pause and resume', () => {
     });
   });
 });
+
+/** A client on which the session completes just before its first UPDATE. */
+function completedBeforeUpdate(): Client {
+  let completed = false;
+  return new Proxy(client, {
+    get(target, property) {
+      if (property !== 'execute') {
+        const value = Reflect.get(target, property, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      }
+      return async (statement: InStatement) => {
+        const text = typeof statement === 'string' ? statement : statement.sql;
+        if (!completed && /^\s*UPDATE study_sessions\b/i.test(text)) {
+          completed = true;
+          await target.execute(
+            "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-a'"
+          );
+        }
+        return target.execute(statement);
+      };
+    }
+  });
+}
 
 /**
  * A client whose first read of question or lesson payload is preceded by a

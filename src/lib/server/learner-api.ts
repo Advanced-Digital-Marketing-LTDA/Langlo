@@ -19,6 +19,14 @@ const statusFor: Record<string, number> = {
   CONTENT_UNAVAILABLE: 409
 };
 
+// Codes whose cause the learner can act on get their own message; the rest
+// share the generic text for their status.
+const messageForCode: Record<string, string> = {
+  SESSION_NOT_ACTIVE:
+    'This session is paused or finished. Resume it to continue.',
+  CONTENT_UNAVAILABLE: 'This content is not available right now.'
+};
+
 function httpStatusFor(code: string): number | undefined {
   if (Object.hasOwn(statusFor, code)) return statusFor[code];
   if (code.startsWith('INVALID')) return 400;
@@ -51,7 +59,10 @@ export async function learnerApi(
   } catch (error_) {
     if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
       const code = httpStatusFor(error_.code);
-      if (code) error(code, { message: messageFor[code] });
+      if (code)
+        error(code, {
+          message: messageForCode[error_.code] ?? messageFor[code]
+        });
     }
     throw error_;
   } finally {

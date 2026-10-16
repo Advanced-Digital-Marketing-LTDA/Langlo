@@ -381,7 +381,10 @@ export const studySessions = sqliteTable(
     state: text('state', { enum: ['active', 'paused', 'completed'] })
       .notNull()
       .default('active'),
-    // Set by the service when the learner pauses; null while active.
+    // Set by the service when the learner pauses; null while active. The
+    // invariant (paused_at is set exactly when state is 'paused') is kept by
+    // pauseStudySession and resumeStudySession; SQLite cannot add a table
+    // CHECK to an existing table without a rebuild.
     pausedAt: integer('paused_at'),
     createdAt: createdAt()
   },

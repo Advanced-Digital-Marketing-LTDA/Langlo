@@ -145,10 +145,19 @@ const questionShape = z.object({
   holdout: z.boolean().optional()
 });
 
+// Example keys are language codes whose source order carries no meaning, so
+// they are sorted before the lesson is hashed and stored.
+const sortedKeys = (example: Record<string, string>) =>
+  Object.fromEntries(
+    Object.entries(example).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  );
+
+const sortedExample = z.record(z.string(), text).transform(sortedKeys);
+
 const lessonShape = z.object({
   title: text,
   explanation: text,
-  examples: z.array(z.record(z.string(), text)),
+  examples: z.array(sortedExample),
   references: z.array(text)
 });
 
@@ -497,20 +506,20 @@ async function backfillPayloads(tx: Transaction, version: PackageVersion) {
     });
 }
 
-const lessonFingerprint = (lesson: ContentLesson) =>
-  fingerprint({
-    title: lesson.title,
-    explanation: lesson.explanation,
-    examples: lesson.examples,
-    references: lesson.references
-  });
+// The stored and hashed form of a lesson, with example keys in sorted order.
+const canonicalLesson = (lesson: ContentLesson) => ({
+  title: lesson.title,
+  explanation: lesson.explanation,
+  examples: lesson.examples.map(sortedKeys),
+  references: lesson.references
+});
 
 // A lesson is immutable once stored: a different text under the same version
 // is a conflict. A version imported before it had a lesson may gain one.
 async function importLesson(tx: Transaction, version: PackageVersion) {
-  const { lesson } = version;
-  if (lesson === undefined) return;
-  const hash = lessonFingerprint(lesson);
+  if (version.lesson === undefined) return;
+  const lesson = canonicalLesson(version.lesson);
+  const hash = fingerprint(lesson);
   const stored = await tx.execute({
     sql: 'SELECT fingerprint FROM lessons WHERE content_version_id = ?',
     args: [version.id]

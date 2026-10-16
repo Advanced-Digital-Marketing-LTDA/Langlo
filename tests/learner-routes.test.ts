@@ -384,6 +384,9 @@ describe('pause, resume and next-question routes', () => {
       event('learner-a', { params, query: '?skill=fr-a1-001' })
     );
     expect(blocked.status).toBe(409);
+    expect(blocked.body).toMatchObject({
+      message: 'This session is paused or finished. Resume it to continue.'
+    });
     const resumed = await call(
       resume.POST as Handler,
       event('learner-a', { params, body: {} })
@@ -398,6 +401,21 @@ describe('pause, resume and next-question routes', () => {
     );
     expect(served.body.question).toMatchObject({ id: 'fr-a1-001@1:q1' });
     expect(served.body.question).not.toHaveProperty('answer');
+  });
+
+  it('says withdrawn content is unavailable rather than a generic conflict', async () => {
+    await importContent(client, approvedPackage());
+    await client.execute(
+      "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+    );
+    const response = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-001' })
+    );
+    expect(response.status).toBe(409);
+    expect(response.body).toMatchObject({
+      message: 'This content is not available right now.'
+    });
   });
 
   it('rejects a missing skill with 400', async () => {

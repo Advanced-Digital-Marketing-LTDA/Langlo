@@ -321,10 +321,12 @@ export async function pauseStudySession(
 ) {
   const { state } = await ownSession(client, session, studySessionId);
   if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
-  await client.execute({
+  const paused = await client.execute({
     sql: "UPDATE study_sessions SET state = 'paused', paused_at = COALESCE(paused_at, ?) WHERE id = ? AND owner_id = ? AND state <> 'completed'",
     args: [now, studySessionId, session.userId]
   });
+  // The session completed between the lookup and the write.
+  if (paused.rowsAffected === 0) throw new StudyError('SESSION_NOT_ACTIVE');
   return getStudySession(client, session, studySessionId);
 }
 
@@ -336,10 +338,12 @@ export async function resumeStudySession(
 ) {
   const { state } = await ownSession(client, session, studySessionId);
   if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
-  await client.execute({
+  const resumed = await client.execute({
     sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ? AND state <> 'completed'",
     args: [studySessionId, session.userId]
   });
+  // The session completed between the lookup and the write.
+  if (resumed.rowsAffected === 0) throw new StudyError('SESSION_NOT_ACTIVE');
   return getStudySession(client, session, studySessionId);
 }
 
