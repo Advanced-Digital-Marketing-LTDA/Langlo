@@ -1,0 +1,265 @@
+import { spawn, type ChildProcess } from 'node:child_process';
+import { join } from 'node:path';
+import { createClient, type Client } from '@libsql/client/sqlite3';
+import { expect, test } from '@playwright/test';
+import { importContent } from '../../src/lib/server/content-import';
+import { approvedPackage } from '../fixtures/content-package';
+import {
+  createFixtureDatabase,
+  disposeFixtureDatabase,
+  reservePort,
+  runNode,
+  waitForLive
+} from './fixture-server';
+
+let server: ChildProcess;
+let base = '';
+let fixtureRoot = '';
+let dbFile = '';
+
+async function withDatabase<T>(work: (client: Client) => Promise<T>) {
+  const client = createClient({ url: `file://${dbFile}` });
+  try {
+    await client.execute('PRAGMA foreign_keys = ON');
+    await client.execute('PRAGMA busy_timeout = 5000');
+    return await work(client);
+  } finally {
+    client.close();
+  }
+}
+
+test.beforeAll(async () => {
+  const port = await reservePort();
+  base = `http://127.0.0.1:${port}`;
+  ({ fixtureRoot, dbFile } = createFixtureDatabase());
+  const env = {
+    ...process.env,
+    APP_ENV: 'test',
+    APP_ORIGIN: base,
+    DATA_ENABLED: 'true',
+    DATABASE_URL: `file://${dbFile}`,
+    BETTER_AUTH_SECRET: 'e2e-only-auth-secret-0000000000000000',
+    MAIL_TRANSPORT: 'capture',
+    MAIL_CAPTURE_DIR: join(fixtureRoot, 'mail')
+  };
+  runNode(
+    [
+      'scripts/accounts-provision.ts',
+      '--app',
+      '--email',
+      'exercises@example.test',
+      '--name',
+      'Exercise Learner'
+    ],
+    'exercise-password-0000',
+    env
+  );
+  const pkg = approvedPackage();
+  pkg.versions[0].lesson = {
+    title: 'Synthetic exercise lesson',
+    explanation: 'Practice the four exercise formats.',
+    examples: [],
+    references: []
+  };
+  pkg.versions[0].questions.push(
+    {
+      id: 'fr-a1-001@1:q3',
+      format: 'translation',
+      prompt: 'We are here.',
+      answer: 'Nous sommes ici.'
+    },
+    {
+      id: 'fr-a1-001@1:q4',
+      format: 'correction',
+      prompt: 'Je est ici.',
+      answer: 'Je suis ici.'
+    }
+  );
+  await withDatabase((client) => importContent(client, pkg));
+  server = spawn(process.execPath, ['build'], {
+    env: {
+      ...env,
+      HOST: '127.0.0.1',
+      PORT: String(port),
+      ORIGIN: base,
+      PROTOCOL_HEADER: 'x-forwarded-proto'
+    },
+    stdio: 'ignore'
+  });
+  await waitForLive(base);
+});
+
+test.afterAll(async () => {
+  server?.kill();
+  if (server && server.exitCode === null && server.signalCode === null)
+    await new Promise<void>((resolve) => server.once('exit', resolve));
+  await disposeFixtureDatabase(fixtureRoot, dbFile);
+});
+
+test('all four exercise formats render and submit without overflow', async ({
+  page,
+  context
+}, testInfo) => {
+  await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
+  await page.goto(`${base}/login`);
+  await page.getByLabel('Email').fill('exercises@example.test');
+  await page.getByLabel('Password').fill('exercise-password-0000');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page).toHaveURL(`${base}/app`);
+  const { user } = await (
+    await page.request.get(`${base}/api/auth/get-session`)
+  ).json();
+  await withDatabase((client) =>
+    client.batch(
+      [
+        {
+          sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('exercise-enrollment', ?, 'fr', 'A1', 'en')",
+          args: [user.id]
+        },
+        {
+          sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('exercise-session', ?, 'exercise-enrollment', 'fr', 'practice')",
+          args: [user.id]
+        }
+      ],
+      'write'
+    )
+  );
+  const storedAnswers = async () =>
+    (
+      await withDatabase((client) =>
+        client.execute({
+          sql: "SELECT question_id, answer, evidence_kind FROM attempts WHERE owner_id = ? AND study_session_id = 'exercise-session' ORDER BY question_id",
+          args: [user.id]
+        })
+      )
+    ).rows;
+
+  // Exercise the JSON boundary with the same authenticated browser session.
+  for (const answer of ['', ' \n\t\u00a0']) {
+    const response = await page.request.post(`${base}/app/api/attempts`, {
+      headers: { origin: base },
+      data: {
+        studySessionId: 'exercise-session',
+        questionId: 'fr-a1-001@1:q1',
+        submissionKey: 'empty-api-attempt',
+        evidenceKind: 'independent',
+        answer
+      }
+    });
+    expect(response.status()).toBe(400);
+  }
+  expect(await storedAnswers()).toEqual([]);
+
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=exercise-session`
+  );
+  const submissions: string[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes('/lesson/'))
+      submissions.push(request.url());
+  });
+  const exercises = [
+    {
+      format: 'multiple-choice',
+      instruction: 'Choose the correct answer.',
+      answer: 'suis'
+    },
+    {
+      format: 'typed-blank',
+      instruction: 'Type the missing word or words.',
+      answer: 'es'
+    },
+    {
+      format: 'translation',
+      instruction: 'Translate the sentence.',
+      answer: 'Nous sommes ici.'
+    },
+    {
+      format: 'correction',
+      instruction: 'Rewrite the sentence with the mistake corrected.',
+      answer: 'Je suis ici.'
+    }
+  ];
+  for (const [index, exercise] of exercises.entries()) {
+    await expect(
+      page.getByText(exercise.instruction, { exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByText(`Question ${index + 1} of 4`, { exact: true })
+    ).toBeVisible();
+    const submit = page.getByRole('button', {
+      name: 'Submit answer',
+      exact: true
+    });
+    await submit.click();
+    await expect(page.getByRole('alert')).toContainText('Enter an answer');
+    expect(await storedAnswers()).toHaveLength(index);
+
+    if (exercise.format === 'multiple-choice') {
+      await page
+        .getByRole('radio', { name: exercise.answer, exact: true })
+        .check();
+    } else {
+      const field = page.getByLabel('Your answer', { exact: true });
+      await expect(field).toHaveJSProperty(
+        'tagName',
+        exercise.format === 'typed-blank' ? 'INPUT' : 'TEXTAREA'
+      );
+      await field.fill('ee');
+      await field.evaluate((element: HTMLInputElement | HTMLTextAreaElement) =>
+        element.setSelectionRange(1, 1)
+      );
+      await page.getByRole('button', { name: 'é', exact: true }).click();
+      await expect(field).toHaveValue('eée');
+      await expect(field).toBeFocused();
+      await field.fill(exercise.answer);
+    }
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth
+      )
+    ).toBe(true);
+    const controls = page
+      .locator('form')
+      .filter({ has: submit })
+      .locator(
+        'input:not([type="hidden"]):not([type="radio"]), textarea, button, label.option'
+      );
+    for (const control of await controls.all()) {
+      const box = await control.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.height).toBeGreaterThanOrEqual(44);
+      expect(box!.width).toBeGreaterThan(0);
+      expect(box!.x).toBeGreaterThanOrEqual(0);
+      expect(box!.x + box!.width).toBeLessThanOrEqual(
+        page.viewportSize()!.width
+      );
+    }
+    const screenshot = testInfo.outputPath(`${exercise.format}.png`);
+    await page.screenshot({ path: screenshot, fullPage: true });
+    await testInfo.attach(`${exercise.format}-${testInfo.project.name}`, {
+      path: screenshot,
+      contentType: 'image/png'
+    });
+    await submit.click();
+    await expect.poll(storedAnswers).toHaveLength(index + 1);
+  }
+  expect(submissions).toHaveLength(4);
+  expect(new URL(page.url()).searchParams.get('session')).toBe(
+    'exercise-session'
+  );
+  await expect(page.getByRole('status')).toContainText(
+    'You have answered every question'
+  );
+  expect(await storedAnswers()).toEqual(
+    exercises.map((exercise, index) => ({
+      question_id: `fr-a1-001@1:q${index + 1}`,
+      answer: exercise.answer,
+      evidence_kind: 'independent'
+    }))
+  );
+  await page.reload();
+  await expect(page.getByRole('status')).toContainText(
+    'You have answered every question'
+  );
+});

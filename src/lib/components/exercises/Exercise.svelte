@@ -35,17 +35,6 @@
   let pending = $state(false);
   const message = $derived(problem || failure || '');
   const fieldId = $derived(`answer-${question.id}`);
-
-  // A quick local message; the server checks the same rules and decides.
-  function isAnswerable() {
-    const checked = checkAnswer(
-      question.format,
-      value,
-      question.alternatives ?? []
-    );
-    problem = checked.ok ? '' : checked.message;
-    return checked.ok;
-  }
 </script>
 
 <form
@@ -53,8 +42,17 @@
   action={answerActionUrl(studySessionId)}
   novalidate
   use:enhance={({ cancel }) => {
-    // use:enhance sends the form itself, so a refused answer is cancelled here.
-    if (!isAnswerable()) return cancel();
+    // Enhanced submissions must be cancelled through enhance itself.
+    const checked = checkAnswer(
+      question.format,
+      value,
+      question.alternatives ?? []
+    );
+    problem = checked.ok ? '' : checked.message;
+    if (!checked.ok) {
+      cancel();
+      return;
+    }
     pending = true;
     return async ({ result, update }) => {
       // Keep what was typed when the server refused it.

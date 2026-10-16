@@ -290,6 +290,33 @@ describe('private learner routes', () => {
     expect(await privateState(client)).toEqual(before);
   });
 
+  it.each(['', '   ', '\n\t', '\u00a0\u2003'])(
+    'rejects a blank attempt answer %j with no private writes',
+    async (answer) => {
+      await client.execute(
+        "INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES ('question-3', 'content-v1', 'fr-articles', 'fr', 'typed-blank')"
+      );
+      const before = await privateState(client);
+      const response = await call(
+        attempts.POST as Handler,
+        event('learner-a', {
+          body: {
+            studySessionId: 'study-a',
+            questionId: 'question-3',
+            submissionKey: 'blank-attempt',
+            evidenceKind: 'independent',
+            answer
+          }
+        })
+      );
+      expect(response).toMatchObject({
+        status: 400,
+        body: { message: 'Invalid request.' }
+      });
+      expect(await privateState(client)).toEqual(before);
+    }
+  );
+
   it('let the owner review and record an attempt through the routes', async () => {
     const reviewed = await call(
       reviews.POST as Handler,
