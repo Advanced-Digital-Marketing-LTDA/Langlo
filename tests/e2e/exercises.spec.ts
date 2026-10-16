@@ -5,6 +5,7 @@ import {
   expect,
   test,
   type BrowserContext,
+  type Locator,
   type Page,
   type TestInfo
 } from '@playwright/test';
@@ -191,26 +192,80 @@ async function expectBlankAttemptsRefused(page: Page) {
 }
 
 /** Fill the current exercise the way a learner would, accents included. */
-async function fillAnswer(page: Page, exercise: Exercise) {
+async function fillAnswer(
+  page: Page,
+  exercise: Exercise,
+  answerControl: Locator
+) {
+  const submit = page.getByRole('button', {
+    name: 'Submit answer',
+    exact: true
+  });
   if (exercise.format === 'multiple-choice') {
-    await page
-      .getByRole('radio', { name: exercise.answer, exact: true })
-      .check();
-    return;
+    const first = answerControl.getByRole('radio', {
+      name: exercise.answer,
+      exact: true
+    });
+    const second = answerControl.getByRole('radio', {
+      name: 'es',
+      exact: true
+    });
+    await first.focus();
+    await page.keyboard.press('Space');
+    await expect(first).toBeChecked();
+    await page.keyboard.press('ArrowDown');
+    await expect(second).toBeFocused();
+    await expect(second).toBeChecked();
+    await page.keyboard.press('ArrowUp');
+    await expect(first).toBeFocused();
+    await expect(first).toBeChecked();
+    await page.keyboard.press('Tab');
+    await expect(submit).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(first).toBeFocused();
+  } else {
+    const field = answerControl;
+    await expect(field).toHaveJSProperty(
+      'tagName',
+      exercise.format === 'typed-blank' ? 'INPUT' : 'TEXTAREA'
+    );
+    await field.fill('ee');
+    const accents = page.getByRole('group', {
+      name: 'Accented letters',
+      exact: true
+    });
+    await page.keyboard.press('Tab');
+    await expect(
+      accents.getByRole('button', { name: 'à', exact: true })
+    ).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(field).toBeFocused();
+    await page.keyboard.press('Home');
+    await page.keyboard.press('ArrowRight');
+    for (const letter of ['à', 'â', 'ç', 'é']) {
+      await page.keyboard.press('Tab');
+      await expect(
+        accents.getByRole('button', { name: letter, exact: true })
+      ).toBeFocused();
+    }
+    await page.keyboard.press('Space');
+    await expect(field).toHaveValue('eée');
+    await expect(field).toBeFocused();
+    await expect(field).toHaveJSProperty('selectionStart', 2);
+    await expect(field).toHaveJSProperty('selectionEnd', 2);
+    await field.fill(exercise.answer);
+    const accentButtons = accents.getByRole('button');
+    for (const button of await accentButtons.all()) {
+      await page.keyboard.press('Tab');
+      await expect(button).toBeFocused();
+    }
+    await page.keyboard.press('Tab');
+    await expect(submit).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(accentButtons.last()).toBeFocused();
   }
-  const field = page.getByLabel('Your answer', { exact: true });
-  await expect(field).toHaveJSProperty(
-    'tagName',
-    exercise.format === 'typed-blank' ? 'INPUT' : 'TEXTAREA'
-  );
-  await field.fill('ee');
-  await field.evaluate((element: HTMLInputElement | HTMLTextAreaElement) =>
-    element.setSelectionRange(1, 1)
-  );
-  await page.getByRole('button', { name: 'é', exact: true }).click();
-  await expect(field).toHaveValue('eée');
-  await expect(field).toBeFocused();
-  await field.fill(exercise.answer);
+  await page.keyboard.press('Tab');
+  await expect(submit).toBeFocused();
 }
 
 /** The page fits the viewport and every control is a usable touch target. */
@@ -256,9 +311,23 @@ async function answerExercise(
   index: number
 ) {
   const exercise = exercises[index];
-  await expect(
-    page.getByText(exercise.instruction, { exact: true })
-  ).toBeVisible();
+  const exerciseGroup = page.getByRole('group', {
+    name: exercise.instruction,
+    exact: true
+  });
+  await expect(exerciseGroup).toBeVisible();
+  await expect(exerciseGroup.locator('legend')).toHaveText(
+    exercise.instruction
+  );
+  const answerControl =
+    exercise.format === 'multiple-choice'
+      ? exerciseGroup.getByRole('radiogroup')
+      : exerciseGroup.getByRole('textbox', {
+          name: 'Your answer',
+          exact: true
+        });
+  await expect(answerControl).not.toHaveAttribute('aria-describedby', /.+/);
+  await expect(answerControl).toHaveAccessibleDescription('');
   await expect(
     page.getByText(`Question ${index + 1} of 4`, { exact: true })
   ).toBeVisible();
@@ -268,11 +337,19 @@ async function answerExercise(
   });
   await submit.click();
   await expect(page.getByRole('alert')).toContainText('Enter an answer');
+  await expect(answerControl).toHaveAttribute(
+    'aria-describedby',
+    'exercise-problem'
+  );
+  await expect(answerControl).toHaveAccessibleDescription(
+    'Enter an answer before you submit.'
+  );
+  await expect(submit).toBeEnabled();
   expect(await storedAnswers(userId)).toHaveLength(index);
-  await fillAnswer(page, exercise);
+  await fillAnswer(page, exercise, answerControl);
   await expectUsableLayout(page);
   await attachScreenshot(page, testInfo, exercise.format);
-  await submit.click();
+  await page.keyboard.press('Enter');
   await expect.poll(() => storedAnswers(userId)).toHaveLength(index + 1);
 }
 
