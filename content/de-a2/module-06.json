@@ -1,0 +1,678 @@
+{
+  "module_id": "de-a2-module-06",
+  "track": "German A2",
+  "title": "Future, imperatives, preference and possession",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a2-021",
+      "title": "The future with werden",
+      "explanation": "Use werden plus an infinitive at the end for predictions and plans: Morgen wird es regnen. Ich werde nächstes Jahr nach Wien fahren. Werden is irregular: ich werde, du wirst, er/sie/es wird, wir werden, ihr werdet, sie werden. The infinitive stays unchanged. For close, planned events German often uses the present with a time word instead: Ich fahre morgen nach Wien.",
+      "examples": [
+        {
+          "de": "Morgen wird es regnen.",
+          "en": "Tomorrow it will rain."
+        },
+        {
+          "de": "Ich werde nächstes Jahr nach Wien fahren.",
+          "en": "I will go to Vienna next year."
+        },
+        {
+          "de": "Wir werden um acht Uhr kommen.",
+          "en": "We will come at eight o'clock."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-021@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-021@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of werden goes with 'ich'?",
+            "answer": "werde",
+            "alternatives": ["werde", "wirst", "wird"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of werden goes with 'du'?",
+            "answer": "wirst",
+            "alternatives": ["werde", "wirst", "wird"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of werden goes with 'er'?",
+            "answer": "wird",
+            "alternatives": ["werde", "wirst", "wird"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Where does the infinitive stand in a future with werden?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "right after werden"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich ___ nächstes Jahr nach Wien fahren. (werden)",
+            "answer": "werde",
+            "near_misses": ["wirst", "werden"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q06",
+            "format": "typed-blank",
+            "prompt": "Morgen ___ es regnen. (werden)",
+            "answer": "wird",
+            "near_misses": ["werde", "werden"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q07",
+            "format": "typed-blank",
+            "prompt": "Wir ___ um acht Uhr kommen. (werden)",
+            "answer": "werden",
+            "near_misses": ["werdet", "wird"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use werden): Tomorrow it will rain.",
+            "answer": "Morgen wird es regnen.",
+            "near_misses": [
+              "Morgen werden es regnen.",
+              "Morgen wird es regnet."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use werden): I will drive to Vienna next year.",
+            "answer": "Ich werde nächstes Jahr nach Wien fahren.",
+            "near_misses": [
+              "Ich werde nächstes Jahr nach Wien fährt.",
+              "Ich werde fahren nächstes Jahr nach Wien."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use werden): We will come at eight o'clock.",
+            "answer": "Wir werden um acht Uhr kommen.",
+            "near_misses": [
+              "Wir wird um acht Uhr kommen.",
+              "Wir werden um acht Uhr kommt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Du werde morgen kommen.",
+            "answer": "Du wirst morgen kommen.",
+            "near_misses": [
+              "Du werde morgen kommen.",
+              "Du wird morgen kommen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word order: Ich werde fahren nach Berlin.",
+            "answer": "Ich werde nach Berlin fahren.",
+            "near_misses": [
+              "Ich werde fahren nach Berlin.",
+              "Ich werde nach Berlin fährt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-021@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form of werden goes with 'ihr'?",
+            "answer": "werdet",
+            "alternatives": ["werdet", "werden", "wirst"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-021@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use werden): She will learn German.",
+            "answer": "Sie wird Deutsch lernen.",
+            "near_misses": [
+              "Sie werden Deutsch lernen.",
+              "Sie wird Deutsch lernt."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-021@1:h03",
+            "format": "correction",
+            "prompt": "Correct the form: Er wirst morgen arbeiten.",
+            "answer": "Er wird morgen arbeiten.",
+            "near_misses": [
+              "Er wirst morgen arbeiten.",
+              "Er werde morgen arbeiten."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-022",
+      "title": "Routine du and ihr imperatives",
+      "explanation": "Use the du-imperative for one friend and the ihr-imperative for several: Mach bitte das Fenster zu! (du), Macht bitte das Fenster zu! (ihr). Verbs that change the vowel in du keep the change: Nimm einen Stift! Lies den Text! (but Lest den Text! for ihr). Separable prefixes go to the end: Steh auf! For suggestions use Komm, wir gehen ins Kino!",
+      "examples": [
+        {
+          "de": "Mach bitte das Fenster zu!",
+          "en": "Please close the window!"
+        },
+        {
+          "de": "Lest den Text!",
+          "en": "Read the text! (you all)"
+        },
+        {
+          "de": "Nimm einen Stift!",
+          "en": "Take a pen!"
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-022@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-022@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which imperative of 'nehmen' is right for one friend?",
+            "answer": "Nimm",
+            "alternatives": ["Nimm", "Nehm", "Nehmt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which imperative of 'lesen' is right for several friends?",
+            "answer": "Lest",
+            "alternatives": ["Lies", "Lest", "Lesen Sie"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses a separable verb correctly for one friend?",
+            "answer": "Mach bitte das Fenster zu!",
+            "alternatives": [
+              "Zumach bitte das Fenster!",
+              "Mach bitte das Fenster zu!",
+              "Mach zu bitte das Fenster!"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a suggestion to one friend?",
+            "answer": "Komm, wir gehen ins Kino!",
+            "alternatives": [
+              "Komm, wir gehen ins Kino!",
+              "Kommst, wir gehen ins Kino!",
+              "Kommt, wir gehen ins Kino!"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ einen Stift! (nehmen, du)",
+            "answer": "Nimm",
+            "near_misses": ["Nehm", "Nehmt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ den Text! (lesen, ihr)",
+            "answer": "Lest",
+            "near_misses": ["Lies", "Lesen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q07",
+            "format": "typed-blank",
+            "prompt": "Steh bitte ___! (aufstehen)",
+            "answer": "auf",
+            "near_misses": ["an", "zu"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Please close the window! (one friend)",
+            "answer": "Mach bitte das Fenster zu!",
+            "near_misses": [
+              "Zumach bitte das Fenster!",
+              "Macht bitte das Fenster zu!"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Read the text! (you all)",
+            "answer": "Lest den Text!",
+            "near_misses": ["Lies den Text!", "Lesen den Text!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Take a pen! (one friend)",
+            "answer": "Nimm einen Stift!",
+            "near_misses": ["Nehm einen Stift!", "Nimmt einen Stift!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q11",
+            "format": "correction",
+            "prompt": "Correct the imperative (one friend): Lese den Text!",
+            "answer": "Lies den Text!",
+            "near_misses": ["Lese den Text!", "Lest den Text!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:q12",
+            "format": "correction",
+            "prompt": "Correct the imperative (you all): Komm bitte pünktlich!",
+            "answer": "Kommt bitte pünktlich!",
+            "near_misses": ["Komm bitte pünktlich!", "Kommen bitte pünktlich!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-022@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which imperative of 'sprechen' is right for one friend?",
+            "answer": "Sprich",
+            "alternatives": ["Sprich", "Sprech", "Sprecht"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-022@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Write your name, please! (one friend)",
+            "answer": "Schreib bitte deinen Namen!",
+            "alternatives": ["Schreibe bitte deinen Namen!"],
+            "near_misses": [
+              "Schreibst bitte deinen Namen!",
+              "Schreibt bitte deinen Namen!"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-022@1:h03",
+            "format": "correction",
+            "prompt": "Correct the imperative (you all): Mach die Tür zu!",
+            "answer": "Macht die Tür zu!",
+            "near_misses": ["Mach die Tür zu!", "Machen die Tür zu!"],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-023",
+      "title": "Adverbs and preference: gern, lieber, am liebsten",
+      "explanation": "Gern says what you like to do: Ich spiele gern Tennis. Lieber expresses a preference between two things and uses als: Ich spiele lieber Fußball als Tennis. Am liebsten says what you like best of all: Am liebsten spiele ich Gitarre. Other frequent adverbs of degree are sehr (very), ziemlich (quite) and zu (too): Das Essen ist ziemlich gut. When an adverb or time phrase starts the sentence, the verb stays second: Am liebsten spiele ich Gitarre.",
+      "examples": [
+        {
+          "de": "Ich spiele gern Tennis.",
+          "en": "I like playing tennis."
+        },
+        {
+          "de": "Ich spiele lieber Fußball als Tennis.",
+          "en": "I prefer playing football to tennis."
+        },
+        {
+          "de": "Am liebsten spiele ich Gitarre.",
+          "en": "Most of all I like playing guitar."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-023@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-023@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'I like to'?",
+            "answer": "gern",
+            "alternatives": ["gern", "lieber", "am liebsten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which expression means 'I like best of all'?",
+            "answer": "am liebsten",
+            "alternatives": ["gern", "lieber", "am liebsten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence expresses a preference between two things?",
+            "answer": "Ich spiele lieber Fußball als Tennis.",
+            "alternatives": [
+              "Ich spiele gern Fußball als Tennis.",
+              "Ich spiele lieber Fußball als Tennis.",
+              "Ich spiele am liebsten Fußball als Tennis."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence puts 'am liebsten' first correctly?",
+            "answer": "Am liebsten spiele ich Gitarre.",
+            "alternatives": [
+              "Am liebsten ich spiele Gitarre.",
+              "Am liebsten spiele ich Gitarre.",
+              "Am liebsten spiele Gitarre ich."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich spiele ___ Tennis. (gladly)",
+            "answer": "gern",
+            "alternatives": ["gerne"],
+            "near_misses": ["lieber", "sehr"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ich spiele ___ Fußball als Tennis. (rather)",
+            "answer": "lieber",
+            "near_misses": ["gern", "liebsten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ spiele ich Gitarre. (most of all)",
+            "answer": "Am liebsten",
+            "near_misses": ["Lieber", "Gern"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use gern, lieber or am liebsten): I like playing tennis.",
+            "answer": "Ich spiele gern Tennis.",
+            "alternatives": ["Ich spiele gerne Tennis."],
+            "near_misses": [
+              "Ich spiele lieber Tennis.",
+              "Ich gern spiele Tennis."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use gern, lieber or am liebsten): I prefer playing football to tennis.",
+            "answer": "Ich spiele lieber Fußball als Tennis.",
+            "near_misses": [
+              "Ich spiele gern Fußball als Tennis.",
+              "Ich spiele lieber Fußball wie Tennis."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use gern, lieber or am liebsten): Most of all I play guitar.",
+            "answer": "Am liebsten spiele ich Gitarre.",
+            "near_misses": [
+              "Am liebsten ich spiele Gitarre.",
+              "Lieber spiele ich Gitarre."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Am liebsten ich lese Bücher.",
+            "answer": "Am liebsten lese ich Bücher.",
+            "near_misses": [
+              "Am liebsten ich lese Bücher.",
+              "Am liebsten lese Bücher ich."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:q12",
+            "format": "correction",
+            "prompt": "Correct the comparison: Ich lese lieber Bücher wie Zeitungen.",
+            "answer": "Ich lese lieber Bücher als Zeitungen.",
+            "near_misses": [
+              "Ich lese lieber Bücher wie Zeitungen.",
+              "Ich lese gern Bücher als Zeitungen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-023@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'very'?",
+            "answer": "sehr",
+            "alternatives": ["sehr", "zu", "oft"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-023@1:h02",
+            "format": "typed-blank",
+            "prompt": "Das Essen ist ___ gut. (quite)",
+            "answer": "ziemlich",
+            "near_misses": ["sehr", "zu"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-023@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use gern, lieber or am liebsten): I like reading books.",
+            "answer": "Ich lese gern Bücher.",
+            "alternatives": ["Ich lese gerne Bücher."],
+            "near_misses": ["Ich lese lieber Bücher.", "Ich gern lese Bücher."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-024",
+      "title": "Possession with names and von + dative",
+      "explanation": "With a name, add -s without an apostrophe: Annas Buch, Pauls Haus. Names ending in s, ß, x or z take only an apostrophe: Max' Auto. The alternative is von + dative, which also works with nouns: das Buch von Anna, das Auto von meinem Bruder. Spoken German often prefers von + dative.",
+      "examples": [
+        {
+          "de": "Das ist Annas Buch.",
+          "en": "That is Anna's book."
+        },
+        {
+          "de": "Das ist das Buch von Anna.",
+          "en": "That is Anna's book."
+        },
+        {
+          "de": "Das ist das Auto von meinem Bruder.",
+          "en": "That is my brother's car."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-024@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-024@1:q01",
+            "format": "multiple-choice",
+            "prompt": "How do you say 'Anna's book'?",
+            "answer": "Annas Buch",
+            "alternatives": ["Annas Buch", "Anna's Buch", "Anna Buch"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which preposition expresses possession as an alternative to -s?",
+            "answer": "von",
+            "alternatives": ["von", "für", "mit"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses von + dative correctly?",
+            "answer": "Das ist das Auto von meinem Bruder.",
+            "alternatives": [
+              "Das ist das Auto von mein Bruder.",
+              "Das ist das Auto von meinem Bruder.",
+              "Das ist das Auto von meinen Bruder."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q04",
+            "format": "multiple-choice",
+            "prompt": "How is possession shown for a name ending in -x, like Max?",
+            "answer": "Max' Auto",
+            "alternatives": ["Max' Auto", "Maxs Auto", "Max Auto's"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q05",
+            "format": "typed-blank",
+            "prompt": "Das ist ___ Buch. (Anna's)",
+            "answer": "Annas",
+            "near_misses": ["Anna", "Annes"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q06",
+            "format": "typed-blank",
+            "prompt": "Das ist das Buch ___ Anna. (of)",
+            "answer": "von",
+            "near_misses": ["für", "mit"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q07",
+            "format": "typed-blank",
+            "prompt": "Das ist das Auto von ___ Bruder. (my)",
+            "answer": "meinem",
+            "near_misses": ["mein", "meinen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q08",
+            "format": "translation",
+            "prompt": "Translate (show possession): That is Anna's book.",
+            "answer": "Das ist Annas Buch.",
+            "alternatives": ["Das ist das Buch von Anna."],
+            "near_misses": ["Das ist Anna's Buch.", "Das ist Anna Buch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q09",
+            "format": "translation",
+            "prompt": "Translate (show possession): That is my brother's car.",
+            "answer": "Das ist das Auto von meinem Bruder.",
+            "near_misses": [
+              "Das ist das Auto von mein Bruder.",
+              "Das ist meinem Bruders Auto."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q10",
+            "format": "translation",
+            "prompt": "Translate (show possession): That is Paul's house.",
+            "answer": "Das ist Pauls Haus.",
+            "alternatives": ["Das ist das Haus von Paul."],
+            "near_misses": ["Das ist Paul Haus.", "Das ist Paul's Haus."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q11",
+            "format": "correction",
+            "prompt": "Correct the possessive: Das ist Anna Buch.",
+            "answer": "Das ist Annas Buch.",
+            "alternatives": ["Das ist das Buch von Anna."],
+            "near_misses": ["Das ist Anna Buch.", "Das ist Anna's Buch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:q12",
+            "format": "correction",
+            "prompt": "Correct the case: Das ist das Auto von mein Bruder.",
+            "answer": "Das ist das Auto von meinem Bruder.",
+            "near_misses": [
+              "Das ist das Auto von mein Bruder.",
+              "Das ist das Auto von meinen Bruder."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-024@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which phrase means 'Lisa's bag'?",
+            "answer": "Lisas Tasche",
+            "alternatives": ["Lisas Tasche", "Lisa's Tasche", "Lisa Tasche"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-024@1:h02",
+            "format": "translation",
+            "prompt": "Translate (show possession): That is Max's bicycle.",
+            "answer": "Das ist das Fahrrad von Max.",
+            "alternatives": ["Das ist Max' Fahrrad."],
+            "near_misses": [
+              "Das ist das Fahrrad von Max'.",
+              "Das ist das Fahrrad Max."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-024@1:h03",
+            "format": "correction",
+            "prompt": "Correct the possessive: Das ist Lisa Tasche.",
+            "answer": "Das ist Lisas Tasche.",
+            "alternatives": ["Das ist die Tasche von Lisa."],
+            "near_misses": ["Das ist Lisa Tasche.", "Das ist Lisa's Tasche."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
