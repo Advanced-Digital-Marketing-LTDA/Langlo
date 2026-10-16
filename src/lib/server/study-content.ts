@@ -141,18 +141,29 @@ export async function nextQuestion(
   };
 }
 
-/** The newest version of a skill with its lesson, which must exist and be available. */
-async function lessonRow(
-  client: Pick<Client, 'execute'>,
-  language: string,
-  skillId: unknown
-) {
-  if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
+/** What a lesson read is scoped to; a session pins the version it was started on. */
+type LessonRead = {
+  userId: string;
+  language: string;
+  skillId: unknown;
+  studySessionId?: string;
+};
+
+/**
+ * The version of a skill with its lesson, which must exist and be available:
+ * the session's version when a session is given, the newest otherwise.
+ */
+async function lessonRow(client: Pick<Client, 'execute'>, read: LessonRead) {
+  if (typeof read.skillId !== 'string') throw new StudyError('NOT_FOUND');
+  const { userId, studySessionId, language, skillId } = read;
   const found = await client.execute({
     sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs
-          FROM ${latestVersion} v
+          FROM ${studySessionId === undefined ? latestVersion : sessionVersion} v
           LEFT JOIN lessons l ON l.content_version_id = v.id`,
-    args: [skillId, language]
+    args:
+      studySessionId === undefined
+        ? [skillId, language]
+        : [userId, studySessionId, skillId, skillId, language]
   });
   const row = found.rows[0];
   assertAvailable(row);
@@ -160,26 +171,17 @@ async function lessonRow(
   return row;
 }
 
-/**
- * The stored lesson for a skill in a track the caller is enrolled in. Authored
- * explanations are English only; for another enrollment language the English
- * text is returned with `englishFallback` set so the page can say so.
- */
-export async function getLesson(
-  client: Client,
-  session: LearnerSession,
-  language: string,
-  skillId: string
-) {
-  if (typeof language !== 'string') throw new StudyError('NOT_FOUND');
+/** The lesson for an enrollment's explanation language, as the page shows it. */
+async function readLesson(client: Client, read: LessonRead) {
+  if (typeof read.language !== 'string') throw new StudyError('NOT_FOUND');
   const enrolled = await client.execute({
     sql: 'SELECT explanation_language FROM enrollments WHERE owner_id = ? AND language = ?',
-    args: [session.userId, language]
+    args: [read.userId, read.language]
   });
   if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
-  const row = await lessonRow(client, language, skillId);
+  const row = await lessonRow(client, read);
   return {
-    skillId,
+    skillId: String(read.skillId),
     contentVersionId: String(row.version_id),
     title: String(row.title),
     explanation: String(row.explanation),
@@ -188,4 +190,37 @@ export async function getLesson(
     explanationLanguage: 'en',
     englishFallback: enrolled.rows[0].explanation_language !== 'en'
   };
+}
+
+/**
+ * The stored lesson for a skill in a track the caller is enrolled in. Authored
+ * explanations are English only; for another enrollment language the English
+ * text is returned with `englishFallback` set so the page can say so.
+ */
+export function getLesson(
+  client: Client,
+  session: LearnerSession,
+  language: string,
+  skillId: string
+) {
+  return readLesson(client, { userId: session.userId, language, skillId });
+}
+
+/**
+ * The lesson as the caller's own study session sees it: the version its first
+ * attempt at the skill used, so the explanation matches the questions asked.
+ */
+export async function getSessionLesson(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string,
+  skillId: string
+) {
+  const study = await ownSession(client, session, studySessionId);
+  return readLesson(client, {
+    userId: session.userId,
+    language: study.language,
+    skillId,
+    studySessionId
+  });
 }

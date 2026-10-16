@@ -37,14 +37,14 @@
   const fieldId = $derived(`answer-${question.id}`);
 
   // A quick local message; the server checks the same rules and decides.
-  function validate(event: SubmitEvent) {
+  function isAnswerable() {
     const checked = checkAnswer(
       question.format,
       value,
       question.alternatives ?? []
     );
     problem = checked.ok ? '' : checked.message;
-    if (!checked.ok) event.preventDefault();
+    return checked.ok;
   }
 </script>
 
@@ -52,8 +52,9 @@
   method="POST"
   action={answerActionUrl(studySessionId)}
   novalidate
-  onsubmit={validate}
-  use:enhance={() => {
+  use:enhance={({ cancel }) => {
+    // use:enhance sends the form itself, so a refused answer is cancelled here.
+    if (!isAnswerable()) return cancel();
     pending = true;
     return async ({ result, update }) => {
       // Keep what was typed when the server refused it.

@@ -4,6 +4,7 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import {
   getLesson,
+  getSessionLesson,
   getStudySession,
   nextQuestion,
   pauseStudySession,
@@ -369,6 +370,38 @@ describe('lesson', () => {
       explanationLanguage: 'en',
       englishFallback: false
     });
+  });
+
+  it("keeps a session's lesson on the version its first answer used", async () => {
+    await attempt('k-first', 'fr-a1-001@1:q1');
+    await importVersionTwo();
+    // Version 2 has no lesson, so the newest version cannot teach this skill.
+    await expect(getLesson(client, ownerA, 'fr', 'fr-a1-001')).rejects.toThrow(
+      'NOT_FOUND'
+    );
+    expect(
+      await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+    ).toMatchObject({ contentVersionId: 'fr-a1-001@1', title: 'Être' });
+  });
+
+  it('reads the newest version for a session that has not started the skill', async () => {
+    await importVersionTwo();
+    await expect(
+      getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+    ).rejects.toThrow('NOT_FOUND');
+  });
+
+  it("does not reveal another learner's session or serve a withdrawn pinned lesson", async () => {
+    await expect(
+      getSessionLesson(client, ownerB, 'study-a', 'fr-a1-001')
+    ).rejects.toThrow('NOT_FOUND');
+    await attempt('k-first', 'fr-a1-001@1:q1');
+    await client.execute(
+      "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+    );
+    await expect(
+      getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+    ).rejects.toThrow('CONTENT_UNAVAILABLE');
   });
 
   it('shows English with a flag for a Portuguese enrollment', async () => {

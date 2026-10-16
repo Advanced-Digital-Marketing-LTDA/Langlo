@@ -9,9 +9,10 @@ import {
 } from '../../../../../../lib/server/learner-session';
 import {
   exerciseFor,
+  lessonFor,
   recordAnswer
 } from '../../../../../../lib/server/lesson-practice';
-import { getLesson, StudyError } from '../../../../../../lib/server/study';
+import { StudyError } from '../../../../../../lib/server/study';
 
 /** Withdrawn content gets an honest notice instead of an error page. */
 function lessonFailure(thrown: unknown, language: string) {
@@ -43,17 +44,17 @@ export const load: PageServerLoad = async (event) => {
   // The learner comes only from the verified session, never from the URL.
   const learner = requireLearnerPage(event);
   const { language, skill } = event.params;
+  const studySessionId = event.url.searchParams.get('session');
   try {
     return await withDatabase(event.locals.config, async (client) => ({
       language,
       unavailable: false as const,
-      lesson: await getLesson(client, learner, language, skill),
-      exercise: await exerciseFor(
-        client,
-        learner,
-        event.url.searchParams.get('session'),
-        skill
-      )
+      lesson: await lessonFor(client, learner, {
+        language,
+        skillId: skill,
+        studySessionId
+      }),
+      exercise: await exerciseFor(client, learner, studySessionId, skill)
     }));
   } catch (thrown) {
     return lessonFailure(thrown, language);

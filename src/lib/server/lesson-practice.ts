@@ -4,10 +4,31 @@ import type { Client } from '@libsql/client';
 import { checkAnswer, normalizeAnswer } from '../components/exercises/answer';
 import { describeLearnerError } from './learner-api';
 import type { LearnerSession } from './learner-session';
-import { findReplay, nextQuestion, recordAttempt, StudyError } from './study';
+import {
+  findReplay,
+  getLesson,
+  getSessionLesson,
+  nextQuestion,
+  recordAttempt,
+  StudyError
+} from './study';
 
 // The practice half of the lesson page: serving the session's next exercise
 // and recording the answer to it.
+
+/**
+ * The lesson of the page: as the learner's session sees it when the page was
+ * opened from one, so the explanation matches the questions asked.
+ */
+export function lessonFor(
+  client: Client,
+  learner: LearnerSession,
+  page: { language: string; skillId: string; studySessionId: string | null }
+) {
+  return page.studySessionId
+    ? getSessionLesson(client, learner, page.studySessionId, page.skillId)
+    : getLesson(client, learner, page.language, page.skillId);
+}
 
 /**
  * The next exercise of the learner's own session, when the page was opened

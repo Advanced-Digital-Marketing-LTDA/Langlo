@@ -4,7 +4,7 @@ import { beginWrite, type LearnerSession } from './flashcards';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
 
-export { getLesson, nextQuestion } from './study-content';
+export { getLesson, getSessionLesson, nextQuestion } from './study-content';
 export { StudyError };
 
 // Owner-scoped grammar study repository. Every statement on a learner table
