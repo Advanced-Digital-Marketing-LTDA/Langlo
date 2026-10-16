@@ -55,7 +55,7 @@ describe('reusable adversarial review gate', () => {
 
 describe('reusable Claude review gate', () => {
   it('keeps the turn cap, Haiku and the inline-comment guard', () => {
-    expect(claude).toContain('--max-turns 18');
+    expect(claude).toContain('--max-turns 30');
     expect(claude).toContain('--model haiku');
     expect(claude).toContain("classify_inline_comments: 'false'");
     expect(claude).toContain('"CLAUDE_CODE_SUBAGENT_MODEL": "haiku"');

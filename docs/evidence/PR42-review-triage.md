@@ -15,6 +15,10 @@ Same command: 7 passed (7). A short or malformed `tools-ref` now fails the first
 
 `actions/checkout` rejects a `path` outside the workspace, and the tools checkout used `${{ runner.temp }}/langlo-tools`. Red: `checks the tools out inside the workspace, never under runner.temp` failed (path was the runner.temp one). Fix: check out to `.langlo-tools`, copy the lockfile to `$RUNNER_TEMP/ai-review`, then delete `.langlo-tools`. Green: 8 passed (8).
 
+## Claude review turn cap
+
+Langlo's own `claude-review.yml` failed on d75c3c2: "24 turns, exceeding the configured maximum of 18". The owner chose 30 on the decision card. Red: the shared-workflow test expecting `--max-turns 30` failed against 18. Green: all tests pass with 30 in both `claude-review.yml` and `reusable-claude-review.yml`.
+
 ## Findings
 
 - `tools-ref` unvalidated: fixed with a first step that requires a 40-character commit SHA.
