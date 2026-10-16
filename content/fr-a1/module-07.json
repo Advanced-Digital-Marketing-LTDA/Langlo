@@ -1,0 +1,687 @@
+{
+  "module_id": "fr-a1-module-07",
+  "track": "French A1",
+  "title": "Necessity, polite requests, identity and actions in progress",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "fr-a1-025",
+      "title": "Necessity and prohibition: il faut + infinitive",
+      "explanation": "Il faut followed by an infinitive says what has to be done in general: Il faut travailler (one has to work, you have to work). Il faut never changes for person or number. In the negative, il ne faut pas followed by an infinitive says what must not be done: Il ne faut pas parler ici (you must not speak here). It is a prohibition, not just a lack of need.",
+      "examples": [
+        {
+          "fr": "Il faut travailler.",
+          "en": "One has to work."
+        },
+        {
+          "fr": "Il faut jouer dehors.",
+          "en": "You have to play outside."
+        },
+        {
+          "fr": "Il ne faut pas parler ici.",
+          "en": "You must not speak here."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-025@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-025@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'You have to work.' (in general)?",
+            "answer": "Il faut travailler.",
+            "alternatives": [
+              "Il faut travaille.",
+              "Il faut travailler.",
+              "Il fait travailler."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What form follows 'il faut'?",
+            "answer": "an infinitive",
+            "alternatives": [
+              "a conjugated verb",
+              "an infinitive",
+              "a past participle"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What does 'Il ne faut pas parler.' mean?",
+            "answer": "You must not speak.",
+            "alternatives": [
+              "You do not need to speak.",
+              "You must not speak.",
+              "You cannot speak."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'One must eat.'",
+            "answer": "Il faut manger.",
+            "alternatives": [
+              "Il faut mange.",
+              "Il faut manger.",
+              "Elle faut manger."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q05",
+            "format": "typed-blank",
+            "prompt": "Il ___ travailler. (it is necessary)",
+            "answer": "faut",
+            "near_misses": ["fait", "faute"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q06",
+            "format": "typed-blank",
+            "prompt": "Il ne faut ___ parler. (not)",
+            "answer": "pas",
+            "near_misses": ["plus", "non"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q07",
+            "format": "typed-blank",
+            "prompt": "Il faut ___ ici. (rester)",
+            "answer": "rester",
+            "near_misses": ["reste", "restez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): You have to work tomorrow.",
+            "answer": "Il faut travailler demain.",
+            "near_misses": [
+              "Il faut travaille demain.",
+              "Il travailler faut demain."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): You must not eat here.",
+            "answer": "Il ne faut pas manger ici.",
+            "near_misses": [
+              "Il ne faut manger pas ici.",
+              "Il ne faut pas mange ici."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): One has to speak French.",
+            "answer": "Il faut parler français.",
+            "near_misses": [
+              "Il faut parle français.",
+              "Il faux parler français."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Il faut travaillez.",
+            "answer": "Il faut travailler.",
+            "near_misses": ["Il faut travaillez.", "Il faut travaille."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Il faut pas parler ici.",
+            "answer": "Il ne faut pas parler ici.",
+            "near_misses": [
+              "Il faut pas parler ici.",
+              "Il ne faut parler pas ici."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-025@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'You must not sing.'?",
+            "answer": "Il ne faut pas chanter.",
+            "alternatives": [
+              "Il faut pas chanter.",
+              "Il ne faut pas chanter.",
+              "Il ne fait pas chanter."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-025@1:h02",
+            "format": "typed-blank",
+            "prompt": "Il faut ___ ici. (manger)",
+            "answer": "manger",
+            "near_misses": ["mange", "mangez"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-025@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): You have to play here.",
+            "answer": "Il faut jouer ici.",
+            "near_misses": ["Il faut joue ici.", "Il faut jouez ici."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-026",
+      "title": "Polite requests: je voudrais and pourriez-vous",
+      "explanation": "Learn these two polite forms as ready-made phrases. Je voudrais (I would like) is followed by a noun or an infinitive: Je voudrais un café; Je voudrais réserver une table. Pourriez-vous (could you) is followed by an infinitive: Pourriez-vous répéter ? Write the hyphen in pourriez-vous. Add s'il vous plaît (please, to a stranger or to several people); with a friend say s'il te plaît.",
+      "examples": [
+        {
+          "fr": "Je voudrais un café, s'il vous plaît.",
+          "en": "I would like a coffee, please."
+        },
+        {
+          "fr": "Je voudrais parler à Marie.",
+          "en": "I would like to speak to Marie."
+        },
+        {
+          "fr": "Pourriez-vous répéter, s'il vous plaît ?",
+          "en": "Could you repeat, please?"
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-026@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-026@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which phrase politely means 'I would like'?",
+            "answer": "Je voudrais",
+            "alternatives": ["Je veux", "Je voudrais", "Je vais"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which question politely asks someone to repeat?",
+            "answer": "Pourriez-vous répéter ?",
+            "alternatives": [
+              "Répéter pourriez-vous ?",
+              "Pourriez-vous répéter ?",
+              "Pourriez répéter vous ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "Je voudrais manger.",
+            "alternatives": [
+              "Je voudrais mange.",
+              "Je voudrais manger.",
+              "Je voudrais mangez."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which phrase means 'please' to a stranger?",
+            "answer": "s'il vous plaît",
+            "alternatives": ["s'il te plaît", "s'il vous plaît", "merci"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q05",
+            "format": "typed-blank",
+            "prompt": "Je ___ un café, s'il vous plaît. (I would like)",
+            "answer": "voudrais",
+            "near_misses": ["veux", "voudrai"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q06",
+            "format": "typed-blank",
+            "prompt": "___-vous répéter ? (could)",
+            "answer": "Pourriez",
+            "near_misses": ["Pouvez", "Pourrez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q07",
+            "format": "typed-blank",
+            "prompt": "Je voudrais ___ une table. (réserver)",
+            "answer": "réserver",
+            "near_misses": ["réserve", "reserver"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): I would like a tea, please.",
+            "answer": "Je voudrais un thé, s'il vous plaît.",
+            "alternatives": ["S'il vous plaît, je voudrais un thé."],
+            "near_misses": [
+              "Je veux un thé, s'il vous plaît.",
+              "Je voudrais un thé, s'il te plaît."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): Could you work tomorrow, please?",
+            "answer": "Pourriez-vous travailler demain, s'il vous plaît ?",
+            "near_misses": [
+              "Pourriez-vous travaillez demain, s'il vous plaît ?",
+              "Pourriez vous travailler demain, s'il vous plaît ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): I would like to speak to Paul.",
+            "answer": "Je voudrais parler à Paul.",
+            "near_misses": [
+              "Je voudrais parle à Paul.",
+              "Je voudrais parler a Paul."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Je voudrais parlez à Marie.",
+            "answer": "Je voudrais parler à Marie.",
+            "near_misses": [
+              "Je voudrais parlez à Marie.",
+              "Je voudrais parle à Marie."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Pourriez vous répéter, s'il vous plaît ?",
+            "answer": "Pourriez-vous répéter, s'il vous plaît ?",
+            "near_misses": [
+              "Pourriez vous répéter, s'il vous plaît ?",
+              "Pourriez-vous répétez, s'il vous plaît ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-026@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which phrase means 'please' to a friend?",
+            "answer": "s'il te plaît",
+            "alternatives": ["s'il te plaît", "s'il vous plaît", "excusez-moi"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-026@1:h02",
+            "format": "typed-blank",
+            "prompt": "Pourriez-vous ___ ici, s'il vous plaît ? (attendre)",
+            "answer": "attendre",
+            "near_misses": ["attends", "attendez"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-026@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): I would like to eat here, please.",
+            "answer": "Je voudrais manger ici, s'il vous plaît.",
+            "near_misses": [
+              "Je veux manger ici, s'il vous plaît.",
+              "Je voudrais mange ici, s'il vous plaît."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-027",
+      "title": "Professions and nationalities: masculine and feminine",
+      "explanation": "After être, a profession or nationality usually has no article: Il est médecin, Elle est française. Many words add -e for the feminine: étudiant, étudiante; français, française; allemand, allemande; américain, américaine. Words in -ien double the n: italien, italienne. Words in -ier become -ière: infirmier, infirmière; boulanger, boulangère. Some end in -eur and change: acteur, actrice. Words already ending in -e do not change: journaliste, dentiste. Nationality adjectives are written with a lowercase letter.",
+      "examples": [
+        {
+          "fr": "Elle est étudiante.",
+          "en": "She is a student."
+        },
+        {
+          "fr": "Il est français.",
+          "en": "He is French."
+        },
+        {
+          "fr": "Marie est italienne.",
+          "en": "Marie is Italian."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-027@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-027@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'étudiant'?",
+            "answer": "étudiante",
+            "alternatives": ["étudiant", "étudiante", "étudiantes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'italien'?",
+            "answer": "italienne",
+            "alternatives": ["italiene", "italienne", "italiène"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'infirmier'?",
+            "answer": "infirmière",
+            "alternatives": ["infirmiere", "infirmière", "infirmiére"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence correctly says she is French?",
+            "answer": "Elle est française.",
+            "alternatives": [
+              "Elle est français.",
+              "Elle est française.",
+              "Elle est francaise."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q05",
+            "format": "typed-blank",
+            "prompt": "Marie est ___. (allemand)",
+            "answer": "allemande",
+            "near_misses": ["allemand", "allemandes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q06",
+            "format": "typed-blank",
+            "prompt": "Elle est ___. (journaliste)",
+            "answer": "journaliste",
+            "near_misses": ["journalistes", "journalisté"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q07",
+            "format": "typed-blank",
+            "prompt": "Paul est ___. (américain)",
+            "answer": "américain",
+            "near_misses": ["américaine", "americain"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She is a nurse.",
+            "answer": "Elle est infirmière.",
+            "near_misses": ["Elle est infirmier.", "Elle est une infirmière."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): He is Spanish.",
+            "answer": "Il est espagnol.",
+            "near_misses": ["Il est espagnole.", "Il est espagnols."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Marie is English.",
+            "answer": "Marie est anglaise.",
+            "near_misses": ["Marie est anglais.", "Marie est anglaisse."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the person): Elle est étudiant.",
+            "answer": "Elle est étudiante.",
+            "near_misses": ["Elle est étudiant.", "Elle est étudiants."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the person): Marie est italien.",
+            "answer": "Marie est italienne.",
+            "near_misses": ["Marie est italien.", "Marie est italiene."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-027@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'espagnol'?",
+            "answer": "espagnole",
+            "alternatives": ["espagnol", "espagnole", "espagnolle"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-027@1:h02",
+            "format": "typed-blank",
+            "prompt": "Elle est ___. (acteur)",
+            "answer": "actrice",
+            "near_misses": ["acteure", "acteuse"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-027@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She is a baker.",
+            "answer": "Elle est boulangère.",
+            "near_misses": ["Elle est boulanger.", "Elle est boulangere."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-028",
+      "title": "Action in progress: être en train de + infinitive",
+      "explanation": "To stress that an action is happening right now, use the present of être, then en train de, then an infinitive: Je suis en train de chanter. De becomes d' before a vowel or a silent h: Elle est en train d'écouter. The infinitive does not change. The simple present can also express an action in progress, but être en train de makes it clear that it is happening at this moment.",
+      "examples": [
+        {
+          "fr": "Je suis en train de chanter.",
+          "en": "I am singing right now."
+        },
+        {
+          "fr": "Il est en train de regarder la télé.",
+          "en": "He is watching TV right now."
+        },
+        {
+          "fr": "Ils sont en train d'arriver.",
+          "en": "They are arriving right now."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-028@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-028@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which phrase stresses an action happening right now?",
+            "answer": "être en train de",
+            "alternatives": ["venir de", "être en train de", "aller"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'I am eating right now.'",
+            "answer": "Je suis en train de manger.",
+            "alternatives": [
+              "Je suis en train manger.",
+              "Je suis en train de manger.",
+              "Je suis en train de mangé."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of être goes with 'nous'?",
+            "answer": "sommes",
+            "alternatives": ["êtes", "sommes", "sont"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct before a vowel?",
+            "answer": "Elle est en train d'écouter.",
+            "alternatives": [
+              "Elle est en train de écouter.",
+              "Elle est en train d'écouter.",
+              "Elle est en train du écouter."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q05",
+            "format": "typed-blank",
+            "prompt": "Nous sommes en train ___ travailler. (de)",
+            "answer": "de",
+            "near_misses": ["d'", "du"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q06",
+            "format": "typed-blank",
+            "prompt": "Tu ___ en train de parler. (être)",
+            "answer": "es",
+            "near_misses": ["est", "êtes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ils sont en train ___arriver. (de before a vowel)",
+            "answer": "d'",
+            "near_misses": ["de", "du"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use être en train de): She is working right now.",
+            "answer": "Elle est en train de travailler.",
+            "near_misses": [
+              "Elle est en train travailler.",
+              "Elle est en train de travaille."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use être en train de): We are eating right now.",
+            "answer": "Nous sommes en train de manger.",
+            "near_misses": [
+              "Nous sommes en train manger.",
+              "Nous sont en train de manger."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use être en train de): They are listening right now.",
+            "answer": "Ils sont en train d'écouter.",
+            "near_misses": [
+              "Ils sont en train de écouter.",
+              "Ils est en train d'écouter."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je suis en train manger.",
+            "answer": "Je suis en train de manger.",
+            "near_misses": [
+              "Je suis en train manger.",
+              "Je suis en train de mangé."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Elle est en train de écouter.",
+            "answer": "Elle est en train d'écouter.",
+            "near_misses": [
+              "Elle est en train de écouter.",
+              "Elle est en train d'écoute."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-028@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'You are singing right now.' (one friend)?",
+            "answer": "Tu es en train de chanter.",
+            "alternatives": [
+              "Tu es en train chanter.",
+              "Tu es en train de chanter.",
+              "Tu est en train de chanter."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-028@1:h02",
+            "format": "typed-blank",
+            "prompt": "Il ___ en train de jouer. (être)",
+            "answer": "est",
+            "near_misses": ["es", "sont"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-028@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use être en train de): He is playing right now.",
+            "answer": "Il est en train de jouer.",
+            "near_misses": [
+              "Il est en train jouer.",
+              "Il est en train de joue."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
