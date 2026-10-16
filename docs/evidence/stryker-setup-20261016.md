@@ -6,16 +6,15 @@ Owner-approved local installation using `npm init stryker@latest`, selecting the
 Svelte preset, Vitest runner, JavaScript configuration, and npm. Node 24.19.0 and
 npm 11.9.0 were used (npm selected through `npm exec --package=npm@11.9.0`).
 Installed `@stryker-mutator/core` and `@stryker-mutator/vitest-runner` 10.0.0;
-the runner resolves the existing Vitest 5.0.5 without peer dependency errors.
+the runner resolves the existing Vitest 5.0.3 without peer dependency errors.
 
 `stryker.config.mjs` targets TypeScript source, excluding tests, declaration
 files, generated auth code, and Drizzle configuration. Svelte templates are not
 in the mutation scope. Agent-tooling directories are excluded from sandbox
 copying. Temporary files and HTML mutation reports are ignored by Git.
 Application code, tests, and CI workflows were not changed by this task.
-Concurrent Codecov work remains separate.
 
-## Initial validation on the Codecov checkout
+## Initial validation before the isolated branch
 
 - `npm ci`: exit 0.
 - `npm run check`: exit 0; zero errors and warnings.
@@ -78,7 +77,7 @@ or account access was performed.
 The owner subsequently authorized pushing this setup in a new PR. The branch
 `chore/stryker-setup` starts from `origin/main` at
 `0cfaa1c` in `/tmp/langlo-stryker-setup`. It preserves main's pinned Vitest
-5.0.3 and excludes the Codecov branch's workflow, coverage dependency, and tests.
+5.0.3.
 The lockfile was regenerated from main; no existing dependency version changed.
 
 PR validation uses Node 24.19.0, npm 11.9.0, and `npm ci --ignore-scripts`, with
@@ -94,8 +93,9 @@ required checks run explicitly. All commands exited 0:
   zero errors, matching the initial run.
 
 Final diff review confirmed only the five setup files changed and no existing
-lockfile dependency version changed. No high-severity finding was identified in
-this local review; the known audit and mutation-score limitations remain open.
+lockfile dependency version changed. This was a manual diff review; the
+`pr-test-analyzer`, `silent-failure-hunter`, `code-reviewer`, and
+`type-design-analyzer` review agents were not run. The known audit and mutation-score limitations remain open.
 
 No new test-hardening changes are included. The mutation score remains
 provisional and the two moderate transitive audit findings remain unresolved.
