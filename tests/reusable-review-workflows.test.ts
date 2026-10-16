@@ -40,6 +40,12 @@ describe('reusable OSSAR scan', () => {
     expect(tools.toLowerCase()).not.toContain('binskim');
   });
 
+  it('leaves out bandit, which aborts the scan when a repo has no Python files', () => {
+    const tools = /^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '';
+    expect(tools).not.toBe('');
+    expect(tools.toLowerCase()).not.toContain('bandit');
+  });
+
   it('pins every third-party action to a full commit SHA', () => {
     const uses = [...ossar.matchAll(/^\s+uses:\s*(\S+)/gmu)].map((m) => m[1]);
     expect(uses.length).toBeGreaterThanOrEqual(3);
