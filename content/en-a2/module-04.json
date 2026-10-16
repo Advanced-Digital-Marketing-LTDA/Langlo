@@ -1,0 +1,737 @@
+{
+  "module_id": "en-a2-module-04",
+  "track": "English A2",
+  "title": "Relative clauses, connectors, first conditional and reported speech",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "en-a2-013",
+      "title": "Identifying relative clauses with who, which and that",
+      "explanation": "A relative clause says which person or thing you mean. Use who for people, which for things and that for either: The woman who lives next door is a nurse. This is the book which I bought. The man that called is my uncle. The relative word replaces the noun, so do not add another pronoun: not The book which I bought it.",
+      "examples": [
+        {
+          "en": "The woman who lives next door is a nurse."
+        },
+        {
+          "en": "This is the book which I bought."
+        },
+        {
+          "en": "The man that called is my uncle."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "COE-CV20"],
+      "version": {
+        "id": "en-a2-013@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-013@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which relative word is used for people?",
+            "answer": "who",
+            "alternatives": ["who", "which", "where"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which relative word is used for things?",
+            "answer": "which",
+            "alternatives": ["which", "who", "whose"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "The woman who lives next door is a nurse.",
+            "alternatives": [
+              "The woman who lives next door is a nurse.",
+              "The woman which lives next door is a nurse.",
+              "The woman who she lives next door is a nurse."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which relative word can be used for both people and things?",
+            "answer": "that",
+            "alternatives": ["that", "what", "where"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q05",
+            "format": "typed-blank",
+            "prompt": "The woman ___ lives next door is a nurse.",
+            "answer": "who",
+            "near_misses": ["which", "what"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q06",
+            "format": "typed-blank",
+            "prompt": "This is the book ___ I bought.",
+            "answer": "which",
+            "near_misses": ["who", "where"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q07",
+            "format": "typed-blank",
+            "prompt": "The man ___ called is my uncle.",
+            "answer": "that",
+            "near_misses": ["what", "whose"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q08",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: the woman / lives next door / is a nurse (who)",
+            "answer": "The woman who lives next door is a nurse.",
+            "near_misses": [
+              "The woman who she lives next door is a nurse.",
+              "The woman which lives next door is a nurse."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q09",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: this is the book / I bought it (which)",
+            "answer": "This is the book which I bought.",
+            "near_misses": [
+              "This is the book which I bought it.",
+              "This is the book who I bought."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q10",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: the man / called me / is my uncle (that)",
+            "answer": "The man that called me is my uncle.",
+            "near_misses": [
+              "The man what called me is my uncle.",
+              "The man that he called me is my uncle."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: The film who we saw was long.",
+            "answer": "The film which we saw was long.",
+            "alternatives": ["The film that we saw was long."],
+            "near_misses": [
+              "The film who we saw was long.",
+              "The film which we saw it was long."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: The girl which sits behind me is kind.",
+            "answer": "The girl who sits behind me is kind.",
+            "alternatives": ["The girl that sits behind me is kind."],
+            "near_misses": [
+              "The girl which sits behind me is kind.",
+              "The girl who she sits behind me is kind."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-013@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence describes a thing?",
+            "answer": "I lost the umbrella which my mother gave me.",
+            "alternatives": [
+              "I lost the umbrella who my mother gave me.",
+              "I lost the umbrella which my mother gave me.",
+              "I lost the umbrella what my mother gave me."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-013@1:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: The teacher which teaches us French is from Lyon.",
+            "answer": "The teacher who teaches us French is from Lyon.",
+            "alternatives": [
+              "The teacher that teaches us French is from Lyon."
+            ],
+            "near_misses": [
+              "The teacher which teaches us French is from Lyon.",
+              "The teacher who he teaches us French is from Lyon."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-013@1:h03",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: the phone / I bought / is new (that)",
+            "answer": "The phone that I bought is new.",
+            "alternatives": ["The phone which I bought is new."],
+            "near_misses": [
+              "The phone that I bought it is new.",
+              "The phone who I bought is new."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-014",
+      "title": "Connectors for cause, time and result",
+      "explanation": "Connectors link short clauses. Use because for a reason: I stayed home because I was ill. Use so for a result: I was ill, so I stayed home. Use when, before and after for time: Call me when you arrive. Wash your hands before you eat. Because answers why; so gives the result. Do not use both because and so in one sentence.",
+      "examples": [
+        {
+          "en": "I stayed home because I was ill."
+        },
+        {
+          "en": "I was ill, so I stayed home."
+        },
+        {
+          "en": "Call me when you arrive."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "COE-CV20"],
+      "version": {
+        "id": "en-a2-014@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-014@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which connector gives a reason?",
+            "answer": "because",
+            "alternatives": ["because", "so", "but"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which connector gives a result?",
+            "answer": "so",
+            "alternatives": ["so", "because", "when"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence about washing hands is correct?",
+            "answer": "Wash your hands before you eat.",
+            "alternatives": [
+              "Wash your hands before you eat.",
+              "Wash your hands before eat.",
+              "Wash your hands before you eating."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence gives the reason first?",
+            "answer": "I stayed home because I was ill.",
+            "alternatives": [
+              "I stayed home because I was ill.",
+              "I stayed home so I was ill.",
+              "I was ill because I stayed home."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q05",
+            "format": "typed-blank",
+            "prompt": "I stayed home ___ I was ill.",
+            "answer": "because",
+            "near_misses": ["so", "but"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q06",
+            "format": "typed-blank",
+            "prompt": "I was ill, ___ I stayed home.",
+            "answer": "so",
+            "near_misses": ["because", "when"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q07",
+            "format": "typed-blank",
+            "prompt": "Call me ___ you arrive.",
+            "answer": "when",
+            "near_misses": ["so", "because"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q08",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: I stayed home / I was ill (because)",
+            "answer": "I stayed home because I was ill.",
+            "near_misses": [
+              "I stayed home so I was ill.",
+              "I stayed home because was ill."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q09",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: I was ill / I stayed home (so)",
+            "answer": "I was ill, so I stayed home.",
+            "alternatives": ["I was ill so I stayed home."],
+            "near_misses": [
+              "I was ill, because I stayed home.",
+              "I was ill so because I stayed home."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q10",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: call me / you arrive (when)",
+            "answer": "Call me when you arrive.",
+            "near_misses": [
+              "Call me when you arriving.",
+              "Call me because you arrive."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: I was tired, because I went to bed early.",
+            "answer": "I was tired, so I went to bed early.",
+            "alternatives": ["I was tired so I went to bed early."],
+            "near_misses": [
+              "I was tired, because I went to bed early.",
+              "I was tired, so because I went to bed early."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: We left after it start to rain.",
+            "answer": "We left after it started to rain.",
+            "near_misses": [
+              "We left after it start to rain.",
+              "We left after it starts rain."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-014@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence gives a result?",
+            "answer": "It was cold, so we wore coats.",
+            "alternatives": [
+              "It was cold, so we wore coats.",
+              "It was cold because we wore coats.",
+              "It was cold, because we wear coats."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-014@1:h02",
+            "format": "typed-blank",
+            "prompt": "Brush your teeth ___ you go to bed.",
+            "answer": "before",
+            "near_misses": ["so", "because"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-014@1:h03",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: she was hungry / she made a sandwich (so)",
+            "answer": "She was hungry, so she made a sandwich.",
+            "alternatives": ["She was hungry so she made a sandwich."],
+            "near_misses": [
+              "She was hungry because she made a sandwich.",
+              "She was hungry, so because she made a sandwich."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-015",
+      "title": "First conditional for likely possibilities",
+      "explanation": "Use if plus the present simple for a likely condition and will plus the base verb for its result: If it rains, we will stay at home. The if-clause uses the present, not will: not If it will rain. You can put the if-clause second without a comma: We will stay at home if it rains. Questions: What will you do if you miss the bus?",
+      "examples": [
+        {
+          "en": "If it rains, we will stay at home."
+        },
+        {
+          "en": "I will call you if I am late."
+        },
+        {
+          "en": "What will you do if you miss the bus?"
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-015@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-015@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct first conditional?",
+            "answer": "If it rains, we will stay at home.",
+            "alternatives": [
+              "If it rains, we will stay at home.",
+              "If it will rain, we stay at home.",
+              "If it rain, we will stay at home."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which tense follows 'if' in a first conditional?",
+            "answer": "the present simple",
+            "alternatives": [
+              "the present simple",
+              "will + base verb",
+              "the past simple"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which tense gives the result?",
+            "answer": "will + base verb",
+            "alternatives": [
+              "will + base verb",
+              "the present simple",
+              "the -ing form"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question is correct?",
+            "answer": "What will you do if you miss the bus?",
+            "alternatives": [
+              "What will you do if you will miss the bus?",
+              "What will you do if you miss the bus?",
+              "What you do if you miss the bus?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q05",
+            "format": "typed-blank",
+            "prompt": "If it ___, we will stay at home. (rain)",
+            "answer": "rains",
+            "near_misses": ["will rain", "rained"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q06",
+            "format": "typed-blank",
+            "prompt": "I will call you if I ___ late. (be)",
+            "answer": "am",
+            "near_misses": ["will be", "was"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q07",
+            "format": "typed-blank",
+            "prompt": "If you miss the bus, you ___ walk. (will)",
+            "answer": "will",
+            "near_misses": ["would", "did"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with if: it / rain / we / stay at home",
+            "answer": "If it rains, we will stay at home.",
+            "alternatives": ["If it rains, we'll stay at home."],
+            "near_misses": [
+              "If it will rain, we will stay at home.",
+              "If it rains, we stay at home will."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with if: I / be late / I / call you",
+            "answer": "If I am late, I will call you.",
+            "alternatives": ["If I'm late, I'll call you."],
+            "near_misses": [
+              "If I will be late, I will call you.",
+              "If I am late, I call will you."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with if: ask: what / you / do / you miss the bus",
+            "answer": "What will you do if you miss the bus?",
+            "near_misses": [
+              "What will you do if you will miss the bus?",
+              "What you will do if you miss the bus?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: If it will snow, we will build a snowman.",
+            "answer": "If it snows, we will build a snowman.",
+            "alternatives": ["If it snows, we'll build a snowman."],
+            "near_misses": [
+              "If it will snow, we will build a snowman.",
+              "If it snowed, we will build a snowman."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: If she comes, I giving her the keys.",
+            "answer": "If she comes, I will give her the keys.",
+            "alternatives": ["If she comes, I'll give her the keys."],
+            "near_misses": [
+              "If she comes, I giving her the keys.",
+              "If she will come, I will give her the keys."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-015@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence talks about a likely future event?",
+            "answer": "If you study hard, you will pass the test.",
+            "alternatives": [
+              "If you study hard, you will pass the test.",
+              "If you will study hard, you pass the test.",
+              "If you studied hard, you will pass the test."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-015@1:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: If the shop is closed, we would go tomorrow.",
+            "answer": "If the shop is closed, we will go tomorrow.",
+            "alternatives": ["If the shop is closed, we'll go tomorrow."],
+            "near_misses": [
+              "If the shop is closed, we would go tomorrow.",
+              "If the shop will be closed, we will go tomorrow."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-015@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with if: you / not hurry / you / miss the train",
+            "answer": "If you don't hurry, you will miss the train.",
+            "alternatives": [
+              "If you do not hurry, you will miss the train.",
+              "If you don't hurry, you'll miss the train."
+            ],
+            "near_misses": [
+              "If you won't hurry, you will miss the train.",
+              "If you don't hurry, you miss will the train."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-016",
+      "title": "Reporting statements and requests",
+      "explanation": "To report what someone says now, use says that plus a clause: She says that she is tired. The word that is optional. Change the pronoun when the speaker changes: 'I am tired' becomes She says she is tired. To report a request or order use asked or told plus an object plus to and the base verb: He asked me to open the door. She told us not to be late.",
+      "examples": [
+        {
+          "en": "She says that she is tired."
+        },
+        {
+          "en": "He asked me to open the door."
+        },
+        {
+          "en": "She told us not to be late."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-016@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-016@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence reports 'I am tired'?",
+            "answer": "She says she is tired.",
+            "alternatives": [
+              "She says she is tired.",
+              "She says I am tired.",
+              "She says she am tired."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which pattern reports a request?",
+            "answer": "asked + object + to + base verb",
+            "alternatives": [
+              "asked + object + to + base verb",
+              "asked + that + base verb",
+              "asked + -ing"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q03",
+            "format": "multiple-choice",
+            "prompt": "How do you report a negative order?",
+            "answer": "told + object + not to + base verb",
+            "alternatives": [
+              "told + object + not to + base verb",
+              "told + object + to not + -ing",
+              "told + don't + base verb"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence about the door is correct?",
+            "answer": "He asked me to open the door.",
+            "alternatives": [
+              "He asked me to open the door.",
+              "He asked me open the door.",
+              "He asked me opening the door."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q05",
+            "format": "typed-blank",
+            "prompt": "She says that she ___ tired. (be)",
+            "answer": "is",
+            "near_misses": ["am", "are"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q06",
+            "format": "typed-blank",
+            "prompt": "He asked me ___ open the door.",
+            "answer": "to",
+            "near_misses": ["for", "that"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q07",
+            "format": "typed-blank",
+            "prompt": "She told us not ___ be late.",
+            "answer": "to",
+            "near_misses": ["for", "that"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q08",
+            "format": "translation",
+            "prompt": "Report what was said: she says: 'I am tired.'",
+            "answer": "She says she is tired.",
+            "alternatives": ["She says that she is tired."],
+            "near_misses": ["She says I am tired.", "She says she am tired."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q09",
+            "format": "translation",
+            "prompt": "Report what was said: he asked me: 'Open the door, please.'",
+            "answer": "He asked me to open the door.",
+            "near_misses": [
+              "He asked me open the door.",
+              "He asked me to opened the door."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q10",
+            "format": "translation",
+            "prompt": "Report what was said: she told us: 'Don't be late.'",
+            "answer": "She told us not to be late.",
+            "near_misses": [
+              "She told us to not being late.",
+              "She told us don't be late."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He says that I am hungry. (he is hungry)",
+            "answer": "He says that he is hungry.",
+            "alternatives": ["He says he is hungry."],
+            "near_misses": [
+              "He says that I am hungry.",
+              "He says that he am hungry."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: She asked me closing the window.",
+            "answer": "She asked me to close the window.",
+            "near_misses": [
+              "She asked me closing the window.",
+              "She asked me to closed the window."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-016@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence reports a request?",
+            "answer": "My mother asked us to wash the dishes.",
+            "alternatives": [
+              "My mother asked us wash the dishes.",
+              "My mother asked us to wash the dishes.",
+              "My mother asked us washing the dishes."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-016@1:h02",
+            "format": "typed-blank",
+            "prompt": "They say they ___ happy here. (be)",
+            "answer": "are",
+            "near_misses": ["is", "am"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-016@1:h03",
+            "format": "translation",
+            "prompt": "Report what was said: the doctor told me: 'Don't eat sugar.'",
+            "answer": "The doctor told me not to eat sugar.",
+            "near_misses": [
+              "The doctor told me don't eat sugar.",
+              "The doctor told me to not eating sugar."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
