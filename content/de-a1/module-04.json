@@ -1,0 +1,621 @@
+{
+  "module_id": "de-a1-module-04",
+  "track": "German A1",
+  "title": "Dative, possessives and demonstratives",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a1-010",
+      "title": "Dative forms in fixed expressions and verb frames",
+      "explanation": "The dative is the case of the indirect object and of some fixed patterns. Dative articles: dem for masculine and neuter nouns, der for feminine nouns, den (plus -n on the noun) for plurals. Learn the dative in frequent chunks: mit dem Bus, mit der Freundin, mit dem Auto, and in verb frames such as helfen (jemandem helfen), gehören (Das Buch gehört dem Kind) and gefallen. The preposition mit always takes the dative.",
+      "examples": [
+        {
+          "de": "Ich fahre mit dem Bus.",
+          "en": "I travel by bus."
+        },
+        {
+          "de": "Anna hilft der Frau.",
+          "en": "Anna helps the woman."
+        },
+        {
+          "de": "Das Buch gehört dem Kind.",
+          "en": "The book belongs to the child."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-010@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-010@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the dative of 'der Mann'?",
+            "answer": "dem Mann",
+            "alternatives": ["den Mann", "dem Mann", "der Mann"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the dative of 'die Frau'?",
+            "answer": "der Frau",
+            "alternatives": ["die Frau", "der Frau", "den Frau"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which preposition always takes the dative?",
+            "answer": "mit",
+            "alternatives": ["mit", "für", "ohne"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses the dative correctly?",
+            "answer": "Ich fahre mit dem Bus.",
+            "alternatives": [
+              "Ich fahre mit den Bus.",
+              "Ich fahre mit dem Bus.",
+              "Ich fahre mit der Bus."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q05",
+            "format": "typed-blank",
+            "prompt": "Anna hilft ___ Mann. (the)",
+            "answer": "dem",
+            "near_misses": ["den", "der"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ich fahre mit ___ Freundin. (the)",
+            "answer": "der",
+            "near_misses": ["die", "dem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q07",
+            "format": "typed-blank",
+            "prompt": "Das gefällt ___ Kind. (the)",
+            "answer": "dem",
+            "near_misses": ["das", "den"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the dative): I travel by bus.",
+            "answer": "Ich fahre mit dem Bus.",
+            "near_misses": ["Ich fahre mit den Bus.", "Ich fahre mit der Bus."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the dative): Anna helps the woman.",
+            "answer": "Anna hilft der Frau.",
+            "near_misses": ["Anna hilft die Frau.", "Anna helfen der Frau."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the dative): The book belongs to the child.",
+            "answer": "Das Buch gehört dem Kind.",
+            "near_misses": [
+              "Das Buch gehört das Kind.",
+              "Das Buch gehören dem Kind."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q11",
+            "format": "correction",
+            "prompt": "Correct the article: Ich helfe den Mann.",
+            "answer": "Ich helfe dem Mann.",
+            "near_misses": ["Ich helfe den Mann.", "Ich helfe der Mann."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:q12",
+            "format": "correction",
+            "prompt": "Correct the article: Er fährt mit der Auto.",
+            "answer": "Er fährt mit dem Auto.",
+            "near_misses": ["Er fährt mit der Auto.", "Er fährt mit den Auto."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-010@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the dative of 'das Kind'?",
+            "answer": "dem Kind",
+            "alternatives": ["das Kind", "dem Kind", "den Kind"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-010@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use the dative): We help the man.",
+            "answer": "Wir helfen dem Mann.",
+            "near_misses": ["Wir helfen den Mann.", "Wir helft dem Mann."],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-010@1:h03",
+            "format": "correction",
+            "prompt": "Correct the article: Das gehört die Frau.",
+            "answer": "Das gehört der Frau.",
+            "near_misses": ["Das gehört die Frau.", "Das gehört den Frau."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-012",
+      "title": "Possessive determiners",
+      "explanation": "Possessive determiners show who owns something: mein (my), dein (your, one friend), sein (his, its), ihr (her), unser (our), euer (your, several friends), ihr (their), Ihr (your, formal). They take the endings of ein: mein Bruder, meine Schwester, mein Kind, meine Eltern. Choose the form by the gender of the noun that follows, not by the owner: Seine Schwester can belong to a man.",
+      "examples": [
+        {
+          "de": "Das ist mein Bruder.",
+          "en": "That is my brother."
+        },
+        {
+          "de": "Meine Schwester wohnt in Wien.",
+          "en": "My sister lives in Vienna."
+        },
+        {
+          "de": "Unser Haus ist klein.",
+          "en": "Our house is small."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-012@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-012@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'my' before 'Schwester'?",
+            "answer": "meine",
+            "alternatives": ["mein", "meine", "meinen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'your' (one friend) before 'Bruder'?",
+            "answer": "dein",
+            "alternatives": ["dein", "deine", "du"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which possessive means 'his'?",
+            "answer": "sein",
+            "alternatives": ["sein", "ihr", "unser"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which possessive means 'our'?",
+            "answer": "unser",
+            "alternatives": ["unser", "euer", "mein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q05",
+            "format": "typed-blank",
+            "prompt": "Das ist ___ Bruder. (my)",
+            "answer": "mein",
+            "near_misses": ["meine", "dein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ Schwester wohnt in Wien. (my)",
+            "answer": "Meine",
+            "near_misses": ["Mein", "Deine"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ist das ___ Buch? (your, one friend)",
+            "answer": "dein",
+            "near_misses": ["deine", "sein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use a possessive): That is my brother.",
+            "answer": "Das ist mein Bruder.",
+            "near_misses": ["Das ist meine Bruder.", "Das ist dein Bruder."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use a possessive): Our house is small.",
+            "answer": "Unser Haus ist klein.",
+            "near_misses": ["Unsere Haus ist klein.", "Unser Haus ist kleine."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use a possessive): His sister works in Bonn.",
+            "answer": "Seine Schwester arbeitet in Bonn.",
+            "near_misses": [
+              "Sein Schwester arbeitet in Bonn.",
+              "Seine Schwester arbeiten in Bonn."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q11",
+            "format": "correction",
+            "prompt": "Correct the possessive: Das ist meine Bruder.",
+            "answer": "Das ist mein Bruder.",
+            "near_misses": ["Das ist meine Bruder.", "Das ist meinen Bruder."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:q12",
+            "format": "correction",
+            "prompt": "Correct the possessive: Mein Mutter arbeitet heute.",
+            "answer": "Meine Mutter arbeitet heute.",
+            "near_misses": [
+              "Mein Mutter arbeitet heute.",
+              "Meinen Mutter arbeitet heute."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-012@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which possessive means 'her'?",
+            "answer": "ihr",
+            "alternatives": ["ihr", "sein", "euer"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-012@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use a possessive): Her brother lives in Köln.",
+            "answer": "Ihr Bruder wohnt in Köln.",
+            "near_misses": [
+              "Ihre Bruder wohnt in Köln.",
+              "Ihr Bruder wohnen in Köln."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-012@1:h03",
+            "format": "correction",
+            "prompt": "Correct the possessive: Deine Bruder ist nett.",
+            "answer": "Dein Bruder ist nett.",
+            "near_misses": [
+              "Deine Bruder ist nett.",
+              "Deinen Bruder ist nett."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-013",
+      "title": "Demonstratives: dieser, diese, dieses",
+      "explanation": "Use dieser, diese and dieses to point to something specific (this, these). The endings follow the gender of the noun: dieser Tisch (masculine), diese Lampe (feminine), dieses Buch (neuter), diese Kinder (plural). They work like the definite article: the ending carries the gender signal. The same words cover 'these' in the plural.",
+      "examples": [
+        {
+          "de": "Dieser Tisch ist neu.",
+          "en": "This table is new."
+        },
+        {
+          "de": "Diese Lampe ist alt.",
+          "en": "This lamp is old."
+        },
+        {
+          "de": "Dieses Buch ist gut.",
+          "en": "This book is good."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-013@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-013@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'Frau'?",
+            "answer": "diese",
+            "alternatives": ["dieser", "diese", "dieses"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'Buch'?",
+            "answer": "dieses",
+            "alternatives": ["dieser", "diese", "dieses"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'Tisch'?",
+            "answer": "dieser",
+            "alternatives": ["dieser", "diese", "dieses"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with the plural 'Kinder'?",
+            "answer": "diese",
+            "alternatives": ["dieser", "diese", "dieses"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ Tisch ist neu. (this)",
+            "answer": "Dieser",
+            "near_misses": ["Diese", "Dieses"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ Lampe ist alt. (this)",
+            "answer": "Diese",
+            "near_misses": ["Dieser", "Dieses"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ Buch ist gut. (this)",
+            "answer": "Dieses",
+            "near_misses": ["Dieser", "Diese"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use this/these): This table is new.",
+            "answer": "Dieser Tisch ist neu.",
+            "near_misses": ["Diese Tisch ist neu.", "Dieses Tisch ist neu."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use this/these): These children play.",
+            "answer": "Diese Kinder spielen.",
+            "near_misses": ["Dieser Kinder spielen.", "Diese Kinder spielt."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use this/these): This book is good.",
+            "answer": "Dieses Buch ist gut.",
+            "near_misses": ["Diese Buch ist gut.", "Dieser Buch ist gut."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Diese Tisch ist alt.",
+            "answer": "Dieser Tisch ist alt.",
+            "near_misses": ["Diese Tisch ist alt.", "Dieses Tisch ist alt."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Dieser Lampe ist neu.",
+            "answer": "Diese Lampe ist neu.",
+            "near_misses": ["Dieser Lampe ist neu.", "Dieses Lampe ist neu."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-013@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses the right form for 'this house'?",
+            "answer": "Dieses Haus ist alt.",
+            "alternatives": [
+              "Diese Haus ist alt.",
+              "Dieses Haus ist alt.",
+              "Dieser Haus ist alt."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-013@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use this/these): This woman works.",
+            "answer": "Diese Frau arbeitet.",
+            "near_misses": ["Dieser Frau arbeitet.", "Diese Frau arbeiten."],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-013@1:h03",
+            "format": "correction",
+            "prompt": "Correct the form: Dieses Mann ist müde.",
+            "answer": "Dieser Mann ist müde.",
+            "near_misses": ["Dieses Mann ist müde.", "Diese Mann ist müde."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-015",
+      "title": "Dative pronouns in frequent expressions",
+      "explanation": "Learn the dative pronouns inside frequent chunks: mir (me), dir (you, one friend), ihm (him), ihr (her), uns (us), euch (you, several friends), ihnen (them). Typical frames are Wie geht es dir? (How are you?), Mir geht es gut, Das gefällt mir (I like it), Ich helfe ihm (I help him) and Anna hilft mir. Do not use the accusative here: mir, not mich, after helfen and gefallen.",
+      "examples": [
+        {
+          "de": "Wie geht es dir?",
+          "en": "How are you?"
+        },
+        {
+          "de": "Das gefällt mir.",
+          "en": "I like that."
+        },
+        {
+          "de": "Ich helfe ihm.",
+          "en": "I help him."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-015@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-015@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the dative of 'ich'?",
+            "answer": "mir",
+            "alternatives": ["mir", "mich", "mein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the dative of 'du'?",
+            "answer": "dir",
+            "alternatives": ["dich", "dir", "du"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the dative of 'er'?",
+            "answer": "ihm",
+            "alternatives": ["ihn", "ihm", "ihr"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question asks 'How are you?' to one friend?",
+            "answer": "Wie geht es dir?",
+            "alternatives": [
+              "Wie geht es dich?",
+              "Wie geht es dir?",
+              "Wie geht es du?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q05",
+            "format": "typed-blank",
+            "prompt": "Wie geht es ___? (you, one friend)",
+            "answer": "dir",
+            "near_misses": ["dich", "du"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q06",
+            "format": "typed-blank",
+            "prompt": "Das gefällt ___. (me)",
+            "answer": "mir",
+            "near_misses": ["mich", "ich"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich helfe ___. (him)",
+            "answer": "ihm",
+            "near_misses": ["ihn", "er"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use a dative pronoun): I like that. (it pleases me)",
+            "answer": "Das gefällt mir.",
+            "near_misses": ["Das gefällt mich.", "Das gefallen mir."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use a dative pronoun): I help him.",
+            "answer": "Ich helfe ihm.",
+            "near_misses": ["Ich helfe ihn.", "Ich helfe er."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use a dative pronoun): Anna helps me.",
+            "answer": "Anna hilft mir.",
+            "near_misses": ["Anna hilft mich.", "Anna helfen mir."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Wie geht es du?",
+            "answer": "Wie geht es dir?",
+            "near_misses": ["Wie geht es du?", "Wie geht es dich?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Das gefällt ich.",
+            "answer": "Das gefällt mir.",
+            "near_misses": ["Das gefällt ich.", "Das gefällt mich."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-015@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the dative of 'wir'?",
+            "answer": "uns",
+            "alternatives": ["uns", "wir", "unser"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-015@1:h02",
+            "format": "typed-blank",
+            "prompt": "Wie geht es ___? (you all)",
+            "answer": "euch",
+            "near_misses": ["ihr", "eure"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-015@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use a dative pronoun): Max helps you. (one friend)",
+            "answer": "Max hilft dir.",
+            "near_misses": ["Max hilft dich.", "Max helfen dir."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
