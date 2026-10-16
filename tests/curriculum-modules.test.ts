@@ -3,12 +3,16 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
-import { bundlePackage } from '../src/lib/server/content-bundle';
-import {
-  importContent,
-  type ContentPackage
-} from '../src/lib/server/content-import';
+import { importContent } from '../src/lib/server/content-import';
 import { columnIndex, parseCsv } from '../scripts/curriculum-contract.mjs';
+import {
+  accepts,
+  formats,
+  modulePackage,
+  normalize,
+  typedAnswers,
+  type Module
+} from './fixtures/curriculum-module';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 
 // Authored curriculum modules after French A1 module 01 (which keeps its own
@@ -16,38 +20,8 @@ import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 // answer-matching rule and the importer. Add a module by adding its JSON file
 // under content/<track>/ and an evidence file under docs/evidence/modules/.
 
-type Question = {
-  id: string;
-  format: 'multiple-choice' | 'typed-blank' | 'translation' | 'correction';
-  prompt: string;
-  answer: string;
-  alternatives?: string[];
-  near_misses?: string[];
-  holdout: boolean;
-};
-
-type Lesson = {
-  skill_id: string;
-  title: string;
-  explanation: string;
-  examples: { fr?: string; de?: string; en: string }[];
-  references: string[];
-  version: { id: string; version: number; questions: Question[] };
-};
-
-type Module = {
-  module_id: string;
-  track: string;
-  title: string;
-  instruction_language: string;
-  review_status: string;
-  matching: string;
-  lessons: Lesson[];
-};
-
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
-const formats = ['multiple-choice', 'typed-blank', 'translation', 'correction'];
 
 const files = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
@@ -78,56 +52,8 @@ const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .sort()
   .map(load);
 
-// Typed answers ignore letter case, surrounding and repeated spaces,
-// typographic apostrophes and final . ! or ?; accents and all else count.
-function normalize(value: string) {
-  return value
-    .normalize('NFC')
-    .replace(/[‘’ʼ‛]/gu, "'")
-    .trim()
-    .replace(/[.!?]+$/u, '')
-    .replace(/\s+/gu, ' ')
-    .trim()
-    .toLowerCase();
-}
-
-function accepts(question: Question, response: string) {
-  if (question.format === 'multiple-choice')
-    return response === question.answer;
-  return [question.answer, ...(question.alternatives ?? [])].some(
-    (item) => normalize(item) === normalize(response)
-  );
-}
-
-const typedAnswers = (q: Question) =>
-  q.format === 'multiple-choice'
-    ? [q.answer]
-    : [q.answer, ...(q.alternatives ?? [])];
-
-function modulePackage(
-  module: Module,
-  review: string,
-  version?: string
-): ContentPackage {
-  const pkg = bundlePackage(root);
-  return {
-    ...pkg,
-    curriculumVersion: version ?? pkg.curriculumVersion,
-    versions: module.lessons.map((lesson) => ({
-      id: lesson.version.id,
-      skillId: lesson.skill_id,
-      version: lesson.version.version,
-      review,
-      questions: lesson.version.questions.map((q) => ({
-        id: q.id,
-        format: q.format,
-        prompt: q.prompt,
-        answer: q.answer,
-        alternatives: q.alternatives
-      }))
-    }))
-  };
-}
+const packageFor = (module: Module, review: string, version?: string) =>
+  modulePackage(root, module, review, version);
 
 it('finds the authored modules this suite covers', () => {
   expect(files.length).toBeGreaterThan(0);
@@ -311,7 +237,7 @@ describe.each(files)('%s', (path) => {
       const before = await Promise.all(tables.map(count));
       for (const review of ['unreviewed', 'pending-owner-review']) {
         await expect(
-          importContent(client, modulePackage(module, review)),
+          importContent(client, packageFor(module, review)),
           review
         ).rejects.toMatchObject({ code: 'UNREVIEWED' });
         expect(await Promise.all(tables.map(count)), review).toEqual(before);
@@ -321,16 +247,13 @@ describe.each(files)('%s', (path) => {
     it('imports once reviewed, and a second import adds nothing', async () => {
       const result = await importContent(
         client,
-        modulePackage(module, 'approved')
+        packageFor(module, 'approved')
       );
       expect([result.versions, result.questions]).toEqual([
         module.lessons.length,
         questions.length
       ]);
-      const again = await importContent(
-        client,
-        modulePackage(module, 'approved')
-      );
+      const again = await importContent(client, packageFor(module, 'approved'));
       expect([again.versions, again.questions]).toEqual([0, 0]);
     });
   });
