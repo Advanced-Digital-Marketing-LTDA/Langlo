@@ -55,28 +55,30 @@ const attempt = (key: string, questionId: string, studySessionId = 'study-a') =>
     answer: 'suis'
   });
 
+/** Import a second version of fr-a1-001 with its own question ids. */
+const importVersionTwo = async () => {
+  const pkg = approvedPackage();
+  Object.assign(pkg.versions[0], { lesson });
+  Object.assign(pkg.versions[0].questions[1], { holdout: true });
+  pkg.curriculumVersion = '0.2.0';
+  pkg.versions.push({
+    id: 'fr-a1-001@2',
+    skillId: 'fr-a1-001',
+    version: 2,
+    review: 'approved',
+    questions: [
+      {
+        id: 'fr-a1-001@2:q1',
+        format: 'typed-blank',
+        prompt: 'Nous ___ ici.',
+        answer: 'sommes'
+      }
+    ]
+  });
+  await importContent(client, pkg);
+};
+
 describe('answers are held to the session version', () => {
-  const importVersionTwo = async () => {
-    const pkg = approvedPackage();
-    Object.assign(pkg.versions[0], { lesson });
-    Object.assign(pkg.versions[0].questions[1], { holdout: true });
-    pkg.curriculumVersion = '0.2.0';
-    pkg.versions.push({
-      id: 'fr-a1-001@2',
-      skillId: 'fr-a1-001',
-      version: 2,
-      review: 'approved',
-      questions: [
-        {
-          id: 'fr-a1-001@2:q1',
-          format: 'typed-blank',
-          prompt: 'Nous ___ ici.',
-          answer: 'sommes'
-        }
-      ]
-    });
-    await importContent(client, pkg);
-  };
   const countAttempts = async () =>
     (await client.execute('SELECT count(*) AS n FROM attempts')).rows[0].n;
 
@@ -333,25 +335,7 @@ describe('next question', () => {
 
   it('keeps a started skill on its original version after a newer import', async () => {
     await attempt('k-pin', 'fr-a1-001@1:q1');
-    const pkg = approvedPackage();
-    Object.assign(pkg.versions[0], { lesson });
-    Object.assign(pkg.versions[0].questions[1], { holdout: true });
-    pkg.curriculumVersion = '0.2.0';
-    pkg.versions.push({
-      id: 'fr-a1-001@2',
-      skillId: 'fr-a1-001',
-      version: 2,
-      review: 'approved',
-      questions: [
-        {
-          id: 'fr-a1-001@2:q1',
-          format: 'typed-blank',
-          prompt: 'Nous ___ ici.',
-          answer: 'sommes'
-        }
-      ]
-    });
-    await importContent(client, pkg);
+    await importVersionTwo();
     await pauseStudySession(client, ownerA, 'study-a');
     await resumeStudySession(client, ownerA, 'study-a');
     // The resumed session is finished with version 1, not restarted on 2.

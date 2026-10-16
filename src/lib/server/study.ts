@@ -208,6 +208,47 @@ async function replayAttempt(
   return { id: String(prior.id), duplicate: true };
 }
 
+/** The question in the session's language, if it is available in this mode. */
+async function availableQuestion(
+  tx: WriteTransaction,
+  input: AttemptInput,
+  studyRow: Row
+) {
+  const question = await tx.execute({
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    args: [input.questionId, studyRow.language]
+  });
+  const questionRow = question.rows[0];
+  if (!questionRow) throw new StudyError('NOT_FOUND');
+  // Withdrawn content is unavailable; assessment holdouts cannot enter practice.
+  if (
+    questionRow.status === 'quarantined' ||
+    (questionRow.holdout === 1 && studyRow.mode !== 'assessment')
+  )
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  return questionRow;
+}
+
+/**
+ * The first answer pins a skill to a version for the session. A tab still
+ * holding a question from another version would record evidence the resume
+ * position can no longer see.
+ */
+async function assertSessionVersion(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput,
+  questionRow: Row
+) {
+  const pinned = await tx.execute({
+    sql: 'SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1',
+    args: [session.userId, input.studySessionId, questionRow.skill_id]
+  });
+  const version = pinned.rows[0]?.content_version_id;
+  if (version !== undefined && version !== questionRow.content_version_id)
+    throw new StudyError('STALE_QUESTION');
+}
+
 /** The caller's active session and an available question in its language. */
 async function attemptSource(
   tx: WriteTransaction,
@@ -221,31 +262,8 @@ async function attemptSource(
   const studyRow = study.rows[0];
   if (!studyRow) throw new StudyError('NOT_FOUND');
   if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
-
-  const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
-    args: [input.questionId, studyRow.language]
-  });
-  const questionRow = question.rows[0];
-  if (!questionRow) throw new StudyError('NOT_FOUND');
-  // Withdrawn content is unavailable; assessment holdouts cannot enter practice.
-  if (
-    questionRow.status === 'quarantined' ||
-    (questionRow.holdout === 1 && studyRow.mode !== 'assessment')
-  )
-    throw new StudyError('CONTENT_UNAVAILABLE');
-  // The first answer pins the skill to a version for this session. A tab
-  // still holding a question from another version would record evidence the
-  // resume position can no longer see.
-  const pinned = await tx.execute({
-    sql: 'SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1',
-    args: [session.userId, input.studySessionId, questionRow.skill_id]
-  });
-  if (
-    pinned.rows[0] &&
-    pinned.rows[0].content_version_id !== questionRow.content_version_id
-  )
-    throw new StudyError('STALE_QUESTION');
+  const questionRow = await availableQuestion(tx, input, studyRow);
+  await assertSessionVersion(tx, session, input, questionRow);
   return {
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
