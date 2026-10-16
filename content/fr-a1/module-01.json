@@ -1,0 +1,655 @@
+{
+  "module_id": "fr-a1-module-01",
+  "track": "French A1",
+  "title": "Identity and simple statements",
+  "instruction_language": "en",
+  "review_status": "pending-owner-review",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "fr-a1-001",
+      "title": "Short statements: a subject and a verb",
+      "explanation": "A basic French statement starts with a subject (a name, a noun such as le train, or a pronoun) followed by a conjugated verb: Marie travaille. The verb must be a conjugated form, not the dictionary form (the infinitive): say Le bus arrive, not Le bus arriver. Extra information, such as a place or a time, usually comes after the verb.",
+      "examples": [
+        {
+          "fr": "Marie travaille.",
+          "en": "Marie works."
+        },
+        {
+          "fr": "Le train arrive à midi.",
+          "en": "The train arrives at noon."
+        },
+        {
+          "fr": "Paul mange une pomme.",
+          "en": "Paul is eating an apple."
+        }
+      ],
+      "references": ["COE-CV20", "FEI-INV"],
+      "version": {
+        "id": "fr-a1-001@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-001@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a complete French statement?",
+            "answer": "Marie travaille.",
+            "alternatives": [
+              "Marie travaille.",
+              "Marie travailler.",
+              "Travaille Marie."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'The train is arriving.'",
+            "answer": "Le train arrive.",
+            "alternatives": [
+              "Le arrive train.",
+              "Le train arrive.",
+              "Le train arriver."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word is the verb in 'Paul mange une pomme.'?",
+            "answer": "mange",
+            "alternatives": ["pomme", "Paul", "mange"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q04",
+            "format": "typed-blank",
+            "prompt": "Le chat ___. (dort / dormir)",
+            "answer": "dort",
+            "near_misses": ["dormir"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ma sœur ___ à Lille. (habiter / habite)",
+            "answer": "habite",
+            "near_misses": ["habiter"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q06",
+            "format": "typed-blank",
+            "prompt": "Le magasin ___ à neuf heures. (ouvre / ouvrir)",
+            "answer": "ouvre",
+            "near_misses": ["ouvrir"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q07",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Paul is working.",
+            "answer": "Paul travaille.",
+            "near_misses": ["Paul travailler.", "Paul est travaille."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The baby is crying.",
+            "answer": "Le bébé pleure.",
+            "near_misses": [
+              "Le bébé pleurer.",
+              "Le bébé est pleure.",
+              "Le bebe pleure."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Anna speaks Italian.",
+            "answer": "Anna parle italien.",
+            "alternatives": ["Anna parle l'italien."],
+            "near_misses": ["Anna parler italien.", "Parle Anna italien."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q10",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Le train arriver.",
+            "answer": "Le train arrive.",
+            "near_misses": ["Le train arriver."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Travaille Marc à Nice.",
+            "answer": "Marc travaille à Nice.",
+            "near_misses": ["Travaille Marc à Nice.", "Marc travaille a Nice."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Le professeur parler anglais.",
+            "answer": "Le professeur parle anglais.",
+            "alternatives": ["Le professeur parle l'anglais."],
+            "near_misses": ["Le professeur parler anglais."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-001@1:h01",
+            "format": "typed-blank",
+            "prompt": "La boulangerie ___ tôt. (fermer / ferme)",
+            "answer": "ferme",
+            "near_misses": ["fermer"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-001@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The bus is passing.",
+            "answer": "Le bus passe.",
+            "alternatives": ["L'autobus passe."],
+            "near_misses": ["Le bus passer.", "Le passe bus."],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-001@1:h03",
+            "format": "multiple-choice",
+            "prompt": "Pick the sentence with a subject and a conjugated verb.",
+            "answer": "Mon frère chante.",
+            "alternatives": [
+              "Mon frère chante.",
+              "Mon frère chanter.",
+              "Chanter mon frère."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-002",
+      "title": "Subject pronouns",
+      "explanation": "French subject pronouns are je (I), tu (you, one person you know well), il (he), elle (she), on (we, informal, or people in general), nous (we), vous (you, polite or more than one person), ils (they, men or a mixed group) and elles (they, women only). Je becomes j' before a vowel or a silent h: j'aime, j'habite. A group with at least one man takes ils.",
+      "examples": [
+        {
+          "fr": "Elle chante.",
+          "en": "She sings."
+        },
+        {
+          "fr": "J'habite à Lyon.",
+          "en": "I live in Lyon."
+        },
+        {
+          "fr": "Vous parlez français ?",
+          "en": "Do you speak French?"
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-002@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-002@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun replaces 'Marie' in 'Marie est là.'?",
+            "answer": "Elle",
+            "alternatives": ["Ils", "Elle", "Il"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun replaces 'Paul et Luc'?",
+            "answer": "Ils",
+            "alternatives": ["Elles", "Il", "Ils"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun replaces 'Léa et Inès'?",
+            "answer": "Elles",
+            "alternatives": ["Elles", "Ils", "Elle"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q04",
+            "format": "multiple-choice",
+            "prompt": "You are speaking politely to a new colleague. Which word means 'you'?",
+            "answer": "vous",
+            "alternatives": ["on", "vous", "tu"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ parles anglais. (you, one friend)",
+            "answer": "Tu",
+            "near_misses": ["Vous", "Te"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ habitons à Lyon. (we)",
+            "answer": "Nous",
+            "near_misses": ["On", "Vous"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q07",
+            "format": "typed-blank",
+            "prompt": "___aime le café. (I)",
+            "answer": "J'",
+            "near_misses": ["Je", "J"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She is singing.",
+            "answer": "Elle chante.",
+            "near_misses": ["Il chante.", "Elles chante."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (a group of women) are dancing.",
+            "answer": "Elles dansent.",
+            "near_misses": ["Ils dansent."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are eating.",
+            "answer": "On mange.",
+            "alternatives": ["Nous mangeons."],
+            "near_misses": ["Nous mange.", "On mangeons."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je habite à Rennes.",
+            "answer": "J'habite à Rennes.",
+            "near_misses": ["Je habite à Rennes.", "J'habite a Rennes."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (replace the pronoun): (Paul and Sophie) Elles arrivent.",
+            "answer": "Ils arrivent.",
+            "near_misses": ["Elles arrivent.", "Il arrivent."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-002@1:h01",
+            "format": "multiple-choice",
+            "prompt": "In everyday speech, which pronoun often replaces 'nous'?",
+            "answer": "On",
+            "alternatives": ["Il", "Vous", "On"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-002@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ arrive demain. (he)",
+            "answer": "Il",
+            "near_misses": ["Elle", "Ils"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-002@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (boys) are playing.",
+            "answer": "Ils jouent.",
+            "near_misses": ["Elles jouent.", "Il jouent."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-003",
+      "title": "Regular -er verbs in the present",
+      "explanation": "Most French verbs end in -er, like parler (to speak). Drop -er and add the ending for the subject: je parle, tu parles, il/elle/on parle, nous parlons, vous parlez, ils/elles parlent. The -e, -es and -ent forms sound the same. To ask a yes/no question, put est-ce que before the statement (Est-ce que tu parles anglais ?) or simply raise your voice at the end (Tu parles anglais ?).",
+      "examples": [
+        {
+          "fr": "Nous parlons français.",
+          "en": "We speak French."
+        },
+        {
+          "fr": "Ils regardent un film.",
+          "en": "They are watching a film."
+        },
+        {
+          "fr": "Est-ce que tu travailles demain ?",
+          "en": "Are you working tomorrow?"
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-003@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-003@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nous ___ (parler) français.",
+            "answer": "parlons",
+            "alternatives": ["parlons", "parlez", "parlent"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ils ___ (regarder) un film.",
+            "answer": "regardent",
+            "alternatives": ["regardez", "regardent", "regardes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which is a correct yes/no question?",
+            "answer": "Est-ce que tu travailles ?",
+            "alternatives": [
+              "Est-ce que tu travailler ?",
+              "Est-ce tu que travailles ?",
+              "Est-ce que tu travailles ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q04",
+            "format": "typed-blank",
+            "prompt": "Tu ___ (chercher) tes clés.",
+            "answer": "cherches",
+            "near_misses": ["cherche", "cherchez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q05",
+            "format": "typed-blank",
+            "prompt": "Vous ___ (aimer) le thé ?",
+            "answer": "aimez",
+            "near_misses": ["aimer", "aimé"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q06",
+            "format": "typed-blank",
+            "prompt": "Elle ___ (étudier) le droit.",
+            "answer": "étudie",
+            "near_misses": ["étudient", "etudie"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q07",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are watching TV.",
+            "answer": "Nous regardons la télé.",
+            "alternatives": [
+              "Nous regardons la télévision.",
+              "On regarde la télé.",
+              "On regarde la télévision.",
+              "Nous regardons la TV.",
+              "On regarde la TV."
+            ],
+            "near_misses": [
+              "Nous regardez la télé.",
+              "Nous regardons la tele."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Do you (informal) like music? Use est-ce que.",
+            "answer": "Est-ce que tu aimes la musique ?",
+            "near_misses": [
+              "Est-ce que tu aime la musique ?",
+              "Est-ce que tu aimez la musique ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (men) are working today.",
+            "answer": "Ils travaillent aujourd'hui.",
+            "alternatives": [
+              "Aujourd'hui, ils travaillent.",
+              "Aujourd'hui ils travaillent."
+            ],
+            "near_misses": [
+              "Ils travaille aujourd'hui.",
+              "Ils travaillez aujourd'hui."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q10",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Nous parlez espagnol.",
+            "answer": "Nous parlons espagnol.",
+            "alternatives": ["Nous parlons l'espagnol."],
+            "near_misses": ["Nous parlez espagnol."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Tu chante bien.",
+            "answer": "Tu chantes bien.",
+            "near_misses": ["Tu chante bien."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Est-ce que vous habiter ici ?",
+            "answer": "Est-ce que vous habitez ici ?",
+            "alternatives": ["Vous habitez ici ?"],
+            "near_misses": ["Est-ce que vous habiter ici ?"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-003@1:h01",
+            "format": "typed-blank",
+            "prompt": "Je ___ (donner) un livre à Sam.",
+            "answer": "donne",
+            "near_misses": ["donnes", "donner"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-003@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Do you (polite) speak English? Use est-ce que.",
+            "answer": "Est-ce que vous parlez anglais ?",
+            "alternatives": ["Est-ce que vous parlez l'anglais ?"],
+            "near_misses": [
+              "Est-ce que vous parlé anglais ?",
+              "Est-ce que vous parler anglais ?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-003@1:h03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Elles ___ (jouer) au tennis.",
+            "answer": "jouent",
+            "alternatives": ["jouent", "joues", "jouons"],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-004",
+      "title": "Être and avoir in the present",
+      "explanation": "Être (to be) and avoir (to have) are irregular. Être: je suis, tu es, il/elle/on est, nous sommes, vous êtes, ils/elles sont. Avoir: j'ai, tu as, il/elle/on a, nous avons, vous avez, ils/elles ont. Use être for who you are (nationality, job): Je suis infirmière. Use avoir for what you have, and for your age: J'ai trente ans (not Je suis trente ans). Do not confuse a (has) with the preposition à.",
+      "examples": [
+        {
+          "fr": "Je suis canadien.",
+          "en": "I am Canadian."
+        },
+        {
+          "fr": "Nous avons un chat.",
+          "en": "We have a cat."
+        },
+        {
+          "fr": "Elle a vingt ans.",
+          "en": "She is twenty years old."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-004@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-004@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nous ___ étudiants.",
+            "answer": "sommes",
+            "alternatives": ["sont", "sommes", "êtes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q02",
+            "format": "multiple-choice",
+            "prompt": "How do you say 'I am 20 years old'?",
+            "answer": "J'ai vingt ans.",
+            "alternatives": [
+              "Je suis vingt ans.",
+              "J'ai vingt.",
+              "J'ai vingt ans."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Vous ___ une voiture ?",
+            "answer": "avez",
+            "alternatives": ["avez", "êtes", "avons"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q04",
+            "format": "typed-blank",
+            "prompt": "Tu ___ (être) canadien ?",
+            "answer": "es",
+            "near_misses": ["est", "ai"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ils ___ (avoir) deux enfants.",
+            "answer": "ont",
+            "near_misses": ["sont", "a"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q06",
+            "format": "typed-blank",
+            "prompt": "Je ___ (être) infirmière.",
+            "answer": "suis",
+            "near_misses": ["sui", "es"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q07",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She is Spanish.",
+            "answer": "Elle est espagnole.",
+            "near_misses": ["Elle est espagnol.", "Elle a espagnole."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We have a dog.",
+            "answer": "Nous avons un chien.",
+            "alternatives": ["On a un chien."],
+            "near_misses": ["Nous sommes un chien.", "Nous avez un chien."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I am thirty years old.",
+            "answer": "J'ai trente ans.",
+            "alternatives": ["J'ai 30 ans."],
+            "near_misses": ["Je suis trente ans.", "J'ai trente."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q10",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je suis 25 ans.",
+            "answer": "J'ai 25 ans.",
+            "alternatives": ["J'ai vingt-cinq ans."],
+            "near_misses": ["Je suis 25 ans.", "Je ai 25 ans."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Vous êtez médecin ?",
+            "answer": "Vous êtes médecin ?",
+            "near_misses": ["Vous êtez médecin ?", "Vous etes médecin ?"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Ils a un appartement.",
+            "answer": "Ils ont un appartement.",
+            "near_misses": [
+              "Ils a un appartement.",
+              "Ils sont un appartement."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-004@1:h01",
+            "format": "typed-blank",
+            "prompt": "Elle ___ (avoir) un vélo rouge.",
+            "answer": "a",
+            "near_misses": ["à", "est"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-004@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): You (polite, one person) are French.",
+            "answer": "Vous êtes français.",
+            "alternatives": ["Vous êtes française."],
+            "near_misses": ["Vous etes français.", "Vous avez français."],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-004@1:h03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nous ___ une maison.",
+            "answer": "avons",
+            "alternatives": ["ont", "avons", "sommes"],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
