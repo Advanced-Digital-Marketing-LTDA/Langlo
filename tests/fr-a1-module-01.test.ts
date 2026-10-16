@@ -256,8 +256,13 @@ describe('French A1 module 01 import', () => {
         .filter((key) => key.startsWith('fr-a1-'))
         .sort()
     ).toEqual(expected);
-    // The importer has no holdout flag (LANGLO-125): holdouts are stored as ordinary
-    // questions, so their separation from practice lives in the module JSON.
+    const classifications = await db.client.execute(
+      "SELECT holdout, COUNT(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' GROUP BY holdout ORDER BY holdout"
+    );
+    expect(classifications.rows).toEqual([
+      { holdout: 0, n: 48 },
+      { holdout: 1, n: 12 }
+    ]);
     expect((await count('questions')) - before).toBe(questions.length);
     const tables = [
       'skills',

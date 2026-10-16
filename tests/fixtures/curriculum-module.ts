@@ -133,7 +133,8 @@ export function modulePackage(
         format: q.format,
         prompt: q.prompt,
         answer: q.answer,
-        alternatives: q.alternatives
+        alternatives: q.alternatives,
+        holdout: q.holdout
       }))
     }))
   };

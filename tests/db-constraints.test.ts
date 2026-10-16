@@ -21,6 +21,30 @@ afterEach(async () => {
 });
 
 describe('actual SQLite ownership and version constraints', () => {
+  it.each([2, -1, 0.5, 'true', null])(
+    'rejects invalid persisted holdout %s',
+    async (holdout) => {
+      const { client, close } = await openFixtureDatabase(target);
+      try {
+        await expect(
+          client.execute({
+            sql: "UPDATE questions SET holdout = ? WHERE id = 'question-1'",
+            args: [holdout]
+          })
+        ).rejects.toThrow();
+        expect(
+          (
+            await client.execute(
+              "SELECT holdout FROM questions WHERE id = 'question-1'"
+            )
+          ).rows
+        ).toEqual([{ holdout: 0 }]);
+      } finally {
+        close();
+      }
+    }
+  );
+
   it.each(['not-positive-integer', 1.5])(
     'rejects non-integral persisted content version %s',
     async (version) => {
