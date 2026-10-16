@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `attempts_session_question_independent` ON `attempts` (`owner_id`,`study_session_id`,`question_id`) WHERE "attempts"."evidence_kind" = 'independent';

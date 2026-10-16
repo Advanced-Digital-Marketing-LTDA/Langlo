@@ -311,7 +311,7 @@ describe('private learner routes', () => {
       event('learner-a', {
         body: {
           studySessionId: 'study-a',
-          questionId: 'question-1',
+          questionId: 'question-2',
           submissionKey: 'route-attempt',
           evidenceKind: 'independent',
           answer: 'est'

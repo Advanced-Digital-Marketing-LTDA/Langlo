@@ -65,7 +65,7 @@ describe('disposable libSQL migrations', () => {
         const contentSql =
           'SELECT id, skill_id, language, version, status, created_at FROM content_versions ORDER BY id';
         const objectsSql =
-          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name <> 'sqlite_autoindex_lessons_1' ORDER BY name";
+          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT IN ('sqlite_autoindex_lessons_1', 'attempts_session_question_independent') ORDER BY name";
         const content = (await client.execute(contentSql)).rows;
         const attempts = (await client.execute('SELECT * FROM attempts')).rows;
         const objects = (await client.execute(objectsSql)).rows;
@@ -341,7 +341,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT count(*) AS count FROM __drizzle_migrations'
           )
         ).rows[0].count
-      ).toBe(11);
+      ).toBe(12);
     } finally {
       close();
     }

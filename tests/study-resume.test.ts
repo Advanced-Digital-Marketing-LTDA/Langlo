@@ -55,6 +55,53 @@ const attempt = (key: string, questionId: string, studySessionId = 'study-a') =>
     answer: 'suis'
   });
 
+describe('one independent answer per question', () => {
+  it('lets only one of two tabs answer the same question', async () => {
+    const settled = await Promise.allSettled([
+      attempt('tab-1', 'fr-a1-001@1:q1'),
+      attempt('tab-2', 'fr-a1-001@1:q1')
+    ]);
+    expect(settled.map((result) => result.status).sort()).toEqual([
+      'fulfilled',
+      'rejected'
+    ]);
+    const lost = settled.find((result) => result.status === 'rejected');
+    expect((lost as PromiseRejectedResult).reason.message).toBe(
+      'QUESTION_ALREADY_ANSWERED'
+    );
+    const stored = await client.execute(
+      "SELECT count(*) AS n FROM attempts WHERE study_session_id = 'study-a' AND question_id = 'fr-a1-001@1:q1' AND evidence_kind = 'independent'"
+    );
+    expect(stored.rows[0].n).toBe(1);
+  });
+
+  it('still replays the same submission key and records an assisted retry', async () => {
+    const first = await attempt('k-once', 'fr-a1-001@1:q1');
+    expect(await attempt('k-once', 'fr-a1-001@1:q1')).toEqual({
+      id: first.id,
+      duplicate: true
+    });
+    await expect(
+      recordAttempt(client, ownerA, {
+        studySessionId: 'study-a',
+        questionId: 'fr-a1-001@1:q1',
+        submissionKey: 'k-retry',
+        evidenceKind: 'assisted',
+        answer: 'suis'
+      })
+    ).resolves.toMatchObject({ duplicate: false });
+  });
+
+  it('is enforced by the database for writes that bypass the service', async () => {
+    await attempt('k-db', 'fr-a1-001@1:q1');
+    await expect(
+      client.execute(
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('dup', 'learner-a', 'study-a', 'fr-a1-001@1:q1', 'fr-a1-001@1', 'fr-a1-001', 'fr', 'k-dup', 'independent', 'suis')"
+      )
+    ).rejects.toThrow(/UNIQUE/i);
+  });
+});
+
 describe('pause and resume', () => {
   it('pauses with the supplied time and resumes a paused session with no expiry', async () => {
     const pausedAt = 1_800_000_000_000;
@@ -236,6 +283,41 @@ describe('next question', () => {
         'fr-a1-001'
       )
     ).rejects.toThrow('CONTENT_UNAVAILABLE');
+  });
+
+  it('keeps a started skill on its original version after a newer import', async () => {
+    await attempt('k-pin', 'fr-a1-001@1:q1');
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson });
+    Object.assign(pkg.versions[0].questions[1], { holdout: true });
+    pkg.curriculumVersion = '0.2.0';
+    pkg.versions.push({
+      id: 'fr-a1-001@2',
+      skillId: 'fr-a1-001',
+      version: 2,
+      review: 'approved',
+      questions: [
+        {
+          id: 'fr-a1-001@2:q1',
+          format: 'typed-blank',
+          prompt: 'Nous ___ ici.',
+          answer: 'sommes'
+        }
+      ]
+    });
+    await importContent(client, pkg);
+    await pauseStudySession(client, ownerA, 'study-a');
+    await resumeStudySession(client, ownerA, 'study-a');
+    // The resumed session is finished with version 1, not restarted on 2.
+    expect(await nextQuestion(client, ownerA, 'study-a', 'fr-a1-001')).toEqual({
+      question: null,
+      answered: 1,
+      total: 1
+    });
+    // A session that has not started the skill gets the newest version.
+    expect(
+      await nextQuestion(client, ownerB, 'study-b', 'fr-a1-001')
+    ).toMatchObject({ question: { id: 'fr-a1-001@2:q1' }, total: 1 });
   });
 
   it("does not reveal another learner's session", async () => {

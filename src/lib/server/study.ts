@@ -243,6 +243,23 @@ async function attemptSource(
 }
 
 /**
+ * A question takes one independent answer per session, whichever tab sent it;
+ * the database index enforces the same rule for writes outside this service.
+ */
+async function assertNotAnswered(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput
+) {
+  if (input.evidenceKind !== 'independent') return;
+  const answered = await tx.execute({
+    sql: "SELECT 1 FROM attempts WHERE owner_id = ? AND study_session_id = ? AND question_id = ? AND evidence_kind = 'independent'",
+    args: [session.userId, input.studySessionId, input.questionId]
+  });
+  if (answered.rows[0]) throw new StudyError('QUESTION_ALREADY_ANSWERED');
+}
+
+/**
  * Record an answer in the caller's own active study session. The submission
  * key is idempotent per owner: a replay with the same payload returns the
  * original attempt, and a different payload is IDEMPOTENCY_CONFLICT.
@@ -261,6 +278,7 @@ export async function recordAttempt(
       return replay;
     }
     const source = await attemptSource(tx, session, input);
+    await assertNotAnswered(tx, session, input);
     const id = randomUUID();
     await tx.execute({
       sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -355,6 +373,16 @@ export async function resumeStudySession(
 const latestVersion =
   '(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1)';
 
+/**
+ * The version a session reads for a skill: the one its first attempt at the
+ * skill was recorded against, so a session that spans an import is finished on
+ * the questions it started, and the newest version otherwise. Takes the
+ * owner, session and skill, then the skill and language of the fallback.
+ */
+const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = COALESCE(
+    (SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1),
+    (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1)))`;
+
 /** Reject a joined version row that is missing or withdrawn. */
 function assertAvailable(row: Row | undefined): asserts row is Row {
   if (!row) throw new StudyError('NOT_FOUND');
@@ -380,10 +408,19 @@ export async function nextQuestion(
   const found = await client.execute({
     sql: `SELECT v.status, q.id, q.format, q.prompt, q.alternatives,
             EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.study_session_id = ? AND a.question_id = q.id) AS answered
-          FROM ${latestVersion} v
+          FROM ${sessionVersion} v
           LEFT JOIN questions q ON q.content_version_id = v.id AND q.prompt IS NOT NULL AND (q.holdout = 0 OR ? = 'assessment')
           ORDER BY q.id`,
-    args: [session.userId, studySessionId, skillId, study.language, study.mode]
+    args: [
+      session.userId,
+      studySessionId,
+      session.userId,
+      studySessionId,
+      skillId,
+      skillId,
+      study.language,
+      study.mode
+    ]
   });
   assertAvailable(found.rows[0]);
   const rows = { rows: found.rows.filter((row) => row.id !== null) };

@@ -438,6 +438,11 @@ export const attempts = sqliteTable(
       table.ownerId,
       table.submissionKey
     ),
+    // One independent answer per question in a study session, so two tabs
+    // cannot both record evidence for it. Assisted retries are not limited.
+    uniqueIndex('attempts_session_question_independent')
+      .on(table.ownerId, table.studySessionId, table.questionId)
+      .where(sql`${table.evidenceKind} = 'independent'`),
     uniqueIndex('attempts_identity_owner').on(table.id, table.ownerId),
     uniqueIndex('attempts_identity_owner_skill_language').on(
       table.id,

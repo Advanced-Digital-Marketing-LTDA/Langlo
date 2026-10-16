@@ -255,7 +255,8 @@ describe('migration inventory', () => {
       '0007_content_payload_fingerprint',
       '0008_question_holdouts',
       '0009_question_payload',
-      '0010_lessons_and_pause'
+      '0010_lessons_and_pause',
+      '0011_one_independent_attempt'
     ]);
     const whens = migrations.map((m) => m.when);
     expect([...whens].sort((a, b) => a - b)).toEqual(whens);
@@ -340,7 +341,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       '0007_content_payload_fingerprint',
       '0008_question_holdouts',
       '0009_question_payload',
-      '0010_lessons_and_pause'
+      '0010_lessons_and_pause',
+      '0011_one_independent_attempt'
     ]);
     const result = await applyRemoteTestPlan(client, all, {
       host,
@@ -354,7 +356,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       '0007_content_payload_fingerprint',
       '0008_question_holdouts',
       '0009_question_payload',
-      '0010_lessons_and_pause'
+      '0010_lessons_and_pause',
+      '0011_one_independent_attempt'
     ]);
   });
 
@@ -671,7 +674,7 @@ describe('remote-test CLI', () => {
         open
       )
     ).toBe(0);
-    expect(ok.lines.join('\n')).toContain('applied 11 migration(s)');
+    expect(ok.lines.join('\n')).toContain('applied 12 migration(s)');
   });
 
   it('prints table names from the target without control characters', async () => {

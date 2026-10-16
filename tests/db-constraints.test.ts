@@ -72,7 +72,7 @@ describe('actual SQLite ownership and version constraints', () => {
     "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('forged', 'learner-b', 'enrollment-a', 'fr', 'practice')",
     "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('forged', 'learner-b', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'forged', 'independent', 'un')",
     "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES ('forged', 'learner-b', 'attempt-a', 'prepared-forged', 'rubric-forged', 'correct')",
-    "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('wrong-version', 'learner-a', 'study-a', 'question-1', 'content-v2', 'fr-articles', 'fr', 'wrong-version', 'independent', 'un')",
+    "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('wrong-version', 'learner-a', 'study-a', 'question-1', 'content-v2', 'fr-articles', 'fr', 'wrong-version', 'assisted', 'un')",
     "INSERT INTO skill_evidence (id, owner_id, attempt_id, evaluation_id, skill_id, language, scoring_version, contribution) VALUES ('forged', 'learner-b', 'attempt-a', 'evaluation-a', 'fr-articles', 'fr', 'mastery-v1', 1)"
   ])(
     'rejects a forged related-record owner or question version with no side effect: %s',
