@@ -432,7 +432,7 @@
           {
             "id": "de-a2-015@1:q07",
             "format": "typed-blank",
-            "prompt": "Ich trinke ___ Tee als Kaffee. (gladly)",
+            "prompt": "Ich trinke ___ Tee als Kaffee. (rather)",
             "answer": "lieber",
             "near_misses": ["gerner", "liebste"],
             "holdout": false

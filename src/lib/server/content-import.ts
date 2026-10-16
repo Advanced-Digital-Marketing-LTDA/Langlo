@@ -39,6 +39,16 @@ export type ContentQuestion = {
   prompt: string;
   answer: string;
   alternatives?: string[] | undefined;
+  // Omitted legacy flags stay omitted in fingerprints; storage defaults to practice.
+  holdout?: boolean | undefined;
+};
+
+export type ContentLesson = {
+  title: string;
+  explanation: string;
+  // Each example maps a language code to a sentence; values are plain text.
+  examples: Record<string, string>[];
+  references: string[];
 };
 
 export type ContentPackage = {
@@ -62,6 +72,8 @@ export type ContentPackage = {
     version: number;
     review: string;
     questions: ContentQuestion[];
+    // Optional so packages without lessons keep their fingerprints.
+    lesson?: ContentLesson | undefined;
   }[];
 };
 
@@ -129,7 +141,24 @@ const questionShape = z.object({
   format: z.enum(formats),
   prompt: text,
   answer: text,
-  alternatives: z.unknown().optional()
+  alternatives: z.unknown().optional(),
+  holdout: z.boolean().optional()
+});
+
+// Example keys are language codes whose source order carries no meaning, so
+// they are sorted before the lesson is hashed and stored.
+const sortedKeys = (example: Record<string, string>) =>
+  Object.fromEntries(
+    Object.entries(example).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  );
+
+const sortedExample = z.record(z.string(), text).transform(sortedKeys);
+
+const lessonShape = z.object({
+  title: text,
+  explanation: text,
+  examples: z.array(sortedExample),
+  references: z.array(text)
 });
 
 const packageShape = z.object({
@@ -142,7 +171,8 @@ const packageShape = z.object({
       skillId: text,
       version: z.int().min(1),
       review: z.unknown().optional(),
-      questions: z.array(questionShape).min(1)
+      questions: z.array(questionShape).min(1),
+      lesson: lessonShape.optional()
     })
   )
 });
@@ -194,6 +224,21 @@ function validateAlternatives(question: ContentQuestion) {
 // packages hash equally whatever order their source listed keys in.
 const fingerprint = (data: unknown) =>
   createHash('sha256').update(JSON.stringify(data)).digest('hex');
+
+// Review status may change to quarantine; question payloads remain immutable.
+const versionFingerprint = (version: PackageVersion) =>
+  fingerprint(
+    version.questions
+      .map(({ id, format, prompt, answer, alternatives, holdout }) => ({
+        id,
+        format,
+        prompt,
+        answer,
+        alternatives,
+        holdout
+      }))
+      .sort((a, b) => Number(a.id > b.id) - Number(a.id < b.id))
+  );
 
 function validatePackage(pkg: ContentPackage) {
   validatePackageHeader(pkg);
@@ -360,7 +405,7 @@ async function insertEdges(tx: Transaction, edges: NewEdge[]) {
 
 async function storedVersion(tx: Transaction, version: PackageVersion) {
   const rows = await tx.execute({
-    sql: 'SELECT id, skill_id, version, status FROM content_versions WHERE id = ? OR (skill_id = ? AND version = ?)',
+    sql: 'SELECT id, skill_id, version, status, fingerprint FROM content_versions WHERE id = ? OR (skill_id = ? AND version = ?)',
     args: [version.id, version.skillId, version.version]
   });
   if (rows.rows.length === 0) return undefined;
@@ -372,24 +417,33 @@ async function storedVersion(tx: Transaction, version: PackageVersion) {
     JSON.stringify(found) !== JSON.stringify(expected)
   )
     fail('CONTENT_CONFLICT', `version ${version.id}`);
-  return String(row.status);
+  return row;
 }
 
 // Both sides are keyed and sorted the same way in JS; SQL collation order is
 // not relied on.
-const questionKeys = (pairs: Array<[unknown, unknown]>) =>
+const questionKeys = (pairs: Array<[unknown, unknown, unknown]>) =>
   pairs
-    .map(([id, format]) => `${String(id)}\u0000${String(format)}`)
+    .map(
+      ([id, format, holdout]) =>
+        `${String(id)}\u0000${String(format)}\u0000${Number(holdout)}`
+    )
     .sort((a, b) => Number(a > b) - Number(a < b));
 
 async function sameQuestions(tx: Transaction, version: PackageVersion) {
   const rows = await tx.execute({
-    sql: 'SELECT id, format FROM questions WHERE content_version_id = ?',
+    sql: 'SELECT id, format, holdout FROM questions WHERE content_version_id = ?',
     args: [version.id]
   });
-  const stored = questionKeys(rows.rows.map((row) => [row.id, row.format]));
+  const stored = questionKeys(
+    rows.rows.map((row) => [row.id, row.format, row.holdout])
+  );
   const incoming = questionKeys(
-    version.questions.map((question) => [question.id, question.format])
+    version.questions.map((question) => [
+      question.id,
+      question.format,
+      question.holdout ?? false
+    ])
   );
   return JSON.stringify(stored) === JSON.stringify(incoming);
 }
@@ -406,37 +460,103 @@ async function insertVersion(
   if (taken.rows.length > 0)
     fail('CONTENT_CONFLICT', `question ${String(taken.rows[0].id)}`);
   await tx.execute({
-    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, ?, ?, ?)',
+    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status, fingerprint) VALUES (?, ?, ?, ?, ?, ?)',
     args: [
       version.id,
       version.skillId,
       language,
       version.version,
-      version.review === 'quarantined' ? 'quarantined' : 'schema-validated'
+      version.review === 'quarantined' ? 'quarantined' : 'schema-validated',
+      versionFingerprint(version)
     ]
   });
   for (const question of version.questions)
     await tx.execute({
-      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES (?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer, alternatives) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         question.id,
         version.id,
         version.skillId,
         language,
-        question.format
+        question.format,
+        Number(question.holdout ?? false),
+        ...payloadArgs(question)
       ]
     });
+}
+
+// Prompt, answer and alternatives as stored; alternatives are a JSON array.
+const payloadArgs = (question: ContentQuestion) =>
+  [
+    question.prompt,
+    question.answer,
+    question.alternatives === undefined
+      ? null
+      : JSON.stringify(question.alternatives)
+  ] as const;
+
+// Only reached once the stored version fingerprint (which covers the payload)
+// equals the incoming package's, so filling rows that predate 0009 cannot
+// introduce unverified text. Rows that already hold a payload are untouched.
+async function backfillPayloads(tx: Transaction, version: PackageVersion) {
+  for (const question of version.questions)
+    await tx.execute({
+      sql: 'UPDATE questions SET prompt = ?, answer = ?, alternatives = ? WHERE id = ? AND prompt IS NULL AND answer IS NULL',
+      args: [...payloadArgs(question), question.id]
+    });
+}
+
+// The stored and hashed form of a lesson, with example keys in sorted order.
+const canonicalLesson = (lesson: ContentLesson) => ({
+  title: lesson.title,
+  explanation: lesson.explanation,
+  examples: lesson.examples.map(sortedKeys),
+  references: lesson.references
+});
+
+// A lesson is immutable once stored: a different text under the same version
+// is a conflict. A version imported before it had a lesson may gain one.
+async function importLesson(tx: Transaction, version: PackageVersion) {
+  if (version.lesson === undefined) return;
+  const lesson = canonicalLesson(version.lesson);
+  const hash = fingerprint(lesson);
+  const stored = await tx.execute({
+    sql: 'SELECT fingerprint FROM lessons WHERE content_version_id = ?',
+    args: [version.id]
+  });
+  if (stored.rows[0]) {
+    if (stored.rows[0].fingerprint !== hash)
+      fail('CONTENT_CONFLICT', `lesson ${version.id}`);
+    return;
+  }
+  await tx.execute({
+    sql: 'INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) SELECT id, skill_id, language, ?, ?, ?, ?, ? FROM content_versions WHERE id = ?',
+    args: [
+      lesson.title,
+      lesson.explanation,
+      JSON.stringify(lesson.examples),
+      JSON.stringify(lesson.references),
+      hash,
+      version.id
+    ]
+  });
 }
 
 async function importVersions(
   tx: Transaction,
   pkg: ContentPackage,
   known: Map<string, SkillInfo>,
-  result: ImportResult
+  result: ImportResult,
+  packageHash: string
 ) {
   // A version may only target a skill this package declares and reviews;
   // stored skills carry no review state.
   const declared = new Map(pkg.skills.map((skill) => [skill.id, skill]));
+  const recorded = await tx.execute({
+    sql: 'SELECT fingerprint FROM curriculum_imports WHERE curriculum_version = ?',
+    args: [pkg.curriculumVersion]
+  });
+  const verifiedOriginal = recorded.rows[0]?.fingerprint === packageHash;
   for (const version of pkg.versions) {
     const skill = declared.get(version.skillId);
     if (!skill)
@@ -444,9 +564,10 @@ async function importVersions(
         known.has(version.skillId) ? 'UNREVIEWED' : 'MISSING_REFERENCE',
         `version ${version.id}`
       );
-    const status = await storedVersion(tx, version);
-    if (status === undefined) {
+    const stored = await storedVersion(tx, version);
+    if (stored === undefined) {
       await insertVersion(tx, version, skill.language);
+      await importLesson(tx, version);
       result.versions += 1;
       result.questions += version.questions.length;
       result.quarantined += Number(version.review === 'quarantined');
@@ -454,6 +575,21 @@ async function importVersions(
     }
     if (!(await sameQuestions(tx, version)))
       fail('CONTENT_CONFLICT', `version ${version.id}`);
+    const hash = versionFingerprint(version);
+    if (stored.fingerprint === null) {
+      if (!verifiedOriginal)
+        fail(
+          'LEGACY_CONTENT_UNVERIFIED',
+          `version ${version.id}: re-import the recorded original package or publish a new content version with new question IDs`
+        );
+      await tx.execute({
+        sql: 'UPDATE content_versions SET fingerprint = ? WHERE id = ? AND fingerprint IS NULL',
+        args: [hash, version.id]
+      });
+    } else if (stored.fingerprint !== hash)
+      fail('CONTENT_CONFLICT', `version ${version.id}`);
+    await backfillPayloads(tx, version);
+    await importLesson(tx, version);
     if (version.review === 'quarantined') {
       const update = await tx.execute({
         sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
@@ -493,7 +629,7 @@ export async function importContent(
       questions: 0,
       quarantined: 0
     };
-    await importVersions(tx, pkg, known, result);
+    await importVersions(tx, pkg, known, result, hash);
     // Last, so that a content error keeps its own code.
     await recordVersion(tx, pkg.curriculumVersion, hash);
     await tx.commit();

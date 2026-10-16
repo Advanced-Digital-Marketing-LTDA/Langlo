@@ -18,12 +18,7 @@ Accepted T003 export policy: the APKG generator may write synthetic feasibility 
 
 ## Before opening a PR
 
-Run these local review layers on every change before pushing; each is an independent line of defense, so overlap with CI is intended.
-
-1. PR Review Toolkit (enabled in `.claude/settings.json`): run `pr-test-analyzer` and `silent-failure-hunter`, plus `code-reviewer` and `type-design-analyzer` when types or server code change.
-2. The vendored `adversarial-review` skill (`.agents/skills/adversarial-review`): `npx adversarial-review@2.11.1 --base main --verify --passes 2`. This local run uses the owner's own signed-in CLI or key and is allowed only when the owner runs it or asks for it.
-3. gstack `/cso` and `/test-audit` (a user-level install) for changes to auth, owner scoping, migrations or tests.
-4. Warp `validate-changes-match-specs` once a task carries a checked-in spec.
+Run Warp `validate-changes-match-specs` once a task carries a checked-in spec.
 
 Fix or explicitly answer every high-severity finding before opening the PR.
 

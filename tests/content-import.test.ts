@@ -8,7 +8,7 @@ import {
 } from '../src/lib/server/content-import';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 import { privateState } from './fixtures/owner-scope';
-import { approvedPackage } from './fixtures/content-package';
+import { approvedPackage, seedLegacyPackage } from './fixtures/content-package';
 
 // T012 importer gates on a disposable fixture database. The package is
 // synthetic; passing here proves the gates, not any checked curriculum.
@@ -31,9 +31,10 @@ async function sharedContent() {
     [
       'SELECT id, language, level FROM skills ORDER BY id',
       'SELECT skill_id, prerequisite_id, language FROM prerequisites ORDER BY skill_id, prerequisite_id',
-      'SELECT id, skill_id, language, version, status FROM content_versions ORDER BY id',
-      'SELECT id, content_version_id, skill_id, language, format FROM questions ORDER BY id',
-      'SELECT curriculum_version, fingerprint FROM curriculum_imports ORDER BY curriculum_version'
+      'SELECT id, skill_id, language, version, status, fingerprint FROM content_versions ORDER BY id',
+      'SELECT id, content_version_id, skill_id, language, format, holdout FROM questions ORDER BY id',
+      'SELECT curriculum_version, fingerprint FROM curriculum_imports ORDER BY curriculum_version',
+      'SELECT content_version_id, title, explanation, examples, refs, fingerprint FROM lessons ORDER BY content_version_id'
     ],
     'read'
   );
@@ -49,6 +50,183 @@ async function rejects(pkg: ContentPackage, code: string) {
 }
 
 describe('content import', () => {
+  it('stores holdouts separately and rejects reclassification of an immutable version', async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0].questions[0], { holdout: true });
+    await importContent(client, pkg);
+    const rows = await client.execute(
+      "SELECT id, holdout FROM questions WHERE id LIKE 'fr-a1-%' ORDER BY id"
+    );
+    expect(rows.rows).toEqual([
+      { id: 'fr-a1-001@1:q1', holdout: 1 },
+      { id: 'fr-a1-001@1:q2', holdout: 0 },
+      { id: 'fr-a1-002@1:q1', holdout: 0 }
+    ]);
+    expect((await importContent(client, pkg)).questions).toBe(0);
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0].questions[0], { holdout: false });
+    await rejects(pkg, 'CONTENT_CONFLICT');
+  });
+
+  it('stores each question prompt, answer and alternatives', async () => {
+    await importContent(client, approvedPackage());
+    const rows = await client.execute(
+      "SELECT id, prompt, answer, alternatives FROM questions WHERE id LIKE 'fr-a1-%' ORDER BY id"
+    );
+    expect(rows.rows.map((row) => ({ ...row }))).toEqual([
+      {
+        id: 'fr-a1-001@1:q1',
+        prompt: 'Je ___ étudiant.',
+        answer: 'suis',
+        alternatives: JSON.stringify(['suis', 'es', 'est'])
+      },
+      {
+        id: 'fr-a1-001@1:q2',
+        prompt: 'Tu ___ ici.',
+        answer: 'es',
+        alternatives: null
+      },
+      {
+        id: 'fr-a1-002@1:q1',
+        prompt: 'We are here.',
+        answer: 'Nous sommes ici.',
+        alternatives: JSON.stringify(['On est ici.'])
+      }
+    ]);
+  });
+
+  it('backfills payloads of verified legacy questions on adoption and keeps them on re-import', async () => {
+    await seedLegacyPackage(client);
+    const before = await client.execute(
+      "SELECT count(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' AND prompt IS NOT NULL"
+    );
+    expect(before.rows[0].n).toBe(0);
+    await importContent(client, approvedPackage());
+    const after = await client.execute(
+      "SELECT count(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' AND (prompt IS NULL OR answer IS NULL)"
+    );
+    expect(after.rows[0].n).toBe(0);
+    const snapshotRows = await client.execute(
+      'SELECT id, prompt, answer, alternatives FROM questions ORDER BY id'
+    );
+    await importContent(client, approvedPackage());
+    expect(
+      (
+        await client.execute(
+          'SELECT id, prompt, answer, alternatives FROM questions ORDER BY id'
+        )
+      ).rows
+    ).toEqual(snapshotRows.rows);
+  });
+
+  const lesson = {
+    title: 'Être',
+    explanation: 'Use être to say who you are.',
+    examples: [{ fr: 'Je suis étudiant.', en: 'I am a student.' }],
+    references: ['https://example.test/etre']
+  };
+
+  it('stores a version lesson and rejects a changed lesson for the same version', async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson });
+    await importContent(client, pkg);
+    const row = (
+      await client.execute(
+        "SELECT content_version_id, skill_id, language, title, explanation, examples, refs FROM lessons WHERE content_version_id = 'fr-a1-001@1'"
+      )
+    ).rows[0];
+    expect({ ...row }).toEqual({
+      content_version_id: 'fr-a1-001@1',
+      skill_id: 'fr-a1-001',
+      language: 'fr',
+      title: 'Être',
+      explanation: 'Use être to say who you are.',
+      // Example keys are stored in sorted order.
+      examples: JSON.stringify([
+        { en: 'I am a student.', fr: 'Je suis étudiant.' }
+      ]),
+      refs: JSON.stringify(lesson.references)
+    });
+    const count = async () =>
+      (await client.execute('SELECT count(*) AS n FROM lessons')).rows[0].n;
+    expect(await count()).toBe(1);
+    await importContent(client, pkg);
+    expect(await count()).toBe(1);
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0], {
+      lesson: { ...lesson, explanation: 'Changed text.' }
+    });
+    await rejects(pkg, 'CONTENT_CONFLICT');
+  });
+
+  it('treats a re-import with reordered example keys as the same lesson', async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson });
+    await importContent(client, pkg);
+    const stored = await client.execute(
+      'SELECT examples, fingerprint FROM lessons'
+    );
+    const reordered = approvedPackage();
+    Object.assign(reordered.versions[0], {
+      lesson: {
+        ...lesson,
+        examples: [{ en: 'I am a student.', fr: 'Je suis étudiant.' }]
+      }
+    });
+    await importContent(client, reordered);
+    expect(
+      (await client.execute('SELECT examples, fingerprint FROM lessons')).rows
+    ).toEqual(stored.rows);
+  });
+
+  it('adds a lesson to an already imported version under a new curriculum version', async () => {
+    await importContent(client, approvedPackage());
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0], { lesson });
+    await importContent(client, pkg);
+    const row = await client.execute(
+      "SELECT title FROM lessons WHERE content_version_id = 'fr-a1-001@1'"
+    );
+    expect(row.rows.map((r) => r.title)).toEqual(['Être']);
+  });
+
+  it.each([
+    ['empty title', { ...lesson, title: ' ' }],
+    ['examples not a list', { ...lesson, examples: 'x' }],
+    ['non-string reference', { ...lesson, references: [1] }],
+    ['non-string example value', { ...lesson, examples: [{ fr: 1 }] }]
+  ])('rejects a malformed lesson (%s) without writes', async (_name, bad) => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson: bad });
+    await rejects(pkg, 'INVALID_PACKAGE');
+  });
+
+  it.each(['true', 1, null])(
+    'rejects malformed holdout %s without writes',
+    async (holdout) => {
+      const pkg = approvedPackage();
+      Object.assign(pkg.versions[0].questions[0], { holdout });
+      await rejects(pkg, 'INVALID_PACKAGE');
+    }
+  );
+
+  it('includes explicit holdout flags in the immutable version fingerprint', async () => {
+    const pkg = approvedPackage();
+    await importContent(client, pkg);
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0].questions[0], { holdout: false });
+    await rejects(pkg, 'CONTENT_CONFLICT');
+  });
+
+  it('includes holdouts in the curriculum fingerprint', async () => {
+    const pkg = approvedPackage();
+    await importContent(client, pkg);
+    await client.execute('UPDATE content_versions SET fingerprint = NULL');
+    Object.assign(pkg.versions[0].questions[0], { holdout: false });
+    await rejects(pkg, 'LEGACY_CONTENT_UNVERIFIED');
+  });
+
   it('imports approved skills, prerequisites, versions and questions', async () => {
     const result = await importContent(client, approvedPackage());
     expect(result).toEqual({
@@ -75,14 +253,16 @@ describe('content import', () => {
       skill_id: 'fr-a1-001',
       language: 'fr',
       version: 1,
-      status: 'schema-validated'
+      status: 'schema-validated',
+      fingerprint: expect.stringMatching(/^[0-9a-f]{64}$/u)
     });
     expect(questions).toContainEqual({
       id: 'fr-a1-001@1:q1',
       content_version_id: 'fr-a1-001@1',
       skill_id: 'fr-a1-001',
       language: 'fr',
-      format: 'multiple-choice'
+      format: 'multiple-choice',
+      holdout: 0
     });
   });
 
@@ -118,6 +298,154 @@ describe('content import', () => {
     const [, edges] = await sharedContent();
     expect(edges).toHaveLength(3);
   });
+
+  it.each([
+    'prompt',
+    'answer',
+    'alternatives',
+    'removed alternatives',
+    'added alternatives',
+    'alternative order'
+  ] as const)(
+    'rejects changed %s under an existing content version in a newer curriculum',
+    async (field) => {
+      await importContent(client, approvedPackage());
+      const changed = approvedPackage();
+      changed.curriculumVersion = '0.2.0';
+      const question = changed.versions[0].questions[0];
+      if (field === 'prompt') question.prompt = 'Tu ___ étudiant.';
+      if (field === 'answer') question.answer = 'es';
+      if (field === 'alternatives') question.alternatives?.push('sommes');
+      if (field === 'removed alternatives')
+        delete changed.versions[1].questions[0].alternatives;
+      if (field === 'added alternatives')
+        changed.versions[0].questions[1].alternatives = ['sois'];
+      if (field === 'alternative order') question.alternatives?.reverse();
+      // Exercise rollback after an earlier version and skill have been inserted.
+      changed.skills.push({
+        id: 'fr-a1-new',
+        language: 'fr',
+        level: 'A1',
+        review: 'approved',
+        prerequisites: ['fr-a1-003']
+      });
+      changed.versions.unshift({
+        id: 'fr-a1-new@1',
+        skillId: 'fr-a1-new',
+        version: 1,
+        review: 'approved',
+        questions: [
+          {
+            id: 'fr-a1-new@1:q1',
+            format: 'translation',
+            prompt: 'Hi.',
+            answer: 'Salut.'
+          }
+        ]
+      });
+      const privateBefore = await privateState(client);
+      await rejects(changed, 'CONTENT_CONFLICT');
+      expect(await privateState(client)).toEqual(privateBefore);
+    }
+  );
+
+  it('accepts identical content with reordered questions and source keys in a newer curriculum', async () => {
+    await importContent(client, approvedPackage());
+    const next = approvedPackage();
+    next.curriculumVersion = '0.2.0';
+    next.versions[0].questions.reverse();
+    next.versions[0].questions = next.versions[0].questions.map((q) => ({
+      alternatives: q.alternatives,
+      answer: q.answer,
+      prompt: q.prompt,
+      format: q.format,
+      id: q.id
+    }));
+    expect(await importContent(client, next)).toEqual({
+      skills: 0,
+      prerequisites: 0,
+      versions: 0,
+      questions: 0,
+      quarantined: 0
+    });
+  });
+
+  it('adopts only a verified legacy package, then permits idempotent imports and quarantine', async () => {
+    const pkg = await seedLegacyPackage(client);
+    const before = await sharedContent();
+    const learnerBefore = await privateState(client);
+    expect(await importContent(client, pkg)).toEqual({
+      skills: 0,
+      prerequisites: 0,
+      versions: 0,
+      questions: 0,
+      quarantined: 0
+    });
+    const adopted = await sharedContent();
+    for (const index of [0, 1, 3, 4])
+      expect(adopted[index]).toEqual(before[index]);
+    expect(adopted[2]).toEqual(
+      before[2].map((row) => ({
+        ...row,
+        fingerprint: String(row.id).startsWith('fr-a1-')
+          ? expect.stringMatching(/^[0-9a-f]{64}$/u)
+          : row.fingerprint
+      }))
+    );
+    await importContent(client, pkg);
+    expect(await sharedContent()).toEqual(adopted);
+    expect(await privateState(client)).toEqual(learnerBefore);
+    pkg.curriculumVersion = '0.2.0';
+    pkg.versions[0].review = 'quarantined';
+    expect((await importContent(client, pkg)).quarantined).toBe(1);
+  });
+
+  it.each([
+    'prompt',
+    'answer',
+    'alternatives',
+    'new curriculum',
+    'missing ledger',
+    'subset'
+  ])(
+    'rejects unverifiable legacy content with an actionable error: %s',
+    async (change) => {
+      const pkg = await seedLegacyPackage(client);
+      if (change === 'prompt')
+        pkg.versions[0].questions[0].prompt = 'Tu ___ étudiant.';
+      if (change === 'answer') pkg.versions[0].questions[0].answer = 'es';
+      if (change === 'alternatives')
+        pkg.versions[0].questions[0].alternatives?.push('sommes');
+      if (change === 'new curriculum') pkg.curriculumVersion = '0.2.0';
+      if (change === 'missing ledger')
+        await client.execute('DELETE FROM curriculum_imports');
+      if (change === 'subset') pkg.versions.pop();
+      await rejects(pkg, 'LEGACY_CONTENT_UNVERIFIED');
+      await expect(importContent(client, pkg)).rejects.toThrow(
+        /recorded original package.*new content version/u
+      );
+    }
+  );
+
+  it.each([
+    "UPDATE questions SET format = 'correction' WHERE id = 'fr-a1-002@1:q1'",
+    "DELETE FROM questions WHERE id = 'fr-a1-002@1:q1'",
+    "UPDATE content_versions SET version = 2 WHERE id = 'fr-a1-002@1'"
+  ])(
+    'rolls back adoption when later stored metadata differs: %s',
+    async (sql) => {
+      const pkg = await seedLegacyPackage(client);
+      await client.execute(sql);
+      await rejects(pkg, 'CONTENT_CONFLICT');
+      expect(
+        (
+          await client.execute(
+            "SELECT fingerprint FROM content_versions WHERE id = 'fr-a1-001@1'"
+          )
+        ).rows[0].fingerprint
+      ).toBeNull();
+    }
+  );
 
   it('adds a new version alongside the old one instead of rewriting it', async () => {
     await importContent(client, approvedPackage());

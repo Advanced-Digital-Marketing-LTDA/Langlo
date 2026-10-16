@@ -238,6 +238,8 @@ export const contentVersions = sqliteTable(
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
     version: integer('version').notNull(),
+    // Legacy payloads require their recorded package fingerprint before adoption.
+    fingerprint: text('fingerprint'),
     status: text('status', {
       enum: [
         'draft',
@@ -296,6 +298,13 @@ export const questions = sqliteTable(
   'questions',
   {
     id: text('id').primaryKey(),
+    holdout: integer('holdout', { mode: 'boolean' }).notNull().default(false),
+    // Checked payload. Null only on rows imported before 0009; a verified
+    // re-import of the recorded original package fills them in.
+    prompt: text('prompt'),
+    answer: text('answer'),
+    // JSON array of strings, null when the question has no alternatives.
+    alternatives: text('alternatives'),
     contentVersionId: text('content_version_id').notNull(),
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
@@ -318,10 +327,42 @@ export const questions = sqliteTable(
         contentVersions.language
       ]
     }),
+    check('questions_holdout', sql`${table.holdout} IN (0, 1)`),
     check(
       'questions_format',
       sql`${table.format} IN ('multiple-choice', 'typed-blank', 'translation', 'correction')`
     )
+  ]
+);
+
+export const lessons = sqliteTable(
+  'lessons',
+  {
+    contentVersionId: text('content_version_id').primaryKey(),
+    skillId: text('skill_id').notNull(),
+    language: text('language').notNull(),
+    title: text('title').notNull(),
+    explanation: text('explanation').notNull(),
+    // JSON array of objects whose values are strings.
+    examples: text('examples').notNull(),
+    // JSON array of strings.
+    refs: text('refs').notNull(),
+    fingerprint: text('fingerprint').notNull()
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.contentVersionId, table.skillId, table.language],
+      foreignColumns: [
+        contentVersions.id,
+        contentVersions.skillId,
+        contentVersions.language
+      ]
+    }),
+    check(
+      'lessons_fingerprint',
+      sql`length(${table.fingerprint}) = 64 AND ${table.fingerprint} NOT GLOB '*[^0-9a-f]*'`
+    ),
+    check('lessons_title', sql`length(trim(${table.title})) > 0`)
   ]
 );
 
@@ -340,6 +381,11 @@ export const studySessions = sqliteTable(
     state: text('state', { enum: ['active', 'paused', 'completed'] })
       .notNull()
       .default('active'),
+    // Set by the service when the learner pauses; null while active. The
+    // invariant (paused_at is set exactly when state is 'paused') is kept by
+    // pauseStudySession and resumeStudySession; SQLite cannot add a table
+    // CHECK to an existing table without a rebuild.
+    pausedAt: integer('paused_at'),
     createdAt: createdAt()
   },
   (table) => [
@@ -392,6 +438,11 @@ export const attempts = sqliteTable(
       table.ownerId,
       table.submissionKey
     ),
+    // One independent answer per question in a study session, so two tabs
+    // cannot both record evidence for it. Assisted retries are not limited.
+    uniqueIndex('attempts_session_question_independent')
+      .on(table.ownerId, table.studySessionId, table.questionId)
+      .where(sql`${table.evidenceKind} = 'independent'`),
     uniqueIndex('attempts_identity_owner').on(table.id, table.ownerId),
     uniqueIndex('attempts_identity_owner_skill_language').on(
       table.id,

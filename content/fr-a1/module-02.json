@@ -358,11 +358,11 @@
       ],
       "references": ["FEI-INV"],
       "version": {
-        "id": "fr-a1-007@1",
-        "version": 1,
+        "id": "fr-a1-007@2",
+        "version": 2,
         "questions": [
           {
-            "id": "fr-a1-007@1:q01",
+            "id": "fr-a1-007@2:q01",
             "format": "multiple-choice",
             "prompt": "Which question uses est-ce que correctly?",
             "answer": "Est-ce que tu manges ?",
@@ -374,7 +374,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q02",
+            "id": "fr-a1-007@2:q02",
             "format": "multiple-choice",
             "prompt": "Which form is correct before 'il'?",
             "answer": "Est-ce qu'il",
@@ -382,7 +382,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q03",
+            "id": "fr-a1-007@2:q03",
             "format": "multiple-choice",
             "prompt": "How can you turn 'Tu aimes la musique.' into a spoken question?",
             "answer": "Raise your voice at the end",
@@ -394,7 +394,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q04",
+            "id": "fr-a1-007@2:q04",
             "format": "multiple-choice",
             "prompt": "What is the usual way to say yes to 'Est-ce que tu travailles ?'",
             "answer": "Oui",
@@ -402,7 +402,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q05",
+            "id": "fr-a1-007@2:q05",
             "format": "typed-blank",
             "prompt": "___ que vous aimez le café ?",
             "answer": "Est-ce",
@@ -410,7 +410,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q06",
+            "id": "fr-a1-007@2:q06",
             "format": "typed-blank",
             "prompt": "Est-ce ___elle habite à Lyon ?",
             "answer": "qu'",
@@ -418,7 +418,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q07",
+            "id": "fr-a1-007@2:q07",
             "format": "typed-blank",
             "prompt": "Est-ce que tu ___ français ? (parler)",
             "answer": "parles",
@@ -426,7 +426,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q08",
+            "id": "fr-a1-007@2:q08",
             "format": "translation",
             "prompt": "Translate (use the simple present): Do you (one friend) speak English? Use est-ce que.",
             "answer": "Est-ce que tu parles anglais ?",
@@ -438,7 +438,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q09",
+            "id": "fr-a1-007@2:q09",
             "format": "translation",
             "prompt": "Translate (use the simple present): Does she live in Paris?",
             "answer": "Est-ce qu'elle habite à Paris ?",
@@ -450,7 +450,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q10",
+            "id": "fr-a1-007@2:q10",
             "format": "translation",
             "prompt": "Translate (use the simple present): Do you (polite) like coffee?",
             "answer": "Vous aimez le café ?",
@@ -462,7 +462,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q11",
+            "id": "fr-a1-007@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Est-ce que il travaille ?",
             "answer": "Est-ce qu'il travaille ?",
@@ -473,7 +473,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:q12",
+            "id": "fr-a1-007@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject and the verb): Tu est-ce que habites ici ?",
             "answer": "Est-ce que tu habites ici ?",
@@ -484,7 +484,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-007@1:h01",
+            "id": "fr-a1-007@2:h01",
             "format": "multiple-choice",
             "prompt": "Which sentence is a question formed with est-ce que?",
             "answer": "Est-ce que vous travaillez demain ?",
@@ -496,7 +496,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-007@1:h02",
+            "id": "fr-a1-007@2:h02",
             "format": "typed-blank",
             "prompt": "Est-ce que tu ___ le thé ? (aimer)",
             "answer": "aimes",
@@ -504,14 +504,14 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-007@1:h03",
+            "id": "fr-a1-007@2:h03",
             "format": "translation",
-            "prompt": "Translate (use the simple present): Do they (boys) work today?",
-            "answer": "Est-ce qu'ils travaillent aujourd'hui ?",
-            "alternatives": ["Ils travaillent aujourd'hui ?"],
+            "prompt": "Translate (use the simple present): Do the boys work here?",
+            "answer": "Est-ce que les garçons travaillent ici ?",
+            "alternatives": ["Les garçons travaillent ici ?"],
             "near_misses": [
-              "Est-ce que ils travaillent aujourd'hui ?",
-              "Est-ce qu'ils travaille aujourd'hui ?"
+              "Est-ce les garçons travaillent ici ?",
+              "Est-ce que les garçons travaille ici ?"
             ],
             "holdout": true
           }

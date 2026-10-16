@@ -236,9 +236,9 @@
             "id": "en-a2-014@1:q04",
             "format": "multiple-choice",
             "prompt": "Which sentence gives the reason first?",
-            "answer": "I stayed home because I was ill.",
+            "answer": "Because I was ill, I stayed home.",
             "alternatives": [
-              "I stayed home because I was ill.",
+              "Because I was ill, I stayed home.",
               "I stayed home so I was ill.",
               "I was ill because I stayed home."
             ],

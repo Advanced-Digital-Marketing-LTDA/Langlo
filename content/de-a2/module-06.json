@@ -98,7 +98,8 @@
               "Morgen werden es regnen.",
               "Morgen wird es regnet."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Es wird morgen regnen."]
           },
           {
             "id": "de-a2-021@1:q09",
@@ -431,7 +432,10 @@
             "format": "translation",
             "prompt": "Translate (use gern, lieber or am liebsten): I like playing tennis.",
             "answer": "Ich spiele gern Tennis.",
-            "alternatives": ["Ich spiele gerne Tennis."],
+            "alternatives": [
+              "Ich spiele gerne Tennis.",
+              "Ich spiele Tennis gern."
+            ],
             "near_misses": [
               "Ich spiele lieber Tennis.",
               "Ich gern spiele Tennis."

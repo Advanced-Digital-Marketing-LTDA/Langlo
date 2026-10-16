@@ -1,7 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
+import { prepareBrowserEnvironment } from './scripts/playwright-environment.mjs';
+
+const browserEnvironment = prepareBrowserEnvironment();
 
 export default defineConfig({
   testDir: './tests/e2e',
+  globalSetup: './scripts/playwright-environment.mjs',
   fullyParallel: false,
   retries: 0,
   workers: 1,
@@ -9,12 +13,15 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4173',
     trace: 'retain-on-failure',
-    launchOptions: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
-      ? {
-          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
-          args: ['--no-sandbox']
-        }
-      : {}
+    launchOptions: {
+      ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+        ? {
+            executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+            args: ['--no-sandbox']
+          }
+        : {}),
+      env: browserEnvironment.env
+    }
   },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },

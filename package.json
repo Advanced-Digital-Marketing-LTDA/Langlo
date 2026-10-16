@@ -53,10 +53,13 @@
     "@e2e-dev/web": "^0.14.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.63.0",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@sveltejs/adapter-node": "6.0.0",
     "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@types/node": "24.19.1",
+    "@vitest/coverage-v8": "5.0.5",
     "ai": "^7.0.0",
     "drizzle-kit": "0.31.11",
     "e2e": "^0.19.0",
@@ -72,7 +75,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.1",
     "vite": "8.3.3",
-    "vitest": "5.0.3",
+    "vitest": "5.0.5",
     "zod": "^4.1.8"
   }
 }

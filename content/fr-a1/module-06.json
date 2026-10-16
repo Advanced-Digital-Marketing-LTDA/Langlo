@@ -26,11 +26,11 @@
       ],
       "references": ["FEI-INV"],
       "version": {
-        "id": "fr-a1-021@1",
-        "version": 1,
+        "id": "fr-a1-021@2",
+        "version": 2,
         "questions": [
           {
-            "id": "fr-a1-021@1:q01",
+            "id": "fr-a1-021@2:q01",
             "format": "multiple-choice",
             "prompt": "What is the past participle of 'manger'?",
             "answer": "mangé",
@@ -38,7 +38,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q02",
+            "id": "fr-a1-021@2:q02",
             "format": "multiple-choice",
             "prompt": "Choose the correct sentence for 'I spoke French.'",
             "answer": "J'ai parlé français.",
@@ -50,7 +50,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q03",
+            "id": "fr-a1-021@2:q03",
             "format": "multiple-choice",
             "prompt": "Which auxiliary verb goes with 'arriver'?",
             "answer": "être",
@@ -58,7 +58,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q04",
+            "id": "fr-a1-021@2:q04",
             "format": "multiple-choice",
             "prompt": "Which sentence is correct?",
             "answer": "Elle est allée au marché.",
@@ -70,7 +70,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q05",
+            "id": "fr-a1-021@2:q05",
             "format": "typed-blank",
             "prompt": "Hier, nous avons ___ la télé. (regarder)",
             "answer": "regardé",
@@ -78,7 +78,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q06",
+            "id": "fr-a1-021@2:q06",
             "format": "typed-blank",
             "prompt": "Il ___ arrivé hier. (être)",
             "answer": "est",
@@ -86,7 +86,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q07",
+            "id": "fr-a1-021@2:q07",
             "format": "typed-blank",
             "prompt": "Tu as ___ le pain. (prendre)",
             "answer": "pris",
@@ -94,7 +94,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q08",
+            "id": "fr-a1-021@2:q08",
             "format": "translation",
             "prompt": "Translate (use the passé composé): I ate an apple.",
             "answer": "J'ai mangé une pomme.",
@@ -105,7 +105,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q09",
+            "id": "fr-a1-021@2:q09",
             "format": "translation",
             "prompt": "Translate (use the passé composé): We spoke yesterday.",
             "answer": "Nous avons parlé hier.",
@@ -113,10 +113,11 @@
               "Nous avons parler hier.",
               "Nous sommes parlé hier."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Hier, nous avons parlé."]
           },
           {
-            "id": "fr-a1-021@1:q10",
+            "id": "fr-a1-021@2:q10",
             "format": "translation",
             "prompt": "Translate (use the passé composé): She arrived at noon.",
             "answer": "Elle est arrivée à midi.",
@@ -124,10 +125,11 @@
               "Elle est arrivé à midi.",
               "Elle a arrivée à midi."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["À midi, elle est arrivée."]
           },
           {
-            "id": "fr-a1-021@1:q11",
+            "id": "fr-a1-021@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Nous avons mangeons hier.",
             "answer": "Nous avons mangé hier.",
@@ -138,7 +140,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:q12",
+            "id": "fr-a1-021@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Marie est allé au marché.",
             "answer": "Marie est allée au marché.",
@@ -149,7 +151,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-021@1:h01",
+            "id": "fr-a1-021@2:h01",
             "format": "multiple-choice",
             "prompt": "What is the past participle of 'chanter'?",
             "answer": "chanté",
@@ -157,7 +159,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-021@1:h02",
+            "id": "fr-a1-021@2:h02",
             "format": "typed-blank",
             "prompt": "Ils ont ___ au parc. (jouer)",
             "answer": "joué",
@@ -165,7 +167,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-021@1:h03",
+            "id": "fr-a1-021@2:h03",
             "format": "translation",
             "prompt": "Translate (use the passé composé): They (boys) arrived yesterday.",
             "answer": "Ils sont arrivés hier.",
@@ -355,11 +357,11 @@
       ],
       "references": ["FEI-INV"],
       "version": {
-        "id": "fr-a1-023@1",
-        "version": 1,
+        "id": "fr-a1-023@2",
+        "version": 2,
         "questions": [
           {
-            "id": "fr-a1-023@1:q01",
+            "id": "fr-a1-023@2:q01",
             "format": "multiple-choice",
             "prompt": "Which pronoun goes with 'je' in a reflexive verb?",
             "answer": "me",
@@ -367,7 +369,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q02",
+            "id": "fr-a1-023@2:q02",
             "format": "multiple-choice",
             "prompt": "Which sentence means 'My name is Paul.'?",
             "answer": "Je m'appelle Paul.",
@@ -379,7 +381,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q03",
+            "id": "fr-a1-023@2:q03",
             "format": "multiple-choice",
             "prompt": "Which sentence means 'He gets up.'?",
             "answer": "Il se lève.",
@@ -387,7 +389,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q04",
+            "id": "fr-a1-023@2:q04",
             "format": "multiple-choice",
             "prompt": "Which pronoun goes with 'nous'?",
             "answer": "nous",
@@ -395,7 +397,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q05",
+            "id": "fr-a1-023@2:q05",
             "format": "typed-blank",
             "prompt": "Tu ___ couches tard. (se coucher)",
             "answer": "te",
@@ -403,7 +405,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q06",
+            "id": "fr-a1-023@2:q06",
             "format": "typed-blank",
             "prompt": "Elle ___ réveille à six heures. (se réveiller)",
             "answer": "se",
@@ -411,7 +413,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q07",
+            "id": "fr-a1-023@2:q07",
             "format": "typed-blank",
             "prompt": "Vous vous ___ à huit heures. (se lever)",
             "answer": "levez",
@@ -419,7 +421,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q08",
+            "id": "fr-a1-023@2:q08",
             "format": "translation",
             "prompt": "Translate (use the simple present): I get up at seven o'clock.",
             "answer": "Je me lève à sept heures.",
@@ -427,10 +429,11 @@
               "Je lève à sept heures.",
               "Je me levé à sept heures."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Je me lève à 7 heures."]
           },
           {
-            "id": "fr-a1-023@1:q09",
+            "id": "fr-a1-023@2:q09",
             "format": "translation",
             "prompt": "Translate (use the simple present): We go to bed late.",
             "answer": "Nous nous couchons tard.",
@@ -438,7 +441,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q10",
+            "id": "fr-a1-023@2:q10",
             "format": "translation",
             "prompt": "Translate (use the simple present): They (boys) wake up early.",
             "answer": "Ils se réveillent tôt.",
@@ -446,7 +449,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q11",
+            "id": "fr-a1-023@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Je couche à dix heures.",
             "answer": "Je me couche à dix heures.",
@@ -457,7 +460,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:q12",
+            "id": "fr-a1-023@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Elle me lève à sept heures.",
             "answer": "Elle se lève à sept heures.",
@@ -468,7 +471,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-023@1:h01",
+            "id": "fr-a1-023@2:h01",
             "format": "multiple-choice",
             "prompt": "Which pronoun goes with 'vous'?",
             "answer": "vous",
@@ -476,7 +479,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-023@1:h02",
+            "id": "fr-a1-023@2:h02",
             "format": "typed-blank",
             "prompt": "Nous nous ___ à six heures. (se réveiller)",
             "answer": "réveillons",
@@ -484,7 +487,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-023@1:h03",
+            "id": "fr-a1-023@2:h03",
             "format": "translation",
             "prompt": "Translate (use the simple present): She gets up early.",
             "answer": "Elle se lève tôt.",
@@ -514,11 +517,11 @@
       ],
       "references": ["FEI-INV"],
       "version": {
-        "id": "fr-a1-024@1",
-        "version": 1,
+        "id": "fr-a1-024@2",
+        "version": 2,
         "questions": [
           {
-            "id": "fr-a1-024@1:q01",
+            "id": "fr-a1-024@2:q01",
             "format": "multiple-choice",
             "prompt": "Which expression means 'there is' or 'there are'?",
             "answer": "il y a",
@@ -526,7 +529,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q02",
+            "id": "fr-a1-024@2:q02",
             "format": "multiple-choice",
             "prompt": "Choose the correct sentence for 'There are cats in the house.'",
             "answer": "Il y a des chats dans la maison.",
@@ -538,7 +541,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q03",
+            "id": "fr-a1-024@2:q03",
             "format": "multiple-choice",
             "prompt": "What is the negative of 'Il y a du pain.'?",
             "answer": "Il n'y a pas de pain.",
@@ -550,7 +553,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q04",
+            "id": "fr-a1-024@2:q04",
             "format": "multiple-choice",
             "prompt": "Which question asks 'Is there a restaurant here?'",
             "answer": "Est-ce qu'il y a un restaurant ici ?",
@@ -562,7 +565,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q05",
+            "id": "fr-a1-024@2:q05",
             "format": "typed-blank",
             "prompt": "Il ___ a des enfants ici.",
             "answer": "y",
@@ -570,7 +573,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q06",
+            "id": "fr-a1-024@2:q06",
             "format": "typed-blank",
             "prompt": "___ y a du pain sur la table.",
             "answer": "Il",
@@ -578,7 +581,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q07",
+            "id": "fr-a1-024@2:q07",
             "format": "typed-blank",
             "prompt": "Il n'y a pas ___ lait. (de)",
             "answer": "de",
@@ -586,7 +589,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q08",
+            "id": "fr-a1-024@2:q08",
             "format": "translation",
             "prompt": "Translate (use the simple present): There is a cat in the garden.",
             "answer": "Il y a un chat dans le jardin.",
@@ -594,10 +597,11 @@
               "Il est un chat dans le jardin.",
               "Il y a un chat dans la jardin."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Dans le jardin, il y a un chat."]
           },
           {
-            "id": "fr-a1-024@1:q09",
+            "id": "fr-a1-024@2:q09",
             "format": "translation",
             "prompt": "Translate (use the simple present): There are children in the house.",
             "answer": "Il y a des enfants dans la maison.",
@@ -608,7 +612,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q10",
+            "id": "fr-a1-024@2:q10",
             "format": "translation",
             "prompt": "Translate (use the simple present): There is no bread here.",
             "answer": "Il n'y a pas de pain ici.",
@@ -619,7 +623,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q11",
+            "id": "fr-a1-024@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the nouns): Il est un chat sur la table.",
             "answer": "Il y a un chat sur la table.",
@@ -630,7 +634,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:q12",
+            "id": "fr-a1-024@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the meaning): Il y a pas de pain.",
             "answer": "Il n'y a pas de pain.",
@@ -638,7 +642,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-024@1:h01",
+            "id": "fr-a1-024@2:h01",
             "format": "multiple-choice",
             "prompt": "How do you say 'There are books on the table.'?",
             "answer": "Il y a des livres sur la table.",
@@ -650,7 +654,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-024@1:h02",
+            "id": "fr-a1-024@2:h02",
             "format": "typed-blank",
             "prompt": "Il y ___ un restaurant ici. (a)",
             "answer": "a",
@@ -658,7 +662,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-024@1:h03",
+            "id": "fr-a1-024@2:h03",
             "format": "translation",
             "prompt": "Translate (use the simple present): Is there a school here?",
             "answer": "Est-ce qu'il y a une école ici ?",
