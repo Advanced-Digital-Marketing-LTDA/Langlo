@@ -178,7 +178,7 @@ function validateAttemptInput(input: AttemptInput) {
     throw new StudyError('INVALID_SUBMISSION_KEY');
   if (!evidenceKinds.has(input.evidenceKind))
     throw new StudyError('INVALID_EVIDENCE_KIND');
-  if (!isBoundedText(input.answer, 4096))
+  if (!isBoundedText(input.answer, 4096) || !input.answer.trim())
     throw new StudyError('INVALID_ANSWER');
   if (
     typeof input.studySessionId !== 'string' ||

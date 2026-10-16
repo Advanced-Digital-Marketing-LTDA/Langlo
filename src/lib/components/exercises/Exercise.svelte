@@ -35,25 +35,24 @@
   let pending = $state(false);
   const message = $derived(problem || failure || '');
   const fieldId = $derived(`answer-${question.id}`);
-
-  // A quick local message; the server checks the same rules and decides.
-  function validate(event: SubmitEvent) {
-    const checked = checkAnswer(
-      question.format,
-      value,
-      question.alternatives ?? []
-    );
-    problem = checked.ok ? '' : checked.message;
-    if (!checked.ok) event.preventDefault();
-  }
 </script>
 
 <form
   method="POST"
   action={answerActionUrl(studySessionId)}
   novalidate
-  onsubmit={validate}
-  use:enhance={() => {
+  use:enhance={({ cancel }) => {
+    // Enhanced submissions must be cancelled through enhance itself.
+    const checked = checkAnswer(
+      question.format,
+      value,
+      question.alternatives ?? []
+    );
+    problem = checked.ok ? '' : checked.message;
+    if (!checked.ok) {
+      cancel();
+      return;
+    }
     pending = true;
     return async ({ result, update }) => {
       // Keep what was typed when the server refused it.
