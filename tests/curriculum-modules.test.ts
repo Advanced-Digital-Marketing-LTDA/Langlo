@@ -41,6 +41,14 @@ const catalog = new Map(
     .slice(1)
     .map((row) => [row[0], row])
 );
+// The practised language's own text: English tracks carry only `en`.
+const practisedText = (
+  module: Module,
+  example: Module['lessons'][number]['examples'][number]
+) =>
+  module.track.startsWith('English')
+    ? example.en
+    : (example.fr ?? example.de ?? '');
 const load = (path: string) => JSON.parse(read(path)) as Module;
 const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
@@ -101,7 +109,7 @@ describe.each(files)('%s', (path) => {
       expect(lesson.explanation.length).toBeGreaterThan(80);
       expect(lesson.examples.length).toBeGreaterThanOrEqual(3);
       for (const example of lesson.examples) {
-        const target = example.fr ?? example.de ?? '';
+        const target = practisedText(module, example);
         expect(target.trim(), lesson.skill_id).not.toBe('');
         expect(example.en.trim(), lesson.skill_id).not.toBe('');
       }
@@ -149,7 +157,7 @@ describe.each(files)('%s', (path) => {
     const seen = new Set(
       module.lessons.flatMap((lesson) => [
         ...lesson.examples.map((example) =>
-          normalize(example.fr ?? example.de ?? '')
+          normalize(practisedText(module, example))
         ),
         ...lesson.version.questions
           .filter((q) => !q.holdout)
