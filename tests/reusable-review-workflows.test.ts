@@ -18,6 +18,11 @@ const ossar = readFileSync(
   'utf8'
 );
 
+const ossarTools = (/^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '')
+  .toLowerCase()
+  .split(',')
+  .map((tool) => tool.trim());
+
 describe('reusable OSSAR scan', () => {
   it('runs the policy through security-devops-action, not the fixed ossar-action', () => {
     expect(ossar).toContain('microsoft/security-devops-action@');
@@ -28,22 +33,20 @@ describe('reusable OSSAR scan', () => {
     expect(ossar).toMatch(/policy:\s*GitHub/u);
   });
 
-  it('names its tools explicitly and leaves out ESLint', () => {
-    const tools = /^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '';
-    expect(tools).not.toBe('');
-    expect(tools.toLowerCase()).not.toContain('eslint');
+  it('names its tools explicitly', () => {
+    expect(ossarTools).toContain('trivy');
+    expect(ossarTools).toContain('templateanalyzer');
   });
 
-  it('leaves out binskim, which aborts the scan when a repo has no binaries', () => {
-    const tools = /^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '';
-    expect(tools).not.toBe('');
-    expect(tools.toLowerCase()).not.toContain('binskim');
-  });
-
-  it('leaves out bandit, which aborts the scan when a repo has no Python files', () => {
-    const tools = /^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '';
-    expect(tools).not.toBe('');
-    expect(tools.toLowerCase()).not.toContain('bandit');
+  it.each([
+    [
+      'eslint',
+      'reports every .ts file as ignored when a repo has no .js files'
+    ],
+    ['binskim', 'aborts the scan when a repo has no binaries'],
+    ['bandit', 'aborts the scan when a repo has no Python files']
+  ])('leaves out %s, which %s', (tool) => {
+    expect(ossarTools).not.toContain(tool);
   });
 
   it('pins every third-party action to a full commit SHA', () => {
