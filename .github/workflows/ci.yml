@@ -48,13 +48,13 @@ jobs:
         run: |
           mkdir -p .ci-reports
           npm test -- --coverage --coverage.reporter=lcov --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
-      - name: Upload coverage reports to Codecov
-        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: Advanced-Digital-Marketing-LTDA/Langlo
-          files: ./coverage/lcov.info
+          name: coverage
+          path: coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 1
       - run: npm run test:property
       - run: npm run build
       - run: npx playwright install --with-deps chromium
@@ -149,6 +149,16 @@ jobs:
             test-results/
           if-no-files-found: ignore
           retention-days: 3
+
+  codecov:
+    needs: foundation
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+    # Publish the shared workflow commit before publishing this caller.
+    uses: Advanced-Digital-Marketing-LTDA/workflows/.github/workflows/codecov.yml@57cd741cf0f04648e3c05e503cbd4839b6ce4abe
+    with:
+      artifact-name: coverage
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   apkg-feasibility:
     runs-on: ubuntu-latest
