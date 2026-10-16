@@ -238,7 +238,7 @@ export const contentVersions = sqliteTable(
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
     version: integer('version').notNull(),
-    // Legacy rows have no recoverable payload; imports reject a missing fingerprint.
+    // Legacy payloads require their recorded package fingerprint before adoption.
     fingerprint: text('fingerprint'),
     status: text('status', {
       enum: [

@@ -8,7 +8,7 @@ import {
 } from '../src/lib/server/content-import';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 import { privateState } from './fixtures/owner-scope';
-import { approvedPackage } from './fixtures/content-package';
+import { approvedPackage, seedLegacyPackage } from './fixtures/content-package';
 
 // T012 importer gates on a disposable fixture database. The package is
 // synthetic; passing here proves the gates, not any checked curriculum.
@@ -191,16 +191,73 @@ describe('content import', () => {
     });
   });
 
-  it.each(['0.1.0', '0.2.0'])(
-    'rejects unverifiable legacy content without backfilling its fingerprint (%s)',
-    async (curriculumVersion) => {
-      await importContent(client, approvedPackage());
-      await client.execute(
-        "UPDATE content_versions SET fingerprint = NULL WHERE id = 'fr-a1-001@1'"
+  it('adopts only a verified legacy package, then permits idempotent imports and quarantine', async () => {
+    const pkg = await seedLegacyPackage(client);
+    const before = await sharedContent();
+    const learnerBefore = await privateState(client);
+    expect(await importContent(client, pkg)).toEqual({
+      skills: 0,
+      prerequisites: 0,
+      versions: 0,
+      questions: 0,
+      quarantined: 0
+    });
+    const adopted = await sharedContent();
+    for (const index of [0, 1, 3, 4])
+      expect(adopted[index]).toEqual(before[index]);
+    expect(adopted[2]).toEqual(
+      before[2].map((row) => ({
+        ...row,
+        fingerprint: String(row.id).startsWith('fr-a1-')
+          ? expect.stringMatching(/^[0-9a-f]{64}$/u)
+          : row.fingerprint
+      }))
+    );
+    await importContent(client, pkg);
+    expect(await sharedContent()).toEqual(adopted);
+    expect(await privateState(client)).toEqual(learnerBefore);
+    pkg.curriculumVersion = '0.2.0';
+    pkg.versions[0].review = 'quarantined';
+    expect((await importContent(client, pkg)).quarantined).toBe(1);
+  });
+
+  it.each([
+    'prompt',
+    'answer',
+    'alternatives',
+    'new curriculum',
+    'missing ledger',
+    'subset'
+  ])(
+    'rejects unverifiable legacy content with an actionable error: %s',
+    async (change) => {
+      const pkg = await seedLegacyPackage(client);
+      if (change === 'prompt')
+        pkg.versions[0].questions[0].prompt = 'Tu ___ étudiant.';
+      if (change === 'answer') pkg.versions[0].questions[0].answer = 'es';
+      if (change === 'alternatives')
+        pkg.versions[0].questions[0].alternatives?.push('sommes');
+      if (change === 'new curriculum') pkg.curriculumVersion = '0.2.0';
+      if (change === 'missing ledger')
+        await client.execute('DELETE FROM curriculum_imports');
+      if (change === 'subset') pkg.versions.pop();
+      await rejects(pkg, 'LEGACY_CONTENT_UNVERIFIED');
+      await expect(importContent(client, pkg)).rejects.toThrow(
+        /recorded original package.*new content version/u
       );
-      const next = approvedPackage();
-      next.curriculumVersion = curriculumVersion;
-      await rejects(next, 'CONTENT_CONFLICT');
+    }
+  );
+
+  it.each([
+    "UPDATE questions SET format = 'correction' WHERE id = 'fr-a1-002@1:q1'",
+    "DELETE FROM questions WHERE id = 'fr-a1-002@1:q1'",
+    "UPDATE content_versions SET version = 2 WHERE id = 'fr-a1-002@1'"
+  ])(
+    'rolls back adoption when later stored metadata differs: %s',
+    async (sql) => {
+      const pkg = await seedLegacyPackage(client);
+      await client.execute(sql);
+      await rejects(pkg, 'CONTENT_CONFLICT');
       expect(
         (
           await client.execute(

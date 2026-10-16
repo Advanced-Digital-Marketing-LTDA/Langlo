@@ -1,4 +1,44 @@
 import type { ContentPackage } from '../../src/lib/server/content-import';
+import type { Client } from '@libsql/client';
+
+// Recorded by the pre-0007 package hashing contract; independent of today's importer.
+const legacyPackageFingerprint =
+  'ce74c388095c5d815f47791d8dd31b43a6d4a5352541136f2a7fef675e190c24';
+
+/** Seed the pre-0007 storage shape without invoking the current importer. */
+export async function seedLegacyPackage(client: Client) {
+  const pkg = approvedPackage();
+  await client.batch(
+    [
+      ...pkg.skills.map((skill) => ({
+        sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
+        args: [skill.id, skill.language, skill.level]
+      })),
+      ...pkg.skills.flatMap((skill) =>
+        skill.prerequisites.map((id) => ({
+          sql: 'INSERT INTO prerequisites (skill_id, prerequisite_id, language) VALUES (?, ?, ?)',
+          args: [skill.id, id, skill.language]
+        }))
+      ),
+      ...pkg.versions.map((version) => ({
+        sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, 'fr', ?, 'schema-validated')",
+        args: [version.id, version.skillId, version.version]
+      })),
+      ...pkg.versions.flatMap((version) =>
+        version.questions.map((q) => ({
+          sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES (?, ?, ?, 'fr', ?)",
+          args: [q.id, version.id, version.skillId, q.format]
+        }))
+      ),
+      {
+        sql: 'INSERT INTO curriculum_imports (curriculum_version, fingerprint) VALUES (?, ?)',
+        args: [pkg.curriculumVersion, legacyPackageFingerprint]
+      }
+    ],
+    'write'
+  );
+  return pkg;
+}
 
 // Synthetic, approved French A1 package. It is not checked curriculum: it only
 // exercises the importer's gates against the current migration.
