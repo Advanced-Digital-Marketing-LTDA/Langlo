@@ -47,7 +47,7 @@ jobs:
       # report every file as ignored, exit 2, and fail the whole scan with
       # zero findings.
       - name: Run OSSAR
-        uses: microsoft/security-devops-action@v1
+        uses: microsoft/security-devops-action@5b26a185ff02cf7c100778adeff0ebbf704ca144 # v1
         id: msdo
         with:
           policy: GitHub
@@ -55,6 +55,6 @@ jobs:
 
         # Upload results to the Security tab
       - name: Upload OSSAR results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@ce5e7eeac396d720fe2d802714996c8ce561e311 # v3
         with:
           sarif_file: ${{ steps.msdo.outputs.sarifFile }}

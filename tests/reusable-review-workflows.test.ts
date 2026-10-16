@@ -40,6 +40,14 @@ describe('reusable OSSAR scan', () => {
     expect(tools.toLowerCase()).not.toContain('binskim');
   });
 
+  it('pins every third-party action to a full commit SHA', () => {
+    const uses = [...ossar.matchAll(/^\s+uses:\s*(\S+)/gmu)].map((m) => m[1]);
+    expect(uses.length).toBeGreaterThanOrEqual(3);
+    for (const ref of uses) {
+      expect(ref).toMatch(/@[0-9a-f]{40}$/u);
+    }
+  });
+
   it('uploads the SARIF file the scan step produced', () => {
     expect(ossar).toContain('codeql-action/upload-sarif@');
     expect(ossar).toMatch(
