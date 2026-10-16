@@ -8,7 +8,8 @@ const config = {
     '!src/**/*.gen.ts',
     '!src/lib/server/db/drizzle.config.ts'
   ],
-  testRunner: 'vitest',
+  testRunner: 'command',
+  commandRunner: { command: 'npx vitest run' },
   ignorePatterns: ['.claude', '.agents', '.codex'],
   reporters: ['progress', 'clear-text', 'html']
 };

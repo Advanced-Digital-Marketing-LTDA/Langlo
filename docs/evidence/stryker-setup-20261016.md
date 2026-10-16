@@ -41,12 +41,23 @@ smoke run also completed with exit 0:
 npx stryker run --mutate src/lib/prototype/results.ts --concurrency 1
 ```
 
-Reported results: 2 killed, 108 survived, 1 without coverage, zero errors,
-1.80% mutation score. A control run with `--coverageAnalysis off` returned
-the same counts. This is an installation smoke test, not an accepted assessment
-of test effectiveness. The unexpectedly low score needs survivor and runner
-investigation before using it as a quality baseline. No threshold or CI gate
-was added, and no tests were changed to pursue a score.
+With the original `testRunner: 'vitest'` it reported 2 killed, 108 survived,
+1 without coverage, 1.80% mutation score; `--coverageAnalysis off` returned the
+same counts. That score was corrupted: `@stryker-mutator/vitest-runner` 10.0.0
+(the latest release) builds test-name filters joined with spaces, while Vitest 5
+matches full names joined with `>`, so mutants ran no tests. Deleting the
+`session.answers.push(answer)` line by hand failed 2 of 14 tests in
+`tests/prototype-results.test.ts`, yet Stryker reported that mutant as surviving.
+
+The config now uses Stryker's built-in command runner
+(`testRunner: 'command'`, `npx vitest run`), which runs the whole suite per
+mutant: slower, but correct. A scoped check with the command runner limited to
+`npx vitest run tests/prototype-results.test.ts` reported 97 killed, 13
+survived, 1 timeout, zero errors, 88.29% mutation score. A run with the
+committed full-suite command was not performed. `@stryker-mutator/vitest-runner`
+remains installed but unused. This is an installation smoke test, not an
+accepted quality baseline. No threshold or CI gate was added, and no tests were
+changed to pursue a score.
 
 ## Pending acceptance and limits
 
