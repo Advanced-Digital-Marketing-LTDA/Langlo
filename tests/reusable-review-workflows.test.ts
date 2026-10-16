@@ -37,6 +37,15 @@ describe('reusable adversarial review gate', () => {
     expect(adversarial).toContain('exit 1');
   });
 
+  it('checks the tools out inside the workspace, never under runner.temp', () => {
+    const checkoutPaths = [...adversarial.matchAll(/^\s+path: (.+)$/gmu)].map(
+      (match) => match[1]
+    );
+    expect(checkoutPaths).toEqual(['.langlo-tools']);
+    expect(adversarial).not.toMatch(/path: .*runner\.temp/u);
+    expect(adversarial).toContain('rm -rf .langlo-tools');
+  });
+
   it('runs only for same-repository pull requests', () => {
     expect(adversarial).toContain(
       'github.event.pull_request.head.repo.full_name == github.repository'

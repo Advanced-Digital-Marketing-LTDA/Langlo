@@ -56,7 +56,7 @@ jobs:
         with:
           repository: Advanced-Digital-Marketing-LTDA/Langlo
           ref: ${{ inputs.tools-ref }}
-          path: ${{ runner.temp }}/langlo-tools
+          path: .langlo-tools
           sparse-checkout: .github/tools/ai-review
           persist-credentials: false
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -68,7 +68,8 @@ jobs:
         run: |
           npm install --global --ignore-scripts npm@11.9.0
           mkdir -p "$RUNNER_TEMP/ai-review"
-          cp "$RUNNER_TEMP/langlo-tools/.github/tools/ai-review/package.json" "$RUNNER_TEMP/langlo-tools/.github/tools/ai-review/package-lock.json" "$RUNNER_TEMP/ai-review/"
+          cp .langlo-tools/.github/tools/ai-review/package.json .langlo-tools/.github/tools/ai-review/package-lock.json "$RUNNER_TEMP/ai-review/"
+          rm -rf .langlo-tools
           npm ci --prefix "$RUNNER_TEMP/ai-review" --ignore-scripts --no-audit --no-fund
           echo "$RUNNER_TEMP/ai-review/node_modules/@anthropic-ai/claude-code-linux-x64" >> "$GITHUB_PATH"
       - name: Fail on high-severity findings (subscription)

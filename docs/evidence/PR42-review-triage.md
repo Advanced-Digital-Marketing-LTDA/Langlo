@@ -11,6 +11,10 @@ Scope: `.github/workflows/reusable-adversarial-review.yml`, `.github/workflows/r
 
 Same command: 7 passed (7). A short or malformed `tools-ref` now fails the first step with an error before any checkout.
 
+## Adversarial-review HIGH on d75c3c2
+
+`actions/checkout` rejects a `path` outside the workspace, and the tools checkout used `${{ runner.temp }}/langlo-tools`. Red: `checks the tools out inside the workspace, never under runner.temp` failed (path was the runner.temp one). Fix: check out to `.langlo-tools`, copy the lockfile to `$RUNNER_TEMP/ai-review`, then delete `.langlo-tools`. Green: 8 passed (8).
+
 ## Findings
 
 - `tools-ref` unvalidated: fixed with a first step that requires a 40-character commit SHA.
