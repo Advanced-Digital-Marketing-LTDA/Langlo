@@ -34,6 +34,12 @@ describe('reusable OSSAR scan', () => {
     expect(tools.toLowerCase()).not.toContain('eslint');
   });
 
+  it('leaves out binskim, which aborts the scan when a repo has no binaries', () => {
+    const tools = /^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '';
+    expect(tools).not.toBe('');
+    expect(tools.toLowerCase()).not.toContain('binskim');
+  });
+
   it('uploads the SARIF file the scan step produced', () => {
     expect(ossar).toContain('codeql-action/upload-sarif@');
     expect(ossar).toMatch(
