@@ -55,6 +55,54 @@ const attempt = (key: string, questionId: string, studySessionId = 'study-a') =>
     answer: 'suis'
   });
 
+describe('answers are held to the session version', () => {
+  const importVersionTwo = async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson });
+    Object.assign(pkg.versions[0].questions[1], { holdout: true });
+    pkg.curriculumVersion = '0.2.0';
+    pkg.versions.push({
+      id: 'fr-a1-001@2',
+      skillId: 'fr-a1-001',
+      version: 2,
+      review: 'approved',
+      questions: [
+        {
+          id: 'fr-a1-001@2:q1',
+          format: 'typed-blank',
+          prompt: 'Nous ___ ici.',
+          answer: 'sommes'
+        }
+      ]
+    });
+    await importContent(client, pkg);
+  };
+  const countAttempts = async () =>
+    (await client.execute('SELECT count(*) AS n FROM attempts')).rows[0].n;
+
+  it('rejects an answer to a newer version once the session started on the first', async () => {
+    await attempt('k-first', 'fr-a1-001@1:q1');
+    await importVersionTwo();
+    const before = await countAttempts();
+    await expect(attempt('k-late', 'fr-a1-001@2:q1')).rejects.toThrow(
+      'STALE_QUESTION'
+    );
+    expect(await countAttempts()).toBe(before);
+  });
+
+  it('pins to whichever version is answered first and rejects the other', async () => {
+    await importVersionTwo();
+    await expect(attempt('k-new', 'fr-a1-001@2:q1')).resolves.toMatchObject({
+      duplicate: false
+    });
+    const before = await countAttempts();
+    await expect(attempt('k-old', 'fr-a1-001@1:q1')).rejects.toThrow(
+      'STALE_QUESTION'
+    );
+    expect(await countAttempts()).toBe(before);
+  });
+});
+
 describe('one independent answer per question', () => {
   it('lets only one of two tabs answer the same question', async () => {
     const settled = await Promise.allSettled([
@@ -271,6 +319,16 @@ describe('next question', () => {
         'fr-a1-001'
       )
     ).rejects.toThrow('CONTENT_UNAVAILABLE');
+  });
+
+  it('does not serve a question after the session was paused during the read', async () => {
+    const pausedDuringRead = afterOtherCommit(
+      /\b(FROM|JOIN)\s+questions\b/i,
+      "UPDATE study_sessions SET state = 'paused' WHERE id = 'study-a'"
+    );
+    await expect(
+      nextQuestion(pausedDuringRead, ownerA, 'study-a', 'fr-a1-001')
+    ).rejects.toThrow('SESSION_NOT_ACTIVE');
   });
 
   it('keeps a started skill on its original version after a newer import', async () => {

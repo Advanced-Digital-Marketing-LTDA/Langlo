@@ -164,6 +164,25 @@ function isBoundedText(value: unknown, limit: number): value is string {
   );
 }
 
+/**
+ * The newest content version of a skill, as a subquery that callers join their
+ * payload to. The status is read in the same statement as the payload, so
+ * content withdrawn by a quarantine import is never served after the check.
+ */
+const latestVersion =
+  '(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1)';
+
+/**
+ * The version a session reads for a skill: the one its first attempt at the
+ * skill was recorded against, so a session that spans an import is finished on
+ * the questions it started, and the newest version otherwise. Takes the
+ * owner, session and skill, then the skill and language of the fallback.
+ */
+const sessionVersionId = `COALESCE(
+    (SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1),
+    (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1))`;
+const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = ${sessionVersionId})`;
+
 type AttemptInput = {
   studySessionId: string;
   questionId: string;
@@ -235,6 +254,18 @@ async function attemptSource(
     (questionRow.holdout === 1 && studyRow.mode !== 'assessment')
   )
     throw new StudyError('CONTENT_UNAVAILABLE');
+  // The first answer pins the skill to a version for this session. A tab
+  // still holding a question from another version would record evidence the
+  // resume position can no longer see.
+  const pinned = await tx.execute({
+    sql: 'SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1',
+    args: [session.userId, input.studySessionId, questionRow.skill_id]
+  });
+  if (
+    pinned.rows[0] &&
+    pinned.rows[0].content_version_id !== questionRow.content_version_id
+  )
+    throw new StudyError('STALE_QUESTION');
   return {
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
@@ -365,24 +396,6 @@ export async function resumeStudySession(
   return getStudySession(client, session, studySessionId);
 }
 
-/**
- * The newest content version of a skill, as a subquery that callers join their
- * payload to. The status is read in the same statement as the payload, so
- * content withdrawn by a quarantine import is never served after the check.
- */
-const latestVersion =
-  '(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1)';
-
-/**
- * The version a session reads for a skill: the one its first attempt at the
- * skill was recorded against, so a session that spans an import is finished on
- * the questions it started, and the newest version otherwise. Takes the
- * owner, session and skill, then the skill and language of the fallback.
- */
-const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = COALESCE(
-    (SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1),
-    (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1)))`;
-
 /** Reject a joined version row that is missing or withdrawn. */
 function assertAvailable(row: Row | undefined): asserts row is Row {
   if (!row) throw new StudyError('NOT_FOUND');
@@ -405,11 +418,15 @@ export async function nextQuestion(
   const study = await ownSession(client, session, studySessionId);
   if (study.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
   if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
+  // The session state is read in the payload statement itself, so a pause
+  // committed after the lookup above is not answered with a question.
   const found = await client.execute({
-    sql: `SELECT v.status, q.id, q.format, q.prompt, q.alternatives,
+    sql: `SELECT s.state, v.status, q.id, q.format, q.prompt, q.alternatives,
             EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.study_session_id = ? AND a.question_id = q.id) AS answered
-          FROM ${sessionVersion} v
+          FROM study_sessions s
+          CROSS JOIN ${sessionVersion} v
           LEFT JOIN questions q ON q.content_version_id = v.id AND q.prompt IS NOT NULL AND (q.holdout = 0 OR ? = 'assessment')
+          WHERE s.id = ? AND s.owner_id = ?
           ORDER BY q.id`,
     args: [
       session.userId,
@@ -419,9 +436,13 @@ export async function nextQuestion(
       skillId,
       skillId,
       study.language,
-      study.mode
+      study.mode,
+      studySessionId,
+      session.userId
     ]
   });
+  if (found.rows[0] && found.rows[0].state !== 'active')
+    throw new StudyError('SESSION_NOT_ACTIVE');
   assertAvailable(found.rows[0]);
   const rows = { rows: found.rows.filter((row) => row.id !== null) };
   const next = rows.rows.find((row) => Number(row.answered) === 0);

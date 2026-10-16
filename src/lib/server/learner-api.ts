@@ -17,7 +17,8 @@ const statusFor: Record<string, number> = {
   SUSPENDED: 409,
   SESSION_NOT_ACTIVE: 409,
   CONTENT_UNAVAILABLE: 409,
-  QUESTION_ALREADY_ANSWERED: 409
+  QUESTION_ALREADY_ANSWERED: 409,
+  STALE_QUESTION: 409
 };
 
 // Codes whose cause the learner can act on get their own message; the rest
@@ -27,7 +28,8 @@ const messageForCode: Record<string, string> = {
     'This session is paused or finished. Resume it to continue.',
   CONTENT_UNAVAILABLE: 'This content is not available right now.',
   QUESTION_ALREADY_ANSWERED:
-    'This question was already answered in this session.'
+    'This question was already answered in this session.',
+  STALE_QUESTION: 'This question is out of date. Reload to continue.'
 };
 
 function httpStatusFor(code: string): number | undefined {

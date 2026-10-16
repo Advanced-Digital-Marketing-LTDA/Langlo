@@ -263,15 +263,19 @@ describe('forged identifiers yield zero cross-owner reads and writes', () => {
   );
 
   it('assessment can record a holdout with idempotent replay', async () => {
+    // A second version-1 question: study-a already answered question-1.
     await client.execute(
-      "UPDATE questions SET holdout = 1 WHERE id = 'question-2'"
+      "INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES ('question-3', 'content-v1', 'fr-articles', 'fr', 'typed-blank')"
+    );
+    await client.execute(
+      "UPDATE questions SET holdout = 1 WHERE id = 'question-3'"
     );
     await client.execute(
       "UPDATE study_sessions SET mode = 'assessment' WHERE id = 'study-a'"
     );
     const input = {
       studySessionId: 'study-a',
-      questionId: 'question-2',
+      questionId: 'question-3',
       submissionKey: 'holdout',
       evidenceKind: 'independent' as const,
       answer: 'un'

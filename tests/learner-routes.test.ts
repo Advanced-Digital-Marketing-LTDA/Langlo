@@ -306,12 +306,16 @@ describe('private learner routes', () => {
     );
     expect(stale.status).toBe(409);
 
+    // A second version-1 question: study-a already answered question-1.
+    await client.execute(
+      "INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES ('question-3', 'content-v1', 'fr-articles', 'fr', 'typed-blank')"
+    );
     const recorded = await call(
       attempts.POST as Handler,
       event('learner-a', {
         body: {
           studySessionId: 'study-a',
-          questionId: 'question-2',
+          questionId: 'question-3',
           submissionKey: 'route-attempt',
           evidenceKind: 'independent',
           answer: 'est'
