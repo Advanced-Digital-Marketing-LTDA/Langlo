@@ -1,4 +1,4 @@
-# Content-version immutability follow-up
+# Content-version immutability and legacy adoption
 
 Date: 2026-10-16. Branch: `codex/open-pr-review-20261016`.
 
@@ -34,18 +34,32 @@ still requires a new content version and new question IDs.
 this column and snapshot ancestry. No old migration is edited; no table is
 rebuilt and no existing content, learner data, index or trigger is rewritten.
 
-Legacy rows keep a null fingerprint because their original payload was never
-stored. The importer rejects these versions, including an otherwise identical
-reimport or quarantine request, rather than trusting an incoming package as a
-backfill. Existing study reads are unchanged. An importer caller must use a new
-content version and new question IDs for legacy content; no automatic recovery
-or production backfill is implemented.
+Legacy rows initially keep a null fingerprint because their original payload was
+never stored. Following the owner's approval of the compatibility repair, the
+importer adopts them only when the incoming package's whole-package fingerprint
+matches the existing `curriculum_imports` row for that same curriculum version.
+Stored version metadata and question IDs/formats must also match. It writes only
+the missing per-version fingerprints inside the import transaction. It neither
+creates proof from the incoming package nor replaces a non-null fingerprint.
+
+For an upgrade, first reimport the recorded original package, with its original
+curriculum version and payload. Then import corrected content under new content
+versions, new question IDs and a newer curriculum version. Repeating the adopted
+original package is a no-op; one-way quarantine remains available afterwards.
+If the original package or its matching ledger entry is unavailable, or the
+incoming package differs, `LEGACY_CONTENT_UNVERIFIED` explains that the caller
+must supply the recorded original package or publish new content and question
+IDs. No unverifiable adoption, destructive repair or production backfill is run.
 
 Only disposable local SQLite fixtures were migrated. The migration upgrade test
 starts from migrations 0000–0006 with synthetic study data, applies 0007, and
-checks unchanged version metadata, learner attempts, indexes and triggers, null
-legacy fingerprints, foreign keys and SQLite integrity. Remote migration tests
-continue to use file-backed stand-ins, not a remote database.
+checks unchanged version metadata, learner attempts, indexes and triggers, and
+initially null legacy fingerprints. It then adopts the recorded package and
+imports a corrected revision alongside the original, preserving learner attempts
+and passing foreign-key and SQLite integrity checks. The legacy seed uses the
+old SQL shape and a fixed historical package hash, without invoking the current
+importer. Remote migration tests continue to use file-backed stand-ins, not a
+remote database.
 
 ## Observed red and green
 
@@ -67,7 +81,7 @@ Logs are retained locally under `/tmp/langlo-content-identity-*.log` and
 `/tmp/langlo-content-migration-red.log`; generated databases and build output are
 excluded from Git.
 
-## Full local validation
+## Initial local validation, before the compatibility repair
 
 Using Node **24.19.0** and npm **11.9.0**:
 
@@ -107,8 +121,10 @@ merge changes ancestry only. This does not merge PR #80 into `main`.
 
 This fingerprint is an import identity guard, not storage of deliverable question
 payloads. LANGLO-125 holdout separation and runtime payload persistence remain
-release blockers. No learner schema, auth, grading, UI, curriculum JSON, provider
-configuration or deployment is changed by this follow-up.
+release blockers. No learner schema, auth, grading, UI, provider configuration or
+deployment is changed. Existing migrations and the schema definition are
+unchanged by the compatibility repair; only the schema's legacy-field comment
+is updated.
 
 The requested external local review layers are not claimed as executed. The
 PR Review Toolkit specialist agents, gstack commands and Warp validator were not
@@ -117,3 +133,75 @@ adversarial reviewer would call a provider using the owner's CLI/key and has not
 been authorized separately. Foreground source and test review does not replace
 those independent reviews. Hosted checks and release acceptance remain separate
 from local validation.
+
+## Adversarial review findings and approved compatibility repair
+
+The owner supplied the [CI review of head `e2678eb`](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/38951807264/job/117144762360). Its no-ship verdict identified
+a valid upgrade limitation in the first, explicitly fail-closed implementation.
+The owner then approved verified legacy adoption and new content identities.
+
+1. **High: legacy null fingerprints block reimport.** Fixed through verified
+   adoption against the saved package fingerprint. Computing a hash from stored
+   question rows alone cannot verify a payload: those rows lack prompts, answers
+   and alternatives. The migration-upgrade test now exercises the real pre-0007
+   storage shape, migration, adoption and revised-content import in sequence.
+2. **High: edited existing content retains its old identity.** Conservative fix:
+   the 16 lessons below now use content version 2 and all 240 question IDs use the
+   corresponding `@2` namespace. Payload wording is unchanged by this revision
+   repair. Existing rows are retained; fixtures verify that every affected module
+   imports alongside synthetic historical version/question IDs without overwrites.
+3. **Medium: the same in-place content edits violate immutability.** Addressed by
+   the same revision changes. An independent comparison against `origin/main`
+   found no changed importer payload retaining an existing version ID. No claim
+   is made about actual production imports, which were not inspected.
+
+| Module              | Skills moved from version 1 to version 2 |
+| ------------------- | ---------------------------------------- |
+| German A1 module 01 | de-a1-001                                |
+| German A1 module 04 | de-a1-010                                |
+| German A1 module 06 | de-a1-021                                |
+| German A2 module 01 | de-a2-002                                |
+| German A2 module 02 | de-a2-005, de-a2-006, de-a2-007          |
+| German A2 module 03 | de-a2-009, de-a2-010, de-a2-011          |
+| French A1 module 02 | fr-a1-007                                |
+| French A1 module 05 | fr-a1-017, fr-a1-019                     |
+| French A1 module 06 | fr-a1-021, fr-a1-023, fr-a1-024          |
+
+The earlier curriculum additions remain on the owner's requested repair branch;
+they already have separate authoring commits. No additional PR split, branch
+deletion or merge into `main` is performed for this repair.
+
+Observed red: **8 failures across the importer and migration suites** before the
+adoption change; the verified original package and actual pre-0007 upgrade both
+raised `CONTENT_CONFLICT`, and the six unverifiable cases lacked their actionable
+error. The curriculum suite had **26 failures** before the identity bumps,
+including all nine historical-coexistence cases. Observed green afterwards:
+**382 tests across these three files**.
+
+The tests also cover missing ledger proof, changed prompts/answers/alternatives,
+changed curriculum versions, partial packages, rollback of an earlier adoption
+when later stored metadata differs, repeated no-op imports, quarantine, and
+retaining original version/question records. The old null-rejection tests were
+replaced with these verified-adoption and fail-closed cases.
+
+Follow-up logs: `/tmp/langlo-legacy-adoption-{red,green}.log`,
+`/tmp/langlo-revision-identities-red.log`, and
+`/tmp/langlo-content-revision-bumps.json`.
+
+Full compatibility-follow-up validation on Node 24.19.0 / npm 11.9.0:
+
+- `npm ci --ignore-scripts`: 280 packages, zero audit vulnerabilities.
+- `npm run check`: zero errors and zero warnings.
+- `npm run lint` and `npm run format:check`: passed.
+- `npm test`: **811 tests across 40 files**, no skips.
+- `npm run test:property`: **5 properties across 4 files**.
+- `npm run validate:curriculum`: **125 records, 164 edges**, approved 1.0.0.
+- `npm run build`: passed.
+- `npm run test:e2e`: **72 desktop/mobile browser tests**, built Node server,
+  disposable synthetic fixtures.
+- `drizzle-kit check` and `git diff --check`: passed. No migration file changed.
+
+Logs are `/tmp/langlo-legacy-final-*.log`; step exit codes and timings are in
+`/tmp/langlo-legacy-validation-results.json`. These are local results, not a claim
+that the earlier failed CI review has passed on the new head. Provider-backed
+reviews were not invoked manually; publication triggers the configured checks.

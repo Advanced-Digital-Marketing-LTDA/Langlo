@@ -26,11 +26,11 @@
       ],
       "references": ["GOETHE-A1"],
       "version": {
-        "id": "de-a1-010@1",
-        "version": 1,
+        "id": "de-a1-010@2",
+        "version": 2,
         "questions": [
           {
-            "id": "de-a1-010@1:q01",
+            "id": "de-a1-010@2:q01",
             "format": "multiple-choice",
             "prompt": "Which phrase completes 'Anna hilft ___'? (der Mann)",
             "answer": "dem Mann",
@@ -38,7 +38,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q02",
+            "id": "de-a1-010@2:q02",
             "format": "multiple-choice",
             "prompt": "Which phrase completes 'Das Buch gehört ___'? (die Frau)",
             "answer": "der Frau",
@@ -46,7 +46,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q03",
+            "id": "de-a1-010@2:q03",
             "format": "multiple-choice",
             "prompt": "Which preposition always takes the dative?",
             "answer": "mit",
@@ -54,7 +54,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q04",
+            "id": "de-a1-010@2:q04",
             "format": "multiple-choice",
             "prompt": "Which sentence uses the dative correctly?",
             "answer": "Ich fahre mit dem Bus.",
@@ -66,7 +66,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q05",
+            "id": "de-a1-010@2:q05",
             "format": "typed-blank",
             "prompt": "Anna hilft ___ Mann. (the)",
             "answer": "dem",
@@ -74,7 +74,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q06",
+            "id": "de-a1-010@2:q06",
             "format": "typed-blank",
             "prompt": "Ich fahre mit ___ Freundin. (the)",
             "answer": "der",
@@ -82,7 +82,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q07",
+            "id": "de-a1-010@2:q07",
             "format": "typed-blank",
             "prompt": "Das gefällt ___ Kind. (the)",
             "answer": "dem",
@@ -90,7 +90,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q08",
+            "id": "de-a1-010@2:q08",
             "format": "translation",
             "prompt": "Translate (use the dative): I travel by bus.",
             "answer": "Ich fahre mit dem Bus.",
@@ -98,7 +98,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q09",
+            "id": "de-a1-010@2:q09",
             "format": "translation",
             "prompt": "Translate (use the dative): Anna helps the woman.",
             "answer": "Anna hilft der Frau.",
@@ -106,7 +106,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q10",
+            "id": "de-a1-010@2:q10",
             "format": "translation",
             "prompt": "Translate (use the dative): The book belongs to the child.",
             "answer": "Das Buch gehört dem Kind.",
@@ -117,7 +117,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q11",
+            "id": "de-a1-010@2:q11",
             "format": "correction",
             "prompt": "Correct the article: Ich helfe den Mann.",
             "answer": "Ich helfe dem Mann.",
@@ -125,7 +125,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:q12",
+            "id": "de-a1-010@2:q12",
             "format": "correction",
             "prompt": "Correct the article: Er fährt mit der Auto.",
             "answer": "Er fährt mit dem Auto.",
@@ -133,7 +133,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-010@1:h01",
+            "id": "de-a1-010@2:h01",
             "format": "multiple-choice",
             "prompt": "Which phrase completes 'Das Spiel gefällt ___'? (das Kind)",
             "answer": "dem Kind",
@@ -141,7 +141,7 @@
             "holdout": true
           },
           {
-            "id": "de-a1-010@1:h02",
+            "id": "de-a1-010@2:h02",
             "format": "translation",
             "prompt": "Translate (use the dative): We help the man.",
             "answer": "Wir helfen dem Mann.",
@@ -149,7 +149,7 @@
             "holdout": true
           },
           {
-            "id": "de-a1-010@1:h03",
+            "id": "de-a1-010@2:h03",
             "format": "correction",
             "prompt": "Correct the article: Das gehört die Frau.",
             "answer": "Das gehört der Frau.",

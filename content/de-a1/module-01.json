@@ -26,11 +26,11 @@
       ],
       "references": ["GOETHE-A1", "COE-CV20"],
       "version": {
-        "id": "de-a1-001@1",
-        "version": 1,
+        "id": "de-a1-001@2",
+        "version": 2,
         "questions": [
           {
-            "id": "de-a1-001@1:q01",
+            "id": "de-a1-001@2:q01",
             "format": "multiple-choice",
             "prompt": "Which sentence is a correct German statement?",
             "answer": "Anna wohnt in Berlin.",
@@ -42,7 +42,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q02",
+            "id": "de-a1-001@2:q02",
             "format": "multiple-choice",
             "prompt": "Where does the finite verb stand in a German main clause?",
             "answer": "in second position",
@@ -54,7 +54,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q03",
+            "id": "de-a1-001@2:q03",
             "format": "multiple-choice",
             "prompt": "Which sentence has the verb in second position?",
             "answer": "Heute spielt Max Fußball.",
@@ -66,7 +66,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q04",
+            "id": "de-a1-001@2:q04",
             "format": "multiple-choice",
             "prompt": "Choose the correct sentence for 'We live in Hamburg.'",
             "answer": "Wir wohnen in Hamburg.",
@@ -78,7 +78,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q05",
+            "id": "de-a1-001@2:q05",
             "format": "typed-blank",
             "prompt": "Anna ___ in Berlin. (wohnen)",
             "answer": "wohnt",
@@ -86,7 +86,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q06",
+            "id": "de-a1-001@2:q06",
             "format": "typed-blank",
             "prompt": "Wir ___ Fußball. (spielen)",
             "answer": "spielen",
@@ -94,7 +94,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q07",
+            "id": "de-a1-001@2:q07",
             "format": "typed-blank",
             "prompt": "Heute ___ Max Deutsch. (lernen)",
             "answer": "lernt",
@@ -102,7 +102,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q08",
+            "id": "de-a1-001@2:q08",
             "format": "translation",
             "prompt": "Translate (write a main clause): Anna works in Bonn.",
             "answer": "Anna arbeitet in Bonn.",
@@ -111,7 +111,7 @@
             "alternatives": ["In Bonn arbeitet Anna."]
           },
           {
-            "id": "de-a1-001@1:q09",
+            "id": "de-a1-001@2:q09",
             "format": "translation",
             "prompt": "Translate (write a main clause): Tomorrow Paul learns German.",
             "answer": "Morgen lernt Paul Deutsch.",
@@ -123,7 +123,7 @@
             "alternatives": ["Paul lernt morgen Deutsch."]
           },
           {
-            "id": "de-a1-001@1:q10",
+            "id": "de-a1-001@2:q10",
             "format": "translation",
             "prompt": "Translate (write a main clause): Lisa and I live in Köln.",
             "answer": "Lisa und ich wohnen in Köln.",
@@ -134,7 +134,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q11",
+            "id": "de-a1-001@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the meaning): Anna in Berlin wohnt.",
             "answer": "Anna wohnt in Berlin.",
@@ -142,7 +142,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:q12",
+            "id": "de-a1-001@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the meaning): Heute Max lernt Deutsch.",
             "answer": "Heute lernt Max Deutsch.",
@@ -153,7 +153,7 @@
             "holdout": false
           },
           {
-            "id": "de-a1-001@1:h01",
+            "id": "de-a1-001@2:h01",
             "format": "multiple-choice",
             "prompt": "Which sentence puts the verb in the right place?",
             "answer": "Paul kauft ein Brot.",
@@ -165,7 +165,7 @@
             "holdout": true
           },
           {
-            "id": "de-a1-001@1:h02",
+            "id": "de-a1-001@2:h02",
             "format": "typed-blank",
             "prompt": "Max ___ Tee. (trinken)",
             "answer": "trinkt",
@@ -173,7 +173,7 @@
             "holdout": true
           },
           {
-            "id": "de-a1-001@1:h03",
+            "id": "de-a1-001@2:h03",
             "format": "translation",
             "prompt": "Translate (write a main clause): Mia lives in Wien.",
             "answer": "Mia wohnt in Wien.",

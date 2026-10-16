@@ -26,11 +26,11 @@
       ],
       "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
       "version": {
-        "id": "de-a2-009@1",
-        "version": 1,
+        "id": "de-a2-009@2",
+        "version": 2,
         "questions": [
           {
-            "id": "de-a2-009@1:q01",
+            "id": "de-a2-009@2:q01",
             "format": "multiple-choice",
             "prompt": "Which question asks for a location (dative)?",
             "answer": "Wo?",
@@ -38,7 +38,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q02",
+            "id": "de-a2-009@2:q02",
             "format": "multiple-choice",
             "prompt": "Which question asks for a direction (accusative)?",
             "answer": "Wohin?",
@@ -46,7 +46,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q03",
+            "id": "de-a2-009@2:q03",
             "format": "multiple-choice",
             "prompt": "Which sentence describes a location?",
             "answer": "Das Buch liegt auf dem Tisch.",
@@ -58,7 +58,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q04",
+            "id": "de-a2-009@2:q04",
             "format": "multiple-choice",
             "prompt": "Which sentence describes motion into the city?",
             "answer": "Ich gehe in die Stadt.",
@@ -70,7 +70,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q05",
+            "id": "de-a2-009@2:q05",
             "format": "typed-blank",
             "prompt": "Wir wohnen in ___ Stadt. (the)",
             "answer": "der",
@@ -78,7 +78,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q06",
+            "id": "de-a2-009@2:q06",
             "format": "typed-blank",
             "prompt": "Ich lege das Buch auf ___ Tisch. (the)",
             "answer": "den",
@@ -86,7 +86,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q07",
+            "id": "de-a2-009@2:q07",
             "format": "typed-blank",
             "prompt": "Das Kind spielt in ___ Garten. (the)",
             "answer": "dem",
@@ -94,7 +94,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q08",
+            "id": "de-a2-009@2:q08",
             "format": "translation",
             "prompt": "Translate (choose accusative or dative): The book is on the table.",
             "answer": "Das Buch liegt auf dem Tisch.",
@@ -106,7 +106,7 @@
             "alternatives": ["Das Buch ist auf dem Tisch."]
           },
           {
-            "id": "de-a2-009@1:q09",
+            "id": "de-a2-009@2:q09",
             "format": "translation",
             "prompt": "Translate (choose accusative or dative): I put the book on the table.",
             "answer": "Ich lege das Buch auf den Tisch.",
@@ -117,7 +117,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q10",
+            "id": "de-a2-009@2:q10",
             "format": "translation",
             "prompt": "Translate (choose accusative or dative): We are going into the city.",
             "answer": "Wir gehen in die Stadt.",
@@ -128,7 +128,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q11",
+            "id": "de-a2-009@2:q11",
             "format": "correction",
             "prompt": "Correct the case: Ich wohne in die Stadt.",
             "answer": "Ich wohne in der Stadt.",
@@ -139,7 +139,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-009@1:q12",
+            "id": "de-a2-009@2:q12",
             "format": "correction",
             "prompt": "Correct the case (he is entering the house): Er geht in dem Haus.",
             "answer": "Er geht in das Haus.",
@@ -148,7 +148,7 @@
             "alternatives": ["Er geht ins Haus."]
           },
           {
-            "id": "de-a2-009@1:h01",
+            "id": "de-a2-009@2:h01",
             "format": "multiple-choice",
             "prompt": "Which sentence says the lamp hangs over the table?",
             "answer": "Die Lampe hängt über dem Tisch.",
@@ -160,7 +160,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-009@1:h02",
+            "id": "de-a2-009@2:h02",
             "format": "translation",
             "prompt": "Translate (choose accusative or dative): The child goes into the garden.",
             "answer": "Das Kind geht in den Garten.",
@@ -171,7 +171,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-009@1:h03",
+            "id": "de-a2-009@2:h03",
             "format": "correction",
             "prompt": "Correct the case: Das Auto steht vor den Haus.",
             "answer": "Das Auto steht vor dem Haus.",
@@ -204,11 +204,11 @@
       ],
       "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
       "version": {
-        "id": "de-a2-010@1",
-        "version": 1,
+        "id": "de-a2-010@2",
+        "version": 2,
         "questions": [
           {
-            "id": "de-a2-010@1:q01",
+            "id": "de-a2-010@2:q01",
             "format": "multiple-choice",
             "prompt": "Which pronoun is the dative of 'sie' (she)?",
             "answer": "ihr",
@@ -216,7 +216,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q02",
+            "id": "de-a2-010@2:q02",
             "format": "multiple-choice",
             "prompt": "Which pronoun is the accusative of 'er'?",
             "answer": "ihn",
@@ -224,7 +224,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q03",
+            "id": "de-a2-010@2:q03",
             "format": "multiple-choice",
             "prompt": "Which sentence uses a dative pronoun correctly?",
             "answer": "Er gibt mir das Buch.",
@@ -236,7 +236,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q04",
+            "id": "de-a2-010@2:q04",
             "format": "multiple-choice",
             "prompt": "Which sentence uses an accusative pronoun correctly?",
             "answer": "Ich rufe dich morgen an.",
@@ -248,7 +248,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q05",
+            "id": "de-a2-010@2:q05",
             "format": "typed-blank",
             "prompt": "Ich gebe ___ das Buch. (him)",
             "answer": "ihm",
@@ -256,7 +256,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q06",
+            "id": "de-a2-010@2:q06",
             "format": "typed-blank",
             "prompt": "Wir besuchen ___ morgen. (you all)",
             "answer": "euch",
@@ -264,7 +264,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q07",
+            "id": "de-a2-010@2:q07",
             "format": "typed-blank",
             "prompt": "Kannst du ___ helfen? (me)",
             "answer": "mir",
@@ -272,7 +272,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q08",
+            "id": "de-a2-010@2:q08",
             "format": "translation",
             "prompt": "Translate (use a pronoun): He gives me the book.",
             "answer": "Er gibt mir das Buch.",
@@ -281,7 +281,7 @@
             "alternatives": ["Wir geben ihr eine Blume."]
           },
           {
-            "id": "de-a2-010@1:q09",
+            "id": "de-a2-010@2:q09",
             "format": "translation",
             "prompt": "Translate (use a pronoun): I call you tomorrow. (one friend)",
             "answer": "Ich rufe dich morgen an.",
@@ -292,7 +292,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q10",
+            "id": "de-a2-010@2:q10",
             "format": "translation",
             "prompt": "Translate (use a pronoun): We give her a flower.",
             "answer": "Wir schenken ihr eine Blume.",
@@ -303,7 +303,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q11",
+            "id": "de-a2-010@2:q11",
             "format": "correction",
             "prompt": "Correct the pronoun: Kannst du mich helfen?",
             "answer": "Kannst du mir helfen?",
@@ -311,7 +311,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:q12",
+            "id": "de-a2-010@2:q12",
             "format": "correction",
             "prompt": "Correct the pronoun: Ich besuche dir morgen.",
             "answer": "Ich besuche dich morgen.",
@@ -322,7 +322,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-010@1:h01",
+            "id": "de-a2-010@2:h01",
             "format": "multiple-choice",
             "prompt": "Which pronoun is the accusative of 'sie' (they)?",
             "answer": "sie",
@@ -330,7 +330,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-010@1:h02",
+            "id": "de-a2-010@2:h02",
             "format": "translation",
             "prompt": "Translate (use a pronoun): She helps him.",
             "answer": "Sie hilft ihm.",
@@ -338,7 +338,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-010@1:h03",
+            "id": "de-a2-010@2:h03",
             "format": "correction",
             "prompt": "Correct the pronoun: Er sieht mir nicht.",
             "answer": "Er sieht mich nicht.",
@@ -368,11 +368,11 @@
       ],
       "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
       "version": {
-        "id": "de-a2-011@1",
-        "version": 1,
+        "id": "de-a2-011@2",
+        "version": 2,
         "questions": [
           {
-            "id": "de-a2-011@1:q01",
+            "id": "de-a2-011@2:q01",
             "format": "multiple-choice",
             "prompt": "Which reflexive pronoun goes with 'ich'?",
             "answer": "mich",
@@ -380,7 +380,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q02",
+            "id": "de-a2-011@2:q02",
             "format": "multiple-choice",
             "prompt": "Which reflexive pronoun goes with 'du'?",
             "answer": "dich",
@@ -388,7 +388,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q03",
+            "id": "de-a2-011@2:q03",
             "format": "multiple-choice",
             "prompt": "Which reflexive pronoun goes with 'er'?",
             "answer": "sich",
@@ -396,7 +396,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q04",
+            "id": "de-a2-011@2:q04",
             "format": "multiple-choice",
             "prompt": "Which reflexive pronoun goes with 'wir'?",
             "answer": "uns",
@@ -404,7 +404,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q05",
+            "id": "de-a2-011@2:q05",
             "format": "typed-blank",
             "prompt": "Ich freue ___ auf das Wochenende. (myself)",
             "answer": "mich",
@@ -412,7 +412,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q06",
+            "id": "de-a2-011@2:q06",
             "format": "typed-blank",
             "prompt": "Wir treffen ___ um acht Uhr. (ourselves)",
             "answer": "uns",
@@ -420,7 +420,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q07",
+            "id": "de-a2-011@2:q07",
             "format": "typed-blank",
             "prompt": "Sie setzt ___ auf das Sofa. (herself)",
             "answer": "sich",
@@ -428,7 +428,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q08",
+            "id": "de-a2-011@2:q08",
             "format": "translation",
             "prompt": "Translate (use a reflexive verb): I look forward to the weekend.",
             "answer": "Ich freue mich auf das Wochenende.",
@@ -439,7 +439,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q09",
+            "id": "de-a2-011@2:q09",
             "format": "translation",
             "prompt": "Translate (use a reflexive verb): We meet at eight o'clock.",
             "answer": "Wir treffen uns um acht Uhr.",
@@ -451,7 +451,7 @@
             "alternatives": ["Wir treffen uns um 8 Uhr."]
           },
           {
-            "id": "de-a2-011@1:q10",
+            "id": "de-a2-011@2:q10",
             "format": "translation",
             "prompt": "Translate (use a reflexive verb): She sits down on the sofa.",
             "answer": "Sie setzt sich auf das Sofa.",
@@ -462,7 +462,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q11",
+            "id": "de-a2-011@2:q11",
             "format": "correction",
             "prompt": "Correct the pronoun: Du freust mich auf das Wochenende.",
             "answer": "Du freust dich auf das Wochenende.",
@@ -473,7 +473,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:q12",
+            "id": "de-a2-011@2:q12",
             "format": "correction",
             "prompt": "Correct the pronoun: Ihr trefft uns um acht Uhr.",
             "answer": "Ihr trefft euch um acht Uhr.",
@@ -484,7 +484,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-011@1:h01",
+            "id": "de-a2-011@2:h01",
             "format": "multiple-choice",
             "prompt": "Which sentence uses the reflexive pronoun correctly for 'ihr'?",
             "answer": "Ihr freut euch.",
@@ -496,7 +496,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-011@1:h02",
+            "id": "de-a2-011@2:h02",
             "format": "translation",
             "prompt": "Translate (use a reflexive verb): You wash yourself. (one friend)",
             "answer": "Du wäschst dich.",
@@ -504,7 +504,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-011@1:h03",
+            "id": "de-a2-011@2:h03",
             "format": "correction",
             "prompt": "Correct the pronoun: Wir freuen sich auf die Ferien.",
             "answer": "Wir freuen uns auf die Ferien.",

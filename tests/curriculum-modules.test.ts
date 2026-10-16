@@ -51,6 +51,24 @@ const practisedText = (
       ? (example.de ?? '')
       : example.en;
 const load = (path: string) => JSON.parse(read(path)) as Module;
+const revisedSkills = new Set([
+  'de-a1-001',
+  'de-a1-010',
+  'de-a1-021',
+  'de-a2-002',
+  'de-a2-005',
+  'de-a2-006',
+  'de-a2-007',
+  'de-a2-009',
+  'de-a2-010',
+  'de-a2-011',
+  'fr-a1-007',
+  'fr-a1-017',
+  'fr-a1-019',
+  'fr-a1-021',
+  'fr-a1-023',
+  'fr-a1-024'
+]);
 const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .flatMap((dir) =>
@@ -86,21 +104,21 @@ describe('reviewed curriculum answer keys', () => {
   };
 
   it.each([
-    ['fr-a1-021@1:q09', 'Hier, nous avons parlé.'],
-    ['fr-a1-021@1:q10', 'À midi, elle est arrivée.'],
-    ['fr-a1-023@1:q08', 'Je me lève à 7 heures.'],
-    ['fr-a1-024@1:q08', 'Dans le jardin, il y a un chat.'],
-    ['de-a1-001@1:q08', 'In Bonn arbeitet Anna.'],
-    ['de-a1-001@1:q09', 'Paul lernt morgen Deutsch.'],
-    ['de-a1-021@1:q07', 'gerne'],
-    ['de-a2-005@1:q10', 'Anna lernt Deutsch, weil sie in Wien lebt.'],
-    ['de-a2-006@1:q08', 'Ich weiß, dass Anna in Wien lebt.'],
-    ['de-a2-006@1:q10', 'Ich glaube, dass das Buch gut ist.'],
-    ['de-a2-007@1:q10', 'Sie fragt, wann der Kurs beginnt.'],
-    ['de-a2-009@1:q08', 'Das Buch ist auf dem Tisch.'],
-    ['de-a2-009@1:q12', 'Er geht ins Haus.'],
-    ['de-a2-010@1:q08', 'Wir geben ihr eine Blume.'],
-    ['de-a2-011@1:q09', 'Wir treffen uns um 8 Uhr.'],
+    ['fr-a1-021@2:q09', 'Hier, nous avons parlé.'],
+    ['fr-a1-021@2:q10', 'À midi, elle est arrivée.'],
+    ['fr-a1-023@2:q08', 'Je me lève à 7 heures.'],
+    ['fr-a1-024@2:q08', 'Dans le jardin, il y a un chat.'],
+    ['de-a1-001@2:q08', 'In Bonn arbeitet Anna.'],
+    ['de-a1-001@2:q09', 'Paul lernt morgen Deutsch.'],
+    ['de-a1-021@2:q07', 'gerne'],
+    ['de-a2-005@2:q10', 'Anna lernt Deutsch, weil sie in Wien lebt.'],
+    ['de-a2-006@2:q08', 'Ich weiß, dass Anna in Wien lebt.'],
+    ['de-a2-006@2:q10', 'Ich glaube, dass das Buch gut ist.'],
+    ['de-a2-007@2:q10', 'Sie fragt, wann der Kurs beginnt.'],
+    ['de-a2-009@2:q08', 'Das Buch ist auf dem Tisch.'],
+    ['de-a2-009@2:q12', 'Er geht ins Haus.'],
+    ['de-a2-010@2:q08', 'Wir geben ihr eine Blume.'],
+    ['de-a2-011@2:q09', 'Wir treffen uns um 8 Uhr.'],
     ['de-a2-017@1:h03', 'Ich arbeite vor dem Abendessen.'],
     ['de-a2-019@1:q07', 'darum'],
     ['de-a2-019@1:q07', 'daher'],
@@ -124,9 +142,9 @@ describe('reviewed curriculum answer keys', () => {
   });
 
   it('states the intended tense or modal when other grammatical forms fit', () => {
-    for (const id of ['de-a2-002@1:q06', 'de-a2-002@1:q07'])
+    for (const id of ['de-a2-002@2:q06', 'de-a2-002@2:q07'])
       expect(question(id).prompt, id).toMatch(/gestern|past|Präteritum/u);
-    expect(question('de-a2-006@1:q07').prompt).toMatch(/Anna/u);
+    expect(question('de-a2-006@2:q07').prompt).toMatch(/Anna/u);
     expect(question('de-a2-015@1:q07').prompt).toMatch(/rather|prefer/u);
     expect(question('en-a2-003@1:q06').prompt).toMatch(/ever/u);
     expect(question('en-a2-005@1:q07').prompt).toMatch(/will/u);
@@ -144,7 +162,7 @@ describe('reviewed curriculum answer keys', () => {
   });
 
   it('keeps dative recognition inside the catalogued frequent frames', () => {
-    for (const id of ['de-a1-010@1:q01', 'de-a1-010@1:q02', 'de-a1-010@1:h01'])
+    for (const id of ['de-a1-010@2:q01', 'de-a1-010@2:q02', 'de-a1-010@2:h01'])
       expect(question(id).prompt, id).toMatch(/mit|hilft|gehört|gefällt/u);
   });
 
@@ -223,9 +241,10 @@ describe.each(files)('%s', (path) => {
         expect(allowed).toContain(reference);
       }
       expect(lesson.version).toMatchObject({
-        id: `${lesson.skill_id}@1`,
-        version: 1
+        id: `${lesson.skill_id}@${lesson.version.version}`
       });
+      expect(Number.isSafeInteger(lesson.version.version)).toBe(true);
+      expect(lesson.version.version).toBeGreaterThan(0);
     }
   });
 
@@ -332,6 +351,56 @@ describe.each(files)('%s', (path) => {
   describe('import', () => {
     const db = moduleImportFixture();
     const count = db.count;
+
+    if (module.lessons.some((lesson) => revisedSkills.has(lesson.skill_id))) {
+      it('imports corrected revisions alongside historical version and question IDs', async () => {
+        const historical = modulePackage(root, module);
+        const revised = historical.versions.filter((version) =>
+          revisedSkills.has(version.skillId)
+        );
+        for (const version of revised) {
+          version.id = `${version.skillId}@1`;
+          version.version = 1;
+          version.questions = [
+            {
+              ...version.questions[0],
+              id: `${version.skillId}@1:q01`,
+              prompt: 'Synthetic historical question, not released curriculum.'
+            }
+          ];
+        }
+        await importContent(db.client, historical);
+        const before = (
+          await db.client.execute('SELECT * FROM content_versions ORDER BY id')
+        ).rows;
+        const oldQuestions = (
+          await db.client.execute('SELECT * FROM questions ORDER BY id')
+        ).rows;
+        const result = await importContent(
+          db.client,
+          modulePackage(root, module, module.review_status, '1.1.0')
+        );
+        expect(result.versions).toBe(revised.length);
+        expect(result.questions).toBe(revised.length * 15);
+        expect(
+          (
+            await db.client.execute(
+              'SELECT * FROM content_versions ORDER BY id'
+            )
+          ).rows
+        ).toEqual(expect.arrayContaining(before));
+        expect(
+          (await db.client.execute('SELECT * FROM questions ORDER BY id')).rows
+        ).toEqual(expect.arrayContaining(oldQuestions));
+        for (const lesson of module.lessons.filter((lesson) =>
+          revisedSkills.has(lesson.skill_id)
+        ))
+          expect(lesson.version).toMatchObject({
+            id: `${lesson.skill_id}@2`,
+            version: 2
+          });
+      });
+    }
 
     it('is refused while unreviewed, and writes nothing', async () => {
       const tables = [

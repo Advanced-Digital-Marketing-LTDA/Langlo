@@ -26,11 +26,11 @@
       ],
       "references": ["FEI-INV"],
       "version": {
-        "id": "fr-a1-017@1",
-        "version": 1,
+        "id": "fr-a1-017@2",
+        "version": 2,
         "questions": [
           {
-            "id": "fr-a1-017@1:q01",
+            "id": "fr-a1-017@2:q01",
             "format": "multiple-choice",
             "prompt": "Which form of pouvoir goes with 'je'?",
             "answer": "peux",
@@ -38,7 +38,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q02",
+            "id": "fr-a1-017@2:q02",
             "format": "multiple-choice",
             "prompt": "In 'Elle veut manger.', which verb is in the infinitive?",
             "answer": "manger",
@@ -46,7 +46,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q03",
+            "id": "fr-a1-017@2:q03",
             "format": "multiple-choice",
             "prompt": "Choose the correct sentence for 'We can sing.'",
             "answer": "Nous pouvons chanter.",
@@ -58,7 +58,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q04",
+            "id": "fr-a1-017@2:q04",
             "format": "multiple-choice",
             "prompt": "Which form of vouloir goes with 'vous'?",
             "answer": "voulez",
@@ -66,7 +66,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q05",
+            "id": "fr-a1-017@2:q05",
             "format": "typed-blank",
             "prompt": "Tu ___ parler anglais. (pouvoir)",
             "answer": "peux",
@@ -74,7 +74,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q06",
+            "id": "fr-a1-017@2:q06",
             "format": "typed-blank",
             "prompt": "Ils ___ manger. (vouloir)",
             "answer": "veulent",
@@ -82,7 +82,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q07",
+            "id": "fr-a1-017@2:q07",
             "format": "typed-blank",
             "prompt": "J'aime ___ la musique. (écouter)",
             "answer": "écouter",
@@ -90,7 +90,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q08",
+            "id": "fr-a1-017@2:q08",
             "format": "translation",
             "prompt": "Translate (use the simple present): I want to work.",
             "answer": "Je veux travailler.",
@@ -98,7 +98,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q09",
+            "id": "fr-a1-017@2:q09",
             "format": "translation",
             "prompt": "Translate (use the simple present): She can speak French.",
             "answer": "Elle peut parler français.",
@@ -109,7 +109,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q10",
+            "id": "fr-a1-017@2:q10",
             "format": "translation",
             "prompt": "Translate (use the simple present): We like to eat here.",
             "answer": "Nous aimons manger ici.",
@@ -121,7 +121,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q11",
+            "id": "fr-a1-017@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Je veux mangez.",
             "answer": "Je veux manger.",
@@ -129,7 +129,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:q12",
+            "id": "fr-a1-017@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Ils peut chanter.",
             "answer": "Ils peuvent chanter.",
@@ -137,7 +137,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-017@1:h01",
+            "id": "fr-a1-017@2:h01",
             "format": "multiple-choice",
             "prompt": "Which form of savoir goes with 'tu'?",
             "answer": "sais",
@@ -145,7 +145,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-017@1:h02",
+            "id": "fr-a1-017@2:h02",
             "format": "typed-blank",
             "prompt": "Nous ___ jouer ici. (pouvoir)",
             "answer": "pouvons",
@@ -153,7 +153,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-017@1:h03",
+            "id": "fr-a1-017@2:h03",
             "format": "translation",
             "prompt": "Translate (use the simple present): They (boys) want to play.",
             "answer": "Ils veulent jouer.",
@@ -336,11 +336,11 @@
       ],
       "references": ["FEI-INV"],
       "version": {
-        "id": "fr-a1-019@1",
-        "version": 1,
+        "id": "fr-a1-019@2",
+        "version": 2,
         "questions": [
           {
-            "id": "fr-a1-019@1:q01",
+            "id": "fr-a1-019@2:q01",
             "format": "multiple-choice",
             "prompt": "Which sentence means 'I am going to work.'?",
             "answer": "Je vais travailler.",
@@ -352,7 +352,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q02",
+            "id": "fr-a1-019@2:q02",
             "format": "multiple-choice",
             "prompt": "Which form of aller goes with 'nous' in this structure?",
             "answer": "allons",
@@ -360,7 +360,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q03",
+            "id": "fr-a1-019@2:q03",
             "format": "multiple-choice",
             "prompt": "What does 'demain' mean?",
             "answer": "tomorrow",
@@ -368,7 +368,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q04",
+            "id": "fr-a1-019@2:q04",
             "format": "multiple-choice",
             "prompt": "Which sentence is correct?",
             "answer": "Ils vont manger ici.",
@@ -380,7 +380,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q05",
+            "id": "fr-a1-019@2:q05",
             "format": "typed-blank",
             "prompt": "Tu ___ arriver demain. (aller)",
             "answer": "vas",
@@ -388,7 +388,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q06",
+            "id": "fr-a1-019@2:q06",
             "format": "typed-blank",
             "prompt": "Elle va ___ ce soir. (travailler)",
             "answer": "travailler",
@@ -396,7 +396,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q07",
+            "id": "fr-a1-019@2:q07",
             "format": "typed-blank",
             "prompt": "Nous ___ chanter bientôt. (aller)",
             "answer": "allons",
@@ -404,7 +404,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q08",
+            "id": "fr-a1-019@2:q08",
             "format": "translation",
             "prompt": "Translate (use aller + infinitive for the near future): I am going to eat tonight.",
             "answer": "Je vais manger ce soir.",
@@ -412,7 +412,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q09",
+            "id": "fr-a1-019@2:q09",
             "format": "translation",
             "prompt": "Translate (use aller + infinitive for the near future): He is going to arrive tomorrow.",
             "answer": "Il va arriver demain.",
@@ -420,7 +420,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q10",
+            "id": "fr-a1-019@2:q10",
             "format": "translation",
             "prompt": "Translate (use aller + infinitive for the near future): We are going to work next week.",
             "answer": "Nous allons travailler la semaine prochaine.",
@@ -432,7 +432,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q11",
+            "id": "fr-a1-019@2:q11",
             "format": "correction",
             "prompt": "Correct the sentence (keep the subject): Je vais mange demain.",
             "answer": "Je vais manger demain.",
@@ -440,7 +440,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:q12",
+            "id": "fr-a1-019@2:q12",
             "format": "correction",
             "prompt": "Correct the sentence (keep the verb): Ils va chanter ce soir.",
             "answer": "Ils vont chanter ce soir.",
@@ -451,7 +451,7 @@
             "holdout": false
           },
           {
-            "id": "fr-a1-019@1:h01",
+            "id": "fr-a1-019@2:h01",
             "format": "multiple-choice",
             "prompt": "What does 'bientôt' mean?",
             "answer": "soon",
@@ -459,7 +459,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-019@1:h02",
+            "id": "fr-a1-019@2:h02",
             "format": "typed-blank",
             "prompt": "Vous ___ jouer ici. (aller)",
             "answer": "allez",
@@ -467,7 +467,7 @@
             "holdout": true
           },
           {
-            "id": "fr-a1-019@1:h03",
+            "id": "fr-a1-019@2:h03",
             "format": "translation",
             "prompt": "Translate (use aller + infinitive for the near future): They (girls) are going to sing tomorrow.",
             "answer": "Elles vont chanter demain.",

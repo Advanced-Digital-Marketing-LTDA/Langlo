@@ -190,11 +190,11 @@
       ],
       "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
       "version": {
-        "id": "de-a2-002@1",
-        "version": 1,
+        "id": "de-a2-002@2",
+        "version": 2,
         "questions": [
           {
-            "id": "de-a2-002@1:q01",
+            "id": "de-a2-002@2:q01",
             "format": "multiple-choice",
             "prompt": "Which past form of können goes with 'ich'?",
             "answer": "konnte",
@@ -202,7 +202,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q02",
+            "id": "de-a2-002@2:q02",
             "format": "multiple-choice",
             "prompt": "Which past form of müssen goes with 'er'?",
             "answer": "musste",
@@ -210,7 +210,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q03",
+            "id": "de-a2-002@2:q03",
             "format": "multiple-choice",
             "prompt": "Which past form of wollen goes with 'wir'?",
             "answer": "wollten",
@@ -218,7 +218,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q04",
+            "id": "de-a2-002@2:q04",
             "format": "multiple-choice",
             "prompt": "Which past form of sein goes with 'du'?",
             "answer": "warst",
@@ -226,7 +226,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q05",
+            "id": "de-a2-002@2:q05",
             "format": "typed-blank",
             "prompt": "Ich ___ gestern nicht kommen. (können)",
             "answer": "konnte",
@@ -234,7 +234,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q06",
+            "id": "de-a2-002@2:q06",
             "format": "typed-blank",
             "prompt": "Wir ___ gestern arbeiten. (müssen, Präteritum)",
             "answer": "mussten",
@@ -242,7 +242,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q07",
+            "id": "de-a2-002@2:q07",
             "format": "typed-blank",
             "prompt": "Anna ___ gestern keine Zeit. (haben, Präteritum)",
             "answer": "hatte",
@@ -250,7 +250,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q08",
+            "id": "de-a2-002@2:q08",
             "format": "translation",
             "prompt": "Translate (use the Präteritum): I could not come yesterday.",
             "answer": "Ich konnte gestern nicht kommen.",
@@ -261,7 +261,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q09",
+            "id": "de-a2-002@2:q09",
             "format": "translation",
             "prompt": "Translate (use the Präteritum): We had to work.",
             "answer": "Wir mussten arbeiten.",
@@ -269,7 +269,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q10",
+            "id": "de-a2-002@2:q10",
             "format": "translation",
             "prompt": "Translate (use the Präteritum): He wanted to go home.",
             "answer": "Er wollte nach Hause gehen.",
@@ -280,7 +280,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q11",
+            "id": "de-a2-002@2:q11",
             "format": "correction",
             "prompt": "Correct the form: Wir konnte gestern nicht kommen.",
             "answer": "Wir konnten gestern nicht kommen.",
@@ -291,7 +291,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:q12",
+            "id": "de-a2-002@2:q12",
             "format": "correction",
             "prompt": "Correct the form: Er musstest arbeiten.",
             "answer": "Er musste arbeiten.",
@@ -299,7 +299,7 @@
             "holdout": false
           },
           {
-            "id": "de-a2-002@1:h01",
+            "id": "de-a2-002@2:h01",
             "format": "multiple-choice",
             "prompt": "Which past form of dürfen goes with 'ich'?",
             "answer": "durfte",
@@ -307,7 +307,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-002@1:h02",
+            "id": "de-a2-002@2:h02",
             "format": "typed-blank",
             "prompt": "Ihr ___ gestern zu Hause. (sein)",
             "answer": "wart",
@@ -315,7 +315,7 @@
             "holdout": true
           },
           {
-            "id": "de-a2-002@1:h03",
+            "id": "de-a2-002@2:h03",
             "format": "translation",
             "prompt": "Translate (use the Präteritum): She had to learn German.",
             "answer": "Sie musste Deutsch lernen.",

@@ -513,6 +513,9 @@ the file by itself does not establish enforced branch-protection settings.
    required server-side content identity/storage work outside the original edit scope.
    The owner subsequently approved the focused repair; see
    [content-version immutability evidence](content-version-immutability.md).
+   The later CI review's legacy-upgrade and unchanged-version findings were
+   separately approved for repair: recorded-package adoption and 16 new content
+   revisions are documented in that evidence, including pre-0007 upgrade tests.
 2. **Module ID is not bound to its filename — valid test gap, repaired locally.**
    Cited in #47's summary. An in-memory filesystem overlay changes English A2
    module 06's module_id to en-a2-module-05 while leaving the actual file and lessons
