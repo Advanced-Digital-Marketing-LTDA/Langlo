@@ -13,6 +13,7 @@
 /tests/detect-changed-tests.test.ts @Bonobo791
 /tests/testtrust-report.test.ts  @Bonobo791
 /tests/report-path.test.ts       @Bonobo791
+/tests/playwright-environment.test.ts @Bonobo791
 /tests/db-remote-migrate.test.ts @Bonobo791
 /tests/curriculum-contract.test.ts @Bonobo791
 /tests/curriculum-modules.test.ts @Bonobo791
