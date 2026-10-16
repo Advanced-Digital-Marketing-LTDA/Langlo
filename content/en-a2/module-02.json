@@ -1,0 +1,722 @@
+{
+  "module_id": "en-a2-module-02",
+  "track": "English A2",
+  "title": "Will, arranged plans, could and obligation",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "en-a2-005",
+      "title": "Will for predictions, offers and promises",
+      "explanation": "Use will plus the base verb for simple predictions, quick offers and promises: It will be sunny tomorrow. I'll carry your bag. I won't be late. The short form is 'll and the negative is won't (will not). Will is the same for every subject and is never followed by to or by an -s form. Questions put will first: Will you help me?",
+      "examples": [
+        {
+          "en": "It will be sunny tomorrow."
+        },
+        {
+          "en": "I'll carry your bag."
+        },
+        {
+          "en": "I won't be late."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-005@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-005@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is an offer made at the moment of speaking?",
+            "answer": "I'll carry your bag.",
+            "alternatives": [
+              "I'll carry your bag.",
+              "I carry your bag.",
+              "I'm carrying your bag."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the negative short form of 'will'?",
+            "answer": "won't",
+            "alternatives": ["won't", "willn't", "don't"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows 'will'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -s form", "to + base verb"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a prediction?",
+            "answer": "It will be sunny tomorrow.",
+            "alternatives": [
+              "It will sunny tomorrow.",
+              "It will be sunny tomorrow.",
+              "It wills be sunny tomorrow."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q05",
+            "format": "typed-blank",
+            "prompt": "It ___ be sunny tomorrow.",
+            "answer": "will",
+            "near_misses": ["is", "does"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q06",
+            "format": "typed-blank",
+            "prompt": "I ___ be late. (promise, negative short form)",
+            "answer": "won't",
+            "alternatives": ["will not"],
+            "near_misses": ["don't", "willn't"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ you help me? (request)",
+            "answer": "Will",
+            "near_misses": ["Do", "Are"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with will: it / be sunny / tomorrow",
+            "answer": "It will be sunny tomorrow.",
+            "alternatives": ["It'll be sunny tomorrow."],
+            "near_misses": [
+              "It will sunny tomorrow.",
+              "It wills be sunny tomorrow."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with will: I / carry / your bag (offer)",
+            "answer": "I'll carry your bag.",
+            "alternatives": ["I will carry your bag."],
+            "near_misses": [
+              "I'll to carry your bag.",
+              "I'll carries your bag."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with will: negative promise: I / be late",
+            "answer": "I won't be late.",
+            "alternatives": ["I will not be late."],
+            "near_misses": ["I willn't be late.", "I won't to be late."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She will goes home.",
+            "answer": "She will go home.",
+            "near_misses": ["She will goes home.", "She will to go home."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: I will to help you.",
+            "answer": "I will help you.",
+            "alternatives": ["I'll help you."],
+            "near_misses": ["I will to help you.", "I will helping you."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-005@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a promise?",
+            "answer": "I'll call you tonight.",
+            "alternatives": [
+              "I'll call you tonight.",
+              "I call you tonight.",
+              "I'll calling you tonight."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-005@1:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: They will to win the game.",
+            "answer": "They will win the game.",
+            "alternatives": ["They'll win the game."],
+            "near_misses": [
+              "They will to win the game.",
+              "They will winning the game."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-005@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with will: ask: you / open / the window",
+            "answer": "Will you open the window?",
+            "near_misses": [
+              "Will you to open the window?",
+              "Do you will open the window?"
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-006",
+      "title": "Present continuous for arranged plans",
+      "explanation": "Use am, is or are plus the -ing form for a fixed arrangement in the near future, usually with a future time: I'm meeting Anna on Friday. We're flying to Rome next week. Add a time expression so the sentence is clearly about the future. Questions put be first: Are you working tomorrow? Use going to for general intentions and the present continuous for a plan that already has a time or place.",
+      "examples": [
+        {
+          "en": "I'm meeting Anna on Friday."
+        },
+        {
+          "en": "We're flying to Rome next week."
+        },
+        {
+          "en": "Are you working tomorrow?"
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-006@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-006@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a fixed arrangement?",
+            "answer": "I'm meeting Anna on Friday.",
+            "alternatives": [
+              "I meet Anna on Friday.",
+              "I'm meeting Anna on Friday.",
+              "I meeting Anna on Friday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which words show that a present continuous sentence is about the future?",
+            "answer": "a future time, such as next week",
+            "alternatives": [
+              "a future time, such as next week",
+              "the word always",
+              "the word never"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'we'?",
+            "answer": "are",
+            "alternatives": ["is", "am", "are"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question asks about an arrangement?",
+            "answer": "Are you working tomorrow?",
+            "alternatives": [
+              "Do you working tomorrow?",
+              "Are you working tomorrow?",
+              "You are working tomorrow?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q05",
+            "format": "typed-blank",
+            "prompt": "We ___ flying to Rome next week. (be)",
+            "answer": "are",
+            "alternatives": ["'re"],
+            "near_misses": ["is", "am"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q06",
+            "format": "typed-blank",
+            "prompt": "I am ___ Anna on Friday. (meet)",
+            "answer": "meeting",
+            "near_misses": ["meet", "meets"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ you working tomorrow? (be)",
+            "answer": "Are",
+            "near_misses": ["Do", "Is"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence for a fixed arrangement, using the present continuous: I / meet / Anna / on Friday",
+            "answer": "I am meeting Anna on Friday.",
+            "alternatives": ["I'm meeting Anna on Friday."],
+            "near_misses": [
+              "I meeting Anna on Friday.",
+              "I am meet Anna on Friday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence for a fixed arrangement, using the present continuous: we / fly / to Rome / next week",
+            "answer": "We are flying to Rome next week.",
+            "alternatives": ["We're flying to Rome next week."],
+            "near_misses": [
+              "We is flying to Rome next week.",
+              "We flying to Rome next week."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence for a fixed arrangement, using the present continuous: ask: you / work / tomorrow",
+            "answer": "Are you working tomorrow?",
+            "near_misses": [
+              "Do you working tomorrow?",
+              "Are you work tomorrow?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She is meet her friend on Saturday.",
+            "answer": "She is meeting her friend on Saturday.",
+            "alternatives": ["She's meeting her friend on Saturday."],
+            "near_misses": [
+              "She is meet her friend on Saturday.",
+              "She meeting her friend on Saturday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: They is arriving at six.",
+            "answer": "They are arriving at six.",
+            "alternatives": ["They're arriving at six."],
+            "near_misses": [
+              "They is arriving at six.",
+              "They are arrive at six."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-006@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a plan for tonight?",
+            "answer": "I'm cooking dinner for my parents tonight.",
+            "alternatives": [
+              "I cook dinner for my parents tonight.",
+              "I'm cooking dinner for my parents tonight.",
+              "I cooking dinner for my parents tonight."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-006@1:h02",
+            "format": "typed-blank",
+            "prompt": "He is ___ the dentist at three. (see)",
+            "answer": "seeing",
+            "near_misses": ["see", "sees"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-006@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence for a fixed arrangement, using the present continuous: she / start / a new job / on Monday",
+            "answer": "She is starting a new job on Monday.",
+            "alternatives": ["She's starting a new job on Monday."],
+            "near_misses": [
+              "She starting a new job on Monday.",
+              "She are starting a new job on Monday."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-007",
+      "title": "Could for past ability and polite requests",
+      "explanation": "Use could plus the base verb for general ability in the past: I could swim when I was five. The negative is couldn't (could not). Could is the same for every subject. Could also makes requests more polite: Could you open the window, please? Could I sit here? For one single past achievement use was able to or managed to, not could.",
+      "examples": [
+        {
+          "en": "I could swim when I was five."
+        },
+        {
+          "en": "Could you open the window, please?"
+        },
+        {
+          "en": "She couldn't find her keys."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-007@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-007@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence talks about past ability?",
+            "answer": "I could swim when I was five.",
+            "alternatives": [
+              "I could swim when I was five.",
+              "I can swim when I was five.",
+              "I could swam when I was five."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the negative short form of 'could'?",
+            "answer": "couldn't",
+            "alternatives": ["couldn't", "cannot", "don't could"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which request is more polite?",
+            "answer": "Could you open the window, please?",
+            "alternatives": [
+              "Open the window.",
+              "Could you open the window, please?",
+              "You open the window?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows 'could'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -ing form", "the past form"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ swim when I was five.",
+            "answer": "could",
+            "near_misses": ["can", "am"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q06",
+            "format": "typed-blank",
+            "prompt": "She ___ find her keys. (negative short form)",
+            "answer": "couldn't",
+            "alternatives": ["could not"],
+            "near_misses": ["can't", "doesn't"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ I sit here, please? (polite request)",
+            "answer": "Could",
+            "near_misses": ["Do", "Am"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with could: I / swim / when I was five",
+            "answer": "I could swim when I was five.",
+            "near_misses": [
+              "I could to swim when I was five.",
+              "I could swam when I was five."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with could: polite request: you / open / the window / please",
+            "answer": "Could you open the window, please?",
+            "near_misses": [
+              "Could you opened the window, please?",
+              "Do you could open the window, please?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with could: negative: she / find / her keys",
+            "answer": "She couldn't find her keys.",
+            "alternatives": ["She could not find her keys."],
+            "near_misses": [
+              "She couldn't found her keys.",
+              "She not could find her keys."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He could played the piano.",
+            "answer": "He could play the piano.",
+            "near_misses": [
+              "He could played the piano.",
+              "He could plays the piano."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:q12",
+            "format": "correction",
+            "prompt": "Correct the question: Could you to help me?",
+            "answer": "Could you help me?",
+            "near_misses": ["Could you to help me?", "Could you helping me?"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-007@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a polite question?",
+            "answer": "Could I borrow your pen?",
+            "alternatives": [
+              "Could I borrow your pen?",
+              "Could I borrowing your pen?",
+              "I could borrow your pen?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-007@1:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: My grandfather could to speak three languages.",
+            "answer": "My grandfather could speak three languages.",
+            "near_misses": [
+              "My grandfather could to speak three languages.",
+              "My grandfather could speaks three languages."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-007@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with could: negative: we / hear / the music",
+            "answer": "We couldn't hear the music.",
+            "alternatives": ["We could not hear the music."],
+            "near_misses": [
+              "We couldn't heard the music.",
+              "We couldn't to hear the music."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-008",
+      "title": "Must, have to and mustn't",
+      "explanation": "Use must or have to for obligation: You must wear a seat belt. I have to get up early. Have to changes for the subject: she has to work. Use mustn't (must not) for prohibition: You mustn't smoke here. Do not confuse mustn't with don't have to: mustn't means it is forbidden, but don't have to means it is not necessary. Must is followed by the base verb with no to.",
+      "examples": [
+        {
+          "en": "You must wear a seat belt."
+        },
+        {
+          "en": "She has to work on Saturday."
+        },
+        {
+          "en": "You mustn't smoke here."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-008@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-008@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence expresses a rule?",
+            "answer": "You must wear a seat belt.",
+            "alternatives": [
+              "You must wear a seat belt.",
+              "You must to wear a seat belt.",
+              "You musts wear a seat belt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of 'have to' goes with 'she'?",
+            "answer": "has to",
+            "alternatives": ["has to", "have to", "having to"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'it is forbidden'?",
+            "answer": "You mustn't smoke here.",
+            "alternatives": [
+              "You mustn't smoke here.",
+              "You don't have to smoke here.",
+              "You must smoke here."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'it is not necessary'?",
+            "answer": "You don't have to come.",
+            "alternatives": [
+              "You mustn't come.",
+              "You don't have to come.",
+              "You must come."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ to get up early. (obligation)",
+            "answer": "have",
+            "near_misses": ["has", "must"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q06",
+            "format": "typed-blank",
+            "prompt": "You ___ smoke here. (forbidden, short form)",
+            "answer": "mustn't",
+            "alternatives": ["must not"],
+            "near_misses": ["don't", "can"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q07",
+            "format": "typed-blank",
+            "prompt": "She ___ to work on Saturday.",
+            "answer": "has",
+            "near_misses": ["have", "must"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with must, have to or mustn't: you / wear / a seat belt (rule)",
+            "answer": "You must wear a seat belt.",
+            "near_misses": [
+              "You must wearing a seat belt.",
+              "You must to wear a seat belt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with must, have to or mustn't: she / work / on Saturday (have to)",
+            "answer": "She has to work on Saturday.",
+            "near_misses": [
+              "She have to work on Saturday.",
+              "She has to works on Saturday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with must, have to or mustn't: you / smoke / here (forbidden)",
+            "answer": "You mustn't smoke here.",
+            "alternatives": ["You must not smoke here."],
+            "near_misses": [
+              "You don't must smoke here.",
+              "You mustn't to smoke here."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He must to leave now.",
+            "answer": "He must leave now.",
+            "near_misses": ["He must to leave now.", "He musts leave now."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: She have to study tonight.",
+            "answer": "She has to study tonight.",
+            "near_misses": [
+              "She have to study tonight.",
+              "She has to studies tonight."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-008@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is an order from a teacher?",
+            "answer": "You must be quiet in the library.",
+            "alternatives": [
+              "You must be quiet in the library.",
+              "You must to be quiet in the library.",
+              "You have be quiet in the library."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-008@1:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: Children must to go to school.",
+            "answer": "Children must go to school.",
+            "near_misses": [
+              "Children must to go to school.",
+              "Children musts go to school."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-008@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with must, have to or mustn't: we / run / in the corridor (forbidden)",
+            "answer": "We mustn't run in the corridor.",
+            "alternatives": ["We must not run in the corridor."],
+            "near_misses": [
+              "We don't must run in the corridor.",
+              "We mustn't to run in the corridor."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
