@@ -298,6 +298,7 @@ export const questions = sqliteTable(
   'questions',
   {
     id: text('id').primaryKey(),
+    holdout: integer('holdout', { mode: 'boolean' }).notNull().default(false),
     contentVersionId: text('content_version_id').notNull(),
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
@@ -320,6 +321,7 @@ export const questions = sqliteTable(
         contentVersions.language
       ]
     }),
+    check('questions_holdout', sql`${table.holdout} IN (0, 1)`),
     check(
       'questions_format',
       sql`${table.format} IN ('multiple-choice', 'typed-blank', 'translation', 'correction')`
