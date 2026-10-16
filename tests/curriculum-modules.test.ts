@@ -127,6 +127,7 @@ describe('reviewed curriculum answer keys', () => {
     for (const id of ['de-a2-002@1:q06', 'de-a2-002@1:q07'])
       expect(question(id).prompt, id).toMatch(/gestern|past|Präteritum/u);
     expect(question('de-a2-006@1:q07').prompt).toMatch(/Anna/u);
+    expect(question('de-a2-015@1:q07').prompt).toMatch(/rather|prefer/u);
     expect(question('en-a2-003@1:q06').prompt).toMatch(/ever/u);
     expect(question('en-a2-005@1:q07').prompt).toMatch(/will/u);
     expect(question('en-a2-007@1:q06').prompt).toMatch(/past|yesterday|last/u);
@@ -164,6 +165,15 @@ describe.each(files)('%s', (path) => {
   const questions = module.lessons.flatMap(
     (lesson) => lesson.version.questions
   );
+
+  it('binds the module identity to its track and filename', () => {
+    expect(module.module_id).toBe(
+      path
+        .slice('content/'.length)
+        .replace('/', '-')
+        .replace(/\.json$/u, '')
+    );
+  });
 
   it('covers active catalog skills of its track in prerequisite order', () => {
     expect(module.instruction_language).toBe('en');
