@@ -1,20 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Client } from '@libsql/client';
-import { openFixtureDatabase } from '../src/lib/server/db/connection';
+import { describe, expect, it } from 'vitest';
 import { bundlePackage } from '../src/lib/server/content-bundle';
 import { importContent } from '../src/lib/server/content-import';
 import { columnIndex, parseCsv } from '../scripts/curriculum-contract.mjs';
 import {
   accepts,
+  assertUniqueQuestions,
+  moduleImportFixture,
   formats,
   modulePackage as sharedModulePackage,
   normalize,
   type Module,
   type Question
 } from './fixtures/curriculum-module';
-import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 
 // French A1 module 01 (LANGLO-35): checks the authored module against the
 // approved curriculum bundle and the importer, and pins answer matching with
@@ -134,10 +133,7 @@ describe('French A1 module 01', () => {
           false
         );
     }
-    const ids = questions.map((q) => q.id);
-    expect(new Set(ids).size).toBe(ids.length);
-    const prompts = questions.map((q) => normalize(q.prompt));
-    expect(new Set(prompts).size).toBe(prompts.length);
+    assertUniqueQuestions(questions);
   });
 
   it('data consistency: typed answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
@@ -221,26 +217,8 @@ describe('French A1 module 01', () => {
 });
 
 describe('French A1 module 01 import', () => {
-  let client: Client;
-  let close: (() => void) | undefined;
-
-  beforeEach(async () => {
-    ({ client, close } = await openFixtureDatabase(await fixture()));
-  });
-
-  afterEach(async () => {
-    try {
-      close?.();
-    } finally {
-      close = undefined;
-      await disposeFlashcardFixtures();
-    }
-  });
-
-  const count = async (table: string) =>
-    Number(
-      (await client.execute(`SELECT COUNT(*) AS n FROM ${table}`)).rows[0].n
-    );
+  const db = moduleImportFixture();
+  const count = db.count;
 
   it('is refused while unreviewed, and writes nothing', async () => {
     const tables = [
@@ -249,11 +227,11 @@ describe('French A1 module 01 import', () => {
       'content_versions',
       'questions',
       'curriculum_imports'
-    ];
+    ] as const;
     const before = await Promise.all(tables.map(count));
     for (const review of ['unreviewed', 'pending-owner-review']) {
       await expect(
-        importContent(client, modulePackage(review)),
+        importContent(db.client, modulePackage(review)),
         review
       ).rejects.toMatchObject({
         code: 'UNREVIEWED',
@@ -265,10 +243,10 @@ describe('French A1 module 01 import', () => {
 
   it("imports with the approved bundle's skills and prerequisites into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)", async () => {
     const before = await count('questions');
-    const result = await importContent(client, modulePackage('approved'));
+    const result = await importContent(db.client, modulePackage('approved'));
     expect(result.versions).toBe(4);
     expect(result.questions).toBe(60);
-    const stored = await client.execute(
+    const stored = await db.client.execute(
       'SELECT id, format FROM questions ORDER BY id'
     );
     const expected = questions.map((q) => `${q.id}|${q.format}`).sort();
@@ -278,8 +256,13 @@ describe('French A1 module 01 import', () => {
         .filter((key) => key.startsWith('fr-a1-'))
         .sort()
     ).toEqual(expected);
-    // The importer has no holdout flag (LANGLO-125): holdouts are stored as ordinary
-    // questions, so their separation from practice lives in the module JSON.
+    const classifications = await db.client.execute(
+      "SELECT holdout, COUNT(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' GROUP BY holdout ORDER BY holdout"
+    );
+    expect(classifications.rows).toEqual([
+      { holdout: 0, n: 48 },
+      { holdout: 1, n: 12 }
+    ]);
     expect((await count('questions')) - before).toBe(questions.length);
     const tables = [
       'skills',
@@ -287,19 +270,19 @@ describe('French A1 module 01 import', () => {
       'content_versions',
       'questions',
       'curriculum_imports'
-    ];
+    ] as const;
     const afterFirst = await Promise.all(tables.map(count));
-    const again = await importContent(client, modulePackage('approved'));
+    const again = await importContent(db.client, modulePackage('approved'));
     expect([again.versions, again.questions]).toEqual([0, 0]);
     expect(await Promise.all(tables.map(count))).toEqual(afterFirst);
   });
 
   it('refuses the module under the already imported 1.0.0 curriculum version, and writes nothing', async () => {
-    await importContent(client, bundlePackage(root));
-    const tables = ['skills', 'content_versions', 'questions'];
+    await importContent(db.client, bundlePackage(root));
+    const tables = ['skills', 'content_versions', 'questions'] as const;
     const before = await Promise.all(tables.map(count));
     await expect(
-      importContent(client, modulePackage('approved'))
+      importContent(db.client, modulePackage('approved'))
     ).rejects.toMatchObject({ code: 'CONTENT_CONFLICT' });
     expect(await Promise.all(tables.map(count))).toEqual(before);
   });
@@ -308,10 +291,10 @@ describe('French A1 module 01 import', () => {
     const bundle = bundlePackage(root);
     const [major, minor] = bundle.curriculumVersion.split('.').map(Number);
     const newer = `${major}.${minor + 1}.0`;
-    await importContent(client, bundle);
+    await importContent(db.client, bundle);
     const before = await count('questions');
     const result = await importContent(
-      client,
+      db.client,
       modulePackage('approved', newer)
     );
     expect([result.skills, result.versions, result.questions]).toEqual([
@@ -320,7 +303,7 @@ describe('French A1 module 01 import', () => {
       questions.length
     ]);
     expect((await count('questions')) - before).toBe(questions.length);
-    const imports = await client.execute(
+    const imports = await db.client.execute(
       'SELECT curriculum_version FROM curriculum_imports ORDER BY curriculum_version'
     );
     const versions = imports.rows.map((row) => String(row.curriculum_version));

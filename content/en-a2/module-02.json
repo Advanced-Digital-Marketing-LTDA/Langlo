@@ -86,7 +86,7 @@
           {
             "id": "en-a2-005@1:q07",
             "format": "typed-blank",
-            "prompt": "___ you help me? (request)",
+            "prompt": "___ you help me? (request, use will)",
             "answer": "Will",
             "near_misses": ["Do", "Are"],
             "holdout": false
@@ -433,7 +433,7 @@
           {
             "id": "en-a2-007@1:q06",
             "format": "typed-blank",
-            "prompt": "She ___ find her keys. (negative short form)",
+            "prompt": "She ___ find her keys last night. (negative short form)",
             "answer": "couldn't",
             "alternatives": ["could not"],
             "near_misses": ["can't", "doesn't"],
@@ -442,7 +442,7 @@
           {
             "id": "en-a2-007@1:q07",
             "format": "typed-blank",
-            "prompt": "___ I sit here, please? (polite request)",
+            "prompt": "___ I sit here, please? (polite request, use could)",
             "answer": "Could",
             "near_misses": ["Do", "Am"],
             "holdout": false

@@ -484,7 +484,7 @@
     {
       "skill_id": "fr-a1-016",
       "title": "Clock times, days and months",
-      "explanation": "To give the time, use il est plus the hour: Il est trois heures (3:00), Il est midi (noon), Il est minuit (midnight). Add et demie for half past, et quart for quarter past and moins plus a number for minutes before the hour: trois heures et demie, quatre heures et quart, cinq heures moins dix. Use à for the time of an event: à huit heures. A day name alone means one particular day (lundi, on Monday); le lundi means every Monday. Use en with a month: en mai.",
+      "explanation": "To give the time, use il est followed by the hour: Il est trois heures (3:00), Il est midi (noon), Il est minuit (midnight). Add et demie for half past, et quart for quarter past and moins followed by a number for minutes before the hour: trois heures et demie, quatre heures et quart, cinq heures moins dix. Use à for the time of an event: à huit heures. A day name alone means one particular day (lundi, on Monday); le lundi means every Monday. Use en with a month: en mai.",
       "examples": [
         {
           "fr": "Il est trois heures et demie.",

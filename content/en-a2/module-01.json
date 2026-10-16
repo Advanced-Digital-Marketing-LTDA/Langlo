@@ -399,7 +399,7 @@
           {
             "id": "en-a2-003@1:q06",
             "format": "typed-blank",
-            "prompt": "Have you ___ eaten sushi? (life experience)",
+            "prompt": "Have you ___ eaten sushi? (use ever to ask about life experience)",
             "answer": "ever",
             "near_misses": ["never", "yet"],
             "holdout": false

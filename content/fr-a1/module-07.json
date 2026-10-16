@@ -375,7 +375,7 @@
           "en": "Marie is Italian."
         }
       ],
-      "references": ["FEI-INV"],
+      "references": ["FEI-INV", "DELF-A1-ADULT"],
       "version": {
         "id": "fr-a1-027@1",
         "version": 1,

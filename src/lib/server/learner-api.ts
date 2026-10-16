@@ -16,7 +16,20 @@ const statusFor: Record<string, number> = {
   NOT_APPROVED: 409,
   SUSPENDED: 409,
   SESSION_NOT_ACTIVE: 409,
-  CONTENT_UNAVAILABLE: 409
+  CONTENT_UNAVAILABLE: 409,
+  QUESTION_ALREADY_ANSWERED: 409,
+  STALE_QUESTION: 409
+};
+
+// Codes whose cause the learner can act on get their own message; the rest
+// share the generic text for their status.
+const messageForCode: Record<string, string> = {
+  SESSION_NOT_ACTIVE:
+    'This session is paused or finished. Only a paused session can be resumed.',
+  CONTENT_UNAVAILABLE: 'This content is not available right now.',
+  QUESTION_ALREADY_ANSWERED:
+    'This question was already answered in this session.',
+  STALE_QUESTION: 'This question is out of date. Reload to continue.'
 };
 
 function httpStatusFor(code: string): number | undefined {
@@ -51,7 +64,10 @@ export async function learnerApi(
   } catch (error_) {
     if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
       const code = httpStatusFor(error_.code);
-      if (code) error(code, { message: messageFor[code] });
+      if (code)
+        error(code, {
+          message: messageForCode[error_.code] ?? messageFor[code]
+        });
     }
     throw error_;
   } finally {

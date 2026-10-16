@@ -1,0 +1,689 @@
+{
+  "module_id": "en-a2-module-05",
+  "track": "English A2",
+  "title": "Passives, quantifiers, question tags and adverb position",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "en-a2-017",
+      "title": "Recognizing simple present and past passives",
+      "explanation": "In a passive sentence the thing that receives the action is the subject. Recognize the present passive by am, is or are plus the past participle: English is spoken here. Recognize the past passive by was or were plus the past participle: The window was broken yesterday. Notices and descriptions often use the passive. By introduces who did it: The book was written by Orwell.",
+      "examples": [
+        {
+          "en": "English is spoken here."
+        },
+        {
+          "en": "The window was broken yesterday."
+        },
+        {
+          "en": "The book was written by Orwell."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-017@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-017@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a present passive?",
+            "answer": "English is spoken here.",
+            "alternatives": [
+              "English is spoken here.",
+              "English speaks here.",
+              "English was spoken here."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a past passive?",
+            "answer": "The window was broken yesterday.",
+            "alternatives": [
+              "The window was broken yesterday.",
+              "The window is broken yesterday.",
+              "The window broke yesterday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows is, are, was or were in a passive?",
+            "answer": "the past participle",
+            "alternatives": [
+              "the past participle",
+              "the base verb",
+              "the -ing form"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word introduces who did the action?",
+            "answer": "by",
+            "alternatives": ["by", "from", "with"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q05",
+            "format": "typed-blank",
+            "prompt": "Read 'English is spoken here.' Is the passive present or past?",
+            "answer": "present",
+            "near_misses": ["past", "future"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q06",
+            "format": "typed-blank",
+            "prompt": "Read 'The window was broken yesterday.' Is the passive present or past?",
+            "answer": "past",
+            "near_misses": ["present", "future"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q07",
+            "format": "typed-blank",
+            "prompt": "Read 'The book was written by Orwell.' Who wrote the book?",
+            "answer": "Orwell",
+            "near_misses": ["the book", "the reader"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q08",
+            "format": "translation",
+            "prompt": "Read 'English is spoken here.' Explain its meaning in an active sentence beginning with People.",
+            "answer": "People speak English here.",
+            "near_misses": [
+              "English speaks here.",
+              "People spoke English here."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q09",
+            "format": "translation",
+            "prompt": "Read 'The window was broken yesterday.' Explain its meaning in an active sentence beginning with Someone.",
+            "answer": "Someone broke the window yesterday.",
+            "near_misses": [
+              "Someone breaks the window yesterday.",
+              "The window broke someone yesterday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q10",
+            "format": "translation",
+            "prompt": "Read 'The book was written by Orwell.' Explain its meaning in an active sentence beginning with Orwell.",
+            "answer": "Orwell wrote the book.",
+            "near_misses": [
+              "Orwell writes the book.",
+              "The book wrote Orwell."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q11",
+            "format": "correction",
+            "prompt": "Read 'The cakes are made every day.' A learner thinks the cakes make something. Correct that meaning in an active sentence beginning with Someone.",
+            "answer": "Someone makes the cakes every day.",
+            "near_misses": [
+              "The cakes make someone every day.",
+              "Someone made the cakes every day."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:q12",
+            "format": "correction",
+            "prompt": "Read 'The room was cleaned yesterday by Tom.' A learner thinks the room cleaned Tom. Correct that meaning in an active sentence beginning with Tom.",
+            "answer": "Tom cleaned the room yesterday.",
+            "near_misses": [
+              "The room cleaned Tom yesterday.",
+              "Tom cleans the room yesterday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-017@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which notice uses the passive?",
+            "answer": "Smoking is not allowed here.",
+            "alternatives": [
+              "Smoking not allow here.",
+              "Smoking is not allowed here.",
+              "Smoking not allowed is here."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-017@1:h02",
+            "format": "typed-blank",
+            "prompt": "Read 'The letters were sent yesterday.' What was sent?",
+            "answer": "letters",
+            "near_misses": ["yesterday", "the sender"],
+            "holdout": true,
+            "alternatives": ["the letters"]
+          },
+          {
+            "id": "en-a2-017@1:h03",
+            "format": "translation",
+            "prompt": "Read 'Cars are made in this factory.' Explain its meaning in an active sentence beginning with People.",
+            "answer": "People make cars in this factory.",
+            "near_misses": [
+              "Cars make people in this factory.",
+              "People made cars in this factory."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-018",
+      "title": "Quantifiers with count and non-count nouns",
+      "explanation": "Count nouns (apples, books) can be counted; non-count nouns (water, money) cannot. Use many and a few with count nouns: many books, a few apples. Use much and a little with non-count nouns: much water, a little milk. Use a lot of and some with both. In questions and negatives use many and much: How many eggs? How much sugar? There aren't many chairs.",
+      "examples": [
+        {
+          "en": "There are a few apples on the table."
+        },
+        {
+          "en": "How much sugar do you want?"
+        },
+        {
+          "en": "We have a lot of time."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-018@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-018@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which quantifier goes with a count noun like 'apples'?",
+            "answer": "a few",
+            "alternatives": ["a few", "a little", "much"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which quantifier goes with a non-count noun like 'milk'?",
+            "answer": "a little",
+            "alternatives": ["a little", "a few", "many"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which question asks about a non-count noun?",
+            "answer": "How much sugar do you want?",
+            "alternatives": [
+              "How many sugar do you want?",
+              "How much sugar do you want?",
+              "How few sugar do you want?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which quantifier works with both count and non-count nouns?",
+            "answer": "a lot of",
+            "alternatives": ["a lot of", "many", "a few"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q05",
+            "format": "typed-blank",
+            "prompt": "There are ___ apples on the table. (a small number)",
+            "answer": "a few",
+            "near_misses": ["a little", "much"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q06",
+            "format": "typed-blank",
+            "prompt": "How ___ sugar do you want?",
+            "answer": "much",
+            "near_misses": ["many", "few"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q07",
+            "format": "typed-blank",
+            "prompt": "We have ___ time. (a large amount)",
+            "answer": "a lot of",
+            "near_misses": ["many", "a few"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a quantifier: there are / a few / apples / on the table",
+            "answer": "There are a few apples on the table.",
+            "near_misses": [
+              "There are a little apples on the table.",
+              "There is a few apples on the table."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a quantifier: ask: how much / sugar / you want",
+            "answer": "How much sugar do you want?",
+            "near_misses": [
+              "How many sugar do you want?",
+              "How much sugar you want?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a quantifier: negative: there / not many / chairs",
+            "answer": "There aren't many chairs.",
+            "alternatives": ["There are not many chairs."],
+            "near_misses": [
+              "There aren't much chairs.",
+              "There isn't many chairs."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: I drink many water.",
+            "answer": "I drink a lot of water.",
+            "alternatives": [
+              "I drink much water.",
+              "I drink a lot of water every day."
+            ],
+            "near_misses": ["I drink many water.", "I drink a few water."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:q12",
+            "format": "correction",
+            "prompt": "Correct the question: How much eggs do we need?",
+            "answer": "How many eggs do we need?",
+            "near_misses": [
+              "How much eggs do we need?",
+              "How many egg do we need?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-018@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence about money is correct?",
+            "answer": "I have a little money.",
+            "alternatives": [
+              "I have a few money.",
+              "I have a little money.",
+              "I have many money."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-018@1:h02",
+            "format": "typed-blank",
+            "prompt": "How ___ people came to the party?",
+            "answer": "many",
+            "near_misses": ["much", "little"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-018@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a quantifier: she / not have / much / free time",
+            "answer": "She doesn't have much free time.",
+            "alternatives": ["She does not have much free time."],
+            "near_misses": [
+              "She doesn't have many free time.",
+              "She not have much free time."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-019",
+      "title": "Question tags and short answers",
+      "explanation": "A question tag is a short question added to a statement to check information. After a positive statement use a negative tag; after a negative statement use a positive tag: You are tired, aren't you? She can't swim, can she? The tag repeats the auxiliary verb. For a short answer repeat the auxiliary: Yes, I am. No, she can't. Do not repeat the whole sentence.",
+      "examples": [
+        {
+          "en": "You are tired, aren't you?"
+        },
+        {
+          "en": "She can't swim, can she?"
+        },
+        {
+          "en": "Yes, I am."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-019@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-019@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which tag completes 'You are tired, ...'?",
+            "answer": "aren't you?",
+            "alternatives": ["aren't you?", "are you?", "do you?"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which tag completes 'She can't swim, ...'?",
+            "answer": "can she?",
+            "alternatives": ["can she?", "can't she?", "does she?"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which is a short answer to 'Are you tired?'",
+            "answer": "Yes, I am.",
+            "alternatives": ["Yes, I am.", "Yes, I tired.", "Yes, I do."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q04",
+            "format": "multiple-choice",
+            "prompt": "When the statement is positive, the tag is usually...",
+            "answer": "negative",
+            "alternatives": ["negative", "positive", "missing"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q05",
+            "format": "typed-blank",
+            "prompt": "You are tired, ___ you?",
+            "answer": "aren't",
+            "near_misses": ["are", "don't"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q06",
+            "format": "typed-blank",
+            "prompt": "She can't swim, ___ she?",
+            "answer": "can",
+            "near_misses": ["can't", "does"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q07",
+            "format": "typed-blank",
+            "prompt": "Do you like tea? Yes, I ___.",
+            "answer": "do",
+            "near_misses": ["am", "like"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q08",
+            "format": "translation",
+            "prompt": "Add the question tag or short answer: you / be / tired (tag)",
+            "answer": "You are tired, aren't you?",
+            "alternatives": ["You're tired, aren't you?"],
+            "near_misses": [
+              "You are tired, are you?",
+              "You are tired, don't you?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q09",
+            "format": "translation",
+            "prompt": "Add the question tag or short answer: she / can't / swim (tag)",
+            "answer": "She can't swim, can she?",
+            "near_misses": [
+              "She can't swim, can't she?",
+              "She can't swim, does she?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q10",
+            "format": "translation",
+            "prompt": "Give the short answer: Are you tired? Yes",
+            "answer": "Yes, I am.",
+            "near_misses": ["Yes, I tired.", "Yes, I do."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He likes pizza, doesn't she?",
+            "answer": "He likes pizza, doesn't he?",
+            "near_misses": [
+              "He likes pizza, doesn't she?",
+              "He likes pizza, isn't he?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: They aren't here, aren't they?",
+            "answer": "They aren't here, are they?",
+            "near_misses": [
+              "They aren't here, aren't they?",
+              "They aren't here, do they?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-019@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which tag completes 'It's cold today, ...'?",
+            "answer": "isn't it?",
+            "alternatives": ["isn't it?", "is it?", "doesn't it?"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-019@1:h02",
+            "format": "typed-blank",
+            "prompt": "Can you swim? No, I ___.",
+            "answer": "can't",
+            "near_misses": ["don't", "am not"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-019@1:h03",
+            "format": "translation",
+            "prompt": "Add the question tag or short answer: they / live / here (tag)",
+            "answer": "They live here, don't they?",
+            "near_misses": [
+              "They live here, aren't they?",
+              "They live here, do they?"
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a2-020",
+      "title": "Adverbs of frequency and manner in simple clauses",
+      "explanation": "Adverbs of frequency (always, usually, often, sometimes, never) go before the main verb but after be: She often reads. He is always late. Adverbs of manner (quickly, carefully, well) usually go after the verb or after its object: He drives carefully. She speaks English well. Do not put a manner adverb between the verb and its object: not She speaks well English.",
+      "examples": [
+        {
+          "en": "She often reads in bed."
+        },
+        {
+          "en": "He is always late."
+        },
+        {
+          "en": "She speaks English well."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-020@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a2-020@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does a frequency adverb go with an ordinary verb?",
+            "answer": "before the main verb",
+            "alternatives": [
+              "before the main verb",
+              "after the object",
+              "at the start of a question"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Where does a frequency adverb go with 'be'?",
+            "answer": "after be",
+            "alternatives": ["after be", "before be", "at the end"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "She speaks English well.",
+            "alternatives": [
+              "She speaks English well.",
+              "She speaks well English.",
+              "She well speaks English."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word is an adverb of manner?",
+            "answer": "carefully",
+            "alternatives": ["carefully", "often", "never"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q05",
+            "format": "typed-blank",
+            "prompt": "He is ___ late. (always)",
+            "answer": "always",
+            "near_misses": ["often to", "late always"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q06",
+            "format": "typed-blank",
+            "prompt": "She speaks English ___. (well)",
+            "answer": "well",
+            "near_misses": ["good", "goodly"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q07",
+            "format": "typed-blank",
+            "prompt": "He drives ___. (careful)",
+            "answer": "carefully",
+            "near_misses": ["careful", "carefuller"],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q08",
+            "format": "translation",
+            "prompt": "Put the adverb in the right place: she / often / reads / in bed",
+            "answer": "She often reads in bed.",
+            "near_misses": [
+              "She reads often in bed.",
+              "She reads in bed often."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q09",
+            "format": "translation",
+            "prompt": "Put the adverb in the right place: he / is / always / late",
+            "answer": "He is always late.",
+            "near_misses": ["He always is late.", "He is late always."],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q10",
+            "format": "translation",
+            "prompt": "Put the adverb in the right place: she / speaks / English / well",
+            "answer": "She speaks English well.",
+            "near_misses": [
+              "She speaks well English.",
+              "She well speaks English."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: They go usually to the park.",
+            "answer": "They usually go to the park.",
+            "near_misses": [
+              "They go usually to the park.",
+              "They go to usually the park."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: He plays well the guitar.",
+            "answer": "He plays the guitar well.",
+            "near_misses": [
+              "He plays well the guitar.",
+              "He well plays the guitar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a2-020@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence about meat is correct?",
+            "answer": "I never eat meat.",
+            "alternatives": [
+              "I eat never meat.",
+              "I never eat meat.",
+              "Never I eat meat."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-020@1:h02",
+            "format": "typed-blank",
+            "prompt": "The baby is sleeping ___. (quiet)",
+            "answer": "quietly",
+            "near_misses": ["quiet", "quieter"],
+            "holdout": true
+          },
+          {
+            "id": "en-a2-020@1:h03",
+            "format": "translation",
+            "prompt": "Put the adverb in the right place: my sister / sometimes / cooks / dinner",
+            "answer": "My sister sometimes cooks dinner.",
+            "near_misses": [
+              "My sister cooks sometimes dinner.",
+              "My sister cooks dinner sometimes always."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
