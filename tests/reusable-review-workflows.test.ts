@@ -13,6 +13,36 @@ const claude = readFileSync(
   'utf8'
 );
 
+const ossar = readFileSync(
+  new URL('../.github/workflows/reusable-ossar.yml', import.meta.url),
+  'utf8'
+);
+
+describe('reusable OSSAR scan', () => {
+  it('runs the policy through security-devops-action, not the fixed ossar-action', () => {
+    expect(ossar).toContain('microsoft/security-devops-action@');
+    expect(ossar).not.toContain('github/ossar-action');
+  });
+
+  it('keeps the GitHub OSSAR policy so detections still reach code scanning', () => {
+    expect(ossar).toMatch(/policy:\s*GitHub/u);
+  });
+
+  it('names its tools explicitly and leaves out ESLint', () => {
+    const tools = /^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '';
+    expect(tools).not.toBe('');
+    expect(tools.toLowerCase()).not.toContain('eslint');
+  });
+
+  it('uploads the SARIF file the scan step produced', () => {
+    expect(ossar).toContain('codeql-action/upload-sarif@');
+    expect(ossar).toMatch(
+      /sarif_file: \$\{\{ steps\.msdo\.outputs\.sarifFile \}\}/u
+    );
+    expect(ossar).toMatch(/id: msdo/u);
+  });
+});
+
 describe('reusable adversarial review gate', () => {
   it('keeps the blocking flags on both providers', () => {
     expect(adversarial.match(/--fail-on high/gu)).toHaveLength(2);
