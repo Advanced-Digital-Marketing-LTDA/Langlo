@@ -6,6 +6,7 @@ name: Adversarial review
 # fallback; the subscription token is preferred when both exist.
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
