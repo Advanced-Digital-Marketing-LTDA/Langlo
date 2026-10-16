@@ -2,17 +2,24 @@
   let {
     name,
     options,
+    labelledby,
     value = $bindable(''),
     describedby
   }: {
     name: string;
     options: readonly string[];
+    labelledby: string;
     value?: string;
     describedby?: string | undefined;
   } = $props();
 </script>
 
-<div class="options" role="radiogroup" aria-describedby={describedby}>
+<div
+  class="options"
+  role="radiogroup"
+  aria-labelledby={labelledby}
+  aria-describedby={describedby}
+>
   {#each options as option (option)}
     <label class="option">
       <input type="radio" {name} value={option} bind:group={value} />

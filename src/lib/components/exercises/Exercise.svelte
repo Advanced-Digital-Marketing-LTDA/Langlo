@@ -34,6 +34,7 @@
   let problem = $state('');
   let pending = $state(false);
   const message = $derived(problem || failure || '');
+  const legendId = $derived(`instruction-${question.id}`);
   const fieldId = $derived(`answer-${question.id}`);
 </script>
 
@@ -67,7 +68,7 @@
   <input type="hidden" name="submissionKey" value={submissionKey} />
 
   <fieldset>
-    <legend>{instructions[question.format]}</legend>
+    <legend id={legendId}>{instructions[question.format]}</legend>
     <p
       class="prompt"
       lang={question.format === 'translation' ? undefined : language}
@@ -79,6 +80,7 @@
       <MultipleChoice
         name="answer"
         options={question.alternatives ?? []}
+        labelledby={legendId}
         bind:value
         describedby={message ? 'exercise-problem' : undefined}
       />

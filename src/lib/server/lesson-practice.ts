@@ -1,13 +1,18 @@
 import { randomUUID } from 'node:crypto';
 import { fail } from '@sveltejs/kit';
 import type { Client } from '@libsql/client';
-import { checkAnswer, normalizeAnswer } from '../components/exercises/answer';
+import {
+  checkAnswer,
+  checkAnswerText,
+  normalizeAnswer
+} from '../components/exercises/answer';
 import { describeLearnerError } from './learner-api';
 import type { LearnerSession } from './learner-session';
 import {
   findReplay,
   getLesson,
   getSessionLesson,
+  getStudySession,
   nextQuestion,
   recordAttempt,
   StudyError
@@ -20,14 +25,16 @@ import {
  * The lesson of the page: as the learner's session sees it when the page was
  * opened from one, so the explanation matches the questions asked.
  */
-export function lessonFor(
+export async function lessonFor(
   client: Client,
   learner: LearnerSession,
   page: { language: string; skillId: string; studySessionId: string | null }
 ) {
-  return page.studySessionId
-    ? getSessionLesson(client, learner, page.studySessionId, page.skillId)
-    : getLesson(client, learner, page.language, page.skillId);
+  if (!page.studySessionId)
+    return getLesson(client, learner, page.language, page.skillId);
+  const study = await getStudySession(client, learner, page.studySessionId);
+  if (study.language !== page.language) throw new StudyError('NOT_FOUND');
+  return getSessionLesson(client, learner, page.studySessionId, page.skillId);
 }
 
 /**
@@ -92,6 +99,8 @@ export async function recordAnswer(
   form: FormData,
   skillId: string
 ) {
+  const text = checkAnswerText(form.get('answer'));
+  if (!text.ok) return fail(400, { message: text.message });
   const studySessionId = field(form, 'studySessionId');
   const repeated = await repeatedAnswer(client, learner, form, studySessionId);
   if (repeated) return repeated;

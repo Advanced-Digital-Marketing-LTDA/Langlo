@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { accentsFor, ANSWER_LIMIT } from './answer';
+  import { accentsFor } from './answer';
 
   let {
     id,
@@ -45,7 +45,6 @@
       {name}
       lang={language}
       rows="4"
-      maxlength={ANSWER_LIMIT}
       autocapitalize="off"
       autocomplete="off"
       spellcheck="false"
@@ -58,7 +57,6 @@
       {name}
       type="text"
       lang={language}
-      maxlength={ANSWER_LIMIT}
       autocapitalize="off"
       autocomplete="off"
       spellcheck="false"

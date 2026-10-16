@@ -521,6 +521,18 @@ describe('lesson page load', () => {
     });
   });
 
+  it('rejects a route language that differs from the owned session', async () => {
+    const before = await privateState(client);
+    const e = Object.assign(event('learner-a'), {
+      params: { language: 'de', skill: 'fr-a1-001' },
+      url: new URL(
+        'http://127.0.0.1/app/learn/de/lesson/fr-a1-001?session=study-a'
+      )
+    });
+    await expect(lessonPage(e as never)).rejects.toMatchObject({ status: 404 });
+    expect(await privateState(client)).toEqual(before);
+  });
+
   it('shows an unavailable notice for quarantined content', async () => {
     await client.execute(
       "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
@@ -609,19 +621,46 @@ describe('lesson answer action', () => {
   });
 
   it.each([
-    ['an empty answer', ''],
-    ['a blank answer', '   \n '],
-    ['an oversized answer', 'a'.repeat(4097)],
-    ['an answer with a null byte', 'es\0'],
-    ['a multi-line blank', 'es\nes']
-  ])('refuses %s and writes nothing', async (_name, answer) => {
+    ['an empty answer', '', 'Enter an answer before you submit.'],
+    ['a blank answer', '   \n ', 'Enter an answer before you submit.'],
+    [
+      'an oversized answer',
+      'a'.repeat(4097),
+      'Your answer is too long. Keep it under 4096 characters.'
+    ],
+    [
+      'an answer with a null byte',
+      'es\0',
+      'Your answer contains characters that cannot be sent.'
+    ],
+    [
+      'a multi-line blank',
+      'es\nes',
+      'Your answer contains characters that cannot be sent.'
+    ]
+  ])(
+    'refuses %s with specific feedback and writes nothing',
+    async (_name, answer, message) => {
+      await submit('learner-a', q1);
+      const before = await attemptCount();
+      expect(await submit('learner-a', { ...q2, answer })).toMatchObject({
+        status: 400,
+        data: { message }
+      });
+      expect(await attemptCount()).toBe(before);
+    }
+  );
+
+  it('records 4096 supplementary-plane characters as a valid answer', async () => {
     await submit('learner-a', q1);
-    const before = await attemptCount();
+    const answer = '😀'.repeat(4096);
     expect(await submit('learner-a', { ...q2, answer })).toMatchObject({
-      status: 400,
-      data: { message: expect.any(String) }
+      recorded: true
     });
-    expect(await attemptCount()).toBe(before);
+    const stored = await client.execute(
+      "SELECT answer FROM attempts WHERE question_id = 'fr-a1-001@1:q2'"
+    );
+    expect(stored.rows[0]?.answer).toBe(answer);
   });
 
   it('refuses a multiple-choice answer that is not an option', async () => {

@@ -191,6 +191,48 @@ async function expectBlankAttemptsRefused(page: Page) {
   }
 }
 
+async function expectUnicodeLimit(page: Page, field: Locator, submit: Locator) {
+  const atLimit = '😀'.repeat(4096);
+  await field.fill('');
+  await page.keyboard.insertText(atLimit);
+  await expect(field).toHaveValue(atLimit);
+  await page.keyboard.insertText('😀');
+  await submit.click();
+  await expect(page.getByRole('alert')).toContainText(
+    'Your answer is too long.'
+  );
+  await expect(field).toHaveValue(`${atLimit}😀`);
+}
+
+async function selectChoiceByKeyboard(
+  page: Page,
+  exercise: Exercise,
+  answerControl: Locator,
+  submit: Locator
+) {
+  const first = answerControl.getByRole('radio', {
+    name: exercise.answer,
+    exact: true
+  });
+  const second = answerControl.getByRole('radio', {
+    name: 'es',
+    exact: true
+  });
+  await first.focus();
+  await page.keyboard.press('Space');
+  await expect(first).toBeChecked();
+  await page.keyboard.press('ArrowDown');
+  await expect(second).toBeFocused();
+  await expect(second).toBeChecked();
+  await page.keyboard.press('ArrowUp');
+  await expect(first).toBeFocused();
+  await expect(first).toBeChecked();
+  await page.keyboard.press('Tab');
+  await expect(submit).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(first).toBeFocused();
+}
+
 /** Fill the current exercise the way a learner would, accents included. */
 async function fillAnswer(
   page: Page,
@@ -202,33 +244,14 @@ async function fillAnswer(
     exact: true
   });
   if (exercise.format === 'multiple-choice') {
-    const first = answerControl.getByRole('radio', {
-      name: exercise.answer,
-      exact: true
-    });
-    const second = answerControl.getByRole('radio', {
-      name: 'es',
-      exact: true
-    });
-    await first.focus();
-    await page.keyboard.press('Space');
-    await expect(first).toBeChecked();
-    await page.keyboard.press('ArrowDown');
-    await expect(second).toBeFocused();
-    await expect(second).toBeChecked();
-    await page.keyboard.press('ArrowUp');
-    await expect(first).toBeFocused();
-    await expect(first).toBeChecked();
-    await page.keyboard.press('Tab');
-    await expect(submit).toBeFocused();
-    await page.keyboard.press('Shift+Tab');
-    await expect(first).toBeFocused();
+    await selectChoiceByKeyboard(page, exercise, answerControl, submit);
   } else {
     const field = answerControl;
     await expect(field).toHaveJSProperty(
       'tagName',
       exercise.format === 'typed-blank' ? 'INPUT' : 'TEXTAREA'
     );
+    await expectUnicodeLimit(page, field, submit);
     await field.fill('ee');
     const accents = page.getByRole('group', {
       name: 'Accented letters',
@@ -326,6 +349,8 @@ async function answerExercise(
           name: 'Your answer',
           exact: true
         });
+  if (exercise.format === 'multiple-choice')
+    await expect(answerControl).toHaveAccessibleName(exercise.instruction);
   await expect(answerControl).not.toHaveAttribute('aria-describedby', /.+/);
   await expect(answerControl).toHaveAccessibleDescription('');
   await expect(

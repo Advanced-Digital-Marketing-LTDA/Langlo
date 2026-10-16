@@ -32,36 +32,34 @@ function problem(code: AnswerProblem): AnswerCheck {
   return { ok: false, code, message: messages[code] };
 }
 
-function textProblem(format: ExerciseFormat, text: string) {
-  if (text.includes('\0')) return 'INVALID';
-  // A fill-in-the-blank answer is one line; the other formats are sentences.
-  if (format === 'typed-blank' && /[\r\n]/.test(text)) return 'INVALID';
-  if (Array.from(text).length > ANSWER_LIMIT) return 'TOO_LONG';
-  return undefined;
-}
-
 /** The form an answer is stored in: composed accents, no outer whitespace. */
 export function normalizeAnswer(raw: string): string {
   return raw.normalize('NFC').trim();
 }
 
-/**
- * Normalise (composed accents, so "é" is one form however it was typed), trim,
- * and reject empty, oversized and malformed input. A multiple-choice answer
- * must be one of the options the question offers.
- */
-export function checkAnswer(
-  format: ExerciseFormat,
-  raw: unknown,
-  alternatives: readonly string[] = []
-): AnswerCheck {
+/** Format-independent validation, also used before looking up a retry. */
+export function checkAnswerText(raw: unknown): AnswerCheck {
   if (typeof raw !== 'string') return problem('INVALID');
   // Bound the work before normalising an arbitrarily large string.
   if (raw.length > ANSWER_LIMIT * 2) return problem('TOO_LONG');
   const answer = normalizeAnswer(raw);
   if (!answer) return problem('EMPTY');
-  const rejected = textProblem(format, answer);
-  if (rejected) return problem(rejected);
+  if (answer.includes('\0')) return problem('INVALID');
+  if (Array.from(answer).length > ANSWER_LIMIT) return problem('TOO_LONG');
+  return { ok: true, answer };
+}
+
+/** Check normalized text against its question's format and offered options. */
+export function checkAnswer(
+  format: ExerciseFormat,
+  raw: unknown,
+  alternatives: readonly string[] = []
+): AnswerCheck {
+  const checked = checkAnswerText(raw);
+  if (!checked.ok) return checked;
+  const { answer } = checked;
+  if (format === 'typed-blank' && /[\r\n]/.test(answer))
+    return problem('INVALID');
   if (format === 'multiple-choice') {
     const options = alternatives.map(normalizeAnswer);
     if (!options.includes(answer)) return problem('NOT_AN_OPTION');
