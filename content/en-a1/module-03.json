@@ -1,0 +1,592 @@
+{
+  "module_id": "en-a1-module-03",
+  "track": "English A1",
+  "title": "Plurals, articles, pronouns and possessives",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "en-a1-009",
+      "title": "Regular and irregular plural nouns",
+      "explanation": "Most nouns add -s in the plural: book, books. Nouns ending in -s, -sh, -ch, -x or -z add -es: box, boxes; watch, watches; bus, buses. Nouns ending in a consonant plus -y change y to -ies: baby, babies (but boy, boys). Some frequent nouns are irregular and must be learned: man, men; woman, women; child, children; foot, feet; person, people. The verb after a plural subject has no -s: Two women work here.",
+      "examples": [
+        {
+          "en": "I have two books."
+        },
+        {
+          "en": "Two women work here."
+        },
+        {
+          "en": "The children are happy."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-009@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-009@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'box'?",
+            "answer": "boxes",
+            "alternatives": ["boxs", "boxes", "boxies"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'baby'?",
+            "answer": "babies",
+            "alternatives": ["babys", "babies", "babyes"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'child'?",
+            "answer": "children",
+            "alternatives": ["childs", "children", "childrens"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'man'?",
+            "answer": "men",
+            "alternatives": ["mans", "men", "mens"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q05",
+            "format": "typed-blank",
+            "prompt": "I have two ___. (book)",
+            "answer": "books",
+            "near_misses": ["book", "bookes"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q06",
+            "format": "typed-blank",
+            "prompt": "Three ___ are in the garden. (child)",
+            "answer": "children",
+            "near_misses": ["childs", "child"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q07",
+            "format": "typed-blank",
+            "prompt": "She has two ___. (watch)",
+            "answer": "watches",
+            "near_misses": ["watchs", "watch"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with the plural: I / have / two / book",
+            "answer": "I have two books.",
+            "near_misses": ["I have two book.", "I have two bookes."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with the plural: two / woman / work / here",
+            "answer": "Two women work here.",
+            "near_misses": ["Two womans work here.", "Two woman work here."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with the plural: three / box / be / on the table",
+            "answer": "Three boxes are on the table.",
+            "near_misses": [
+              "Three boxs are on the table.",
+              "Three box are on the table."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q11",
+            "format": "correction",
+            "prompt": "Correct the plural: I have two childs.",
+            "answer": "I have two children.",
+            "near_misses": ["I have two childs.", "I have two childrens."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:q12",
+            "format": "correction",
+            "prompt": "Correct the plural: Three womans work here.",
+            "answer": "Three women work here.",
+            "near_misses": [
+              "Three womans work here.",
+              "Three woman work here."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-009@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'person'?",
+            "answer": "people",
+            "alternatives": ["persons", "people", "peoples"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-009@1:h02",
+            "format": "typed-blank",
+            "prompt": "My ___ are cold. (foot)",
+            "answer": "feet",
+            "near_misses": ["foots", "foot"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-009@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with the plural: four / baby / sleep",
+            "answer": "Four babies sleep.",
+            "near_misses": ["Four babys sleep.", "Four baby sleep."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a1-010",
+      "title": "Articles a, an, the and demonstratives",
+      "explanation": "Use a before a consonant sound (a book) and an before a vowel sound (an apple, an hour). Use a or an when you mention something for the first time and the when it is already known: I have a book. The book is new. This and that point to one thing (near and far); these and those point to several: This book is new. Those shoes are old. The demonstrative agrees in number with the noun.",
+      "examples": [
+        {
+          "en": "I have an apple."
+        },
+        {
+          "en": "This book is new."
+        },
+        {
+          "en": "Those shoes are old."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-010@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-010@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which article goes before 'apple' when you mention it for the first time?",
+            "answer": "an",
+            "alternatives": ["a", "an", "the"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which article goes before 'book' when you mention it for the first time?",
+            "answer": "a",
+            "alternatives": ["a", "an", "the"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word points to one thing near you?",
+            "answer": "this",
+            "alternatives": ["this", "that", "these"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word points to several things far from you?",
+            "answer": "those",
+            "alternatives": ["these", "those", "that"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q05",
+            "format": "typed-blank",
+            "prompt": "She has ___ umbrella. (a/an)",
+            "answer": "an",
+            "near_misses": ["a", "the"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q06",
+            "format": "typed-blank",
+            "prompt": "I have a book. ___ book is new. (the)",
+            "answer": "The",
+            "near_misses": ["A", "An"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ shoes are old. (these, near)",
+            "answer": "These",
+            "near_misses": ["This", "Those"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence: I / have / apple",
+            "answer": "I have an apple.",
+            "near_misses": ["I have a apple.", "I have the apple."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence: this / book / be / new",
+            "answer": "This book is new.",
+            "near_misses": ["This book are new.", "These book is new."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence: those / shoes / be / old",
+            "answer": "Those shoes are old.",
+            "near_misses": ["Those shoes is old.", "That shoes are old."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q11",
+            "format": "correction",
+            "prompt": "Correct the article: She has a umbrella.",
+            "answer": "She has an umbrella.",
+            "near_misses": ["She has a umbrella.", "She has the umbrella."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word: These book is new.",
+            "answer": "This book is new.",
+            "near_misses": ["These book is new.", "This books is new."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-010@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word points to one thing far from you?",
+            "answer": "that",
+            "alternatives": ["this", "that", "those"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-010@1:h02",
+            "format": "translation",
+            "prompt": "Write the sentence: I / see / egg",
+            "answer": "I see an egg.",
+            "near_misses": ["I see a egg.", "I see the egg."],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-010@1:h03",
+            "format": "correction",
+            "prompt": "Correct the article: He has a eraser.",
+            "answer": "He has an eraser.",
+            "near_misses": ["He has a eraser.", "He has the eraser."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a1-013",
+      "title": "Subject and object pronouns",
+      "explanation": "Subject pronouns come before the verb: I, you, he, she, it, we, they. Object pronouns come after the verb or a preposition: me, you, him, her, it, us, them. She sees me. I help them. This is for her. After a verb or preposition never use the subject form: not She sees I. Demonstratives such as this and that can also stand alone: This is for her.",
+      "examples": [
+        {
+          "en": "She sees me."
+        },
+        {
+          "en": "I help them."
+        },
+        {
+          "en": "This is for her."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-013@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-013@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'I'?",
+            "answer": "me",
+            "alternatives": ["me", "my", "mine"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'he'?",
+            "answer": "him",
+            "alternatives": ["he", "him", "his"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'they'?",
+            "answer": "them",
+            "alternatives": ["they", "them", "their"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses an object pronoun correctly?",
+            "answer": "She sees me.",
+            "alternatives": ["She sees I.", "She sees me.", "She sees my."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q05",
+            "format": "typed-blank",
+            "prompt": "I know her. She knows ___. (I)",
+            "answer": "me",
+            "near_misses": ["I", "my"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q06",
+            "format": "typed-blank",
+            "prompt": "We help them. They help ___. (we)",
+            "answer": "us",
+            "near_misses": ["we", "our"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q07",
+            "format": "typed-blank",
+            "prompt": "He is my brother. I like ___. (he)",
+            "answer": "him",
+            "near_misses": ["he", "his"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: she / see / I",
+            "answer": "She sees me.",
+            "near_misses": ["She sees I.", "She see me."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: I / help / they",
+            "answer": "I help them.",
+            "near_misses": ["I help they.", "I helps them."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: this / be / for / she",
+            "answer": "This is for her.",
+            "near_misses": ["This is for she.", "This is for hers."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: He helps I.",
+            "answer": "He helps me.",
+            "near_misses": ["He helps I.", "He helps my."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: I like they.",
+            "answer": "I like them.",
+            "near_misses": ["I like they.", "I like their."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-013@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'it'?",
+            "answer": "it",
+            "alternatives": ["it", "its", "them"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-013@1:h02",
+            "format": "typed-blank",
+            "prompt": "They know ___. (you)",
+            "answer": "you",
+            "near_misses": ["your", "yours"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-013@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: we / see / he",
+            "answer": "We see him.",
+            "near_misses": ["We see he.", "We sees him."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a1-011",
+      "title": "Possessive determiners and possessive pronouns",
+      "explanation": "Possessive determiners go before a noun: my, your, his, her, our, their (my bag, her house). Possessive pronouns replace the noun and stand alone: mine, yours, his, hers, ours, theirs (This bag is mine). Do not use my where mine is needed: not This bag is my. Do not use mine before a noun: not This is mine bag.",
+      "examples": [
+        {
+          "en": "This is my bag."
+        },
+        {
+          "en": "That bag is mine."
+        },
+        {
+          "en": "Her house is big."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-011@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-011@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'belonging to me' before a noun?",
+            "answer": "my",
+            "alternatives": ["my", "mine", "me"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word replaces 'my bag' when no noun follows?",
+            "answer": "mine",
+            "alternatives": ["my", "mine", "me"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which possessive means 'belonging to her' before a noun?",
+            "answer": "her",
+            "alternatives": ["she", "her", "hers"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses a possessive pronoun correctly?",
+            "answer": "This bag is mine.",
+            "alternatives": [
+              "This bag is my.",
+              "This bag is mine.",
+              "This bag is me."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q05",
+            "format": "typed-blank",
+            "prompt": "This is ___ bag. (I)",
+            "answer": "my",
+            "near_misses": ["me", "mine"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q06",
+            "format": "typed-blank",
+            "prompt": "That bag is ___. (belonging to you)",
+            "answer": "yours",
+            "near_misses": ["your", "you"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ house is big. (belonging to them)",
+            "answer": "Their",
+            "near_misses": ["Theirs", "They"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: this / be / my / bag",
+            "answer": "This is my bag.",
+            "near_misses": ["This is me bag.", "This is mine bag."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: that / bag / be / mine",
+            "answer": "That bag is mine.",
+            "near_misses": ["That bag is my.", "That bag is me."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: her / house / be / big",
+            "answer": "Her house is big.",
+            "near_misses": ["She house is big.", "Hers house is big."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word: This is yours bag.",
+            "answer": "This is your bag.",
+            "near_misses": ["This is yours bag.", "This is you bag."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word: That book is my.",
+            "answer": "That book is mine.",
+            "near_misses": ["That book is my.", "That book is me."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-011@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'belonging to us' before a noun?",
+            "answer": "our",
+            "alternatives": ["our", "ours", "us"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-011@1:h02",
+            "format": "typed-blank",
+            "prompt": "The red car is ___. (belonging to us)",
+            "answer": "ours",
+            "near_misses": ["our", "us"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-011@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: his / car / be / new",
+            "answer": "His car is new.",
+            "near_misses": ["He car is new.", "Him car is new."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
