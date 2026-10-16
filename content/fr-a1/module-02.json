@@ -1,0 +1,700 @@
+{
+  "module_id": "fr-a1-module-02",
+  "track": "French A1",
+  "title": "Verbs in common use, negation and questions",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "fr-a1-005",
+      "title": "Frequent irregular verbs: aller, faire, prendre",
+      "explanation": "A few of the most frequent French verbs do not follow the regular -er pattern, so learn their present forms as units. Aller (to go): je vais, tu vas, il/elle/on va, nous allons, vous allez, ils/elles vont. Faire (to do, to make): je fais, tu fais, il/elle/on fait, nous faisons, vous faites, ils/elles font. Prendre (to take, also to have food or drink or to use transport): je prends, tu prends, il/elle/on prend, nous prenons, vous prenez, ils/elles prennent. Aller is the verb for going somewhere and is followed by à and the place: Je vais à Lyon.",
+      "examples": [
+        {
+          "fr": "Je vais à la maison.",
+          "en": "I am going home."
+        },
+        {
+          "fr": "Nous faisons du sport.",
+          "en": "We do sport."
+        },
+        {
+          "fr": "Elle prend le bus.",
+          "en": "She takes the bus."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-005@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-005@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of aller goes with 'je'?",
+            "answer": "vais",
+            "alternatives": ["vas", "vais", "va"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'They are going to school.'",
+            "answer": "Ils vont à l'école.",
+            "alternatives": [
+              "Ils allent à l'école.",
+              "Ils vont à l'école.",
+              "Ils va à l'école."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of faire goes with 'vous'?",
+            "answer": "faites",
+            "alternatives": ["faisez", "faites", "faisons"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'She takes the bus.'",
+            "answer": "Elle prend le bus.",
+            "alternatives": [
+              "Elle prende le bus.",
+              "Elle prend le bus.",
+              "Elle prends le bus."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q05",
+            "format": "typed-blank",
+            "prompt": "Nous ___ à Lyon. (aller)",
+            "answer": "allons",
+            "near_misses": ["vont", "allez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q06",
+            "format": "typed-blank",
+            "prompt": "Tu ___ du café. (prendre)",
+            "answer": "prends",
+            "near_misses": ["prend", "prendes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ils ___ la cuisine. (faire)",
+            "answer": "font",
+            "near_misses": ["faisent", "fait"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I am going to the station.",
+            "answer": "Je vais à la gare.",
+            "near_misses": ["Je vas à la gare.", "J'allons à la gare."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are taking the train.",
+            "answer": "Nous prenons le train.",
+            "alternatives": ["On prend le train."],
+            "near_misses": ["Nous prendons le train.", "Nous prenez le train."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (boys) are doing the shopping.",
+            "answer": "Ils font les courses.",
+            "near_misses": ["Ils faisent les courses.", "Il font les courses."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Il aller à Paris.",
+            "answer": "Il va à Paris.",
+            "near_misses": ["Il aller à Paris.", "Il vais à Paris."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Vous prendez un taxi.",
+            "answer": "Vous prenez un taxi.",
+            "near_misses": ["Vous prendez un taxi.", "Vous prennent un taxi."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-005@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form of aller goes with 'tu'?",
+            "answer": "vas",
+            "alternatives": ["vais", "vas", "va"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-005@1:h02",
+            "format": "typed-blank",
+            "prompt": "Il ___ la vaisselle. (faire)",
+            "answer": "fait",
+            "near_misses": ["fais", "font"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-005@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (girls) are going to Rennes.",
+            "answer": "Elles vont à Rennes.",
+            "near_misses": ["Elles va à Rennes.", "Elles allent à Rennes."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-006",
+      "title": "Simple negation with ne ... pas",
+      "explanation": "To make a French statement negative, put ne before the conjugated verb and pas after it: Marie ne travaille pas. Ne becomes n' before a vowel or a silent h: Je n'aime pas le café, Elle n'habite pas ici. The verb stays in the same place in the sentence, so ne and pas wrap around it. Spoken French often drops ne, but in writing keep both parts.",
+      "examples": [
+        {
+          "fr": "Je ne parle pas anglais.",
+          "en": "I do not speak English."
+        },
+        {
+          "fr": "Il n'habite pas à Lyon.",
+          "en": "He does not live in Lyon."
+        },
+        {
+          "fr": "Nous ne mangeons pas.",
+          "en": "We are not eating."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-006@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-006@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'Marie does not work.'?",
+            "answer": "Marie ne travaille pas.",
+            "alternatives": [
+              "Marie travaille ne pas.",
+              "Marie ne travaille pas.",
+              "Marie pas travaille ne."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "Je n'aime pas le café.",
+            "alternatives": [
+              "Je ne aime pas le café.",
+              "Je n'aime pas le café.",
+              "Je n'aime le café pas."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q03",
+            "format": "multiple-choice",
+            "prompt": "In 'Il ne mange pas.', which word is the verb?",
+            "answer": "mange",
+            "alternatives": ["ne", "mange", "pas"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'We are not going to Lyon.'?",
+            "answer": "Nous n'allons pas à Lyon.",
+            "alternatives": [
+              "Nous ne allons pas à Lyon.",
+              "Nous n'allons pas à Lyon.",
+              "Nous allons ne pas à Lyon."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q05",
+            "format": "typed-blank",
+            "prompt": "Je ___ parle pas allemand. (negative)",
+            "answer": "ne",
+            "near_misses": ["n'", "non"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q06",
+            "format": "typed-blank",
+            "prompt": "Elle ___habite pas ici. (negative)",
+            "answer": "n'",
+            "near_misses": ["ne", "na"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ils ne travaillent ___. (negative)",
+            "answer": "pas",
+            "near_misses": ["plus", "non"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I do not speak Spanish.",
+            "answer": "Je ne parle pas espagnol.",
+            "alternatives": ["Je ne parle pas l'espagnol."],
+            "near_misses": [
+              "Je ne parle espagnol pas.",
+              "Je ne pas parle espagnol."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): He is not eating.",
+            "answer": "Il ne mange pas.",
+            "near_misses": ["Il mange ne pas.", "Il ne mangeons pas."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are not working today.",
+            "answer": "Nous ne travaillons pas aujourd'hui.",
+            "alternatives": [
+              "Aujourd'hui, nous ne travaillons pas.",
+              "Aujourd'hui nous ne travaillons pas.",
+              "On ne travaille pas aujourd'hui."
+            ],
+            "near_misses": [
+              "Nous ne travaillons aujourd'hui pas.",
+              "Nous ne travaille pas aujourd'hui."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (make it negative, keep the subject): Tu aimes la musique.",
+            "answer": "Tu n'aimes pas la musique.",
+            "near_misses": [
+              "Tu ne aimes pas la musique.",
+              "Tu aimes pas la musique."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject and the verb): Elle ne pas mange.",
+            "answer": "Elle ne mange pas.",
+            "near_misses": ["Elle ne pas mange.", "Elle mange ne pas."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-006@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'They are not arriving.'?",
+            "answer": "Ils n'arrivent pas.",
+            "alternatives": [
+              "Ils ne arrivent pas.",
+              "Ils n'arrivent pas.",
+              "Ils arrivent ne pas."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-006@1:h02",
+            "format": "typed-blank",
+            "prompt": "Elle ne ___ pas. (danser)",
+            "answer": "danse",
+            "near_misses": ["danses", "danser"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-006@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (girls) do not sing.",
+            "answer": "Elles ne chantent pas.",
+            "near_misses": ["Elles ne chante pas.", "Elles chantent ne pas."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-007",
+      "title": "Yes/no questions: intonation and est-ce que",
+      "explanation": "There are two easy ways to ask a yes/no question in French. In speech you can keep the statement word order and raise your voice at the end: Tu parles français ? Or you can put est-ce que before the statement: Est-ce que tu parles français ? Est-ce que becomes est-ce qu' before a vowel or a silent h: Est-ce qu'il habite ici ? The usual answers are oui (yes) and non (no).",
+      "examples": [
+        {
+          "fr": "Vous aimez le thé ?",
+          "en": "Do you like tea?"
+        },
+        {
+          "fr": "Est-ce que tu travailles demain ?",
+          "en": "Are you working tomorrow?"
+        },
+        {
+          "fr": "Est-ce qu'elle habite à Nantes ?",
+          "en": "Does she live in Nantes?"
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-007@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-007@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which question uses est-ce que correctly?",
+            "answer": "Est-ce que tu manges ?",
+            "alternatives": [
+              "Tu est-ce que manges ?",
+              "Est-ce que tu manges ?",
+              "Est-ce que manges tu ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form is correct before 'il'?",
+            "answer": "Est-ce qu'il",
+            "alternatives": ["Est-ce que il", "Est-ce qu'il", "Est-ce il"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q03",
+            "format": "multiple-choice",
+            "prompt": "How can you turn 'Tu aimes la musique.' into a spoken question?",
+            "answer": "Raise your voice at the end",
+            "alternatives": [
+              "Add ne ... pas",
+              "Raise your voice at the end",
+              "Change the verb to the infinitive"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the usual way to say yes to 'Est-ce que tu travailles ?'",
+            "answer": "Oui",
+            "alternatives": ["Non", "Oui", "Pas"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ que vous aimez le café ?",
+            "answer": "Est-ce",
+            "near_misses": ["Est", "Est-il"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q06",
+            "format": "typed-blank",
+            "prompt": "Est-ce ___elle habite à Lyon ?",
+            "answer": "qu'",
+            "near_misses": ["que", "quand"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q07",
+            "format": "typed-blank",
+            "prompt": "Est-ce que tu ___ français ? (parler)",
+            "answer": "parles",
+            "near_misses": ["parle", "parler"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Do you (one friend) speak English? Use est-ce que.",
+            "answer": "Est-ce que tu parles anglais ?",
+            "alternatives": ["Est-ce que tu parles l'anglais ?"],
+            "near_misses": [
+              "Tu est-ce que parles anglais ?",
+              "Est-ce que tu parler anglais ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Does she live in Paris?",
+            "answer": "Est-ce qu'elle habite à Paris ?",
+            "alternatives": ["Elle habite à Paris ?"],
+            "near_misses": [
+              "Est-ce que elle habite à Paris ?",
+              "Habite elle à Paris ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Do you (polite) like coffee?",
+            "answer": "Vous aimez le café ?",
+            "alternatives": ["Est-ce que vous aimez le café ?"],
+            "near_misses": [
+              "Vous aimer le café ?",
+              "Est-ce que vous aimer le café ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Est-ce que il travaille ?",
+            "answer": "Est-ce qu'il travaille ?",
+            "near_misses": [
+              "Est-ce que il travaille ?",
+              "Est-ce qu'il travaillent ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject and the verb): Tu est-ce que habites ici ?",
+            "answer": "Est-ce que tu habites ici ?",
+            "near_misses": [
+              "Tu est-ce que habites ici ?",
+              "Est-ce que habites tu ici ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-007@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a question formed with est-ce que?",
+            "answer": "Est-ce que vous travaillez demain ?",
+            "alternatives": [
+              "Vous travaillez demain.",
+              "Est-ce que vous travaillez demain ?",
+              "Vous ne travaillez pas demain."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-007@1:h02",
+            "format": "typed-blank",
+            "prompt": "Est-ce que tu ___ le thé ? (aimer)",
+            "answer": "aimes",
+            "near_misses": ["aime", "aimer"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-007@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Do they (boys) work today?",
+            "answer": "Est-ce qu'ils travaillent aujourd'hui ?",
+            "alternatives": ["Ils travaillent aujourd'hui ?"],
+            "near_misses": [
+              "Est-ce que ils travaillent aujourd'hui ?",
+              "Est-ce qu'ils travaille aujourd'hui ?"
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-008",
+      "title": "Question words: qui, où, quand, comment, pourquoi, combien",
+      "explanation": "Common question words are qui (who), où (where), quand (when), comment (how), pourquoi (why) and combien (how many, how much). A reliable pattern is the question word followed by est-ce que and a normal statement: Où est-ce que tu habites ? Before a vowel, est-ce que becomes est-ce qu': Pourquoi est-ce qu'elle travaille ? In informal speech the question word can also come first with normal word order (Où tu habites ?) or last (Tu habites où ?). With être, the question word often comes straight before the verb: Où est Marie ? Qui est là ?",
+      "examples": [
+        {
+          "fr": "Où est-ce que tu habites ?",
+          "en": "Where do you live?"
+        },
+        {
+          "fr": "Pourquoi est-ce que vous mangez ici ?",
+          "en": "Why are you eating here?"
+        },
+        {
+          "fr": "Qui est-ce ?",
+          "en": "Who is it?"
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-008@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-008@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'where'?",
+            "answer": "où",
+            "alternatives": ["quand", "où", "qui"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'why'?",
+            "answer": "pourquoi",
+            "alternatives": ["comment", "pourquoi", "combien"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which question asks about a person?",
+            "answer": "Qui est-ce que tu cherches ?",
+            "alternatives": [
+              "Où est-ce que tu cherches ?",
+              "Qui est-ce que tu cherches ?",
+              "Comment est-ce que tu cherches ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'When does the train arrive?'",
+            "answer": "Quand est-ce que le train arrive ?",
+            "alternatives": [
+              "Quand est-ce que le train arrive ?",
+              "Est-ce que quand le train arrive ?",
+              "Quand le train est-ce que arrive ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ est-ce que tu habites ? (where)",
+            "answer": "Où",
+            "near_misses": ["Ou", "Quand"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ est-ce que vous travaillez ? (when)",
+            "answer": "Quand",
+            "near_misses": ["Comment", "Où"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q07",
+            "format": "typed-blank",
+            "prompt": "Vous allez ___ ? (how)",
+            "answer": "comment",
+            "near_misses": ["combien", "comme"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Where do you (one friend) work?",
+            "answer": "Où est-ce que tu travailles ?",
+            "alternatives": ["Tu travailles où ?", "Où tu travailles ?"],
+            "near_misses": [
+              "Où tu est-ce que travailles ?",
+              "Où est-ce que tu travaille ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Why is she working?",
+            "answer": "Pourquoi est-ce qu'elle travaille ?",
+            "alternatives": [
+              "Pourquoi elle travaille ?",
+              "Elle travaille pourquoi ?"
+            ],
+            "near_misses": [
+              "Pourquoi est-ce que elle travaille ?",
+              "Pourquoi est-ce qu'elle travailles ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Who is there?",
+            "answer": "Qui est là ?",
+            "near_misses": ["Qui là est ?", "Quand est là ?"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the question word): Où est-ce que il habite ?",
+            "answer": "Où est-ce qu'il habite ?",
+            "near_misses": [
+              "Où est-ce que il habite ?",
+              "Où est-ce qu'il habites ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject and the verb): Quand tu est-ce que arrives ?",
+            "answer": "Quand est-ce que tu arrives ?",
+            "near_misses": [
+              "Quand tu est-ce que arrives ?",
+              "Quand est-ce que arrives tu ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-008@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'how many' or 'how much'?",
+            "answer": "combien",
+            "alternatives": ["comment", "combien", "pourquoi"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-008@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ est-ce que tu invites ? (who)",
+            "answer": "Qui",
+            "near_misses": ["Que", "Quoi"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-008@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): How do they (boys) work?",
+            "answer": "Comment est-ce qu'ils travaillent ?",
+            "alternatives": [
+              "Comment ils travaillent ?",
+              "Ils travaillent comment ?"
+            ],
+            "near_misses": [
+              "Comment est-ce que ils travaillent ?",
+              "Comment est-ce qu'ils travaille ?"
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
