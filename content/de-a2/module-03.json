@@ -102,7 +102,8 @@
               "Das Buch liegt auf den Tisch.",
               "Das Buch liegt auf der Tisch."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Das Buch ist auf dem Tisch."]
           },
           {
             "id": "de-a2-009@1:q09",
@@ -143,7 +144,8 @@
             "prompt": "Correct the case (he is entering the house): Er geht in dem Haus.",
             "answer": "Er geht in das Haus.",
             "near_misses": ["Er geht in dem Haus.", "Er geht in den Haus."],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Er geht ins Haus."]
           },
           {
             "id": "de-a2-009@1:h01",
@@ -275,7 +277,8 @@
             "prompt": "Translate (use a pronoun): He gives me the book.",
             "answer": "Er gibt mir das Buch.",
             "near_misses": ["Er gibt mich das Buch.", "Er gibt ich das Buch."],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Wir geben ihr eine Blume."]
           },
           {
             "id": "de-a2-010@1:q09",
@@ -444,7 +447,8 @@
               "Wir treffen wir um acht Uhr.",
               "Wir treffen sich um acht Uhr."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Wir treffen uns um 8 Uhr."]
           },
           {
             "id": "de-a2-011@1:q10",

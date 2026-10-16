@@ -117,7 +117,7 @@
           {
             "id": "en-a2-009@1:q10",
             "format": "translation",
-            "prompt": "Write the advice with should or shouldn't: I / need to / buy / a ticket",
+            "prompt": "Write the sentence with need to: I / need to / buy / a ticket",
             "answer": "I need to buy a ticket.",
             "near_misses": ["I need buy a ticket.", "I needs to buy a ticket."],
             "holdout": false
@@ -349,7 +349,7 @@
     {
       "skill_id": "en-a2-011",
       "title": "Superlatives with the most and -est",
-      "explanation": "Use the superlative to say that something is first in a group. Short adjectives add -est: the tallest, the oldest; with a final -y change to -iest: the happiest. Longer adjectives use the most: the most expensive. Always put the before the superlative. A few are irregular: the best, the worst. Use in or of for the group: the tallest in the class.",
+      "explanation": "Use the superlative to say that something is first in a group. Short adjectives add -est: the tallest, the oldest; with a final -y change to -iest: the happiest. Longer adjectives use the most: the most expensive. Use the before a superlative noun phrase unless a possessive replaces it: the best day, but my best friend. A few are irregular: the best, the worst. Use in or of for the group: the tallest in the class.",
       "examples": [
         {
           "en": "She is the tallest girl in the class."
@@ -371,7 +371,7 @@
             "format": "multiple-choice",
             "prompt": "What is the superlative of 'tall'?",
             "answer": "the tallest",
-            "alternatives": ["the tallest", "the most tall", "tallest"],
+            "alternatives": ["the tallest", "the most tall", "the taller"],
             "holdout": false
           },
           {

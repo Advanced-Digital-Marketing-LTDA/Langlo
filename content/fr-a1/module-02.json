@@ -506,12 +506,12 @@
           {
             "id": "fr-a1-007@1:h03",
             "format": "translation",
-            "prompt": "Translate (use the simple present): Do they (boys) work today?",
-            "answer": "Est-ce qu'ils travaillent aujourd'hui ?",
-            "alternatives": ["Ils travaillent aujourd'hui ?"],
+            "prompt": "Translate (use the simple present): Do the boys work here?",
+            "answer": "Est-ce que les garçons travaillent ici ?",
+            "alternatives": ["Les garçons travaillent ici ?"],
             "near_misses": [
-              "Est-ce que ils travaillent aujourd'hui ?",
-              "Est-ce qu'ils travaille aujourd'hui ?"
+              "Est-ce les garçons travaillent ici ?",
+              "Est-ce que les garçons travaille ici ?"
             ],
             "holdout": true
           }

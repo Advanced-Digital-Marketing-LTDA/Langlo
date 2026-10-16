@@ -9,7 +9,7 @@
     {
       "skill_id": "de-a2-017",
       "title": "Temporal prepositions and their cases",
-      "explanation": "Frequent time prepositions have a fixed case. Seit, vor, nach, in (for 'in an hour'), von ... bis (from ... to) and bei take the dative: Ich wohne seit einem Jahr hier. Nach dem Kurs gehe ich nach Hause. In einer Stunde fängt der Kurs an. Für (for a period) and um (at a clock time) take the accusative or no article: Wir fahren für eine Woche nach Spanien. Learn each preposition together with its case.",
+      "explanation": "Frequent time prepositions have a fixed case. Seit, vor, nach, in (for 'in an hour'), von ... bis (from ... to) and bei take the dative: Ich wohne seit einem Jahr hier. Nach dem Kurs gehe ich nach Hause. In zwei Tagen beginnt der Urlaub. Für (for a period) and um (at a clock time) take the accusative or no article: Wir fahren für eine Woche nach Spanien. Learn each preposition together with its case.",
       "examples": [
         {
           "de": "Ich wohne seit einem Jahr hier.",
@@ -102,7 +102,8 @@
               "Ich wohne seit ein Jahr hier.",
               "Ich wohne seit einen Jahr hier."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Seit einem Jahr wohne ich hier."]
           },
           {
             "id": "de-a2-017@1:q09",
@@ -113,7 +114,8 @@
               "Nach den Kurs gehe ich nach Hause.",
               "Nach dem Kurs ich gehe nach Hause."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Ich gehe nach dem Kurs nach Hause."]
           },
           {
             "id": "de-a2-017@1:q10",
@@ -124,7 +126,8 @@
               "Wir fahren für einer Woche nach Spanien.",
               "Wir fahren für eine Woche in Spanien."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Für eine Woche fahren wir nach Spanien."]
           },
           {
             "id": "de-a2-017@1:q11",
@@ -174,7 +177,8 @@
               "Vor den Abendessen arbeite ich.",
               "Vor dem Abendessen ich arbeite."
             ],
-            "holdout": true
+            "holdout": true,
+            "alternatives": ["Ich arbeite vor dem Abendessen."]
           }
         ]
       }
@@ -278,7 +282,7 @@
           {
             "id": "de-a2-018@1:q09",
             "format": "translation",
-            "prompt": "Translate (use the correct case): We live with my aunt.",
+            "prompt": "Translate (use bei and the correct case): We live at my aunt's.",
             "answer": "Wir wohnen bei meiner Tante.",
             "near_misses": [
               "Wir wohnen bei meine Tante.",
@@ -442,7 +446,8 @@
             "prompt": "Ich bin müde, ___ bleibe ich zu Hause. (therefore)",
             "answer": "deshalb",
             "near_misses": ["denn", "weil"],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["darum", "daher", "deswegen"]
           },
           {
             "id": "de-a2-019@1:q08",
@@ -453,7 +458,8 @@
               "Wenn ich bin müde, trinke ich Kaffee.",
               "Wenn ich müde bin, ich trinke Kaffee."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Ich trinke Kaffee, wenn ich müde bin."]
           },
           {
             "id": "de-a2-019@1:q09",
@@ -464,7 +470,8 @@
               "Bevor ich arbeite, ich trinke Tee.",
               "Bevor ich arbeite, trinke Tee ich."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Ich trinke Tee, bevor ich arbeite."]
           },
           {
             "id": "de-a2-019@1:q10",
@@ -475,7 +482,8 @@
               "Ich bin müde, deshalb ich bleibe zu Hause.",
               "Ich bin müde, deshalb bleibe zu Hause ich."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Ich bin müde, darum bleibe ich zu Hause."]
           },
           {
             "id": "de-a2-019@1:q11",

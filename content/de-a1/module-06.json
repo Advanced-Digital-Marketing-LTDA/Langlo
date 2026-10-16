@@ -91,7 +91,8 @@
             "prompt": "Ich würde ___ nach Wien fahren. (gladly)",
             "answer": "gern",
             "near_misses": ["gut", "sehr"],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["gerne"]
           },
           {
             "id": "de-a1-021@1:q08",

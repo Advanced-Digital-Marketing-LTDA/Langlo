@@ -175,7 +175,7 @@
     {
       "skill_id": "en-a2-022",
       "title": "Infinitive of purpose",
-      "explanation": "Use to plus the base verb to say why someone does something: I went to the shop to buy milk. She is studying to become a nurse. This answers the question Why? and means the same as in order to. Do not use for plus a verb: not I went to the shop for buy milk. Use for plus a noun if you like: I went to the shop for milk.",
+      "explanation": "Use to plus the base verb to say why someone does something: I went to the shop to buy milk. She is studying to become a nurse. This answers the question Why? and means the same as in order to. Do not use for followed directly by a base verb: not I went to the shop for buy milk. Use for plus a noun if you like: I went to the shop for milk.",
       "examples": [
         {
           "en": "I went to the shop to buy milk."
@@ -223,7 +223,7 @@
           {
             "id": "en-a2-022@1:q04",
             "format": "multiple-choice",
-            "prompt": "Which question does a purpose clause answer?",
+            "prompt": "Which word comes before a base verb to show purpose?",
             "answer": "Why?",
             "alternatives": ["Why?", "When?", "Where?"],
             "holdout": false
@@ -255,7 +255,7 @@
           {
             "id": "en-a2-022@1:q08",
             "format": "translation",
-            "prompt": "Explain the purpose with to: I / go to the shop / buy milk",
+            "prompt": "Explain the purpose with to (simple past): I / go to the shop / buy milk",
             "answer": "I went to the shop to buy milk.",
             "near_misses": [
               "I went to the shop for buy milk.",
@@ -266,7 +266,7 @@
           {
             "id": "en-a2-022@1:q09",
             "format": "translation",
-            "prompt": "Explain the purpose with to: she / study / become a nurse",
+            "prompt": "Explain the purpose with to (present continuous): she / study / become a nurse",
             "answer": "She is studying to become a nurse.",
             "near_misses": [
               "She is studying for become a nurse.",
@@ -299,10 +299,10 @@
           {
             "id": "en-a2-022@1:q12",
             "format": "correction",
-            "prompt": "Correct the sentence: I saved money for buying a bike.",
+            "prompt": "Correct the sentence: I saved money for buy a bike.",
             "answer": "I saved money to buy a bike.",
             "near_misses": [
-              "I saved money for buying a bike.",
+              "I saved money for buy a bike.",
               "I saved money to buying a bike."
             ],
             "holdout": false
@@ -333,7 +333,7 @@
           {
             "id": "en-a2-022@1:h03",
             "format": "translation",
-            "prompt": "Explain the purpose with to: he / take / a taxi / get to the airport",
+            "prompt": "Explain the purpose with to (simple past): he / take / a taxi / get to the airport",
             "answer": "He took a taxi to get to the airport.",
             "near_misses": [
               "He took a taxi for get to the airport.",
@@ -347,7 +347,7 @@
     {
       "skill_id": "en-a2-023",
       "title": "Verb + -ing patterns",
-      "explanation": "After some verbs and after prepositions use the -ing form: I enjoy swimming. She finished writing. We are interested in learning Spanish. He is good at cooking. Common verbs that take -ing: enjoy, like, love, hate, finish, stop, start. After a preposition always use -ing: thank you for helping, before leaving. Do not use the base verb or to: not I enjoy to swim.",
+      "explanation": "After some verbs and after prepositions use the -ing form: I enjoy swimming. She finished writing. We are interested in learning Spanish. He is good at cooking. Enjoy and finish take -ing. Like, love, hate and start can take either -ing or a to-infinitive; stop to do something has a different meaning from stop doing it. After a preposition always use -ing: thank you for helping, before leaving. After enjoy, do not use the base verb or a to-infinitive: not I enjoy to swim.",
       "examples": [
         {
           "en": "I enjoy swimming."
@@ -498,7 +498,8 @@
             "prompt": "He hates ___ up early. (get)",
             "answer": "getting",
             "near_misses": ["get", "to getting"],
-            "holdout": true
+            "holdout": true,
+            "alternatives": ["to get"]
           },
           {
             "id": "en-a2-023@1:h03",

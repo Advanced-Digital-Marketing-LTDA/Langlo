@@ -113,7 +113,8 @@
               "Nous avons parler hier.",
               "Nous sommes parlé hier."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Hier, nous avons parlé."]
           },
           {
             "id": "fr-a1-021@1:q10",
@@ -124,7 +125,8 @@
               "Elle est arrivé à midi.",
               "Elle a arrivée à midi."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["À midi, elle est arrivée."]
           },
           {
             "id": "fr-a1-021@1:q11",
@@ -427,7 +429,8 @@
               "Je lève à sept heures.",
               "Je me levé à sept heures."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Je me lève à 7 heures."]
           },
           {
             "id": "fr-a1-023@1:q09",
@@ -594,7 +597,8 @@
               "Il est un chat dans le jardin.",
               "Il y a un chat dans la jardin."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Dans le jardin, il y a un chat."]
           },
           {
             "id": "fr-a1-024@1:q09",

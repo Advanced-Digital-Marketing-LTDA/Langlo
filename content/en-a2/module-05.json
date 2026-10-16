@@ -9,7 +9,7 @@
     {
       "skill_id": "en-a2-017",
       "title": "Recognizing simple present and past passives",
-      "explanation": "In a passive sentence the thing that receives the action is the subject. Form the present passive with am, is or are plus the past participle: English is spoken here. Form the past passive with was or were plus the past participle: The window was broken yesterday. Notices and descriptions often use the passive. Add by to name who did it: The book was written by Orwell.",
+      "explanation": "In a passive sentence the thing that receives the action is the subject. Recognize the present passive by am, is or are plus the past participle: English is spoken here. Recognize the past passive by was or were plus the past participle: The window was broken yesterday. Notices and descriptions often use the passive. By introduces who did it: The book was written by Orwell.",
       "examples": [
         {
           "en": "English is spoken here."
@@ -73,76 +73,79 @@
           {
             "id": "en-a2-017@1:q05",
             "format": "typed-blank",
-            "prompt": "English ___ spoken here. (be)",
-            "answer": "is",
-            "near_misses": ["are", "was"],
+            "prompt": "Read 'English is spoken here.' Is the passive present or past?",
+            "answer": "present",
+            "near_misses": ["past", "future"],
             "holdout": false
           },
           {
             "id": "en-a2-017@1:q06",
             "format": "typed-blank",
-            "prompt": "The window ___ broken yesterday. (be)",
-            "answer": "was",
-            "near_misses": ["is", "were"],
+            "prompt": "Read 'The window was broken yesterday.' Is the passive present or past?",
+            "answer": "past",
+            "near_misses": ["present", "future"],
             "holdout": false
           },
           {
             "id": "en-a2-017@1:q07",
             "format": "typed-blank",
-            "prompt": "The book was ___ by Orwell. (write)",
-            "answer": "written",
-            "near_misses": ["wrote", "writing"],
+            "prompt": "Read 'The book was written by Orwell.' Who wrote the book?",
+            "answer": "Orwell",
+            "near_misses": ["the book", "the reader"],
             "holdout": false
           },
           {
             "id": "en-a2-017@1:q08",
             "format": "translation",
-            "prompt": "Write the passive sentence: English / speak / here (present)",
-            "answer": "English is spoken here.",
-            "near_misses": ["English is speak here.", "English speaked here."],
+            "prompt": "Read 'English is spoken here.' Explain its meaning in an active sentence beginning with People.",
+            "answer": "People speak English here.",
+            "near_misses": [
+              "English speaks here.",
+              "People spoke English here."
+            ],
             "holdout": false
           },
           {
             "id": "en-a2-017@1:q09",
             "format": "translation",
-            "prompt": "Write the passive sentence: the window / break / yesterday (past)",
-            "answer": "The window was broken yesterday.",
+            "prompt": "Read 'The window was broken yesterday.' Explain its meaning in an active sentence beginning with Someone.",
+            "answer": "Someone broke the window yesterday.",
             "near_misses": [
-              "The window was break yesterday.",
-              "The window were broken yesterday."
+              "Someone breaks the window yesterday.",
+              "The window broke someone yesterday."
             ],
             "holdout": false
           },
           {
             "id": "en-a2-017@1:q10",
             "format": "translation",
-            "prompt": "Write the passive sentence: the book / write / by Orwell (past)",
-            "answer": "The book was written by Orwell.",
+            "prompt": "Read 'The book was written by Orwell.' Explain its meaning in an active sentence beginning with Orwell.",
+            "answer": "Orwell wrote the book.",
             "near_misses": [
-              "The book was wrote by Orwell.",
-              "The book is written by Orwell last year."
+              "Orwell writes the book.",
+              "The book wrote Orwell."
             ],
             "holdout": false
           },
           {
             "id": "en-a2-017@1:q11",
             "format": "correction",
-            "prompt": "Correct the sentence: The cakes is made every day.",
-            "answer": "The cakes are made every day.",
+            "prompt": "Read 'The cakes are made every day.' A learner thinks the cakes make something. Correct that meaning in an active sentence beginning with Someone.",
+            "answer": "Someone makes the cakes every day.",
             "near_misses": [
-              "The cakes is made every day.",
-              "The cakes are make every day."
+              "The cakes make someone every day.",
+              "Someone made the cakes every day."
             ],
             "holdout": false
           },
           {
             "id": "en-a2-017@1:q12",
             "format": "correction",
-            "prompt": "Correct the sentence: The room was clean yesterday by Tom.",
-            "answer": "The room was cleaned yesterday by Tom.",
+            "prompt": "Read 'The room was cleaned yesterday by Tom.' A learner thinks the room cleaned Tom. Correct that meaning in an active sentence beginning with Tom.",
+            "answer": "Tom cleaned the room yesterday.",
             "near_misses": [
-              "The room was clean yesterday by Tom.",
-              "The room were cleaned yesterday by Tom."
+              "The room cleaned Tom yesterday.",
+              "Tom cleans the room yesterday."
             ],
             "holdout": false
           },
@@ -161,19 +164,20 @@
           {
             "id": "en-a2-017@1:h02",
             "format": "typed-blank",
-            "prompt": "The letters were ___ yesterday. (send)",
-            "answer": "sent",
-            "near_misses": ["send", "sending"],
-            "holdout": true
+            "prompt": "Read 'The letters were sent yesterday.' What was sent?",
+            "answer": "letters",
+            "near_misses": ["yesterday", "the sender"],
+            "holdout": true,
+            "alternatives": ["the letters"]
           },
           {
             "id": "en-a2-017@1:h03",
             "format": "translation",
-            "prompt": "Write the passive sentence: cars / make / in this factory (present)",
-            "answer": "Cars are made in this factory.",
+            "prompt": "Read 'Cars are made in this factory.' Explain its meaning in an active sentence beginning with People.",
+            "answer": "People make cars in this factory.",
             "near_misses": [
-              "Cars is made in this factory.",
-              "Cars are make in this factory."
+              "Cars make people in this factory.",
+              "People made cars in this factory."
             ],
             "holdout": true
           }
@@ -454,7 +458,7 @@
           {
             "id": "en-a2-019@1:q10",
             "format": "translation",
-            "prompt": "Add the question tag or short answer: short answer: Are you tired? Yes",
+            "prompt": "Give the short answer: Are you tired? Yes",
             "answer": "Yes, I am.",
             "near_misses": ["Yes, I tired.", "Yes, I do."],
             "holdout": false

@@ -131,7 +131,7 @@
           {
             "id": "fr-a1-017@1:q12",
             "format": "correction",
-            "prompt": "Correct the sentence (keep the subject and the verbs): Ils peut chanter.",
+            "prompt": "Correct the sentence (keep the subject): Ils peut chanter.",
             "answer": "Ils peuvent chanter.",
             "near_misses": ["Ils peut chanter.", "Ils peuvent chantent."],
             "holdout": false
@@ -406,7 +406,7 @@
           {
             "id": "fr-a1-019@1:q08",
             "format": "translation",
-            "prompt": "Translate (use the simple present): I am going to eat tonight.",
+            "prompt": "Translate (use aller + infinitive for the near future): I am going to eat tonight.",
             "answer": "Je vais manger ce soir.",
             "near_misses": ["Je vais mange ce soir.", "Je vas manger ce soir."],
             "holdout": false
@@ -414,7 +414,7 @@
           {
             "id": "fr-a1-019@1:q09",
             "format": "translation",
-            "prompt": "Translate (use the simple present): He is going to arrive tomorrow.",
+            "prompt": "Translate (use aller + infinitive for the near future): He is going to arrive tomorrow.",
             "answer": "Il va arriver demain.",
             "near_misses": ["Il vais arriver demain.", "Il va arrive demain."],
             "holdout": false
@@ -422,7 +422,7 @@
           {
             "id": "fr-a1-019@1:q10",
             "format": "translation",
-            "prompt": "Translate (use the simple present): We are going to work next week.",
+            "prompt": "Translate (use aller + infinitive for the near future): We are going to work next week.",
             "answer": "Nous allons travailler la semaine prochaine.",
             "alternatives": ["On va travailler la semaine prochaine."],
             "near_misses": [
@@ -469,7 +469,7 @@
           {
             "id": "fr-a1-019@1:h03",
             "format": "translation",
-            "prompt": "Translate (use the simple present): They (girls) are going to sing tomorrow.",
+            "prompt": "Translate (use aller + infinitive for the near future): They (girls) are going to sing tomorrow.",
             "answer": "Elles vont chanter demain.",
             "near_misses": [
               "Elles va chanter demain.",

@@ -155,7 +155,7 @@
     {
       "skill_id": "de-a1-007",
       "title": "Noun gender and nominative articles",
-      "explanation": "Every German noun has a grammatical gender: masculine (der), feminine (die) or neuter (das). The plural article is always die. Learn each noun together with its article: der Mann, die Frau, das Kind, die Kinder. The indefinite article in the nominative is ein for masculine and neuter and eine for feminine: ein Mann, eine Frau, ein Kind. All nouns are written with a capital letter. Endings help a little: nouns in -ung, -heit and -keit are feminine, and nouns in -chen are neuter.",
+      "explanation": "Every German noun has a grammatical gender: masculine (der), feminine (die) or neuter (das). The nominative plural article is always die. Learn each noun together with its article: der Mann, die Frau, das Kind, die Kinder. The indefinite article in the nominative is ein for masculine and neuter and eine for feminine: ein Mann, eine Frau, ein Kind. All nouns are written with a capital letter. Endings help a little: nouns in -ung, -heit and -keit are feminine, and nouns in -chen are neuter.",
       "examples": [
         {
           "de": "Der Tisch ist neu.",
@@ -301,7 +301,7 @@
     {
       "skill_id": "de-a1-008",
       "title": "Singular and plural noun forms",
-      "explanation": "German forms plurals in several ways, so learn the plural with the noun. Common patterns: -e (der Tag, die Tage), -e with an umlaut (die Hand, die Hände), -er with an umlaut where possible (das Kind, die Kinder; das Haus, die Häuser), -n or -en (die Frau, die Frauen; die Lampe, die Lampen), -s (das Auto, die Autos), and no change or only an umlaut (der Lehrer, die Lehrer; der Bruder, die Brüder). The plural article is always die, and the verb takes the plural ending.",
+      "explanation": "German forms plurals in several ways, so learn the plural with the noun. Common patterns: -e (der Tag, die Tage), -e with an umlaut (die Hand, die Hände), -er with an umlaut where possible (das Kind, die Kinder; das Haus, die Häuser), -n or -en (die Frau, die Frauen; die Lampe, die Lampen), -s (das Auto, die Autos), and no change or only an umlaut (der Lehrer, die Lehrer; der Bruder, die Brüder). The nominative plural article is always die, and the verb takes the plural ending.",
       "examples": [
         {
           "de": "Die Kinder spielen.",

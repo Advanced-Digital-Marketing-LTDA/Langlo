@@ -236,7 +236,7 @@
           {
             "id": "de-a2-002@1:q06",
             "format": "typed-blank",
-            "prompt": "Wir ___ arbeiten. (müssen)",
+            "prompt": "Wir ___ gestern arbeiten. (müssen, Präteritum)",
             "answer": "mussten",
             "near_misses": ["musste", "müssen"],
             "holdout": false
@@ -244,7 +244,7 @@
           {
             "id": "de-a2-002@1:q07",
             "format": "typed-blank",
-            "prompt": "Anna ___ keine Zeit. (haben)",
+            "prompt": "Anna ___ gestern keine Zeit. (haben, Präteritum)",
             "answer": "hatte",
             "near_misses": ["hat", "hatten"],
             "holdout": false

@@ -107,7 +107,8 @@
             "prompt": "Translate (write a main clause): Anna works in Bonn.",
             "answer": "Anna arbeitet in Bonn.",
             "near_misses": ["Anna arbeiten in Bonn.", "Anna in Bonn arbeitet."],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["In Bonn arbeitet Anna."]
           },
           {
             "id": "de-a1-001@1:q09",
@@ -118,7 +119,8 @@
               "Morgen Paul lernt Deutsch.",
               "Morgen lernen Paul Deutsch."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Paul lernt morgen Deutsch."]
           },
           {
             "id": "de-a1-001@1:q10",

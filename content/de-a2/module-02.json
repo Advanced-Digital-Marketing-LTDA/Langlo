@@ -137,7 +137,8 @@
               "Er kommt nicht, weil er muss arbeiten.",
               "Er kommt nicht, weil muss er arbeiten."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Anna lernt Deutsch, weil sie in Wien lebt."]
           },
           {
             "id": "de-a2-005@1:q11",
@@ -281,7 +282,7 @@
           {
             "id": "de-a2-006@1:q07",
             "format": "typed-blank",
-            "prompt": "Ich glaube, dass sie heute ___. (kommen)",
+            "prompt": "Ich glaube, dass Anna heute ___. (kommen)",
             "answer": "kommt",
             "near_misses": ["kommen", "komme"],
             "holdout": false
@@ -295,7 +296,8 @@
               "Ich weiß, dass Anna wohnt in Wien.",
               "Ich weiß, das Anna in Wien wohnt."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Ich weiß, dass Anna in Wien lebt."]
           },
           {
             "id": "de-a2-006@1:q09",
@@ -317,7 +319,8 @@
               "Ich denke, dass das Buch ist gut.",
               "Ich denke, das das Buch gut ist."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Ich glaube, dass das Buch gut ist."]
           },
           {
             "id": "de-a2-006@1:q11",
@@ -501,7 +504,8 @@
               "Sie fragt, wann fängt der Kurs an.",
               "Sie fragt, wann der Kurs fängt an."
             ],
-            "holdout": false
+            "holdout": false,
+            "alternatives": ["Sie fragt, wann der Kurs beginnt."]
           },
           {
             "id": "de-a2-007@1:q11",
