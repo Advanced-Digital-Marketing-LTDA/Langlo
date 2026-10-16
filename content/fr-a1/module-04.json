@@ -1,0 +1,652 @@
+{
+  "module_id": "fr-a1-module-04",
+  "track": "French A1",
+  "title": "Demonstratives, partitives, places and time",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "fr-a1-013",
+      "title": "Demonstratives: ce, cet, cette, ces",
+      "explanation": "To point to a person or thing, French uses a demonstrative that agrees with the noun. This or that: ce (masculine), cet (masculine before a vowel or a silent h), cette (feminine). These or those: ces (plural, both genders). Examples: ce livre, cet ami, cette maison, ces enfants. Context shows whether ce means this or that.",
+      "examples": [
+        {
+          "fr": "Ce livre est intéressant.",
+          "en": "This book is interesting."
+        },
+        {
+          "fr": "Cette femme travaille ici.",
+          "en": "This woman works here."
+        },
+        {
+          "fr": "Ces enfants jouent.",
+          "en": "These children are playing."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-013@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-013@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'this' before 'livre' (masculine)?",
+            "answer": "ce",
+            "alternatives": ["cette", "ce", "ces"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which phrase is correct for 'this house'?",
+            "answer": "cette maison",
+            "alternatives": ["ce maison", "cette maison", "ces maison"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which phrase is correct for 'this friend' (a boy)?",
+            "answer": "cet ami",
+            "alternatives": ["ce ami", "cet ami", "cette ami"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'these' or 'those'?",
+            "answer": "ces",
+            "alternatives": ["ce", "ces", "cette"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ gâteau est bon. (this)",
+            "answer": "Ce",
+            "near_misses": ["Cette", "Ces"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ chaise est petite. (this)",
+            "answer": "Cette",
+            "near_misses": ["Ce", "Ces"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ enfants jouent. (these)",
+            "answer": "Ces",
+            "near_misses": ["Ce", "Cet"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I like this book.",
+            "answer": "J'aime ce livre.",
+            "near_misses": ["J'aime cette livre.", "J'aime ces livre."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): These women are working.",
+            "answer": "Ces femmes travaillent.",
+            "near_misses": [
+              "Ce femmes travaillent.",
+              "Cettes femmes travaillent."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): This man is arriving.",
+            "answer": "Cet homme arrive.",
+            "near_misses": ["Ce homme arrive.", "Cette homme arrive."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Elle aime ce maison.",
+            "answer": "Elle aime cette maison.",
+            "near_misses": ["Elle aime ce maison.", "Elle aime ces maison."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Ce amis arrivent.",
+            "answer": "Ces amis arrivent.",
+            "near_misses": ["Ce amis arrivent.", "Cet amis arrivent."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-013@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which phrase is correct for 'these books'?",
+            "answer": "ces livres",
+            "alternatives": ["ce livres", "ces livres", "cette livres"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-013@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ arbre est grand. (this)",
+            "answer": "Cet",
+            "near_misses": ["Ce", "Cette"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-013@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): This boy is eating.",
+            "answer": "Ce garçon mange.",
+            "near_misses": ["Cette garçon mange.", "Ces garçon mange."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-014",
+      "title": "Partitive articles for food and uncounted things",
+      "explanation": "To talk about some of a food, a drink or another uncounted thing, French uses a partitive article that agrees with the noun: du (masculine), de la (feminine), de l' (before a vowel or a silent h) and des (plural). Je mange du pain; Elle prend de la soupe; Nous mangeons des légumes. English often leaves this word out, but French cannot. After a negative the partitive usually shrinks to de or d': Je ne mange pas de pain.",
+      "examples": [
+        {
+          "fr": "Il mange du poisson.",
+          "en": "He is eating fish."
+        },
+        {
+          "fr": "Elle mange de la confiture.",
+          "en": "She is eating jam."
+        },
+        {
+          "fr": "Ils mangent des fruits.",
+          "en": "They are eating fruit."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-014@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-014@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which partitive article goes with 'pain' (masculine)?",
+            "answer": "du",
+            "alternatives": ["de la", "du", "des"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which partitive article goes with 'soupe' (feminine)?",
+            "answer": "de la",
+            "alternatives": ["du", "de la", "des"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'I am eating some vegetables.'",
+            "answer": "Je mange des légumes.",
+            "alternatives": [
+              "Je mange du légumes.",
+              "Je mange des légumes.",
+              "Je mange de la légumes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'She is having some water.'",
+            "answer": "Elle prend de l'eau.",
+            "alternatives": [
+              "Elle prend du eau.",
+              "Elle prend de l'eau.",
+              "Elle prend des eau."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q05",
+            "format": "typed-blank",
+            "prompt": "Je mange ___ fromage. (some)",
+            "answer": "du",
+            "near_misses": ["de la", "des"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nous prenons ___ salade. (some)",
+            "answer": "de la",
+            "near_misses": ["du", "des"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q07",
+            "format": "typed-blank",
+            "prompt": "Elle mange ___ pommes. (some)",
+            "answer": "des",
+            "near_misses": ["du", "de la"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I am eating some bread.",
+            "answer": "Je mange du pain.",
+            "near_misses": ["Je mange de la pain.", "Je mange des pain."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are having some soup.",
+            "answer": "Nous prenons de la soupe.",
+            "alternatives": ["On prend de la soupe."],
+            "near_misses": [
+              "Nous prenons du soupe.",
+              "Nous prenons des soupe."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (girls) are eating some vegetables.",
+            "answer": "Elles mangent des légumes.",
+            "near_misses": [
+              "Elles mangent du légumes.",
+              "Elles mangent de la légumes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Il prend de la café.",
+            "answer": "Il prend du café.",
+            "near_misses": ["Il prend de la café.", "Il prend des café."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Nous mangeons du légumes.",
+            "answer": "Nous mangeons des légumes.",
+            "near_misses": [
+              "Nous mangeons du légumes.",
+              "Nous mangeons de la légumes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-014@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which partitive form goes with 'huile' (feminine, starts with a vowel sound)?",
+            "answer": "de l'",
+            "alternatives": ["du", "de la", "de l'"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-014@1:h02",
+            "format": "typed-blank",
+            "prompt": "Nous mangeons des ___. (fruit, plural)",
+            "answer": "fruits",
+            "near_misses": ["fruit", "fruites"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-014@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): He is eating some rice.",
+            "answer": "Il mange du riz.",
+            "near_misses": ["Il mange de la riz.", "Il mange des riz."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-015",
+      "title": "Place prepositions",
+      "explanation": "Frequent place prepositions are à (at, to), dans (in), sur (on), sous (under), devant (in front of), derrière (behind), entre (between) and chez (at the home or business of a person). They are followed directly by the noun and its article: sur la table, dans le jardin, devant la porte. Do not add de after devant or derrière. À joins the articles le and les into one word: à + le becomes au, and à + les becomes aux (au marché, aux magasins). Use chez with people: chez Paul.",
+      "examples": [
+        {
+          "fr": "Le chat est sur la table.",
+          "en": "The cat is on the table."
+        },
+        {
+          "fr": "Je suis dans le jardin.",
+          "en": "I am in the garden."
+        },
+        {
+          "fr": "Nous allons au marché.",
+          "en": "We are going to the market."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-015@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-015@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'under'?",
+            "answer": "sous",
+            "alternatives": ["sur", "sous", "dans"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'The book is on the table.'?",
+            "answer": "Le livre est sur la table.",
+            "alternatives": [
+              "Le livre est sous la table.",
+              "Le livre est sur la table.",
+              "Le livre est chez la table."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What does à + le become?",
+            "answer": "au",
+            "alternatives": ["aux", "à le", "au"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word do you use for 'at Paul's place'?",
+            "answer": "chez",
+            "alternatives": ["dans", "chez", "sur"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q05",
+            "format": "typed-blank",
+            "prompt": "Le chat est ___ la chaise. (behind)",
+            "answer": "derrière",
+            "near_misses": ["devant", "derriere"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nous allons ___ marché. (to the)",
+            "answer": "au",
+            "near_misses": ["aux", "à le"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q07",
+            "format": "typed-blank",
+            "prompt": "Le livre est ___ le sac. (in)",
+            "answer": "dans",
+            "near_misses": ["sur", "sous"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The cat is under the table.",
+            "answer": "Le chat est sous la table.",
+            "near_misses": [
+              "Le chat est sur la table.",
+              "Le chat est sous le table."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I am in the house.",
+            "answer": "Je suis dans la maison.",
+            "near_misses": [
+              "Je suis sur la maison.",
+              "Je suis dans le maison."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She is going to the market.",
+            "answer": "Elle va au marché.",
+            "near_misses": ["Elle va à le marché.", "Elle va aux marché."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the place): Je vais à le jardin.",
+            "answer": "Je vais au jardin.",
+            "near_misses": ["Je vais à le jardin.", "Je vais aux jardin."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the place): Il est devant de la porte.",
+            "answer": "Il est devant la porte.",
+            "near_misses": [
+              "Il est devant de la porte.",
+              "Il est devant à la porte."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-015@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'in front of'?",
+            "answer": "devant",
+            "alternatives": ["derrière", "devant", "entre"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-015@1:h02",
+            "format": "typed-blank",
+            "prompt": "La lettre est ___ la table. (on)",
+            "answer": "sur",
+            "near_misses": ["sous", "dans"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-015@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The dog is behind the door.",
+            "answer": "Le chien est derrière la porte.",
+            "near_misses": [
+              "Le chien est devant la porte.",
+              "Le chien est derrière le porte."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-016",
+      "title": "Clock times, days and months",
+      "explanation": "To give the time, use il est plus the hour: Il est trois heures (3:00), Il est midi (noon), Il est minuit (midnight). Add et demie for half past, et quart for quarter past and moins plus a number for minutes before the hour: trois heures et demie, quatre heures et quart, cinq heures moins dix. Use à for the time of an event: à huit heures. A day name alone means one particular day (lundi, on Monday); le lundi means every Monday. Use en with a month: en mai.",
+      "examples": [
+        {
+          "fr": "Il est trois heures et demie.",
+          "en": "It is half past three."
+        },
+        {
+          "fr": "Je travaille à huit heures.",
+          "en": "I work at eight o'clock."
+        },
+        {
+          "fr": "Elle arrive lundi.",
+          "en": "She arrives on Monday."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-016@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-016@1:q01",
+            "format": "multiple-choice",
+            "prompt": "How do you say 'It is 3 o'clock'?",
+            "answer": "Il est trois heures.",
+            "alternatives": [
+              "Il est trois heure.",
+              "Il est trois heures.",
+              "Elle est trois heures."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What does 'midi' mean?",
+            "answer": "noon",
+            "alternatives": ["midnight", "noon", "one o'clock"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a month, as in 'in May'?",
+            "answer": "en",
+            "alternatives": ["à", "en", "dans"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What does 'le lundi' usually mean?",
+            "answer": "every Monday",
+            "alternatives": ["last Monday", "every Monday", "next Monday"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q05",
+            "format": "typed-blank",
+            "prompt": "Je travaille ___ huit heures. (at)",
+            "answer": "à",
+            "near_misses": ["en", "a"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q06",
+            "format": "typed-blank",
+            "prompt": "Il est trois heures ___ demie. (half past)",
+            "answer": "et",
+            "near_misses": ["à", "en"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q07",
+            "format": "typed-blank",
+            "prompt": "Nous voyageons ___ juin. (in)",
+            "answer": "en",
+            "near_misses": ["à", "au"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): It is half past two.",
+            "answer": "Il est deux heures et demie.",
+            "near_misses": [
+              "Il est deux heures et demi.",
+              "Elle est deux heures et demie."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She works at nine o'clock.",
+            "answer": "Elle travaille à neuf heures.",
+            "near_misses": [
+              "Elle travaille en neuf heures.",
+              "Elle travaille à neuf heure."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are working on Monday.",
+            "answer": "Nous travaillons lundi.",
+            "alternatives": ["On travaille lundi."],
+            "near_misses": [
+              "Nous travaillons en lundi.",
+              "Nous travaillons à lundi."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the time): Je mange en midi.",
+            "answer": "Je mange à midi.",
+            "near_misses": ["Je mange en midi.", "Je mange au midi."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the month): Il arrive à mars.",
+            "answer": "Il arrive en mars.",
+            "near_misses": ["Il arrive à mars.", "Il arrive au mars."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-016@1:h01",
+            "format": "multiple-choice",
+            "prompt": "How do you say 'It is midnight'?",
+            "answer": "Il est minuit.",
+            "alternatives": [
+              "Il est midi.",
+              "Il est minuit.",
+              "Il est minute."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-016@1:h02",
+            "format": "typed-blank",
+            "prompt": "Il est cinq heures moins ___. (ten)",
+            "answer": "dix",
+            "near_misses": ["dis", "dixe"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-016@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The train arrives at seven o'clock.",
+            "answer": "Le train arrive à sept heures.",
+            "near_misses": [
+              "Le train arrive en sept heures.",
+              "Le train arrive à sept heure."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

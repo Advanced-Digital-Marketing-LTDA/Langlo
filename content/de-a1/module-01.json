@@ -1,0 +1,650 @@
+{
+  "module_id": "de-a1-module-01",
+  "track": "German A1",
+  "title": "Sentence order, questions and the present tense",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a1-001",
+      "title": "Main clauses: the verb in second position",
+      "explanation": "In a German statement the finite verb (the verb with a personal ending) stands in second position. The first position can be the subject (Anna wohnt in Berlin) or another element such as a time word (Heute lernt Anna Deutsch). When something else comes first, the subject moves behind the verb. The second position means second element, not second word: a longer first element still counts as one.",
+      "examples": [
+        {
+          "de": "Anna wohnt in Berlin.",
+          "en": "Anna lives in Berlin."
+        },
+        {
+          "de": "Heute lernt Anna Deutsch.",
+          "en": "Today Anna learns German."
+        },
+        {
+          "de": "Wir spielen Fußball.",
+          "en": "We play football."
+        }
+      ],
+      "references": ["GOETHE-A1", "COE-CV20"],
+      "version": {
+        "id": "de-a1-001@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-001@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct German statement?",
+            "answer": "Anna wohnt in Berlin.",
+            "alternatives": [
+              "Anna in Berlin wohnt.",
+              "Anna wohnt in Berlin.",
+              "Wohnt Anna in Berlin."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Where does the finite verb stand in a German main clause?",
+            "answer": "in second position",
+            "alternatives": [
+              "in first position",
+              "in second position",
+              "at the end"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence has the verb in second position?",
+            "answer": "Heute spielt Max Fußball.",
+            "alternatives": [
+              "Heute Max spielt Fußball.",
+              "Heute spielt Max Fußball.",
+              "Heute Max Fußball spielt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'We live in Hamburg.'",
+            "answer": "Wir wohnen in Hamburg.",
+            "alternatives": [
+              "Wir in Hamburg wohnen.",
+              "Wir wohnen in Hamburg.",
+              "Wohnen wir in Hamburg."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q05",
+            "format": "typed-blank",
+            "prompt": "Anna ___ in Berlin. (wohnen)",
+            "answer": "wohnt",
+            "near_misses": ["wohne", "wohnen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir ___ Fußball. (spielen)",
+            "answer": "spielen",
+            "near_misses": ["spielt", "spiele"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q07",
+            "format": "typed-blank",
+            "prompt": "Heute ___ Max Deutsch. (lernen)",
+            "answer": "lernt",
+            "near_misses": ["lernen", "lerne"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q08",
+            "format": "translation",
+            "prompt": "Translate (write a main clause): Anna works in Bonn.",
+            "answer": "Anna arbeitet in Bonn.",
+            "near_misses": ["Anna arbeiten in Bonn.", "Anna in Bonn arbeitet."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q09",
+            "format": "translation",
+            "prompt": "Translate (write a main clause): Tomorrow Paul learns German.",
+            "answer": "Morgen lernt Paul Deutsch.",
+            "near_misses": [
+              "Morgen Paul lernt Deutsch.",
+              "Morgen lernen Paul Deutsch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q10",
+            "format": "translation",
+            "prompt": "Translate (write a main clause): Lisa and I live in Köln.",
+            "answer": "Lisa und ich wohnen in Köln.",
+            "near_misses": [
+              "Lisa und ich wohnt in Köln.",
+              "Lisa und ich in Köln wohnen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Anna in Berlin wohnt.",
+            "answer": "Anna wohnt in Berlin.",
+            "near_misses": ["Anna in Berlin wohnt.", "Anna wohnen in Berlin."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Heute Max lernt Deutsch.",
+            "answer": "Heute lernt Max Deutsch.",
+            "near_misses": [
+              "Heute Max lernt Deutsch.",
+              "Heute lernen Max Deutsch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-001@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence puts the verb in the right place?",
+            "answer": "Paul kauft ein Brot.",
+            "alternatives": [
+              "Paul ein Brot kauft.",
+              "Paul kauft ein Brot.",
+              "Kauft Paul ein Brot."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-001@1:h02",
+            "format": "typed-blank",
+            "prompt": "Max ___ Tee. (trinken)",
+            "answer": "trinkt",
+            "near_misses": ["trinken", "trinke"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-001@1:h03",
+            "format": "translation",
+            "prompt": "Translate (write a main clause): Mia lives in Wien.",
+            "answer": "Mia wohnt in Wien.",
+            "near_misses": ["Mia wohnen in Wien.", "Mia in Wien wohnt."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-002",
+      "title": "Yes/no questions: the verb comes first",
+      "explanation": "A yes/no question starts with the finite verb, followed by the subject: Wohnst du in Berlin? To turn a statement into a yes/no question, move the verb to the front and keep the other words: Max spielt Tennis becomes Spielt Max Tennis? German has no helper verb like English 'do', so the main verb itself goes first. Answer with Ja or Nein, then a full clause: Ja, ich wohne in Berlin.",
+      "examples": [
+        {
+          "de": "Wohnst du in Berlin?",
+          "en": "Do you live in Berlin?"
+        },
+        {
+          "de": "Spielt Max Fußball?",
+          "en": "Does Max play football?"
+        },
+        {
+          "de": "Kommt ihr aus Spanien?",
+          "en": "Do you (all) come from Spain?"
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-002@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-002@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a yes/no question?",
+            "answer": "Spielt Max Fußball?",
+            "alternatives": [
+              "Max spielt Fußball.",
+              "Spielt Max Fußball?",
+              "Max Fußball spielt?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What comes first in a yes/no question?",
+            "answer": "the finite verb",
+            "alternatives": [
+              "the subject",
+              "the finite verb",
+              "a question word"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the question for 'Do you work today?' (one friend)",
+            "answer": "Arbeitest du heute?",
+            "alternatives": [
+              "Du arbeitest heute?",
+              "Arbeitest du heute?",
+              "Tust du heute arbeiten?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question asks whether Anna comes from Spain?",
+            "answer": "Kommt Anna aus Spanien?",
+            "alternatives": [
+              "Anna kommt aus Spanien?",
+              "Kommt Anna aus Spanien?",
+              "Kommt aus Spanien Anna?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ du in Berlin? (wohnen)",
+            "answer": "Wohnst",
+            "near_misses": ["Wohnt", "Wohne"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ ihr Deutsch? (lernen)",
+            "answer": "Lernt",
+            "near_misses": ["Lernen", "Lernst"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ Anna heute? (arbeiten)",
+            "answer": "Arbeitet",
+            "near_misses": ["Arbeiten", "Arbeitest"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q08",
+            "format": "translation",
+            "prompt": "Translate (ask a yes/no question): Do you live in Bonn? (one friend)",
+            "answer": "Wohnst du in Bonn?",
+            "near_misses": ["Du wohnst in Bonn?", "Wohnt du in Bonn?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q09",
+            "format": "translation",
+            "prompt": "Translate (ask a yes/no question): Does Paul play tennis?",
+            "answer": "Spielt Paul Tennis?",
+            "near_misses": ["Paul spielt Tennis?", "Spielen Paul Tennis?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q10",
+            "format": "translation",
+            "prompt": "Translate (ask a yes/no question): Are you learning German? (you all)",
+            "answer": "Lernt ihr Deutsch?",
+            "near_misses": ["Ihr lernt Deutsch?", "Lernen ihr Deutsch?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q11",
+            "format": "correction",
+            "prompt": "Make it a yes/no question with the verb first: Max spielt Tennis.",
+            "answer": "Spielt Max Tennis?",
+            "near_misses": ["Max spielt Tennis?", "Spielt Tennis Max?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:q12",
+            "format": "correction",
+            "prompt": "Make it a yes/no question with the verb first: Ihr lernt heute.",
+            "answer": "Lernt ihr heute?",
+            "near_misses": ["Ihr lernt heute?", "Lernt heute ihr?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-002@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which question starts with the finite verb and asks whether Lisa comes today?",
+            "answer": "Kommt Lisa heute?",
+            "alternatives": [
+              "Lisa kommt heute?",
+              "Kommt Lisa heute?",
+              "Lisa heute kommt?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-002@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ du Musik? (hören)",
+            "answer": "Hörst",
+            "near_misses": ["Hört", "Höre"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-002@1:h03",
+            "format": "translation",
+            "prompt": "Translate (ask a yes/no question): Do you (all) play tennis?",
+            "answer": "Spielt ihr Tennis?",
+            "near_misses": ["Ihr spielt Tennis?", "Spielen ihr Tennis?"],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-003",
+      "title": "Questions with question words",
+      "explanation": "A question word opens the question, the finite verb comes second and the subject follows: Wo wohnst du? Frequent question words are wer (who), was (what), wo (where), woher (from where), wohin (to where), wann (when), wie (how) and warum (why). Questions with a question word are answered with information, not with ja or nein. Wie heißt du? means 'What is your name?'",
+      "examples": [
+        {
+          "de": "Wo wohnst du?",
+          "en": "Where do you live?"
+        },
+        {
+          "de": "Woher kommt Anna?",
+          "en": "Where does Anna come from?"
+        },
+        {
+          "de": "Was lernt ihr?",
+          "en": "What are you (all) learning?"
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-003@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-003@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks 'where'?",
+            "answer": "wo",
+            "alternatives": ["wo", "wer", "wann"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks 'when'?",
+            "answer": "wann",
+            "alternatives": ["wann", "wie", "warum"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which question puts the verb right after the question word?",
+            "answer": "Wann kommt Max?",
+            "alternatives": [
+              "Wann Max kommt?",
+              "Wann kommt Max?",
+              "Kommt wann Max?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks 'why'?",
+            "answer": "warum",
+            "alternatives": ["warum", "was", "wer"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ wohnst du? (where)",
+            "answer": "Wo",
+            "near_misses": ["Wer", "Wie"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ heißt du? (how)",
+            "answer": "Wie",
+            "near_misses": ["Wo", "Was"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ kommt Anna? (from where)",
+            "answer": "Woher",
+            "near_misses": ["Wohin", "Wo"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q08",
+            "format": "translation",
+            "prompt": "Translate (ask a question): Who is that?",
+            "answer": "Wer ist das?",
+            "near_misses": ["Wer das ist?", "Wer sind das?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q09",
+            "format": "translation",
+            "prompt": "Translate (ask a question): What are you learning? (one friend)",
+            "answer": "Was lernst du?",
+            "near_misses": ["Was du lernst?", "Was lernt du?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q10",
+            "format": "translation",
+            "prompt": "Translate (ask a question): When does Max work?",
+            "answer": "Wann arbeitet Max?",
+            "near_misses": ["Wann Max arbeitet?", "Wann arbeiten Max?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q11",
+            "format": "correction",
+            "prompt": "Correct the question: Wo du wohnst?",
+            "answer": "Wo wohnst du?",
+            "near_misses": ["Wo du wohnst?", "Wo wohnt du?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:q12",
+            "format": "correction",
+            "prompt": "Correct the question: Warum Anna lernt Deutsch?",
+            "answer": "Warum lernt Anna Deutsch?",
+            "near_misses": [
+              "Warum Anna lernt Deutsch?",
+              "Warum lernen Anna Deutsch?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-003@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks 'who'?",
+            "answer": "wer",
+            "alternatives": ["wer", "wo", "was"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-003@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ ist das? (what)",
+            "answer": "Was",
+            "near_misses": ["Wer", "Wie"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-003@1:h03",
+            "format": "translation",
+            "prompt": "Translate (ask a question): Where does Lisa live?",
+            "answer": "Wo wohnt Lisa?",
+            "near_misses": ["Wo Lisa wohnt?", "Wo wohnen Lisa?"],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-004",
+      "title": "Present tense of regular verbs",
+      "explanation": "Regular verbs drop -en from the infinitive and add endings to the stem: ich wohne, du wohnst, er/sie/es wohnt, wir wohnen, ihr wohnt, sie/Sie wohnen. Stems ending in -t or -d add an extra -e before -st and -t: du arbeitest, er arbeitet, ihr arbeitet. The German present tense covers both 'I live' and 'I am living'.",
+      "examples": [
+        {
+          "de": "Ich wohne in Wien.",
+          "en": "I live in Vienna."
+        },
+        {
+          "de": "Du lernst Deutsch.",
+          "en": "You learn German."
+        },
+        {
+          "de": "Wir kommen aus Spanien.",
+          "en": "We come from Spain."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-004@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-004@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'ich'? (wohnen)",
+            "answer": "wohne",
+            "alternatives": ["wohne", "wohnst", "wohnt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'du'? (lernen)",
+            "answer": "lernst",
+            "alternatives": ["lerne", "lernst", "lernt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'er'? (spielen)",
+            "answer": "spielt",
+            "alternatives": ["spiele", "spielt", "spielen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'du'? (arbeiten)",
+            "answer": "arbeitest",
+            "alternatives": ["arbeitst", "arbeitest", "arbeiten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich ___ in Wien. (wohnen)",
+            "answer": "wohne",
+            "near_misses": ["wohnt", "wohnst"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir ___ aus Spanien. (kommen)",
+            "answer": "kommen",
+            "near_misses": ["kommt", "komme"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ihr ___ Musik. (hören)",
+            "answer": "hört",
+            "near_misses": ["hörst", "hören"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): I learn German.",
+            "answer": "Ich lerne Deutsch.",
+            "near_misses": ["Ich lernen Deutsch.", "Ich lernt Deutsch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): You work in Köln. (one friend)",
+            "answer": "Du arbeitest in Köln.",
+            "near_misses": ["Du arbeitst in Köln.", "Du arbeitet in Köln."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): She plays tennis.",
+            "answer": "Sie spielt Tennis.",
+            "near_misses": ["Sie spielen Tennis.", "Sie spiele Tennis."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Du lerne Deutsch.",
+            "answer": "Du lernst Deutsch.",
+            "near_misses": ["Du lerne Deutsch.", "Du lernt Deutsch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Wir wohnt in Bonn.",
+            "answer": "Wir wohnen in Bonn.",
+            "near_misses": ["Wir wohnt in Bonn.", "Wir wohne in Bonn."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-004@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'ihr'? (machen)",
+            "answer": "macht",
+            "alternatives": ["mache", "machst", "macht"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-004@1:h02",
+            "format": "typed-blank",
+            "prompt": "Du ___ Kaffee. (kaufen)",
+            "answer": "kaufst",
+            "near_misses": ["kauft", "kaufe"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-004@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): He works in Bonn.",
+            "answer": "Er arbeitet in Bonn.",
+            "near_misses": ["Er arbeitest in Bonn.", "Er arbeiten in Bonn."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

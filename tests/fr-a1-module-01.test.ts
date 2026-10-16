@@ -4,45 +4,21 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { bundlePackage } from '../src/lib/server/content-bundle';
-import {
-  importContent,
-  type ContentPackage
-} from '../src/lib/server/content-import';
+import { importContent } from '../src/lib/server/content-import';
 import { columnIndex, parseCsv } from '../scripts/curriculum-contract.mjs';
+import {
+  accepts,
+  formats,
+  modulePackage as sharedModulePackage,
+  normalize,
+  type Module,
+  type Question
+} from './fixtures/curriculum-module';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 
 // French A1 module 01 (LANGLO-35): checks the authored module against the
 // approved curriculum bundle and the importer, and pins answer matching with
 // holdout and near-miss cases. Nothing here marks the module as reviewed.
-
-type Question = {
-  id: string;
-  format: 'multiple-choice' | 'typed-blank' | 'translation' | 'correction';
-  prompt: string;
-  answer: string;
-  alternatives?: string[];
-  near_misses?: string[];
-  holdout: boolean;
-};
-
-type Lesson = {
-  skill_id: string;
-  title: string;
-  explanation: string;
-  examples: { fr: string; en: string }[];
-  references: string[];
-  version: { id: string; version: number; questions: Question[] };
-};
-
-type Module = {
-  module_id: string;
-  track: string;
-  title: string;
-  instruction_language: string;
-  review_status: string;
-  matching: string;
-  lessons: Lesson[];
-};
 
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
@@ -56,50 +32,9 @@ const catalog = new Map(
     .map((row) => [row[0], row])
 );
 const questions = module.lessons.flatMap((lesson) => lesson.version.questions);
-const formats = ['multiple-choice', 'typed-blank', 'translation', 'correction'];
 
-// The matching rule the module declares: case, surrounding and repeated
-// spaces, typographic apostrophes and final punctuation are ignored; accents
-// and every other character count.
-function normalize(value: string) {
-  return value
-    .normalize('NFC')
-    .replace(/[\u2018\u2019\u02bc\u201b]/gu, "'")
-    .trim()
-    .replace(/[.!?]+$/u, '')
-    .replace(/\s+/gu, ' ')
-    .trim()
-    .toLowerCase();
-}
-
-function accepts(question: Question, response: string) {
-  if (question.format === 'multiple-choice')
-    return response === question.answer;
-  return [question.answer, ...(question.alternatives ?? [])].some(
-    (item) => normalize(item) === normalize(response)
-  );
-}
-
-function modulePackage(review: string, version?: string): ContentPackage {
-  const pkg = bundlePackage(root);
-  return {
-    ...pkg,
-    curriculumVersion: version ?? pkg.curriculumVersion,
-    versions: module.lessons.map((lesson) => ({
-      id: lesson.version.id,
-      skillId: lesson.skill_id,
-      version: lesson.version.version,
-      review,
-      questions: lesson.version.questions.map((q) => ({
-        id: q.id,
-        format: q.format,
-        prompt: q.prompt,
-        answer: q.answer,
-        alternatives: q.alternatives
-      }))
-    }))
-  };
-}
+const modulePackage = (review: string, version?: string) =>
+  sharedModulePackage(root, module, review, version);
 
 describe('French A1 module 01', () => {
   it('covers the four approved skills in prerequisite order', () => {
@@ -129,7 +64,7 @@ describe('French A1 module 01', () => {
       expect(lesson.explanation.length).toBeGreaterThan(80);
       expect(lesson.examples.length).toBeGreaterThanOrEqual(3);
       for (const example of lesson.examples) {
-        expect(example.fr.trim(), lesson.skill_id).not.toBe('');
+        expect((example.fr ?? '').trim(), lesson.skill_id).not.toBe('');
         expect(example.en.trim(), lesson.skill_id).not.toBe('');
       }
       const row = catalog.get(lesson.skill_id);
@@ -184,7 +119,7 @@ describe('French A1 module 01', () => {
         : [q.answer, ...(q.alternatives ?? [])];
     const seen = new Set(
       module.lessons.flatMap((lesson) => [
-        ...lesson.examples.map((example) => normalize(example.fr)),
+        ...lesson.examples.map((example) => normalize(example.fr ?? '')),
         ...lesson.version.questions
           .filter((q) => !q.holdout)
           .flatMap((q) => [normalize(q.prompt), ...typed(q).map(normalize)])

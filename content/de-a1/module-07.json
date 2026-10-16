@@ -1,0 +1,528 @@
+{
+  "module_id": "de-a1-module-07",
+  "track": "German A1",
+  "title": "Kein, time expressions and nicht",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a1-025",
+      "title": "Negating noun phrases with kein",
+      "explanation": "Kein negates a noun phrase that would have ein or no article. It has the endings of ein: kein (masculine and neuter, nominative), keine (feminine and plural), and keinen for a masculine direct object. Ich habe einen Hund becomes Ich habe keinen Hund; Wir haben ein Auto becomes Wir haben kein Auto; Anna hat Kinder becomes Anna hat keine Kinder. Use kein with uncountable nouns too: Ich habe kein Geld.",
+      "examples": [
+        {
+          "de": "Ich habe keinen Hund.",
+          "en": "I have no dog."
+        },
+        {
+          "de": "Wir haben kein Auto.",
+          "en": "We have no car."
+        },
+        {
+          "de": "Anna hat keine Kinder.",
+          "en": "Anna has no children."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-025@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-025@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of 'kein' goes with 'Hund' as a direct object?",
+            "answer": "keinen",
+            "alternatives": ["kein", "keine", "keinen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of 'kein' goes with 'Katze'?",
+            "answer": "keine",
+            "alternatives": ["kein", "keine", "keinen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of 'kein' goes with 'Auto' as a direct object?",
+            "answer": "kein",
+            "alternatives": ["kein", "keine", "keinen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates 'Ich habe Geld.'?",
+            "answer": "Ich habe kein Geld.",
+            "alternatives": [
+              "Ich habe nicht Geld.",
+              "Ich habe kein Geld.",
+              "Ich habe keine Geld."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich habe ___ Hund. (no)",
+            "answer": "keinen",
+            "near_misses": ["kein", "keine"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir haben ___ Katze. (no)",
+            "answer": "keine",
+            "near_misses": ["kein", "keinen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q07",
+            "format": "typed-blank",
+            "prompt": "Anna hat ___ Auto. (no)",
+            "answer": "kein",
+            "near_misses": ["keine", "keinen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q08",
+            "format": "translation",
+            "prompt": "Translate (negate with kein): I have no dog.",
+            "answer": "Ich habe keinen Hund.",
+            "near_misses": ["Ich habe kein Hund.", "Ich habe nicht Hund."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q09",
+            "format": "translation",
+            "prompt": "Translate (negate with kein): We have no car.",
+            "answer": "Wir haben kein Auto.",
+            "near_misses": ["Wir haben keine Auto.", "Wir haben nicht Auto."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q10",
+            "format": "translation",
+            "prompt": "Translate (negate with kein): Anna has no children.",
+            "answer": "Anna hat keine Kinder.",
+            "near_misses": ["Anna hat kein Kinder.", "Anna hat keinen Kinder."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q11",
+            "format": "correction",
+            "prompt": "Correct the negation: Er hat nicht Bruder.",
+            "answer": "Er hat keinen Bruder.",
+            "near_misses": ["Er hat nicht Bruder.", "Er hat kein Bruder."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:q12",
+            "format": "correction",
+            "prompt": "Correct the negation: Sie hat kein Schwester.",
+            "answer": "Sie hat keine Schwester.",
+            "near_misses": [
+              "Sie hat kein Schwester.",
+              "Sie hat nicht Schwester."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-025@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates 'Max hat einen Bruder.'?",
+            "answer": "Max hat keinen Bruder.",
+            "alternatives": [
+              "Max hat kein Bruder.",
+              "Max hat keinen Bruder.",
+              "Max hat nicht Bruder."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-025@1:h02",
+            "format": "translation",
+            "prompt": "Translate (negate with kein): They have no house.",
+            "answer": "Sie haben kein Haus.",
+            "near_misses": ["Sie haben keine Haus.", "Sie haben nicht Haus."],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-025@1:h03",
+            "format": "correction",
+            "prompt": "Correct the negation: Ich habe nicht Auto.",
+            "answer": "Ich habe kein Auto.",
+            "near_misses": ["Ich habe nicht Auto.", "Ich habe keine Auto."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-026",
+      "title": "Time expressions in main clauses",
+      "explanation": "Time words such as heute, morgen, gestern, am Montag and um acht Uhr can stand in the first position or after the verb. If a time expression comes first, the subject moves behind the verb because the verb must stay in second position: Heute arbeite ich zu Hause. After the verb, the time expression usually comes before the place or direction: Ich fahre morgen nach Berlin.",
+      "examples": [
+        {
+          "de": "Heute arbeite ich zu Hause.",
+          "en": "Today I work at home."
+        },
+        {
+          "de": "Ich fahre morgen nach Berlin.",
+          "en": "I am driving to Berlin tomorrow."
+        },
+        {
+          "de": "Am Montag lernt Anna Deutsch.",
+          "en": "On Monday Anna learns German."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-026@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-026@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence starts with a time word and keeps the verb second?",
+            "answer": "Heute arbeite ich.",
+            "alternatives": [
+              "Heute ich arbeite.",
+              "Heute arbeite ich.",
+              "Heute arbeiten ich."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What follows the verb when a time word starts the sentence?",
+            "answer": "the subject",
+            "alternatives": ["the subject", "the infinitive", "the time word"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence places the time word after the verb?",
+            "answer": "Ich fahre morgen nach Berlin.",
+            "alternatives": [
+              "Ich morgen fahre nach Berlin.",
+              "Ich fahre morgen nach Berlin.",
+              "Ich fahre nach morgen Berlin."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'On Monday Anna learns German.'",
+            "answer": "Am Montag lernt Anna Deutsch.",
+            "alternatives": [
+              "Am Montag Anna lernt Deutsch.",
+              "Am Montag lernt Anna Deutsch.",
+              "Am Montag lernen Anna Deutsch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q05",
+            "format": "typed-blank",
+            "prompt": "Morgen ___ ich nach Berlin. (fahren)",
+            "answer": "fahre",
+            "near_misses": ["fahren", "fährst"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q06",
+            "format": "typed-blank",
+            "prompt": "Heute ___ Anna zu Hause. (arbeiten)",
+            "answer": "arbeitet",
+            "near_misses": ["arbeiten", "arbeite"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q07",
+            "format": "typed-blank",
+            "prompt": "Am Montag ___ wir Deutsch. (lernen)",
+            "answer": "lernen",
+            "near_misses": ["lernt", "lerne"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q08",
+            "format": "translation",
+            "prompt": "Translate (start with the time word): Today I work.",
+            "answer": "Heute arbeite ich.",
+            "near_misses": ["Heute ich arbeite.", "Heute arbeiten ich."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q09",
+            "format": "translation",
+            "prompt": "Translate (start with the time word): Tomorrow we drive to Bonn.",
+            "answer": "Morgen fahren wir nach Bonn.",
+            "near_misses": [
+              "Morgen wir fahren nach Bonn.",
+              "Morgen fahren nach Bonn wir."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q10",
+            "format": "translation",
+            "prompt": "Translate (start with the time word): On Tuesday Paul plays tennis.",
+            "answer": "Am Dienstag spielt Paul Tennis.",
+            "near_misses": [
+              "Am Dienstag Paul spielt Tennis.",
+              "Am Dienstag spielen Paul Tennis."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Heute ich lerne Deutsch.",
+            "answer": "Heute lerne ich Deutsch.",
+            "near_misses": [
+              "Heute ich lerne Deutsch.",
+              "Heute lernt ich Deutsch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word order: Morgen Anna kommt.",
+            "answer": "Morgen kommt Anna.",
+            "near_misses": ["Morgen Anna kommt.", "Morgen kommen Anna."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-026@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct for 'Today Max works at home.'?",
+            "answer": "Heute arbeitet Max zu Hause.",
+            "alternatives": [
+              "Heute Max arbeitet zu Hause.",
+              "Heute arbeitet Max zu Hause.",
+              "Heute arbeiten Max zu Hause."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-026@1:h02",
+            "format": "typed-blank",
+            "prompt": "Am Samstag ___ ich nach Hause. (gehen)",
+            "answer": "gehe",
+            "near_misses": ["gehen", "geht"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-026@1:h03",
+            "format": "translation",
+            "prompt": "Translate (start with the time word): Tomorrow Lisa learns German.",
+            "answer": "Morgen lernt Lisa Deutsch.",
+            "near_misses": [
+              "Morgen Lisa lernt Deutsch.",
+              "Morgen lernen Lisa Deutsch."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-027",
+      "title": "Negating clauses and constituents with nicht",
+      "explanation": "Nicht negates verbs, adjectives, adverbs and phrases. To negate the whole clause, put nicht at the end: Ich arbeite heute nicht. Before an adjective, nicht stands directly in front of it: Das Buch ist nicht neu. To negate one part, put nicht in front of that part: Wir fahren nicht nach Berlin. Nicht never stands before the finite verb in a statement, so Ich nicht arbeite is wrong.",
+      "examples": [
+        {
+          "de": "Ich arbeite heute nicht.",
+          "en": "I am not working today."
+        },
+        {
+          "de": "Das Buch ist nicht neu.",
+          "en": "The book is not new."
+        },
+        {
+          "de": "Wir fahren nicht nach Berlin.",
+          "en": "We are not driving to Berlin."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-027@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-027@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does 'nicht' usually stand when it negates the whole clause?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "before the subject",
+              "before the finite verb"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates the adjective correctly?",
+            "answer": "Das Buch ist nicht neu.",
+            "alternatives": [
+              "Das Buch nicht ist neu.",
+              "Das Buch ist nicht neu.",
+              "Das Buch ist neu nicht."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates the place correctly?",
+            "answer": "Wir wohnen nicht in Berlin.",
+            "alternatives": [
+              "Wir wohnen in nicht Berlin.",
+              "Wir wohnen nicht in Berlin.",
+              "Wir nicht wohnen in Berlin."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence negates the whole clause?",
+            "answer": "Ich arbeite heute nicht.",
+            "alternatives": [
+              "Ich nicht arbeite heute.",
+              "Ich arbeite heute nicht.",
+              "Ich nicht heute arbeite."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich arbeite heute ___. (not)",
+            "answer": "nicht",
+            "near_misses": ["kein", "keine"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q06",
+            "format": "typed-blank",
+            "prompt": "Die Suppe ist nicht ___. (good)",
+            "answer": "gut",
+            "near_misses": ["gute", "kalt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q07",
+            "format": "typed-blank",
+            "prompt": "Anna kommt heute ___. (not)",
+            "answer": "nicht",
+            "near_misses": ["nichts", "kein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q08",
+            "format": "translation",
+            "prompt": "Translate (negate with nicht): I do not work today.",
+            "answer": "Ich arbeite heute nicht.",
+            "near_misses": [
+              "Ich nicht arbeite heute.",
+              "Ich arbeite heute kein."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q09",
+            "format": "translation",
+            "prompt": "Translate (negate with nicht): The book is not new.",
+            "answer": "Das Buch ist nicht neu.",
+            "near_misses": [
+              "Das Buch nicht ist neu.",
+              "Das Buch ist neu nicht."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q10",
+            "format": "translation",
+            "prompt": "Translate (negate with nicht): We are not driving to Berlin.",
+            "answer": "Wir fahren nicht nach Berlin.",
+            "near_misses": [
+              "Wir nicht fahren nach Berlin.",
+              "Wir fahren nach nicht Berlin."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q11",
+            "format": "correction",
+            "prompt": "Correct the negation: Max nicht kommt heute.",
+            "answer": "Max kommt heute nicht.",
+            "near_misses": [
+              "Max nicht kommt heute.",
+              "Max kommt nicht heute nicht."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:q12",
+            "format": "correction",
+            "prompt": "Correct the negation: Die Lampe ist neu nicht.",
+            "answer": "Die Lampe ist nicht neu.",
+            "near_misses": [
+              "Die Lampe ist neu nicht.",
+              "Die Lampe nicht ist neu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-027@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence correctly says 'Paul is not at home.'?",
+            "answer": "Paul ist nicht zu Hause.",
+            "alternatives": [
+              "Paul nicht ist zu Hause.",
+              "Paul ist nicht zu Hause.",
+              "Paul ist zu Hause nicht."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-027@1:h02",
+            "format": "translation",
+            "prompt": "Translate (negate with nicht): Anna does not come today.",
+            "answer": "Anna kommt heute nicht.",
+            "near_misses": [
+              "Anna nicht kommt heute.",
+              "Anna kommt nicht heute nicht."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-027@1:h03",
+            "format": "correction",
+            "prompt": "Correct the negation: Das Auto ist groß nicht.",
+            "answer": "Das Auto ist nicht groß.",
+            "near_misses": [
+              "Das Auto ist groß nicht.",
+              "Das Auto nicht ist groß."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

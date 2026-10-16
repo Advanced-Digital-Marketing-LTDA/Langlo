@@ -1,0 +1,677 @@
+{
+  "module_id": "de-a1-module-06",
+  "track": "German A1",
+  "title": "Polite requests, adjectives, prepositions and connectors",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a1-021",
+      "title": "Polite requests: möchte and würde gern",
+      "explanation": "Learn möchte and würde gern as ready-made patterns. Möchte: ich möchte, du möchtest, er möchte, wir möchten, ihr möchtet, sie möchten. It is followed by a noun or by an infinitive at the end: Ich möchte einen Kaffee, bitte. Wir möchten Deutsch lernen. Würde gern is followed by an infinitive at the end: Ich würde gern nach Wien fahren. Both are more polite than ich will or ich wünsche.",
+      "examples": [
+        {
+          "de": "Ich möchte einen Kaffee, bitte.",
+          "en": "I would like a coffee, please."
+        },
+        {
+          "de": "Wir möchten Deutsch lernen.",
+          "en": "We would like to learn German."
+        },
+        {
+          "de": "Ich würde gern nach Wien fahren.",
+          "en": "I would like to go to Vienna."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-021@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-021@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of möchten goes with 'ich'?",
+            "answer": "möchte",
+            "alternatives": ["möchte", "möchtest", "möchten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of möchten goes with 'du'?",
+            "answer": "möchtest",
+            "alternatives": ["möchte", "möchtest", "möchten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Where does the infinitive stand after 'möchte'?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "before the subject"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence politely orders a coffee?",
+            "answer": "Ich möchte einen Kaffee, bitte.",
+            "alternatives": [
+              "Ich will einen Kaffee.",
+              "Ich möchte einen Kaffee, bitte.",
+              "Gib mir Kaffee."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich ___ einen Tee, bitte. (möchten)",
+            "answer": "möchte",
+            "near_misses": ["möchten", "möchtest"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir ___ Deutsch lernen. (möchten)",
+            "answer": "möchten",
+            "near_misses": ["möchte", "möchtet"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich würde ___ nach Wien fahren. (gladly)",
+            "answer": "gern",
+            "near_misses": ["gut", "sehr"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): I would like a coffee, please.",
+            "answer": "Ich möchte einen Kaffee, bitte.",
+            "near_misses": [
+              "Ich will einen Kaffee, bitte.",
+              "Ich möchte ein Kaffee, bitte."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): We would like to learn German.",
+            "answer": "Wir möchten Deutsch lernen.",
+            "near_misses": [
+              "Wir möchte Deutsch lernen.",
+              "Wir möchten lernen Deutsch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): I would gladly drive to Vienna.",
+            "answer": "Ich würde gern nach Wien fahren.",
+            "alternatives": ["Ich würde gerne nach Wien fahren."],
+            "near_misses": [
+              "Ich würde gern fahren nach Wien.",
+              "Ich würde gern nach Wien fährt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Ich möchte lernen Deutsch.",
+            "answer": "Ich möchte Deutsch lernen.",
+            "near_misses": [
+              "Ich möchte lernen Deutsch.",
+              "Ich möchte Deutsch lernt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Du möchte einen Tee.",
+            "answer": "Du möchtest einen Tee.",
+            "near_misses": ["Du möchte einen Tee.", "Du möchten einen Tee."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-021@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form of möchten goes with 'ihr'?",
+            "answer": "möchtet",
+            "alternatives": ["möchte", "möchtet", "möchten"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-021@1:h02",
+            "format": "translation",
+            "prompt": "Translate (use a polite request): We would gladly play tennis.",
+            "answer": "Wir würden gern Tennis spielen.",
+            "alternatives": ["Wir würden gerne Tennis spielen."],
+            "near_misses": [
+              "Wir würde gern Tennis spielen.",
+              "Wir würden gern spielen Tennis."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-021@1:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Anna möchten ein Brot.",
+            "answer": "Anna möchte ein Brot.",
+            "near_misses": [
+              "Anna möchten ein Brot.",
+              "Anna möchtest ein Brot."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-022",
+      "title": "Adjectives after sein and as adverbs",
+      "explanation": "After sein, an adjective stands without an ending: Das Haus ist groß. The same bare form works as an adverb that describes how something happens: Anna spricht langsam. Frequent adjectives: groß, klein, neu, alt, gut, schlecht, schnell, langsam, schön, müde. Intensifiers such as sehr (very) and zu (too) come before the adjective: Die Suppe ist sehr gut.",
+      "examples": [
+        {
+          "de": "Das Haus ist groß.",
+          "en": "The house is big."
+        },
+        {
+          "de": "Anna spricht langsam.",
+          "en": "Anna speaks slowly."
+        },
+        {
+          "de": "Die Suppe ist sehr gut.",
+          "en": "The soup is very good."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-022@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-022@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses an adjective after 'sein' correctly?",
+            "answer": "Das Haus ist groß.",
+            "alternatives": [
+              "Das Haus ist große.",
+              "Das Haus ist groß.",
+              "Das Haus ist großes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'slowly'?",
+            "answer": "langsam",
+            "alternatives": ["langsam", "schnell", "laut"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word is the opposite of 'alt' for things?",
+            "answer": "neu",
+            "alternatives": ["neu", "groß", "gut"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses an adjective as an adverb?",
+            "answer": "Anna spricht schnell.",
+            "alternatives": [
+              "Anna spricht schnelle.",
+              "Anna spricht schnell.",
+              "Anna schnell spricht."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q05",
+            "format": "typed-blank",
+            "prompt": "Das Buch ist ___. (old)",
+            "answer": "alt",
+            "near_misses": ["alte", "neu"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q06",
+            "format": "typed-blank",
+            "prompt": "Die Suppe ist sehr ___. (good)",
+            "answer": "gut",
+            "near_misses": ["gute", "gutes"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q07",
+            "format": "typed-blank",
+            "prompt": "Max spricht ___. (slowly)",
+            "answer": "langsam",
+            "near_misses": ["langsame", "schnell"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the adjective without an ending): The house is big.",
+            "answer": "Das Haus ist groß.",
+            "near_misses": ["Das Haus ist große.", "Das Haus ist gross."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the adjective without an ending): The soup is very good.",
+            "answer": "Die Suppe ist sehr gut.",
+            "near_misses": [
+              "Die Suppe ist sehr gute.",
+              "Die Suppe sehr ist gut."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the adjective without an ending): Anna speaks quickly.",
+            "answer": "Anna spricht schnell.",
+            "near_misses": ["Anna spricht schnelle.", "Anna sprechen schnell."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q11",
+            "format": "correction",
+            "prompt": "Correct the adjective: Die Lampe ist neue.",
+            "answer": "Die Lampe ist neu.",
+            "near_misses": ["Die Lampe ist neue.", "Die Lampe ist neues."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:q12",
+            "format": "correction",
+            "prompt": "Correct the adjective: Das Kind ist kleine.",
+            "answer": "Das Kind ist klein.",
+            "near_misses": ["Das Kind ist kleine.", "Das Kind ist kleines."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-022@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'tired'?",
+            "answer": "müde",
+            "alternatives": ["müde", "laut", "kalt"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-022@1:h02",
+            "format": "typed-blank",
+            "prompt": "Der Tisch ist ___. (big)",
+            "answer": "groß",
+            "near_misses": ["große", "klein"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-022@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the adjective without an ending): The book is very old.",
+            "answer": "Das Buch ist sehr alt.",
+            "near_misses": [
+              "Das Buch ist sehr alte.",
+              "Das Buch sehr ist alt."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-023",
+      "title": "Time and place prepositions in familiar chunks",
+      "explanation": "Learn frequent prepositions inside chunks. Time: am Montag (on Monday), um acht Uhr (at eight o'clock), im Juni (in June), am Wochenende (at the weekend). Place and direction: in der Stadt (in the city), zu Hause (at home), nach Hause (home, as a direction), aus Spanien (from Spain), in Berlin (in Berlin). Am and im are short for an dem and in dem.",
+      "examples": [
+        {
+          "de": "Ich wohne in der Stadt.",
+          "en": "I live in the city."
+        },
+        {
+          "de": "Wir gehen nach Hause.",
+          "en": "We are going home."
+        },
+        {
+          "de": "Der Kurs fängt am Montag an.",
+          "en": "The course starts on Monday."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-023@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-023@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a weekday like 'Montag'?",
+            "answer": "am",
+            "alternatives": ["am", "um", "im"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a clock time like 'acht Uhr'?",
+            "answer": "um",
+            "alternatives": ["am", "um", "im"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which phrase means 'at home'?",
+            "answer": "zu Hause",
+            "alternatives": ["zu Hause", "nach Hause", "im Haus"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which phrase means 'going home'?",
+            "answer": "nach Hause",
+            "alternatives": ["zu Hause", "nach Hause", "aus Hause"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q05",
+            "format": "typed-blank",
+            "prompt": "Der Kurs beginnt ___ Montag. (on)",
+            "answer": "am",
+            "near_misses": ["im", "um"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir essen ___ ein Uhr. (at)",
+            "answer": "um",
+            "near_misses": ["am", "im"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich wohne ___ der Stadt. (in)",
+            "answer": "in",
+            "near_misses": ["im", "an"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use a preposition): I live in the city.",
+            "answer": "Ich wohne in der Stadt.",
+            "near_misses": [
+              "Ich wohne im der Stadt.",
+              "Ich wohne in die Stadt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use a preposition): We go home.",
+            "answer": "Wir gehen nach Hause.",
+            "near_misses": ["Wir gehen zu Hause.", "Wir gehen nach Haus."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use a preposition): The course starts on Monday at eight o'clock.",
+            "answer": "Der Kurs fängt am Montag um acht Uhr an.",
+            "near_misses": [
+              "Der Kurs fängt im Montag um acht Uhr an.",
+              "Der Kurs fängt am Montag um acht Uhr."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q11",
+            "format": "correction",
+            "prompt": "Correct the preposition: Der Kurs beginnt um Montag.",
+            "answer": "Der Kurs beginnt am Montag.",
+            "near_misses": [
+              "Der Kurs beginnt um Montag.",
+              "Der Kurs beginnt im Montag."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:q12",
+            "format": "correction",
+            "prompt": "Correct the preposition: Ich bin nach Hause.",
+            "answer": "Ich bin zu Hause.",
+            "near_misses": ["Ich bin nach Hause.", "Ich bin in Hause."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-023@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a month like 'Juni'?",
+            "answer": "im",
+            "alternatives": ["am", "um", "im"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-023@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ich komme ___ Spanien. (from)",
+            "answer": "aus",
+            "near_misses": ["von", "in"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-023@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use a preposition): The class starts at nine o'clock.",
+            "answer": "Der Unterricht beginnt um neun Uhr.",
+            "near_misses": [
+              "Der Unterricht beginnt am neun Uhr.",
+              "Der Unterricht beginnt im neun Uhr."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-024",
+      "title": "Coordinating connectors: und, aber, oder, denn",
+      "explanation": "The connectors und (and), aber (but), oder (or) and denn (because) join two main clauses and do not change the word order: the second clause keeps its normal order with the finite verb in second position. Put a comma before aber and denn; before und and oder the comma is usually omitted. Example: Ich bin müde, aber ich arbeite. Ich bleibe zu Hause, denn ich bin müde.",
+      "examples": [
+        {
+          "de": "Ich lerne Deutsch und Anna lernt Französisch.",
+          "en": "I learn German and Anna learns French."
+        },
+        {
+          "de": "Ich bin müde, aber ich arbeite.",
+          "en": "I am tired, but I work."
+        },
+        {
+          "de": "Kommst du oder bleibst du hier?",
+          "en": "Are you coming or are you staying here?"
+        }
+      ],
+      "references": ["GOETHE-A1", "COE-CV20"],
+      "version": {
+        "id": "de-a1-024@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-024@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which connector means 'but'?",
+            "answer": "aber",
+            "alternatives": ["aber", "oder", "denn"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which connector means 'or'?",
+            "answer": "oder",
+            "alternatives": ["aber", "oder", "und"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which connector means 'because' and keeps normal word order?",
+            "answer": "denn",
+            "alternatives": ["denn", "und", "aber"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence keeps the verb in second position after 'und'?",
+            "answer": "Ich lerne Deutsch und Anna lernt Französisch.",
+            "alternatives": [
+              "Ich lerne Deutsch und Anna Französisch lernt.",
+              "Ich lerne Deutsch und Anna lernt Französisch.",
+              "Ich lerne Deutsch und lernt Anna Französisch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich bin müde, ___ ich arbeite. (but)",
+            "answer": "aber",
+            "near_misses": ["oder", "denn"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q06",
+            "format": "typed-blank",
+            "prompt": "Kommst du ___ bleibst du hier? (or)",
+            "answer": "oder",
+            "near_misses": ["aber", "und"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich bleibe zu Hause, ___ ich bin müde. (because)",
+            "answer": "denn",
+            "near_misses": ["weil", "dann"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q08",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): I am tired, but I work.",
+            "answer": "Ich bin müde, aber ich arbeite.",
+            "near_misses": [
+              "Ich bin müde, aber ich arbeiten.",
+              "Ich bin müde aber ich arbeitest."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q09",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): Do you come or do you stay here? (one friend)",
+            "answer": "Kommst du oder bleibst du hier?",
+            "near_misses": [
+              "Kommst du oder du bleibst hier?",
+              "Kommst du oder bleiben du hier?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q10",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): Anna learns German and Paul learns French.",
+            "answer": "Anna lernt Deutsch und Paul lernt Französisch.",
+            "near_misses": [
+              "Anna lernt Deutsch und Paul Französisch lernt.",
+              "Anna lernt Deutsch und lernt Paul Französisch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Ich lerne Deutsch und Anna Französisch lernt.",
+            "answer": "Ich lerne Deutsch und Anna lernt Französisch.",
+            "near_misses": [
+              "Ich lerne Deutsch und Anna Französisch lernt.",
+              "Ich lerne Deutsch und lernt Anna Französisch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word order: Ich bleibe zu Hause, denn ich müde bin.",
+            "answer": "Ich bleibe zu Hause, denn ich bin müde.",
+            "near_misses": [
+              "Ich bleibe zu Hause, denn ich müde bin.",
+              "Ich bleibe zu Hause, denn bin ich müde."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-024@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'denn' correctly?",
+            "answer": "Max bleibt hier, denn er ist krank.",
+            "alternatives": [
+              "Max bleibt hier, denn er krank ist.",
+              "Max bleibt hier, denn er ist krank.",
+              "Max bleibt hier, denn ist er krank."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-024@1:h02",
+            "format": "translation",
+            "prompt": "Translate (join the clauses): Max stays here, but Anna comes.",
+            "answer": "Max bleibt hier, aber Anna kommt.",
+            "near_misses": [
+              "Max bleibt hier, aber Anna kommen.",
+              "Max bleibt hier, aber kommt Anna."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-024@1:h03",
+            "format": "correction",
+            "prompt": "Correct the word order: Wir spielen Tennis und Max Fußball spielt.",
+            "answer": "Wir spielen Tennis und Max spielt Fußball.",
+            "near_misses": [
+              "Wir spielen Tennis und Max Fußball spielt.",
+              "Wir spielen Tennis und spielt Max Fußball."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

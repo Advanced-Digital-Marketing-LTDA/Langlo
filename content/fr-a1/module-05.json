@@ -1,0 +1,655 @@
+{
+  "module_id": "fr-a1-module-05",
+  "track": "French A1",
+  "title": "Can, want, commands, near future and connectors",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "fr-a1-017",
+      "title": "Infinitive after can, want, know how and like",
+      "explanation": "After many common verbs the second verb stays in the infinitive while the first verb is conjugated: Je peux parler, Elle veut manger, Nous aimons chanter. Pouvoir (can): je peux, tu peux, il/elle/on peut, nous pouvons, vous pouvez, ils/elles peuvent. Vouloir (to want): je veux, tu veux, il/elle/on veut, nous voulons, vous voulez, ils/elles veulent. Savoir (to know how to): je sais, tu sais, il/elle/on sait, nous savons, vous savez, ils/elles savent. Aimer, préférer and détester (like, prefer, hate) work the same way.",
+      "examples": [
+        {
+          "fr": "Je peux parler français.",
+          "en": "I can speak French."
+        },
+        {
+          "fr": "Elle veut manger.",
+          "en": "She wants to eat."
+        },
+        {
+          "fr": "Nous aimons chanter.",
+          "en": "We like to sing."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-017@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-017@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of pouvoir goes with 'je'?",
+            "answer": "peux",
+            "alternatives": ["peut", "peux", "pouvons"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q02",
+            "format": "multiple-choice",
+            "prompt": "In 'Elle veut manger.', which verb is in the infinitive?",
+            "answer": "manger",
+            "alternatives": ["veut", "manger", "Elle"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'We can sing.'",
+            "answer": "Nous pouvons chanter.",
+            "alternatives": [
+              "Nous pouvons chantons.",
+              "Nous pouvons chanter.",
+              "Nous pouvez chanter."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which form of vouloir goes with 'vous'?",
+            "answer": "voulez",
+            "alternatives": ["voulons", "voulez", "veulent"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q05",
+            "format": "typed-blank",
+            "prompt": "Tu ___ parler anglais. (pouvoir)",
+            "answer": "peux",
+            "near_misses": ["peut", "pouvoir"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ils ___ manger. (vouloir)",
+            "answer": "veulent",
+            "near_misses": ["veut", "voulent"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q07",
+            "format": "typed-blank",
+            "prompt": "J'aime ___ la musique. (écouter)",
+            "answer": "écouter",
+            "near_misses": ["écoute", "ecouter"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I want to work.",
+            "answer": "Je veux travailler.",
+            "near_misses": ["Je veux travaille.", "Je voulons travailler."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She can speak French.",
+            "answer": "Elle peut parler français.",
+            "near_misses": [
+              "Elle peut parle français.",
+              "Elle peux parler français."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We like to eat here.",
+            "answer": "Nous aimons manger ici.",
+            "alternatives": ["On aime manger ici."],
+            "near_misses": [
+              "Nous aimons mangeons ici.",
+              "Nous aimer manger ici."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je veux mangez.",
+            "answer": "Je veux manger.",
+            "near_misses": ["Je veux mangez.", "Je veux mange."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject and the verbs): Ils peut chanter.",
+            "answer": "Ils peuvent chanter.",
+            "near_misses": ["Ils peut chanter.", "Ils peuvent chantent."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-017@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form of savoir goes with 'tu'?",
+            "answer": "sais",
+            "alternatives": ["sait", "sais", "savons"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-017@1:h02",
+            "format": "typed-blank",
+            "prompt": "Nous ___ jouer ici. (pouvoir)",
+            "answer": "pouvons",
+            "near_misses": ["pouvez", "pouvon"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-017@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (boys) want to play.",
+            "answer": "Ils veulent jouer.",
+            "near_misses": ["Ils veut jouer.", "Ils veulent joue."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-018",
+      "title": "Short commands: the imperative",
+      "explanation": "The imperative is the present-tense verb without the subject. For -er verbs the tu form loses its final -s: tu parles becomes Parle ! The vous form is Parlez ! and the nous form means let's: Parlons ! Être is irregular: sois, soyons, soyez. For a negative command put ne ... pas around the verb: Ne parle pas ! Add s'il te plaît (to a friend) or s'il vous plaît (polite or plural) to make a request polite.",
+      "examples": [
+        {
+          "fr": "Écoute, s'il te plaît.",
+          "en": "Listen, please."
+        },
+        {
+          "fr": "Mangeons ensemble !",
+          "en": "Let's eat together."
+        },
+        {
+          "fr": "Ne parlez pas ici.",
+          "en": "Do not speak here."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-018@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-018@1:q01",
+            "format": "multiple-choice",
+            "prompt": "How do you tell one friend to 'speak'?",
+            "answer": "Parle !",
+            "alternatives": ["Parles !", "Parle !", "Parlons !"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form tells several people to 'listen'?",
+            "answer": "Écoutez !",
+            "alternatives": ["Écoute !", "Écoutez !", "Écoutons !"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form means 'Let's sing!'?",
+            "answer": "Chantons !",
+            "alternatives": ["Chantez !", "Chante !", "Chantons !"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which is the tu command of être?",
+            "answer": "Sois",
+            "alternatives": ["Es", "Sois", "Soyez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ la porte, s'il te plaît. (fermer, tu)",
+            "answer": "Ferme",
+            "near_misses": ["Fermes", "Fermer"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ le pain, s'il vous plaît. (prendre, vous)",
+            "answer": "Prenez",
+            "near_misses": ["Prendez", "Prends"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ ensemble ! (travailler, nous)",
+            "answer": "Travaillons",
+            "near_misses": ["Travaillez", "Travailles"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q08",
+            "format": "translation",
+            "prompt": "Translate (give the command): Speak, please (to one friend).",
+            "answer": "Parle, s'il te plaît.",
+            "alternatives": ["S'il te plaît, parle."],
+            "near_misses": ["Parles, s'il te plaît.", "Parler, s'il te plaît."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q09",
+            "format": "translation",
+            "prompt": "Translate (give the command): Eat the apple (to several people).",
+            "answer": "Mangez la pomme.",
+            "near_misses": ["Mangeons la pomme.", "Manges la pomme."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q10",
+            "format": "translation",
+            "prompt": "Translate (give the command): Do not speak here (to one friend).",
+            "answer": "Ne parle pas ici.",
+            "near_misses": ["Ne parles pas ici.", "Parle ne pas ici."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the verb and the person): Chantes ici, s'il te plaît.",
+            "answer": "Chante ici, s'il te plaît.",
+            "near_misses": [
+              "Chantes ici, s'il te plaît.",
+              "Chanter ici, s'il te plaît."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the verb and the person): Es ici à huit heures.",
+            "answer": "Sois ici à huit heures.",
+            "near_misses": [
+              "Es ici à huit heures.",
+              "Soyez ici à huit heures."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-018@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form tells one friend to 'eat'?",
+            "answer": "Mange !",
+            "alternatives": ["Manges !", "Mange !", "Mangez !"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-018@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ à la maison, s'il vous plaît. (rester, vous)",
+            "answer": "Restez",
+            "near_misses": ["Reste", "Restes"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-018@1:h03",
+            "format": "translation",
+            "prompt": "Translate (give the command): Let's play here.",
+            "answer": "Jouons ici.",
+            "near_misses": ["Jouez ici.", "Joue ici."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-019",
+      "title": "Near future with aller + infinitive",
+      "explanation": "To say what is going to happen soon, use the present tense of aller followed by an infinitive: Je vais travailler. Elle va arriver. Nous allons voyager. The conjugated verb is aller (vais, vas, va, allons, allez, vont) and the second verb never changes. Time words help: demain (tomorrow), ce soir (tonight), bientôt (soon) and la semaine prochaine (next week). In a negative sentence ne ... pas goes around aller: Je ne vais pas travailler.",
+      "examples": [
+        {
+          "fr": "Je vais regarder un film ce soir.",
+          "en": "I am going to watch a film tonight."
+        },
+        {
+          "fr": "Elle va arriver bientôt.",
+          "en": "She is going to arrive soon."
+        },
+        {
+          "fr": "Nous allons voyager demain.",
+          "en": "We are going to travel tomorrow."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-019@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-019@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'I am going to work.'?",
+            "answer": "Je vais travailler.",
+            "alternatives": [
+              "Je vais travaille.",
+              "Je vais travailler.",
+              "Je vas travailler."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of aller goes with 'nous' in this structure?",
+            "answer": "allons",
+            "alternatives": ["allez", "allons", "vont"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What does 'demain' mean?",
+            "answer": "tomorrow",
+            "alternatives": ["yesterday", "tomorrow", "today"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "Ils vont manger ici.",
+            "alternatives": [
+              "Ils vont mangent ici.",
+              "Ils vont manger ici.",
+              "Ils allent manger ici."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q05",
+            "format": "typed-blank",
+            "prompt": "Tu ___ arriver demain. (aller)",
+            "answer": "vas",
+            "near_misses": ["va", "vais"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q06",
+            "format": "typed-blank",
+            "prompt": "Elle va ___ ce soir. (travailler)",
+            "answer": "travailler",
+            "near_misses": ["travaille", "travaillez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q07",
+            "format": "typed-blank",
+            "prompt": "Nous ___ chanter bientôt. (aller)",
+            "answer": "allons",
+            "near_misses": ["allez", "allon"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I am going to eat tonight.",
+            "answer": "Je vais manger ce soir.",
+            "near_misses": ["Je vais mange ce soir.", "Je vas manger ce soir."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): He is going to arrive tomorrow.",
+            "answer": "Il va arriver demain.",
+            "near_misses": ["Il vais arriver demain.", "Il va arrive demain."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are going to work next week.",
+            "answer": "Nous allons travailler la semaine prochaine.",
+            "alternatives": ["On va travailler la semaine prochaine."],
+            "near_misses": [
+              "Nous allons travaillons la semaine prochaine.",
+              "Nous allons travailler la semaine prochain."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je vais mange demain.",
+            "answer": "Je vais manger demain.",
+            "near_misses": ["Je vais mange demain.", "Je vais mangez demain."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the verb): Ils va chanter ce soir.",
+            "answer": "Ils vont chanter ce soir.",
+            "near_misses": [
+              "Ils va chanter ce soir.",
+              "Ils vont chantent ce soir."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-019@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What does 'bientôt' mean?",
+            "answer": "soon",
+            "alternatives": ["soon", "always", "never"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-019@1:h02",
+            "format": "typed-blank",
+            "prompt": "Vous ___ jouer ici. (aller)",
+            "answer": "allez",
+            "near_misses": ["allons", "vas"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-019@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (girls) are going to sing tomorrow.",
+            "answer": "Elles vont chanter demain.",
+            "near_misses": [
+              "Elles va chanter demain.",
+              "Elles vont chantent demain."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-020",
+      "title": "Joining short clauses: et, mais, ou, parce que, donc",
+      "explanation": "Connectors join two short clauses. Et means and, mais means but, ou means or (without an accent, unlike où, where), parce que means because, donc means so, puis means then and aussi means also. Parce que becomes parce qu' before a vowel or a silent h: parce qu'il travaille. Each clause keeps its own subject and verb: Il travaille et elle étudie.",
+      "examples": [
+        {
+          "fr": "Il travaille et elle étudie.",
+          "en": "He works and she studies."
+        },
+        {
+          "fr": "Je veux voyager, mais je travaille.",
+          "en": "I want to travel, but I am working."
+        },
+        {
+          "fr": "Elle est contente parce que Marie arrive.",
+          "en": "She is happy because Marie is arriving."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-020@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-020@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'but'?",
+            "answer": "mais",
+            "alternatives": ["et", "mais", "ou"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'or'?",
+            "answer": "ou",
+            "alternatives": ["où", "ou", "et"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which connector gives a reason?",
+            "answer": "parce que",
+            "alternatives": ["mais", "parce que", "puis"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'Paul is eating and Marie is working.'?",
+            "answer": "Paul mange et Marie travaille.",
+            "alternatives": [
+              "Paul mange mais Marie travaille.",
+              "Paul mange et Marie travaille.",
+              "Paul mange parce que Marie travaille."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q05",
+            "format": "typed-blank",
+            "prompt": "Je mange ___ je travaille. (and)",
+            "answer": "et",
+            "near_misses": ["ou", "est"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q06",
+            "format": "typed-blank",
+            "prompt": "Elle veut chanter, ___ elle travaille. (but)",
+            "answer": "mais",
+            "near_misses": ["mes", "et"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q07",
+            "format": "typed-blank",
+            "prompt": "Nous restons ici ___ nous aimons la maison. (because)",
+            "answer": "parce que",
+            "near_misses": ["parce", "pour que"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I am working and she is eating.",
+            "answer": "Je travaille et elle mange.",
+            "near_misses": [
+              "Je travaille et elle manges.",
+              "Je travaille et mange elle."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): He wants to eat, but he is working.",
+            "answer": "Il veut manger, mais il travaille.",
+            "alternatives": ["Il veut manger mais il travaille."],
+            "near_misses": [
+              "Il veut manger, mais il travailler.",
+              "Il veut manger, et mais il travaille."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are happy because Marie is arriving.",
+            "answer": "Nous sommes contents parce que Marie arrive.",
+            "alternatives": ["Nous sommes contentes parce que Marie arrive."],
+            "near_misses": [
+              "Nous sommes contents parce Marie arrive.",
+              "Nous sommes contents parce que Marie arrives."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Elle est contente parce Paul arrive.",
+            "answer": "Elle est contente parce que Paul arrive.",
+            "near_misses": [
+              "Elle est contente parce Paul arrive.",
+              "Elle est contente parce qu'Paul arrive."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the connector): Nous restons parce que il travaille.",
+            "answer": "Nous restons parce qu'il travaille.",
+            "near_misses": [
+              "Nous restons parce que il travaille.",
+              "Nous restons parce qu'ils travaille."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-020@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'then'?",
+            "answer": "puis",
+            "alternatives": ["puis", "mais", "donc"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-020@1:h02",
+            "format": "typed-blank",
+            "prompt": "Il est fatigué, ___ il travaille. (so)",
+            "answer": "donc",
+            "near_misses": ["done", "dont"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-020@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We are eating or working.",
+            "answer": "Nous mangeons ou nous travaillons.",
+            "alternatives": ["Nous mangeons ou travaillons."],
+            "near_misses": [
+              "Nous mangeons où nous travaillons.",
+              "Nous mangeons et ou nous travaillons."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

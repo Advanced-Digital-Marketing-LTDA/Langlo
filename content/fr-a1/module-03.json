@@ -1,0 +1,643 @@
+{
+  "module_id": "fr-a1-module-03",
+  "track": "French A1",
+  "title": "Nouns, articles, adjectives and possessives",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "fr-a1-009",
+      "title": "Singular articles and noun gender",
+      "explanation": "Every French noun is masculine or feminine, and the article shows which. The definite article (the) is le for masculine nouns and la for feminine nouns; before a vowel or a silent h both become l': l'ami, l'école. The indefinite article (a, an) is un for masculine and une for feminine. Gender is mostly not predictable from the meaning, so learn each noun with its article: le livre, la table, un livre, une table.",
+      "examples": [
+        {
+          "fr": "Le garçon a un chat.",
+          "en": "The boy has a cat."
+        },
+        {
+          "fr": "La femme mange une pomme.",
+          "en": "The woman is eating an apple."
+        },
+        {
+          "fr": "L'ami arrive.",
+          "en": "The friend arrives."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-009@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-009@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which article goes with 'livre' (masculine)?",
+            "answer": "le",
+            "alternatives": ["la", "le", "l'"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which phrase is correct?",
+            "answer": "une table",
+            "alternatives": ["un table", "une table", "le table"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'I have a car.'",
+            "answer": "J'ai une voiture.",
+            "alternatives": [
+              "J'ai un voiture.",
+              "J'ai une voiture.",
+              "J'ai le voiture."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which indefinite article goes with 'ami' (a male friend)?",
+            "answer": "un",
+            "alternatives": ["un", "une", "le"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ chat mange. (the, masculine)",
+            "answer": "Le",
+            "near_misses": ["La", "L'"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q06",
+            "format": "typed-blank",
+            "prompt": "Elle a ___ maison. (a, feminine)",
+            "answer": "une",
+            "near_misses": ["un", "la"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q07",
+            "format": "typed-blank",
+            "prompt": "J'ai ___ stylo. (a, masculine)",
+            "answer": "un",
+            "near_misses": ["une", "le"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The girl has a cat.",
+            "answer": "La fille a un chat.",
+            "near_misses": ["Le fille a un chat.", "La fille a une chat."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I have a friend (a boy).",
+            "answer": "J'ai un ami.",
+            "near_misses": ["J'ai une ami.", "Je ai un ami."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The train arrives at the station.",
+            "answer": "Le train arrive à la gare.",
+            "near_misses": [
+              "La train arrive à la gare.",
+              "Le train arrive à le gare."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Je mange un pomme.",
+            "answer": "Je mange une pomme.",
+            "near_misses": ["Je mange un pomme.", "Je mange une pommes."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Le maison est ici.",
+            "answer": "La maison est ici.",
+            "near_misses": ["Le maison est ici.", "L'maison est ici."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-009@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which article goes with 'fenêtre' (feminine)?",
+            "answer": "la",
+            "alternatives": ["le", "la", "un"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-009@1:h02",
+            "format": "typed-blank",
+            "prompt": "___amie arrive. (the)",
+            "answer": "L'",
+            "near_misses": ["La", "Le"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-009@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The boy eats the bread.",
+            "answer": "Le garçon mange le pain.",
+            "near_misses": [
+              "La garçon mange le pain.",
+              "Le garçon mange la pain."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-010",
+      "title": "Regular plurals and plural articles",
+      "explanation": "Most French nouns form the plural by adding -s, which is silent in speech: le chat, les chats. Nouns that already end in -s, -x or -z do not change. Nouns ending in -eau add -x (le gâteau, les gâteaux) and most nouns ending in -al change to -aux (le journal, les journaux). The plural articles are the same for both genders: les (the) and des (some, or no article in English). In speech the article is what shows that a noun is plural.",
+      "examples": [
+        {
+          "fr": "Les enfants jouent.",
+          "en": "The children are playing."
+        },
+        {
+          "fr": "Elle a des livres.",
+          "en": "She has some books."
+        },
+        {
+          "fr": "Les gâteaux sont ici.",
+          "en": "The cakes are here."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-010@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-010@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'le livre'?",
+            "answer": "les livres",
+            "alternatives": ["le livres", "les livres", "les livre"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'un chat'?",
+            "answer": "des chats",
+            "alternatives": ["un chats", "des chat", "des chats"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'le gâteau'?",
+            "answer": "les gâteaux",
+            "alternatives": ["les gâteaus", "les gâteaux", "des gâteau"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which plural article means 'the'?",
+            "answer": "les",
+            "alternatives": ["des", "les", "un"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q05",
+            "format": "typed-blank",
+            "prompt": "Les ___ jouent. (enfant, plural)",
+            "answer": "enfants",
+            "near_misses": ["enfant", "enfantes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q06",
+            "format": "typed-blank",
+            "prompt": "J'ai des ___. (ami, plural)",
+            "answer": "amis",
+            "near_misses": ["ami", "amies"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q07",
+            "format": "typed-blank",
+            "prompt": "Les ___ sont ici. (journal, plural)",
+            "answer": "journaux",
+            "near_misses": ["journals", "journales"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The cats are eating.",
+            "answer": "Les chats mangent.",
+            "near_misses": ["Les chat mangent.", "Le chats mangent."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I have some friends.",
+            "answer": "J'ai des amis.",
+            "near_misses": ["J'ai des ami.", "Je ai des amis."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The boys are eating the cakes.",
+            "answer": "Les garçons mangent les gâteaux.",
+            "near_misses": [
+              "Les garçon mangent les gâteaux.",
+              "Les garçons mangent les gâteau."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Les chevals sont là.",
+            "answer": "Les chevaux sont là.",
+            "near_misses": ["Les chevals sont là.", "Les chevaus sont là."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Des enfant jouent.",
+            "answer": "Des enfants jouent.",
+            "near_misses": ["Des enfant jouent.", "Des enfantes jouent."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-010@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'un journal'?",
+            "answer": "des journaux",
+            "alternatives": ["des journals", "des journaux", "un journaux"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-010@1:h02",
+            "format": "typed-blank",
+            "prompt": "Les ___ mangent. (chien, plural)",
+            "answer": "chiens",
+            "near_misses": ["chien", "chienes"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-010@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The girls have some books.",
+            "answer": "Les filles ont des livres.",
+            "near_misses": [
+              "Les fille ont des livres.",
+              "Les filles a des livres."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-011",
+      "title": "Adjectives: agreement and position",
+      "explanation": "French adjectives agree in gender and number with the noun they describe. Most add -e for the feminine and -s for the plural: petit, petite, petits, petites. Adjectives that already end in -e keep the same form in the feminine: rouge, rouges. Most adjectives come after the noun (une voiture rouge, un chat noir), but a few very common short ones come before it, for example petit, grand, bon and joli: une petite maison. After être the adjective follows the verb and still agrees with the subject: Les filles sont contentes.",
+      "examples": [
+        {
+          "fr": "Il a un chat noir.",
+          "en": "He has a black cat."
+        },
+        {
+          "fr": "Nous avons une grande voiture.",
+          "en": "We have a big car."
+        },
+        {
+          "fr": "Les filles sont contentes.",
+          "en": "The girls are happy."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-011@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-011@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which adjective form goes with 'une maison'?",
+            "answer": "petite",
+            "alternatives": ["petit", "petite", "petits"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct phrase for 'a red car'.",
+            "answer": "une voiture rouge",
+            "alternatives": [
+              "une rouge voiture",
+              "une voiture rouge",
+              "un voiture rouge"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'les garçons'?",
+            "answer": "contents",
+            "alternatives": ["content", "contente", "contents"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct phrase for 'a black cat'.",
+            "answer": "un chat noir",
+            "alternatives": ["un noir chat", "un chat noir", "une chat noir"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q05",
+            "format": "typed-blank",
+            "prompt": "Une ___ maison. (grand)",
+            "answer": "grande",
+            "near_misses": ["grand", "grands"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q06",
+            "format": "typed-blank",
+            "prompt": "Les filles sont ___. (content)",
+            "answer": "contentes",
+            "near_misses": ["content", "contents"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q07",
+            "format": "typed-blank",
+            "prompt": "Il a un ___ chat. (petit)",
+            "answer": "petit",
+            "near_misses": ["petite", "petits"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She has a small house.",
+            "answer": "Elle a une petite maison.",
+            "near_misses": [
+              "Elle a une petit maison.",
+              "Elle a un petite maison."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The boys are happy.",
+            "answer": "Les garçons sont contents.",
+            "near_misses": [
+              "Les garçons sont content.",
+              "Les garçons sont contentes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): He has a red car.",
+            "answer": "Il a une voiture rouge.",
+            "near_misses": [
+              "Il a une rouge voiture.",
+              "Il a un voiture rouge."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Elle a un chat noire.",
+            "answer": "Elle a un chat noir.",
+            "near_misses": ["Elle a un chat noire.", "Elle a une chat noir."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the adjective): Les maisons sont grand.",
+            "answer": "Les maisons sont grandes.",
+            "near_misses": [
+              "Les maisons sont grand.",
+              "Les maisons sont grands."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-011@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "Marie est contente.",
+            "alternatives": [
+              "Marie est content.",
+              "Marie est contente.",
+              "Marie est contents."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-011@1:h02",
+            "format": "typed-blank",
+            "prompt": "Les voitures sont ___. (rouge)",
+            "answer": "rouges",
+            "near_misses": ["rouge", "rougent"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-011@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (girls) have a big dog.",
+            "answer": "Elles ont un grand chien.",
+            "near_misses": [
+              "Elles ont un grande chien.",
+              "Elles ont une grand chien."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-012",
+      "title": "Possessive determiners",
+      "explanation": "Possessive determiners agree with the noun that is owned, not with the owner. My: mon (masculine), ma (feminine), mes (plural). Your (one friend): ton, ta, tes. His, her or its: son, sa, ses. Our: notre (singular), nos (plural). Your (polite or several people): votre, vos. Their: leur (singular), leurs (plural). Before a feminine noun that starts with a vowel the masculine form is used: mon amie. Because son, sa and ses agree with the noun, son frère can mean his brother or her brother.",
+      "examples": [
+        {
+          "fr": "Ma sœur habite à Lyon.",
+          "en": "My sister lives in Lyon."
+        },
+        {
+          "fr": "Nous aimons notre maison.",
+          "en": "We like our house."
+        },
+        {
+          "fr": "Il mange son pain.",
+          "en": "He is eating his bread."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-012@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-012@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'my' before 'frère' (masculine)?",
+            "answer": "mon",
+            "alternatives": ["ma", "mon", "mes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which phrase is correct for 'my mother'?",
+            "answer": "ma mère",
+            "alternatives": ["mon mère", "ma mère", "mes mère"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'your' (one friend) before 'amis'?",
+            "answer": "tes",
+            "alternatives": ["ta", "ton", "tes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'They like their house.'",
+            "answer": "Ils aiment leur maison.",
+            "alternatives": [
+              "Ils aiment leurs maison.",
+              "Ils aiment leur maison.",
+              "Ils aiment son maison."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ sœur habite ici. (my)",
+            "answer": "Ma",
+            "near_misses": ["Mon", "Mes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q06",
+            "format": "typed-blank",
+            "prompt": "Vous aimez ___ enfants. (your, polite)",
+            "answer": "vos",
+            "near_misses": ["votre", "tes"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q07",
+            "format": "typed-blank",
+            "prompt": "Elle mange ___ pomme. (her)",
+            "answer": "sa",
+            "near_misses": ["son", "ses"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): My brother works.",
+            "answer": "Mon frère travaille.",
+            "near_misses": ["Ma frère travaille.", "Mes frère travaille."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We love our parents.",
+            "answer": "Nous aimons nos parents.",
+            "near_misses": [
+              "Nous aimons notre parents.",
+              "Nous aimons nos parent."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She has her books.",
+            "answer": "Elle a ses livres.",
+            "near_misses": ["Elle a son livres.", "Elle a leurs livres."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the noun): Je cherche mon clé.",
+            "answer": "Je cherche ma clé.",
+            "near_misses": ["Je cherche mon clé.", "Je cherche mes clé."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the owner): Nous aimons notre amis.",
+            "answer": "Nous aimons nos amis.",
+            "near_misses": ["Nous aimons notre amis.", "Nous aimons nos ami."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-012@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'our' before 'maison'?",
+            "answer": "notre",
+            "alternatives": ["nos", "notre", "votre"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-012@1:h02",
+            "format": "typed-blank",
+            "prompt": "Tu cherches ___ clé. (your, one friend)",
+            "answer": "ta",
+            "near_misses": ["ton", "tes"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-012@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Her sister lives in Nantes.",
+            "answer": "Sa sœur habite à Nantes.",
+            "near_misses": [
+              "Son sœur habite à Nantes.",
+              "Ses sœur habite à Nantes."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
