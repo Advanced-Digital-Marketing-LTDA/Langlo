@@ -54,14 +54,13 @@ property tests, and build passed again on the combined tree. Coverage tests
 passed 813 tests across 41 files; the existing evidence validator confirmed
 zero failed or skipped/disabled tests. All 72 browser tests also passed again.
 
-## Pending acceptance
+## Shared workflow integration
 
-The shared workflow commit `57cd741cf0f04648e3c05e503cbd4839b6ce4abe` exists
-locally in `/tmp/org-workflows-codecov` on branch `ci/codecov`. Langlo pins that
-exact commit. Publish the shared commit before publishing the Langlo caller;
-GitHub cannot resolve a workflow that exists only locally. This correction has
-not been published. The earlier Langlo-only version remains on the remote
-`ci/codecov-coverage` branch.
+The shared workflow commit `57cd741cf0f04648e3c05e503cbd4839b6ce4abe` was
+published and merged into `Advanced-Digital-Marketing-LTDA/workflows` main via
+PR #1. Langlo pins that exact commit. The Langlo caller was published as
+`6d50191a3a7b072443b73bc5d5aeb2b0f0ac7f8b` on `ci/codecov-coverage`, used by
+PR #83. The branch was restored at that same SHA after accidental deletion.
 
 The shared workflow downloads an artifact from the caller's current run and
 passes the selected report to Codecov with `slug: ${{ github.repository }}`.
@@ -89,8 +88,51 @@ The correction's observed red/green checks:
   changes in the main working tree; those unrelated changes were left intact.
 
 Each caller needs a suitable `CODECOV_TOKEN` repository or organization secret,
-a matching Codecov repository, and access to the shared workflow. Secret presence,
-Actions access settings, GitHub-hosted execution, and successful receipt by Codecov
-were not checked. No upload, secret change, deployment, real provider call, or
-paid review ran during local validation. Local coverage generation does not prove
-hosted upload success. The Vite Codecov plugin was not installed or configured.
+a matching Codecov repository, and access to the shared workflow. Initial hosted
+uploads received an empty token and failed with "Token required because branch
+is protected". After the owner added the organization secret and updated access,
+the Codecov-only rerun succeeded: job `117184463491` in run `38962945517` received
+a nonempty token, found `coverage/lcov.info`, and queued the upload for processing.
+This verifies the hosted artifact handoff and upload acceptance for caller
+`6d50191`; Codecov's final report processing was not checked. The agent did not
+read or change the secret value.
+
+## Merge-conflict resolution for PR #83
+
+The owner approved merging main `7f8e117b2ea79b624b6f17a272f135658fdaa6a0`
+into caller branch head `6d50191a3a7b072443b73bc5d5aeb2b0f0ac7f8b` in an
+isolated checkout at `/tmp/langlo-codecov-conflict-resolution`.
+
+Only `.github/workflows/ci.yml` and `tests/codecov-workflow.test.ts` conflicted.
+Main pinned the older direct Codecov action; the PR instead delegates uploading
+to the shared workflow. Both conflicts retain the PR's artifact upload, pinned
+shared workflow call, explicit secret forwarding, fork guard, and matching tests.
+All nonconflicting changes from main were retained, including question holdouts
+and their migration. No migrations were applied outside disposable local fixtures.
+Concurrent Stryker working-tree files in the original checkout were left intact.
+
+Observed focused validation:
+
+- Red: with the shared-workflow test restored and the workflow still conflicted,
+  `npm test -- tests/codecov-workflow.test.ts` exited 1 with 1 failed and 1 passed
+  test. The artifact step did not contain `name: coverage` because the conflicting
+  direct-upload step interrupted it.
+- Green: after resolving the workflow, the same command passed both tests.
+- Actionlint `1.7.12` passed for the resolved workflow with shellcheck disabled.
+- Full merged-tree validation passed with Node `24.19.0` and npm `11.9.0`:
+  `npm ci --ignore-scripts`, `npm run check`, `npm run lint`,
+  `npm run format:check`, the coverage-enabled `npm test` command,
+  `npm run test:property`, `npm run build`, and `npm run test:e2e`.
+  Tests passed 827/827 across 41 files; the evidence validator confirmed no failed
+  or skipped/disabled tests. The property run passed 5 tests and browser tests
+  passed 72 tests. `git ls-files -u` returned no unresolved entries, and
+  `git diff --cached --check` passed.
+
+## Pending acceptance
+
+The merge resolution has not been published. Hosted checks must run on its exact
+new commit after publication; success on `6d50191` does not validate the merged
+tree. PR #83's earlier TestTrust failure remains a separate hosted finding and
+has not been changed as part of this conflict resolution. No PR merge, deployment,
+secret change, or paid review was performed. The shared workflow repository was
+not modified. The Vite Codecov plugin was not installed or configured.

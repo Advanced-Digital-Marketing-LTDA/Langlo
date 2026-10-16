@@ -215,7 +215,7 @@ async function attemptSource(
   input: AttemptInput
 ) {
   const study = await tx.execute({
-    sql: 'SELECT language, state FROM study_sessions WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT language, state, mode FROM study_sessions WHERE id = ? AND owner_id = ?',
     args: [input.studySessionId, session.userId]
   });
   const studyRow = study.rows[0];
@@ -223,13 +223,16 @@ async function attemptSource(
   if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
 
   const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
     args: [input.questionId, studyRow.language]
   });
   const questionRow = question.rows[0];
   if (!questionRow) throw new StudyError('NOT_FOUND');
-  // Quarantined content is withdrawn: no new learner history may cite it.
-  if (questionRow.status === 'quarantined')
+  // Withdrawn content is unavailable; assessment holdouts cannot enter practice.
+  if (
+    questionRow.status === 'quarantined' ||
+    (questionRow.holdout === 1 && studyRow.mode !== 'assessment')
+  )
     throw new StudyError('CONTENT_UNAVAILABLE');
   return {
     contentVersionId: String(questionRow.content_version_id),

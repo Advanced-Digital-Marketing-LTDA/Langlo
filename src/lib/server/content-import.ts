@@ -39,6 +39,8 @@ export type ContentQuestion = {
   prompt: string;
   answer: string;
   alternatives?: string[] | undefined;
+  // Omitted legacy flags stay omitted in fingerprints; storage defaults to practice.
+  holdout?: boolean | undefined;
 };
 
 export type ContentPackage = {
@@ -129,7 +131,8 @@ const questionShape = z.object({
   format: z.enum(formats),
   prompt: text,
   answer: text,
-  alternatives: z.unknown().optional()
+  alternatives: z.unknown().optional(),
+  holdout: z.boolean().optional()
 });
 
 const packageShape = z.object({
@@ -199,12 +202,13 @@ const fingerprint = (data: unknown) =>
 const versionFingerprint = (version: PackageVersion) =>
   fingerprint(
     version.questions
-      .map(({ id, format, prompt, answer, alternatives }) => ({
+      .map(({ id, format, prompt, answer, alternatives, holdout }) => ({
         id,
         format,
         prompt,
         answer,
-        alternatives
+        alternatives,
+        holdout
       }))
       .sort((a, b) => Number(a.id > b.id) - Number(a.id < b.id))
   );
@@ -391,19 +395,28 @@ async function storedVersion(tx: Transaction, version: PackageVersion) {
 
 // Both sides are keyed and sorted the same way in JS; SQL collation order is
 // not relied on.
-const questionKeys = (pairs: Array<[unknown, unknown]>) =>
+const questionKeys = (pairs: Array<[unknown, unknown, unknown]>) =>
   pairs
-    .map(([id, format]) => `${String(id)}\u0000${String(format)}`)
+    .map(
+      ([id, format, holdout]) =>
+        `${String(id)}\u0000${String(format)}\u0000${Number(holdout)}`
+    )
     .sort((a, b) => Number(a > b) - Number(a < b));
 
 async function sameQuestions(tx: Transaction, version: PackageVersion) {
   const rows = await tx.execute({
-    sql: 'SELECT id, format FROM questions WHERE content_version_id = ?',
+    sql: 'SELECT id, format, holdout FROM questions WHERE content_version_id = ?',
     args: [version.id]
   });
-  const stored = questionKeys(rows.rows.map((row) => [row.id, row.format]));
+  const stored = questionKeys(
+    rows.rows.map((row) => [row.id, row.format, row.holdout])
+  );
   const incoming = questionKeys(
-    version.questions.map((question) => [question.id, question.format])
+    version.questions.map((question) => [
+      question.id,
+      question.format,
+      question.holdout ?? false
+    ])
   );
   return JSON.stringify(stored) === JSON.stringify(incoming);
 }
@@ -432,13 +445,14 @@ async function insertVersion(
   });
   for (const question of version.questions)
     await tx.execute({
-      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES (?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout) VALUES (?, ?, ?, ?, ?, ?)',
       args: [
         question.id,
         version.id,
         version.skillId,
         language,
-        question.format
+        question.format,
+        Number(question.holdout ?? false)
       ]
     });
 }
