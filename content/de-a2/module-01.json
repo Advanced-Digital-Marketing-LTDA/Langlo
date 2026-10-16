@@ -1,0 +1,685 @@
+{
+  "module_id": "de-a2-module-01",
+  "track": "German A2",
+  "title": "Past tenses, separable verbs and the sentence bracket",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a2-001",
+      "title": "Perfekt with regular and irregular verbs in short accounts",
+      "explanation": "Use the Perfekt to report what happened: haben or sein in second position and the participle at the end. Regular participles: ge- + stem + -t (gearbeitet). Irregular ones end in -en and often change the stem: gegessen, gesprochen, gefahren. Verbs with an inseparable prefix or ending in -ieren have no ge-: besucht, verstanden, telefoniert. Separable verbs put ge- between prefix and stem: aufgestanden, eingekauft. Verbs of movement or change of state take sein: gefahren, gegangen, geblieben, aufgestanden.",
+      "examples": [
+        {
+          "de": "Ich habe gestern Freunde besucht.",
+          "en": "I visited friends yesterday."
+        },
+        {
+          "de": "Wir sind am Wochenende nach Köln gefahren.",
+          "en": "We drove to Cologne at the weekend."
+        },
+        {
+          "de": "Er ist früh aufgestanden.",
+          "en": "He got up early."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-001@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-001@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of 'besuchen'?",
+            "answer": "besucht",
+            "alternatives": ["besucht", "gebesucht", "besuchen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of 'aufstehen'?",
+            "answer": "aufgestanden",
+            "alternatives": ["aufgestanden", "aufgestehen", "aufgestand"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which auxiliary goes with 'geblieben'?",
+            "answer": "sein",
+            "alternatives": ["haben", "sein", "werden"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of 'sprechen'?",
+            "answer": "gesprochen",
+            "alternatives": ["gesprochen", "gesprecht", "besprochen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich habe Freunde ___. (besuchen)",
+            "answer": "besucht",
+            "near_misses": ["gebesucht", "besuchen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q06",
+            "format": "typed-blank",
+            "prompt": "Er ist früh ___. (aufstehen)",
+            "answer": "aufgestanden",
+            "near_misses": ["aufgestehen", "gestanden"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q07",
+            "format": "typed-blank",
+            "prompt": "Wir sind zu Hause ___. (bleiben)",
+            "answer": "geblieben",
+            "near_misses": ["gebleibt", "bleiben"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): I visited friends yesterday.",
+            "answer": "Ich habe gestern Freunde besucht.",
+            "near_misses": [
+              "Ich habe gestern Freunde gebesucht.",
+              "Ich bin gestern Freunde besucht."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): We drove to Cologne at the weekend.",
+            "answer": "Wir sind am Wochenende nach Köln gefahren.",
+            "near_misses": [
+              "Wir haben am Wochenende nach Köln gefahren.",
+              "Wir sind am Wochenende nach Köln gefahrt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): He got up early.",
+            "answer": "Er ist früh aufgestanden.",
+            "near_misses": [
+              "Er hat früh aufgestanden.",
+              "Er ist früh gestanden auf."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q11",
+            "format": "correction",
+            "prompt": "Correct the participle: Ich habe Anna gebesucht.",
+            "answer": "Ich habe Anna besucht.",
+            "near_misses": [
+              "Ich habe Anna gebesucht.",
+              "Ich bin Anna besucht."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:q12",
+            "format": "correction",
+            "prompt": "Correct the auxiliary: Wir haben nach Wien gefahren.",
+            "answer": "Wir sind nach Wien gefahren.",
+            "near_misses": [
+              "Wir haben nach Wien gefahren.",
+              "Wir sind nach Wien gefahrt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-001@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of 'verstehen'?",
+            "answer": "verstanden",
+            "alternatives": ["verstanden", "geverstanden", "verstehen"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-001@1:h02",
+            "format": "typed-blank",
+            "prompt": "Sie hat gestern Brot ___. (kaufen)",
+            "answer": "gekauft",
+            "near_misses": ["kauft", "gekaufen"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-001@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): She stayed at home.",
+            "answer": "Sie ist zu Hause geblieben.",
+            "near_misses": [
+              "Sie hat zu Hause geblieben.",
+              "Sie ist geblieben zu Hause."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-002",
+      "title": "Präteritum of sein, haben and modal verbs",
+      "explanation": "In narratives and everyday reports, sein, haben and the modal verbs usually appear in the Präteritum. Sein: war, warst, war, waren, wart, waren. Haben: hatte, hattest, hatte, hatten, hattet, hatten. Modal verbs drop the umlaut and add -te: ich konnte, musste, wollte, durfte, sollte, mochte. Add -st for du, -n for wir and sie, -t for ihr: du konntest, wir mussten, ihr wolltet. The ich and er forms are identical.",
+      "examples": [
+        {
+          "de": "Ich konnte gestern nicht kommen.",
+          "en": "I could not come yesterday."
+        },
+        {
+          "de": "Wir mussten arbeiten.",
+          "en": "We had to work."
+        },
+        {
+          "de": "Er wollte nach Hause gehen.",
+          "en": "He wanted to go home."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-002@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-002@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which past form of können goes with 'ich'?",
+            "answer": "konnte",
+            "alternatives": ["konnte", "könnte", "kannte"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which past form of müssen goes with 'er'?",
+            "answer": "musste",
+            "alternatives": ["musste", "müsste", "mustete"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which past form of wollen goes with 'wir'?",
+            "answer": "wollten",
+            "alternatives": ["wollte", "wollten", "wolltest"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which past form of sein goes with 'du'?",
+            "answer": "warst",
+            "alternatives": ["war", "warst", "wart"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich ___ gestern nicht kommen. (können)",
+            "answer": "konnte",
+            "near_misses": ["kann", "könnte"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir ___ arbeiten. (müssen)",
+            "answer": "mussten",
+            "near_misses": ["musste", "müssen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q07",
+            "format": "typed-blank",
+            "prompt": "Anna ___ keine Zeit. (haben)",
+            "answer": "hatte",
+            "near_misses": ["hat", "hatten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the Präteritum): I could not come yesterday.",
+            "answer": "Ich konnte gestern nicht kommen.",
+            "near_misses": [
+              "Ich kann gestern nicht kommen.",
+              "Ich konnte gestern nicht kommt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the Präteritum): We had to work.",
+            "answer": "Wir mussten arbeiten.",
+            "near_misses": ["Wir musste arbeiten.", "Wir mussten arbeitet."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the Präteritum): He wanted to go home.",
+            "answer": "Er wollte nach Hause gehen.",
+            "near_misses": [
+              "Er wollte gehen nach Hause.",
+              "Er will nach Hause gehen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Wir konnte gestern nicht kommen.",
+            "answer": "Wir konnten gestern nicht kommen.",
+            "near_misses": [
+              "Wir konnte gestern nicht kommen.",
+              "Wir konntest gestern nicht kommen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Er musstest arbeiten.",
+            "answer": "Er musste arbeiten.",
+            "near_misses": ["Er musstest arbeiten.", "Er mussten arbeiten."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-002@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which past form of dürfen goes with 'ich'?",
+            "answer": "durfte",
+            "alternatives": ["durfte", "dürfte", "darfte"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-002@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ihr ___ gestern zu Hause. (sein)",
+            "answer": "wart",
+            "near_misses": ["waren", "seid"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-002@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the Präteritum): She had to learn German.",
+            "answer": "Sie musste Deutsch lernen.",
+            "near_misses": [
+              "Sie musste lernen Deutsch.",
+              "Sie muss Deutsch lernen."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-003",
+      "title": "Separable verbs in statements, questions and imperatives",
+      "explanation": "Separable verbs split in main clauses: the stem takes the verb position and the prefix goes to the end. This holds in statements (Der Zug kommt um acht Uhr an), yes/no questions (Bringst du Brot mit?) and imperatives (Räum bitte dein Zimmer auf!). More frequent separable verbs: ankommen, abfahren, mitbringen, zurückkommen, aufräumen. The infinitive is written as one word.",
+      "examples": [
+        {
+          "de": "Der Zug kommt um acht Uhr an.",
+          "en": "The train arrives at eight o'clock."
+        },
+        {
+          "de": "Bringst du Brot mit?",
+          "en": "Are you bringing bread?"
+        },
+        {
+          "de": "Räum bitte dein Zimmer auf!",
+          "en": "Please clean up your room!"
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-003@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-003@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which question uses 'mitbringen' correctly?",
+            "answer": "Bringst du Brot mit?",
+            "alternatives": [
+              "Bringst du mit Brot?",
+              "Bringst du Brot mit?",
+              "Mitbringst du Brot?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'ankommen' correctly?",
+            "answer": "Der Zug kommt um acht Uhr an.",
+            "alternatives": [
+              "Der Zug ankommt um acht Uhr.",
+              "Der Zug kommt um acht Uhr an.",
+              "Der Zug kommt an um acht Uhr an."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which imperative of 'aufräumen' is right for one friend?",
+            "answer": "Räum auf!",
+            "alternatives": ["Räum auf!", "Aufräum!", "Auf räum!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the infinitive of 'Der Bus fährt um neun Uhr ab.'?",
+            "answer": "abfahren",
+            "alternatives": ["abfahren", "fahren", "anfahren"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q05",
+            "format": "typed-blank",
+            "prompt": "Der Zug kommt um acht Uhr ___. (ankommen)",
+            "answer": "an",
+            "near_misses": ["ab", "auf"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q06",
+            "format": "typed-blank",
+            "prompt": "Bringst du Brot ___? (mitbringen)",
+            "answer": "mit",
+            "near_misses": ["an", "auf"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q07",
+            "format": "typed-blank",
+            "prompt": "Der Bus fährt um neun Uhr ___. (abfahren)",
+            "answer": "ab",
+            "near_misses": ["an", "auf"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q08",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): The train arrives at eight o'clock.",
+            "answer": "Der Zug kommt um acht Uhr an.",
+            "near_misses": [
+              "Der Zug ankommt um acht Uhr.",
+              "Der Zug kommt an um acht Uhr."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q09",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): Are you bringing bread? (one friend)",
+            "answer": "Bringst du Brot mit?",
+            "near_misses": ["Bringst du mit Brot?", "Mitbringst du Brot?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q10",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): Please clean up your room! (one friend)",
+            "answer": "Räum bitte dein Zimmer auf!",
+            "near_misses": [
+              "Aufräum bitte dein Zimmer!",
+              "Räum auf bitte dein Zimmer!"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Der Bus abfährt um neun Uhr.",
+            "answer": "Der Bus fährt um neun Uhr ab.",
+            "near_misses": [
+              "Der Bus abfährt um neun Uhr.",
+              "Der Bus fährt ab um neun Uhr."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Zurückkommst du morgen?",
+            "answer": "Kommst du morgen zurück?",
+            "near_misses": [
+              "Zurückkommst du morgen?",
+              "Kommst zurück du morgen?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-003@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the infinitive of 'Wir räumen heute auf.'?",
+            "answer": "aufräumen",
+            "alternatives": ["aufräumen", "räumen", "einräumen"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-003@1:h02",
+            "format": "typed-blank",
+            "prompt": "Er kommt um zehn Uhr ___. (zurückkommen)",
+            "answer": "zurück",
+            "near_misses": ["mit", "ab"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-003@1:h03",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): The bus arrives at nine o'clock.",
+            "answer": "Der Bus kommt um neun Uhr an.",
+            "near_misses": [
+              "Der Bus ankommt um neun Uhr.",
+              "Der Bus kommt an um neun Uhr."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-004",
+      "title": "The sentence bracket with modal and separable verbs",
+      "explanation": "German clauses often form a bracket: the finite verb stands in second position and the verb part that completes it stands at the end, with the other information in between. With a modal verb, a separable verb stays together as one infinitive at the end: Ich muss morgen früh aufstehen. The same holds in questions: Kannst du mich später anrufen? Do not split the infinitive after a modal.",
+      "examples": [
+        {
+          "de": "Ich muss morgen früh aufstehen.",
+          "en": "I have to get up early tomorrow."
+        },
+        {
+          "de": "Wir wollen heute Abend einkaufen.",
+          "en": "We want to shop this evening."
+        },
+        {
+          "de": "Kannst du mich später anrufen?",
+          "en": "Can you call me later?"
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-004@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-004@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does a separable verb stand after a modal verb?",
+            "answer": "as one infinitive at the end",
+            "alternatives": [
+              "as one infinitive at the end",
+              "split, with the prefix at the end",
+              "right after the subject"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses a modal with 'aufstehen'?",
+            "answer": "Ich muss morgen früh aufstehen.",
+            "alternatives": [
+              "Ich muss morgen früh stehen auf.",
+              "Ich muss morgen früh aufstehen.",
+              "Ich muss aufstehen morgen früh."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which question asks 'Can you call me later?'",
+            "answer": "Kannst du mich später anrufen?",
+            "alternatives": [
+              "Kannst du mich später rufen an?",
+              "Kannst du mich später anrufen?",
+              "Kannst du anrufen mich später?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence has the right bracket?",
+            "answer": "Wir wollen heute Abend einkaufen.",
+            "alternatives": [
+              "Wir wollen einkaufen heute Abend.",
+              "Wir wollen heute Abend einkaufen.",
+              "Wir einkaufen wollen heute Abend."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich muss morgen früh ___. (aufstehen)",
+            "answer": "aufstehen",
+            "near_misses": ["aufsteht", "stehen auf"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir wollen heute ___. (einkaufen)",
+            "answer": "einkaufen",
+            "near_misses": ["kaufen ein", "einkauft"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q07",
+            "format": "typed-blank",
+            "prompt": "Kannst du mich später ___? (anrufen)",
+            "answer": "anrufen",
+            "near_misses": ["rufen an", "anruft"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the sentence bracket): I have to get up early tomorrow.",
+            "answer": "Ich muss morgen früh aufstehen.",
+            "near_misses": [
+              "Ich muss morgen früh auf stehen.",
+              "Ich muss morgen früh stehen auf."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the sentence bracket): We want to shop this evening.",
+            "answer": "Wir wollen heute Abend einkaufen.",
+            "near_misses": [
+              "Wir wollen einkaufen heute Abend.",
+              "Wir wollen heute Abend kaufen ein."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the sentence bracket): Can you call me later? (one friend)",
+            "answer": "Kannst du mich später anrufen?",
+            "near_misses": [
+              "Kannst du mich später rufen an?",
+              "Kannst du mich anrufen später?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Ich muss stehen früh auf.",
+            "answer": "Ich muss früh aufstehen.",
+            "near_misses": [
+              "Ich muss stehen früh auf.",
+              "Ich muss früh stehen auf."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Wir wollen kaufen heute ein.",
+            "answer": "Wir wollen heute einkaufen.",
+            "near_misses": [
+              "Wir wollen kaufen heute ein.",
+              "Wir wollen heute kaufen ein."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-004@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence has the right bracket for 'She wants to come along'?",
+            "answer": "Sie will mitkommen.",
+            "alternatives": [
+              "Sie will kommen mit.",
+              "Sie will mitkommen.",
+              "Sie mitkommen will."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-004@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ihr müsst morgen ___. (zurückkommen)",
+            "answer": "zurückkommen",
+            "near_misses": ["kommen zurück", "zurückkommt"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-004@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the sentence bracket): We must call you tomorrow. (one friend)",
+            "answer": "Wir müssen dich morgen anrufen.",
+            "near_misses": [
+              "Wir müssen dich morgen rufen an.",
+              "Wir müssen morgen anrufen dich."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
