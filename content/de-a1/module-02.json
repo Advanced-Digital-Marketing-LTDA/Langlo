@@ -1,0 +1,617 @@
+{
+  "module_id": "de-a1-module-02",
+  "track": "German A1",
+  "title": "Irregular verbs, noun gender, plurals and articles",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a1-005",
+      "title": "Irregular present forms: sein, haben and frequent verbs",
+      "explanation": "Sein (to be) and haben (to have) are irregular: ich bin, du bist, er ist, wir sind, ihr seid, sie sind; ich habe, du hast, er hat, wir haben, ihr habt, sie haben. Some frequent verbs change their stem vowel in the du and er/sie/es forms: fahren (du fährst, er fährt), sprechen (du sprichst, er spricht), essen (du isst, er isst), lesen (du liest, er liest), sehen (du siehst, er sieht), nehmen (du nimmst, er nimmt). The ich, wir and plural forms stay regular.",
+      "examples": [
+        {
+          "de": "Ich bin Student.",
+          "en": "I am a student."
+        },
+        {
+          "de": "Anna hat einen Hund.",
+          "en": "Anna has a dog."
+        },
+        {
+          "de": "Er spricht Deutsch.",
+          "en": "He speaks German."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-005@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-005@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of sein goes with 'ich'?",
+            "answer": "bin",
+            "alternatives": ["bin", "bist", "ist"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of haben goes with 'du'?",
+            "answer": "hast",
+            "alternatives": ["habe", "hast", "hat"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'er'? (sprechen)",
+            "answer": "spricht",
+            "alternatives": ["sprecht", "spricht", "sprichst"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'du'? (fahren)",
+            "answer": "fährst",
+            "alternatives": ["fahrst", "fährst", "fährt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q05",
+            "format": "typed-blank",
+            "prompt": "Wir ___ aus Spanien. (sein)",
+            "answer": "sind",
+            "near_misses": ["seid", "bin"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q06",
+            "format": "typed-blank",
+            "prompt": "Anna ___ einen Hund. (haben)",
+            "answer": "hat",
+            "near_misses": ["habt", "hast"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q07",
+            "format": "typed-blank",
+            "prompt": "Er ___ Brot. (essen)",
+            "answer": "isst",
+            "near_misses": ["esst", "esse"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): You are tired. (one friend)",
+            "answer": "Du bist müde.",
+            "near_misses": ["Du bis müde.", "Du ist müde."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): I have time.",
+            "answer": "Ich habe Zeit.",
+            "near_misses": ["Ich hat Zeit.", "Ich bin Zeit."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): He reads a book.",
+            "answer": "Er liest ein Buch.",
+            "near_misses": ["Er lest ein Buch.", "Er liesst ein Buch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Du habst Zeit.",
+            "answer": "Du hast Zeit.",
+            "near_misses": ["Du habst Zeit.", "Du habt Zeit."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Er sprechen Deutsch.",
+            "answer": "Er spricht Deutsch.",
+            "near_misses": ["Er sprechen Deutsch.", "Er sprecht Deutsch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-005@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form of sein goes with 'ihr'?",
+            "answer": "seid",
+            "alternatives": ["seid", "sind", "bist"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-005@1:h02",
+            "format": "typed-blank",
+            "prompt": "Du ___ ein Buch. (lesen)",
+            "answer": "liest",
+            "near_misses": ["lest", "lesst"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-005@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the present tense): They are at home.",
+            "answer": "Sie sind zu Hause.",
+            "near_misses": ["Sie seid zu Hause.", "Sie ist zu Hause."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-007",
+      "title": "Noun gender and nominative articles",
+      "explanation": "Every German noun has a grammatical gender: masculine (der), feminine (die) or neuter (das). The plural article is always die. Learn each noun together with its article: der Mann, die Frau, das Kind, die Kinder. The indefinite article in the nominative is ein for masculine and neuter and eine for feminine: ein Mann, eine Frau, ein Kind. All nouns are written with a capital letter. Endings help a little: nouns in -ung, -heit and -keit are feminine, and nouns in -chen are neuter.",
+      "examples": [
+        {
+          "de": "Der Tisch ist neu.",
+          "en": "The table is new."
+        },
+        {
+          "de": "Die Lampe ist neu.",
+          "en": "The lamp is new."
+        },
+        {
+          "de": "Das Buch ist neu.",
+          "en": "The book is new."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-007@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-007@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which article goes with 'Mann'?",
+            "answer": "der",
+            "alternatives": ["der", "die", "das"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which article goes with 'Frau'?",
+            "answer": "die",
+            "alternatives": ["der", "die", "das"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which article goes with 'Kind'?",
+            "answer": "das",
+            "alternatives": ["der", "die", "das"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which definite article goes with every plural noun?",
+            "answer": "die",
+            "alternatives": ["der", "die", "das"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ Tisch ist alt. (the)",
+            "answer": "Der",
+            "near_misses": ["Die", "Das"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ Buch ist alt. (the)",
+            "answer": "Das",
+            "near_misses": ["Der", "Die"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q07",
+            "format": "typed-blank",
+            "prompt": "Das ist ___ Frau. (a)",
+            "answer": "eine",
+            "near_misses": ["ein", "einer"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q08",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): The woman is here.",
+            "answer": "Die Frau ist hier.",
+            "near_misses": ["Der Frau ist hier.", "Das Frau ist hier."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q09",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): The book is new.",
+            "answer": "Das Buch ist neu.",
+            "near_misses": ["Der Buch ist neu.", "Die Buch ist neu."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q10",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): A man is here.",
+            "answer": "Ein Mann ist hier.",
+            "near_misses": ["Eine Mann ist hier.", "Der Mann ist hier."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q11",
+            "format": "correction",
+            "prompt": "Correct the article: Der Lampe ist alt.",
+            "answer": "Die Lampe ist alt.",
+            "near_misses": ["Der Lampe ist alt.", "Das Lampe ist alt."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:q12",
+            "format": "correction",
+            "prompt": "Correct the article: Die Kind ist hier.",
+            "answer": "Das Kind ist hier.",
+            "near_misses": ["Die Kind ist hier.", "Der Kind ist hier."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-007@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which noun ending usually signals a feminine noun?",
+            "answer": "-ung",
+            "alternatives": ["-ung", "-chen", "-ismus"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-007@1:h02",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): A woman is here.",
+            "answer": "Eine Frau ist hier.",
+            "near_misses": ["Ein Frau ist hier.", "Die Frau ist hier."],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-007@1:h03",
+            "format": "correction",
+            "prompt": "Correct the article: Das Zeitung ist neu.",
+            "answer": "Die Zeitung ist neu.",
+            "near_misses": ["Das Zeitung ist neu.", "Der Zeitung ist neu."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-008",
+      "title": "Singular and plural noun forms",
+      "explanation": "German forms plurals in several ways, so learn the plural with the noun. Common patterns: -e (der Tag, die Tage), -e with an umlaut (die Hand, die Hände), -er with an umlaut where possible (das Kind, die Kinder; das Haus, die Häuser), -n or -en (die Frau, die Frauen; die Lampe, die Lampen), -s (das Auto, die Autos), and no change or only an umlaut (der Lehrer, die Lehrer; der Bruder, die Brüder). The plural article is always die, and the verb takes the plural ending.",
+      "examples": [
+        {
+          "de": "Die Kinder spielen.",
+          "en": "The children are playing."
+        },
+        {
+          "de": "Die Frauen arbeiten.",
+          "en": "The women work."
+        },
+        {
+          "de": "Die Autos sind neu.",
+          "en": "The cars are new."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-008@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-008@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'Frau'?",
+            "answer": "Frauen",
+            "alternatives": ["Fraue", "Frauen", "Fraus"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'Kind'?",
+            "answer": "Kinder",
+            "alternatives": ["Kinde", "Kinder", "Kinds"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'Auto'?",
+            "answer": "Autos",
+            "alternatives": ["Auten", "Autos", "Autoe"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'Haus'?",
+            "answer": "Häuser",
+            "alternatives": ["Hauser", "Häuser", "Hause"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ein Tag, zwei ___. (Tag)",
+            "answer": "Tage",
+            "near_misses": ["Tags", "Täge"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ein Bruder, zwei ___. (Bruder)",
+            "answer": "Brüder",
+            "near_misses": ["Bruder", "Brüders"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q07",
+            "format": "typed-blank",
+            "prompt": "Eine Lampe, zwei ___. (Lampe)",
+            "answer": "Lampen",
+            "near_misses": ["Lampe", "Lampes"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the plural): The children play.",
+            "answer": "Die Kinder spielen.",
+            "near_misses": ["Die Kinde spielen.", "Das Kinder spielen."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the plural): The women work.",
+            "answer": "Die Frauen arbeiten.",
+            "near_misses": ["Die Fraue arbeiten.", "Die Frauen arbeitet."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the plural): The cars are new.",
+            "answer": "Die Autos sind neu.",
+            "near_misses": ["Die Autos ist neu.", "Die Auto sind neu."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q11",
+            "format": "correction",
+            "prompt": "Correct the plural: Die Kinds spielen.",
+            "answer": "Die Kinder spielen.",
+            "near_misses": ["Die Kinds spielen.", "Die Kinde spielen."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:q12",
+            "format": "correction",
+            "prompt": "Correct the plural: Die Häuse sind alt.",
+            "answer": "Die Häuser sind alt.",
+            "near_misses": ["Die Häuse sind alt.", "Die Hauser sind alt."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-008@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the plural of 'Tisch'?",
+            "answer": "Tische",
+            "alternatives": ["Tisches", "Tische", "Tischer"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-008@1:h02",
+            "format": "typed-blank",
+            "prompt": "Eine Hand, zwei ___. (Hand)",
+            "answer": "Hände",
+            "near_misses": ["Hande", "Hands"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-008@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the plural): The days are long.",
+            "answer": "Die Tage sind lang.",
+            "near_misses": ["Die Tag sind lang.", "Die Tage ist lang."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-011",
+      "title": "Choosing definite and indefinite articles",
+      "explanation": "Use the indefinite article (ein, eine) when you introduce something new: Da ist ein Kind. Use the definite article (der, die, das) when it is already known or specific: Das Kind ist klein. With a profession or nationality after sein, German usually has no article: Anna ist Lehrerin. The gender of the noun decides the form, so learn nouns with their article.",
+      "examples": [
+        {
+          "de": "Da ist ein Kind.",
+          "en": "There is a child."
+        },
+        {
+          "de": "Das Kind ist klein.",
+          "en": "The child is small."
+        },
+        {
+          "de": "Anna ist Lehrerin.",
+          "en": "Anna is a teacher."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-011@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-011@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence introduces a new person?",
+            "answer": "Da ist eine Frau.",
+            "alternatives": [
+              "Da ist die Frau.",
+              "Da ist eine Frau.",
+              "Da ist Frau."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which kind of article is used for something already mentioned?",
+            "answer": "the definite article",
+            "alternatives": [
+              "the definite article",
+              "the indefinite article",
+              "no article"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence states a profession in the usual way?",
+            "answer": "Anna ist Lehrerin.",
+            "alternatives": [
+              "Anna ist ein Lehrerin.",
+              "Anna ist Lehrerin.",
+              "Anna ist das Lehrerin."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which pair is correct?",
+            "answer": "Da ist ein Tisch. Der Tisch ist alt.",
+            "alternatives": [
+              "Da ist der Tisch. Ein Tisch ist alt.",
+              "Da ist ein Tisch. Der Tisch ist alt.",
+              "Da ist ein Tisch. Ein Tisch ist alt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q05",
+            "format": "typed-blank",
+            "prompt": "Da ist ___ Kind. (a)",
+            "answer": "ein",
+            "near_misses": ["eine", "der"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q06",
+            "format": "typed-blank",
+            "prompt": "Da ist eine Lampe. ___ Lampe ist neu. (the)",
+            "answer": "Die",
+            "near_misses": ["Eine", "Der"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q07",
+            "format": "typed-blank",
+            "prompt": "Da ist ein Buch. ___ Buch ist alt. (the)",
+            "answer": "Das",
+            "near_misses": ["Ein", "Der"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q08",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): There is a table.",
+            "answer": "Da ist ein Tisch.",
+            "near_misses": ["Da ist eine Tisch.", "Da ist der Tisch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q09",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): The child is small.",
+            "answer": "Das Kind ist klein.",
+            "near_misses": ["Der Kind ist klein.", "Ein Kind ist klein."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q10",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): Paul is a teacher. (no article)",
+            "answer": "Paul ist Lehrer.",
+            "near_misses": ["Paul ist der Lehrer.", "Paul ist das Lehrer."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q11",
+            "format": "correction",
+            "prompt": "Correct the article: Da ist eine Tisch.",
+            "answer": "Da ist ein Tisch.",
+            "near_misses": ["Da ist eine Tisch.", "Da ist einen Tisch."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:q12",
+            "format": "correction",
+            "prompt": "Correct the article: Die Buch ist neu.",
+            "answer": "Das Buch ist neu.",
+            "near_misses": ["Die Buch ist neu.", "Der Buch ist neu."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-011@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence introduces a new thing?",
+            "answer": "Da ist ein Haus.",
+            "alternatives": [
+              "Da ist das Haus.",
+              "Da ist ein Haus.",
+              "Da ist Haus."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-011@1:h02",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): Lisa is a student. (no article)",
+            "answer": "Lisa ist Studentin.",
+            "near_misses": [
+              "Lisa ist die Studentin.",
+              "Lisa ist ein Studentin."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-011@1:h03",
+            "format": "correction",
+            "prompt": "Correct the article: Die Haus ist alt.",
+            "answer": "Das Haus ist alt.",
+            "near_misses": ["Die Haus ist alt.", "Der Haus ist alt."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
