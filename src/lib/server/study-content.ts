@@ -101,8 +101,10 @@ function publicQuestion(row: Row) {
     id: String(row.id),
     format: String(row.format) as ExerciseFormat,
     prompt: String(row.prompt),
+    // Only multiple choice offers its alternatives; for other formats they
+    // are accepted answers and stay on the server.
     alternatives:
-      row.alternatives === null
+      row.format !== 'multiple-choice' || row.alternatives === null
         ? undefined
         : (JSON.parse(String(row.alternatives)) as string[])
   };

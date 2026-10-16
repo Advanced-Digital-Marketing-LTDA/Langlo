@@ -411,6 +411,25 @@ describe('pause, resume and next-question routes', () => {
     expect(served.body.question).not.toHaveProperty('answer');
   });
 
+  it('returns options for multiple choice but never accepted answers', async () => {
+    await importContent(client, approvedPackage());
+    const choice = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-001' })
+    );
+    expect(choice.body.question.alternatives).toEqual(['suis', 'es', 'est']);
+    const translation = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-002' })
+    );
+    expect(translation.body.question).toMatchObject({
+      id: 'fr-a1-002@1:q1',
+      format: 'translation'
+    });
+    expect(translation.body.question).not.toHaveProperty('alternatives');
+    expect(JSON.stringify(translation.body)).not.toContain('On est ici.');
+  });
+
   it('says withdrawn content is unavailable rather than a generic conflict', async () => {
     await importContent(client, approvedPackage());
     await client.execute(
