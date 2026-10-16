@@ -1,0 +1,661 @@
+{
+  "module_id": "en-a1-module-04",
+  "track": "English A1",
+  "title": "Some and any, adjectives, adverbs and prepositions",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "en-a1-012",
+      "title": "Some and any with count and non-count nouns",
+      "explanation": "Use some in positive statements and any in negative statements and questions. Both work with plural count nouns (apples) and non-count nouns (water, milk, bread): I have some apples. I don't have any milk. Do you have any bread? Non-count nouns have no plural and no a/an: not a milk. Some can also appear in offers, but at this level keep to the basic rule.",
+      "examples": [
+        {
+          "en": "I have some apples."
+        },
+        {
+          "en": "I don't have any milk."
+        },
+        {
+          "en": "Do you have any bread?"
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-012@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-012@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word is normally used in positive statements?",
+            "answer": "some",
+            "alternatives": ["some", "any", "no"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word is normally used in negative statements?",
+            "answer": "any",
+            "alternatives": ["some", "any", "no"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'any' correctly?",
+            "answer": "I don't have any milk.",
+            "alternatives": [
+              "I don't have some milk.",
+              "I don't have any milk.",
+              "I don't have a milk."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which noun is a non-count noun?",
+            "answer": "water",
+            "alternatives": ["water", "apple", "book"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q05",
+            "format": "typed-blank",
+            "prompt": "I have ___ apples. (positive)",
+            "answer": "some",
+            "near_misses": ["any", "a"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q06",
+            "format": "typed-blank",
+            "prompt": "Do you have ___ milk? (question)",
+            "answer": "any",
+            "near_misses": ["some", "an"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q07",
+            "format": "typed-blank",
+            "prompt": "She doesn't have ___ friends here. (negative)",
+            "answer": "any",
+            "near_misses": ["some", "a"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: I / have / apples",
+            "answer": "I have some apples.",
+            "near_misses": ["I have any apples.", "I have a apples."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: I / not have / milk",
+            "answer": "I don't have any milk.",
+            "alternatives": ["I do not have any milk."],
+            "near_misses": ["I don't have some milk.", "I not have any milk."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: ask: you / have / bread",
+            "answer": "Do you have any bread?",
+            "near_misses": ["Do you have some bread?", "You have any bread?"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: I don't have some money.",
+            "answer": "I don't have any money.",
+            "alternatives": ["I do not have any money."],
+            "near_misses": [
+              "I don't have some money.",
+              "I don't have a money."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Do you have some friends here?",
+            "answer": "Do you have any friends here?",
+            "near_misses": [
+              "Do you have some friends here?",
+              "Do you has any friends here?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-012@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct positive statement?",
+            "answer": "She buys some bread.",
+            "alternatives": [
+              "She buys any bread.",
+              "She buys some bread.",
+              "She buys a bread."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-012@1:h02",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: she / not have / tea",
+            "answer": "She doesn't have any tea.",
+            "alternatives": ["She does not have any tea."],
+            "near_misses": [
+              "She doesn't have some tea.",
+              "She don't have any tea."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-012@1:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: He has any apples.",
+            "answer": "He has some apples.",
+            "near_misses": ["He has any apples.", "He has a apples."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a1-014",
+      "title": "Describing with adjectives and comparatives",
+      "explanation": "Adjectives describe people and things and stand after be or before a noun: My brother is tall. Make the comparative with -er for short adjectives: tall, taller; old, older; big, bigger (double the final consonant); happy, happier (y becomes i). Use more for longer adjectives: more interesting. Good is irregular: good, better. Use than to compare: This bag is bigger than that bag.",
+      "examples": [
+        {
+          "en": "My brother is tall."
+        },
+        {
+          "en": "This bag is bigger than that bag."
+        },
+        {
+          "en": "She is happier today."
+        }
+      ],
+      "references": ["CAM-A1-YLE", "BC-A1-A2"],
+      "version": {
+        "id": "en-a1-014@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-014@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'tall'?",
+            "answer": "taller",
+            "alternatives": ["taller", "more tall", "tallest"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'big'?",
+            "answer": "bigger",
+            "alternatives": ["biger", "bigger", "more big"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'happy'?",
+            "answer": "happier",
+            "alternatives": ["happyer", "happier", "more happy"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'interesting'?",
+            "answer": "more interesting",
+            "alternatives": [
+              "more interesting",
+              "interestinger",
+              "most interesting"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q05",
+            "format": "typed-blank",
+            "prompt": "My brother is ___ than me. (tall)",
+            "answer": "taller",
+            "near_misses": ["tall", "tallest"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q06",
+            "format": "typed-blank",
+            "prompt": "This bag is ___ than that bag. (big)",
+            "answer": "bigger",
+            "near_misses": ["big", "biggest"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q07",
+            "format": "typed-blank",
+            "prompt": "Tom is ___ than Anna. (old)",
+            "answer": "older",
+            "near_misses": ["old", "more old"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence: my brother / be / tall",
+            "answer": "My brother is tall.",
+            "near_misses": ["My brother tall.", "My brother are tall."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence: this bag / be / big / than / that bag",
+            "answer": "This bag is bigger than that bag.",
+            "near_misses": [
+              "This bag is more big than that bag.",
+              "This bag is bigger then that bag."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence: she / be / happy / than / yesterday",
+            "answer": "She is happier than yesterday.",
+            "near_misses": [
+              "She is more happy than yesterday.",
+              "She is happyer than yesterday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: Tom is more tall than Anna.",
+            "answer": "Tom is taller than Anna.",
+            "near_misses": [
+              "Tom is more tall than Anna.",
+              "Tom is tallest than Anna."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: This book is more good than that book.",
+            "answer": "This book is better than that book.",
+            "near_misses": [
+              "This book is more good than that book.",
+              "This book is gooder than that book."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-014@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'good'?",
+            "answer": "better",
+            "alternatives": ["better", "gooder", "more good"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-014@1:h02",
+            "format": "typed-blank",
+            "prompt": "My sister is ___ than me. (young)",
+            "answer": "younger",
+            "near_misses": ["young", "youngest"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-014@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence: this film / be / interesting / than / that film",
+            "answer": "This film is more interesting than that film.",
+            "near_misses": [
+              "This film is interestinger than that film.",
+              "This film is most interesting than that film."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a1-015",
+      "title": "Adverbs of frequency and place",
+      "explanation": "Frequency adverbs (always, usually, often, sometimes, never) stand before the main verb and after be: I always drink tea. She is never late. Place adverbs (here, there, outside, inside, upstairs) usually come at the end of the clause: The children play outside. Do not put a frequency adverb between a verb and its object: not I drink always tea.",
+      "examples": [
+        {
+          "en": "I always drink tea."
+        },
+        {
+          "en": "She is never late."
+        },
+        {
+          "en": "The children play outside."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-015@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-015@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does 'always' go with a main verb?",
+            "answer": "before the main verb",
+            "alternatives": [
+              "before the main verb",
+              "after the main verb",
+              "at the very end"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Where does 'never' go with the verb be?",
+            "answer": "after be",
+            "alternatives": ["after be", "before be", "at the end"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence places the adverb correctly?",
+            "answer": "I always drink tea.",
+            "alternatives": [
+              "I drink always tea.",
+              "I always drink tea.",
+              "Always I drink tea."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct with be?",
+            "answer": "She is never late.",
+            "alternatives": [
+              "She never is late.",
+              "She is never late.",
+              "She is late never."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ drink tea in the morning. (every time)",
+            "answer": "always",
+            "near_misses": ["never", "sometimes"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q06",
+            "format": "typed-blank",
+            "prompt": "She is ___ late. (not at any time)",
+            "answer": "never",
+            "near_misses": ["always", "often"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q07",
+            "format": "typed-blank",
+            "prompt": "The children play ___. (not inside)",
+            "answer": "outside",
+            "near_misses": ["inside", "upstairs"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with the adverb: I / always / drink / tea",
+            "answer": "I always drink tea.",
+            "near_misses": ["I drink always tea.", "I always drinks tea."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with the adverb: she / be / never / late",
+            "answer": "She is never late.",
+            "near_misses": ["She never is late.", "She is late never."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with the adverb: the children / play / outside",
+            "answer": "The children play outside.",
+            "near_misses": [
+              "The children outside play.",
+              "The children plays outside."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: He plays often tennis.",
+            "answer": "He often plays tennis.",
+            "near_misses": ["He plays often tennis.", "He often play tennis."],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word order: They usually are happy.",
+            "answer": "They are usually happy.",
+            "near_misses": [
+              "They usually are happy.",
+              "They are happy usually."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-015@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence places 'often' correctly?",
+            "answer": "We often eat pizza.",
+            "alternatives": [
+              "We eat often pizza.",
+              "We often eat pizza.",
+              "Often we eat pizza."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-015@1:h02",
+            "format": "typed-blank",
+            "prompt": "He ___ goes to school by bus. (some days)",
+            "answer": "sometimes",
+            "near_misses": ["always", "never"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-015@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with the adverb: he / be / often / tired",
+            "answer": "He is often tired.",
+            "near_misses": ["He often is tired.", "He is tired often."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "en-a1-016",
+      "title": "Prepositions of place and time",
+      "explanation": "Use at with clock times (at seven o'clock), on with days (on Monday) and in with months (in June). For place, on means touching the top of a surface (on the table), in means inside (in the box), under means below, next to means beside and between means in the middle of two things. Learn these as chunks: at home, on Monday, in June.",
+      "examples": [
+        {
+          "en": "The book is on the table."
+        },
+        {
+          "en": "The class starts at seven o'clock."
+        },
+        {
+          "en": "My birthday is in June."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-016@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "en-a1-016@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a clock time?",
+            "answer": "at",
+            "alternatives": ["at", "on", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a day of the week?",
+            "answer": "on",
+            "alternatives": ["at", "on", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which preposition goes with a month?",
+            "answer": "in",
+            "alternatives": ["at", "on", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which preposition describes a thing below another?",
+            "answer": "under",
+            "alternatives": ["under", "next to", "between"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q05",
+            "format": "typed-blank",
+            "prompt": "The class starts ___ seven o'clock. (time)",
+            "answer": "at",
+            "near_misses": ["on", "in"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q06",
+            "format": "typed-blank",
+            "prompt": "My birthday is ___ June. (month)",
+            "answer": "in",
+            "near_misses": ["on", "at"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q07",
+            "format": "typed-blank",
+            "prompt": "The book is ___ the table. (on top)",
+            "answer": "on",
+            "near_misses": ["in", "at"],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a preposition: the class / start / seven o'clock",
+            "answer": "The class starts at seven o'clock.",
+            "near_misses": [
+              "The class starts on seven o'clock.",
+              "The class starts in seven o'clock."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a preposition: my birthday / be / June",
+            "answer": "My birthday is in June.",
+            "near_misses": [
+              "My birthday is on June.",
+              "My birthday is at June."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a preposition: the cat / be / under / the table",
+            "answer": "The cat is under the table.",
+            "near_misses": [
+              "The cat is on the table.",
+              "The cat is the table under."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q11",
+            "format": "correction",
+            "prompt": "Correct the preposition: The class starts in Monday.",
+            "answer": "The class starts on Monday.",
+            "near_misses": [
+              "The class starts in Monday.",
+              "The class starts at Monday."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:q12",
+            "format": "correction",
+            "prompt": "Correct the preposition: I get up on seven o'clock.",
+            "answer": "I get up at seven o'clock.",
+            "near_misses": [
+              "I get up on seven o'clock.",
+              "I get up in seven o'clock."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "en-a1-016@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which preposition describes a thing beside another?",
+            "answer": "next to",
+            "alternatives": ["next to", "under", "at"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-016@1:h02",
+            "format": "typed-blank",
+            "prompt": "The shop is ___ the bank and the school. (in the middle of two)",
+            "answer": "between",
+            "near_misses": ["under", "among"],
+            "holdout": true
+          },
+          {
+            "id": "en-a1-016@1:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a preposition: the bag / be / on / the chair",
+            "answer": "The bag is on the chair.",
+            "near_misses": [
+              "The bag is in the chair.",
+              "The bag is at the chair."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
