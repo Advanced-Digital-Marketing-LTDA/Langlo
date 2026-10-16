@@ -3,7 +3,7 @@
   "track": "French A1",
   "title": "Identity and simple statements",
   "instruction_language": "en",
-  "review_status": "pending-owner-review",
+  "review_status": "approved",
   "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
   "lessons": [
     {
