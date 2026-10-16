@@ -1,0 +1,676 @@
+{
+  "module_id": "fr-a1-module-06",
+  "track": "French A1",
+  "title": "Past events, routines and existence",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "fr-a1-021",
+      "title": "Short past events: the passé composé",
+      "explanation": "The passé composé describes a finished event. It has two parts: avoir or être in the present, then a past participle. Regular -er verbs form the participle by changing -er to -é: parler, parlé; manger, mangé. Frequent irregular participles: faire, fait; prendre, pris; avoir, eu; être, été. Most verbs use avoir: J'ai mangé. A few frequent verbs of movement, such as aller, arriver and rester, use être, and then the participle agrees with the subject: Il est arrivé, Elle est arrivée, Ils sont arrivés. A time word such as hier (yesterday) often goes with it.",
+      "examples": [
+        {
+          "fr": "J'ai chanté hier.",
+          "en": "I sang yesterday."
+        },
+        {
+          "fr": "Elle est arrivée hier.",
+          "en": "She arrived yesterday."
+        },
+        {
+          "fr": "Nous avons fait les courses.",
+          "en": "We did the shopping."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-021@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-021@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the past participle of 'manger'?",
+            "answer": "mangé",
+            "alternatives": ["mangeu", "mangé", "mangez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'I spoke French.'",
+            "answer": "J'ai parlé français.",
+            "alternatives": [
+              "Je suis parlé français.",
+              "J'ai parlé français.",
+              "J'ai parler français."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which auxiliary verb goes with 'arriver'?",
+            "answer": "être",
+            "alternatives": ["avoir", "être", "aller"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "Elle est allée au marché.",
+            "alternatives": [
+              "Elle est allé au marché.",
+              "Elle est allée au marché.",
+              "Elle a allée au marché."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q05",
+            "format": "typed-blank",
+            "prompt": "Hier, nous avons ___ la télé. (regarder)",
+            "answer": "regardé",
+            "near_misses": ["regarder", "regardez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q06",
+            "format": "typed-blank",
+            "prompt": "Il ___ arrivé hier. (être)",
+            "answer": "est",
+            "near_misses": ["a", "es"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q07",
+            "format": "typed-blank",
+            "prompt": "Tu as ___ le pain. (prendre)",
+            "answer": "pris",
+            "near_misses": ["prendu", "prend"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the passé composé): I ate an apple.",
+            "answer": "J'ai mangé une pomme.",
+            "near_misses": [
+              "Je suis mangé une pomme.",
+              "J'ai manger une pomme."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the passé composé): We spoke yesterday.",
+            "answer": "Nous avons parlé hier.",
+            "near_misses": [
+              "Nous avons parler hier.",
+              "Nous sommes parlé hier."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the passé composé): She arrived at noon.",
+            "answer": "Elle est arrivée à midi.",
+            "near_misses": [
+              "Elle est arrivé à midi.",
+              "Elle a arrivée à midi."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Nous avons mangeons hier.",
+            "answer": "Nous avons mangé hier.",
+            "near_misses": [
+              "Nous avons mangeons hier.",
+              "Nous avons manger hier."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Marie est allé au marché.",
+            "answer": "Marie est allée au marché.",
+            "near_misses": [
+              "Marie est allé au marché.",
+              "Marie a allée au marché."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-021@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the past participle of 'chanter'?",
+            "answer": "chanté",
+            "alternatives": ["chante", "chanté", "chanter"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-021@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ils ont ___ au parc. (jouer)",
+            "answer": "joué",
+            "near_misses": ["jouer", "jouez"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-021@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the passé composé): They (boys) arrived yesterday.",
+            "answer": "Ils sont arrivés hier.",
+            "near_misses": ["Ils sont arrivé hier.", "Ils ont arrivés hier."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-022",
+      "title": "Something just happened: venir de + infinitive",
+      "explanation": "To say that something has just happened, use the present of venir, then de, then an infinitive: Je viens de manger. De becomes d' before a vowel or a silent h: Elle vient d'arriver. Venir is irregular: je viens, tu viens, il/elle/on vient, nous venons, vous venez, ils/elles viennent. The infinitive never changes.",
+      "examples": [
+        {
+          "fr": "Je viens de travailler.",
+          "en": "I have just worked."
+        },
+        {
+          "fr": "Marie vient d'arriver.",
+          "en": "Marie has just arrived."
+        },
+        {
+          "fr": "Ils viennent de chanter.",
+          "en": "They have just sung."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-022@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-022@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of venir goes with 'je'?",
+            "answer": "viens",
+            "alternatives": ["vient", "viens", "venons"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'He has just eaten.'?",
+            "answer": "Il vient de manger.",
+            "alternatives": [
+              "Il vient manger.",
+              "Il vient de manger.",
+              "Il vient de mangé."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of venir goes with 'ils'?",
+            "answer": "viennent",
+            "alternatives": ["viennent", "vient", "venent"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct before a vowel?",
+            "answer": "Elle vient d'arriver.",
+            "alternatives": [
+              "Elle vient de arriver.",
+              "Elle vient d'arriver.",
+              "Elle vient du arriver."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q05",
+            "format": "typed-blank",
+            "prompt": "Nous ___ de manger. (venir)",
+            "answer": "venons",
+            "near_misses": ["venez", "venont"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q06",
+            "format": "typed-blank",
+            "prompt": "Tu ___ de chanter. (venir)",
+            "answer": "viens",
+            "near_misses": ["vient", "vien"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q07",
+            "format": "typed-blank",
+            "prompt": "Il vient ___ parler. (just)",
+            "answer": "de",
+            "near_misses": ["d'", "du"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use venir de): I have just eaten.",
+            "answer": "Je viens de manger.",
+            "near_misses": ["Je viens manger.", "Je venir de manger."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use venir de): She has just arrived.",
+            "answer": "Elle vient d'arriver.",
+            "near_misses": ["Elle vient de arriver.", "Elle viens d'arriver."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use venir de): We have just spoken.",
+            "answer": "Nous venons de parler.",
+            "near_misses": ["Nous venez de parler.", "Nous venons parler."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je vient de travailler.",
+            "answer": "Je viens de travailler.",
+            "near_misses": [
+              "Je vient de travailler.",
+              "Je viens de travaillé."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Elle vient de arriver.",
+            "answer": "Elle vient d'arriver.",
+            "near_misses": ["Elle vient de arriver.", "Elle vient d'arrivé."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-022@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form of venir goes with 'vous'?",
+            "answer": "venez",
+            "alternatives": ["venons", "venez", "viennent"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-022@1:h02",
+            "format": "typed-blank",
+            "prompt": "On ___ de partir. (venir)",
+            "answer": "vient",
+            "near_misses": ["viens", "viennent"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-022@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use venir de): They (girls) have just arrived.",
+            "answer": "Elles viennent d'arriver.",
+            "near_misses": [
+              "Elles vient d'arriver.",
+              "Elles viennent de arriver."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-023",
+      "title": "Reflexive verbs for daily routine",
+      "explanation": "Reflexive verbs have a pronoun before the verb that refers back to the subject: me (je), te (tu), se (il, elle, on, ils, elles), nous, vous. Me, te and se become m', t' and s' before a vowel or a silent h: je m'appelle. Frequent verbs: se lever (to get up), se coucher (to go to bed), se réveiller (to wake up), s'appeler (to be called). Se lever has a spelling change: je me lève, tu te lèves, il se lève, nous nous levons, vous vous levez, ils se lèvent.",
+      "examples": [
+        {
+          "fr": "Je m'appelle Marie.",
+          "en": "My name is Marie."
+        },
+        {
+          "fr": "Il se lève à sept heures.",
+          "en": "He gets up at seven o'clock."
+        },
+        {
+          "fr": "Elles se réveillent tôt.",
+          "en": "They wake up early."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-023@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-023@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun goes with 'je' in a reflexive verb?",
+            "answer": "me",
+            "alternatives": ["se", "me", "nous"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'My name is Paul.'?",
+            "answer": "Je m'appelle Paul.",
+            "alternatives": [
+              "Je appelle Paul.",
+              "Je m'appelle Paul.",
+              "Je me appelle Paul."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'He gets up.'?",
+            "answer": "Il se lève.",
+            "alternatives": ["Il lève se.", "Il se lève.", "Il me lève."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun goes with 'nous'?",
+            "answer": "nous",
+            "alternatives": ["se", "nous", "vous"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q05",
+            "format": "typed-blank",
+            "prompt": "Tu ___ couches tard. (se coucher)",
+            "answer": "te",
+            "near_misses": ["me", "se"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q06",
+            "format": "typed-blank",
+            "prompt": "Elle ___ réveille à six heures. (se réveiller)",
+            "answer": "se",
+            "near_misses": ["te", "me"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q07",
+            "format": "typed-blank",
+            "prompt": "Vous vous ___ à huit heures. (se lever)",
+            "answer": "levez",
+            "near_misses": ["levons", "lèvez"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I get up at seven o'clock.",
+            "answer": "Je me lève à sept heures.",
+            "near_misses": [
+              "Je lève à sept heures.",
+              "Je me levé à sept heures."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We go to bed late.",
+            "answer": "Nous nous couchons tard.",
+            "near_misses": ["Nous couchons tard.", "Nous se couchons tard."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (boys) wake up early.",
+            "answer": "Ils se réveillent tôt.",
+            "near_misses": ["Ils réveillent tôt.", "Ils se réveille tôt."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je couche à dix heures.",
+            "answer": "Je me couche à dix heures.",
+            "near_misses": [
+              "Je couche à dix heures.",
+              "Je se couche à dix heures."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Elle me lève à sept heures.",
+            "answer": "Elle se lève à sept heures.",
+            "near_misses": [
+              "Elle me lève à sept heures.",
+              "Elle s'lève à sept heures."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-023@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun goes with 'vous'?",
+            "answer": "vous",
+            "alternatives": ["se", "vous", "nous"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-023@1:h02",
+            "format": "typed-blank",
+            "prompt": "Nous nous ___ à six heures. (se réveiller)",
+            "answer": "réveillons",
+            "near_misses": ["réveillez", "reveillons"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-023@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She gets up early.",
+            "answer": "Elle se lève tôt.",
+            "near_misses": ["Elle lève tôt.", "Elle se levé tôt."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "fr-a1-024",
+      "title": "There is and there are: il y a",
+      "explanation": "Il y a means there is or there are, and it does not change for singular or plural: Il y a un livre sur la table, Il y a des fleurs dans le jardin. It is followed by an article and a noun, often with a place. To ask, use intonation or est-ce que: Est-ce qu'il y a un restaurant ici ? After a negative the article becomes de or d': Il n'y a pas de lait. Do not use il est for this meaning.",
+      "examples": [
+        {
+          "fr": "Il y a un livre dans le sac.",
+          "en": "There is a book in the bag."
+        },
+        {
+          "fr": "Il y a des fleurs dans le jardin.",
+          "en": "There are flowers in the garden."
+        },
+        {
+          "fr": "Il n'y a pas de lait.",
+          "en": "There is no milk."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-024@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "fr-a1-024@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which expression means 'there is' or 'there are'?",
+            "answer": "il y a",
+            "alternatives": ["il a", "il y a", "il est"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'There are cats in the house.'",
+            "answer": "Il y a des chats dans la maison.",
+            "alternatives": [
+              "Il y a des chats dans la maison.",
+              "Il y ont des chats dans la maison.",
+              "Ils y a des chats dans la maison."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the negative of 'Il y a du pain.'?",
+            "answer": "Il n'y a pas de pain.",
+            "alternatives": [
+              "Il n'y a pas du pain.",
+              "Il n'y a pas de pain.",
+              "Il ne y a pas de pain."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question asks 'Is there a restaurant here?'",
+            "answer": "Est-ce qu'il y a un restaurant ici ?",
+            "alternatives": [
+              "Est-ce qu'il y a un restaurant ici ?",
+              "Est-ce que il y a un restaurant ici ?",
+              "Il y a est-ce qu'un restaurant ici ?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q05",
+            "format": "typed-blank",
+            "prompt": "Il ___ a des enfants ici.",
+            "answer": "y",
+            "near_misses": ["l'", "il"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ y a du pain sur la table.",
+            "answer": "Il",
+            "near_misses": ["Elle", "Ils"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q07",
+            "format": "typed-blank",
+            "prompt": "Il n'y a pas ___ lait. (de)",
+            "answer": "de",
+            "near_misses": ["du", "des"],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): There is a cat in the garden.",
+            "answer": "Il y a un chat dans le jardin.",
+            "near_misses": [
+              "Il est un chat dans le jardin.",
+              "Il y a un chat dans la jardin."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): There are children in the house.",
+            "answer": "Il y a des enfants dans la maison.",
+            "near_misses": [
+              "Il y a enfants dans la maison.",
+              "Il y ont des enfants dans la maison."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): There is no bread here.",
+            "answer": "Il n'y a pas de pain ici.",
+            "near_misses": [
+              "Il n'y a pas du pain ici.",
+              "Il ne y a pas de pain ici."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the nouns): Il est un chat sur la table.",
+            "answer": "Il y a un chat sur la table.",
+            "near_misses": [
+              "Il est un chat sur la table.",
+              "Il a un chat sur la table."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Il y a pas de pain.",
+            "answer": "Il n'y a pas de pain.",
+            "near_misses": ["Il y a pas de pain.", "Il ne y a pas de pain."],
+            "holdout": false
+          },
+          {
+            "id": "fr-a1-024@1:h01",
+            "format": "multiple-choice",
+            "prompt": "How do you say 'There are books on the table.'?",
+            "answer": "Il y a des livres sur la table.",
+            "alternatives": [
+              "Il y a des livres sur la table.",
+              "Il est des livres sur la table.",
+              "Ils ont des livres sur la table."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-024@1:h02",
+            "format": "typed-blank",
+            "prompt": "Il y ___ un restaurant ici. (a)",
+            "answer": "a",
+            "near_misses": ["as", "ont"],
+            "holdout": true
+          },
+          {
+            "id": "fr-a1-024@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Is there a school here?",
+            "answer": "Est-ce qu'il y a une école ici ?",
+            "alternatives": ["Il y a une école ici ?"],
+            "near_misses": [
+              "Est-ce que il y a une école ici ?",
+              "Est-ce qu'il y a un école ici ?"
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
