@@ -5,7 +5,7 @@
 
 # This workflow integrates a collection of open source static analysis tools
 # with GitHub code scanning. For documentation, or to provide feedback, visit
-# https://github.com/github/ossar-action
+# https://github.com/microsoft/security-devops-action
 name: OSSAR (reusable)
 
 # Shared by Langlo and Moderaty. Callers own their triggers and must grant the
@@ -41,13 +41,22 @@ jobs:
       #   uses: actions/setup-dotnet@v4
       #   with:
       #     dotnet-version: '3.1.x'
-      # Run open source static analysis tools
+      # Run open source static analysis tools with the GitHub OSSAR policy.
+      # ESLint is left out on purpose: Microsoft's bundled ESLint config only
+      # matches .js files, so a repo with .ts but no .js files makes ESLint
+      # report every file as ignored, exit 2, and fail the whole scan with
+      # zero findings. An explicit tool list forces every named tool to run, so
+      # bandit (needs Python files) and binskim (needs binaries) are left out too:
+      # either aborts the scan when the repo has no such files.
       - name: Run OSSAR
-        uses: github/ossar-action@v1
-        id: ossar
+        uses: microsoft/security-devops-action@5b26a185ff02cf7c100778adeff0ebbf704ca144 # v1
+        id: msdo
+        with:
+          policy: GitHub
+          tools: templateanalyzer, trivy
 
         # Upload results to the Security tab
       - name: Upload OSSAR results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@ce5e7eeac396d720fe2d802714996c8ce561e311 # v3
         with:
-          sarif_file: ${{ steps.ossar.outputs.sarifFile }}
+          sarif_file: ${{ steps.msdo.outputs.sarifFile }}
