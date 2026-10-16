@@ -118,6 +118,66 @@ describe('content import', () => {
     ).toEqual(snapshotRows.rows);
   });
 
+  const lesson = {
+    title: 'Être',
+    explanation: 'Use être to say who you are.',
+    examples: [{ fr: 'Je suis étudiant.', en: 'I am a student.' }],
+    references: ['https://example.test/etre']
+  };
+
+  it('stores a version lesson and rejects a changed lesson for the same version', async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson });
+    await importContent(client, pkg);
+    const row = (
+      await client.execute(
+        "SELECT content_version_id, skill_id, language, title, explanation, examples, refs FROM lessons WHERE content_version_id = 'fr-a1-001@1'"
+      )
+    ).rows[0];
+    expect({ ...row }).toEqual({
+      content_version_id: 'fr-a1-001@1',
+      skill_id: 'fr-a1-001',
+      language: 'fr',
+      title: 'Être',
+      explanation: 'Use être to say who you are.',
+      examples: JSON.stringify(lesson.examples),
+      refs: JSON.stringify(lesson.references)
+    });
+    const count = async () =>
+      (await client.execute('SELECT count(*) AS n FROM lessons')).rows[0].n;
+    expect(await count()).toBe(1);
+    await importContent(client, pkg);
+    expect(await count()).toBe(1);
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0], {
+      lesson: { ...lesson, explanation: 'Changed text.' }
+    });
+    await rejects(pkg, 'CONTENT_CONFLICT');
+  });
+
+  it('adds a lesson to an already imported version under a new curriculum version', async () => {
+    await importContent(client, approvedPackage());
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '0.2.0';
+    Object.assign(pkg.versions[0], { lesson });
+    await importContent(client, pkg);
+    const row = await client.execute(
+      "SELECT title FROM lessons WHERE content_version_id = 'fr-a1-001@1'"
+    );
+    expect(row.rows.map((r) => r.title)).toEqual(['Être']);
+  });
+
+  it.each([
+    ['empty title', { ...lesson, title: ' ' }],
+    ['no examples key', { ...lesson, examples: 'x' }],
+    ['non-string reference', { ...lesson, references: [1] }],
+    ['non-string example value', { ...lesson, examples: [{ fr: 1 }] }]
+  ])('rejects a malformed lesson (%s) without writes', async (_name, bad) => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], { lesson: bad });
+    await rejects(pkg, 'INVALID_PACKAGE');
+  });
+
   it.each(['true', 1, null])(
     'rejects malformed holdout %s without writes',
     async (holdout) => {

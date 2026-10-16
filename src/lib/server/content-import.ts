@@ -43,6 +43,14 @@ export type ContentQuestion = {
   holdout?: boolean | undefined;
 };
 
+export type ContentLesson = {
+  title: string;
+  explanation: string;
+  // Each example maps a language code to a sentence; values are plain text.
+  examples: Record<string, string>[];
+  references: string[];
+};
+
 export type ContentPackage = {
   curriculumVersion: string;
   publicationStatus: string;
@@ -64,6 +72,8 @@ export type ContentPackage = {
     version: number;
     review: string;
     questions: ContentQuestion[];
+    // Optional so packages without lessons keep their fingerprints.
+    lesson?: ContentLesson | undefined;
   }[];
 };
 
@@ -135,6 +145,13 @@ const questionShape = z.object({
   holdout: z.boolean().optional()
 });
 
+const lessonShape = z.object({
+  title: text,
+  explanation: text,
+  examples: z.array(z.record(z.string(), text)),
+  references: z.array(text)
+});
+
 const packageShape = z.object({
   dependencySemantics: z.literal('recommended_teaching_order'),
   bundleDigest: z.string().optional(),
@@ -145,7 +162,8 @@ const packageShape = z.object({
       skillId: text,
       version: z.int().min(1),
       review: z.unknown().optional(),
-      questions: z.array(questionShape).min(1)
+      questions: z.array(questionShape).min(1),
+      lesson: lessonShape.optional()
     })
   )
 });
@@ -479,6 +497,42 @@ async function backfillPayloads(tx: Transaction, version: PackageVersion) {
     });
 }
 
+const lessonFingerprint = (lesson: ContentLesson) =>
+  fingerprint({
+    title: lesson.title,
+    explanation: lesson.explanation,
+    examples: lesson.examples,
+    references: lesson.references
+  });
+
+// A lesson is immutable once stored: a different text under the same version
+// is a conflict. A version imported before it had a lesson may gain one.
+async function importLesson(tx: Transaction, version: PackageVersion) {
+  const { lesson } = version;
+  if (lesson === undefined) return;
+  const hash = lessonFingerprint(lesson);
+  const stored = await tx.execute({
+    sql: 'SELECT fingerprint FROM lessons WHERE content_version_id = ?',
+    args: [version.id]
+  });
+  if (stored.rows[0]) {
+    if (stored.rows[0].fingerprint !== hash)
+      fail('CONTENT_CONFLICT', `lesson ${version.id}`);
+    return;
+  }
+  await tx.execute({
+    sql: 'INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) SELECT id, skill_id, language, ?, ?, ?, ?, ? FROM content_versions WHERE id = ?',
+    args: [
+      lesson.title,
+      lesson.explanation,
+      JSON.stringify(lesson.examples),
+      JSON.stringify(lesson.references),
+      hash,
+      version.id
+    ]
+  });
+}
+
 async function importVersions(
   tx: Transaction,
   pkg: ContentPackage,
@@ -504,6 +558,7 @@ async function importVersions(
     const stored = await storedVersion(tx, version);
     if (stored === undefined) {
       await insertVersion(tx, version, skill.language);
+      await importLesson(tx, version);
       result.versions += 1;
       result.questions += version.questions.length;
       result.quarantined += Number(version.review === 'quarantined');
@@ -525,6 +580,7 @@ async function importVersions(
     } else if (stored.fingerprint !== hash)
       fail('CONTENT_CONFLICT', `version ${version.id}`);
     await backfillPayloads(tx, version);
+    await importLesson(tx, version);
     if (version.review === 'quarantined') {
       const update = await tx.execute({
         sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
