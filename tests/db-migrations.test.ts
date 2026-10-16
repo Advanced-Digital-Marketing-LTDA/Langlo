@@ -341,7 +341,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT count(*) AS count FROM __drizzle_migrations'
           )
         ).rows[0].count
-      ).toBe(9);
+      ).toBe(10);
     } finally {
       close();
     }
