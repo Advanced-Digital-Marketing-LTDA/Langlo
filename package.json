@@ -53,6 +53,8 @@
     "@e2e-dev/web": "^0.14.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.63.0",
+    "@stryker-mutator/core": "^10.0.0",
+    "@stryker-mutator/vitest-runner": "^10.0.0",
     "@sveltejs/adapter-node": "6.0.0",
     "@sveltejs/kit": "3.0.1",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
