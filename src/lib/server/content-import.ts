@@ -445,15 +445,37 @@ async function insertVersion(
   });
   for (const question of version.questions)
     await tx.execute({
-      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout) VALUES (?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer, alternatives) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         question.id,
         version.id,
         version.skillId,
         language,
         question.format,
-        Number(question.holdout ?? false)
+        Number(question.holdout ?? false),
+        ...payloadArgs(question)
       ]
+    });
+}
+
+// Prompt, answer and alternatives as stored; alternatives are a JSON array.
+const payloadArgs = (question: ContentQuestion) =>
+  [
+    question.prompt,
+    question.answer,
+    question.alternatives === undefined
+      ? null
+      : JSON.stringify(question.alternatives)
+  ] as const;
+
+// Only reached once the stored version fingerprint (which covers the payload)
+// equals the incoming package's, so filling rows that predate 0009 cannot
+// introduce unverified text. Rows that already hold a payload are untouched.
+async function backfillPayloads(tx: Transaction, version: PackageVersion) {
+  for (const question of version.questions)
+    await tx.execute({
+      sql: 'UPDATE questions SET prompt = ?, answer = ?, alternatives = ? WHERE id = ? AND prompt IS NULL AND answer IS NULL',
+      args: [...payloadArgs(question), question.id]
     });
 }
 
@@ -502,6 +524,7 @@ async function importVersions(
       });
     } else if (stored.fingerprint !== hash)
       fail('CONTENT_CONFLICT', `version ${version.id}`);
+    await backfillPayloads(tx, version);
     if (version.review === 'quarantined') {
       const update = await tx.execute({
         sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",

@@ -299,6 +299,12 @@ export const questions = sqliteTable(
   {
     id: text('id').primaryKey(),
     holdout: integer('holdout', { mode: 'boolean' }).notNull().default(false),
+    // Checked payload. Null only on rows imported before 0009; a verified
+    // re-import of the recorded original package fills them in.
+    prompt: text('prompt'),
+    answer: text('answer'),
+    // JSON array of strings, null when the question has no alternatives.
+    alternatives: text('alternatives'),
     contentVersionId: text('content_version_id').notNull(),
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),

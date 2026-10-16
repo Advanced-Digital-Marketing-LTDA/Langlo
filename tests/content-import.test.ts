@@ -67,6 +67,57 @@ describe('content import', () => {
     await rejects(pkg, 'CONTENT_CONFLICT');
   });
 
+  it('stores each question prompt, answer and alternatives', async () => {
+    await importContent(client, approvedPackage());
+    const rows = await client.execute(
+      "SELECT id, prompt, answer, alternatives FROM questions WHERE id LIKE 'fr-a1-%' ORDER BY id"
+    );
+    expect(rows.rows.map((row) => ({ ...row }))).toEqual([
+      {
+        id: 'fr-a1-001@1:q1',
+        prompt: 'Je ___ étudiant.',
+        answer: 'suis',
+        alternatives: JSON.stringify(['suis', 'es', 'est'])
+      },
+      {
+        id: 'fr-a1-001@1:q2',
+        prompt: 'Tu ___ ici.',
+        answer: 'es',
+        alternatives: null
+      },
+      {
+        id: 'fr-a1-002@1:q1',
+        prompt: 'We are here.',
+        answer: 'Nous sommes ici.',
+        alternatives: JSON.stringify(['On est ici.'])
+      }
+    ]);
+  });
+
+  it('backfills payloads of verified legacy questions on adoption and keeps them on re-import', async () => {
+    await seedLegacyPackage(client);
+    const before = await client.execute(
+      "SELECT count(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' AND prompt IS NOT NULL"
+    );
+    expect(before.rows[0].n).toBe(0);
+    await importContent(client, approvedPackage());
+    const after = await client.execute(
+      "SELECT count(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' AND (prompt IS NULL OR answer IS NULL)"
+    );
+    expect(after.rows[0].n).toBe(0);
+    const snapshotRows = await client.execute(
+      'SELECT id, prompt, answer, alternatives FROM questions ORDER BY id'
+    );
+    await importContent(client, approvedPackage());
+    expect(
+      (
+        await client.execute(
+          'SELECT id, prompt, answer, alternatives FROM questions ORDER BY id'
+        )
+      ).rows
+    ).toEqual(snapshotRows.rows);
+  });
+
   it.each(['true', 1, null])(
     'rejects malformed holdout %s without writes',
     async (holdout) => {

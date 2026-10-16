@@ -253,7 +253,8 @@ describe('migration inventory', () => {
       '0005_auth_contract',
       '0006_content_version_ledger',
       '0007_content_payload_fingerprint',
-      '0008_question_holdouts'
+      '0008_question_holdouts',
+      '0009_question_payload'
     ]);
     const whens = migrations.map((m) => m.when);
     expect([...whens].sort((a, b) => a - b)).toEqual(whens);
@@ -336,7 +337,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       '0005_auth_contract',
       '0006_content_version_ledger',
       '0007_content_payload_fingerprint',
-      '0008_question_holdouts'
+      '0008_question_holdouts',
+      '0009_question_payload'
     ]);
     const result = await applyRemoteTestPlan(client, all, {
       host,
@@ -348,7 +350,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       '0005_auth_contract',
       '0006_content_version_ledger',
       '0007_content_payload_fingerprint',
-      '0008_question_holdouts'
+      '0008_question_holdouts',
+      '0009_question_payload'
     ]);
   });
 
@@ -665,7 +668,7 @@ describe('remote-test CLI', () => {
         open
       )
     ).toBe(0);
-    expect(ok.lines.join('\n')).toContain('applied 9 migration(s)');
+    expect(ok.lines.join('\n')).toContain('applied 10 migration(s)');
   });
 
   it('prints table names from the target without control characters', async () => {
