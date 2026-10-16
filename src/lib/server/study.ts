@@ -27,6 +27,7 @@ function toStudySession(row: Row) {
     language: String(row.language),
     mode: String(row.mode),
     state: String(row.state),
+    pausedAt: row.paused_at === null ? null : Number(row.paused_at),
     createdAt: Number(row.created_at)
   };
 }
@@ -59,7 +60,7 @@ function toEvaluation(row: Row) {
 }
 
 const studySessionColumns =
-  'id, enrollment_id, language, mode, state, created_at';
+  'id, enrollment_id, language, mode, state, paused_at, created_at';
 
 export async function listStudySessions(
   client: Client,
@@ -285,4 +286,154 @@ export async function recordAttempt(
   } finally {
     tx.close();
   }
+}
+
+type SessionRow = { language: string; mode: string; state: string };
+
+async function ownSession(
+  client: Pick<Client, 'execute'>,
+  session: LearnerSession,
+  studySessionId: unknown
+): Promise<SessionRow> {
+  if (typeof studySessionId !== 'string') throw new StudyError('NOT_FOUND');
+  const found = await client.execute({
+    sql: 'SELECT language, mode, state FROM study_sessions WHERE id = ? AND owner_id = ?',
+    args: [studySessionId, session.userId]
+  });
+  const row = found.rows[0];
+  if (!row) throw new StudyError('NOT_FOUND');
+  return {
+    language: String(row.language),
+    mode: String(row.mode),
+    state: String(row.state)
+  };
+}
+
+/**
+ * Pause the caller's own session. A repeat keeps the first pause time; there
+ * is no expiry, so a session can be resumed after any length of time.
+ */
+export async function pauseStudySession(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string,
+  now: number = Date.now()
+) {
+  const { state } = await ownSession(client, session, studySessionId);
+  if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
+  await client.execute({
+    sql: "UPDATE study_sessions SET state = 'paused', paused_at = COALESCE(paused_at, ?) WHERE id = ? AND owner_id = ? AND state <> 'completed'",
+    args: [now, studySessionId, session.userId]
+  });
+  return getStudySession(client, session, studySessionId);
+}
+
+/** Resume the caller's own paused (or already active) session. */
+export async function resumeStudySession(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string
+) {
+  const { state } = await ownSession(client, session, studySessionId);
+  if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
+  await client.execute({
+    sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ? AND state <> 'completed'",
+    args: [studySessionId, session.userId]
+  });
+  return getStudySession(client, session, studySessionId);
+}
+
+/** The newest content version of a skill, which must not be quarantined. */
+async function currentVersion(
+  client: Pick<Client, 'execute'>,
+  language: string,
+  skillId: unknown
+) {
+  if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
+  const found = await client.execute({
+    sql: 'SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1',
+    args: [skillId, language]
+  });
+  const row = found.rows[0];
+  if (!row) throw new StudyError('NOT_FOUND');
+  if (row.status === 'quarantined') throw new StudyError('CONTENT_UNAVAILABLE');
+  return String(row.id);
+}
+
+/**
+ * The next item of a skill for the caller's active session: the first
+ * question, in id order, that this session has not attempted. The position is
+ * derived from confirmed attempts, so a reload or a second tab gets the same
+ * answer. Holdouts are served only in assessment sessions. The expected
+ * answer is never returned.
+ */
+export async function nextQuestion(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string,
+  skillId: string
+) {
+  const study = await ownSession(client, session, studySessionId);
+  if (study.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
+  const versionId = await currentVersion(client, study.language, skillId);
+  const rows = await client.execute({
+    sql: `SELECT q.id, q.format, q.prompt, q.alternatives,
+            EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.study_session_id = ? AND a.question_id = q.id) AS answered
+          FROM questions q
+          WHERE q.content_version_id = ? AND q.prompt IS NOT NULL AND (q.holdout = 0 OR ? = 'assessment')
+          ORDER BY q.id`,
+    args: [session.userId, studySessionId, versionId, study.mode]
+  });
+  const next = rows.rows.find((row) => Number(row.answered) === 0);
+  return {
+    question: next
+      ? {
+          id: String(next.id),
+          format: String(next.format),
+          prompt: String(next.prompt),
+          alternatives:
+            next.alternatives === null
+              ? undefined
+              : (JSON.parse(String(next.alternatives)) as string[])
+        }
+      : null,
+    answered: rows.rows.filter((row) => Number(row.answered) === 1).length,
+    total: rows.rows.length
+  };
+}
+
+/**
+ * The stored lesson for a skill in a track the caller is enrolled in. Authored
+ * explanations are English only; for another enrollment language the English
+ * text is returned with `englishFallback` set so the page can say so.
+ */
+export async function getLesson(
+  client: Client,
+  session: LearnerSession,
+  language: string,
+  skillId: string
+) {
+  if (typeof language !== 'string') throw new StudyError('NOT_FOUND');
+  const enrolled = await client.execute({
+    sql: 'SELECT explanation_language FROM enrollments WHERE owner_id = ? AND language = ?',
+    args: [session.userId, language]
+  });
+  if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
+  const versionId = await currentVersion(client, language, skillId);
+  const found = await client.execute({
+    sql: 'SELECT title, explanation, examples, refs FROM lessons WHERE content_version_id = ?',
+    args: [versionId]
+  });
+  const row = found.rows[0];
+  if (!row) throw new StudyError('NOT_FOUND');
+  return {
+    skillId,
+    contentVersionId: versionId,
+    title: String(row.title),
+    explanation: String(row.explanation),
+    examples: JSON.parse(String(row.examples)) as Record<string, string>[],
+    references: JSON.parse(String(row.refs)) as string[],
+    explanationLanguage: 'en',
+    englishFallback: enrolled.rows[0].explanation_language !== 'en'
+  };
 }
