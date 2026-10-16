@@ -51,19 +51,22 @@ function assertAvailable(row: Row | undefined): asserts row is Row {
   if (row.status === 'quarantined') throw new StudyError('CONTENT_UNAVAILABLE');
 }
 
+/** What a question read is scoped to: the owner, session, skill and its mode. */
+type QuestionRead = {
+  userId: string;
+  studySessionId: string;
+  skillId: string;
+  language: string;
+  mode: string;
+};
+
 /**
  * The question rows of a skill for an active session, with whether this
  * session answered each. The session state and the version status are read in
  * the payload statement itself, so a pause or quarantine committed after an
  * earlier lookup is not answered with a question.
  */
-async function questionRows(
-  client: Client,
-  session: LearnerSession,
-  studySessionId: string,
-  skillId: string,
-  study: SessionRow
-) {
+async function questionRows(client: Client, read: QuestionRead) {
   const found = await client.execute({
     sql: `SELECT s.state, v.status, q.id, q.format, q.prompt, q.alternatives,
             EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.study_session_id = ? AND a.question_id = q.id) AS answered
@@ -73,16 +76,16 @@ async function questionRows(
           WHERE s.id = ? AND s.owner_id = ?
           ORDER BY q.id`,
     args: [
-      session.userId,
-      studySessionId,
-      session.userId,
-      studySessionId,
-      skillId,
-      skillId,
-      study.language,
-      study.mode,
-      studySessionId,
-      session.userId
+      read.userId,
+      read.studySessionId,
+      read.userId,
+      read.studySessionId,
+      read.skillId,
+      read.skillId,
+      read.language,
+      read.mode,
+      read.studySessionId,
+      read.userId
     ]
   });
   if (found.rows[0] && found.rows[0].state !== 'active')
@@ -120,13 +123,13 @@ export async function nextQuestion(
   const study = await ownSession(client, session, studySessionId);
   if (study.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
   if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
-  const rows = await questionRows(
-    client,
-    session,
+  const rows = await questionRows(client, {
+    userId: session.userId,
     studySessionId,
     skillId,
-    study
-  );
+    language: study.language,
+    mode: study.mode
+  });
   const next = rows.find((row) => Number(row.answered) === 0);
   return {
     question: next ? publicQuestion(next) : null,
