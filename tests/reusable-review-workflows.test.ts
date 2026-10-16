@@ -30,12 +30,11 @@ describe('reusable OSSAR scan', () => {
   });
 
   it('keeps the GitHub OSSAR policy so detections still reach code scanning', () => {
-    expect(ossar).toMatch(/policy:\s*GitHub/u);
+    expect(ossar).toMatch(/^\s+policy:\s*GitHub\s*$/mu);
   });
 
-  it('names its tools explicitly', () => {
-    expect(ossarTools).toContain('trivy');
-    expect(ossarTools).toContain('templateanalyzer');
+  it('names exactly the tools that run, so none is added unnoticed', () => {
+    expect(ossarTools).toEqual(['templateanalyzer', 'trivy']);
   });
 
   it.each([
