@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   accentsFor,
+  answerActionUrl,
   ANSWER_LIMIT,
   checkAnswer
 } from '../src/lib/components/exercises/answer';
@@ -61,5 +62,16 @@ describe('accentsFor', () => {
     expect(accentsFor('de')).toContain('ß');
     expect(accentsFor('en')).toEqual([]);
     expect(accentsFor('constructor')).toEqual([]);
+  });
+});
+
+describe('answerActionUrl', () => {
+  it('keeps the session and names the answer action', () => {
+    const url = new URL(
+      answerActionUrl('study a&b'),
+      'http://127.0.0.1/lesson'
+    );
+    expect(url.searchParams.get('session')).toBe('study a&b');
+    expect([...url.searchParams.keys()]).toContain('/answer');
   });
 });

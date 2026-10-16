@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import {
+    answerActionUrl,
     checkAnswer,
     type ExerciseFormat,
     type ExerciseQuestion
@@ -49,7 +50,7 @@
 
 <form
   method="POST"
-  action="?/answer"
+  action={answerActionUrl(studySessionId)}
   novalidate
   onsubmit={validate}
   use:enhance={() => {

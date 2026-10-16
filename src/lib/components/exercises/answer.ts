@@ -78,3 +78,12 @@ const accents: Record<string, readonly string[]> = {
 export function accentsFor(language: string): readonly string[] {
   return Object.hasOwn(accents, language) ? (accents[language] ?? []) : [];
 }
+
+/**
+ * The form action URL. Without JavaScript the browser replaces the whole query
+ * string with the action's, so the session the page was opened with is kept in
+ * it and the learner lands back on their next question.
+ */
+export function answerActionUrl(studySessionId: string): string {
+  return `?session=${encodeURIComponent(studySessionId)}&/answer`;
+}
