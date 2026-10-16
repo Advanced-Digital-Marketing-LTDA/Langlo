@@ -1,4 +1,5 @@
 import type { Client, Row } from '@libsql/client';
+import type { ExerciseFormat } from '../components/exercises/answer';
 import type { LearnerSession } from './flashcards';
 import { StudyError } from './study-error';
 
@@ -98,7 +99,7 @@ async function questionRows(client: Client, read: QuestionRead) {
 function publicQuestion(row: Row) {
   return {
     id: String(row.id),
-    format: String(row.format),
+    format: String(row.format) as ExerciseFormat,
     prompt: String(row.prompt),
     alternatives:
       row.alternatives === null

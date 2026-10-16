@@ -27,7 +27,10 @@ import * as attempt from '../src/routes/app/api/attempts/[id]/+server';
 import * as pause from '../src/routes/app/api/study-sessions/[id]/pause/+server';
 import * as resume from '../src/routes/app/api/study-sessions/[id]/resume/+server';
 import * as next from '../src/routes/app/api/study-sessions/[id]/next/+server';
-import { load as lessonPage } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import {
+  actions as lessonActions,
+  load as lessonPage
+} from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 
@@ -478,5 +481,130 @@ describe('lesson page load', () => {
       unavailable: true,
       lesson: null
     });
+  });
+});
+
+describe('lesson answer action', () => {
+  const attemptCount = async () =>
+    Number(
+      (await client.execute('SELECT COUNT(*) AS n FROM attempts')).rows[0]?.n
+    );
+
+  const submit = (
+    userId: string | null,
+    fields: Record<string, string>,
+    sessionId = 'study-a'
+  ) => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries({
+      studySessionId: sessionId,
+      submissionKey: `key-${Math.random()}`,
+      ...fields
+    }))
+      form.set(name, value);
+    const base = event(userId, {
+      params: { language: 'fr', skill: 'fr-a1-001' }
+    }) as unknown as { request: Request };
+    base.request = new Request('http://127.0.0.1/app/learn', {
+      method: 'POST',
+      body: form
+    });
+    return (lessonActions.answer as unknown as (e: never) => Promise<unknown>)(
+      base as never
+    );
+  };
+
+  const q1 = { questionId: 'fr-a1-001@1:q1', answer: 'suis' };
+  const q2 = { questionId: 'fr-a1-001@1:q2' };
+
+  beforeEach(async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], {
+      lesson: {
+        title: 'Être',
+        explanation: 'Use être.',
+        examples: [],
+        references: []
+      }
+    });
+    await importContent(client, pkg);
+  });
+
+  it('answers 401 to a signed-out caller and writes nothing', async () => {
+    const before = await attemptCount();
+    await expect(submit(null, q1)).rejects.toMatchObject({ status: 401 });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it("answers 404 for another learner's session and writes nothing", async () => {
+    const before = await attemptCount();
+    expect(await submit('learner-b', q1, 'study-a')).toMatchObject({
+      status: 404
+    });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it('records an independent answer with composed accents', async () => {
+    expect(await submit('learner-a', q1)).toMatchObject({ recorded: true });
+    // "e" followed by a combining acute is stored as the one letter "é".
+    expect(
+      await submit('learner-a', { ...q2, answer: 'e\u0301te\u0301' })
+    ).toMatchObject({ recorded: true, duplicate: false });
+    const stored = await client.execute(
+      "SELECT answer, evidence_kind FROM attempts WHERE question_id = 'fr-a1-001@1:q2'"
+    );
+    expect(stored.rows[0]).toMatchObject({
+      answer: 'été',
+      evidence_kind: 'independent'
+    });
+  });
+
+  it.each([
+    ['an empty answer', ''],
+    ['a blank answer', '   \n '],
+    ['an oversized answer', 'a'.repeat(4097)],
+    ['an answer with a null byte', 'es\0'],
+    ['a multi-line blank', 'es\nes']
+  ])('refuses %s and writes nothing', async (_name, answer) => {
+    await submit('learner-a', q1);
+    const before = await attemptCount();
+    expect(await submit('learner-a', { ...q2, answer })).toMatchObject({
+      status: 400,
+      data: { message: expect.any(String) }
+    });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it('refuses a multiple-choice answer that is not an option', async () => {
+    const before = await attemptCount();
+    expect(
+      await submit('learner-a', { ...q1, answer: 'sommes' })
+    ).toMatchObject({ status: 400 });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it('refuses a question the session is not on', async () => {
+    const before = await attemptCount();
+    expect(await submit('learner-a', { ...q2, answer: 'es' })).toMatchObject({
+      status: 409,
+      data: { message: 'This question is out of date. Reload to continue.' }
+    });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it('serves the exercise on the lesson page without its answer', async () => {
+    const e = Object.assign(
+      event('learner-a', { params: { language: 'fr', skill: 'fr-a1-001' } }),
+      { url: new URL('http://127.0.0.1/x?session=study-a') }
+    );
+    const loaded = (await lessonPage(e as never)) as {
+      exercise: { question: Record<string, unknown>; submissionKey: string };
+    };
+    expect(loaded.exercise.question).toMatchObject({
+      id: 'fr-a1-001@1:q1',
+      format: 'multiple-choice'
+    });
+    expect(loaded.exercise.question).not.toHaveProperty('answer');
+    expect(loaded.exercise.submissionKey).toEqual(expect.any(String));
   });
 });

@@ -1,6 +1,11 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  let { data }: { data: PageData } = $props();
+  import type { ActionData, PageData } from './$types';
+  import Exercise from '../../../../../../lib/components/exercises/Exercise.svelte';
+  let { data, form }: { data: PageData; form: ActionData } = $props();
+  const failure = $derived(
+    form && 'message' in form ? form.message : undefined
+  );
+  const recorded = $derived(form !== null && 'recorded' in form);
 </script>
 
 <svelte:head>
@@ -46,6 +51,33 @@
         <li>{reference}</li>
       {/each}
     </ul>
+  {/if}
+
+  {#if data.exercise}
+    <h2>Practice</h2>
+    {#if data.exercise.notice}
+      <p class="callout" role="status">{data.exercise.notice}</p>
+    {:else if data.exercise.question}
+      {#if recorded}
+        <p class="callout" role="status">Answer recorded.</p>
+      {/if}
+      <p>
+        Question {(data.exercise.answered ?? 0) + 1} of {data.exercise.total}
+      </p>
+      {#key data.exercise.question.id}
+        <Exercise
+          question={data.exercise.question}
+          language={data.language}
+          studySessionId={data.exercise.studySessionId}
+          submissionKey={data.exercise.submissionKey}
+          {failure}
+        />
+      {/key}
+    {:else}
+      <p class="callout" role="status">
+        You have answered every question for this skill in this session.
+      </p>
+    {/if}
   {/if}
 {/if}
 

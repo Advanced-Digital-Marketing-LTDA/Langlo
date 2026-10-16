@@ -44,6 +44,15 @@ const messageFor: Record<number, string> = {
   409: 'This change conflicts with the current state.'
 };
 
+/** The HTTP status and learner-safe message for a repository error code. */
+export function describeLearnerError(
+  code: string
+): { status: number; message: string } | undefined {
+  const status = httpStatusFor(code);
+  if (!status) return undefined;
+  return { status, message: messageForCode[code] ?? messageFor[status] };
+}
+
 /**
  * Run a private endpoint for the learner the auth hook verified. The learner
  * is never read from params, query or body; repository errors become safe
@@ -63,11 +72,8 @@ export async function learnerApi(
     return json(await run(client, learner), { status });
   } catch (error_) {
     if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
-      const code = httpStatusFor(error_.code);
-      if (code)
-        error(code, {
-          message: messageForCode[error_.code] ?? messageFor[code]
-        });
+      const described = describeLearnerError(error_.code);
+      if (described) error(described.status, { message: described.message });
     }
     throw error_;
   } finally {
