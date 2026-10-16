@@ -2,7 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { error, fail } from '@sveltejs/kit';
 import type { Client } from '@libsql/client';
 import type { Actions, PageServerLoad } from './$types';
-import { checkAnswer } from '../../../../../../lib/components/exercises/answer';
+import {
+  checkAnswer,
+  normalizeAnswer
+} from '../../../../../../lib/components/exercises/answer';
 import { openAppDatabase } from '../../../../../../lib/server/db/app';
 import { describeLearnerError } from '../../../../../../lib/server/learner-api';
 import {
@@ -10,6 +13,7 @@ import {
   requireLearnerPage
 } from '../../../../../../lib/server/learner-session';
 import {
+  findReplay,
   getLesson,
   nextQuestion,
   recordAttempt,
@@ -98,6 +102,28 @@ const field = (form: FormData, name: string) => {
   return typeof value === 'string' ? value : '';
 };
 
+/**
+ * A retry of an answer that was already recorded gets the original result,
+ * even though the session has since moved on to its next question.
+ */
+async function repeatedAnswer(
+  client: Client,
+  learner: Learner,
+  form: FormData,
+  studySessionId: string
+) {
+  const raw = form.get('answer');
+  if (typeof raw !== 'string') return null;
+  const replay = await findReplay(client, learner, {
+    studySessionId,
+    questionId: field(form, 'questionId'),
+    submissionKey: field(form, 'submissionKey'),
+    evidenceKind: 'independent',
+    answer: normalizeAnswer(raw)
+  });
+  return replay && { recorded: true as const, duplicate: replay.duplicate };
+}
+
 /** Record the answer to the question the session is currently on. */
 async function recordAnswer(
   client: Client,
@@ -106,6 +132,8 @@ async function recordAnswer(
   skillId: string
 ) {
   const studySessionId = field(form, 'studySessionId');
+  const repeated = await repeatedAnswer(client, learner, form, studySessionId);
+  if (repeated) return repeated;
   const next = await nextQuestion(client, learner, studySessionId, skillId);
   const question = next.question;
   if (!question || question.id !== field(form, 'questionId'))

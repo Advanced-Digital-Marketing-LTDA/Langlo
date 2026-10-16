@@ -189,7 +189,7 @@ function validateAttemptInput(input: AttemptInput) {
 
 /** The caller's earlier attempt under this submission key, if any. */
 async function replayAttempt(
-  tx: WriteTransaction,
+  tx: Pick<Client, 'execute'>,
   session: LearnerSession,
   input: AttemptInput
 ) {
@@ -206,6 +206,20 @@ async function replayAttempt(
     prior.answer === input.answer;
   if (!samePayload) throw new StudyError('IDEMPOTENCY_CONFLICT');
   return { id: String(prior.id), duplicate: true };
+}
+
+/**
+ * The caller's earlier attempt under this submission key, when the payload is
+ * the same, so a retry can be answered with the original result before the
+ * session's current question is consulted. Null when the key is new.
+ */
+export async function findReplay(
+  client: Pick<Client, 'execute'>,
+  session: LearnerSession,
+  input: AttemptInput
+) {
+  validateAttemptInput(input);
+  return replayAttempt(client, session, input);
 }
 
 /** Withdrawn content is unavailable; assessment holdouts cannot enter practice. */

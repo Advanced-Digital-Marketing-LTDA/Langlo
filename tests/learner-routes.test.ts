@@ -602,6 +602,25 @@ describe('lesson answer action', () => {
     expect(await attemptCount()).toBe(before);
   });
 
+  it('answers a repeated submission with the original attempt', async () => {
+    const retry = { ...q1, submissionKey: 'retry-key' };
+    expect(await submit('learner-a', retry)).toMatchObject({
+      recorded: true,
+      duplicate: false
+    });
+    const before = await attemptCount();
+    // The session has moved on to the next question; the retry is still the
+    // same submission, not a stale one.
+    expect(await submit('learner-a', retry)).toMatchObject({
+      recorded: true,
+      duplicate: true
+    });
+    expect(await attemptCount()).toBe(before);
+    expect(await submit('learner-a', { ...retry, answer: 'es' })).toMatchObject(
+      { status: 409 }
+    );
+  });
+
   it('refuses a question the session is not on', async () => {
     const before = await attemptCount();
     expect(await submit('learner-a', { ...q2, answer: 'es' })).toMatchObject({

@@ -40,6 +40,11 @@ function textProblem(format: ExerciseFormat, text: string) {
   return undefined;
 }
 
+/** The form an answer is stored in: composed accents, no outer whitespace. */
+export function normalizeAnswer(raw: string): string {
+  return raw.normalize('NFC').trim();
+}
+
 /**
  * Normalise (composed accents, so "é" is one form however it was typed), trim,
  * and reject empty, oversized and malformed input. A multiple-choice answer
@@ -53,7 +58,7 @@ export function checkAnswer(
   if (typeof raw !== 'string') return problem('INVALID');
   // Bound the work before normalising an arbitrarily large string.
   if (raw.length > ANSWER_LIMIT * 2) return problem('TOO_LONG');
-  const answer = raw.normalize('NFC').trim();
+  const answer = normalizeAnswer(raw);
   if (!answer) return problem('EMPTY');
   const rejected = textProblem(format, answer);
   if (rejected) return problem(rejected);
