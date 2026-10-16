@@ -1,0 +1,641 @@
+{
+  "module_id": "de-a1-module-05",
+  "track": "German A1",
+  "title": "Separable verbs, past tenses and imperatives",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a1-017",
+      "title": "Separable-prefix verbs",
+      "explanation": "Many frequent verbs have a separable prefix: aufstehen, einkaufen, anrufen, anfangen, mitkommen. In a main clause the verb stem takes the second position and the prefix goes to the very end: Ich stehe um sieben Uhr auf. Questions work the same way: Rufst du mich an? In the dictionary and in the infinitive the verb is one word (aufstehen).",
+      "examples": [
+        {
+          "de": "Ich stehe um sieben Uhr auf.",
+          "en": "I get up at seven o'clock."
+        },
+        {
+          "de": "Wir kaufen heute ein.",
+          "en": "We are shopping today."
+        },
+        {
+          "de": "Rufst du mich an?",
+          "en": "Are you calling me?"
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-017@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-017@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does the prefix of a separable verb go in a statement?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "before the subject"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'einkaufen' correctly?",
+            "answer": "Wir kaufen heute ein.",
+            "alternatives": [
+              "Wir einkaufen heute.",
+              "Wir kaufen heute ein.",
+              "Wir kauft heute ein."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the infinitive of 'Ich stehe um sieben Uhr auf.'?",
+            "answer": "aufstehen",
+            "alternatives": ["aufstehen", "stehen", "umstehen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question uses 'anrufen' correctly?",
+            "answer": "Rufst du mich an?",
+            "alternatives": [
+              "Rufst du an mich?",
+              "Rufst du mich an?",
+              "Anrufst du mich?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich stehe um sieben Uhr ___. (aufstehen)",
+            "answer": "auf",
+            "near_misses": ["an", "ein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q06",
+            "format": "typed-blank",
+            "prompt": "Wir kaufen heute ___. (einkaufen)",
+            "answer": "ein",
+            "near_misses": ["an", "auf"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q07",
+            "format": "typed-blank",
+            "prompt": "Der Kurs fängt um acht Uhr ___. (anfangen)",
+            "answer": "an",
+            "near_misses": ["auf", "ein"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q08",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): I get up at seven o'clock.",
+            "answer": "Ich stehe um sieben Uhr auf.",
+            "near_misses": [
+              "Ich aufstehe um sieben Uhr.",
+              "Ich stehe auf um sieben Uhr."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q09",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): We shop today.",
+            "answer": "Wir kaufen heute ein.",
+            "near_misses": ["Wir einkaufen heute.", "Wir kaufen ein heute."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q10",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): Are you calling me? (one friend)",
+            "answer": "Rufst du mich an?",
+            "near_misses": ["Rufst du an mich?", "Anrufst du mich?"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Ich aufstehe um acht Uhr.",
+            "answer": "Ich stehe um acht Uhr auf.",
+            "near_misses": [
+              "Ich aufstehe um acht Uhr.",
+              "Ich stehe auf um acht Uhr."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Max einkaufen morgen.",
+            "answer": "Max kauft morgen ein.",
+            "near_misses": ["Max einkaufen morgen.", "Max kauft ein morgen."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-017@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the infinitive of 'Anna ruft Max an.'?",
+            "answer": "anrufen",
+            "alternatives": ["anrufen", "rufen", "aufrufen"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-017@1:h02",
+            "format": "typed-blank",
+            "prompt": "Kommst du ___? (mitkommen)",
+            "answer": "mit",
+            "near_misses": ["auf", "an"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-017@1:h03",
+            "format": "translation",
+            "prompt": "Translate (separate the prefix): Anna gets up at six o'clock.",
+            "answer": "Anna steht um sechs Uhr auf.",
+            "near_misses": [
+              "Anna aufsteht um sechs Uhr.",
+              "Anna steht auf um sechs Uhr."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-018",
+      "title": "Perfekt of frequent everyday verbs",
+      "explanation": "The Perfekt is the usual tense for talking about the past. It uses haben or sein in second position and the past participle at the end: Ich habe gestern gearbeitet. Regular participles are ge- + stem + -t (gearbeitet, gelernt, gespielt, gemacht, gekauft). Some frequent verbs have irregular participles: gegessen, gesehen, gesprochen, gefahren, gekommen, gegangen. Verbs of movement or change of place usually take sein: Wir sind nach Berlin gefahren.",
+      "examples": [
+        {
+          "de": "Ich habe gestern gearbeitet.",
+          "en": "I worked yesterday."
+        },
+        {
+          "de": "Anna hat Deutsch gelernt.",
+          "en": "Anna learned German."
+        },
+        {
+          "de": "Wir sind nach Berlin gefahren.",
+          "en": "We drove to Berlin."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-018@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-018@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does the participle stand in a Perfekt sentence?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "after the subject"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which auxiliary goes with 'gearbeitet'?",
+            "answer": "haben",
+            "alternatives": ["haben", "sein", "werden"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which auxiliary goes with 'gefahren'?",
+            "answer": "sein",
+            "alternatives": ["haben", "sein", "werden"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of 'lernen'?",
+            "answer": "gelernt",
+            "alternatives": ["gelernt", "gelernen", "lernt"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich habe gestern ___. (arbeiten)",
+            "answer": "gearbeitet",
+            "near_misses": ["arbeitet", "gearbeiten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q06",
+            "format": "typed-blank",
+            "prompt": "Anna hat Deutsch ___. (lernen)",
+            "answer": "gelernt",
+            "near_misses": ["lernt", "gelernen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q07",
+            "format": "typed-blank",
+            "prompt": "Wir sind nach Berlin ___. (fahren)",
+            "answer": "gefahren",
+            "near_misses": ["gefahrt", "fahren"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): I worked yesterday.",
+            "answer": "Ich habe gestern gearbeitet.",
+            "near_misses": [
+              "Ich bin gestern gearbeitet.",
+              "Ich habe gearbeitet gestern."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): Anna bought a book.",
+            "answer": "Anna hat ein Buch gekauft.",
+            "near_misses": [
+              "Anna hat gekauft ein Buch.",
+              "Anna ist ein Buch gekauft."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): We drove to Berlin.",
+            "answer": "Wir sind nach Berlin gefahren.",
+            "near_misses": [
+              "Wir haben nach Berlin gefahren.",
+              "Wir sind gefahren nach Berlin."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Ich habe gespielt Fußball.",
+            "answer": "Ich habe Fußball gespielt.",
+            "near_misses": [
+              "Ich habe gespielt Fußball.",
+              "Ich bin Fußball gespielt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Max ist Deutsch gelernt.",
+            "answer": "Max hat Deutsch gelernt.",
+            "near_misses": [
+              "Max ist Deutsch gelernt.",
+              "Max hat gelernt Deutsch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-018@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of 'machen'?",
+            "answer": "gemacht",
+            "alternatives": ["gemacht", "gemachen", "macht"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-018@1:h02",
+            "format": "typed-blank",
+            "prompt": "Paul hat Brot ___. (essen)",
+            "answer": "gegessen",
+            "near_misses": ["geesst", "essen"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-018@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the Perfekt): She came yesterday.",
+            "answer": "Sie ist gestern gekommen.",
+            "near_misses": [
+              "Sie hat gestern gekommen.",
+              "Sie ist gekommen gestern."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-019",
+      "title": "Präteritum of sein and haben",
+      "explanation": "For sein and haben, speakers prefer the Präteritum (simple past) over the Perfekt. Sein: ich war, du warst, er/sie/es war, wir waren, ihr wart, sie/Sie waren. Haben: ich hatte, du hattest, er/sie/es hatte, wir hatten, ihr hattet, sie/Sie hatten. At this level you only need to recognize and use these forms: Ich war gestern müde. Anna hatte keine Zeit.",
+      "examples": [
+        {
+          "de": "Ich war gestern müde.",
+          "en": "I was tired yesterday."
+        },
+        {
+          "de": "Anna hatte keine Zeit.",
+          "en": "Anna had no time."
+        },
+        {
+          "de": "Wir waren in Wien.",
+          "en": "We were in Vienna."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-019@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-019@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which past form of sein goes with 'ich'?",
+            "answer": "war",
+            "alternatives": ["war", "waren", "wart"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which past form of sein goes with 'wir'?",
+            "answer": "waren",
+            "alternatives": ["war", "waren", "warst"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which past form of haben goes with 'er'?",
+            "answer": "hatte",
+            "alternatives": ["hatte", "hatten", "hattest"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which past form of haben goes with 'du'?",
+            "answer": "hattest",
+            "alternatives": ["hatte", "hattest", "hattet"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich ___ gestern müde. (sein)",
+            "answer": "war",
+            "near_misses": ["bin", "waren"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q06",
+            "format": "typed-blank",
+            "prompt": "Anna ___ keine Zeit. (haben)",
+            "answer": "hatte",
+            "near_misses": ["hat", "hatten"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q07",
+            "format": "typed-blank",
+            "prompt": "Wir ___ in Wien. (sein)",
+            "answer": "waren",
+            "near_misses": ["war", "sind"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the past tense): I was tired yesterday.",
+            "answer": "Ich war gestern müde.",
+            "near_misses": ["Ich bin gestern müde.", "Ich wart gestern müde."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the past tense): Anna had no time.",
+            "answer": "Anna hatte keine Zeit.",
+            "near_misses": ["Anna hat keine Zeit.", "Anna hatten keine Zeit."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the past tense): You were at home. (one friend)",
+            "answer": "Du warst zu Hause.",
+            "near_misses": ["Du war zu Hause.", "Du bist zu Hause."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Wir war gestern in Bonn.",
+            "answer": "Wir waren gestern in Bonn.",
+            "near_misses": [
+              "Wir war gestern in Bonn.",
+              "Wir wart gestern in Bonn."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the meaning): Ihr hatte Zeit.",
+            "answer": "Ihr hattet Zeit.",
+            "near_misses": ["Ihr hatte Zeit.", "Ihr hatten Zeit."],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-019@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which past form of haben goes with 'wir'?",
+            "answer": "hatten",
+            "alternatives": ["hatte", "hatten", "hattet"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-019@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ihr ___ gestern müde. (sein)",
+            "answer": "wart",
+            "near_misses": ["waren", "seid"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-019@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the past tense): He had time.",
+            "answer": "Er hatte Zeit.",
+            "near_misses": ["Er hat Zeit.", "Er hatten Zeit."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a1-020",
+      "title": "Imperatives: du, ihr and Sie",
+      "explanation": "Imperatives give instructions. For one friend (du) use the verb stem, with an optional -e: Lerne Deutsch! / Lern Deutsch! For several friends (ihr) use the ihr form: Lernt Deutsch! For the formal address put the verb first and keep Sie: Lernen Sie Deutsch! Verbs that change the stem vowel in du keep it: Sprich! Lies! Nimm! Sei is the imperative of sein. Separable prefixes go to the end: Steh auf! Add bitte to be polite.",
+      "examples": [
+        {
+          "de": "Lerne Deutsch!",
+          "en": "Learn German!"
+        },
+        {
+          "de": "Kommt bitte pünktlich!",
+          "en": "Please come on time! (you all)"
+        },
+        {
+          "de": "Sprechen Sie langsam!",
+          "en": "Speak slowly! (formal)"
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-020@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a1-020@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form is the imperative for one friend (du) of 'lernen'?",
+            "answer": "Lerne",
+            "alternatives": ["Lerne", "Lernt", "Lernen Sie"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form is the imperative for several friends (ihr) of 'kommen'?",
+            "answer": "Kommt",
+            "alternatives": ["Komm", "Kommt", "Kommen Sie"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form is the formal imperative of 'sprechen'?",
+            "answer": "Sprechen Sie",
+            "alternatives": ["Sprich", "Sprecht", "Sprechen Sie"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which imperative of 'sein' is right for one friend?",
+            "answer": "Sei",
+            "alternatives": ["Sei", "Sein", "Bist"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ bitte langsam! (sprechen, du)",
+            "answer": "Sprich",
+            "near_misses": ["Sprech", "Sprecht"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ Sie bitte hier! (warten)",
+            "answer": "Warten",
+            "near_misses": ["Wartet", "Warte"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q07",
+            "format": "typed-blank",
+            "prompt": "___ bitte pünktlich! (kommen, ihr)",
+            "answer": "Kommt",
+            "near_misses": ["Komm", "Kommen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Speak slowly! (one friend)",
+            "answer": "Sprich langsam!",
+            "near_misses": ["Sprech langsam!", "Sprichst langsam!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Learn German! (you all)",
+            "answer": "Lernt Deutsch!",
+            "near_misses": ["Lerne Deutsch!", "Lernen Deutsch!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Please wait here! (formal)",
+            "answer": "Warten Sie bitte hier!",
+            "near_misses": ["Warte bitte hier!", "Warten bitte hier!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q11",
+            "format": "correction",
+            "prompt": "Correct the imperative (one friend): Lernst Deutsch!",
+            "answer": "Lerne Deutsch!",
+            "alternatives": ["Lern Deutsch!"],
+            "near_misses": ["Lernst Deutsch!", "Lernt Deutsch!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:q12",
+            "format": "correction",
+            "prompt": "Correct the imperative (formal): Kommst Sie bitte!",
+            "answer": "Kommen Sie bitte!",
+            "near_misses": ["Kommst Sie bitte!", "Kommt Sie bitte!"],
+            "holdout": false
+          },
+          {
+            "id": "de-a1-020@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which form is the du-imperative of 'lesen'?",
+            "answer": "Lies",
+            "alternatives": ["Lies", "Lese", "Lest"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-020@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ Sie bitte hier! (bleiben)",
+            "answer": "Bleiben",
+            "near_misses": ["Bleibt", "Bleibe"],
+            "holdout": true
+          },
+          {
+            "id": "de-a1-020@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the imperative): Come tomorrow, please! (one friend)",
+            "answer": "Komm bitte morgen!",
+            "near_misses": ["Kommst bitte morgen!", "Kommt bitte morgen!"],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

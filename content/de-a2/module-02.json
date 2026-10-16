@@ -1,0 +1,732 @@
+{
+  "module_id": "de-a2-module-02",
+  "track": "German A2",
+  "title": "Subordinate clauses and case patterns",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "de-a2-005",
+      "title": "Weil clauses with the verb at the end",
+      "explanation": "A weil clause gives a reason and is a subordinate clause: the finite verb moves to the end. Ich bleibe zu Hause, weil ich müde bin. A comma separates the clauses. If the weil clause comes first, the main clause starts with its verb: Weil ich müde bin, bleibe ich zu Hause. With a modal verb the finite modal is last: weil er arbeiten muss. A separable verb is written together again: weil er früh aufsteht.",
+      "examples": [
+        {
+          "de": "Ich bleibe zu Hause, weil ich müde bin.",
+          "en": "I stay at home because I am tired."
+        },
+        {
+          "de": "Anna lernt Deutsch, weil sie in Wien wohnt.",
+          "en": "Anna learns German because she lives in Vienna."
+        },
+        {
+          "de": "Er kommt nicht, weil er arbeiten muss.",
+          "en": "He is not coming because he has to work."
+        }
+      ],
+      "references": [
+        "GOETHE-A2-FIT",
+        "COE-CV20",
+        "GOETHE-A2-ADULT",
+        "GOETHE-DO-A2"
+      ],
+      "version": {
+        "id": "de-a2-005@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-005@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does the finite verb stand in a weil clause?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "right after weil"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence builds the weil clause correctly?",
+            "answer": "Ich bleibe hier, weil ich müde bin.",
+            "alternatives": [
+              "Ich bleibe hier, weil ich bin müde.",
+              "Ich bleibe hier, weil ich müde bin.",
+              "Ich bleibe hier, weil bin ich müde."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence starts with a weil clause correctly?",
+            "answer": "Weil ich müde bin, bleibe ich hier.",
+            "alternatives": [
+              "Weil ich müde bin, ich bleibe hier.",
+              "Weil ich müde bin, bleibe ich hier.",
+              "Weil ich bin müde, bleibe ich hier."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which clause is correct with a separable verb?",
+            "answer": "weil er früh aufsteht",
+            "alternatives": [
+              "weil er steht früh auf",
+              "weil er früh aufsteht",
+              "weil er früh steht auf"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich bleibe zu Hause, weil ich müde ___. (sein)",
+            "answer": "bin",
+            "near_misses": ["ist", "bist"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q06",
+            "format": "typed-blank",
+            "prompt": "Anna lernt Deutsch, weil sie in Wien ___. (wohnen)",
+            "answer": "wohnt",
+            "near_misses": ["wohne", "wohnen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q07",
+            "format": "typed-blank",
+            "prompt": "Er kommt nicht, weil er arbeiten ___. (müssen)",
+            "answer": "muss",
+            "near_misses": ["musst", "müssen"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use weil): I stay at home because I am tired.",
+            "answer": "Ich bleibe zu Hause, weil ich müde bin.",
+            "near_misses": [
+              "Ich bleibe zu Hause, weil ich bin müde.",
+              "Ich bleibe zu Hause, weil bin ich müde."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use weil): Anna learns German because she lives in Vienna.",
+            "answer": "Anna lernt Deutsch, weil sie in Wien wohnt.",
+            "near_misses": [
+              "Anna lernt Deutsch, weil sie wohnt in Wien.",
+              "Anna lernt Deutsch, weil wohnt sie in Wien."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use weil): He is not coming because he has to work.",
+            "answer": "Er kommt nicht, weil er arbeiten muss.",
+            "near_misses": [
+              "Er kommt nicht, weil er muss arbeiten.",
+              "Er kommt nicht, weil muss er arbeiten."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Wir bleiben hier, weil wir sind müde.",
+            "answer": "Wir bleiben hier, weil wir müde sind.",
+            "near_misses": [
+              "Wir bleiben hier, weil wir sind müde.",
+              "Wir bleiben hier, weil sind wir müde."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word order: Max kommt nicht, weil er hat keine Zeit.",
+            "answer": "Max kommt nicht, weil er keine Zeit hat.",
+            "near_misses": [
+              "Max kommt nicht, weil er hat keine Zeit.",
+              "Max kommt nicht, weil hat er keine Zeit."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-005@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence puts the verb at the end of the weil clause?",
+            "answer": "Paul bleibt zu Hause, weil er krank ist.",
+            "alternatives": [
+              "Paul bleibt zu Hause, weil er ist krank.",
+              "Paul bleibt zu Hause, weil er krank ist.",
+              "Paul bleibt zu Hause, weil ist er krank."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-005@1:h02",
+            "format": "typed-blank",
+            "prompt": "Wir essen hier, weil wir Hunger ___. (haben)",
+            "answer": "haben",
+            "near_misses": ["hat", "habt"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-005@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use weil): She learns German because she works in Bonn.",
+            "answer": "Sie lernt Deutsch, weil sie in Bonn arbeitet.",
+            "near_misses": [
+              "Sie lernt Deutsch, weil sie arbeitet in Bonn.",
+              "Sie lernt Deutsch, weil arbeitet sie in Bonn."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-006",
+      "title": "Dass clauses after reporting and opinion verbs",
+      "explanation": "Use a dass clause to report what someone thinks, knows or says. After verbs such as glauben, denken, wissen, sagen and hoffen, a comma and dass introduce a subordinate clause with the finite verb at the end: Ich glaube, dass er kommt. Do not confuse dass (conjunction) with das (article or pronoun). A dass clause can also start the sentence, but at this level use it after the main clause.",
+      "examples": [
+        {
+          "de": "Ich glaube, dass er kommt.",
+          "en": "I believe that he is coming."
+        },
+        {
+          "de": "Ich weiß, dass Anna in Wien wohnt.",
+          "en": "I know that Anna lives in Vienna."
+        },
+        {
+          "de": "Er sagt, dass er müde ist.",
+          "en": "He says that he is tired."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-006@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-006@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word introduces a clause after 'ich glaube'?",
+            "answer": "dass",
+            "alternatives": ["dass", "das", "weil"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Where does the finite verb stand in a dass clause?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "right after dass"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses a dass clause correctly?",
+            "answer": "Ich glaube, dass er kommt.",
+            "alternatives": [
+              "Ich glaube, dass kommt er.",
+              "Ich glaube, dass er kommt.",
+              "Ich glaube, das er kommt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence reports an opinion correctly?",
+            "answer": "Ich denke, dass das Buch gut ist.",
+            "alternatives": [
+              "Ich denke, dass das Buch ist gut.",
+              "Ich denke, dass das Buch gut ist.",
+              "Ich denke, dass ist das Buch gut."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich weiß, ___ Anna in Wien wohnt. (that)",
+            "answer": "dass",
+            "near_misses": ["das", "weil"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q06",
+            "format": "typed-blank",
+            "prompt": "Er sagt, dass er müde ___. (sein)",
+            "answer": "ist",
+            "near_misses": ["bin", "sind"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich glaube, dass sie heute ___. (kommen)",
+            "answer": "kommt",
+            "near_misses": ["kommen", "komme"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use dass): I know that Anna lives in Vienna.",
+            "answer": "Ich weiß, dass Anna in Wien wohnt.",
+            "near_misses": [
+              "Ich weiß, dass Anna wohnt in Wien.",
+              "Ich weiß, das Anna in Wien wohnt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use dass): He says that he is tired.",
+            "answer": "Er sagt, dass er müde ist.",
+            "near_misses": [
+              "Er sagt, dass er ist müde.",
+              "Er sagt, dass ist er müde."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use dass): I think that the book is good.",
+            "answer": "Ich denke, dass das Buch gut ist.",
+            "near_misses": [
+              "Ich denke, dass das Buch ist gut.",
+              "Ich denke, das das Buch gut ist."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Ich glaube, dass sie kommt heute.",
+            "answer": "Ich glaube, dass sie heute kommt.",
+            "near_misses": [
+              "Ich glaube, dass sie kommt heute.",
+              "Ich glaube, dass kommt sie heute."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word: Ich weiß, das er arbeitet.",
+            "answer": "Ich weiß, dass er arbeitet.",
+            "near_misses": [
+              "Ich weiß, das er arbeitet.",
+              "Ich weiß, dass arbeitet er."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-006@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence reports what Max says?",
+            "answer": "Max sagt, dass er Zeit hat.",
+            "alternatives": [
+              "Max sagt, dass er hat Zeit.",
+              "Max sagt, dass er Zeit hat.",
+              "Max sagt, das er Zeit hat."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-006@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ich denke, dass wir morgen ___. (arbeiten)",
+            "answer": "arbeiten",
+            "near_misses": ["arbeitet", "arbeite"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-006@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use dass): She says that she works in Bonn.",
+            "answer": "Sie sagt, dass sie in Bonn arbeitet.",
+            "near_misses": [
+              "Sie sagt, dass sie arbeitet in Bonn.",
+              "Sie sagt, dass arbeitet sie in Bonn."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-007",
+      "title": "Embedded questions with question words",
+      "explanation": "A question can sit inside another sentence. The question word opens the clause and the finite verb moves to the end: Ich weiß nicht, wo er wohnt. Common openers are Ich weiß nicht, Kannst du mir sagen and Sie fragt. Use wo, wann, wie, warum, wer and was as in direct questions, but do not invert the verb and subject. A separable verb is written together again: wann der Kurs anfängt.",
+      "examples": [
+        {
+          "de": "Ich weiß nicht, wo er wohnt.",
+          "en": "I do not know where he lives."
+        },
+        {
+          "de": "Kannst du mir sagen, wo der Bahnhof ist?",
+          "en": "Can you tell me where the station is?"
+        },
+        {
+          "de": "Sie fragt, wann der Kurs anfängt.",
+          "en": "She asks when the course starts."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-007@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-007@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Where does the finite verb stand in an embedded question?",
+            "answer": "at the end",
+            "alternatives": [
+              "at the end",
+              "in second position",
+              "right after the question word"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence contains an embedded question correctly?",
+            "answer": "Ich weiß nicht, wo er wohnt.",
+            "alternatives": [
+              "Ich weiß nicht, wo wohnt er.",
+              "Ich weiß nicht, wo er wohnt.",
+              "Ich weiß nicht, er wo wohnt."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence asks politely where the station is?",
+            "answer": "Kannst du mir sagen, wo der Bahnhof ist?",
+            "alternatives": [
+              "Kannst du mir sagen, wo ist der Bahnhof?",
+              "Kannst du mir sagen, wo der Bahnhof ist?",
+              "Kannst du mir sagen, der Bahnhof wo ist?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which embedded question keeps the separable verb together?",
+            "answer": "wann der Kurs anfängt",
+            "alternatives": [
+              "wann der Kurs fängt an",
+              "wann der Kurs anfängt",
+              "wann fängt der Kurs an"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ich weiß nicht, ___ er wohnt. (where)",
+            "answer": "wo",
+            "near_misses": ["wer", "wie"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q06",
+            "format": "typed-blank",
+            "prompt": "Sie fragt, ___ der Kurs anfängt. (when)",
+            "answer": "wann",
+            "near_misses": ["wo", "wie"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q07",
+            "format": "typed-blank",
+            "prompt": "Ich verstehe nicht, warum er nicht ___. (kommen)",
+            "answer": "kommt",
+            "near_misses": ["kommen", "komme"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use an embedded question): I do not know where he lives.",
+            "answer": "Ich weiß nicht, wo er wohnt.",
+            "near_misses": [
+              "Ich weiß nicht, wo wohnt er.",
+              "Ich weiß nicht, wo er wohnen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use an embedded question): Can you tell me where the station is? (one friend)",
+            "answer": "Kannst du mir sagen, wo der Bahnhof ist?",
+            "near_misses": [
+              "Kannst du mir sagen, wo ist der Bahnhof?",
+              "Kannst du mir sagen, wo der Bahnhof."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use an embedded question): She asks when the course starts.",
+            "answer": "Sie fragt, wann der Kurs anfängt.",
+            "near_misses": [
+              "Sie fragt, wann fängt der Kurs an.",
+              "Sie fragt, wann der Kurs fängt an."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Ich weiß nicht, wann kommt er.",
+            "answer": "Ich weiß nicht, wann er kommt.",
+            "near_misses": [
+              "Ich weiß nicht, wann kommt er.",
+              "Ich weiß nicht, wann er kommen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word order: Sie fragt, wo wohnt Max.",
+            "answer": "Sie fragt, wo Max wohnt.",
+            "near_misses": [
+              "Sie fragt, wo wohnt Max.",
+              "Sie fragt, wo Max wohnen."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-007@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence reports the question 'Wer ist das?'",
+            "answer": "Ich weiß nicht, wer das ist.",
+            "alternatives": [
+              "Ich weiß nicht, wer ist das.",
+              "Ich weiß nicht, wer das ist.",
+              "Ich weiß nicht, das wer ist."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-007@1:h02",
+            "format": "typed-blank",
+            "prompt": "Weißt du, ___ er heißt? (how)",
+            "answer": "wie",
+            "near_misses": ["wer", "wo"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-007@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use an embedded question): Do you know why Anna is learning German? (one friend)",
+            "answer": "Weißt du, warum Anna Deutsch lernt?",
+            "near_misses": [
+              "Weißt du, warum lernt Anna Deutsch?",
+              "Weißt du, warum Anna lernt Deutsch?"
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "de-a2-008",
+      "title": "Accusative and dative in frequent verb and preposition patterns",
+      "explanation": "Some prepositions always take the accusative: für, ohne, durch, gegen, um. Others always take the dative: mit, nach, bei, von, zu, aus, seit. Many verbs also take a dative object: helfen, gefallen, gehören, danken. With verbs like schenken or geben, the person receiving is dative and the thing is accusative: Ich schenke meiner Mutter ein Buch. Learn the case with the preposition or verb.",
+      "examples": [
+        {
+          "de": "Das Geschenk ist für meinen Bruder.",
+          "en": "The gift is for my brother."
+        },
+        {
+          "de": "Ich fahre mit meinem Bruder nach Berlin.",
+          "en": "I am travelling to Berlin with my brother."
+        },
+        {
+          "de": "Ich schenke meiner Mutter ein Buch.",
+          "en": "I give my mother a book."
+        }
+      ],
+      "references": ["GOETHE-A2-FIT", "GOETHE-A2-ADULT", "GOETHE-DO-A2"],
+      "version": {
+        "id": "de-a2-008@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "de-a2-008@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Which case follows 'für'?",
+            "answer": "accusative",
+            "alternatives": ["accusative", "dative", "nominative"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Which case follows 'mit'?",
+            "answer": "dative",
+            "alternatives": ["accusative", "dative", "nominative"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'für' correctly?",
+            "answer": "Das Geschenk ist für den Mann.",
+            "alternatives": [
+              "Das Geschenk ist für dem Mann.",
+              "Das Geschenk ist für den Mann.",
+              "Das Geschenk ist für der Mann."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'mit' correctly?",
+            "answer": "Ich fahre mit dem Zug.",
+            "alternatives": [
+              "Ich fahre mit den Zug.",
+              "Ich fahre mit dem Zug.",
+              "Ich fahre mit der Zug."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q05",
+            "format": "typed-blank",
+            "prompt": "Das Geschenk ist für ___ Frau. (the)",
+            "answer": "die",
+            "near_misses": ["der", "dem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ich wohne bei ___ Eltern. (my)",
+            "answer": "meinen",
+            "near_misses": ["meine", "meinem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q07",
+            "format": "typed-blank",
+            "prompt": "Er geht ohne ___ Freund. (his)",
+            "answer": "seinen",
+            "near_misses": ["sein", "seinem"],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q08",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): The gift is for my brother.",
+            "answer": "Das Geschenk ist für meinen Bruder.",
+            "near_misses": [
+              "Das Geschenk ist für meinem Bruder.",
+              "Das Geschenk ist für mein Bruder."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q09",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): I travel with my brother.",
+            "answer": "Ich fahre mit meinem Bruder.",
+            "near_misses": [
+              "Ich fahre mit meinen Bruder.",
+              "Ich fahre mit mein Bruder."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q10",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): I give my mother a book.",
+            "answer": "Ich schenke meiner Mutter ein Buch.",
+            "near_misses": [
+              "Ich schenke meine Mutter ein Buch.",
+              "Ich schenke meiner Mutter einen Buch."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q11",
+            "format": "correction",
+            "prompt": "Correct the case: Ich fahre mit den Bus.",
+            "answer": "Ich fahre mit dem Bus.",
+            "near_misses": ["Ich fahre mit den Bus.", "Ich fahre mit der Bus."],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:q12",
+            "format": "correction",
+            "prompt": "Correct the case: Das Geschenk ist für dem Kind.",
+            "answer": "Das Geschenk ist für das Kind.",
+            "near_misses": [
+              "Das Geschenk ist für dem Kind.",
+              "Das Geschenk ist für den Kind."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "de-a2-008@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Which preposition always takes the accusative?",
+            "answer": "ohne",
+            "alternatives": ["ohne", "mit", "bei"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-008@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ich fahre mit ___ Auto. (the)",
+            "answer": "dem",
+            "near_misses": ["den", "der"],
+            "holdout": true
+          },
+          {
+            "id": "de-a2-008@1:h03",
+            "format": "translation",
+            "prompt": "Translate (use the correct case): He lives with his parents.",
+            "answer": "Er wohnt bei seinen Eltern.",
+            "near_misses": [
+              "Er wohnt bei seine Eltern.",
+              "Er wohnt bei seinem Eltern."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
