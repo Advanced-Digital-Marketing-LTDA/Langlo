@@ -25,7 +25,7 @@ const statusFor: Record<string, number> = {
 // share the generic text for their status.
 const messageForCode: Record<string, string> = {
   SESSION_NOT_ACTIVE:
-    'This session is paused or finished. Resume it to continue.',
+    'This session is paused or finished. Only a paused session can be resumed.',
   CONTENT_UNAVAILABLE: 'This content is not available right now.',
   QUESTION_ALREADY_ANSWERED:
     'This question was already answered in this session.',

@@ -389,7 +389,8 @@ describe('pause, resume and next-question routes', () => {
     );
     expect(blocked.status).toBe(409);
     expect(blocked.body).toMatchObject({
-      message: 'This session is paused or finished. Resume it to continue.'
+      message:
+        'This session is paused or finished. Only a paused session can be resumed.'
     });
     const resumed = await call(
       resume.POST as Handler,
