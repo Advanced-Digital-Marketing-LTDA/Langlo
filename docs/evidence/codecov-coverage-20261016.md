@@ -38,10 +38,24 @@ Node `24.19.0`; npm `11.9.0` selected through `npm exec`.
 - Check and lint passed again after adding the workflow and regression tests.
 - `git diff --check` passed.
 
+## Publication preparation
+
+The owner subsequently authorized pushing and explicitly removed the mandatory
+PR Review Toolkit, external adversarial review, and gstack review requirements
+from `AGENTS.md`. Those reviews were not run. The spec-validation rule and other
+repository guidance remain in place.
+
+Before publication, the Codecov commit was rebased onto remote main
+`0cfaa1c41cd2b8530aa431bfdffc1d8f1fe601b3`, preserving incoming curriculum and
+import changes. Clean installation, check, lint, formatting, coverage tests,
+property tests, and build passed again on the combined tree. Coverage tests
+passed 813 tests across 41 files; the existing evidence validator confirmed
+zero failed or skipped/disabled tests. All 72 browser tests also passed again.
+
 ## Pending acceptance
 
 The owner must configure `CODECOV_TOKEN` for the supplied Codecov repository.
 Secret presence, slug ownership, GitHub-hosted execution, and successful receipt
-by Codecov were not checked. No upload, secret change, push, deployment, real
-provider call, or paid review ran. Local coverage generation does not prove
+by Codecov were not checked. No upload, secret change, deployment, real
+provider call, or paid review ran during local validation. Local coverage generation does not prove
 hosted upload success. The Vite Codecov plugin was not installed or configured.
