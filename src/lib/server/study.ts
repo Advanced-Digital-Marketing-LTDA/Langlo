@@ -442,6 +442,25 @@ export async function nextQuestion(
   };
 }
 
+/** The newest version of a skill with its lesson, which must exist and be available. */
+async function lessonRow(
+  client: Pick<Client, 'execute'>,
+  language: string,
+  skillId: unknown
+) {
+  if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
+  const found = await client.execute({
+    sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs
+          FROM ${latestVersion} v
+          LEFT JOIN lessons l ON l.content_version_id = v.id`,
+    args: [skillId, language]
+  });
+  const row = found.rows[0];
+  assertAvailable(row);
+  if (row.title === null) throw new StudyError('NOT_FOUND');
+  return row;
+}
+
 /**
  * The stored lesson for a skill in a track the caller is enrolled in. Authored
  * explanations are English only; for another enrollment language the English
@@ -459,16 +478,7 @@ export async function getLesson(
     args: [session.userId, language]
   });
   if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
-  if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
-  const found = await client.execute({
-    sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs
-          FROM ${latestVersion} v
-          LEFT JOIN lessons l ON l.content_version_id = v.id`,
-    args: [skillId, language]
-  });
-  const row = found.rows[0];
-  assertAvailable(row);
-  if (row.title === null) throw new StudyError('NOT_FOUND');
+  const row = await lessonRow(client, language, skillId);
   return {
     skillId,
     contentVersionId: String(row.version_id),

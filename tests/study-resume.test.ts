@@ -166,9 +166,13 @@ describe('pause and resume', () => {
   });
 });
 
-/** A client on which the session completes just before its first UPDATE. */
-function completedBeforeUpdate(): Client {
-  let completed = false;
+/**
+ * A client that first runs `sql` when the first statement matching `pattern`
+ * is about to execute, as when another request commits between two reads or
+ * between a lookup and its write.
+ */
+function afterOtherCommit(pattern: RegExp, sql: string): Client {
+  let committed = false;
   return new Proxy(client, {
     get(target, property) {
       if (property !== 'execute') {
@@ -177,11 +181,9 @@ function completedBeforeUpdate(): Client {
       }
       return async (statement: InStatement) => {
         const text = typeof statement === 'string' ? statement : statement.sql;
-        if (!completed && /^\s*UPDATE study_sessions\b/i.test(text)) {
-          completed = true;
-          await target.execute(
-            "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-a'"
-          );
+        if (!committed && pattern.test(text)) {
+          committed = true;
+          await target.execute(sql);
         }
         return target.execute(statement);
       };
@@ -189,32 +191,18 @@ function completedBeforeUpdate(): Client {
   });
 }
 
-/**
- * A client whose first read of question or lesson payload is preceded by a
- * quarantine import committing, as when content is withdrawn between a
- * version check and the payload query.
- */
-function quarantinedBeforePayloadRead(): Client {
-  let withdrawn = false;
-  return new Proxy(client, {
-    get(target, property) {
-      if (property !== 'execute') {
-        const value = Reflect.get(target, property, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      }
-      return async (statement: InStatement) => {
-        const text = typeof statement === 'string' ? statement : statement.sql;
-        if (!withdrawn && /\b(FROM|JOIN)\s+(questions|lessons)\b/i.test(text)) {
-          withdrawn = true;
-          await target.execute(
-            "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
-          );
-        }
-        return target.execute(statement);
-      };
-    }
-  });
-}
+const completedBeforeUpdate = () =>
+  afterOtherCommit(
+    /^\s*UPDATE study_sessions\b/i,
+    "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-a'"
+  );
+
+// Content is withdrawn just before its question or lesson payload is read.
+const quarantinedBeforePayloadRead = () =>
+  afterOtherCommit(
+    /\b(FROM|JOIN)\s+(questions|lessons)\b/i,
+    "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+  );
 
 describe('next question', () => {
   it('returns the same item after a reload and never the answer', async () => {
