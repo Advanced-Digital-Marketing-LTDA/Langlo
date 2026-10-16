@@ -1,0 +1,25 @@
+name: Dependency review (reusable)
+
+# Shared by Langlo and Moderaty. Callers own their triggers.
+on:
+  workflow_call:
+    inputs:
+      comment-summary-in-pr:
+        description: 'Post a summary comment on the PR: always, on-failure or never. "always" needs pull-requests: write in the caller.'
+        type: string
+        default: never
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          comment-summary-in-pr: ${{ inputs.comment-summary-in-pr }}
