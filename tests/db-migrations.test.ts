@@ -37,6 +37,61 @@ async function fixture() {
 }
 
 describe('disposable libSQL migrations', () => {
+  it('adds content fingerprints without rewriting legacy content, learner rows or triggers', async () => {
+    const target = await fixture();
+    const previous = await mkdtemp(join(tmpdir(), 'langlo-migrations-'));
+    try {
+      const journal = JSON.parse(
+        await readFile('drizzle/meta/_journal.json', 'utf8')
+      );
+      journal.entries = journal.entries.slice(0, 7);
+      await mkdir(join(previous, 'meta'));
+      await writeFile(
+        join(previous, 'meta/_journal.json'),
+        JSON.stringify(journal)
+      );
+      for (const entry of journal.entries)
+        await copyFile(
+          `drizzle/${entry.tag}.sql`,
+          join(previous, `${entry.tag}.sql`)
+        );
+      await migrateFixtureDatabase(target, previous);
+      await seedStudy(target);
+      const { client, close } = await openFixtureDatabase(target);
+      try {
+        const contentSql =
+          'SELECT id, skill_id, language, version, status, created_at FROM content_versions ORDER BY id';
+        const objectsSql =
+          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') ORDER BY name";
+        const content = (await client.execute(contentSql)).rows;
+        const attempts = (await client.execute('SELECT * FROM attempts')).rows;
+        const objects = (await client.execute(objectsSql)).rows;
+        await migrateFixtureDatabase(target);
+        expect((await client.execute(contentSql)).rows).toEqual(content);
+        expect((await client.execute('SELECT * FROM attempts')).rows).toEqual(
+          attempts
+        );
+        expect((await client.execute(objectsSql)).rows).toEqual(objects);
+        expect(
+          (
+            await client.execute('SELECT fingerprint FROM content_versions')
+          ).rows.map((row) => row.fingerprint)
+        ).toEqual([null, null]);
+        expect((await client.execute('PRAGMA foreign_key_check')).rows).toEqual(
+          []
+        );
+        expect(
+          (await client.execute('PRAGMA integrity_check')).rows[0]
+            .integrity_check
+        ).toBe('ok');
+      } finally {
+        close();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
+    }
+  });
+
   it('fails a hardening upgrade closed when the previous schema contains a text version', async () => {
     const target = await fixture();
     const previous = await mkdtemp(join(tmpdir(), 'langlo-migrations-'));
@@ -240,7 +295,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT count(*) AS count FROM __drizzle_migrations'
           )
         ).rows[0].count
-      ).toBe(7);
+      ).toBe(8);
     } finally {
       close();
     }

@@ -195,6 +195,20 @@ function validateAlternatives(question: ContentQuestion) {
 const fingerprint = (data: unknown) =>
   createHash('sha256').update(JSON.stringify(data)).digest('hex');
 
+// Review status may change to quarantine; question payloads remain immutable.
+const versionFingerprint = (version: PackageVersion) =>
+  fingerprint(
+    version.questions
+      .map(({ id, format, prompt, answer, alternatives }) => ({
+        id,
+        format,
+        prompt,
+        answer,
+        alternatives
+      }))
+      .sort((a, b) => Number(a.id > b.id) - Number(a.id < b.id))
+  );
+
 function validatePackage(pkg: ContentPackage) {
   validatePackageHeader(pkg);
   const data = validateShape(pkg);
@@ -360,7 +374,7 @@ async function insertEdges(tx: Transaction, edges: NewEdge[]) {
 
 async function storedVersion(tx: Transaction, version: PackageVersion) {
   const rows = await tx.execute({
-    sql: 'SELECT id, skill_id, version, status FROM content_versions WHERE id = ? OR (skill_id = ? AND version = ?)',
+    sql: 'SELECT id, skill_id, version, status, fingerprint FROM content_versions WHERE id = ? OR (skill_id = ? AND version = ?)',
     args: [version.id, version.skillId, version.version]
   });
   if (rows.rows.length === 0) return undefined;
@@ -369,7 +383,8 @@ async function storedVersion(tx: Transaction, version: PackageVersion) {
   const expected = [version.id, version.skillId, version.version];
   if (
     rows.rows.length > 1 ||
-    JSON.stringify(found) !== JSON.stringify(expected)
+    JSON.stringify(found) !== JSON.stringify(expected) ||
+    row.fingerprint !== versionFingerprint(version)
   )
     fail('CONTENT_CONFLICT', `version ${version.id}`);
   return String(row.status);
@@ -406,13 +421,14 @@ async function insertVersion(
   if (taken.rows.length > 0)
     fail('CONTENT_CONFLICT', `question ${String(taken.rows[0].id)}`);
   await tx.execute({
-    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, ?, ?, ?)',
+    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status, fingerprint) VALUES (?, ?, ?, ?, ?, ?)',
     args: [
       version.id,
       version.skillId,
       language,
       version.version,
-      version.review === 'quarantined' ? 'quarantined' : 'schema-validated'
+      version.review === 'quarantined' ? 'quarantined' : 'schema-validated',
+      versionFingerprint(version)
     ]
   });
   for (const question of version.questions)

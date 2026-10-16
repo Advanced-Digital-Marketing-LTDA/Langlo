@@ -502,7 +502,7 @@ the file by itself does not establish enforced branch-protection settings.
 
 ### Additional findings confirmed from summary-only comments
 
-1. **Content-revision immutability gap — valid, existing, not repaired.**
+1. **Content-revision immutability gap — valid, repaired in the approved follow-up.**
    Cited in the summaries on #47, #51, #53, #60 and #69. A disposable real-database
    probe imports an approved package, changes one valid multiple-choice answer
    under the same content/question IDs, and supplies curriculum 1.1.0. The importer
@@ -510,7 +510,9 @@ the file by itself does not establish enforced branch-protection settings.
    original curriculum instead raises CONTENT_CONFLICT through its package hash.
    Thus sameQuestions checking only IDs/formats is a real gap across newer curriculum
    packages, not an unconditional bypass of the curriculum fingerprint. Fixing this
-   requires server-side content identity/storage work outside the approved edit scope.
+   required server-side content identity/storage work outside the original edit scope.
+   The owner subsequently approved the focused repair; see
+   [content-version immutability evidence](content-version-immutability.md).
 2. **Module ID is not bound to its filename — valid test gap, repaired locally.**
    Cited in #47's summary. An in-memory filesystem overlay changes English A2
    module 06's module_id to en-a2-module-05 while leaving the actual file and lessons
@@ -530,7 +532,10 @@ the file by itself does not establish enforced branch-protection settings.
    missing-snapshot path, and the validator logs the absence. No failing PR instance
    was demonstrated here; this is not treated as an unconditional current defect.
 
-The two new test/content fixes stay within the already-approved files: tests/curriculum-modules.test.ts and content/de-a2/module-04.json. This ledger records the expanded audit. The importer/server/storage gap remains outside that scope and needs a concrete separately approved change.
+The two audit test/content fixes stayed within the originally approved files:
+tests/curriculum-modules.test.ts and content/de-a2/module-04.json. The importer gap
+was separately scoped and approved, and its implementation and migration evidence
+are recorded in [the follow-up](content-version-immutability.md).
 
 ### Claims disproved or qualified by probes
 
