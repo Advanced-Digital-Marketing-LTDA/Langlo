@@ -47,7 +47,14 @@ jobs:
       - name: Run tests with machine-readable evidence
         run: |
           mkdir -p .ci-reports
-          npm test -- --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
+          npm test -- --coverage --coverage.reporter=lcov --reporter=json --reporter=default --outputFile.json=.ci-reports/vitest.json
+      - name: Upload coverage reports to Codecov
+        if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          slug: Advanced-Digital-Marketing-LTDA/Langlo
+          files: ./coverage/lcov.info
       - run: npm run test:property
       - run: npm run build
       - run: npx playwright install --with-deps chromium
