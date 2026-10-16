@@ -6,7 +6,7 @@ Owner-approved local installation using `npm init stryker@latest`, selecting the
 Svelte preset, Vitest runner, JavaScript configuration, and npm. Node 24.19.0 and
 npm 11.9.0 were used (npm selected through `npm exec --package=npm@11.9.0`).
 Installed `@stryker-mutator/core` and `@stryker-mutator/vitest-runner` 10.0.0;
-the runner resolves the existing Vitest 5.0.3 without peer dependency errors.
+the runner resolves the existing Vitest 5.0.5 without peer dependency errors.
 
 `stryker.config.mjs` targets TypeScript source, excluding tests, declaration
 files, generated auth code, and Drizzle configuration. Svelte templates are not
@@ -77,7 +77,7 @@ or account access was performed.
 The owner subsequently authorized pushing this setup in a new PR. The branch
 `chore/stryker-setup` starts from `origin/main` at
 `0cfaa1c` in `/tmp/langlo-stryker-setup`. It preserves main's pinned Vitest
-5.0.3.
+5.0.5.
 The lockfile was regenerated from main; no existing dependency version changed.
 
 PR validation uses Node 24.19.0, npm 11.9.0, and `npm ci --ignore-scripts`, with
