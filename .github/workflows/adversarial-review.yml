@@ -61,7 +61,7 @@ jobs:
             --provider claude \
             --model haiku \
             --timeout 600 \
-            --passes 1 \
+            --passes 2 \
             --verify \
             --fail-on high \
             --fail-on-empty
@@ -75,7 +75,7 @@ jobs:
             --base "origin/$BASE_REF" \
             --provider anthropic \
             --model claude-haiku-5-5 \
-            --passes 1 \
+            --passes 2 \
             --verify \
             --fail-on high \
             --fail-on-empty
