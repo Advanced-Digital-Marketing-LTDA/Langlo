@@ -21,7 +21,9 @@ describe('Quality coverage upload', () => {
     expect(upload).toContain(
       "if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}"
     );
-    expect(upload).toContain('uses: codecov/codecov-action@v5');
+    expect(upload).toContain(
+      'uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5'
+    );
     expect(upload).toContain('token: ${{ secrets.CODECOV_TOKEN }}');
     expect(upload).toContain('slug: Advanced-Digital-Marketing-LTDA/Langlo');
     expect(upload).toContain('files: ./coverage/lcov.info');

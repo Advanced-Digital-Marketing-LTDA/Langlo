@@ -10,7 +10,7 @@ Date: 2026-10-16. Base: local main `569534b`. Branch: `codex/langlo-125-holdouts
 - `recordAttempt` reads the owned session's mode and the stored question's flag. New holdout attempts in `practice` or `mixed-review` fail with existing `CONTENT_UNAVAILABLE`; all private tables remain unchanged. `assessment` accepts holdouts and preserves idempotent replay. Existing owner filters, quarantine checks and prior-attempt replay are retained.
 - No lesson/question selection UI exists in this slice. The future lesson runtime must also filter holdouts out of practice selection. This change enforces the existing attempt-write boundary, not a new lesson runtime.
 
-Changed implementation: `src/lib/server/content-import.ts`, `src/lib/server/study.ts`, `src/lib/server/db/schema.ts`; new migration/snapshot and migration journal. Changed tests: `content-import`, `learner-owner-scope`, `db-constraints`, `db-migrations`, `db-remote-migrate`, `fr-a1-module-01`, and `fixtures/curriculum-module`. Updated `docs/schema.md`. No dependency, curriculum content, workflow, matcher or tracker edits.
+Changed implementation: `src/lib/server/content-import.ts`, `src/lib/server/study.ts`, `src/lib/server/db/schema.ts`; new migration/snapshot and migration journal. Changed tests: `content-import`, `learner-owner-scope`, `db-constraints`, `db-migrations`, `db-remote-migrate`, `fr-a1-module-01`, and `fixtures/curriculum-module`. Updated `docs/schema.md`. No curriculum content, matcher or tracker edits. This PR also carries the separate Codecov change (`.github/workflows/ci.yml`, `tests/codecov-workflow.test.ts`, exact-pinned `vitest` and `@vitest/coverage-v8` 5.0.5 in `package.json`/`package-lock.json`); see `docs/evidence/codecov-coverage-20261016.md`.
 
 ## Observed red and green
 
@@ -64,7 +64,7 @@ A separate snapshot of unchanged base `569534b` was built at `/tmp/langlo-125-ba
 
 ## Pending acceptance and compatibility
 
-- The full browser gate is not green. No hosted CI, real provider, release or deployment success is inferred from local tests.
+- The local browser gate above was not green. Hosted CI `foundation` (run 38960646352, head `b392672`), which runs `npm run test:e2e`, passed. No real provider, release or deployment success is inferred from local tests.
 - Only disposable local fixture databases were migrated. Applying 0008 anywhere else requires a separately authorized owner action.
 - Existing rows lack recoverable holdout metadata and default to practice. This migration does not infer classifications from IDs or silently rewrite previously imported questions. Correctly flagged content imports require the version/fingerprint rules; changed classification needs new content identities and curriculum versions.
 - Legacy imports with omitted flags remain compatible. Introducing explicit flags, including false, intentionally changes fingerprints. The original recorded package can still be verified and adopted; new packages cannot claim that legacy identity.
