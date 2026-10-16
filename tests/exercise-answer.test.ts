@@ -54,6 +54,13 @@ describe('checkAnswer', () => {
     });
     expect(checkAnswer('multiple-choice', 'es')).toMatchObject({ ok: false });
   });
+
+  it('matches an option stored with outer whitespace', () => {
+    expect(checkAnswer('multiple-choice', 'es', [' es ', 'est'])).toEqual({
+      ok: true,
+      answer: 'es'
+    });
+  });
 });
 
 describe('accentsFor', () => {

@@ -63,7 +63,7 @@ export function checkAnswer(
   const rejected = textProblem(format, answer);
   if (rejected) return problem(rejected);
   if (format === 'multiple-choice') {
-    const options = alternatives.map((option) => option.normalize('NFC'));
+    const options = alternatives.map(normalizeAnswer);
     if (!options.includes(answer)) return problem('NOT_AN_OPTION');
   }
   return { ok: true, answer };

@@ -97,8 +97,13 @@ export async function recordAnswer(
   if (repeated) return repeated;
   const next = await nextQuestion(client, learner, studySessionId, skillId);
   const question = next.question;
-  if (!question || question.id !== field(form, 'questionId'))
+  if (!question || question.id !== field(form, 'questionId')) {
+    // A concurrent request may have recorded this very submission after the
+    // first lookup; it is a retry then, not a stale question.
+    const raced = await repeatedAnswer(client, learner, form, studySessionId);
+    if (raced) return raced;
     throw new StudyError('STALE_QUESTION');
+  }
   const checked = checkAnswer(
     question.format,
     form.get('answer'),

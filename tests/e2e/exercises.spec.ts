@@ -1,7 +1,13 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { createClient, type Client } from '@libsql/client/sqlite3';
-import { expect, test } from '@playwright/test';
+import {
+  expect,
+  test,
+  type BrowserContext,
+  type Page,
+  type TestInfo
+} from '@playwright/test';
 import { importContent } from '../../src/lib/server/content-import';
 import { approvedPackage } from '../fixtures/content-package';
 import {
@@ -96,10 +102,37 @@ test.afterAll(async () => {
   await disposeFixtureDatabase(fixtureRoot, dbFile);
 });
 
-test('all four exercise formats render and submit without overflow', async ({
-  page,
-  context
-}, testInfo) => {
+type Exercise = {
+  format: string;
+  instruction: string;
+  answer: string;
+};
+
+const exercises: Exercise[] = [
+  {
+    format: 'multiple-choice',
+    instruction: 'Choose the correct answer.',
+    answer: 'suis'
+  },
+  {
+    format: 'typed-blank',
+    instruction: 'Type the missing word or words.',
+    answer: 'es'
+  },
+  {
+    format: 'translation',
+    instruction: 'Translate the sentence.',
+    answer: 'Nous sommes ici.'
+  },
+  {
+    format: 'correction',
+    instruction: 'Rewrite the sentence with the mistake corrected.',
+    answer: 'Je suis ici.'
+  }
+];
+
+/** Sign in through the rendered form and return the learner's id. */
+async function signIn(page: Page, context: BrowserContext) {
   await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
   await page.goto(`${base}/login`);
   await page.getByLabel('Email').fill('exercises@example.test');
@@ -109,32 +142,39 @@ test('all four exercise formats render and submit without overflow', async ({
   const { user } = await (
     await page.request.get(`${base}/api/auth/get-session`)
   ).json();
+  return user.id as string;
+}
+
+async function seedSession(userId: string) {
   await withDatabase((client) =>
     client.batch(
       [
         {
           sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('exercise-enrollment', ?, 'fr', 'A1', 'en')",
-          args: [user.id]
+          args: [userId]
         },
         {
           sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('exercise-session', ?, 'exercise-enrollment', 'fr', 'practice')",
-          args: [user.id]
+          args: [userId]
         }
       ],
       'write'
     )
   );
-  const storedAnswers = async () =>
-    (
-      await withDatabase((client) =>
-        client.execute({
-          sql: "SELECT question_id, answer, evidence_kind FROM attempts WHERE owner_id = ? AND study_session_id = 'exercise-session' ORDER BY question_id",
-          args: [user.id]
-        })
-      )
-    ).rows;
+}
 
-  // Exercise the JSON boundary with the same authenticated browser session.
+const storedAnswers = async (userId: string) =>
+  (
+    await withDatabase((client) =>
+      client.execute({
+        sql: "SELECT question_id, answer, evidence_kind FROM attempts WHERE owner_id = ? AND study_session_id = 'exercise-session' ORDER BY question_id",
+        args: [userId]
+      })
+    )
+  ).rows;
+
+/** Exercise the JSON boundary with the same authenticated browser session. */
+async function expectBlankAttemptsRefused(page: Page) {
   for (const answer of ['', ' \n\t\u00a0']) {
     const response = await page.request.post(`${base}/app/api/attempts`, {
       headers: { origin: base },
@@ -148,7 +188,102 @@ test('all four exercise formats render and submit without overflow', async ({
     });
     expect(response.status()).toBe(400);
   }
-  expect(await storedAnswers()).toEqual([]);
+}
+
+/** Fill the current exercise the way a learner would, accents included. */
+async function fillAnswer(page: Page, exercise: Exercise) {
+  if (exercise.format === 'multiple-choice') {
+    await page
+      .getByRole('radio', { name: exercise.answer, exact: true })
+      .check();
+    return;
+  }
+  const field = page.getByLabel('Your answer', { exact: true });
+  await expect(field).toHaveJSProperty(
+    'tagName',
+    exercise.format === 'typed-blank' ? 'INPUT' : 'TEXTAREA'
+  );
+  await field.fill('ee');
+  await field.evaluate((element: HTMLInputElement | HTMLTextAreaElement) =>
+    element.setSelectionRange(1, 1)
+  );
+  await page.getByRole('button', { name: 'é', exact: true }).click();
+  await expect(field).toHaveValue('eée');
+  await expect(field).toBeFocused();
+  await field.fill(exercise.answer);
+}
+
+/** The page fits the viewport and every control is a usable touch target. */
+async function expectUsableLayout(page: Page) {
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true);
+  const controls = page
+    .locator('form')
+    .locator(
+      'input:not([type="hidden"]):not([type="radio"]), textarea, button, label.option'
+    );
+  for (const control of await controls.all()) {
+    const box = await control.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.height).toBeGreaterThanOrEqual(44);
+    expect(box!.width).toBeGreaterThan(0);
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
+  }
+}
+
+async function attachScreenshot(
+  page: Page,
+  testInfo: TestInfo,
+  format: string
+) {
+  const screenshot = testInfo.outputPath(`${format}.png`);
+  await page.screenshot({ path: screenshot, fullPage: true });
+  await testInfo.attach(`${format}-${testInfo.project.name}`, {
+    path: screenshot,
+    contentType: 'image/png'
+  });
+}
+
+/** Submit blank first (refused, nothing sent), then answer and submit. */
+async function answerExercise(
+  page: Page,
+  testInfo: TestInfo,
+  userId: string,
+  index: number
+) {
+  const exercise = exercises[index];
+  await expect(
+    page.getByText(exercise.instruction, { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText(`Question ${index + 1} of 4`, { exact: true })
+  ).toBeVisible();
+  const submit = page.getByRole('button', {
+    name: 'Submit answer',
+    exact: true
+  });
+  await submit.click();
+  await expect(page.getByRole('alert')).toContainText('Enter an answer');
+  expect(await storedAnswers(userId)).toHaveLength(index);
+  await fillAnswer(page, exercise);
+  await expectUsableLayout(page);
+  await attachScreenshot(page, testInfo, exercise.format);
+  await submit.click();
+  await expect.poll(() => storedAnswers(userId)).toHaveLength(index + 1);
+}
+
+test('all four exercise formats render and submit without overflow', async ({
+  page,
+  context
+}, testInfo) => {
+  const userId = await signIn(page, context);
+  await seedSession(userId);
+  await expectBlankAttemptsRefused(page);
+  expect(await storedAnswers(userId)).toEqual([]);
 
   await page.goto(
     `${base}/app/learn/fr/lesson/fr-a1-001?session=exercise-session`
@@ -158,92 +293,9 @@ test('all four exercise formats render and submit without overflow', async ({
     if (request.method() === 'POST' && request.url().includes('/lesson/'))
       submissions.push(request.url());
   });
-  const exercises = [
-    {
-      format: 'multiple-choice',
-      instruction: 'Choose the correct answer.',
-      answer: 'suis'
-    },
-    {
-      format: 'typed-blank',
-      instruction: 'Type the missing word or words.',
-      answer: 'es'
-    },
-    {
-      format: 'translation',
-      instruction: 'Translate the sentence.',
-      answer: 'Nous sommes ici.'
-    },
-    {
-      format: 'correction',
-      instruction: 'Rewrite the sentence with the mistake corrected.',
-      answer: 'Je suis ici.'
-    }
-  ];
-  for (const [index, exercise] of exercises.entries()) {
-    await expect(
-      page.getByText(exercise.instruction, { exact: true })
-    ).toBeVisible();
-    await expect(
-      page.getByText(`Question ${index + 1} of 4`, { exact: true })
-    ).toBeVisible();
-    const submit = page.getByRole('button', {
-      name: 'Submit answer',
-      exact: true
-    });
-    await submit.click();
-    await expect(page.getByRole('alert')).toContainText('Enter an answer');
-    expect(await storedAnswers()).toHaveLength(index);
+  for (const index of exercises.keys())
+    await answerExercise(page, testInfo, userId, index);
 
-    if (exercise.format === 'multiple-choice') {
-      await page
-        .getByRole('radio', { name: exercise.answer, exact: true })
-        .check();
-    } else {
-      const field = page.getByLabel('Your answer', { exact: true });
-      await expect(field).toHaveJSProperty(
-        'tagName',
-        exercise.format === 'typed-blank' ? 'INPUT' : 'TEXTAREA'
-      );
-      await field.fill('ee');
-      await field.evaluate((element: HTMLInputElement | HTMLTextAreaElement) =>
-        element.setSelectionRange(1, 1)
-      );
-      await page.getByRole('button', { name: 'é', exact: true }).click();
-      await expect(field).toHaveValue('eée');
-      await expect(field).toBeFocused();
-      await field.fill(exercise.answer);
-    }
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth <= window.innerWidth
-      )
-    ).toBe(true);
-    const controls = page
-      .locator('form')
-      .filter({ has: submit })
-      .locator(
-        'input:not([type="hidden"]):not([type="radio"]), textarea, button, label.option'
-      );
-    for (const control of await controls.all()) {
-      const box = await control.boundingBox();
-      expect(box).not.toBeNull();
-      expect(box!.height).toBeGreaterThanOrEqual(44);
-      expect(box!.width).toBeGreaterThan(0);
-      expect(box!.x).toBeGreaterThanOrEqual(0);
-      expect(box!.x + box!.width).toBeLessThanOrEqual(
-        page.viewportSize()!.width
-      );
-    }
-    const screenshot = testInfo.outputPath(`${exercise.format}.png`);
-    await page.screenshot({ path: screenshot, fullPage: true });
-    await testInfo.attach(`${exercise.format}-${testInfo.project.name}`, {
-      path: screenshot,
-      contentType: 'image/png'
-    });
-    await submit.click();
-    await expect.poll(storedAnswers).toHaveLength(index + 1);
-  }
   expect(submissions).toHaveLength(4);
   expect(new URL(page.url()).searchParams.get('session')).toBe(
     'exercise-session'
@@ -251,7 +303,7 @@ test('all four exercise formats render and submit without overflow', async ({
   await expect(page.getByRole('status')).toContainText(
     'You have answered every question'
   );
-  expect(await storedAnswers()).toEqual(
+  expect(await storedAnswers(userId)).toEqual(
     exercises.map((exercise, index) => ({
       question_id: `fr-a1-001@1:q${index + 1}`,
       answer: exercise.answer,

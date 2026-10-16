@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Client } from '@libsql/client';
+import type { Client, InStatement } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
@@ -32,6 +32,8 @@ import {
   load as lessonPage
 } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
 import { importContent } from '../src/lib/server/content-import';
+import { recordAnswer } from '../src/lib/server/lesson-practice';
+import { recordAttempt } from '../src/lib/server/study';
 import { approvedPackage } from './fixtures/content-package';
 
 // Route handlers called the way SvelteKit calls them. The principals are the
@@ -562,6 +564,7 @@ describe('lesson answer action', () => {
 
   const q1 = { questionId: 'fr-a1-001@1:q1', answer: 'suis' };
   const q2 = { questionId: 'fr-a1-001@1:q2' };
+  const ownerA = testSession('learner-a');
 
   beforeEach(async () => {
     const pkg = approvedPackage();
@@ -646,6 +649,45 @@ describe('lesson answer action', () => {
     expect(await submit('learner-a', { ...retry, answer: 'es' })).toMatchObject(
       { status: 409 }
     );
+  });
+
+  it('answers a retry that a concurrent request recorded mid-flight', async () => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries({
+      studySessionId: 'study-a',
+      submissionKey: 'racing-key',
+      ...q1
+    }))
+      form.set(name, value);
+    const before = await attemptCount();
+    // The first read of the session's questions finds the same submission
+    // committed by another request, so the session has already moved on.
+    let raced = false;
+    const racing = new Proxy(client, {
+      get(target, property) {
+        if (property !== 'execute') return Reflect.get(target, property);
+        return async (statement: InStatement) => {
+          const sql = typeof statement === 'string' ? statement : statement.sql;
+          if (!raced && sql.includes('AS answered')) {
+            raced = true;
+            await recordAttempt(client, ownerA, {
+              studySessionId: 'study-a',
+              questionId: q1.questionId,
+              submissionKey: 'racing-key',
+              evidenceKind: 'independent',
+              answer: q1.answer
+            });
+          }
+          return target.execute(statement);
+        };
+      }
+    });
+    expect(await recordAnswer(racing, ownerA, form, 'fr-a1-001')).toMatchObject(
+      { recorded: true, duplicate: true }
+    );
+    expect(raced).toBe(true);
+    // Only the racing request's own attempt was written.
+    expect(await attemptCount()).toBe(before + 1);
   });
 
   it('refuses a question the session is not on', async () => {

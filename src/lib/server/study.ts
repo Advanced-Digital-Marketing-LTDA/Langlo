@@ -172,19 +172,27 @@ type AttemptInput = {
 };
 type WriteTransaction = Awaited<ReturnType<typeof beginWrite>>;
 
-/** Reject malformed input before any statement runs. */
-function validateAttemptInput(input: AttemptInput) {
-  if (!isBoundedText(input.submissionKey, 256) || !input.submissionKey.trim())
-    throw new StudyError('INVALID_SUBMISSION_KEY');
-  if (!evidenceKinds.has(input.evidenceKind))
-    throw new StudyError('INVALID_EVIDENCE_KIND');
-  if (!isBoundedText(input.answer, 4096) || !input.answer.trim())
-    throw new StudyError('INVALID_ANSWER');
+/** Non-blank text within the length bound. */
+const isFilledText = (value: unknown, limit: number) =>
+  isBoundedText(value, limit) && value.trim() !== '';
+
+/** The first malformed field of an attempt, in the order they are checked. */
+function attemptInputProblem(input: AttemptInput) {
+  if (!isFilledText(input.submissionKey, 256)) return 'INVALID_SUBMISSION_KEY';
+  if (!evidenceKinds.has(input.evidenceKind)) return 'INVALID_EVIDENCE_KIND';
+  if (!isFilledText(input.answer, 4096)) return 'INVALID_ANSWER';
   if (
     typeof input.studySessionId !== 'string' ||
     typeof input.questionId !== 'string'
   )
-    throw new StudyError('NOT_FOUND');
+    return 'NOT_FOUND';
+  return null;
+}
+
+/** Reject malformed input before any statement runs. */
+function validateAttemptInput(input: AttemptInput) {
+  const problem = attemptInputProblem(input);
+  if (problem) throw new StudyError(problem);
 }
 
 /** The caller's earlier attempt under this submission key, if any. */
