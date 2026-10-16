@@ -1,11 +1,6 @@
-import { randomUUID } from 'node:crypto';
 import { error, fail } from '@sveltejs/kit';
 import type { Client } from '@libsql/client';
 import type { Actions, PageServerLoad } from './$types';
-import {
-  checkAnswer,
-  normalizeAnswer
-} from '../../../../../../lib/components/exercises/answer';
 import { openAppDatabase } from '../../../../../../lib/server/db/app';
 import { describeLearnerError } from '../../../../../../lib/server/learner-api';
 import {
@@ -13,14 +8,10 @@ import {
   requireLearnerPage
 } from '../../../../../../lib/server/learner-session';
 import {
-  findReplay,
-  getLesson,
-  nextQuestion,
-  recordAttempt,
-  StudyError
-} from '../../../../../../lib/server/study';
-
-type Learner = ReturnType<typeof requireLearnerPage>;
+  exerciseFor,
+  recordAnswer
+} from '../../../../../../lib/server/lesson-practice';
+import { getLesson, StudyError } from '../../../../../../lib/server/study';
 
 /** Withdrawn content gets an honest notice instead of an error page. */
 function lessonFailure(thrown: unknown, language: string) {
@@ -48,34 +39,6 @@ async function withDatabase<T>(
   }
 }
 
-/**
- * The next exercise of the learner's own session, when the page was opened
- * from one. A session that cannot serve a question yields a notice instead.
- */
-async function exerciseFor(
-  client: Client,
-  learner: Learner,
-  studySessionId: string | null,
-  skillId: string
-) {
-  if (!studySessionId) return null;
-  try {
-    const next = await nextQuestion(client, learner, studySessionId, skillId);
-    // One key per page load: a repeated tap of Submit replays, not duplicates.
-    return {
-      studySessionId,
-      submissionKey: randomUUID(),
-      notice: null,
-      ...next
-    };
-  } catch (thrown) {
-    const described =
-      thrown instanceof StudyError && describeLearnerError(thrown.code);
-    if (!described) throw thrown;
-    return { studySessionId, notice: described.message, question: null };
-  }
-}
-
 export const load: PageServerLoad = async (event) => {
   // The learner comes only from the verified session, never from the URL.
   const learner = requireLearnerPage(event);
@@ -96,63 +59,6 @@ export const load: PageServerLoad = async (event) => {
     return lessonFailure(thrown, language);
   }
 };
-
-const field = (form: FormData, name: string) => {
-  const value = form.get(name);
-  return typeof value === 'string' ? value : '';
-};
-
-/**
- * A retry of an answer that was already recorded gets the original result,
- * even though the session has since moved on to its next question.
- */
-async function repeatedAnswer(
-  client: Client,
-  learner: Learner,
-  form: FormData,
-  studySessionId: string
-) {
-  const raw = form.get('answer');
-  if (typeof raw !== 'string') return null;
-  const replay = await findReplay(client, learner, {
-    studySessionId,
-    questionId: field(form, 'questionId'),
-    submissionKey: field(form, 'submissionKey'),
-    evidenceKind: 'independent',
-    answer: normalizeAnswer(raw)
-  });
-  return replay && { recorded: true as const, duplicate: replay.duplicate };
-}
-
-/** Record the answer to the question the session is currently on. */
-async function recordAnswer(
-  client: Client,
-  learner: Learner,
-  form: FormData,
-  skillId: string
-) {
-  const studySessionId = field(form, 'studySessionId');
-  const repeated = await repeatedAnswer(client, learner, form, studySessionId);
-  if (repeated) return repeated;
-  const next = await nextQuestion(client, learner, studySessionId, skillId);
-  const question = next.question;
-  if (!question || question.id !== field(form, 'questionId'))
-    throw new StudyError('STALE_QUESTION');
-  const checked = checkAnswer(
-    question.format,
-    form.get('answer'),
-    question.alternatives
-  );
-  if (!checked.ok) return fail(400, { message: checked.message });
-  const attempt = await recordAttempt(client, learner, {
-    studySessionId,
-    questionId: question.id,
-    submissionKey: field(form, 'submissionKey'),
-    evidenceKind: 'independent',
-    answer: checked.answer
-  });
-  return { recorded: true as const, duplicate: attempt.duplicate };
-}
 
 export const actions: Actions = {
   answer: async (event) => {
