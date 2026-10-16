@@ -208,6 +208,11 @@ async function replayAttempt(
   return { id: String(prior.id), duplicate: true };
 }
 
+/** Withdrawn content is unavailable; assessment holdouts cannot enter practice. */
+const isWithheld = (question: Row, mode: unknown) =>
+  question.status === 'quarantined' ||
+  (question.holdout === 1 && mode !== 'assessment');
+
 /** The question in the session's language, if it is available in this mode. */
 async function availableQuestion(
   tx: WriteTransaction,
@@ -220,11 +225,7 @@ async function availableQuestion(
   });
   const questionRow = question.rows[0];
   if (!questionRow) throw new StudyError('NOT_FOUND');
-  // Withdrawn content is unavailable; assessment holdouts cannot enter practice.
-  if (
-    questionRow.status === 'quarantined' ||
-    (questionRow.holdout === 1 && studyRow.mode !== 'assessment')
-  )
+  if (isWithheld(questionRow, studyRow.mode))
     throw new StudyError('CONTENT_UNAVAILABLE');
   return questionRow;
 }
