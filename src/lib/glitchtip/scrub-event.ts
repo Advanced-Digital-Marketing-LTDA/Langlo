@@ -221,6 +221,38 @@ function safeException(value: unknown): EventRecord | undefined {
   return { values };
 }
 
+const fixedNameSpanOperations = new Set([
+  'resource.script',
+  'resource.link',
+  'resource.css',
+  'resource.img',
+  'resource.audio',
+  'resource.video',
+  'resource.iframe',
+  'resource.other',
+  'resource.worker',
+  'resource.icon',
+  'resource.frame',
+  'resource.object',
+  'resource.ping',
+  'resource.track',
+  'ui.task',
+  'ui.resolve',
+  'ui.render',
+  'ui.mount',
+  'ui.update',
+  'ui.unmount',
+  'ui.long_task',
+  'ui.long_animation_frame',
+  'ui.interaction.click',
+  'ui.interaction.hover',
+  'ui.interaction.drag',
+  'ui.interaction.press',
+  'ui.webvital.lcp',
+  'ui.webvital.cls',
+  'ui.action',
+  'ui.action.click'
+]);
 const spanOperations = new Set([
   'http.server',
   'http.client',
@@ -246,16 +278,7 @@ const spanOperations = new Set([
   'browser.unload_event',
   'browser.dom_content_loaded_event',
   'browser.load_event',
-  'resource.script',
-  'resource.css',
-  'resource.img',
-  'resource.other'
-]);
-const resourceSpanOperations = new Set([
-  'resource.script',
-  'resource.css',
-  'resource.img',
-  'resource.other'
+  ...fixedNameSpanOperations
 ]);
 const safeSpanNames = new Set([
   'Cache lookup',
@@ -291,7 +314,7 @@ const spanStatuses = new Set([
 ]);
 
 function safeSpanName(value: string, operation: unknown): string {
-  if (typeof operation === 'string' && resourceSpanOperations.has(operation))
+  if (typeof operation === 'string' && fixedNameSpanOperations.has(operation))
     return operation;
   const methodPath = /^([A-Z]+)\s+(\S+)$/u.exec(value);
   if (methodPath && httpMethods.has(methodPath[1])) {

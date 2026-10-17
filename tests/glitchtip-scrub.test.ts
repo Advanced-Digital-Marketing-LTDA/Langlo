@@ -519,3 +519,52 @@ it('keeps only scrubbed transaction envelope fields in static mode', () => {
     ]
   });
 });
+
+it('preserves Sentry browser UI and resource operations without their names or URLs', () => {
+  for (const operation of [
+    'resource.script',
+    'resource.link',
+    'resource.img',
+    'resource.css',
+    'resource.audio',
+    'resource.video',
+    'resource.iframe',
+    'resource.other',
+    'resource.worker',
+    'resource.icon',
+    'resource.frame',
+    'resource.object',
+    'resource.ping',
+    'resource.track',
+    'ui.task',
+    'ui.resolve',
+    'ui.render',
+    'ui.mount',
+    'ui.update',
+    'ui.unmount',
+    'ui.long_task',
+    'ui.long_animation_frame',
+    'ui.interaction.click',
+    'ui.interaction.hover',
+    'ui.interaction.drag',
+    'ui.interaction.press',
+    'ui.webvital.lcp',
+    'ui.webvital.cls',
+    'ui.action',
+    'ui.action.click'
+  ]) {
+    expect(
+      scrubTelemetrySpan({
+        trace_id: 'trace-id',
+        span_id: 'span-id',
+        description: 'learner@example.test answer=secret',
+        op: operation,
+        start_timestamp: 1,
+        status: 'ok',
+        data: {
+          'url.full': 'https://learner.example.test/private?token=secret'
+        }
+      })
+    ).toMatchObject({ op: operation, description: operation, data: {} });
+  }
+});
