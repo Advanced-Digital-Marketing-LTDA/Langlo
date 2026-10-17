@@ -6,6 +6,7 @@ import {
   checkAnswerText,
   normalizeAnswer
 } from '../components/exercises/answer';
+import type { FallbackEvaluator } from './evaluation/runtime';
 import { describeLearnerError } from './learner-api';
 import type { LearnerSession } from './learner-session';
 import {
@@ -97,7 +98,8 @@ export async function recordAnswer(
   client: Client,
   learner: LearnerSession,
   form: FormData,
-  skillId: string
+  skillId: string,
+  fallback?: FallbackEvaluator
 ) {
   const text = checkAnswerText(form.get('answer'));
   if (!text.ok) return fail(400, { message: text.message });
@@ -119,12 +121,17 @@ export async function recordAnswer(
     question.alternatives
   );
   if (!checked.ok) return fail(400, { message: checked.message });
-  const attempt = await recordAttempt(client, learner, {
-    studySessionId,
-    questionId: question.id,
-    submissionKey: field(form, 'submissionKey'),
-    evidenceKind: 'independent',
-    answer: checked.answer
-  });
+  const attempt = await recordAttempt(
+    client,
+    learner,
+    {
+      studySessionId,
+      questionId: question.id,
+      submissionKey: field(form, 'submissionKey'),
+      evidenceKind: 'independent',
+      answer: checked.answer
+    },
+    { fallback }
+  );
   return { recorded: true as const, duplicate: attempt.duplicate };
 }

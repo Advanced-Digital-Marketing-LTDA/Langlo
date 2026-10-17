@@ -181,3 +181,37 @@ describe('runtime configuration', () => {
     expect(config.auth?.mailError?.variable).toBe('MAIL_FROM');
   });
 });
+
+describe('OpenAI key', () => {
+  const enabled = {
+    DATA_ENABLED: 'true',
+    DATABASE_URL: 'file:./.fixtures/dev.db',
+    BETTER_AUTH_SECRET: 'synthetic-secret-synthetic-secret-0000'
+  };
+  it('is optional', () => {
+    expect(parseRuntimeConfig(enabled).openAiKey).toBeUndefined();
+    expect(
+      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: '' }).openAiKey
+    ).toBeUndefined();
+  });
+  it('is kept when set', () => {
+    const key = 'sk-synthetic-test-key-000000000000';
+    expect(
+      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: key }).openAiKey
+    ).toBe(key);
+  });
+  it.each([
+    ' sk-synthetic-test-key-000000000000',
+    'short',
+    'sk-has space-0000000000000'
+  ])('rejects %j without echoing it', (value) => {
+    expect(() =>
+      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: value })
+    ).toThrow('Invalid OPENAI_API_KEY');
+  });
+  it('is not read while data is disabled', () => {
+    expect(
+      parseRuntimeConfig({ OPENAI_API_KEY: 'short' }).openAiKey
+    ).toBeUndefined();
+  });
+});
