@@ -12,4 +12,14 @@
 
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Advanced-Digital-Marketing-LTDA_Langlo&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Advanced-Digital-Marketing-LTDA_Langlo)
 
+[![CodeScene Average Code Health](https://codescene.io/projects/86244/status-badges/average-code-health)](https://codescene.io/projects/86244)
+
+[![CodeScene Hotspot Code Health](https://codescene.io/projects/86244/status-badges/hotspot-code-health)](https://codescene.io/projects/86244)
+
+[![CodeScene Missed Goals](https://codescene.io/projects/86244/status-badges/missed-goals)](https://codescene.io/projects/86244)
+
+[![CodeScene System Mastery](https://codescene.io/projects/86244/status-badges/system-mastery)](https://codescene.io/projects/86244)
+
+[![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/86244)
+
 Language learning app.
