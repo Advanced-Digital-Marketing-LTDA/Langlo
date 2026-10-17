@@ -7,7 +7,9 @@ import { reportContentForm } from '../../../../../../lib/server/content-reports'
 import { StudyError } from '../../../../../../lib/server/study-error';
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => {
-    const results = await assessmentResults(client, learner, event.params.id);
+    const results = await assessmentResults(client, learner, event.params.id, {
+      awaitFallback: Boolean(event.locals.config?.openAiKey)
+    });
     return {
       results,
       reportKeys: Object.fromEntries(

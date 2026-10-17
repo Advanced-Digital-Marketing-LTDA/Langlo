@@ -24,6 +24,7 @@ const statusFor: Record<string, number> = {
   QUESTION_ALREADY_ANSWERED: 409,
   STALE_QUESTION: 409,
   RESULTS_NOT_READY: 409,
+  RESULTS_PENDING: 409,
   ASSESSMENT_MODE: 409,
   REPORT_LIMIT: 429
 };
@@ -40,6 +41,8 @@ const messageForCode: Record<string, string> = {
     'This question was already answered in this session.',
   STALE_QUESTION: 'This question is out of date. Reload to continue.',
   RESULTS_NOT_READY: 'Assessment results are available only after completion.',
+  RESULTS_PENDING:
+    'Your last answer is still being checked. Reload in a few seconds.',
   ASSESSMENT_MODE:
     'Use the assessment page to continue. Lessons and feedback are hidden during assessments.',
   REPORT_LIMIT: 'You have reached the daily report limit. Try again tomorrow.'

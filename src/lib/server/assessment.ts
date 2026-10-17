@@ -232,13 +232,56 @@ export function feedbackOutcome(
     : 'uncertain';
 }
 
+/** A fallback verdict that has not arrived this long after the answer is given up on. */
+export const FALLBACK_WAIT_MS = 15_000;
+
+/**
+ * True while a final answer the prepared answers could not settle is still
+ * waiting for its AI fallback verdict. Older answers are treated as settled:
+ * the provider call is bounded, so a missing verdict is not coming.
+ */
+async function awaitingFallbackVerdict(
+  client: QueryClient,
+  learner: LearnerSession,
+  id: string,
+  now: number
+) {
+  const pending = await client.execute({
+    sql: `SELECT 1 FROM attempts a
+      JOIN evaluations p ON p.attempt_id = a.id AND p.owner_id = a.owner_id AND p.evaluator_version = ?
+      WHERE a.study_session_id = ? AND a.owner_id = ? AND a.not_sure = 0
+        AND p.outcome = 'uncertain' AND a.created_at > ?
+        AND NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = a.id AND f.owner_id = a.owner_id AND f.evaluator_version = ?)
+      LIMIT 1`,
+    args: [
+      PREPARED_EVALUATOR_VERSION,
+      id,
+      learner.userId,
+      now - FALLBACK_WAIT_MS,
+      FALLBACK_EVALUATOR_VERSION
+    ]
+  });
+  return pending.rows.length > 0;
+}
+
 export async function assessmentResults(
   client: QueryClient,
   learner: LearnerSession,
-  id: string
+  id: string,
+  options: { awaitFallback?: boolean; now?: number } = {}
 ) {
   const rows = await readPlan(client, learner, id);
   if (rows[0].state !== 'completed') throw new StudyError('RESULTS_NOT_READY');
+  if (
+    options.awaitFallback &&
+    (await awaitingFallbackVerdict(
+      client,
+      learner,
+      id,
+      options.now ?? Date.now()
+    ))
+  )
+    throw new StudyError('RESULTS_PENDING');
   const evaluations = await client.execute({
     sql: `SELECT e.*, a.question_id, a.content_version_id, a.answer, a.not_sure, a.evidence_kind
       FROM evaluations e JOIN attempts a ON a.id = e.attempt_id AND a.owner_id = e.owner_id
