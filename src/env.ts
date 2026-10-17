@@ -2,6 +2,9 @@ import { defineEnvVars } from '@sveltejs/kit/env';
 
 // All variables are dynamic and private. Validation happens at the request boundary.
 export const variables = defineEnvVars({
+  PUBLIC_GLITCHTIP_DSN: { public: true, schema: (value) => value },
+  PUBLIC_APP_ENV: { public: true, schema: (value) => value },
+  PUBLIC_APP_BUILD_SHA: { public: true, schema: (value) => value },
   APP_ENV: { schema: (value) => value },
   APP_ORIGIN: { schema: (value) => value },
   DATA_ENABLED: { schema: (value) => value },
