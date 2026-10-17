@@ -544,6 +544,61 @@ describe('lesson page load', () => {
   });
 });
 
+describe('lesson report action', () => {
+  const report = (fields: Record<string, string>) => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries({
+      submissionKey: crypto.randomUUID(),
+      category: 'unclear',
+      comment: '',
+      ...fields
+    }))
+      form.set(name, value);
+    const base = event('learner-a', {
+      params: { language: 'fr', skill: 'fr-a1-001' }
+    }) as unknown as { request: Request };
+    base.request = new Request('http://127.0.0.1/app/learn', {
+      method: 'POST',
+      body: form
+    });
+    return (lessonActions.report as unknown as (e: never) => Promise<unknown>)(
+      base as never
+    );
+  };
+  const reportCount = async () =>
+    Number(
+      (await client.execute('SELECT COUNT(*) AS n FROM content_reports'))
+        .rows[0]?.n
+    );
+
+  beforeEach(async () => {
+    await importContent(client, approvedPackage());
+  });
+
+  it("saves a report for the route's own lesson and question", async () => {
+    expect(
+      await report({
+        contentVersionId: 'fr-a1-001@1',
+        questionId: 'fr-a1-001@1:q1'
+      })
+    ).toEqual({ reported: true });
+    expect(await reportCount()).toBe(1);
+  });
+
+  it('rejects a posted target that belongs to another skill and stores nothing', async () => {
+    expect(
+      await report({ contentVersionId: 'fr-a1-002@1', questionId: '' })
+    ).toMatchObject({ status: 404 });
+    expect(
+      await report({
+        contentVersionId: 'fr-a1-002@1',
+        questionId: 'fr-a1-002@1:q1'
+      })
+    ).toMatchObject({ status: 404 });
+    expect(await reportCount()).toBe(0);
+  });
+});
+
 describe('lesson answer action', () => {
   const attemptCount = async () =>
     Number(

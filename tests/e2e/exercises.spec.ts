@@ -80,8 +80,16 @@ test.beforeAll(async () => {
       format: 'correction',
       prompt: 'Je est ici.',
       answer: 'Je suis ici.'
+    },
+    {
+      id: 'fr-a1-001@1:h1',
+      format: 'typed-blank',
+      prompt: 'Synthetic assessment item: Je ___ ici.',
+      answer: 'synthetic-secret-answer',
+      holdout: true
     }
   );
+  pkg.versions[1].questions[0].holdout = true;
   await withDatabase((client) => importContent(client, pkg));
   server = spawn(process.execPath, ['build'], {
     env: {
@@ -364,7 +372,7 @@ async function answerExercise(
   await expect(page.getByRole('alert')).toContainText('Enter an answer');
   await expect(answerControl).toHaveAttribute(
     'aria-describedby',
-    'exercise-problem'
+    `exercise-problem-fr-a1-001@1:q${index + 1}`
   );
   await expect(answerControl).toHaveAccessibleDescription(
     'Enter an answer before you submit.'
@@ -382,6 +390,7 @@ test('all four exercise formats render and submit without overflow', async ({
   page,
   context
 }, testInfo) => {
+  test.setTimeout(40000);
   const userId = await signIn(page, context);
   await seedSession(userId);
   await expectBlankAttemptsRefused(page);
@@ -392,11 +401,50 @@ test('all four exercise formats render and submit without overflow', async ({
   );
   const submissions: string[] = [];
   page.on('request', (request) => {
-    if (request.method() === 'POST' && request.url().includes('/lesson/'))
+    if (
+      request.method() === 'POST' &&
+      request.url().includes('/lesson/') &&
+      request.url().includes('/answer')
+    )
       submissions.push(request.url());
   });
-  for (const index of exercises.keys())
+  for (const index of exercises.keys()) {
     await answerExercise(page, testInfo, userId, index);
+    if (index === 0) {
+      const feedback = page.getByRole('region', { name: 'Practice feedback' });
+      await feedback.getByText('Try this question again (assisted)').click();
+      await feedback
+        .getByRole('button', { name: 'Submit assisted retry', exact: true })
+        .click();
+      await page
+        .getByRole('button', { name: 'Submit answer', exact: true })
+        .click();
+      const ids = await page
+        .getByRole('alert')
+        .evaluateAll((nodes) => nodes.map((node) => node.id));
+      expect(ids).toHaveLength(2);
+      expect(new Set(ids).size).toBe(2);
+      await feedback.getByText('Try this question again (assisted)').click();
+      await feedback
+        .getByText('Report a content issue', { exact: true })
+        .click();
+      await feedback
+        .getByRole('button', { name: 'Send report', exact: true })
+        .click();
+      await expect(page.getByRole('status')).toContainText('Report saved');
+      const exactReport = await withDatabase((client) =>
+        client.execute({
+          sql: 'SELECT question_id, content_version_id FROM content_reports WHERE owner_id = ? ORDER BY created_at, rowid LIMIT 1',
+          args: [userId]
+        })
+      );
+      expect(exactReport.rows[0]).toMatchObject({
+        question_id: 'fr-a1-001@1:q1',
+        content_version_id: 'fr-a1-001@1'
+      });
+      await page.reload();
+    }
+  }
 
   expect(submissions).toHaveLength(4);
   expect(new URL(page.url()).searchParams.get('session')).toBe(
@@ -416,4 +464,117 @@ test('all four exercise formats render and submit without overflow', async ({
   await expect(page.getByRole('status')).toContainText(
     'You have answered every question'
   );
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await expect(feedback).toContainText('Correct');
+  await feedback.getByText('Try this question again (assisted)').click();
+  await feedback
+    .getByRole('textbox', { name: 'Your answer', exact: true })
+    .fill('Je suis ici.');
+  await feedback.getByRole('button', { name: 'Submit assisted retry' }).click();
+  await expect(feedback).toContainText(
+    'Assisted retry — this does not add independent grammar evidence.'
+  );
+  await page.reload();
+  await expect(feedback).toContainText('Assisted retry');
+
+  await page.goto(`${base}/app/assessment/fr`);
+  await page.getByRole('button', { name: 'Start assessment' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Grammar assessment', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText('Question 1 of 2', { exact: true })
+  ).toBeVisible();
+  expect(await page.content()).not.toContain('synthetic-secret-answer');
+  await page.getByRole('button', { name: 'Not sure', exact: true }).click();
+  await expect(
+    page.getByText('Question 2 of 2', { exact: true })
+  ).toBeVisible();
+  const assessmentUrl = page.url();
+  await page.reload();
+  expect(await page.content()).not.toContain('synthetic-secret-answer');
+  await expect(
+    page.getByText('Question 2 of 2', { exact: true })
+  ).toBeVisible();
+  const premature = await page.request.get(`${assessmentUrl}/results`);
+  expect(premature.status()).toBe(409);
+  const partial = await withDatabase((client) =>
+    client.execute({
+      sql: "SELECT a.id FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id WHERE a.owner_id = ? AND s.mode = 'assessment'",
+      args: [userId]
+    })
+  );
+  const api = await page.request.get(
+    `${base}/app/api/attempts/${partial.rows[0].id}`
+  );
+  expect((await api.json()).attempt.evaluations).toEqual([]);
+  await page
+    .getByRole('textbox', { name: 'Your answer', exact: true })
+    .fill('Nous sommes ici.');
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Assessment results', exact: true })
+  ).toBeVisible();
+  await expect(page.getByText('Correct: 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('A1 topics to revisit', { exact: true })
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
+  await page.goto(`${base}/app/map`);
+  await expect(
+    page.getByRole('heading', { name: 'Grammar skill map', exact: true })
+  ).toBeVisible();
+  await expect(page.getByText(/^\s*◐\s*Practising\s*$/).first()).toBeVisible();
+  const manual = page.getByRole('link', {
+    name: 'Open Synthetic exercise lesson',
+    exact: true
+  });
+  await manual.focus();
+  await expect(manual).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('heading', {
+      name: 'Synthetic exercise lesson',
+      exact: true
+    })
+  ).toBeVisible();
+  await page.goto(`${base}/app/progress`);
+  await expect(
+    page.getByRole('heading', { name: 'Grammar progress', exact: true })
+  ).toBeVisible();
+  await expect(page.getByText(/Policy grammar-1/).first()).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true);
+  await page.goto(`${base}/app/learn/fr/lesson/fr-a1-001`);
+  await page.getByText('Report a content issue', { exact: true }).click();
+  await page.getByLabel('What needs attention?').selectOption('unclear');
+  await page.getByLabel('Comment (optional)').fill('x'.repeat(1001));
+  await page.getByRole('button', { name: 'Send report', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('1000');
+  await page.getByText('Report a content issue', { exact: true }).click();
+  await page
+    .getByLabel('Comment (optional)')
+    .fill('<script>synthetic correction report</script>');
+  await page.getByRole('button', { name: 'Send report', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Report saved');
+  await page.getByRole('link', { name: 'Your reports', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Your content reports', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText('<script>synthetic correction report</script>', {
+      exact: true
+    })
+  ).toBeVisible();
+  await expect(page.getByText('fr-a1-001@1', { exact: true })).toHaveCount(2);
+  await expect(
+    page.getByText('fr-a1-001@1', { exact: true }).first()
+  ).toBeVisible();
 });

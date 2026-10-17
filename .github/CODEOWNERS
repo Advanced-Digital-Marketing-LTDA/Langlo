@@ -10,6 +10,9 @@
 /.merge-evidence.yml             @Bonobo791
 /scripts/                        @Bonobo791
 /tests/vitest-evidence.test.ts   @Bonobo791
+/tests/stryker-vitest-runner.test.ts @Bonobo791
+/tests/stryker-report.test.ts    @Bonobo791
+/tests/run-stryker.test.ts       @Bonobo791
 /tests/detect-changed-tests.test.ts @Bonobo791
 /tests/testtrust-report.test.ts  @Bonobo791
 /tests/report-path.test.ts       @Bonobo791

@@ -2,7 +2,11 @@ import { error, json, type RequestEvent } from '@sveltejs/kit';
 import type { Client } from '@libsql/client';
 import { openAppDatabase } from './db/app';
 import { FlashcardError } from './flashcards';
-import { requireLearnerApi, type LearnerSession } from './learner-session';
+import {
+  requireLearnerApi,
+  requireLearnerPage,
+  type LearnerSession
+} from './learner-session';
 import { StudyError } from './study';
 
 type LearnerEvent = Pick<RequestEvent, 'locals' | 'request'>;
@@ -18,18 +22,30 @@ const statusFor: Record<string, number> = {
   SESSION_NOT_ACTIVE: 409,
   CONTENT_UNAVAILABLE: 409,
   QUESTION_ALREADY_ANSWERED: 409,
-  STALE_QUESTION: 409
+  STALE_QUESTION: 409,
+  RESULTS_NOT_READY: 409,
+  RESULTS_PENDING: 409,
+  ASSESSMENT_MODE: 409,
+  REPORT_LIMIT: 429
 };
 
 // Codes whose cause the learner can act on get their own message; the rest
 // share the generic text for their status.
 const messageForCode: Record<string, string> = {
+  INVALID_REPORT:
+    'Choose a report category and keep the comment within 1000 characters.',
   SESSION_NOT_ACTIVE:
     'This session is paused or finished. Only a paused session can be resumed.',
   CONTENT_UNAVAILABLE: 'This content is not available right now.',
   QUESTION_ALREADY_ANSWERED:
     'This question was already answered in this session.',
-  STALE_QUESTION: 'This question is out of date. Reload to continue.'
+  STALE_QUESTION: 'This question is out of date. Reload to continue.',
+  RESULTS_NOT_READY: 'Assessment results are available only after completion.',
+  RESULTS_PENDING:
+    'Your last answer is still being checked. Reload in a few seconds.',
+  ASSESSMENT_MODE:
+    'Use the assessment page to continue. Lessons and feedback are hidden during assessments.',
+  REPORT_LIMIT: 'You have reached the daily report limit. Try again tomorrow.'
 };
 
 function httpStatusFor(code: string): number | undefined {
@@ -103,4 +119,26 @@ export function withoutOwner<T extends { ownerId?: unknown }>(
   const rest: Partial<T> = { ...row };
   delete rest.ownerId;
   return rest as Omit<T, 'ownerId'>;
+}
+
+/** Authenticated study pages share the API's database and error boundaries. */
+export async function studyPage<T>(
+  event: Pick<RequestEvent, 'locals'>,
+  run: (client: Client, learner: LearnerSession) => Promise<T>
+): Promise<T> {
+  const learner = requireLearnerPage(event);
+  const config = event.locals.config;
+  if (!config?.dataEnabled || !config.databaseUrl)
+    error(503, { message: 'Study data is not available yet.' });
+  const { client, close } = await openAppDatabase(config);
+  try {
+    return await run(client, learner);
+  } catch (thrown) {
+    const described =
+      thrown instanceof StudyError && describeLearnerError(thrown.code);
+    if (described) error(described.status, { message: described.message });
+    throw thrown;
+  } finally {
+    close();
+  }
 }

@@ -1,5 +1,24 @@
 # Foundation route policy
 
+LANGLO-44–47 add authenticated assessment start/resume, completed results,
+grammar map/progress and owner-only content reports. Their routes inherit the
+existing `/app/**` no-store/noindex policy and verified-session ownership guard.
+
+| New route                              | Behavior                                                                                                          |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `/app/assessment`                      | Enrolled tracks and the owner's unfinished saved assessments.                                                     |
+| `/app/assessment/[language]`           | Start a bounded, saved holdout assessment for an enrolled language.                                               |
+| `/app/assessment/session/[id]`         | Saved question order, Not sure and reload/resume; no feedback before completion.                                  |
+| `/app/assessment/session/[id]/results` | Results only after completion; earlier requests return 409 and foreign IDs return 404.                            |
+| `/app/map` and `/app/progress`         | Owner's versioned grammar evidence, explanations and manual lesson links; unenrolled language filters return 404. |
+| `/app/reports`                         | Owner's latest 100 content reports; no content-editing action.                                                    |
+
+Lesson and completed-result `?/report` actions retain exact item/version and
+bounded plain text. The lesson answer action supports server-classified assisted
+retries and Not sure. Existing attempt API reads also hide active/paused
+assessment evaluations; expected answers are never serialized with an unfinished
+assessment. See `docs/scoring-policy.md` and `docs/content-maintenance.md`.
+
 | Route                                | Audience and access                                                                                            | Indexing/cache                                         | Mutation and analytics                                                                                                                              | Verification                                           |
 | ------------------------------------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
 | /                                    | Public local foundation explanation                                                                            | Public; no-store during foundation                     | Read only; no analytics                                                                                                                             | Built browser desktop/mobile                           |

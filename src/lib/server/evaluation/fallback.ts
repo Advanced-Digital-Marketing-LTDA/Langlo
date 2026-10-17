@@ -5,6 +5,12 @@ import type { ExerciseFormat } from '../../components/exercises/answer';
 // never runs for multiple choice or for an answer the prepared path decided.
 
 export const FALLBACK_EVALUATOR_VERSION = 'decisions-1';
+/**
+ * Marks an attempt whose fallback finished without a usable verdict (timeout,
+ * provider error, cap reached, failure). It is not a verdict, so scoring
+ * ignores it; it only tells results the fallback is no longer running.
+ */
+export const FALLBACK_SETTLED_EVALUATOR_VERSION = 'decisions-1-no-verdict';
 /** Bump when the rubric text or the questions asked change. */
 export const FALLBACK_RUBRIC_VERSION = 'fallback-rubric-1';
 /** The Decisions API accepts only this model. */

@@ -6,6 +6,7 @@ export const privateTables = [
   'attempts',
   'evaluations',
   'skill_evidence',
+  'content_reports',
   'native_flashcard_decks',
   'native_flashcard_notes',
   'native_flashcards',

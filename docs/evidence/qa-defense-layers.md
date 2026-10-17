@@ -12,7 +12,7 @@ Andrew chose "All recommended" for the layered review stack. Each layer is a sep
 
 - `.claude/settings.json` enables the PR Review Toolkit plugin for the repository.
 - The adversarial-review skill 2.11.1 is vendored unchanged under `.agents/skills/adversarial-review` with its Apache-2.0 LICENSE and NOTICE, linked from `.claude/skills/adversarial-review`, and excluded from Prettier.
-- AGENTS.md gains a "Before opening a PR" checklist: PR Review Toolkit, adversarial-review, gstack `/cso` and `/test-audit`, and Warp `validate-changes-match-specs` once specs exist.
+- AGENTS.md gains a "Before opening a PR" checklist: PR Review Toolkit, adversarial-review, gstack `/cso` and `/test-audit`.
 
 ## Local evidence
 

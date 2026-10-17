@@ -8,6 +8,7 @@ import { formats } from './content-import';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
+  FALLBACK_SETTLED_EVALUATOR_VERSION,
   type FallbackReason
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
@@ -16,6 +17,7 @@ import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
 import type { ExerciseFormat } from '../components/exercises/answer';
+import { assertAssessmentQuestion, completeAssessment } from './assessment';
 
 export { getLesson, getSessionLesson, nextQuestion } from './study-content';
 export { StudyError };
@@ -56,6 +58,7 @@ function toAttempt(row: Row) {
     submissionKey: String(row.submission_key),
     evidenceKind: String(row.evidence_kind),
     answer: String(row.answer),
+    notSure: Boolean(row.not_sure),
     createdAt: Number(row.created_at)
   };
 }
@@ -73,6 +76,14 @@ function toEvaluation(row: Row) {
 
 const studySessionColumns =
   'id, enrollment_id, language, mode, state, paused_at, created_at';
+
+// Every learner-facing evaluation read observes assessment completion in SQL.
+const visibleEvaluations = `SELECT e.* FROM evaluations e
+  JOIN attempts a ON a.id = e.attempt_id AND a.owner_id = e.owner_id
+  JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
+  WHERE e.owner_id = ? AND e.attempt_id = ?
+    AND (s.mode <> 'assessment' OR s.state = 'completed')
+  ORDER BY e.created_at, e.id`;
 
 export async function listStudySessions(
   client: Client,
@@ -132,7 +143,7 @@ export async function listEvaluations(
         args: [attemptId, session.userId]
       },
       {
-        sql: 'SELECT * FROM evaluations WHERE owner_id = ? AND attempt_id = ? ORDER BY created_at, id',
+        sql: visibleEvaluations,
         args: [session.userId, attemptId]
       }
     ],
@@ -154,7 +165,7 @@ export async function getAttempt(
         args: [attemptId, session.userId]
       },
       {
-        sql: 'SELECT * FROM evaluations WHERE owner_id = ? AND attempt_id = ? ORDER BY created_at, id',
+        sql: visibleEvaluations,
         args: [session.userId, attemptId]
       }
     ],
@@ -182,6 +193,7 @@ type AttemptInput = {
   submissionKey: string;
   evidenceKind: EvidenceKind;
   answer: string;
+  notSure?: boolean;
 };
 type WriteTransaction = Awaited<ReturnType<typeof beginWrite>>;
 
@@ -193,7 +205,10 @@ const isFilledText = (value: unknown, limit: number) =>
 function attemptInputProblem(input: AttemptInput) {
   if (!isFilledText(input.submissionKey, 256)) return 'INVALID_SUBMISSION_KEY';
   if (!evidenceKinds.has(input.evidenceKind)) return 'INVALID_EVIDENCE_KIND';
-  if (!isFilledText(input.answer, 4096)) return 'INVALID_ANSWER';
+  if (input.notSure !== undefined && typeof input.notSure !== 'boolean')
+    return 'INVALID_ANSWER';
+  if (input.notSure ? input.answer !== '' : !isFilledText(input.answer, 4096))
+    return 'INVALID_ANSWER';
   if (
     typeof input.studySessionId !== 'string' ||
     typeof input.questionId !== 'string'
@@ -215,7 +230,7 @@ async function replayAttempt(
   input: AttemptInput
 ) {
   const previous = await tx.execute({
-    sql: 'SELECT id, study_session_id, question_id, evidence_kind, answer FROM attempts WHERE owner_id = ? AND submission_key = ?',
+    sql: 'SELECT id, study_session_id, question_id, evidence_kind, answer, not_sure FROM attempts WHERE owner_id = ? AND submission_key = ?',
     args: [session.userId, input.submissionKey]
   });
   const prior = previous.rows[0];
@@ -223,7 +238,9 @@ async function replayAttempt(
   const samePayload =
     prior.study_session_id === input.studySessionId &&
     prior.question_id === input.questionId &&
-    prior.evidence_kind === input.evidenceKind &&
+    (prior.evidence_kind === input.evidenceKind ||
+      prior.evidence_kind === (await evidenceKindFor(tx, session, input))) &&
+    Boolean(prior.not_sure) === Boolean(input.notSure) &&
     prior.answer === input.answer;
   if (!samePayload) throw new StudyError('IDEMPOTENCY_CONFLICT');
   return { id: String(prior.id), duplicate: true };
@@ -292,12 +309,19 @@ async function attemptSource(
   input: AttemptInput
 ) {
   const study = await tx.execute({
-    sql: 'SELECT language, state, mode FROM study_sessions WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT language, state, mode, assessment_plan FROM study_sessions WHERE id = ? AND owner_id = ?',
     args: [input.studySessionId, session.userId]
   });
   const studyRow = study.rows[0];
   if (!studyRow) throw new StudyError('NOT_FOUND');
   if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
+  if (studyRow.assessment_plan !== null)
+    await assertAssessmentQuestion(
+      tx,
+      session,
+      input.studySessionId,
+      input.questionId
+    );
   const questionRow = await availableQuestion(tx, input, studyRow);
   await assertSessionVersion(tx, session, input, questionRow);
   return {
@@ -353,12 +377,15 @@ async function recordPreparedEvaluation(
     answer: string;
     contentVersionId: string;
     question: Row;
+    notSure?: boolean;
   }
 ) {
-  const outcome = evaluatePrepared(
-    preparedQuestion(attempt.questionId, attempt.question),
-    attempt.answer
-  );
+  const outcome = attempt.notSure
+    ? 'uncertain'
+    : evaluatePrepared(
+        preparedQuestion(attempt.questionId, attempt.question),
+        attempt.answer
+      );
   await tx.execute({
     sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
     args: [
@@ -393,6 +420,24 @@ type FallbackAttempt = {
   question: Row;
 };
 
+/** Record that the fallback is finished without a verdict, so results stop waiting for it. */
+async function settleFallback(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt
+) {
+  await client.execute({
+    sql: "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, 'uncertain')",
+    args: [
+      randomUUID(),
+      session.userId,
+      attempt.id,
+      FALLBACK_SETTLED_EVALUATOR_VERSION,
+      `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
+    ]
+  });
+}
+
 /**
  * Ask the AI fallback about a typed answer the prepared answers did not
  * match. It runs after the attempt commits, so a slow or failed call never
@@ -422,7 +467,10 @@ async function recordFallbackEvaluation(
       answer: attempt.answer
     });
     if (result.reason !== 'answered') logFallback(result.reason);
-    if (!result.evaluated) return;
+    if (!result.evaluated) {
+      await settleFallback(client, session, attempt);
+      return;
+    }
     await client.execute({
       sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
       args: [
@@ -438,6 +486,9 @@ async function recordFallbackEvaluation(
     // The attempt is already saved; the answer stays uncertain for review.
     logFallback('failed');
     console.error(error);
+    await settleFallback(client, session, attempt).catch((settling) =>
+      console.error(settling)
+    );
   }
 }
 
@@ -456,6 +507,20 @@ async function assertNotAnswered(
     args: [session.userId, input.studySessionId, input.questionId]
   });
   if (answered.rows[0]) throw new StudyError('QUESTION_ALREADY_ANSWERED');
+}
+
+/** Re-presenting a question never creates fresh independent evidence. */
+async function evidenceKindFor(
+  tx: Pick<Client, 'execute'>,
+  session: LearnerSession,
+  input: AttemptInput
+): Promise<EvidenceKind> {
+  if (input.evidenceKind === 'assisted') return 'assisted';
+  const prior = await tx.execute({
+    sql: 'SELECT 1 FROM attempts WHERE owner_id = ? AND question_id = ? AND study_session_id <> ? LIMIT 1',
+    args: [session.userId, input.questionId, input.studySessionId]
+  });
+  return prior.rows.length ? 'assisted' : 'independent';
 }
 
 /**
@@ -500,7 +565,7 @@ async function recordAttemptWrite(
     await assertNotAnswered(tx, session, input);
     const id = randomUUID();
     await tx.execute({
-      sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         id,
         session.userId,
@@ -510,8 +575,9 @@ async function recordAttemptWrite(
         source.skillId,
         source.language,
         input.submissionKey,
-        input.evidenceKind,
-        input.answer
+        await evidenceKindFor(tx, session, input),
+        input.answer,
+        input.notSure ? 1 : 0
       ]
     });
     const attempt = {
@@ -520,12 +586,16 @@ async function recordAttemptWrite(
       answer: input.answer,
       contentVersionId: source.contentVersionId,
       language: source.language,
-      question: source.question
+      question: source.question,
+      notSure: input.notSure
     };
     const outcome = await recordPreparedEvaluation(tx, session, attempt);
+    await completeAssessment(tx, session, input.studySessionId);
     await tx.commit();
     const result = { id, duplicate: false as const };
-    return outcome === 'uncertain' ? { result, attempt } : { result };
+    return outcome === 'uncertain' && !input.notSure
+      ? { result, attempt }
+      : { result };
   } catch (error) {
     // A failed rollback must not replace the error that caused it.
     await tx.rollback().catch(() => undefined);

@@ -3,13 +3,24 @@ import type { Actions, PageServerLoad } from './$types';
 import { resolveAuth } from '../../lib/server/auth-runtime';
 import { applyAuthCookies } from '../../lib/server/auth-cookies';
 import { requireLearnerPage } from '../../lib/server/learner-session';
+import { studyPage } from '../../lib/server/learner-api';
+import { loadProgress } from '../../lib/server/progress';
 
-export const load: PageServerLoad = (event) => {
+export const load: PageServerLoad = async (event) => {
   // Learner data must be loaded with the session this returns, never with a
   // learner ID taken from params, query or form data.
   requireLearnerPage(event);
   const user = event.locals.user;
-  return { user: { name: user?.name ?? '', email: user?.email ?? '' } };
+  const progress =
+    event.locals.config?.dataEnabled && event.locals.config.databaseUrl
+      ? await studyPage(event, (client, learner) =>
+          loadProgress(client, learner)
+        )
+      : { tracks: [] };
+  return {
+    user: { name: user?.name ?? '', email: user?.email ?? '' },
+    ...progress
+  };
 };
 
 export const actions: Actions = {

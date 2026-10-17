@@ -18,8 +18,6 @@ Accepted T003 export policy: the APKG generator may write synthetic feasibility 
 
 ## Before opening a PR
 
-Run Warp `validate-changes-match-specs` once a task carries a checked-in spec.
-
 Fix or explicitly answer every high-severity finding before opening the PR.
 
 ## Global Rules

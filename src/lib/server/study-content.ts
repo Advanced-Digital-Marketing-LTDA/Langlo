@@ -2,6 +2,7 @@ import type { Client, Row } from '@libsql/client';
 import type { ExerciseFormat } from '../components/exercises/answer';
 import type { LearnerSession } from './flashcards';
 import { StudyError } from './study-error';
+import { getAssessment } from './assessment';
 
 // Reads of shared content on behalf of a learner's own study session: the
 // next question of a skill and a skill's lesson.
@@ -25,7 +26,12 @@ const sessionVersionId = `COALESCE(
     (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1))`;
 const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = ${sessionVersionId})`;
 
-export type SessionRow = { language: string; mode: string; state: string };
+export type SessionRow = {
+  language: string;
+  mode: string;
+  state: string;
+  assessmentPlan: string | null;
+};
 
 export async function ownSession(
   client: Pick<Client, 'execute'>,
@@ -34,7 +40,7 @@ export async function ownSession(
 ): Promise<SessionRow> {
   if (typeof studySessionId !== 'string') throw new StudyError('NOT_FOUND');
   const found = await client.execute({
-    sql: 'SELECT language, mode, state FROM study_sessions WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT language, mode, state, assessment_plan FROM study_sessions WHERE id = ? AND owner_id = ?',
     args: [studySessionId, session.userId]
   });
   const row = found.rows[0];
@@ -42,7 +48,9 @@ export async function ownSession(
   return {
     language: String(row.language),
     mode: String(row.mode),
-    state: String(row.state)
+    state: String(row.state),
+    assessmentPlan:
+      row.assessment_plan === null ? null : String(row.assessment_plan)
   };
 }
 
@@ -126,6 +134,15 @@ export async function nextQuestion(
   const study = await ownSession(client, session, studySessionId);
   if (study.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
   if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
+  if (study.assessmentPlan !== null) {
+    const planned = await getAssessment(client, session, studySessionId);
+    if (planned.skillId !== skillId) throw new StudyError('NOT_FOUND');
+    return {
+      question: planned.question,
+      answered: planned.answered,
+      total: planned.total
+    };
+  }
   const rows = await questionRows(client, {
     userId: session.userId,
     studySessionId,
@@ -217,6 +234,7 @@ export async function getSessionLesson(
   skillId: string
 ) {
   const study = await ownSession(client, session, studySessionId);
+  if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
   return readLesson(client, {
     userId: session.userId,
     language: study.language,
