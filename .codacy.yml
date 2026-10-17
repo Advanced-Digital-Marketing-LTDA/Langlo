@@ -3,5 +3,10 @@
 # Test files are reviewed by ESLint, CodeQL and the other scanners instead.
 exclude_paths:
   - 'tests/**'
+  - 'stryker.config.mjs'
+  - 'scripts/run-stryker.mjs'
+  - 'scripts/stryker-vitest-runner.mjs'
+  - 'scripts/validate-stryker-report.mjs'
+  - 'reports/mutation/**'
   # Generated SQLite migrations; Codacy's SQL linter does not read the SQLite dialect.
   - 'drizzle/**'
