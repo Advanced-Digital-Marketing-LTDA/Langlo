@@ -19,6 +19,10 @@ it('requires Coolify secrets and configures Proton mail and persistent services'
   );
   expect(compose).toContain('postgres-data:/var/lib/postgresql');
   expect(compose).toContain('uploads:/code/uploads');
+  expect(compose).toContain("GLITCHTIP_ENABLE_DUCKDB: 'True'");
+  expect(compose).toContain(
+    'GLITCHTIP_COLD_STORAGE_DIR: /code/uploads/cold-storage'
+  );
 });
 
 it('keeps registration restricted and all configured data retention at 30 days', () => {

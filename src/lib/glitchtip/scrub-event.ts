@@ -221,7 +221,12 @@ const spanOperations = new Set([
   'ui.load',
   'ui.interaction',
   'function',
-  'queue.process'
+  'queue.process',
+  'pageload',
+  'navigation',
+  'router',
+  'handler',
+  'middleware'
 ]);
 const spanStatuses = new Set(['ok', 'error']);
 
@@ -231,6 +236,8 @@ function safeSpanName(value: string): string {
     const location = safeLocation(methodPath[2]);
     if (location) return `${methodPath[1]} ${location}`;
   }
+  const location = safeLocation(value);
+  if (location) return location;
   return spanOperations.has(value) ? value : 'operation';
 }
 

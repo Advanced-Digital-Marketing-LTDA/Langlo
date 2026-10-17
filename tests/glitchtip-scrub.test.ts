@@ -214,6 +214,20 @@ it('removes span details while retaining trace timing and operation names', () =
     scrubTelemetrySpan({
       trace_id: 'trace-id',
       span_id: 'span-id',
+      name: '/app/map',
+      start_timestamp: 1,
+      status: 'ok',
+      is_segment: true,
+      attributes: { 'sentry.op': 'navigation' }
+    })
+  ).toMatchObject({
+    name: '/app/map',
+    attributes: { 'sentry.op': 'navigation' }
+  });
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
       name: 'learner-answer',
       start_timestamp: 1,
       status: 'learner answer secret',
@@ -221,6 +235,28 @@ it('removes span details while retaining trace timing and operation names', () =
       attributes: { 'sentry.op': 'learner-answer' }
     })
   ).toMatchObject({ name: 'operation', attributes: {} });
+  for (const operation of [
+    'pageload',
+    'navigation',
+    'router',
+    'handler',
+    'middleware'
+  ]) {
+    expect(
+      scrubTelemetrySpan({
+        trace_id: 'trace-id',
+        span_id: 'span-id',
+        name: operation,
+        start_timestamp: 1,
+        status: 'ok',
+        is_segment: false,
+        attributes: { 'sentry.op': operation }
+      })
+    ).toMatchObject({
+      name: operation,
+      attributes: { 'sentry.op': operation }
+    });
+  }
   expect(
     scrubTelemetrySpan({
       trace_id: 'trace-id',

@@ -9,6 +9,12 @@ vi.mock('@sentry/sveltekit', () => ({
   init: vi.fn(),
   handleErrorWithSentry: vi.fn(() => vi.fn())
 }));
+vi.mock('@sentry/browser', () => ({
+  getDefaultIntegrations: () => [
+    { name: 'BrowserSession' },
+    { name: 'BrowserApiErrors' }
+  ]
+}));
 
 it('initializes browser telemetry with labels, sampling, and scrubbers', async () => {
   vi.resetModules();
@@ -21,6 +27,7 @@ it('initializes browser telemetry with labels, sampling, and scrubbers', async (
       environment: 'test',
       release: 'test-sha',
       tracesSampleRate: 0.01,
+      defaultIntegrations: [{ name: 'BrowserApiErrors' }],
       beforeSend: expect.any(Function),
       beforeSendSpan: expect.any(Function)
     })
