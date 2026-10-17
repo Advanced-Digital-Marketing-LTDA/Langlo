@@ -36,6 +36,7 @@ it('removes learner data and secrets from captured errors', () => {
               {
                 filename: '/app/page.js',
                 function: 'load',
+                module: 'learner-secret',
                 lineno: 42,
                 vars: { answer: 'learner response' }
               }
@@ -65,7 +66,7 @@ it('removes learner data and secrets from captured errors', () => {
         {
           type: 'Error',
           stacktrace: {
-            frames: [{ filename: '/app/page.js', function: 'load', lineno: 42 }]
+            frames: [{ lineno: 42 }]
           }
         }
       ]
@@ -113,6 +114,46 @@ it('drops malformed private fields and validates retained metadata', () => {
       transaction: 'learner answer: secret'
     })
   ).toEqual({});
+  expect(
+    scrubTelemetryEvent({
+      exception: {
+        values: [
+          {
+            type: 'Error',
+            stacktrace: {
+              frames: [
+                {
+                  filename:
+                    'https://langlo.example/app/api/attempts/private-answer?password=secret',
+                  function: 'private-answer',
+                  module: 'learner-secret',
+                  lineno: 42,
+                  colno: 'secret',
+                  in_app: 'secret'
+                }
+              ]
+            }
+          }
+        ]
+      }
+    })
+  ).toEqual({
+    exception: {
+      values: [
+        {
+          type: 'Error',
+          stacktrace: {
+            frames: [
+              {
+                filename: 'https://langlo.example/app/api/attempts/:id',
+                lineno: 42
+              }
+            ]
+          }
+        }
+      ]
+    }
+  });
   expect(
     scrubTelemetryEvent({
       request: 'token=secret',
@@ -246,23 +287,60 @@ it('removes span details while retaining trace timing and operation names', () =
     'navigation',
     'router',
     'handler',
-    'middleware'
+    'middleware',
+    'browser.cache',
+    'browser.dns',
+    'browser.connect',
+    'browser.tls_ssl',
+    'browser.redirect',
+    'browser.request',
+    'browser.response',
+    'browser.unload_event',
+    'browser.dom_content_loaded_event',
+    'browser.load_event'
   ]) {
+    const phaseNames: Record<string, string> = {
+      'browser.cache': 'Cache lookup',
+      'browser.dns': 'DNS lookup',
+      'browser.connect': 'Connect',
+      'browser.tls_ssl': 'TLS handshake',
+      'browser.redirect': 'Redirect',
+      'browser.request': 'Request',
+      'browser.response': 'Response',
+      'browser.unload_event': 'Unload event',
+      'browser.dom_content_loaded_event': 'DOMContentLoaded event',
+      'browser.load_event': 'Load event'
+    };
+    const spanName = phaseNames[operation] ?? operation;
     expect(
       scrubTelemetrySpan({
         trace_id: 'trace-id',
         span_id: 'span-id',
-        name: operation,
+        name: spanName,
         start_timestamp: 1,
         status: 'ok',
         is_segment: false,
         attributes: { 'sentry.op': operation }
       })
     ).toMatchObject({
-      name: operation,
+      name: spanName,
       attributes: { 'sentry.op': operation }
     });
   }
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
+      name: 'DNS lookup',
+      start_timestamp: 1,
+      status: 'ok',
+      is_segment: false,
+      attributes: { 'sentry.op': 'browser.dns' }
+    })
+  ).toMatchObject({
+    name: 'DNS lookup',
+    attributes: { 'sentry.op': 'browser.dns' }
+  });
   expect(
     scrubTelemetrySpan({
       trace_id: 'trace-id',

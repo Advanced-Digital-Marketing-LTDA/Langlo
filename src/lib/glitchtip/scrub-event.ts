@@ -184,16 +184,20 @@ function safeException(value: unknown): EventRecord | undefined {
           const frameRecord = record(frame);
           if (!frameRecord) return [];
           const safeFrame: EventRecord = {};
-          for (const key of [
-            'filename',
-            'function',
-            'module',
-            'lineno',
-            'colno',
-            'in_app'
-          ]) {
-            if (key in frameRecord) safeFrame[key] = frameRecord[key];
+          const filename = safeLocation(frameRecord.filename);
+          if (filename) safeFrame.filename = filename;
+          for (const key of ['lineno', 'colno']) {
+            const value = frameRecord[key];
+            if (
+              typeof value === 'number' &&
+              Number.isInteger(value) &&
+              value >= 0 &&
+              value <= 10_000_000
+            )
+              safeFrame[key] = value;
           }
+          if (typeof frameRecord.in_app === 'boolean')
+            safeFrame.in_app = frameRecord.in_app;
           return [safeFrame];
         })
       : undefined;
@@ -224,9 +228,32 @@ const spanOperations = new Set([
   'queue.process',
   'pageload',
   'navigation',
+  'navigation.redirect',
   'router',
   'handler',
-  'middleware'
+  'middleware',
+  'browser.cache',
+  'browser.dns',
+  'browser.connect',
+  'browser.tls_ssl',
+  'browser.redirect',
+  'browser.request',
+  'browser.response',
+  'browser.unload_event',
+  'browser.dom_content_loaded_event',
+  'browser.load_event'
+]);
+const safeSpanNames = new Set([
+  'Cache lookup',
+  'DNS lookup',
+  'Connect',
+  'TLS handshake',
+  'Redirect',
+  'Request',
+  'Response',
+  'Unload event',
+  'DOMContentLoaded event',
+  'Load event'
 ]);
 const spanStatuses = new Set(['ok', 'error']);
 
@@ -238,7 +265,9 @@ function safeSpanName(value: string): string {
   }
   const location = safeLocation(value);
   if (location) return location;
-  return spanOperations.has(value) ? value : 'operation';
+  return spanOperations.has(value) || safeSpanNames.has(value)
+    ? value
+    : 'operation';
 }
 
 export function scrubTelemetrySpan<T extends object>(span: T): T {
