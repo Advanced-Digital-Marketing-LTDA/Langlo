@@ -19,6 +19,7 @@ export const test = base.extend<{ monocartCoverage: void }>({
 
       const collected: Array<Promise<CoverageEntries>> = [];
       const stops = new Map<Page, () => Promise<void>>();
+      const starts = new Map<Page, Promise<void>>();
       const restores: Array<() => void> = [];
 
       // Coverage can only be stopped while a page is open, so it is collected
@@ -28,6 +29,7 @@ export const test = base.extend<{ monocartCoverage: void }>({
         const started = page.coverage.startJSCoverage({
           resetOnNavigation: false
         });
+        starts.set(page, started);
         let stopped: Promise<void> | undefined;
         const stop = () => {
           stopped ??= started.then(async () => {
@@ -50,6 +52,16 @@ export const test = base.extend<{ monocartCoverage: void }>({
       const trackContext = (target: BrowserContext) => {
         target.on('page', trackPage);
         for (const page of target.pages()) trackPage(page);
+        // A page must not be handed to the test before coverage is running,
+        // or its first navigation can execute scripts that go unrecorded.
+        const newPage = target.newPage.bind(target);
+        target.newPage = async () => {
+          const page = await newPage();
+          trackPage(page);
+          await starts.get(page);
+          return page;
+        };
+        restores.push(() => void (target.newPage = newPage));
         const close = target.close.bind(target);
         target.close = async (options) => {
           await Promise.all([...stops.values()].map((stop) => stop()));
@@ -70,6 +82,7 @@ export const test = base.extend<{ monocartCoverage: void }>({
 
       wrapBrowser(browser);
       trackContext(context);
+      await Promise.all(starts.values());
 
       try {
         await use();
