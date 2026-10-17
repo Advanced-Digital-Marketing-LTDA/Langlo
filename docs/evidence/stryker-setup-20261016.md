@@ -129,3 +129,70 @@ standard E2E command could not bind its default port because `127.0.0.1:4173`
 was already occupied; the same built-server suite ran on an alternate local
 port and passed all 76 tests after rebasing onto the updated branch. Formatting
 and `git diff --check` also passed.
+
+## 2026-10-17 active-mutant environment repair
+
+The command-runner failure was reproduced using only the secure-status condition:
+
+```sh
+LANGLO_STRYKER_SCOPE=mastery node node_modules/@stryker-mutator/core/bin/stryker.js run ./stryker.config.mjs --mutate 'src/lib/server/mastery.ts:26-26' --concurrency 1 --cleanTempDir false --reporters clear-text,json --ignoreStatic
+```
+
+Before the repair, all 14 mutants survived (0%, exit 1). In the retained sandbox,
+Stryker's mutant 12 changes `accuracy >= 0.8` to `accuracy > 0.8`. Running the
+installed Vitest CLI directly with `__STRYKER_ACTIVE_MUTANT__=12` failed two
+mastery tests, while the same command through `npx` passed all 17 tests.
+No application source was manually changed for this diagnosis.
+
+The local `npx` executable is a Distrobox wrapper. A child-process probe printed
+`undefined` for `process.env.__STRYKER_ACTIVE_MUTANT__` through `npx`, compared
+with `12` through direct Node execution. The wrapper lost the variable that
+activates Stryker's mutations, so Vitest exercised the original behavior for
+every mutant. The command runner's `covered 0` label separately reflects its
+lack of per-test coverage reporting.
+
+The configured command now invokes `node_modules/vitest/vitest.mjs` using
+`process.execPath`, preserving the sandbox working directory, active-mutant
+environment, and test exit status without a package-manager wrapper. The six
+source/test scopes and the 80% break threshold are unchanged. The Vitest adapter
+remains unused because of its separately documented Vitest 5 test-name issue.
+
+The new `tests/stryker-config.test.ts` runs the actual configured command against
+a disposable CLI fixture with no package-manager executable on PATH. It failed
+before the config change (`expected '' to be '12'`) and passed afterward,
+confirming the mutant variable and failing CLI exit status reach Stryker.
+The same 14-mutant Stryker reproduction then killed all 14 (100%, exit 0), with
+zero survivors, timeouts, or errors. Retained diagnostic sandboxes were removed.
+
+Importing the config in the regression test also exposed the existing Stryker
+options type annotation on the scope array. The annotation now validates the
+config object with `@satisfies`, retaining the inferred scope and command types.
+The regression test is listed explicitly in CODEOWNERS.
+
+Repository validation used Node 24.19.0 and npm 11.9.0, with a clean
+`npm ci --ignore-scripts` install. `npm run check` passed with zero errors or
+warnings; `npm run lint`, `npm run format:check`, `npm test` (59 files, 1,065
+tests), `npm run test:property` (5 files, 7 tests), `npm run build`, and
+`npm run test:e2e` (76 tests on the default port) passed.
+
+The complete `npm run test:mutation` command exited 0. It tested 855 mutants in
+the six configured files in approximately 9 minutes 20 seconds, using only each
+scope's listed Vitest files. Every scope passed the unchanged 80% break gate:
+
+| Scope             |   Score | Killed | Timed out | Survived |
+| ----------------- | ------: | -----: | --------: | -------: |
+| prototype-results |  88.29% |     97 |         1 |       13 |
+| assessment        |  83.72% |    252 |         0 |       49 |
+| assessment-answer |  85.71% |     36 |         0 |        6 |
+| mastery           |  80.77% |    126 |         0 |       30 |
+| progress          | 100.00% |     27 |         0 |        0 |
+| fallback          |  83.94% |    182 |         1 |       35 |
+
+There were zero runner errors or uncovered mutants reported. Stryker includes
+timeouts in the mutation score; the table lists them separately from kills.
+The six scope-specific HTML reports under `reports/mutation/` were refreshed
+and remain ignored by Git. No application tests were changed to raise scores
+during this repair.
+
+Local runs do not establish hosted CI, release, live-provider, or Windows Anki
+acceptance. This repair has not been pushed.

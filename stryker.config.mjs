@@ -1,5 +1,4 @@
 // @ts-check
-/** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 export const mutationScopes = [
   {
     name: 'prototype-results',
@@ -41,10 +40,14 @@ const scopeName = process.env.LANGLO_STRYKER_SCOPE ?? mutationScopes[0].name;
 const scope = mutationScopes.find(({ name }) => name === scopeName);
 if (!scope) throw new Error(`Unknown LANGLO_STRYKER_SCOPE: ${scopeName}`);
 
+/** @satisfies {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 const config = {
   mutate: scope.mutate,
   testRunner: 'command',
-  commandRunner: { command: `npx vitest run ${scope.tests.join(' ')}` },
+  commandRunner: {
+    // Invoke Vitest directly: package-manager wrappers can drop the active mutant environment variable.
+    command: `"${process.execPath}" ./node_modules/vitest/vitest.mjs run ${scope.tests.join(' ')}`
+  },
   concurrency: 4,
   timeoutMS: 30000,
   thresholds: { break: 80 },
