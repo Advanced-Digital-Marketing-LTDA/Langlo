@@ -1,3 +1,4 @@
+import { normalizeAnswer } from '../components/exercises/answer';
 import { createHash } from 'node:crypto';
 import type { Client, Transaction } from '@libsql/client';
 import { z } from 'zod';
@@ -215,7 +216,11 @@ function validateAlternatives(question: ContentQuestion) {
   const valid =
     unique.size === alternatives.length &&
     (question.format === 'multiple-choice'
-      ? alternatives.length >= 2 && alternatives.includes(question.answer)
+      ? alternatives.length >= 2 &&
+        alternatives.includes(question.answer) &&
+        // The picked option is submitted in normalizeAnswer form and graded
+        // exactly, so every option must already be in that form.
+        alternatives.every((item) => item === normalizeAnswer(item))
       : !unique.has(answer));
   if (!valid) fail('INVALID_ALTERNATIVES', question.id);
 }
