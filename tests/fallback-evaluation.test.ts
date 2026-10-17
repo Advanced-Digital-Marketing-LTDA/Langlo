@@ -288,4 +288,25 @@ describe('running the fallback', () => {
     ).resolves.toMatchObject({ reason: 'malformed' });
     expect(recorded).toEqual([{ inputTokens: 120, outputTokens: 0 }]);
   });
+
+  it('keeps the verdict and logs loudly when the usage write fails', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const usage: FallbackUsage = {
+      reserve: vi.fn(async () => true),
+      record: vi.fn(async () => {
+        throw new Error('disk full');
+      })
+    };
+    const provider = vi.fn(async () => decision(0.9, 0.1));
+    await expect(evaluateFallback(input, provider, usage)).resolves.toEqual({
+      outcome: 'correct',
+      reason: 'answered',
+      evaluated: true
+    });
+    expect(JSON.parse(String(error.mock.calls[0][0]))).toMatchObject({
+      reason: 'usage-record-failed',
+      message: 'disk full'
+    });
+    error.mockRestore();
+  });
 });

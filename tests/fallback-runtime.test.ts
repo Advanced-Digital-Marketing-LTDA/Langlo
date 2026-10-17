@@ -15,6 +15,12 @@ describe('fallback runtime wiring', () => {
     expect(error).not.toHaveBeenCalled();
   });
 
+  it('is on when a key is set', () => {
+    expect(
+      typeof fallbackEvaluator(client, { openAiKey: 'k'.repeat(24) })
+    ).toBe('function');
+  });
+
   it('is off and logs loudly, without a value, when the key was invalid', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     expect(

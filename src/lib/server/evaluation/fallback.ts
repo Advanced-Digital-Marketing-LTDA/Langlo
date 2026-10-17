@@ -227,6 +227,20 @@ export async function evaluateFallback(
     throw error;
   }
   const decision = readDecision(raw);
-  if (decision.usage) await usage.record(decision.usage);
+  if (decision.usage) {
+    // A failed counter write must not discard an answer that was already paid for.
+    try {
+      await usage.record(decision.usage);
+    } catch (error) {
+      console.error(
+        JSON.stringify({
+          level: 'error',
+          operation: 'ai-fallback',
+          reason: 'usage-record-failed',
+          message: error instanceof Error ? error.message : 'unknown error'
+        })
+      );
+    }
+  }
   return decision.result;
 }

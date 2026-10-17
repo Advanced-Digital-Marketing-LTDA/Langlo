@@ -116,7 +116,7 @@ describe('AI fallback for unmatched typed answers', () => {
     expect(await evaluationsOf(recorded.id)).toHaveLength(1);
   });
 
-  it('makes zero AI calls for multiple choice, even when wrong', async () => {
+  it('makes zero AI calls for multiple choice, which prepared grading always settles', async () => {
     const fallback = vi.fn(async () => answered('correct'));
     await attempt('fr-a1-001@1:q1', 'est', fallback);
     expect(fallback).not.toHaveBeenCalled();
