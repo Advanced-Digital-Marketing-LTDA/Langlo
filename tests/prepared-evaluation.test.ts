@@ -76,6 +76,18 @@ describe('evaluatePrepared', () => {
     expect(evaluatePrepared(question, 'marie travaille')).toBe('incorrect');
   });
 
+  it('applies no trimming or Unicode normalization to multiple choice', () => {
+    const question = {
+      format: 'multiple-choice' as const,
+      answer: 'Il a été là.',
+      alternatives: ['Il a été là.', 'Il a ete là.']
+    };
+    expect(evaluatePrepared(question, ' Il a été là. ')).toBe('incorrect');
+    expect(evaluatePrepared(question, 'Il a été là.'.normalize('NFD'))).toBe(
+      'incorrect'
+    );
+  });
+
   it('is uncertain when the question has no stored answer', () => {
     expect(
       evaluatePrepared(

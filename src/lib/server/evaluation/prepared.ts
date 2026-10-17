@@ -36,8 +36,6 @@ export function typedMatchKey(text: string): string {
     .toLowerCase();
 }
 
-const exact = (text: string) => text.normalize('NFC').trim();
-
 /** Evaluate an answer against the question's own checked rubric. */
 export function evaluatePrepared(
   question: PreparedQuestion,
@@ -45,7 +43,7 @@ export function evaluatePrepared(
 ): PreparedOutcome {
   if (question.answer === null) return 'uncertain';
   if (question.format === 'multiple-choice')
-    return exact(answer) === exact(question.answer) ? 'correct' : 'incorrect';
+    return answer === question.answer ? 'correct' : 'incorrect';
   const accepted = [question.answer, ...question.alternatives].map(
     typedMatchKey
   );
