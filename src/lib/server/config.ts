@@ -89,6 +89,8 @@ export interface RuntimeConfig {
   auth?: AuthRuntimeConfig;
   /** OpenAI key for the AI grading fallback; unset leaves unmatched answers uncertain. */
   openAiKey?: string;
+  /** Set when OPENAI_API_KEY is present but unusable; the app keeps serving and the fallback stays off. */
+  openAiKeyError?: ConfigError;
 }
 
 /** Validate private runtime metadata without connecting to a provider; retain credentials only for selected remote libSQL. */
@@ -194,6 +196,18 @@ function parseOpenAiKey(
   return key;
 }
 
+/** A bad optional key disables only the AI fallback, and the error is kept for the caller to log. */
+function openAiKeyConfig(
+  env: Record<string, string | undefined>
+): Pick<RuntimeConfig, 'openAiKey' | 'openAiKeyError'> {
+  try {
+    return { openAiKey: parseOpenAiKey(env) };
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    return { openAiKeyError: error };
+  }
+}
+
 export function parseRuntimeConfig(
   env: Record<string, string | undefined>
 ): RuntimeConfig {
@@ -269,6 +283,6 @@ export function parseRuntimeConfig(
     databaseToken,
     revision,
     auth: dataEnabled ? parseAuthConfig(env, environment) : undefined,
-    openAiKey: dataEnabled ? parseOpenAiKey(env) : undefined
+    ...(dataEnabled ? openAiKeyConfig(env) : {})
   };
 }

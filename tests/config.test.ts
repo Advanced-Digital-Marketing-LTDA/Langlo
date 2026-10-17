@@ -208,11 +208,16 @@ describe('OpenAI key', () => {
     ` ${syntheticKey}`,
     'short',
     syntheticKey.replace('-test-', ' test ')
-  ])('rejects %j without echoing it', (value) => {
-    expect(() =>
-      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: value })
-    ).toThrow('Invalid OPENAI_API_KEY');
-  });
+  ])(
+    'keeps the app up and records the error for %j without echoing it',
+    (value) => {
+      const config = parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: value });
+      expect(config.openAiKey).toBeUndefined();
+      expect(config.openAiKeyError).toBeInstanceOf(ConfigError);
+      expect(config.openAiKeyError?.message).toBe('Invalid OPENAI_API_KEY');
+      expect(config.dataEnabled).toBe(true);
+    }
+  );
   it('is not read while data is disabled', () => {
     expect(
       parseRuntimeConfig({ OPENAI_API_KEY: 'short' }).openAiKey

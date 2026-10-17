@@ -14,5 +14,6 @@ export const variables = defineEnvVars({
   PROTON_SMTP_TOKEN: { schema: (value) => value },
   SMTP_HOST: { schema: (value) => value },
   SMTP_PORT: { schema: (value) => value },
-  MAIL_CAPTURE_DIR: { schema: (value) => value }
+  MAIL_CAPTURE_DIR: { schema: (value) => value },
+  OPENAI_API_KEY: { schema: (value) => value }
 });

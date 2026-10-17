@@ -39,7 +39,7 @@ export type FallbackReason =
 export type FallbackResult = {
   outcome: 'correct' | 'incorrect' | 'uncertain';
   reason: FallbackReason;
-  /** Whether a verdict was received, so an evaluation row should be kept. */
+  /** Whether the provider answered, so an evaluation row is kept even when no verdict can be used. */
   evaluated: boolean;
 };
 
@@ -160,6 +160,7 @@ export function readDecision(raw: unknown): {
   result: FallbackResult;
   usage?: DecisionUsage;
 } {
+  let usage: DecisionUsage | undefined;
   try {
     if (
       !isRecord(raw) ||
@@ -167,7 +168,7 @@ export function readDecision(raw: unknown): {
       raw.answers.length !== 2
     )
       throw new MalformedDecision();
-    const usage = readUsage(raw);
+    usage = readUsage(raw);
     const verdict = readAnswer(raw.answers, 0, 'verdict');
     const injection = readAnswer(raw.answers, 1, 'injection');
     if (verdict.type === 'refusal' || injection.type === 'refusal')
@@ -189,7 +190,7 @@ export function readDecision(raw: unknown): {
     };
   } catch (error) {
     if (error instanceof MalformedDecision)
-      return { result: uncertain('malformed', true) };
+      return { result: uncertain('malformed', true), usage };
     throw error;
   }
 }

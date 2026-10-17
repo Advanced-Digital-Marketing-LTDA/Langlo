@@ -15,8 +15,17 @@ export type FallbackEvaluator = (
 /** The configured AI fallback, or undefined when no OpenAI key is set. */
 export function fallbackEvaluator(
   client: Client,
-  config: Pick<RuntimeConfig, 'openAiKey'> | undefined
+  config: Pick<RuntimeConfig, 'openAiKey' | 'openAiKeyError'> | undefined
 ): FallbackEvaluator | undefined {
+  if (config?.openAiKeyError)
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        operation: 'ai-fallback',
+        reason: 'invalid-config',
+        variable: config.openAiKeyError.variable
+      })
+    );
   const key = config?.openAiKey;
   if (!key) return undefined;
   const provider = openAiDecisions(key);

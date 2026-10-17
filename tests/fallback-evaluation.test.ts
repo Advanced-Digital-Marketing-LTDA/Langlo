@@ -275,4 +275,17 @@ describe('running the fallback', () => {
     });
     expect(recorded).toEqual([]);
   });
+
+  it('still records the tokens of a billed call whose answers are malformed', async () => {
+    const { usage, recorded } = counter();
+    const raw = decision(0.9, 0.1) as Record<string, unknown>;
+    const provider = vi.fn(async () => ({
+      ...raw,
+      answers: [...(raw.answers as unknown[])].reverse()
+    }));
+    await expect(
+      evaluateFallback(input, provider, usage)
+    ).resolves.toMatchObject({ reason: 'malformed' });
+    expect(recorded).toEqual([{ inputTokens: 120, outputTokens: 0 }]);
+  });
 });
