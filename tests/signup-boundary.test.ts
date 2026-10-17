@@ -5,7 +5,23 @@ const mocks = vi.hoisted(() => ({
   handler: vi.fn(),
   resolveAuth: vi.fn()
 }));
-vi.mock('$app/env/private', () => ({}));
+vi.mock('$app/env/private', () => ({
+  APP_ENV: undefined,
+  APP_BUILD_SHA: undefined
+}));
+vi.mock('$app/env/public', () => ({
+  PUBLIC_GLITCHTIP_DSN: undefined,
+  PUBLIC_APP_ENV: undefined,
+  PUBLIC_APP_BUILD_SHA: undefined
+}));
+vi.mock('@sveltejs/kit/hooks', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@sveltejs/kit/hooks')>();
+  return {
+    ...original,
+    sequence: (...handlers: Parameters<typeof original.sequence>) =>
+      handlers.at(-1)!
+  };
+});
 vi.mock('../src/lib/server/config', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/server/config')>()),
   parseRuntimeConfig: () => ({

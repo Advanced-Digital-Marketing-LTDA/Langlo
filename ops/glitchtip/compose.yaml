@@ -1,0 +1,66 @@
+x-environment: &glitchtip-environment
+  DATABASE_URL: postgres://glitchtip:${GLITCHTIP_POSTGRES_PASSWORD:?Set GLITCHTIP_POSTGRES_PASSWORD in Coolify}@postgres:5432/glitchtip
+  VALKEY_URL: redis://valkey:6379
+  SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?Set GLITCHTIP_SECRET_KEY in Coolify}
+  EMAIL_URL: ${EMAIL_URL:?Set Proton SMTP EMAIL_URL in Coolify}
+  GLITCHTIP_DOMAIN: ${GLITCHTIP_DOMAIN:-https://glitchtip.advanceddigitalmarketingltda.com}
+  DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:?Set DEFAULT_FROM_EMAIL in Coolify}
+  ALLOWED_HOSTS: glitchtip.advanceddigitalmarketingltda.com
+  CSRF_TRUSTED_ORIGINS: https://glitchtip.advanceddigitalmarketingltda.com
+  ENABLE_USER_REGISTRATION: 'False'
+  ENABLE_ORGANIZATION_CREATION: 'False'
+  ENABLE_ADMIN: 'False'
+  ENABLE_OPENAPI: 'False'
+  GLITCHTIP_ENABLE_MCP: 'False'
+  GLITCHTIP_ENABLE_LOGS: 'False'
+  GLITCHTIP_ENABLE_UPTIME: 'False'
+  GLITCHTIP_RETENTION_DAYS: '30'
+  GLITCHTIP_EVENT_RETENTION_DAYS: '30'
+  GLITCHTIP_TRANSACTION_RETENTION_DAYS: '30'
+  GLITCHTIP_FILE_RETENTION_DAYS: '30'
+  GLITCHTIP_RELEASE_RETENTION_DAYS: '30'
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: glitchtip
+      POSTGRES_USER: glitchtip
+      POSTGRES_PASSWORD: ${GLITCHTIP_POSTGRES_PASSWORD:?Set GLITCHTIP_POSTGRES_PASSWORD in Coolify}
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U glitchtip -d glitchtip']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:9
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'valkey-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  glitchtip:
+    image: glitchtip/glitchtip:6
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    expose:
+      - '8000'
+    environment:
+      <<: *glitchtip-environment
+      SERVER_ROLE: all_in_one
+    volumes:
+      - uploads:/code/uploads
+
+volumes:
+  postgres-data:
+  uploads:

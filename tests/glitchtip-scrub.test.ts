@@ -1,0 +1,107 @@
+import { expect, it } from 'vitest';
+import {
+  scrubTelemetryEvent,
+  scrubTelemetrySpan
+} from '../src/lib/glitchtip/scrub-event';
+
+it('removes learner data and secrets from captured errors', () => {
+  const event = {
+    event_id: 'event-id',
+    environment: 'production',
+    request: {
+      url: 'https://langlo.example/app/api/study-sessions/123e4567-e89b-12d3-a456-426614174000?token=secret',
+      method: 'POST',
+      headers: { cookie: 'session=secret', authorization: 'Bearer secret' },
+      data: { answer: 'learner response' },
+      query_string: 'token=secret'
+    },
+    user: { id: 'learner-17', email: 'learner@example.test' },
+    extra: { form: 'learner response' },
+    message: 'answer=learner response',
+    breadcrumbs: [
+      {
+        timestamp: 1,
+        category: 'ui.click',
+        message: 'clicked submit',
+        data: { answer: 'learner response' }
+      }
+    ],
+    exception: {
+      values: [{ type: 'Error', value: 'token=secret answer=learner response' }]
+    },
+    contexts: { user: { username: 'learner-17' } },
+    server_name: 'learner-laptop',
+    transaction:
+      '/app/api/study-sessions/123e4567-e89b-12d3-a456-426614174000?token=secret'
+  };
+
+  const scrubbed = scrubTelemetryEvent(event);
+
+  expect(scrubbed).toEqual({
+    event_id: 'event-id',
+    environment: 'production',
+    request: {
+      url: 'https://langlo.example/app/api/study-sessions/:id',
+      method: 'POST'
+    },
+    breadcrumbs: [{ timestamp: 1, category: 'ui.click' }],
+    exception: { values: [{ type: 'Error' }] },
+    transaction: '/app/api/study-sessions/:id'
+  });
+  expect(JSON.stringify(scrubbed)).not.toMatch(
+    /learner|learner@example|learner response|secret|123e4567/iu
+  );
+  expect(
+    scrubTelemetryEvent({
+      transaction: '/app/users/learner%40example.test'
+    }).transaction
+  ).toBe('/app/users/:id');
+  expect(event.request.data).toEqual({ answer: 'learner response' });
+});
+
+it('removes span details while retaining trace timing and operation names', () => {
+  const scrubbed = scrubTelemetrySpan({
+    trace_id: 'trace-id',
+    span_id: 'span-id',
+    name: 'POST /app/api/attempts/91?email=learner%40example.test',
+    start_timestamp: 1,
+    end_timestamp: 2,
+    status: 'ok',
+    is_segment: true,
+    attributes: {
+      'sentry.op': 'http.server',
+      'http.request.method': 'POST',
+      'http.route': '/app/api/attempts/91',
+      'url.full': 'https://langlo.example/app/api/attempts/91?token=secret',
+      'db.query.text': 'select * from answers where answer = secret'
+    }
+  });
+
+  expect(scrubbed).toEqual({
+    trace_id: 'trace-id',
+    span_id: 'span-id',
+    name: 'POST /app/api/attempts/:id',
+    start_timestamp: 1,
+    end_timestamp: 2,
+    status: 'ok',
+    is_segment: true,
+    attributes: {
+      'sentry.op': 'http.server',
+      'http.request.method': 'POST',
+      'http.route': '/app/api/attempts/:id'
+    }
+  });
+  expect(JSON.stringify(scrubbed)).not.toMatch(/learner|secret|answers/iu);
+
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
+      name: 'learner-answer',
+      start_timestamp: 1,
+      status: 'ok',
+      is_segment: true,
+      attributes: { 'sentry.op': 'learner-answer' }
+    })
+  ).toMatchObject({ name: 'operation', attributes: {} });
+});

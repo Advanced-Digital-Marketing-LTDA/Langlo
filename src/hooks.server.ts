@@ -1,13 +1,35 @@
 import { randomUUID } from 'node:crypto';
 import * as env from '$app/env/private';
-import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
+import * as publicEnv from '$app/env/public';
+import {
+  sequence,
+  type Handle,
+  type HandleServerError
+} from '@sveltejs/kit/hooks';
+import * as Sentry from '@sentry/sveltekit';
 import { parseRuntimeConfig } from './lib/server/config';
 import { safeDiagnostic, safeError } from './lib/server/diagnostics';
 import { resolveAuth } from './lib/server/auth-runtime';
 import { withCorrelationId } from './lib/server/request-context';
 import { authRequestHeaders } from './lib/server/auth-request';
+import {
+  scrubTelemetryEvent,
+  scrubTelemetrySpan
+} from './lib/glitchtip/scrub-event';
 
-export const handle: Handle = async ({ event, resolve }) => {
+Sentry.init({
+  dsn: publicEnv.PUBLIC_GLITCHTIP_DSN,
+  environment: env.APP_ENV ?? 'development',
+  release:
+    env.APP_BUILD_SHA && env.APP_BUILD_SHA !== 'unknown'
+      ? env.APP_BUILD_SHA
+      : undefined,
+  tracesSampleRate: 0.01,
+  beforeSend: scrubTelemetryEvent,
+  beforeSendSpan: scrubTelemetrySpan
+});
+
+const appHandle: Handle = async ({ event, resolve }) => {
   const correlationId = randomUUID();
   event.locals.correlationId = correlationId;
   const path = event.url.pathname.replace(/\/+$/, '') || '/';
@@ -195,9 +217,15 @@ export const handle: Handle = async ({ event, resolve }) => {
   return output;
 };
 
-export const handleError: HandleServerError = ({ error, event }) => {
-  console.warn(
-    JSON.stringify(safeDiagnostic('request', error, event.locals.correlationId))
-  );
-  return safeError(event.locals.correlationId);
-};
+export const handle = sequence(Sentry.sentryHandle(), appHandle);
+
+export const handleError: HandleServerError = Sentry.handleErrorWithSentry(
+  ({ error, event }) => {
+    console.warn(
+      JSON.stringify(
+        safeDiagnostic('request', error, event.locals.correlationId)
+      )
+    );
+    return safeError(event.locals.correlationId);
+  }
+);
