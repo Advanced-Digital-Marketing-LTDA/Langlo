@@ -518,9 +518,6 @@ export async function recordAttempt(
       recorded.attempt,
       options.fallback
     );
-  // Completion follows any fallback verdict, so published results cannot
-  // change. It is idempotent, so a replay finishes an interrupted submission.
-  await completeAssessment(client, session, input.studySessionId);
   return recorded.result;
 }
 
@@ -568,6 +565,7 @@ async function recordAttemptWrite(
       notSure: input.notSure
     };
     const outcome = await recordPreparedEvaluation(tx, session, attempt);
+    await completeAssessment(tx, session, input.studySessionId);
     await tx.commit();
     const result = { id, duplicate: false as const };
     return outcome === 'uncertain' && !input.notSure
