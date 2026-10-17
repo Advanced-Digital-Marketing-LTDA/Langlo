@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import type { Client } from '@libsql/client';
+import type { Client, InStatement } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
@@ -27,8 +27,13 @@ import * as attempt from '../src/routes/app/api/attempts/[id]/+server';
 import * as pause from '../src/routes/app/api/study-sessions/[id]/pause/+server';
 import * as resume from '../src/routes/app/api/study-sessions/[id]/resume/+server';
 import * as next from '../src/routes/app/api/study-sessions/[id]/next/+server';
-import { load as lessonPage } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import {
+  actions as lessonActions,
+  load as lessonPage
+} from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
 import { importContent } from '../src/lib/server/content-import';
+import { recordAnswer } from '../src/lib/server/lesson-practice';
+import { recordAttempt } from '../src/lib/server/study';
 import { approvedPackage } from './fixtures/content-package';
 
 // Route handlers called the way SvelteKit calls them. The principals are the
@@ -287,6 +292,33 @@ describe('private learner routes', () => {
     expect(await privateState(client)).toEqual(before);
   });
 
+  it.each(['', '   ', '\n\t', '\u00a0\u2003'])(
+    'rejects a blank attempt answer %j with no private writes',
+    async (answer) => {
+      await client.execute(
+        "INSERT INTO questions (id, content_version_id, skill_id, language, format) VALUES ('question-3', 'content-v1', 'fr-articles', 'fr', 'typed-blank')"
+      );
+      const before = await privateState(client);
+      const response = await call(
+        attempts.POST as Handler,
+        event('learner-a', {
+          body: {
+            studySessionId: 'study-a',
+            questionId: 'question-3',
+            submissionKey: 'blank-attempt',
+            evidenceKind: 'independent',
+            answer
+          }
+        })
+      );
+      expect(response).toMatchObject({
+        status: 400,
+        body: { message: 'Invalid request.' }
+      });
+      expect(await privateState(client)).toEqual(before);
+    }
+  );
+
   it('let the owner review and record an attempt through the routes', async () => {
     const reviewed = await call(
       reviews.POST as Handler,
@@ -408,6 +440,25 @@ describe('pause, resume and next-question routes', () => {
     expect(served.body.question).not.toHaveProperty('answer');
   });
 
+  it('returns options for multiple choice but never accepted answers', async () => {
+    await importContent(client, approvedPackage());
+    const choice = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-001' })
+    );
+    expect(choice.body.question.alternatives).toEqual(['suis', 'es', 'est']);
+    const translation = await call(
+      next.GET as Handler,
+      event('learner-a', { params, query: '?skill=fr-a1-002' })
+    );
+    expect(translation.body.question).toMatchObject({
+      id: 'fr-a1-002@1:q1',
+      format: 'translation'
+    });
+    expect(translation.body.question).not.toHaveProperty('alternatives');
+    expect(JSON.stringify(translation.body)).not.toContain('On est ici.');
+  });
+
   it('says withdrawn content is unavailable rather than a generic conflict', async () => {
     await importContent(client, approvedPackage());
     await client.execute(
@@ -470,6 +521,18 @@ describe('lesson page load', () => {
     });
   });
 
+  it('rejects a route language that differs from the owned session', async () => {
+    const before = await privateState(client);
+    const e = Object.assign(event('learner-a'), {
+      params: { language: 'de', skill: 'fr-a1-001' },
+      url: new URL(
+        'http://127.0.0.1/app/learn/de/lesson/fr-a1-001?session=study-a'
+      )
+    });
+    await expect(lessonPage(e as never)).rejects.toMatchObject({ status: 404 });
+    expect(await privateState(client)).toEqual(before);
+  });
+
   it('shows an unavailable notice for quarantined content', async () => {
     await client.execute(
       "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
@@ -478,5 +541,216 @@ describe('lesson page load', () => {
       unavailable: true,
       lesson: null
     });
+  });
+});
+
+describe('lesson answer action', () => {
+  const attemptCount = async () =>
+    Number(
+      (await client.execute('SELECT COUNT(*) AS n FROM attempts')).rows[0]?.n
+    );
+
+  const submit = (
+    userId: string | null,
+    fields: Record<string, string>,
+    sessionId = 'study-a'
+  ) => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries({
+      studySessionId: sessionId,
+      submissionKey: `key-${Math.random()}`,
+      ...fields
+    }))
+      form.set(name, value);
+    const base = event(userId, {
+      params: { language: 'fr', skill: 'fr-a1-001' }
+    }) as unknown as { request: Request };
+    base.request = new Request('http://127.0.0.1/app/learn', {
+      method: 'POST',
+      body: form
+    });
+    return (lessonActions.answer as unknown as (e: never) => Promise<unknown>)(
+      base as never
+    );
+  };
+
+  const q1 = { questionId: 'fr-a1-001@1:q1', answer: 'suis' };
+  const q2 = { questionId: 'fr-a1-001@1:q2' };
+  const ownerA = testSession('learner-a');
+
+  beforeEach(async () => {
+    const pkg = approvedPackage();
+    Object.assign(pkg.versions[0], {
+      lesson: {
+        title: 'Être',
+        explanation: 'Use être.',
+        examples: [],
+        references: []
+      }
+    });
+    await importContent(client, pkg);
+  });
+
+  it('answers 401 to a signed-out caller and writes nothing', async () => {
+    const before = await attemptCount();
+    await expect(submit(null, q1)).rejects.toMatchObject({ status: 401 });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it("answers 404 for another learner's session and writes nothing", async () => {
+    const before = await attemptCount();
+    expect(await submit('learner-b', q1, 'study-a')).toMatchObject({
+      status: 404
+    });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it('records an independent answer with composed accents', async () => {
+    expect(await submit('learner-a', q1)).toMatchObject({ recorded: true });
+    // "e" followed by a combining acute is stored as the one letter "é".
+    expect(
+      await submit('learner-a', { ...q2, answer: 'e\u0301te\u0301' })
+    ).toMatchObject({ recorded: true, duplicate: false });
+    const stored = await client.execute(
+      "SELECT answer, evidence_kind FROM attempts WHERE question_id = 'fr-a1-001@1:q2'"
+    );
+    expect(stored.rows[0]).toMatchObject({
+      answer: 'été',
+      evidence_kind: 'independent'
+    });
+  });
+
+  it.each([
+    ['an empty answer', '', 'Enter an answer before you submit.'],
+    ['a blank answer', '   \n ', 'Enter an answer before you submit.'],
+    [
+      'an oversized answer',
+      'a'.repeat(4097),
+      'Your answer is too long. Keep it under 4096 characters.'
+    ],
+    [
+      'an answer with a null byte',
+      'es\0',
+      'Your answer contains characters that cannot be sent.'
+    ],
+    [
+      'a multi-line blank',
+      'es\nes',
+      'Your answer contains characters that cannot be sent.'
+    ]
+  ])(
+    'refuses %s with specific feedback and writes nothing',
+    async (_name, answer, message) => {
+      await submit('learner-a', q1);
+      const before = await attemptCount();
+      expect(await submit('learner-a', { ...q2, answer })).toMatchObject({
+        status: 400,
+        data: { message }
+      });
+      expect(await attemptCount()).toBe(before);
+    }
+  );
+
+  it('records 4096 supplementary-plane characters as a valid answer', async () => {
+    await submit('learner-a', q1);
+    const answer = '😀'.repeat(4096);
+    expect(await submit('learner-a', { ...q2, answer })).toMatchObject({
+      recorded: true
+    });
+    const stored = await client.execute(
+      "SELECT answer FROM attempts WHERE question_id = 'fr-a1-001@1:q2'"
+    );
+    expect(stored.rows[0]?.answer).toBe(answer);
+  });
+
+  it('refuses a multiple-choice answer that is not an option', async () => {
+    const before = await attemptCount();
+    expect(
+      await submit('learner-a', { ...q1, answer: 'sommes' })
+    ).toMatchObject({ status: 400 });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it('answers a repeated submission with the original attempt', async () => {
+    const retry = { ...q1, submissionKey: 'retry-key' };
+    expect(await submit('learner-a', retry)).toMatchObject({
+      recorded: true,
+      duplicate: false
+    });
+    const before = await attemptCount();
+    // The session has moved on to the next question; the retry is still the
+    // same submission, not a stale one.
+    expect(await submit('learner-a', retry)).toMatchObject({
+      recorded: true,
+      duplicate: true
+    });
+    expect(await attemptCount()).toBe(before);
+    expect(await submit('learner-a', { ...retry, answer: 'es' })).toMatchObject(
+      { status: 409 }
+    );
+  });
+
+  it('answers a retry that a concurrent request recorded mid-flight', async () => {
+    const form = new FormData();
+    for (const [name, value] of Object.entries({
+      studySessionId: 'study-a',
+      submissionKey: 'racing-key',
+      ...q1
+    }))
+      form.set(name, value);
+    const before = await attemptCount();
+    // The first read of the session's questions finds the same submission
+    // committed by another request, so the session has already moved on.
+    let raced = false;
+    const racing = new Proxy(client, {
+      get(target, property) {
+        if (property !== 'execute') return Reflect.get(target, property);
+        return async (statement: InStatement) => {
+          const sql = typeof statement === 'string' ? statement : statement.sql;
+          if (!raced && sql.includes('AS answered')) {
+            raced = true;
+            await recordAttempt(client, ownerA, {
+              studySessionId: 'study-a',
+              questionId: q1.questionId,
+              submissionKey: 'racing-key',
+              evidenceKind: 'independent',
+              answer: q1.answer
+            });
+          }
+          return target.execute(statement);
+        };
+      }
+    });
+    expect(await recordAnswer(racing, ownerA, form, 'fr-a1-001')).toMatchObject(
+      { recorded: true, duplicate: true }
+    );
+    expect(raced).toBe(true);
+    // Only the racing request's own attempt was written.
+    expect(await attemptCount()).toBe(before + 1);
+  });
+
+  it('refuses a question the session is not on', async () => {
+    const before = await attemptCount();
+    expect(await submit('learner-a', { ...q2, answer: 'es' })).toMatchObject({
+      status: 409,
+      data: { message: 'This question is out of date. Reload to continue.' }
+    });
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it('serves the exercise on the lesson page without its answer', async () => {
+    const e = Object.assign(
+      event('learner-a', { params: { language: 'fr', skill: 'fr-a1-001' } }),
+      { url: new URL('http://127.0.0.1/x?session=study-a') }
+    );
+    const loaded = (await lessonPage(e as never)) as {
+      exercise: { question: Record<string, unknown>; submissionKey: string };
+    };
+    expect(loaded.exercise.question).toMatchObject({
+      id: 'fr-a1-001@1:q1',
+      format: 'multiple-choice'
+    });
+    expect(loaded.exercise.question).not.toHaveProperty('answer');
+    expect(loaded.exercise.submissionKey).toEqual(expect.any(String));
   });
 });
