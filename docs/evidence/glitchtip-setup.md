@@ -1,5 +1,34 @@
 # GlitchTip setup evidence
 
+## Standalone hosting follow-up
+
+- Removed the GlitchTip hosting files from `ops/glitchtip/`. The service is now
+  intended to be managed as a Docker Compose Empty resource in Coolify,
+  independently of Langlo's Git source. A separate local handoff copy of the
+  original Compose file, sample variables, and hosting instructions was saved
+  before removal; the originals also remain in Git history.
+- Added `docs/glitchtip.md` and linked it from the README. The guide covers
+  connecting the existing Langlo resource, matching browser/server labels,
+  retaining existing GlitchTip data when switching resources, and pending live
+  acceptance. Existing runtime hooks, scrubbing, sampling, dependencies, and
+  root application Compose settings are unchanged.
+- Removed the three tests tied to the relocated hosting files and retained the
+  application Compose test for the DSN and public labels. This cleanup adds no
+  runtime behavior, so no new behavior test or red/green cycle was introduced.
+- Local validation passed on Node 24.19.0 with npm 11.9.0 after installing with
+  `npm ci --ignore-scripts`: check (0 errors / 0 warnings), lint, formatting, unit tests
+  (66 files / 1,119 tests), property tests (5 files / 7 tests), build, and E2E
+  (88 passed). No Coolify resource, account, database, domain, or live SMTP
+  configuration was accessed or modified. Standalone deployment, data transfer
+  if applicable, event ingestion, alerts, backups, and retention cleanup remain
+  pending owner acceptance. These local results do not establish hosted CI or
+  deployment success.
+
+## Original implementation history
+
+The entries below describe the initial implementation and its review history.
+Hosting-file references are superseded by the standalone hosting follow-up.
+
 - Added a separate Coolify Compose stack under `ops/glitchtip/` for PostgreSQL, Valkey, and GlitchTip, routed to the hostname configured in Coolify. Coolify variables hold the PostgreSQL password, GlitchTip secret key, Proton SMTP URL, and verified sender address. The sample file contains placeholders only. DuckDB cold storage is enabled at `/code/uploads/cold-storage`, which is inside the persistent uploads volume.
 - Added browser and server Sentry SDK initialization for the public GlitchTip DSN, environment/build labels, and 1% trace sampling. Error events and streamed spans are reduced to allowlisted metadata; request bodies, headers, learner identity, arbitrary contexts, messages, logs, and unsafe span attributes are omitted. Dynamic and encoded path segments, query strings, and fragments are removed or redacted.
 - Compose disables open signup, organization self-creation, Django admin, OpenAPI, MCP, logs, and uptime monitoring. Event, transaction, file, and release retention are explicitly 30 days; the global default is also 30 days.
