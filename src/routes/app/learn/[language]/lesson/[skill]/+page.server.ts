@@ -13,10 +13,10 @@ import {
   exerciseFor,
   lessonFor,
   practiceFeedback,
-  recordAnswer
+  recordAnswer,
+  reportLessonIssue
 } from '../../../../../../lib/server/lesson-practice';
 import { StudyError } from '../../../../../../lib/server/study';
-import { reportContentForm } from '../../../../../../lib/server/content-reports';
 
 /** Withdrawn content gets an honest notice instead of an error page. */
 function lessonFailure(thrown: unknown, language: string) {
@@ -75,7 +75,10 @@ export const actions: Actions = {
     const form = await event.request.formData();
     try {
       return await withDatabase(event.locals.config, (client) =>
-        reportContentForm(client, learner, form)
+        reportLessonIssue(client, learner, form, {
+          language: event.params.language,
+          skillId: event.params.skill
+        })
       );
     } catch (thrown) {
       const described =

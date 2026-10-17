@@ -21,6 +21,7 @@ import {
 } from './study';
 import { ownSession } from './study-content';
 import { feedbackOutcome } from './assessment';
+import { reportContentForm } from './content-reports';
 import type { ExerciseQuestion } from '../components/exercises/answer';
 
 // The practice half of the lesson page: serving the session's next exercise
@@ -68,6 +69,24 @@ export async function exerciseFor(
     if (!described) throw thrown;
     return { studySessionId, notice: described.message, question: null };
   }
+}
+
+/**
+ * Report on the lesson the page shows: the posted content version must be one
+ * of this route's skill, so a report cannot be filed against an unrelated item.
+ */
+export async function reportLessonIssue(
+  client: Client,
+  learner: LearnerSession,
+  form: FormData,
+  page: { language: string; skillId: string }
+) {
+  const owned = await client.execute({
+    sql: 'SELECT 1 FROM content_versions WHERE id = ? AND language = ? AND skill_id = ?',
+    args: [field(form, 'contentVersionId'), page.language, page.skillId]
+  });
+  if (!owned.rows.length) throw new StudyError('NOT_FOUND');
+  return reportContentForm(client, learner, form);
 }
 
 const field = (form: FormData, name: string) => {
