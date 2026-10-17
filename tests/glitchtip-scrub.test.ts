@@ -27,7 +27,22 @@ it('removes learner data and secrets from captured errors', () => {
       }
     ],
     exception: {
-      values: [{ type: 'Error', value: 'token=secret answer=learner response' }]
+      values: [
+        {
+          type: 'Error',
+          value: 'token=secret answer=learner response',
+          stacktrace: {
+            frames: [
+              {
+                filename: '/app/page.js',
+                function: 'load',
+                lineno: 42,
+                vars: { answer: 'learner response' }
+              }
+            ]
+          }
+        }
+      ]
     },
     contexts: { user: { username: 'learner-17' } },
     server_name: 'learner-laptop',
@@ -45,7 +60,16 @@ it('removes learner data and secrets from captured errors', () => {
       method: 'POST'
     },
     breadcrumbs: [{ timestamp: 1, category: 'ui.click' }],
-    exception: { values: [{ type: 'Error' }] },
+    exception: {
+      values: [
+        {
+          type: 'Error',
+          stacktrace: {
+            frames: [{ filename: '/app/page.js', function: 'load', lineno: 42 }]
+          }
+        }
+      ]
+    },
     transaction: '/app/api/study-sessions/:id'
   });
   expect(JSON.stringify(scrubbed)).not.toMatch(
