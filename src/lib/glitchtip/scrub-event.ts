@@ -241,7 +241,17 @@ const spanOperations = new Set([
   'browser.response',
   'browser.unload_event',
   'browser.dom_content_loaded_event',
-  'browser.load_event'
+  'browser.load_event',
+  'resource.script',
+  'resource.css',
+  'resource.img',
+  'resource.other'
+]);
+const resourceSpanOperations = new Set([
+  'resource.script',
+  'resource.css',
+  'resource.img',
+  'resource.other'
 ]);
 const safeSpanNames = new Set([
   'Cache lookup',
@@ -257,7 +267,9 @@ const safeSpanNames = new Set([
 ]);
 const spanStatuses = new Set(['ok', 'error']);
 
-function safeSpanName(value: string): string {
+function safeSpanName(value: string, operation: unknown): string {
+  if (typeof operation === 'string' && resourceSpanOperations.has(operation))
+    return operation;
   const methodPath = /^([A-Z]+)\s+(\S+)$/u.exec(value);
   if (methodPath && httpMethods.has(methodPath[1])) {
     const location = safeLocation(methodPath[2]);
@@ -312,7 +324,7 @@ export function scrubTelemetrySpan<T extends object>(span: T): T {
       ? { parent_span_id: source.parent_span_id }
       : {}),
     span_id: source.span_id,
-    name: safeSpanName(source.name),
+    name: safeSpanName(source.name, source.attributes['sentry.op']),
     start_timestamp: source.start_timestamp,
     ...(typeof source.end_timestamp === 'number'
       ? { end_timestamp: source.end_timestamp }

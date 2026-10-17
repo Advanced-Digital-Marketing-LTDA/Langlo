@@ -297,7 +297,11 @@ it('removes span details while retaining trace timing and operation names', () =
     'browser.response',
     'browser.unload_event',
     'browser.dom_content_loaded_event',
-    'browser.load_event'
+    'browser.load_event',
+    'resource.script',
+    'resource.css',
+    'resource.img',
+    'resource.other'
   ]) {
     const phaseNames: Record<string, string> = {
       'browser.cache': 'Cache lookup',
@@ -340,6 +344,23 @@ it('removes span details while retaining trace timing and operation names', () =
   ).toMatchObject({
     name: 'DNS lookup',
     attributes: { 'sentry.op': 'browser.dns' }
+  });
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
+      name: 'learner.example.test',
+      start_timestamp: 1,
+      status: 'ok',
+      is_segment: false,
+      attributes: {
+        'sentry.op': 'resource.script',
+        'url.full': 'https://learner.example.test/private-answer?token=secret'
+      }
+    })
+  ).toMatchObject({
+    name: 'resource.script',
+    attributes: { 'sentry.op': 'resource.script' }
   });
   expect(
     scrubTelemetrySpan({

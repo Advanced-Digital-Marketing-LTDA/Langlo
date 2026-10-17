@@ -25,6 +25,13 @@ Sentry.init({
       ? env.APP_BUILD_SHA
       : undefined,
   tracesSampleRate: 0.01,
+  integrations: (integrations) =>
+    integrations.flatMap((integration) => {
+      if (integration.name === 'ProcessSession') return [];
+      return integration.name === 'Http'
+        ? [Sentry.httpIntegration({ sessions: false })]
+        : [integration];
+    }),
   beforeSend: scrubTelemetryEvent,
   beforeSendSpan: scrubTelemetrySpan
 });
