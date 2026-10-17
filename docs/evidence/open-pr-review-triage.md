@@ -145,7 +145,7 @@ No original authoring output was reconstructed.
 Manual foreground review covers the test-analysis, silent-failure, code-review and
 fixture-type concerns in the ledger below. The installed PR Review Toolkit agents
 were not available as callable tools in this session; this does not count as execution
-of that plugin. No gstack cso/test-audit skills or Warp CLI were found. These named
+of that plugin. No gstack cso/test-audit skills were found. These named
 external review layers remain unexecuted. Local adversarial review and CI AI reviews
 were not invoked: this task did not authorize provider calls. No PR is being opened or pushed.
 

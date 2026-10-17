@@ -85,7 +85,6 @@ the report action now renders its own bounded, accessible validation message.
 The branch push is authorized; publication is reported separately after verifying
 the exact remote SHA. No PR, tracker Done transition, CI workflow dispatch,
 deployment or production database operation is authorized or performed here.
-Warp's pre-PR spec validation has not run because no PR is being opened.
 Hosted checks for the pushed head, live provider behavior, Windows Anki and release
 acceptance remain unverified. Mastery thresholds are local heuristics, not a
 calibrated CEFR certification.

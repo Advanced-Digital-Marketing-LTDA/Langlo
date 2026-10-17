@@ -172,8 +172,7 @@ and npm 11.9.0:
 7. `npm run build`
 8. `npm run test:e2e`
 
-Record any baseline failure separately from changes. Before any later PR, run
-Warp `validate-changes-match-specs` against this plan and resolve or explicitly
-answer high-severity review findings. No PR is authorized here. Local green
+Record any baseline failure separately from changes. Before any later PR, resolve
+or explicitly answer high-severity review findings. No PR is authorized here. Local green
 checks do not establish T017 acceptance, live provider behavior, Windows Anki,
 hosted CI, deployment or release success.

@@ -127,7 +127,7 @@ unchanged by the compatibility repair; only the schema's legacy-field comment
 is updated.
 
 The requested external local review layers are not claimed as executed. The
-PR Review Toolkit specialist agents, gstack commands and Warp validator were not
+PR Review Toolkit specialist agents and gstack commands were not
 available as callable tools or local installs in this session. The local
 adversarial reviewer would call a provider using the owner's CLI/key and has not
 been authorized separately. Foreground source and test review does not replace

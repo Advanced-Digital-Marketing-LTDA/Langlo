@@ -100,4 +100,4 @@ lockfile dependency version changed. This was a manual diff review; the
 No new test-hardening changes are included. The mutation score remains
 provisional and the two moderate transitive audit findings remain unresolved.
 External review/provider calls were not invoked. This task has no checked-in
-Stryker implementation spec requiring Warp validation.
+Stryker implementation spec.
