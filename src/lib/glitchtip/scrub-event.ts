@@ -178,25 +178,7 @@ const spanOperations = new Set([
   'function',
   'queue.process'
 ]);
-const spanStatuses = new Set([
-  'ok',
-  'cancelled',
-  'unknown_error',
-  'invalid_argument',
-  'deadline_exceeded',
-  'not_found',
-  'already_exists',
-  'permission_denied',
-  'resource_exhausted',
-  'failed_precondition',
-  'aborted',
-  'out_of_range',
-  'unimplemented',
-  'internal_error',
-  'unavailable',
-  'data_loss',
-  'unauthenticated'
-]);
+const spanStatuses = new Set(['ok', 'error']);
 
 function safeSpanName(value: string): string {
   const methodPath = /^([A-Z]+)\s+(\S+)$/u.exec(value);

@@ -202,4 +202,15 @@ it('removes span details while retaining trace timing and operation names', () =
       attributes: {}
     }).status
   ).toBeUndefined();
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
+      name: 'http.server',
+      start_timestamp: 1,
+      status: 'error',
+      is_segment: true,
+      attributes: {}
+    }).status
+  ).toBe('error');
 });
