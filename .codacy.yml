@@ -3,3 +3,5 @@
 # Test files are reviewed by ESLint, CodeQL and the other scanners instead.
 exclude_paths:
   - 'tests/**'
+  # Generated SQLite migrations; Codacy's SQL linter does not read the SQLite dialect.
+  - 'drizzle/**'
