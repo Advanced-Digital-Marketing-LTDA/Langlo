@@ -23,3 +23,6 @@
 [![CodeScene general](https://codescene.io/images/analyzed-by-codescene-badge.svg)](https://codescene.io/projects/86244)
 
 Language learning app.
+
+See [GlitchTip connection setup](docs/glitchtip.md) to connect Langlo to an
+independently hosted monitoring service.
