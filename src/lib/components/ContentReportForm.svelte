@@ -33,7 +33,7 @@
     <textarea
       id={`comment-${target}`}
       name="comment"
-      maxlength="1000"
+      maxlength="2000"
       aria-describedby={`limit-${target}`}></textarea>
     <p id={`limit-${target}`}>
       Up to 1000 characters. Include only information about the content.
