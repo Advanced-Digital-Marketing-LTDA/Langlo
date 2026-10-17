@@ -85,6 +85,13 @@
       "when": 1792189035919,
       "tag": "0011_one_independent_attempt",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1792238327980,
+      "tag": "0012_ai_usage",
+      "breakpoints": true
     }
   ]
 }

@@ -5,7 +5,14 @@ import {
   PREPARED_EVALUATOR_VERSION
 } from './evaluation/prepared';
 import { formats } from './content-import';
+import {
+  FALLBACK_EVALUATOR_VERSION,
+  FALLBACK_RUBRIC_VERSION,
+  type FallbackReason
+} from './evaluation/fallback';
+import type { FallbackEvaluator } from './evaluation/runtime';
 import { beginWrite, type LearnerSession } from './flashcards';
+import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
 import type { ExerciseFormat } from '../components/exercises/answer';
@@ -248,7 +255,7 @@ async function availableQuestion(
   studyRow: Row
 ) {
   const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.answer, q.alternatives, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.prompt, q.answer, q.alternatives, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
     args: [input.questionId, studyRow.language]
   });
   const questionRow = question.rows[0];
@@ -363,6 +370,75 @@ async function recordPreparedEvaluation(
       outcome
     ]
   });
+  return outcome;
+}
+
+/** Loud, content-free log line: never the answer, prompt or learner. */
+function logFallback(reason: FallbackReason | 'not-configured' | 'failed') {
+  console.warn(
+    JSON.stringify({
+      operation: 'ai-fallback',
+      reason,
+      correlationId: currentCorrelationId() || undefined
+    })
+  );
+}
+
+type FallbackAttempt = {
+  id: string;
+  questionId: string;
+  answer: string;
+  contentVersionId: string;
+  language: string;
+  question: Row;
+};
+
+/**
+ * Ask the AI fallback about a typed answer the prepared answers did not
+ * match. It runs after the attempt commits, so a slow or failed call never
+ * loses the answer; every outcome other than a verdict is logged.
+ */
+async function recordFallbackEvaluation(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt,
+  fallback: FallbackEvaluator | undefined
+) {
+  const prepared = preparedQuestion(attempt.questionId, attempt.question);
+  if (prepared.format === 'multiple-choice' || prepared.answer === null) return;
+  if (!fallback) {
+    logFallback('not-configured');
+    return;
+  }
+  try {
+    const result = await fallback({
+      language: attempt.language,
+      format: prepared.format,
+      prompt:
+        attempt.question.prompt === null
+          ? null
+          : String(attempt.question.prompt),
+      accepted: [prepared.answer, ...prepared.alternatives],
+      answer: attempt.answer
+    });
+    if (result.reason !== 'answered') logFallback(result.reason);
+    if (!result.evaluated) return;
+    await client.execute({
+      sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [
+        randomUUID(),
+        session.userId,
+        attempt.id,
+        FALLBACK_EVALUATOR_VERSION,
+        `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`,
+        result.outcome
+      ]
+    });
+  } catch (error) {
+    // The attempt is already saved; the answer stays uncertain for review.
+    logFallback('failed');
+    console.error(error);
+  }
 }
 
 /**
@@ -390,15 +466,35 @@ async function assertNotAnswered(
 export async function recordAttempt(
   client: Client,
   session: LearnerSession,
-  input: AttemptInput
+  input: AttemptInput,
+  options: { fallback?: FallbackEvaluator } = {}
 ) {
   validateAttemptInput(input);
+  const recorded = await recordAttemptWrite(client, session, input);
+  if ('attempt' in recorded)
+    await recordFallbackEvaluation(
+      client,
+      session,
+      recorded.attempt,
+      options.fallback
+    );
+  return recorded.result;
+}
+
+async function recordAttemptWrite(
+  client: Client,
+  session: LearnerSession,
+  input: AttemptInput
+): Promise<
+  | { result: { id: string; duplicate: boolean } }
+  | { result: { id: string; duplicate: false }; attempt: FallbackAttempt }
+> {
   const tx = await beginWrite(client);
   try {
     const replay = await replayAttempt(tx, session, input);
     if (replay) {
       await tx.commit();
-      return replay;
+      return { result: replay };
     }
     const source = await attemptSource(tx, session, input);
     await assertNotAnswered(tx, session, input);
@@ -418,15 +514,18 @@ export async function recordAttempt(
         input.answer
       ]
     });
-    await recordPreparedEvaluation(tx, session, {
+    const attempt = {
       id,
       questionId: input.questionId,
       answer: input.answer,
       contentVersionId: source.contentVersionId,
+      language: source.language,
       question: source.question
-    });
+    };
+    const outcome = await recordPreparedEvaluation(tx, session, attempt);
     await tx.commit();
-    return { id, duplicate: false };
+    const result = { id, duplicate: false as const };
+    return outcome === 'uncertain' ? { result, attempt } : { result };
   } catch (error) {
     // A failed rollback must not replace the error that caused it.
     await tx.rollback().catch(() => undefined);

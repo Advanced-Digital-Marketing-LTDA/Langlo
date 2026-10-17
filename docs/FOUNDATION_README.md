@@ -8,7 +8,7 @@ Use Node 24.19.0 and npm 11.9.0. Run npm ci, npm run check, npm run lint, npm ru
 
 Start local development with npm run dev. Start the built Node server with HOST=127.0.0.1 PORT=3000 npm start. Copy .env.example only for local settings; no secrets are needed for this foundation. Production hosting, TLS, reverse-proxy settings and migrations are separate release work.
 
-The fixture harness uses POSIX filesystem permissions and is verified on Linux. Tests use synthetic accounts and disposable file-backed libSQL databases. Fixture tools must refuse any network URL or non-fixture target. The production database is never needed to build or verify the foundation. Runtime database use, maintained authentication, curricula, assessment, AI fallback, SMTP recovery and Windows Anki delivery are pending.
+The fixture harness uses POSIX filesystem permissions and is verified on Linux. Tests use synthetic accounts and disposable file-backed libSQL databases. Fixture tools must refuse any network URL or non-fixture target. The production database is never needed to build or verify the foundation. Runtime database use, maintained authentication, curricula, assessment, SMTP recovery and Windows Anki delivery are pending.
 
 ## Boundaries and evidence
 

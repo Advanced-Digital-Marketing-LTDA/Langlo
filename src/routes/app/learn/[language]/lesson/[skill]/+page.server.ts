@@ -2,6 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import type { Client } from '@libsql/client';
 import type { Actions, PageServerLoad } from './$types';
 import { openAppDatabase } from '../../../../../../lib/server/db/app';
+import { fallbackEvaluator } from '../../../../../../lib/server/evaluation/runtime';
 import { describeLearnerError } from '../../../../../../lib/server/learner-api';
 import {
   requireLearnerApi,
@@ -67,7 +68,13 @@ export const actions: Actions = {
     const form = await event.request.formData();
     try {
       return await withDatabase(event.locals.config, (client) =>
-        recordAnswer(client, learner, form, event.params.skill)
+        recordAnswer(
+          client,
+          learner,
+          form,
+          event.params.skill,
+          fallbackEvaluator(client, event.locals.config)
+        )
       );
     } catch (thrown) {
       const described =

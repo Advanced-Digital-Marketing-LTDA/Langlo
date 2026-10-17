@@ -16,7 +16,8 @@ export const configVariables = [
   'MAIL_FROM',
   'PROTON_SMTP_TOKEN',
   'MAIL_CAPTURE_DIR',
-  'APP_BUILD_SHA'
+  'APP_BUILD_SHA',
+  'OPENAI_API_KEY'
 ] as const;
 
 export type ConfigVariable = (typeof configVariables)[number];
@@ -86,6 +87,10 @@ export interface RuntimeConfig {
   databaseToken?: string;
   revision: string;
   auth?: AuthRuntimeConfig;
+  /** OpenAI key for the AI grading fallback; unset leaves unmatched answers uncertain. */
+  openAiKey?: string;
+  /** Set when OPENAI_API_KEY is present but unusable; the app keeps serving and the fallback stays off. */
+  openAiKeyError?: ConfigError;
 }
 
 /** Validate private runtime metadata without connecting to a provider; retain credentials only for selected remote libSQL. */
@@ -179,6 +184,30 @@ function parseAuthConfig(
   }
 }
 
+/** An optional OpenAI key: unset is allowed, but a set value must be a usable key. */
+function parseOpenAiKey(
+  env: Record<string, string | undefined>
+): string | undefined {
+  const raw = env.OPENAI_API_KEY;
+  if (raw === undefined || raw === '') return undefined;
+  const key = raw.trim();
+  if (key !== raw || !/^[\x21-\x7e]{20,}$/u.test(key))
+    throw new ConfigError('OPENAI_API_KEY');
+  return key;
+}
+
+/** A bad optional key disables only the AI fallback, and the error is kept for the caller to log. */
+function openAiKeyConfig(
+  env: Record<string, string | undefined>
+): Pick<RuntimeConfig, 'openAiKey' | 'openAiKeyError'> {
+  try {
+    return { openAiKey: parseOpenAiKey(env) };
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    return { openAiKeyError: error };
+  }
+}
+
 export function parseRuntimeConfig(
   env: Record<string, string | undefined>
 ): RuntimeConfig {
@@ -253,6 +282,7 @@ export function parseRuntimeConfig(
     databaseUrl: dataEnabled ? databaseUrl : undefined,
     databaseToken,
     revision,
-    auth: dataEnabled ? parseAuthConfig(env, environment) : undefined
+    auth: dataEnabled ? parseAuthConfig(env, environment) : undefined,
+    ...(dataEnabled ? openAiKeyConfig(env) : {})
   };
 }
