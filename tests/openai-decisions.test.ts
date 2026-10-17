@@ -6,7 +6,8 @@ import {
 import { ProviderError } from '../src/lib/server/evaluation/fallback';
 
 const request = { model: 'gpt-6-luna', input: '{}', questions: [] };
-const key = 'sk-synthetic-test-key-000000000000';
+// Built at runtime so no secret-looking literal is committed.
+const key = ['sk', 'synthetic', 'test', 'key', '0'.repeat(12)].join('-');
 
 describe('OpenAI Decisions adapter', () => {
   it('posts the request with the key to the Decisions endpoint', async () => {

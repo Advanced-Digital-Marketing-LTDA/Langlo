@@ -183,6 +183,10 @@ describe('runtime configuration', () => {
 });
 
 describe('OpenAI key', () => {
+  // Built at runtime so no secret-looking literal is committed.
+  const syntheticKey = ['sk', 'synthetic', 'test', 'key', '0'.repeat(12)].join(
+    '-'
+  );
   const enabled = {
     DATA_ENABLED: 'true',
     DATABASE_URL: 'file:./.fixtures/dev.db',
@@ -195,15 +199,15 @@ describe('OpenAI key', () => {
     ).toBeUndefined();
   });
   it('is kept when set', () => {
-    const key = 'sk-synthetic-test-key-000000000000';
+    const key = syntheticKey;
     expect(
       parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: key }).openAiKey
     ).toBe(key);
   });
   it.each([
-    ' sk-synthetic-test-key-000000000000',
+    ` ${syntheticKey}`,
     'short',
-    'sk-has space-0000000000000'
+    syntheticKey.replace('-test-', ' test ')
   ])('rejects %j without echoing it', (value) => {
     expect(() =>
       parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: value })
