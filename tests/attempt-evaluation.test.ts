@@ -129,6 +129,20 @@ describe('prepared evaluation failures', () => {
     }
   );
 
+  it('refuses a stored answer that is not text', async () => {
+    await client.execute(
+      "UPDATE questions SET answer = x'00' WHERE id = 'fr-a1-002@1:q1'"
+    );
+    await expect(attempt('key-1', 'fr-a1-002@1:q1', 'x')).rejects.toThrow(
+      'Question fr-a1-002@1:q1 has invalid answer'
+    );
+  });
+
+  it('grades a question with no stored alternatives', async () => {
+    const recorded = await attempt('key-1', 'fr-a1-001@1:q2', 'es');
+    expect((await evaluationsOf(recorded.id))[0]?.outcome).toBe('correct');
+  });
+
   it('refuses a stored format outside the known set', async () => {
     // Bypass the table CHECK to simulate corrupted data.
     await client.execute('PRAGMA ignore_check_constraints = ON');
