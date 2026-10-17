@@ -222,6 +222,43 @@ describe('saved placement plan', () => {
     expect(row.rows[0]).toMatchObject({ not_sure: 1, outcome: 'uncertain' });
   });
 
+  it('keeps results unavailable until the fallback verdict on the final answer is recorded', async () => {
+    const { id } = await start();
+    await answer(id, 'fr-a1-001@1:q2');
+    let during: { state: string; results: unknown } | undefined;
+    const fallback = vi.fn(async () => {
+      during = {
+        state: (await getAssessment(client, learner, id)).state,
+        results: await assessmentResults(client, learner, id).catch(
+          (error: { code?: string }) => error.code
+        )
+      };
+      return {
+        outcome: 'correct' as const,
+        reason: 'answered' as const,
+        evaluated: true as const
+      };
+    });
+    await recordAttempt(
+      client,
+      learner,
+      {
+        studySessionId: id,
+        questionId: 'fr-a1-002@1:q1',
+        submissionKey: randomUUID(),
+        evidenceKind: 'independent',
+        answer: 'Nous voici.'
+      },
+      { fallback }
+    );
+    expect(fallback).toHaveBeenCalledTimes(1);
+    expect(during).toEqual({ state: 'active', results: 'RESULTS_NOT_READY' });
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
+    expect(await assessmentResults(client, learner, id)).toMatchObject({
+      counts: { correct: 2, incorrect: 0, uncertain: 0 }
+    });
+  });
+
   it('records uncertainty and identifies A1 gaps without writing mastery or cards', async () => {
     const { id } = await start();
     await answer(id, 'fr-a1-001@1:q2', '', true);

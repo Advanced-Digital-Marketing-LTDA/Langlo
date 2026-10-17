@@ -34,6 +34,8 @@ export function recommendTopics(skills: Topic[]) {
       ? `This foundation is recommended before ${topic.skillId}. You can still choose any topic.`
       : `Recommended from your ${topic.status} grammar evidence. You can still choose any topic.`,
     policyVersion: GRAMMAR_POLICY_VERSION,
-    manualSkillIds: available.map((skill) => skill.skillId).sort()
+    manualSkillIds: available
+      .map((skill) => skill.skillId)
+      .sort((a, b) => a.localeCompare(b))
   };
 }
