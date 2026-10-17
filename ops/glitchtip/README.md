@@ -10,6 +10,9 @@ Set these variables in Coolify, not in this repository:
 - `GLITCHTIP_POSTGRES_PASSWORD`: generate a long hexadecimal password so the
   value is safe inside the PostgreSQL URL.
 - `GLITCHTIP_SECRET_KEY`: generate a separate long random value.
+- `GLITCHTIP_HOSTNAME`: the bare public hostname, without a scheme (for
+  example, `glitchtip.advanceddigitalmarketingltda.com`). Compose uses it for
+  `GLITCHTIP_DOMAIN`, Django `ALLOWED_HOSTS`, and `CSRF_TRUSTED_ORIGINS`.
 - `EMAIL_URL`: Proton SMTP URL with URL-encoded credentials.
 - `DEFAULT_FROM_EMAIL`: verified sender address for alerts.
 

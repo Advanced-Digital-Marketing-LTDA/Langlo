@@ -8,6 +8,15 @@ const compose = readFileSync(
 
 it('requires Coolify secrets and configures Proton mail and persistent services', () => {
   expect(compose).toContain(
+    'GLITCHTIP_DOMAIN: https://${GLITCHTIP_HOSTNAME:?Set GLITCHTIP_HOSTNAME in Coolify}'
+  );
+  expect(compose).toContain(
+    'ALLOWED_HOSTS: ${GLITCHTIP_HOSTNAME:?Set GLITCHTIP_HOSTNAME in Coolify}'
+  );
+  expect(compose).toContain(
+    'CSRF_TRUSTED_ORIGINS: https://${GLITCHTIP_HOSTNAME:?Set GLITCHTIP_HOSTNAME in Coolify}'
+  );
+  expect(compose).toContain(
     'GLITCHTIP_POSTGRES_PASSWORD:?Set GLITCHTIP_POSTGRES_PASSWORD in Coolify'
   );
   expect(compose).toContain(

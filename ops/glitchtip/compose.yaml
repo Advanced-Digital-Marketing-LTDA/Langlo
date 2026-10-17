@@ -3,10 +3,10 @@ x-environment: &glitchtip-environment
   VALKEY_URL: redis://valkey:6379
   SECRET_KEY: ${GLITCHTIP_SECRET_KEY:?Set GLITCHTIP_SECRET_KEY in Coolify}
   EMAIL_URL: ${EMAIL_URL:?Set Proton SMTP EMAIL_URL in Coolify}
-  GLITCHTIP_DOMAIN: ${GLITCHTIP_DOMAIN:-https://glitchtip.advanceddigitalmarketingltda.com}
+  GLITCHTIP_DOMAIN: https://${GLITCHTIP_HOSTNAME:?Set GLITCHTIP_HOSTNAME in Coolify}
   DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:?Set DEFAULT_FROM_EMAIL in Coolify}
-  ALLOWED_HOSTS: glitchtip.advanceddigitalmarketingltda.com
-  CSRF_TRUSTED_ORIGINS: https://glitchtip.advanceddigitalmarketingltda.com
+  ALLOWED_HOSTS: ${GLITCHTIP_HOSTNAME:?Set GLITCHTIP_HOSTNAME in Coolify}
+  CSRF_TRUSTED_ORIGINS: https://${GLITCHTIP_HOSTNAME:?Set GLITCHTIP_HOSTNAME in Coolify}
   ENABLE_USER_REGISTRATION: 'False'
   ENABLE_ORGANIZATION_CREATION: 'False'
   ENABLE_ADMIN: 'False'
