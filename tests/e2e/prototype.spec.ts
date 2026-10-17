@@ -1,4 +1,5 @@
-import { expect, test as base, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test as base } from './coverage-fixture';
 
 // Every prototype navigation waits for hydration: a click on a server-rendered
 // button before its handler attaches is silently lost.
@@ -90,6 +91,44 @@ test('prototype screens are reachable, labelled, and marked noindex', async ({
   }
 });
 
+test('prototype screens show their alternate loading, empty, error, and evaluation states', async ({
+  page
+}) => {
+  const states = [
+    ['/prototype', 'loading', 'Loading your study overview'],
+    ['/prototype', 'empty', 'Start your first lesson'],
+    ['/prototype', 'error', 'Overview unavailable'],
+    ['/prototype/map', 'loading', 'Loading French A1 skills'],
+    ['/prototype/map', 'empty', 'No published skills yet'],
+    ['/prototype/map', 'error', 'Map unavailable'],
+    ['/prototype/lesson', 'loading', 'Loading lesson…'],
+    ['/prototype/lesson', 'error', 'Lesson unavailable'],
+    ['/prototype/lesson', 'unavailable', 'Content temporarily unavailable'],
+    ['/prototype/practice', 'loading', 'Preparing your next exercise'],
+    ['/prototype/practice', 'error', 'Answer could not be submitted'],
+    ['/prototype/results', 'loading', 'Loading your results'],
+    ['/prototype/results', 'error', 'Results unavailable'],
+    ['/prototype/results', 'evaluating', 'One item is still being evaluated'],
+    ['/prototype/review', 'loading', 'Loading your due cards'],
+    ['/prototype/review', 'error', 'Card could not be loaded'],
+    ['/prototype/decks', 'loading', 'Loading your decks'],
+    ['/prototype/decks', 'empty', 'No decks yet'],
+    ['/prototype/decks', 'error', 'Decks unavailable'],
+    ['/prototype/settings', 'error', 'Could not save']
+  ] as const;
+
+  for (const [path, state, expected] of states) {
+    await page.goto(path);
+    await page
+      .getByRole('navigation', { name: 'Prototype screen states' })
+      .getByRole('link', { name: state, exact: true })
+      .click();
+    await expect(
+      page.getByText(expected, { exact: false }).first()
+    ).toBeVisible();
+  }
+});
+
 test('review flow reveals and rates cards by keyboard', async ({ page }) => {
   await page.goto('/prototype/review');
   // Space/Enter on the page body is the documented reveal shortcut; wait for
@@ -110,6 +149,56 @@ test('review flow reveals and rates cards by keyboard', async ({ page }) => {
   ).toBeVisible();
 });
 
+test('review cards can also be revealed and rated by pointer', async ({
+  page
+}) => {
+  await page.goto('/prototype/review');
+  for (const rating of ['Easy', 'Again', 'Hard']) {
+    await page.getByRole('button', { name: /reveal answer/i }).click();
+    await page
+      .getByRole('button', { name: new RegExp(`^${rating}`, 'iu') })
+      .click();
+  }
+  await expect(
+    page.getByRole('heading', { name: /all caught up/iu })
+  ).toBeVisible();
+  await expect(
+    page.getByText(/you rated 3 cards this session \(last rating: hard\)/iu)
+  ).toBeVisible();
+});
+
+test('map explains access to a track without enrollment', async ({ page }) => {
+  await page.goto('/prototype/map');
+  await page.getByRole('link', { name: 'German A1' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Curriculum map' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: /recognize grammatical gender/i })
+  ).toBeVisible();
+  await page.getByRole('link', { name: /german a2.*not enrolled/iu }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Not enrolled in German A2' })
+  ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Open settings' })).toBeVisible();
+});
+
+test('settings save the selected preferences in the prototype session', async ({
+  page
+}) => {
+  await page.goto('/prototype/settings');
+  await page.getByLabel('Your timezone').selectOption('Europe/Lisbon');
+  await page.getByLabel('Day boundary for due queues').fill('05:30');
+  await page.getByLabel('Daily review cap').fill('25');
+  await page.getByLabel('New cards per day').fill('5');
+  await page.getByRole('button', { name: 'Save preferences' }).click();
+  await expect(page.getByRole('status')).toContainText('Preferences saved');
+  await expect(page.getByLabel('Your timezone')).toHaveValue('Europe/Lisbon');
+  await expect(page.getByLabel('Day boundary for due queues')).toHaveValue(
+    '05:30'
+  );
+});
+
 test('practice answers produce immediate feedback and results counts', async ({
   page
 }) => {
@@ -128,6 +217,52 @@ test('deck draft approval updates the pending queue', async ({ page }) => {
   await expect(pending).toBeVisible();
   await page.getByRole('button', { name: 'Approve' }).first().click();
   await expect(page.getByRole('status')).toContainText('approved');
+});
+
+test('deck actions reject drafts, suspend approved cards, and generate an export', async ({
+  page
+}) => {
+  await page.goto('/prototype/decks');
+  const draft = page.locator('ul.drafts li', { hasText: 'tu es vs tu as' });
+  await draft.getByRole('button', { name: 'Reject' }).click();
+  await expect(page.getByRole('status')).toContainText('rejected');
+
+  const approved = page.locator('tr', { hasText: 'Est-ce que' }).first();
+  const suspended = approved.getByRole('checkbox');
+  await suspended.check();
+  await expect(approved).toContainText('Yes');
+  await suspended.uncheck();
+  await expect(approved).toContainText('No');
+  await expect(page.getByRole('status')).toContainText('resumed');
+
+  await page.getByRole('button', { name: 'Export to Anki…' }).first().click();
+  await expect(
+    page.getByRole('group', { name: 'Export French mistakes to Anki' })
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await page.getByRole('button', { name: 'Export to Anki…' }).first().click();
+  await page.getByRole('button', { name: 'Generate package' }).click();
+  await expect(
+    page
+      .getByRole('group', { name: 'Export French mistakes to Anki' })
+      .getByRole('status')
+  ).toContainText('Package ready');
+
+  while ((await page.locator('ul.drafts li').count()) > 0) {
+    await page.getByRole('button', { name: 'Approve' }).first().click();
+  }
+  await expect(page.getByText(/no drafts waiting/i)).toBeVisible();
+});
+
+test('lesson links reflect a requested skill only when it exists', async ({
+  page
+}) => {
+  await page.goto('/prototype/lesson?skill=fr-a1-004');
+  await expect(
+    page.getByText('Requested skill:', { exact: false })
+  ).toContainText('fr-a1-004');
+  await page.goto('/prototype/lesson?skill=missing-skill');
+  await expect(page.getByText('Requested skill:')).toHaveCount(0);
 });
 
 test('results derives missed items from the answers actually given', async ({

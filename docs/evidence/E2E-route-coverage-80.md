@@ -19,6 +19,13 @@ or Codecov.
   (**85%**); the three gaps were session next, pause, and resume. The new
   browser journey exercises those routes, bringing route reach to 20/20
   (**100%**).
+- **E2E browser source coverage:** Monocart records Chromium V8 coverage from
+  source-mapped browser JavaScript. The 82-case baseline had 712/941 statements
+  (**75.66%**) and 230/423 branches (**54.37%**) across original `src/` records.
+  The final 88 desktop/mobile cases cover 745/941 statements (**79.17%**) and
+  250/423 branches (**59.10%**). These are observed source-map records, not
+  whole-repository coverage: server-rendered code that Chromium does not execute
+  remains uncovered. The 80% statement and branch targets are not met.
 
 ## Route inventory
 
@@ -51,8 +58,9 @@ The added test signs in as a synthetic fixture learner and drives the real built
 server. It verifies that the learner can fetch a question without its accepted
 answer, pause their session, receives `409` when requesting another question
 while paused, resume, and fetch a question again. It runs in desktop and mobile
-Playwright projects. No application route behavior or coverage configuration
-changed.
+Playwright projects. Application route behavior did not change. Monocart
+coverage configuration now collects source-mapped Chromium JavaScript data and
+filters the report to original `src/` sources where maps are available.
 
 The route behavior already existed and had integration tests, so there was no
 application-change red phase. Before adding the browser case, the full focused
@@ -71,4 +79,11 @@ the added journey passed against the built server.
 - `npm run test:e2e -- tests/e2e/owner-routes.spec.ts` — passed; 10 cases
   across desktop and mobile.
 - `npm run test:e2e` — passed; 76 cases across desktop and mobile.
+- `npm run test:e2e` after adding the prototype journeys — passed; 88 cases
+  across desktop and mobile, including pointer review, selecting an enrolled
+  track and explaining an unenrolled track, saving preferences, and clearing
+  the pending-draft queue.
+- Monocart browser source report — 745/941 statements (**79.17%**), 250/423
+  branches (**59.10%**) across 21 original `src/` records. Both 80% targets
+  remain open; the report only measures source-mapped browser JavaScript.
 - `npm run format:check` — passed after formatting the new plan and evidence.

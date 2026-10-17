@@ -3,12 +3,12 @@ import { join } from 'node:path';
 import { createClient, type Client } from '@libsql/client/sqlite3';
 import {
   expect,
-  test,
   type BrowserContext,
   type Locator,
   type Page,
   type TestInfo
 } from '@playwright/test';
+import { test } from './coverage-fixture';
 import { importContent } from '../../src/lib/server/content-import';
 import { approvedPackage } from '../fixtures/content-package';
 import {
