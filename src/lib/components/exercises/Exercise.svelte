@@ -14,13 +14,19 @@
     language,
     studySessionId,
     submissionKey,
-    failure = undefined
+    failure = undefined,
+    actionUrl = undefined,
+    retryAttemptId = undefined,
+    submitLabel = 'Submit answer'
   }: {
     question: ExerciseQuestion;
     language: string;
     studySessionId: string;
     submissionKey: string;
     failure?: string | undefined;
+    actionUrl?: string | undefined;
+    retryAttemptId?: string | undefined;
+    submitLabel?: string;
   } = $props();
 
   const instructions: Record<ExerciseFormat, string> = {
@@ -36,21 +42,23 @@
   const message = $derived(problem || failure || '');
   const legendId = $derived(`instruction-${question.id}`);
   const fieldId = $derived(`answer-${question.id}`);
+  const problemId = $derived(`exercise-problem-${question.id}`);
 </script>
 
 <form
   method="POST"
-  action={answerActionUrl(studySessionId)}
+  action={actionUrl ?? answerActionUrl(studySessionId)}
   novalidate
-  use:enhance={({ cancel }) => {
+  use:enhance={({ cancel, submitter }) => {
     // Enhanced submissions must be cancelled through enhance itself.
     const checked = checkAnswer(
       question.format,
       value,
       question.alternatives ?? []
     );
-    problem = checked.ok ? '' : checked.message;
-    if (!checked.ok) {
+    const unsure = submitter?.getAttribute('value') === 'unsure';
+    problem = unsure || checked.ok ? '' : checked.message;
+    if (!unsure && !checked.ok) {
       cancel();
       return;
     }
@@ -66,6 +74,11 @@
   <input type="hidden" name="studySessionId" value={studySessionId} />
   <input type="hidden" name="questionId" value={question.id} />
   <input type="hidden" name="submissionKey" value={submissionKey} />
+  {#if retryAttemptId}<input
+      type="hidden"
+      name="retryAttemptId"
+      value={retryAttemptId}
+    />{/if}
 
   <fieldset>
     <legend id={legendId}>{instructions[question.format]}</legend>
@@ -82,7 +95,7 @@
         options={question.alternatives ?? []}
         labelledby={legendId}
         bind:value
-        describedby={message ? 'exercise-problem' : undefined}
+        describedby={message ? problemId : undefined}
       />
     {:else}
       <TextAnswer
@@ -92,16 +105,19 @@
         {language}
         multiline={question.format !== 'typed-blank'}
         bind:value
-        describedby={message ? 'exercise-problem' : undefined}
+        describedby={message ? problemId : undefined}
       />
     {/if}
   </fieldset>
 
   {#if message}
-    <p id="exercise-problem" class="problem" role="alert">{message}</p>
+    <p id={problemId} class="problem" role="alert">{message}</p>
   {/if}
 
-  <button type="submit" disabled={pending}>Submit answer</button>
+  <button type="submit" disabled={pending}>{submitLabel}</button>
+  <button type="submit" name="intent" value="unsure" disabled={pending}
+    >Not sure</button
+  >
 </form>
 
 <style>

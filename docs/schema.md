@@ -1,5 +1,25 @@
 # Disposable data foundation
 
+## LANGLO-44–47 additions
+
+Migration `0013_assessment_feedback` adds a nullable versioned question-plan JSON
+to study sessions and a false-by-default `not_sure` flag to attempts. Completion
+is derived from all planned questions being answered in the final write
+transaction. Original attempts/evaluations and existing triggers are preserved.
+
+Migration `0014_content_reports` adds owner-scoped report records, a unique
+owner/submission key, a daily-count index, composite version/skill/language and
+optional question foreign keys, allowlisted categories and bounded plain-text
+comments. A null question reports the version's lesson. Reports never alter
+content or learner evidence. The service checks enrollment and current/pinned
+history before writing. Only disposable fixture migrations were exercised.
+
+The existing `skill_evidence` table records the first qualifying evaluation for
+each attempt/policy version; current mastery is recomputed from trusted source
+history. Do not sum historical ledger contributions as current mastery. See
+`docs/scoring-policy.md` and `docs/content-maintenance.md` for the policy and
+correction/version-retention contract.
+
 ## Scope and authority
 
 T009 implements the local SQLite/libSQL shape for the Langlo implementation plan's R001/R003/R009/R010. It is not production storage, authentication, a curriculum importer, scoring, a queue worker or Windows Anki integration. Database/ORM code is server-only. The only connection entry point is an explicitly marked disposable fixture, using `@libsql/client/sqlite3`; it cannot contact Turso or another network service.

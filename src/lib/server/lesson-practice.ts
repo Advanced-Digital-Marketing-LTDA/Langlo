@@ -10,6 +10,7 @@ import type { FallbackEvaluator } from './evaluation/runtime';
 import { describeLearnerError } from './learner-api';
 import type { LearnerSession } from './learner-session';
 import {
+  getAttempt,
   findReplay,
   getLesson,
   getSessionLesson,
@@ -18,6 +19,9 @@ import {
   recordAttempt,
   StudyError
 } from './study';
+import { ownSession } from './study-content';
+import { feedbackOutcome } from './assessment';
+import type { ExerciseQuestion } from '../components/exercises/answer';
 
 // The practice half of the lesson page: serving the session's next exercise
 // and recording the answer to it.
@@ -81,14 +85,15 @@ async function repeatedAnswer(
   form: FormData,
   studySessionId: string
 ) {
-  const raw = form.get('answer');
+  const raw = form.get('intent') === 'unsure' ? '' : form.get('answer');
   if (typeof raw !== 'string') return null;
   const replay = await findReplay(client, learner, {
     studySessionId,
     questionId: field(form, 'questionId'),
     submissionKey: field(form, 'submissionKey'),
-    evidenceKind: 'independent',
-    answer: normalizeAnswer(raw)
+    evidenceKind: form.has('retryAttemptId') ? 'assisted' : 'independent',
+    answer: form.get('intent') === 'unsure' ? '' : normalizeAnswer(raw),
+    notSure: form.get('intent') === 'unsure'
   });
   return replay && { recorded: true as const, duplicate: replay.duplicate };
 }
@@ -101,13 +106,18 @@ export async function recordAnswer(
   skillId: string,
   fallback?: FallbackEvaluator
 ) {
+  const notSure = form.get('intent') === 'unsure';
   const text = checkAnswerText(form.get('answer'));
-  if (!text.ok) return fail(400, { message: text.message });
+  if (!notSure && !text.ok) return fail(400, { message: text.message });
   const studySessionId = field(form, 'studySessionId');
+  const study = await ownSession(client, learner, studySessionId);
+  if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
   const repeated = await repeatedAnswer(client, learner, form, studySessionId);
   if (repeated) return repeated;
-  const next = await nextQuestion(client, learner, studySessionId, skillId);
-  const question = next.question;
+  const retry = field(form, 'retryAttemptId');
+  const question = retry
+    ? await retryQuestion(client, learner, studySessionId, skillId, retry)
+    : (await nextQuestion(client, learner, studySessionId, skillId)).question;
   if (!question || question.id !== field(form, 'questionId')) {
     // A concurrent request may have recorded this very submission after the
     // first lookup; it is a retry then, not a stale question.
@@ -120,7 +130,7 @@ export async function recordAnswer(
     form.get('answer'),
     question.alternatives
   );
-  if (!checked.ok) return fail(400, { message: checked.message });
+  if (!notSure && !checked.ok) return fail(400, { message: checked.message });
   const attempt = await recordAttempt(
     client,
     learner,
@@ -128,10 +138,88 @@ export async function recordAnswer(
       studySessionId,
       questionId: question.id,
       submissionKey: field(form, 'submissionKey'),
-      evidenceKind: 'independent',
-      answer: checked.answer
+      evidenceKind: retry ? 'assisted' : 'independent',
+      answer: notSure ? '' : checked.ok ? checked.answer : '',
+      notSure
     },
     { fallback }
   );
   return { recorded: true as const, duplicate: attempt.duplicate };
+}
+
+async function retryQuestion(
+  client: Client,
+  learner: LearnerSession,
+  sessionId: string,
+  skillId: string,
+  attemptId: string
+): Promise<ExerciseQuestion> {
+  const prior = await getAttempt(client, learner, attemptId);
+  if (prior.studySessionId !== sessionId || prior.skillId !== skillId)
+    throw new StudyError('NOT_FOUND');
+  const found = await client.execute({
+    sql: 'SELECT id, format, prompt, alternatives FROM questions WHERE id = ? AND holdout = 0',
+    args: [prior.questionId]
+  });
+  const row = found.rows[0];
+  if (!row) throw new StudyError('CONTENT_UNAVAILABLE');
+  return {
+    id: String(row.id),
+    format: row.format as ExerciseQuestion['format'],
+    prompt: String(row.prompt),
+    alternatives:
+      row.format === 'multiple-choice' && row.alternatives !== null
+        ? JSON.parse(String(row.alternatives))
+        : undefined
+  };
+}
+
+/** Practice feedback is persisted history, so a reload cannot erase or upgrade it. */
+export async function practiceFeedback(
+  client: Client,
+  learner: LearnerSession,
+  sessionId: string | null,
+  skillId: string
+) {
+  if (!sessionId) return null;
+  const study = await ownSession(client, learner, sessionId);
+  if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
+  const found = await client.execute({
+    sql: `SELECT a.*, q.answer AS expected_answer, v.status FROM attempts a
+      JOIN questions q ON q.id = a.question_id JOIN content_versions v ON v.id = a.content_version_id
+      WHERE a.owner_id = ? AND a.study_session_id = ? AND a.skill_id = ? AND q.holdout = 0
+      ORDER BY a.created_at DESC, a.rowid DESC LIMIT 1`,
+    args: [learner.userId, sessionId, skillId]
+  });
+  const row = found.rows[0];
+  if (!row || row.status === 'quarantined') return null;
+  const evaluations = await client.execute({
+    sql: 'SELECT * FROM evaluations WHERE owner_id = ? AND attempt_id = ?',
+    args: [learner.userId, row.id]
+  });
+  return {
+    attemptId: String(row.id),
+    questionId: String(row.question_id),
+    contentVersionId: String(row.content_version_id),
+    reportSubmissionKey: randomUUID(),
+    answer: String(row.answer),
+    expectedAnswer:
+      row.expected_answer === null ? null : String(row.expected_answer),
+    outcome: row.not_sure
+      ? ('uncertain' as const)
+      : feedbackOutcome(evaluations.rows, String(row.content_version_id)),
+    evidenceKind: String(row.evidence_kind),
+    notSure: Boolean(row.not_sure),
+    retryQuestion:
+      study.state === 'active'
+        ? await retryQuestion(
+            client,
+            learner,
+            sessionId,
+            skillId,
+            String(row.id)
+          )
+        : null,
+    submissionKey: randomUUID()
+  };
 }

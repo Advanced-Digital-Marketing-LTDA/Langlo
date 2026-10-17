@@ -92,6 +92,20 @@
       "when": 1792238327980,
       "tag": "0012_ai_usage",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1792241396978,
+      "tag": "0013_assessment_feedback",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1792242271137,
+      "tag": "0014_content_reports",
+      "breakpoints": true
     }
   ]
 }

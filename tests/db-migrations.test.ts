@@ -65,15 +65,23 @@ describe('disposable libSQL migrations', () => {
         const contentSql =
           'SELECT id, skill_id, language, version, status, created_at FROM content_versions ORDER BY id';
         const objectsSql =
-          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT IN ('sqlite_autoindex_lessons_1', 'attempts_session_question_independent', 'sqlite_autoindex_ai_usage_1') ORDER BY name";
+          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT IN ('sqlite_autoindex_lessons_1', 'attempts_session_question_independent', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created') ORDER BY name";
         const content = (await client.execute(contentSql)).rows;
-        const attempts = (await client.execute('SELECT * FROM attempts')).rows;
+        const attempts = (
+          await client.execute(
+            'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+          )
+        ).rows;
         const objects = (await client.execute(objectsSql)).rows;
         await migrateFixtureDatabase(target);
         expect((await client.execute(contentSql)).rows).toEqual(content);
-        expect((await client.execute('SELECT * FROM attempts')).rows).toEqual(
-          attempts
-        );
+        expect(
+          (
+            await client.execute(
+              'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+            )
+          ).rows
+        ).toEqual(attempts);
         expect(
           (await client.execute('SELECT DISTINCT holdout FROM questions')).rows
         ).toEqual([{ holdout: 0 }]);
@@ -94,9 +102,13 @@ describe('disposable libSQL migrations', () => {
           quarantined: 0
         });
         expect((await client.execute(contentSql)).rows).toEqual(content);
-        expect((await client.execute('SELECT * FROM attempts')).rows).toEqual(
-          attempts
-        );
+        expect(
+          (
+            await client.execute(
+              'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+            )
+          ).rows
+        ).toEqual(attempts);
         expect((await client.execute(objectsSql)).rows).toEqual(objects);
         expect(
           (
@@ -120,9 +132,13 @@ describe('disposable libSQL migrations', () => {
         expect((await client.execute(contentSql)).rows).toEqual(
           expect.arrayContaining(content)
         );
-        expect((await client.execute('SELECT * FROM attempts')).rows).toEqual(
-          attempts
-        );
+        expect(
+          (
+            await client.execute(
+              'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+            )
+          ).rows
+        ).toEqual(attempts);
         expect((await client.execute('PRAGMA foreign_key_check')).rows).toEqual(
           []
         );
@@ -163,7 +179,11 @@ describe('disposable libSQL migrations', () => {
       await old.client.execute(
         "UPDATE content_versions SET version='invalid-text' WHERE id='content-v1'"
       );
-      const before = (await old.client.execute('SELECT * FROM attempts')).rows;
+      const before = (
+        await old.client.execute(
+          'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+        )
+      ).rows;
       old.close();
       await expect(migrateFixtureDatabase(target)).rejects.toThrow(
         /CHECK|CONSTRAINT/iu
@@ -178,7 +198,11 @@ describe('disposable libSQL migrations', () => {
           ).rows[0].n
         ).toBe(2);
         expect(
-          (await unchanged.client.execute('SELECT * FROM attempts')).rows
+          (
+            await unchanged.client.execute(
+              'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+            )
+          ).rows
         ).toEqual(before);
         expect(
           (
@@ -225,8 +249,11 @@ describe('disposable libSQL migrations', () => {
         await seedStudy(target);
         const old = await openFixtureDatabase(target);
         await old.client.execute(statement);
-        const before = (await old.client.execute('SELECT * FROM attempts'))
-          .rows;
+        const before = (
+          await old.client.execute(
+            'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+          )
+        ).rows;
         const enrollments = (
           await old.client.execute('SELECT * FROM enrollments')
         ).rows;
@@ -246,7 +273,11 @@ describe('disposable libSQL migrations', () => {
             ).rows[0].n
           ).toBe(3);
           expect(
-            (await unchanged.client.execute('SELECT * FROM attempts')).rows
+            (
+              await unchanged.client.execute(
+                'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+              )
+            ).rows
           ).toEqual(before);
           expect(
             (await unchanged.client.execute('SELECT * FROM enrollments')).rows
@@ -341,7 +372,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT count(*) AS count FROM __drizzle_migrations'
           )
         ).rows[0].count
-      ).toBe(13);
+      ).toBe(15);
     } finally {
       close();
     }
@@ -400,7 +431,9 @@ describe('disposable libSQL migrations', () => {
       await seedStudy(target);
       const beforeDb = await openFixtureDatabase(target);
       const beforeAttempts = (
-        await beforeDb.client.execute('SELECT * FROM attempts')
+        await beforeDb.client.execute(
+          'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+        )
       ).rows;
       const beforeEvaluations = (
         await beforeDb.client.execute('SELECT * FROM evaluations')
@@ -409,9 +442,13 @@ describe('disposable libSQL migrations', () => {
       await migrateFixtureDatabase(target);
       const { client, close } = await openFixtureDatabase(target);
       try {
-        expect((await client.execute('SELECT * FROM attempts')).rows).toEqual(
-          beforeAttempts
-        );
+        expect(
+          (
+            await client.execute(
+              'SELECT id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, created_at FROM attempts'
+            )
+          ).rows
+        ).toEqual(beforeAttempts);
         expect(
           (await client.execute('SELECT * FROM evaluations')).rows
         ).toEqual(beforeEvaluations);

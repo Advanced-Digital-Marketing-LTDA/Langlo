@@ -16,7 +16,8 @@ export const POST: RequestHandler = async (event) => {
           questionId: body.questionId as string,
           submissionKey: body.submissionKey as string,
           evidenceKind: body.evidenceKind as 'independent' | 'assisted',
-          answer: body.answer as string
+          answer: body.answer as string,
+          notSure: body.notSure as boolean | undefined
         },
         { fallback: fallbackEvaluator(client, event.locals.config) }
       ),

@@ -386,6 +386,8 @@ export const studySessions = sqliteTable(
     // pauseStudySession and resumeStudySession; SQLite cannot add a table
     // CHECK to an existing table without a rebuild.
     pausedAt: integer('paused_at'),
+    // Versioned question IDs, pinned when an assessment starts.
+    assessmentPlan: text('assessment_plan'),
     createdAt: createdAt()
   },
   (table) => [
@@ -431,6 +433,7 @@ export const attempts = sqliteTable(
       enum: ['independent', 'assisted']
     }).notNull(),
     answer: text('answer').notNull(),
+    notSure: integer('not_sure', { mode: 'boolean' }).notNull().default(false),
     createdAt: createdAt()
   },
   (table) => [
@@ -571,6 +574,67 @@ export const skillEvidence = sqliteTable(
       sql`length(trim(${table.scoringVersion})) > 0`
     ),
     check('skill_evidence_contribution', sql`${table.contribution} IN (0, 1)`)
+  ]
+);
+
+export const contentReports = sqliteTable(
+  'content_reports',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    submissionKey: text('submission_key').notNull(),
+    contentVersionId: text('content_version_id').notNull(),
+    skillId: text('skill_id').notNull(),
+    language: text('language').notNull(),
+    questionId: text('question_id'),
+    category: text('category', {
+      enum: ['incorrect-answer', 'unclear', 'other']
+    }).notNull(),
+    comment: text('comment').notNull().default(''),
+    createdAt: createdAt()
+  },
+  (table) => [
+    uniqueIndex('content_reports_owner_submission').on(
+      table.ownerId,
+      table.submissionKey
+    ),
+    index('content_reports_owner_created').on(table.ownerId, table.createdAt),
+    foreignKey({
+      columns: [table.contentVersionId, table.skillId, table.language],
+      foreignColumns: [
+        contentVersions.id,
+        contentVersions.skillId,
+        contentVersions.language
+      ]
+    }),
+    foreignKey({
+      columns: [
+        table.questionId,
+        table.contentVersionId,
+        table.skillId,
+        table.language
+      ],
+      foreignColumns: [
+        questions.id,
+        questions.contentVersionId,
+        questions.skillId,
+        questions.language
+      ]
+    }),
+    check(
+      'content_reports_category',
+      sql`${table.category} IN ('incorrect-answer', 'unclear', 'other')`
+    ),
+    check(
+      'content_reports_comment',
+      sql`length(${table.comment}) <= 1000 AND instr(${table.comment}, char(0)) = 0`
+    ),
+    check(
+      'content_reports_submission',
+      sql`length(trim(${table.submissionKey})) BETWEEN 1 AND 256`
+    )
   ]
 );
 

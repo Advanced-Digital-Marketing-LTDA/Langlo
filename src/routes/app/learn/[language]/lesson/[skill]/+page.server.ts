@@ -1,4 +1,5 @@
 import { error, fail } from '@sveltejs/kit';
+import { randomUUID } from 'node:crypto';
 import type { Client } from '@libsql/client';
 import type { Actions, PageServerLoad } from './$types';
 import { openAppDatabase } from '../../../../../../lib/server/db/app';
@@ -11,9 +12,11 @@ import {
 import {
   exerciseFor,
   lessonFor,
+  practiceFeedback,
   recordAnswer
 } from '../../../../../../lib/server/lesson-practice';
 import { StudyError } from '../../../../../../lib/server/study';
+import { reportContentForm } from '../../../../../../lib/server/content-reports';
 
 /** Withdrawn content gets an honest notice instead of an error page. */
 function lessonFailure(thrown: unknown, language: string) {
@@ -22,6 +25,8 @@ function lessonFailure(thrown: unknown, language: string) {
       return { language, unavailable: true as const, lesson: null };
     if (thrown.code === 'NOT_FOUND')
       error(404, { message: 'Lesson not found.' });
+    const described = describeLearnerError(thrown.code);
+    if (described) error(described.status, { message: described.message });
   }
   throw thrown;
 }
@@ -50,12 +55,14 @@ export const load: PageServerLoad = async (event) => {
     return await withDatabase(event.locals.config, async (client) => ({
       language,
       unavailable: false as const,
+      reportSubmissionKey: randomUUID(),
       lesson: await lessonFor(client, learner, {
         language,
         skillId: skill,
         studySessionId
       }),
-      exercise: await exerciseFor(client, learner, studySessionId, skill)
+      exercise: await exerciseFor(client, learner, studySessionId, skill),
+      feedback: await practiceFeedback(client, learner, studySessionId, skill)
     }));
   } catch (thrown) {
     return lessonFailure(thrown, language);
@@ -63,6 +70,21 @@ export const load: PageServerLoad = async (event) => {
 };
 
 export const actions: Actions = {
+  report: async (event) => {
+    const learner = requireLearnerApi(event);
+    const form = await event.request.formData();
+    try {
+      return await withDatabase(event.locals.config, (client) =>
+        reportContentForm(client, learner, form)
+      );
+    } catch (thrown) {
+      const described =
+        thrown instanceof StudyError && describeLearnerError(thrown.code);
+      if (described)
+        return fail(described.status, { reportError: described.message });
+      throw thrown;
+    }
+  },
   answer: async (event) => {
     const learner = requireLearnerApi(event);
     const form = await event.request.formData();
