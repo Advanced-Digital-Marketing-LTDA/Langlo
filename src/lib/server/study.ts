@@ -1,8 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { Client, Row } from '@libsql/client';
+import {
+  evaluatePrepared,
+  PREPARED_EVALUATOR_VERSION
+} from './evaluation/prepared';
 import { beginWrite, type LearnerSession } from './flashcards';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
+import type { ExerciseFormat } from '../components/exercises/answer';
 
 export { getLesson, getSessionLesson, nextQuestion } from './study-content';
 export { StudyError };
@@ -242,7 +247,7 @@ async function availableQuestion(
   studyRow: Row
 ) {
   const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.answer, q.alternatives, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
     args: [input.questionId, studyRow.language]
   });
   const questionRow = question.rows[0];
@@ -290,8 +295,48 @@ async function attemptSource(
   return {
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
-    language: String(studyRow.language)
+    language: String(studyRow.language),
+    question: questionRow
   };
+}
+
+/**
+ * Record the prepared evaluation of a new attempt in its own transaction. The
+ * rubric is the content version whose answer and alternatives were compared.
+ */
+async function recordPreparedEvaluation(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  attempt: {
+    id: string;
+    answer: string;
+    contentVersionId: string;
+    question: Row;
+  }
+) {
+  const { question } = attempt;
+  const outcome = evaluatePrepared(
+    {
+      format: question.format as ExerciseFormat,
+      answer: question.answer === null ? null : String(question.answer),
+      alternatives:
+        question.alternatives === null
+          ? []
+          : (JSON.parse(String(question.alternatives)) as string[])
+    },
+    attempt.answer
+  );
+  await tx.execute({
+    sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
+    args: [
+      randomUUID(),
+      session.userId,
+      attempt.id,
+      PREPARED_EVALUATOR_VERSION,
+      attempt.contentVersionId,
+      outcome
+    ]
+  });
 }
 
 /**
@@ -346,6 +391,12 @@ export async function recordAttempt(
         input.evidenceKind,
         input.answer
       ]
+    });
+    await recordPreparedEvaluation(tx, session, {
+      id,
+      answer: input.answer,
+      contentVersionId: source.contentVersionId,
+      question: source.question
     });
     await tx.commit();
     return { id, duplicate: false };
