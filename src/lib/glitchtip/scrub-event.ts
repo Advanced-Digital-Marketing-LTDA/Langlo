@@ -48,11 +48,67 @@ const exceptionTypes = new Set([
   'NetworkError',
   'AbortError'
 ]);
+// shortcut: new routes are omitted until added here; update this list with route files.
+const routeTemplates = [
+  '/',
+  '/app',
+  '/app/api/attempts',
+  '/app/api/attempts/:id',
+  '/app/api/cards/:id/reviews',
+  '/app/api/decks',
+  '/app/api/notes/:id',
+  '/app/api/notes/:id/approve',
+  '/app/api/study-sessions',
+  '/app/api/study-sessions/:id',
+  '/app/api/study-sessions/:id/next',
+  '/app/api/study-sessions/:id/pause',
+  '/app/api/study-sessions/:id/resume',
+  '/app/assessment',
+  '/app/assessment/:language',
+  '/app/assessment/session/:id',
+  '/app/assessment/session/:id/results',
+  '/app/learn/:language/lesson/:skill',
+  '/app/map',
+  '/app/progress',
+  '/app/reports',
+  '/build.json',
+  '/health/live',
+  '/health/ready',
+  '/help',
+  '/login',
+  '/privacy',
+  '/prototype',
+  '/prototype/decks',
+  '/prototype/lesson',
+  '/prototype/map',
+  '/prototype/practice',
+  '/prototype/results',
+  '/prototype/review',
+  '/prototype/settings',
+  '/recover',
+  '/reset',
+  '/signup'
+];
 
 function record(value: unknown): EventRecord | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as EventRecord)
     : undefined;
+}
+
+function safeRoute(pathname: string): string | undefined {
+  const path = pathname.replace(/\/+$/u, '') || '/';
+  const segments = path.split('/');
+  return routeTemplates.find((template) => {
+    const expected = template.split('/');
+    return (
+      expected.length === segments.length &&
+      expected.every(
+        (segment, index) =>
+          segment.startsWith(':') || segment === segments[index]
+      )
+    );
+  });
 }
 
 function safeLocation(value: unknown): string | undefined {
@@ -65,19 +121,8 @@ function safeLocation(value: unknown): string | undefined {
   try {
     const base = 'https://relative.invalid';
     const url = new URL(value, base);
-    const path = url.pathname
-      .split('/')
-      .map((part) =>
-        part.length > 0 &&
-        (part.includes('@') ||
-          part.includes('%') ||
-          /^\d+$/u.test(part) ||
-          /^[\da-f]{8}-[\da-f-]{27,}$/iu.test(part) ||
-          /^[\da-z_-]{32,}$/iu.test(part))
-          ? ':id'
-          : part
-      )
-      .join('/');
+    const path = safeRoute(url.pathname);
+    if (!path) return undefined;
     return url.origin === base ? path : `${url.origin}${path}`;
   } catch {
     return undefined;

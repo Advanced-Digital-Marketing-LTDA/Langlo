@@ -77,9 +77,9 @@ it('removes learner data and secrets from captured errors', () => {
   );
   expect(
     scrubTelemetryEvent({
-      transaction: '/app/users/learner%40example.test'
+      transaction: '/app/api/notes/learner%40example.test/approve?token=secret'
     }).transaction
-  ).toBe('/app/users/:id');
+  ).toBe('/app/api/notes/:id/approve');
   expect(event.request.data).toEqual({ answer: 'learner response' });
 });
 
@@ -132,18 +132,48 @@ it('sanitizes method-prefixed transaction names and drops unsafe ones', () => {
 });
 
 it.each([
-  ['/app/lesson', '/app/lesson'],
+  ['/app/map', '/app/map'],
   [
-    'https://langlo.example/app/lesson/123',
-    'https://langlo.example/app/lesson/:id'
+    'https://langlo.example/app/learn/en/lesson/greetings',
+    'https://langlo.example/app/learn/:language/lesson/:skill'
   ],
-  ['/app/users/learner%40example.test?token=secret#answer', '/app/users/:id'],
-  ['/app/attempts/abcdefghijklmnopqrstuvwxyz0123456789', '/app/attempts/:id'],
+  [
+    '/app/api/attempts/private-answer?token=secret#answer',
+    '/app/api/attempts/:id'
+  ],
+  ['/app/api/unknown/private-answer', undefined],
+  [
+    '/app/api/attempts/abcdefghijklmnopqrstuvwxyz0123456789',
+    '/app/api/attempts/:id'
+  ],
   ['javascript:alert(1)', undefined]
 ])('keeps only safe transaction locations: %s', (input, expected) => {
   const result = scrubTelemetryEvent({ transaction: input });
   if (expected === undefined) expect(result).toEqual({});
   else expect(result.transaction).toBe(expected);
+});
+
+it('redacts named dynamic route parameters in requests and spans', () => {
+  expect(
+    scrubTelemetryEvent({
+      request: { url: '/app/api/attempts/private-answer' }
+    }).request
+  ).toEqual({ url: '/app/api/attempts/:id' });
+
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
+      name: 'POST /app/api/attempts/private-answer',
+      start_timestamp: 1,
+      status: 'error',
+      is_segment: true,
+      attributes: { 'http.route': '/app/api/attempts/private-answer' }
+    })
+  ).toMatchObject({
+    name: 'POST /app/api/attempts/:id',
+    attributes: { 'http.route': '/app/api/attempts/:id' }
+  });
 });
 
 it('removes span details while retaining trace timing and operation names', () => {
