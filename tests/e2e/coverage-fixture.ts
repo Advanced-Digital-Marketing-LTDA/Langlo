@@ -7,7 +7,9 @@ import {
 import { CoverageReport } from 'monocart-coverage-reports';
 import coverageOptions from '../../scripts/monocart-coverage.config.mjs';
 
-type CoverageEntries = Awaited<ReturnType<Page['coverage']['stopJSCoverage']>>;
+type CoverageEntries =
+  | Awaited<ReturnType<Page['coverage']['stopJSCoverage']>>[number]
+  | Awaited<ReturnType<Page['coverage']['stopCSSCoverage']>>[number];
 
 export const test = base.extend<{ monocartCoverage: void }>({
   monocartCoverage: [
@@ -17,7 +19,7 @@ export const test = base.extend<{ monocartCoverage: void }>({
         return;
       }
 
-      const collected: Array<Promise<CoverageEntries>> = [];
+      const collected: Array<Promise<CoverageEntries[]>> = [];
       const stops = new Map<Page, () => Promise<void>>();
       const restores: Array<() => void> = [];
 
@@ -25,14 +27,18 @@ export const test = base.extend<{ monocartCoverage: void }>({
       // right before any close and kept, instead of read back at teardown.
       const trackPage = (page: Page) => {
         if (stops.has(page)) return;
-        const started = page.coverage.startJSCoverage({
-          resetOnNavigation: false
-        });
+        const started = Promise.all([
+          page.coverage.startJSCoverage({ resetOnNavigation: false }),
+          page.coverage.startCSSCoverage({ resetOnNavigation: false })
+        ]);
         let stopped: Promise<void> | undefined;
         const stop = () => {
           stopped ??= started.then(async () => {
             if (page.isClosed()) return;
-            const entries = page.coverage.stopJSCoverage();
+            const entries = Promise.all([
+              page.coverage.stopJSCoverage(),
+              page.coverage.stopCSSCoverage()
+            ]).then((coverage) => coverage.flat());
             collected.push(entries);
             await entries;
           });

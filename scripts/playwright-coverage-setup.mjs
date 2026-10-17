@@ -2,6 +2,7 @@ import { CoverageReport } from 'monocart-coverage-reports';
 import coverageOptions from './monocart-coverage.config.mjs';
 import setupBrowserEnvironment from './playwright-environment.mjs';
 
+/** @param {import('@playwright/test').FullConfig} config */
 export default async function setup(config) {
   const cleanupBrowserEnvironment = await setupBrowserEnvironment(config);
   const coverage = new CoverageReport(coverageOptions);

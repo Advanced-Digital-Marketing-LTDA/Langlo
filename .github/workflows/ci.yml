@@ -68,7 +68,7 @@ jobs:
           path: |
             .ci-reports/playwright/playwright-test-report.html
             .ci-reports/playwright-coverage/
-          if-no-files-found: ignore
+          if-no-files-found: error
           retention-days: 1
       - name: Validate non-empty Vitest evidence
         if: always()

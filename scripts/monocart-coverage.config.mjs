@@ -1,7 +1,22 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { resolve, sep } from 'node:path';
 
 const clientRoot = resolve('build/client');
+
+/** @param {string} pathname */
+function clientSourceMapPath(pathname) {
+  const mapPath = resolve(clientRoot, `.${pathname}`);
+  if (!mapPath.startsWith(clientRoot + sep)) {
+    throw new Error(`Source map path escapes ${clientRoot}: ${mapPath}`);
+  }
+  if (!existsSync(mapPath)) return undefined;
+  const realClientRoot = realpathSync(clientRoot);
+  const realMapPath = realpathSync(mapPath);
+  if (!realMapPath.startsWith(realClientRoot + sep)) {
+    throw new Error(`Source map path escapes ${clientRoot}: ${realMapPath}`);
+  }
+  return realMapPath;
+}
 
 export default {
   name: 'Langlo Playwright source coverage',
@@ -15,16 +30,22 @@ export default {
     ) {
       return false;
     }
-    const mapPath = resolve(clientRoot, `.${url.pathname}.map`);
-    if (!mapPath.startsWith(clientRoot + sep)) {
-      throw new Error(`Source map path escapes ${clientRoot}: ${mapPath}`);
-    }
-    if (!existsSync(mapPath)) return false;
-    /** @type {{sources: string[]}} */
-    const { sources } = JSON.parse(readFileSync(mapPath, 'utf8'));
-    return sources.some((source) =>
-      /(?:^|\/)src\//u.test(source.replaceAll('\\', '/'))
+    const mapPath = clientSourceMapPath(`${url.pathname}.map`);
+    if (!mapPath) return false;
+    /** @type {{sources: string[], mappings?: string}} */
+    const { sources, mappings } = JSON.parse(readFileSync(mapPath, 'utf8'));
+    return (
+      typeof mappings === 'string' &&
+      mappings.length > 0 &&
+      sources.some((source) =>
+        /(?:^|\/)src\//u.test(source.replaceAll('\\', '/'))
+      )
     );
+  },
+  /** @param {string} mapUrl @param {Function} _defaultResolver */
+  sourceMapResolver: async (mapUrl, _defaultResolver) => {
+    const mapPath = clientSourceMapPath(new URL(mapUrl).pathname);
+    return mapPath ? JSON.parse(readFileSync(mapPath, 'utf8')) : undefined;
   },
   sourceFilter: /** @param {string} sourcePath */ (sourcePath) => {
     const normalized = sourcePath.replaceAll('\\', '/');

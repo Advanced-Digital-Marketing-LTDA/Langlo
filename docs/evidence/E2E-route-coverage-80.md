@@ -20,10 +20,11 @@ or Codecov.
   browser journey exercises those routes, bringing route reach to 20/20
   (**100%**).
 - **E2E browser source coverage:** Monocart records Chromium V8 coverage from
-  source-mapped browser JavaScript. The 82-case baseline had 712/941 statements
+  source-mapped browser assets. The 82-case baseline had 712/941 statements
   (**75.66%**) and 230/423 branches (**54.37%**) across original `src/` records.
-  The final 88 desktop/mobile cases cover 745/941 statements (**79.17%**) and
-  250/423 branches (**59.10%**). These are observed source-map records, not
+  The final 90 desktop/mobile cases cover 756/953 statements (**79.32%**) and
+  251/427 branches (**58.78%**) across 22 original `src/` records. These are
+  observed source-map records, not
   whole-repository coverage: server-rendered code that Chromium does not execute
   remains uncovered. The 80% statement and branch targets are not met.
 
@@ -83,7 +84,20 @@ the added journey passed against the built server.
   across desktop and mobile, including pointer review, selecting an enrolled
   track and explaining an unenrolled track, saving preferences, and clearing
   the pending-draft queue.
-- Monocart browser source report — 745/941 statements (**79.17%**), 250/423
-  branches (**59.10%**) across 21 original `src/` records. Both 80% targets
-  remain open; the report only measures source-mapped browser JavaScript.
+- `npm run test:e2e` after adding coverage harness regressions — passed; 90
+  cases across desktop and mobile. The new coverage case confirms JavaScript
+  and CSS collection from pages and contexts created during a test, plus
+  coverage submission to Monocart.
+- Monocart generated its configured HTML, V8, JSON summary, and LCOV reports.
+  The final summary contains only original `src/` records (22 records), with
+  756/953 statements (**79.32%**) and 251/427 branches (**58.78%**). Empty-map
+  generated bundles and dependency sources are excluded. Both 80% targets
+  remain open; the report only measures source-mapped browser code.
+- Focused coverage harness tests — 6 passed across 3 files. They cover cache
+  cleanup and teardown generation, source-map selection and symlink/traversal
+  safety, unsupported maps, and the CI artifact paths. The CI upload now fails
+  when expected Playwright reports are missing.
+- `npm test` — passed; 1,014 tests across 54 files. `npm run test:property` —
+  passed; 5 tests across 4 files. `npm run build` and
+  `npm run build:e2e-coverage` — passed.
 - `npm run format:check` — passed after formatting the new plan and evidence.
