@@ -47,8 +47,11 @@ export function evaluatePrepared(
   if (question.answer === null) return 'uncertain';
   if (question.format === 'multiple-choice')
     return answer === question.answer ? 'correct' : 'incorrect';
+  // An empty key (only spaces or final marks) never counts as a match.
+  const key = typedMatchKey(answer);
+  if (key === '') return 'uncertain';
   const accepted = [question.answer, ...question.alternatives].map(
     typedMatchKey
   );
-  return accepted.includes(typedMatchKey(answer)) ? 'correct' : 'uncertain';
+  return accepted.includes(key) ? 'correct' : 'uncertain';
 }

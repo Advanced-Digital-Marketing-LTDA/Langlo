@@ -123,6 +123,12 @@ describe('evaluatePrepared', () => {
     );
   });
 
+  it('never matches an answer or rubric that normalizes to nothing', () => {
+    expect(evaluatePrepared(typed('?!'), '!')).toBe('uncertain');
+    expect(evaluatePrepared(typed('Oui.', ['.']), '...')).toBe('uncertain');
+    expect(evaluatePrepared(typed('Oui.', ['.']), 'oui')).toBe('correct');
+  });
+
   it('is uncertain when the question has no stored answer', () => {
     expect(
       evaluatePrepared(
