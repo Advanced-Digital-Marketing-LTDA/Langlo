@@ -469,6 +469,7 @@ it('keeps only scrubbed transaction envelope fields in static mode', () => {
           trace_id: 'a'.repeat(32),
           span_id: 'b'.repeat(16),
           op: 'http.server',
+          status: 'internal_error',
           data: { answer: 'private' }
         },
         user: { email: 'learner@example.test' }
@@ -481,7 +482,7 @@ it('keeps only scrubbed transaction envelope fields in static mode', () => {
           op: 'db.sql.query',
           start_timestamp: 1,
           timestamp: 1.5,
-          status: 'ok',
+          status: 'internal_error',
           data: { 'http.response.status_code': 200, sql: 'SELECT secret' }
         }
       ],
@@ -500,7 +501,8 @@ it('keeps only scrubbed transaction envelope fields in static mode', () => {
       trace: {
         trace_id: 'a'.repeat(32),
         span_id: 'b'.repeat(16),
-        op: 'http.server'
+        op: 'http.server',
+        status: 'internal_error'
       }
     },
     spans: [
@@ -511,7 +513,7 @@ it('keeps only scrubbed transaction envelope fields in static mode', () => {
         op: 'db.sql.query',
         start_timestamp: 1,
         timestamp: 1.5,
-        status: 'ok',
+        status: 'internal_error',
         data: { 'http.response.status_code': 200 }
       }
     ]

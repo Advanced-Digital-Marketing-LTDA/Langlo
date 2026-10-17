@@ -269,7 +269,26 @@ const safeSpanNames = new Set([
   'DOMContentLoaded event',
   'Load event'
 ]);
-const spanStatuses = new Set(['ok', 'error']);
+const spanStatuses = new Set([
+  'ok',
+  'error',
+  'deadline_exceeded',
+  'unauthenticated',
+  'permission_denied',
+  'not_found',
+  'resource_exhausted',
+  'invalid_argument',
+  'unimplemented',
+  'unavailable',
+  'internal_error',
+  'unknown_error',
+  'cancelled',
+  'already_exists',
+  'failed_precondition',
+  'aborted',
+  'out_of_range',
+  'data_loss'
+]);
 
 function safeSpanName(value: string, operation: unknown): string {
   if (typeof operation === 'string' && resourceSpanOperations.has(operation))
