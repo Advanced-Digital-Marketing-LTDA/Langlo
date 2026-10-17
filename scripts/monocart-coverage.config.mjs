@@ -1,5 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, sep } from 'node:path';
+
+const clientRoot = resolve('build/client');
 
 export default {
   name: 'Langlo Playwright source coverage',
@@ -13,7 +15,10 @@ export default {
     ) {
       return false;
     }
-    const mapPath = resolve('build/client', `.${url.pathname}.map`);
+    const mapPath = resolve(clientRoot, `.${url.pathname}.map`);
+    if (!mapPath.startsWith(clientRoot + sep)) {
+      throw new Error(`Source map path escapes ${clientRoot}: ${mapPath}`);
+    }
     if (!existsSync(mapPath)) return false;
     /** @type {{sources: string[]}} */
     const { sources } = JSON.parse(readFileSync(mapPath, 'utf8'));

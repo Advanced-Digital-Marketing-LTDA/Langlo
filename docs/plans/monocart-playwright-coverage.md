@@ -25,8 +25,7 @@ suite, alongside the existing Vitest LCOV and route-module reach measures.
 
 - Install `monocart-reporter` and `monocart-coverage-reports` as development
   dependencies with lockfile updates.
-- Use one automatic Playwright fixture to collect Chromium JavaScript and CSS
-  coverage; use global setup/teardown to clear and generate reports.
+- Use one automatic Playwright fixture to collect Chromium JavaScript coverage; use global setup/teardown to clear and generate reports.
 - Add an E2E-only Vite build command with source maps and minification disabled.
   Keep the normal build and production output unchanged.
 - Run the E2E suite against the dedicated coverage build in CI and upload the

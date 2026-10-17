@@ -59,7 +59,7 @@ server. It verifies that the learner can fetch a question without its accepted
 answer, pause their session, receives `409` when requesting another question
 while paused, resume, and fetch a question again. It runs in desktop and mobile
 Playwright projects. Application route behavior did not change. Monocart
-coverage configuration now collects source-mapped Chromium JS/CSS data and
+coverage configuration now collects source-mapped Chromium JavaScript data and
 filters the report to original `src/` sources where maps are available.
 
 The route behavior already existed and had integration tests, so there was no
