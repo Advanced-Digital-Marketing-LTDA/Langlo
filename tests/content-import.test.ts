@@ -684,6 +684,24 @@ describe('content import rejects the whole package', () => {
     const cases: Array<(pkg: ContentPackage) => void> = [
       (pkg) => (pkg.versions[0].questions[0].alternatives = ['suis']),
       (pkg) => (pkg.versions[0].questions[0].alternatives = ['es', 'est']),
+      // Multiple choice is graded exactly, so the answer must be an option
+      // as written, not just equal after case or space folding.
+      (pkg) =>
+        (pkg.versions[0].questions[0].alternatives = ['Suis', 'es', 'est']),
+      (pkg) =>
+        (pkg.versions[0].questions[0].alternatives = [' suis', 'es', 'est']),
+      // Submission trims and NFC-composes the picked option, so stored
+      // options must already be in that form or a correct pick fails.
+      (pkg) => {
+        const q = pkg.versions[0].questions[0];
+        q.answer = ' suis ';
+        q.alternatives = [' suis ', 'es', 'est'];
+      },
+      (pkg) => {
+        const q = pkg.versions[0].questions[0];
+        q.answer = 'été'.normalize('NFD');
+        q.alternatives = ['été'.normalize('NFD'), 'es', 'est'];
+      },
       (pkg) =>
         (pkg.versions[0].questions[0].alternatives = ['suis', 'es', 'Es ']),
       (pkg) => (pkg.versions[0].questions[0].alternatives = undefined),

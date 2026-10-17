@@ -1,8 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { Client, Row } from '@libsql/client';
+import {
+  evaluatePrepared,
+  PREPARED_EVALUATOR_VERSION
+} from './evaluation/prepared';
+import { formats } from './content-import';
 import { beginWrite, type LearnerSession } from './flashcards';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
+import type { ExerciseFormat } from '../components/exercises/answer';
 
 export { getLesson, getSessionLesson, nextQuestion } from './study-content';
 export { StudyError };
@@ -242,7 +248,7 @@ async function availableQuestion(
   studyRow: Row
 ) {
   const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.answer, q.alternatives, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
     args: [input.questionId, studyRow.language]
   });
   const questionRow = question.rows[0];
@@ -290,8 +296,73 @@ async function attemptSource(
   return {
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
-    language: String(studyRow.language)
+    language: String(studyRow.language),
+    question: questionRow
   };
+}
+
+const knownFormats: ReadonlySet<unknown> = new Set(formats);
+
+/**
+ * The stored rubric of a question, checked: corrupted rows fail loudly
+ * instead of being graded with a guessed rule.
+ */
+function preparedQuestion(questionId: string, row: Row) {
+  const invalid = (field: string) =>
+    new Error(`Question ${questionId} has invalid ${field}`);
+  if (!knownFormats.has(row.format)) throw invalid('format');
+  let alternatives: unknown = [];
+  if (row.alternatives !== null) {
+    try {
+      alternatives = JSON.parse(String(row.alternatives));
+    } catch {
+      throw invalid('alternatives');
+    }
+  }
+  if (
+    !Array.isArray(alternatives) ||
+    !alternatives.every((item) => typeof item === 'string')
+  )
+    throw invalid('alternatives');
+  if (row.answer !== null && typeof row.answer !== 'string')
+    throw invalid('answer');
+  return {
+    format: row.format as ExerciseFormat,
+    answer: row.answer,
+    alternatives: alternatives as string[]
+  };
+}
+
+/**
+ * Record the prepared evaluation of a new attempt in its own transaction. The
+ * rubric is the content version whose answer and alternatives were compared.
+ */
+async function recordPreparedEvaluation(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  attempt: {
+    id: string;
+    questionId: string;
+    answer: string;
+    contentVersionId: string;
+    question: Row;
+  }
+) {
+  const outcome = evaluatePrepared(
+    preparedQuestion(attempt.questionId, attempt.question),
+    attempt.answer
+  );
+  await tx.execute({
+    sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
+    args: [
+      randomUUID(),
+      session.userId,
+      attempt.id,
+      PREPARED_EVALUATOR_VERSION,
+      attempt.contentVersionId,
+      outcome
+    ]
+  });
 }
 
 /**
@@ -346,6 +417,13 @@ export async function recordAttempt(
         input.evidenceKind,
         input.answer
       ]
+    });
+    await recordPreparedEvaluation(tx, session, {
+      id,
+      questionId: input.questionId,
+      answer: input.answer,
+      contentVersionId: source.contentVersionId,
+      question: source.question
     });
     await tx.commit();
     return { id, duplicate: false };
