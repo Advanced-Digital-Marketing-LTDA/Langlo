@@ -7,6 +7,7 @@ const sentry = vi.hoisted(() => ({
     options
   })),
   sentryHandle: vi.fn(() => vi.fn()),
+  withStaticSpan: vi.fn((callback) => callback),
   handleErrorWithSentry: vi.fn(() => vi.fn())
 }));
 

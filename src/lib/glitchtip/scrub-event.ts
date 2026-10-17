@@ -221,16 +221,6 @@ function safeException(value: unknown): EventRecord | undefined {
   return { values };
 }
 
-type TelemetrySpan = EventRecord & {
-  trace_id: string;
-  span_id: string;
-  name: string;
-  start_timestamp: number;
-  status: string;
-  is_segment: boolean;
-  attributes: EventRecord;
-};
-
 const spanOperations = new Set([
   'http.server',
   'http.client',
@@ -297,7 +287,10 @@ function safeSpanName(value: string, operation: unknown): string {
 }
 
 export function scrubTelemetrySpan<T extends object>(span: T): T {
-  const source = span as unknown as TelemetrySpan;
+  const source = span as unknown as EventRecord;
+  const isStatic = source.attributes === undefined;
+  const sourceAttributes =
+    record(isStatic ? source.data : source.attributes) ?? {};
   const attributes: EventRecord = {};
   const safeKeys = [
     'sentry.op',
@@ -305,7 +298,7 @@ export function scrubTelemetrySpan<T extends object>(span: T): T {
     'http.response.status_code'
   ];
   for (const key of safeKeys) {
-    const value = source.attributes[key];
+    const value = sourceAttributes[key];
     if (
       key === 'sentry.op' &&
       typeof value === 'string' &&
@@ -328,8 +321,41 @@ export function scrubTelemetrySpan<T extends object>(span: T): T {
       attributes[key] = value;
   }
   for (const key of ['http.route', 'http.target', 'url.path']) {
-    const location = safeLocation(source.attributes[key]);
+    const location = safeLocation(sourceAttributes[key]);
     if (location) attributes[key] = location;
+  }
+
+  const operation = isStatic ? source.op : sourceAttributes['sentry.op'];
+  const sourceName = isStatic ? source.description : source.name;
+  const name =
+    typeof sourceName === 'string'
+      ? safeSpanName(sourceName, operation)
+      : 'operation';
+  const status =
+    typeof source.status === 'string' && spanStatuses.has(source.status)
+      ? source.status
+      : undefined;
+  if (isStatic) {
+    return {
+      trace_id: source.trace_id,
+      ...(typeof source.parent_span_id === 'string'
+        ? { parent_span_id: source.parent_span_id }
+        : {}),
+      span_id: source.span_id,
+      ...(typeof operation === 'string' && spanOperations.has(operation)
+        ? { op: operation }
+        : {}),
+      description: name,
+      start_timestamp: source.start_timestamp,
+      ...(typeof source.timestamp === 'number'
+        ? { timestamp: source.timestamp }
+        : {}),
+      ...(status ? { status } : {}),
+      ...(typeof source.is_segment === 'boolean'
+        ? { is_segment: source.is_segment }
+        : {}),
+      data: attributes
+    } as T;
   }
 
   return {
@@ -338,12 +364,12 @@ export function scrubTelemetrySpan<T extends object>(span: T): T {
       ? { parent_span_id: source.parent_span_id }
       : {}),
     span_id: source.span_id,
-    name: safeSpanName(source.name, source.attributes['sentry.op']),
+    name,
     start_timestamp: source.start_timestamp,
     ...(typeof source.end_timestamp === 'number'
       ? { end_timestamp: source.end_timestamp }
       : {}),
-    ...(spanStatuses.has(source.status) ? { status: source.status } : {}),
+    ...(status ? { status } : {}),
     is_segment: source.is_segment,
     attributes
   } as T;
@@ -351,6 +377,7 @@ export function scrubTelemetrySpan<T extends object>(span: T): T {
 
 export function scrubTelemetryEvent<T extends object>(event: T): T {
   const scrubbed = structuredClone(event) as unknown as EventRecord;
+  const isTransaction = scrubbed.type === 'transaction';
   const request = record(scrubbed.request);
   const requestUrl = safeLocation(request?.url);
   const safeRequest = request
@@ -371,6 +398,42 @@ export function scrubTelemetryEvent<T extends object>(event: T): T {
     : undefined;
   const exception = safeException(scrubbed.exception);
   const transaction = safeTransaction(scrubbed.transaction);
+  const safeTrace = record(record(scrubbed.contexts)?.trace);
+  const trace: EventRecord = {};
+  for (const key of ['trace_id', 'span_id', 'parent_span_id']) {
+    const value = safeTrace?.[key];
+    const length = key === 'trace_id' ? 32 : 16;
+    if (
+      typeof value === 'string' &&
+      new RegExp(`^[a-f0-9]{${length}}$`, 'iu').test(value)
+    )
+      trace[key] = value;
+  }
+  if (typeof safeTrace?.op === 'string' && spanOperations.has(safeTrace.op))
+    trace.op = safeTrace.op;
+  if (
+    typeof safeTrace?.status === 'string' &&
+    spanStatuses.has(safeTrace.status)
+  )
+    trace.status = safeTrace.status;
+  const contexts = Object.keys(trace).length ? { trace } : undefined;
+  const spans =
+    isTransaction && Array.isArray(scrubbed.spans)
+      ? scrubbed.spans.flatMap((value) => {
+          const span = record(value);
+          if (
+            !span ||
+            typeof span.trace_id !== 'string' ||
+            !/^[a-f0-9]{32}$/iu.test(span.trace_id) ||
+            typeof span.span_id !== 'string' ||
+            !/^[a-f0-9]{16}$/iu.test(span.span_id) ||
+            typeof span.start_timestamp !== 'number' ||
+            !Number.isFinite(span.start_timestamp)
+          )
+            return [];
+          return [scrubTelemetrySpan(span)];
+        })
+      : undefined;
 
   for (const key of Object.keys(scrubbed)) {
     if (
@@ -384,7 +447,10 @@ export function scrubTelemetryEvent<T extends object>(event: T): T {
         'request',
         'breadcrumbs',
         'exception',
-        'transaction'
+        'transaction',
+        ...(isTransaction
+          ? ['type', 'start_timestamp', 'contexts', 'spans']
+          : [])
       ].includes(key)
     ) {
       delete scrubbed[key];
@@ -398,5 +464,16 @@ export function scrubTelemetryEvent<T extends object>(event: T): T {
   else delete scrubbed.transaction;
   if (safeRequest) scrubbed.request = safeRequest;
   else delete scrubbed.request;
+  if (isTransaction) {
+    if (
+      typeof scrubbed.start_timestamp !== 'number' ||
+      !Number.isFinite(scrubbed.start_timestamp)
+    )
+      delete scrubbed.start_timestamp;
+    if (contexts) scrubbed.contexts = contexts;
+    else delete scrubbed.contexts;
+    if (spans) scrubbed.spans = spans;
+    else delete scrubbed.spans;
+  }
   return scrubbed as T;
 }

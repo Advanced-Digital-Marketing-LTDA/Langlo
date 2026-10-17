@@ -7,6 +7,7 @@ vi.mock('$app/env/public', () => ({
 }));
 vi.mock('@sentry/sveltekit', () => ({
   init: vi.fn(),
+  withStaticSpan: vi.fn((callback) => callback),
   handleErrorWithSentry: vi.fn(() => vi.fn())
 }));
 it('initializes browser telemetry with labels, sampling, and scrubbers', async () => {
@@ -20,8 +21,10 @@ it('initializes browser telemetry with labels, sampling, and scrubbers', async (
       environment: 'test',
       release: 'test-sha',
       tracesSampleRate: 0.01,
+      traceLifecycle: 'static',
       integrations: expect.any(Function),
       beforeSend: expect.any(Function),
+      beforeSendTransaction: expect.any(Function),
       beforeSendSpan: expect.any(Function)
     })
   );

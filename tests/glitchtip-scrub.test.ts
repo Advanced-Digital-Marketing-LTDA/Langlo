@@ -421,3 +421,99 @@ it('removes span details while retaining trace timing and operation names', () =
     }).status
   ).toBe('error');
 });
+
+it('scrubs static transaction spans using the static span shape', () => {
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
+      description: 'GET /app/api/attempts/private-answer?token=secret',
+      op: 'http.server',
+      start_timestamp: 1,
+      timestamp: 2,
+      status: 'ok',
+      is_segment: true,
+      data: {
+        'http.request.method': 'POST',
+        'url.full':
+          'https://langlo.example/app/api/attempts/private-answer?token=secret',
+        answer: 'private answer'
+      }
+    })
+  ).toEqual({
+    trace_id: 'trace-id',
+    span_id: 'span-id',
+    description: 'GET /app/api/attempts/:id',
+    op: 'http.server',
+    start_timestamp: 1,
+    timestamp: 2,
+    status: 'ok',
+    is_segment: true,
+    data: { 'http.request.method': 'POST' }
+  });
+});
+
+it('keeps only scrubbed transaction envelope fields in static mode', () => {
+  expect(
+    scrubTelemetryEvent({
+      type: 'transaction',
+      transaction: 'GET /app/api/attempts/private-answer?token=secret',
+      start_timestamp: 1,
+      timestamp: 2,
+      request: {
+        url: 'https://langlo.example/app/api/attempts/private-answer?token=secret',
+        method: 'GET'
+      },
+      contexts: {
+        trace: {
+          trace_id: 'a'.repeat(32),
+          span_id: 'b'.repeat(16),
+          op: 'http.server',
+          data: { answer: 'private' }
+        },
+        user: { email: 'learner@example.test' }
+      },
+      spans: [
+        {
+          trace_id: 'a'.repeat(32),
+          span_id: 'c'.repeat(16),
+          description: 'db.sql.query',
+          op: 'db.sql.query',
+          start_timestamp: 1,
+          timestamp: 1.5,
+          status: 'ok',
+          data: { 'http.response.status_code': 200, sql: 'SELECT secret' }
+        }
+      ],
+      extra: { answer: 'private' }
+    })
+  ).toEqual({
+    type: 'transaction',
+    transaction: 'GET /app/api/attempts/:id',
+    start_timestamp: 1,
+    timestamp: 2,
+    request: {
+      url: 'https://langlo.example/app/api/attempts/:id',
+      method: 'GET'
+    },
+    contexts: {
+      trace: {
+        trace_id: 'a'.repeat(32),
+        span_id: 'b'.repeat(16),
+        op: 'http.server'
+      }
+    },
+    spans: [
+      {
+        trace_id: 'a'.repeat(32),
+        span_id: 'c'.repeat(16),
+        description: 'db.sql.query',
+        op: 'db.sql.query',
+        start_timestamp: 1,
+        timestamp: 1.5,
+        status: 'ok',
+        data: { 'http.response.status_code': 200 }
+      }
+    ]
+  });
+});

@@ -14,6 +14,7 @@ it('initializes server telemetry with sampled traces and event scrubbing', async
   const options = Sentry.getClient()?.getOptions();
 
   expect(options?.tracesSampleRate).toBe(0.01);
+  expect(options?.traceLifecycle).toBe('static');
 
   const event = {
     event_id: 'event-id',

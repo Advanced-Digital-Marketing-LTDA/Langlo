@@ -12,10 +12,12 @@ Sentry.init({
     (import.meta.env.DEV ? 'development' : 'production'),
   release: publicEnv.PUBLIC_APP_BUILD_SHA,
   tracesSampleRate: 0.01,
+  traceLifecycle: 'static',
   integrations: (integrations) =>
     integrations.filter((integration) => integration.name !== 'BrowserSession'),
   beforeSend: scrubTelemetryEvent,
-  beforeSendSpan: scrubTelemetrySpan
+  beforeSendTransaction: scrubTelemetryEvent,
+  beforeSendSpan: Sentry.withStaticSpan(scrubTelemetrySpan)
 });
 
 export const handleError = Sentry.handleErrorWithSentry();

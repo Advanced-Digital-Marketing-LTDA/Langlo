@@ -25,6 +25,7 @@ Sentry.init({
       ? env.APP_BUILD_SHA
       : undefined,
   tracesSampleRate: 0.01,
+  traceLifecycle: 'static',
   integrations: (integrations) =>
     integrations.flatMap((integration) => {
       if (integration.name === 'ProcessSession') return [];
@@ -33,7 +34,8 @@ Sentry.init({
         : [integration];
     }),
   beforeSend: scrubTelemetryEvent,
-  beforeSendSpan: scrubTelemetrySpan
+  beforeSendTransaction: scrubTelemetryEvent,
+  beforeSendSpan: Sentry.withStaticSpan(scrubTelemetrySpan)
 });
 
 const appHandle: Handle = async ({ event, resolve }) => {
