@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './coverage-fixture';
 
 test('public shell works with keyboard navigation and browser history', async ({
   page

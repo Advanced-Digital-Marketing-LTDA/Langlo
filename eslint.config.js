@@ -25,6 +25,7 @@ export default ts.config(
       'drizzle/meta/**',
       'playwright-report/**',
       'test-results/**',
+      '.ci-reports/**',
       '.fixtures/**'
     ]
   },

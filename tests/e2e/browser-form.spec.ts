@@ -1,7 +1,8 @@
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
 import { setTimeout as delay } from 'node:timers/promises';
-import { type BrowserContext, expect, test } from '@playwright/test';
+import { type BrowserContext, expect } from '@playwright/test';
+import { test } from './coverage-fixture';
 
 async function reservePort(): Promise<number> {
   const probe = createServer();

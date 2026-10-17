@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './coverage-fixture';
 
 test('invalid runtime config fails safely while liveness remains independent', async ({
   request
