@@ -43,16 +43,17 @@ if (!scope) throw new Error(`Unknown LANGLO_STRYKER_SCOPE: ${scopeName}`);
 /** @satisfies {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 const config = {
   mutate: scope.mutate,
-  testRunner: 'command',
-  commandRunner: {
-    // Invoke Vitest directly: package-manager wrappers can drop the active mutant environment variable.
-    command: `"${process.execPath}" ./node_modules/vitest/vitest.mjs run ${scope.tests.join(' ')}`
-  },
+  testRunner: 'langlo-vitest',
+  plugins: ['./scripts/stryker-vitest-runner.mjs'],
+  coverageAnalysis: 'perTest',
+  testFiles: scope.tests,
+  vitest: { configFile: 'vitest.config.ts', related: false },
   concurrency: 4,
   timeoutMS: 30000,
   thresholds: { break: 80 },
   ignorePatterns: ['.claude', '.agents', '.codex', 'test-results'],
-  reporters: ['progress', 'clear-text', 'html'],
-  htmlReporter: { fileName: `reports/mutation/${scope.name}.html` }
+  reporters: ['progress', 'clear-text', 'html', 'json'],
+  htmlReporter: { fileName: `reports/mutation/${scope.name}.html` },
+  jsonReporter: { fileName: `reports/mutation/${scope.name}.json` }
 };
 export default config;

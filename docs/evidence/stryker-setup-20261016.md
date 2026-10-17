@@ -195,4 +195,4 @@ and remain ignored by Git. No application tests were changed to raise scores
 during this repair.
 
 Local runs do not establish hosted CI, release, live-provider, or Windows Anki
-acceptance. This repair has not been pushed.
+acceptance. This repair was subsequently pushed as `85d71ce` at the owner's request.

@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
-import { getMastery, scoreGrammar } from '../src/lib/server/mastery';
+import {
+  getMastery,
+  qualifyingGrammarEvidence,
+  scoreGrammar
+} from '../src/lib/server/mastery';
 import { recommendTopics } from '../src/lib/server/recommendations';
 import {
   disposeFlashcardFixtures,
@@ -24,6 +28,47 @@ beforeEach(async () => {
 afterEach(async () => {
   close?.();
   await disposeFlashcardFixtures();
+});
+
+it.each([
+  {
+    reason: 'timestamp before sequence',
+    first: ['z-first', 1, 9],
+    later: ['a-later', 2, 1]
+  },
+  {
+    reason: 'sequence for equal timestamps',
+    first: ['z-first', 1, 1],
+    later: ['a-later', 1, 2]
+  },
+  {
+    reason: 'attempt ID for equal timestamps and sequences',
+    first: ['a-first', 1, 1],
+    later: ['z-later', 1, 1]
+  }
+])('selects first grammar evidence by $reason', ({ first, later }) => {
+  const rows = [later, first].map(([attemptId, createdAt, sequence]) => ({
+    length: 0,
+    attempt_id: attemptId,
+    created_at: createdAt,
+    sequence,
+    skill_id: 'skill',
+    question_id: 'version:q1',
+    content_version_id: 'version',
+    study_session_id: 'session',
+    evidence_kind: 'independent',
+    not_sure: 0,
+    mode: 'practice',
+    state: 'active',
+    status: 'pilot-ready',
+    evaluator_version: 'prepared-1',
+    rubric_version: 'version',
+    evaluation_id: `evaluation-${attemptId}`,
+    outcome: 'correct'
+  }));
+  expect(qualifyingGrammarEvidence(rows)).toMatchObject([
+    { attemptId: first[0] }
+  ]);
 });
 
 describe('versioned grammar policy', () => {
