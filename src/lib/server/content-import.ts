@@ -22,7 +22,7 @@ const languages = ['fr', 'de', 'en'] as const;
 const levels = ['A1', 'A2'] as const;
 // The contract's five tracks; French A2 is out of scope.
 const tracks = new Set(['fr A1', 'de A1', 'de A2', 'en A1', 'en A2']);
-const formats = [
+export const formats = [
   'multiple-choice',
   'typed-blank',
   'translation',
@@ -215,7 +215,7 @@ function validateAlternatives(question: ContentQuestion) {
   const valid =
     unique.size === alternatives.length &&
     (question.format === 'multiple-choice'
-      ? alternatives.length >= 2 && unique.has(answer)
+      ? alternatives.length >= 2 && alternatives.includes(question.answer)
       : !unique.has(answer));
   if (!valid) fail('INVALID_ALTERNATIVES', question.id);
 }

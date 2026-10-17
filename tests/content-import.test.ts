@@ -684,6 +684,12 @@ describe('content import rejects the whole package', () => {
     const cases: Array<(pkg: ContentPackage) => void> = [
       (pkg) => (pkg.versions[0].questions[0].alternatives = ['suis']),
       (pkg) => (pkg.versions[0].questions[0].alternatives = ['es', 'est']),
+      // Multiple choice is graded exactly, so the answer must be an option
+      // as written, not just equal after case or space folding.
+      (pkg) =>
+        (pkg.versions[0].questions[0].alternatives = ['Suis', 'es', 'est']),
+      (pkg) =>
+        (pkg.versions[0].questions[0].alternatives = [' suis', 'es', 'est']),
       (pkg) =>
         (pkg.versions[0].questions[0].alternatives = ['suis', 'es', 'Es ']),
       (pkg) => (pkg.versions[0].questions[0].alternatives = undefined),

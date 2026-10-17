@@ -27,12 +27,15 @@ export type PreparedQuestion = {
  * normalised away.
  */
 export function typedMatchKey(text: string): string {
+  // Same steps as the curriculum contract: apostrophes, trim, a run of final
+  // . ! or ?, then spaces; accents compare composed.
   return text
     .normalize('NFC')
-    .replace(/[‘’ʼ`´]/g, "'")
-    .replace(/\s+/g, ' ')
+    .replace(/[\u2018\u2019\u02bc\u201b]/gu, "'")
     .trim()
-    .replace(/\s?[.!?]$/, '')
+    .replace(/[.!?]+$/u, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
     .toLowerCase();
 }
 

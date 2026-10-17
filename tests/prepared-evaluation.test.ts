@@ -4,6 +4,7 @@ import {
   PREPARED_EVALUATOR_VERSION,
   typedMatchKey
 } from '../src/lib/server/evaluation/prepared';
+import { normalize } from './fixtures/curriculum-module';
 
 const typed = (answer: string, alternatives: string[] = []) => ({
   format: 'translation' as const,
@@ -27,8 +28,42 @@ describe('typedMatchKey', () => {
     expect(typedMatchKey('Ja, ich komme.')).not.toBe(
       typedMatchKey('Ja ich komme.')
     );
-    // Only one final mark is ignored, not punctuation in general.
-    expect(typedMatchKey('Wirklich?!')).not.toBe(typedMatchKey('Wirklich'));
+    expect(typedMatchKey('Ja. ich komme')).not.toBe(
+      typedMatchKey('Ja ich komme')
+    );
+    // Backticks and acute accents are characters, not apostrophes.
+    expect(typedMatchKey('l`italien')).not.toBe(typedMatchKey("l'italien"));
+    expect(typedMatchKey('l´italien')).not.toBe(typedMatchKey("l'italien"));
+  });
+
+  it('ignores a run of final marks, as the curriculum rule does', () => {
+    expect(typedMatchKey('Wirklich?!')).toBe(typedMatchKey('Wirklich'));
+    expect(typedMatchKey("J'habite à Paris ?!")).toBe(
+      typedMatchKey("J'habite à Paris")
+    );
+  });
+
+  it('agrees with the curriculum contract normalization', () => {
+    const probes = [
+      '  j’habite   à paris ',
+      "J'habite à Paris!",
+      "J'HABITE À PARIS",
+      "J'habite à Paris?!",
+      "J'habite. à Paris",
+      'J\u2018habite',
+      'J\u2019habite',
+      'J\u02bchabite',
+      'J\u201bhabite',
+      'l`italien',
+      'l´italien',
+      'est-ce que tu aimes la musique\u00a0?',
+      "J'habite a\u0300 Paris".normalize('NFD'),
+      'Wirklich . ! ?',
+      '...',
+      ' Ça va ? '
+    ];
+    for (const probe of probes)
+      expect(typedMatchKey(probe), probe).toBe(normalize(probe));
   });
 
   it('treats decomposed and composed accents as the same letter', () => {

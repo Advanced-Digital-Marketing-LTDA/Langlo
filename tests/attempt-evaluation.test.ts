@@ -92,3 +92,72 @@ describe('prepared evaluation of a recorded attempt', () => {
     expect(await evaluationCount()).toBe(before);
   });
 });
+
+describe('prepared evaluation failures', () => {
+  const attemptCount = async () =>
+    Number(
+      (await client.execute('SELECT COUNT(*) AS n FROM attempts')).rows[0]?.n
+    );
+
+  it('rolls the attempt back when the evaluation cannot be written', async () => {
+    await client.execute(
+      "CREATE TRIGGER fail_evaluations BEFORE INSERT ON evaluations BEGIN SELECT RAISE(ABORT, 'synthetic evaluation failure'); END"
+    );
+    const before = await attemptCount();
+    await expect(attempt('key-1', 'fr-a1-001@1:q1', 'suis')).rejects.toThrow(
+      'synthetic evaluation failure'
+    );
+    expect(await attemptCount()).toBe(before);
+  });
+
+  it.each([
+    ['not JSON', 'not json'],
+    ['a JSON string', '"suis"'],
+    ['an array with a non-string', '["suis", 3]']
+  ])(
+    'refuses stored alternatives that are %s, saving nothing',
+    async (_, stored) => {
+      await client.execute({
+        sql: 'UPDATE questions SET alternatives = ? WHERE id = ?',
+        args: [stored, 'fr-a1-002@1:q1']
+      });
+      const before = await attemptCount();
+      await expect(attempt('key-1', 'fr-a1-002@1:q1', 's')).rejects.toThrow(
+        'Question fr-a1-002@1:q1 has invalid alternatives'
+      );
+      expect(await attemptCount()).toBe(before);
+    }
+  );
+
+  it('refuses a stored format outside the known set', async () => {
+    // Bypass the table CHECK to simulate corrupted data.
+    await client.execute('PRAGMA ignore_check_constraints = ON');
+    await client.execute(
+      "UPDATE questions SET format = 'essay' WHERE id = 'fr-a1-002@1:q1'"
+    );
+    await client.execute('PRAGMA ignore_check_constraints = OFF');
+    await expect(attempt('key-1', 'fr-a1-002@1:q1', 'x')).rejects.toThrow(
+      'Question fr-a1-002@1:q1 has invalid format'
+    );
+  });
+});
+
+describe('evaluation ownership', () => {
+  it('writes each learner their own evaluation', async () => {
+    const ownerB = testSession('learner-b');
+    const a = await attempt('key-1', 'fr-a1-001@1:q1', 'suis');
+    const b = await recordAttempt(client, ownerB, {
+      studySessionId: 'study-b',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'key-1',
+      evidenceKind: 'independent',
+      answer: 'es'
+    });
+    expect(
+      (await evaluationsOf(a.id)).map((r) => [r.owner_id, r.outcome])
+    ).toEqual([['learner-a', 'correct']]);
+    expect(
+      (await evaluationsOf(b.id)).map((r) => [r.owner_id, r.outcome])
+    ).toEqual([['learner-b', 'incorrect']]);
+  });
+});

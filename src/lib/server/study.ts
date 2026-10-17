@@ -4,6 +4,7 @@ import {
   evaluatePrepared,
   PREPARED_EVALUATOR_VERSION
 } from './evaluation/prepared';
+import { formats } from './content-import';
 import { beginWrite, type LearnerSession } from './flashcards';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
@@ -300,6 +301,38 @@ async function attemptSource(
   };
 }
 
+const knownFormats: ReadonlySet<unknown> = new Set(formats);
+
+/**
+ * The stored rubric of a question, checked: corrupted rows fail loudly
+ * instead of being graded with a guessed rule.
+ */
+function preparedQuestion(questionId: string, row: Row) {
+  const invalid = (field: string) =>
+    new Error(`Question ${questionId} has invalid ${field}`);
+  if (!knownFormats.has(row.format)) throw invalid('format');
+  let alternatives: unknown = [];
+  if (row.alternatives !== null) {
+    try {
+      alternatives = JSON.parse(String(row.alternatives));
+    } catch {
+      throw invalid('alternatives');
+    }
+  }
+  if (
+    !Array.isArray(alternatives) ||
+    !alternatives.every((item) => typeof item === 'string')
+  )
+    throw invalid('alternatives');
+  if (row.answer !== null && typeof row.answer !== 'string')
+    throw invalid('answer');
+  return {
+    format: row.format as ExerciseFormat,
+    answer: row.answer,
+    alternatives: alternatives as string[]
+  };
+}
+
 /**
  * Record the prepared evaluation of a new attempt in its own transaction. The
  * rubric is the content version whose answer and alternatives were compared.
@@ -309,21 +342,14 @@ async function recordPreparedEvaluation(
   session: LearnerSession,
   attempt: {
     id: string;
+    questionId: string;
     answer: string;
     contentVersionId: string;
     question: Row;
   }
 ) {
-  const { question } = attempt;
   const outcome = evaluatePrepared(
-    {
-      format: question.format as ExerciseFormat,
-      answer: question.answer === null ? null : String(question.answer),
-      alternatives:
-        question.alternatives === null
-          ? []
-          : (JSON.parse(String(question.alternatives)) as string[])
-    },
+    preparedQuestion(attempt.questionId, attempt.question),
     attempt.answer
   );
   await tx.execute({
@@ -394,6 +420,7 @@ export async function recordAttempt(
     });
     await recordPreparedEvaluation(tx, session, {
       id,
+      questionId: input.questionId,
       answer: input.answer,
       contentVersionId: source.contentVersionId,
       question: source.question
