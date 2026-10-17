@@ -129,6 +129,20 @@ function safeLocation(value: unknown): string | undefined {
   }
 }
 
+function safeFrameFilename(value: unknown): string | undefined {
+  const location = safeLocation(value);
+  if (location) return location;
+  if (
+    typeof value !== 'string' ||
+    !/^\/_app\/immutable\/(?:assets|chunks|entry|nodes)\/[A-Za-z0-9._/-]+$/u.test(
+      value
+    ) ||
+    value.split('/').some((segment) => segment === '.' || segment === '..')
+  )
+    return undefined;
+  return value;
+}
+
 function safeTransaction(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const methodPath = /^([A-Z]+)\s+(\S+)$/u.exec(value);
@@ -184,7 +198,7 @@ function safeException(value: unknown): EventRecord | undefined {
           const frameRecord = record(frame);
           if (!frameRecord) return [];
           const safeFrame: EventRecord = {};
-          const filename = safeLocation(frameRecord.filename);
+          const filename = safeFrameFilename(frameRecord.filename);
           if (filename) safeFrame.filename = filename;
           for (const key of ['lineno', 'colno']) {
             const value = frameRecord[key];

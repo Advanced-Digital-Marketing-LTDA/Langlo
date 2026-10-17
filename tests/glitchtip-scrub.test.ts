@@ -84,6 +84,42 @@ it('removes learner data and secrets from captured errors', () => {
   expect(event.request.data).toEqual({ answer: 'learner response' });
 });
 
+it('preserves only generated application asset paths in exception frames', () => {
+  expect(
+    scrubTelemetryEvent({
+      exception: {
+        values: [
+          {
+            type: 'Error',
+            stacktrace: {
+              frames: [
+                { filename: '/_app/immutable/nodes/18.CbCqnVdk.js' },
+                { filename: '/workspace/learner/project/src/routes/+page.ts' },
+                { filename: '/_app/immutable/nodes/../../secret.js' },
+                { filename: '/_app/immutable/nodes/18.chunk.js?token=secret' }
+              ]
+            }
+          }
+        ]
+      }
+    }).exception
+  ).toEqual({
+    values: [
+      {
+        type: 'Error',
+        stacktrace: {
+          frames: [
+            { filename: '/_app/immutable/nodes/18.CbCqnVdk.js' },
+            {},
+            {},
+            {}
+          ]
+        }
+      }
+    ]
+  });
+});
+
 it('drops malformed private fields and validates retained metadata', () => {
   expect(
     scrubTelemetryEvent({
