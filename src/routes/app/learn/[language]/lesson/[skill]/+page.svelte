@@ -95,7 +95,7 @@
           contentVersionId={data.feedback.contentVersionId}
           questionId={data.feedback.questionId}
           submissionKey={data.feedback.reportSubmissionKey}
-          actionUrl={`?session=${encodeURIComponent(data.exercise.studySessionId)}&/report`}
+          actionUrl={`?/report&session=${encodeURIComponent(data.exercise.studySessionId)}`}
         />
         {#if data.feedback.retryQuestion}
           <details>
@@ -143,7 +143,7 @@
       questionId={data.exercise?.question?.id ?? null}
       submissionKey={data.reportSubmissionKey}
       actionUrl={data.exercise
-        ? `?session=${encodeURIComponent(data.exercise.studySessionId)}&/report`
+        ? `?/report&session=${encodeURIComponent(data.exercise.studySessionId)}`
         : '?/report'}
     />
   {/if}
