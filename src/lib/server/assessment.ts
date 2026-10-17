@@ -4,7 +4,8 @@ import { beginWrite, type LearnerSession } from './flashcards';
 import { StudyError } from './study-error';
 import {
   FALLBACK_EVALUATOR_VERSION,
-  FALLBACK_RUBRIC_VERSION
+  FALLBACK_RUBRIC_VERSION,
+  FALLBACK_SETTLED_EVALUATOR_VERSION
 } from './evaluation/fallback';
 import {
   PREPARED_EVALUATOR_VERSION,
@@ -13,6 +14,14 @@ import {
 
 export const ASSESSMENT_POLICY_VERSION = 'assessment-1';
 type QueryClient = Pick<Client, 'execute'>;
+
+/**
+ * A question's identity across content versions: skill ID plus the question ID
+ * without its exact `<contentVersionId>:` prefix, as the mastery policy counts it.
+ */
+const logicalItem = (questionId: string, versionId: string) =>
+  `CASE WHEN substr(${questionId}, 1, length(${versionId}) + 1) = ${versionId} || ':'
+    THEN substr(${questionId}, length(${versionId}) + 2) ELSE ${questionId} END`;
 
 /** A saved plan freezes item identities; newly imported content cannot extend it. */
 export async function startAssessment(
@@ -58,7 +67,8 @@ export async function startAssessment(
         WHERE q.language = ? AND q.holdout = 1 AND q.prompt IS NOT NULL AND q.answer IS NOT NULL
           AND v.status IN ('schema-validated', 'pilot-ready')
           AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id)
-          AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.question_id = q.id)
+          AND NOT EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.skill_id = q.skill_id
+            AND ${logicalItem('a.question_id', 'a.content_version_id')} = ${logicalItem('q.id', 'q.content_version_id')})
         ORDER BY sk.level, q.skill_id, q.id`,
       args: [input.language, learner.userId]
     });
@@ -188,6 +198,15 @@ export async function assertAssessmentQuestion(
     throw new StudyError('CONTENT_UNAVAILABLE');
   if (rows.find((row) => !row.answered)?.id !== questionId)
     throw new StudyError('STALE_QUESTION');
+  // The plan was frozen at start: an item answered in another session since
+  // then is no longer unseen, and counting it would reward a revealed answer.
+  const seenElsewhere = await client.execute({
+    sql: `SELECT 1 FROM questions q JOIN attempts a ON a.owner_id = ? AND a.study_session_id <> ? AND a.skill_id = q.skill_id
+      AND ${logicalItem('a.question_id', 'a.content_version_id')} = ${logicalItem('q.id', 'q.content_version_id')}
+      WHERE q.id = ? LIMIT 1`,
+    args: [learner.userId, id, questionId]
+  });
+  if (seenElsewhere.rows.length) throw new StudyError('STALE_QUESTION');
 }
 
 /** Completion and the last answer commit atomically, never by a client flag. */
@@ -237,8 +256,9 @@ export const FALLBACK_WAIT_MS = 15_000;
 
 /**
  * True while a final answer the prepared answers could not settle is still
- * waiting for its AI fallback verdict. Older answers are treated as settled:
- * the provider call is bounded, so a missing verdict is not coming.
+ * waiting for its AI fallback. A fallback that ended without a verdict leaves
+ * a settled marker, so it is not mistaken for one still running. Older answers
+ * are treated as settled too: the provider call is bounded.
  */
 async function awaitingFallbackVerdict(
   client: QueryClient,
@@ -251,14 +271,15 @@ async function awaitingFallbackVerdict(
       JOIN evaluations p ON p.attempt_id = a.id AND p.owner_id = a.owner_id AND p.evaluator_version = ?
       WHERE a.study_session_id = ? AND a.owner_id = ? AND a.not_sure = 0
         AND p.outcome = 'uncertain' AND a.created_at > ?
-        AND NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = a.id AND f.owner_id = a.owner_id AND f.evaluator_version = ?)
+        AND NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = a.id AND f.owner_id = a.owner_id AND f.evaluator_version IN (?, ?))
       LIMIT 1`,
     args: [
       PREPARED_EVALUATOR_VERSION,
       id,
       learner.userId,
       now - FALLBACK_WAIT_MS,
-      FALLBACK_EVALUATOR_VERSION
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_SETTLED_EVALUATOR_VERSION
     ]
   });
   return pending.rows.length > 0;

@@ -8,6 +8,7 @@ import { formats } from './content-import';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
+  FALLBACK_SETTLED_EVALUATOR_VERSION,
   type FallbackReason
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
@@ -419,6 +420,24 @@ type FallbackAttempt = {
   question: Row;
 };
 
+/** Record that the fallback is finished without a verdict, so results stop waiting for it. */
+async function settleFallback(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt
+) {
+  await client.execute({
+    sql: "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, 'uncertain')",
+    args: [
+      randomUUID(),
+      session.userId,
+      attempt.id,
+      FALLBACK_SETTLED_EVALUATOR_VERSION,
+      `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
+    ]
+  });
+}
+
 /**
  * Ask the AI fallback about a typed answer the prepared answers did not
  * match. It runs after the attempt commits, so a slow or failed call never
@@ -448,7 +467,10 @@ async function recordFallbackEvaluation(
       answer: attempt.answer
     });
     if (result.reason !== 'answered') logFallback(result.reason);
-    if (!result.evaluated) return;
+    if (!result.evaluated) {
+      await settleFallback(client, session, attempt);
+      return;
+    }
     await client.execute({
       sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
       args: [
@@ -464,6 +486,9 @@ async function recordFallbackEvaluation(
     // The attempt is already saved; the answer stays uncertain for review.
     logFallback('failed');
     console.error(error);
+    await settleFallback(client, session, attempt).catch((settling) =>
+      console.error(settling)
+    );
   }
 }
 

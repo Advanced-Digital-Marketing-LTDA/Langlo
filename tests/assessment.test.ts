@@ -262,6 +262,73 @@ describe('saved placement plan', () => {
     ).toMatchObject({ counts: { correct: 2, incorrect: 0, uncertain: 0 } });
   });
 
+  it.each(['timeout', 'provider-error', 'cap-reached'] as const)(
+    'publishes results at once when the fallback ended with %s and no verdict',
+    async (reason) => {
+      const { id } = await start();
+      await answer(id, 'fr-a1-001@1:q2');
+      await recordAttempt(
+        client,
+        learner,
+        {
+          studySessionId: id,
+          questionId: 'fr-a1-002@1:q1',
+          submissionKey: randomUUID(),
+          evidenceKind: 'independent',
+          answer: 'Nous voici.'
+        },
+        {
+          fallback: async () => ({
+            outcome: 'uncertain' as const,
+            reason,
+            evaluated: false as const
+          })
+        }
+      );
+      expect(
+        await assessmentResults(client, learner, id, { awaitFallback: true })
+      ).toMatchObject({ counts: { correct: 1, incorrect: 0, uncertain: 1 } });
+    }
+  );
+
+  it('does not offer a holdout again when a later content version republishes the same item', async () => {
+    const first = await start();
+    await answer(first.id, 'fr-a1-001@1:q2');
+    await answer(first.id, 'fr-a1-002@1:q1', 'On est ici.');
+    const pkg = approvedPackage();
+    const republished = structuredClone(pkg.versions[0]);
+    republished.id = 'fr-a1-001@2';
+    republished.version = 2;
+    republished.questions = republished.questions.map((question) => ({
+      ...question,
+      id: question.id.replace('@1:', '@2:'),
+      holdout: question.id.endsWith(':q2')
+    }));
+    pkg.curriculumVersion = '0.2.0';
+    pkg.versions = [republished];
+    await importContent(client, pkg);
+    await expect(start()).rejects.toMatchObject({
+      code: 'CONTENT_UNAVAILABLE'
+    });
+  });
+
+  it('rejects a planned item the learner already answered in another session', async () => {
+    const first = await start();
+    const second = await start();
+    await answer(first.id, 'fr-a1-001@1:q2');
+    await expect(answer(second.id, 'fr-a1-001@1:q2')).rejects.toMatchObject({
+      code: 'STALE_QUESTION'
+    });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT 1 FROM attempts WHERE study_session_id = ?',
+          args: [second.id]
+        })
+      ).rows
+    ).toHaveLength(0);
+  });
+
   it('records uncertainty and identifies A1 gaps without writing mastery or cards', async () => {
     const { id } = await start();
     await answer(id, 'fr-a1-001@1:q2', '', true);

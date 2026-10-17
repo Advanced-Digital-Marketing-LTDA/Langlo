@@ -81,6 +81,14 @@ const prepared = {
   outcome: 'uncertain'
 };
 
+// A fallback that ended without a verdict leaves this marker, never a verdict.
+const noVerdict = {
+  owner_id: 'learner-a',
+  evaluator_version: 'decisions-1-no-verdict',
+  rubric_version: 'fallback-rubric-1:fr-a1-002@1',
+  outcome: 'uncertain'
+};
+
 describe('AI fallback for unmatched typed answers', () => {
   it('records the verdict next to the prepared evaluation', async () => {
     const fallback = vi.fn(async () => answered('correct'));
@@ -152,7 +160,7 @@ describe('AI fallback for unmatched typed answers', () => {
   });
 
   it.each(['timeout', 'provider-error', 'cap-reached'] as const)(
-    'keeps no AI evaluation after %s and logs it',
+    'keeps no AI verdict after %s, marks the fallback settled and logs it',
     async (reason) => {
       const fallback = vi.fn(async (): Promise<FallbackResult> => ({
         outcome: 'uncertain',
@@ -164,7 +172,7 @@ describe('AI fallback for unmatched typed answers', () => {
         'Nous voilà ici.',
         fallback
       );
-      expect(await evaluationsOf(recorded.id)).toEqual([prepared]);
+      expect(await evaluationsOf(recorded.id)).toEqual([prepared, noVerdict]);
       expect(logged()).toEqual([{ operation: 'ai-fallback', reason }]);
     }
   );
@@ -181,7 +189,7 @@ describe('AI fallback for unmatched typed answers', () => {
       'Nous voilà ici.',
       fallback
     );
-    expect(await evaluationsOf(recorded.id)).toEqual([prepared]);
+    expect(await evaluationsOf(recorded.id)).toEqual([prepared, noVerdict]);
     expect(logged()).toEqual([{ operation: 'ai-fallback', reason: 'failed' }]);
     expect(error).toHaveBeenCalledOnce();
   });
