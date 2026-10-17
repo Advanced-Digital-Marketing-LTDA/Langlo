@@ -11,7 +11,7 @@ Set these variables in Coolify, not in this repository:
   value is safe inside the PostgreSQL URL.
 - `GLITCHTIP_SECRET_KEY`: generate a separate long random value.
 - `GLITCHTIP_HOSTNAME`: the bare public hostname, without a scheme (for
-  example, `glitchtip.advanceddigitalmarketingltda.com`). Compose uses it for
+  example, `glitchtip.example.com`). Compose uses it for
   `GLITCHTIP_DOMAIN`, Django `ALLOWED_HOSTS`, and `CSRF_TRUSTED_ORIGINS`.
 - `EMAIL_URL`: Proton SMTP URL with URL-encoded credentials.
 - `DEFAULT_FROM_EMAIL`: verified sender address for alerts.
@@ -19,8 +19,8 @@ Set these variables in Coolify, not in this repository:
 The Compose file keeps account registration, organization creation, Django
 admin, OpenAPI, MCP, log ingestion, and uptime monitoring disabled. After
 deploying without a public route, create the initial administrator with
-`./manage.py createsuperuser` in the GlitchTip container. Then route
-`glitchtip.advanceddigitalmarketingltda.com` to service `glitchtip` on port
+`./manage.py createsuperuser` in the GlitchTip container. Then route the
+hostname configured by `GLITCHTIP_HOSTNAME` to service `glitchtip` on port
 `8000`, create the organization and Langlo project, configure email alert rules
 and recipients, and copy the project DSN into Langlo's Coolify environment as
 `PUBLIC_GLITCHTIP_DSN`.

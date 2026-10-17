@@ -9,11 +9,31 @@ const appCompose = readFileSync(
   new URL('../compose.yaml', import.meta.url),
   'utf8'
 );
+const setup = readFileSync(
+  new URL('../ops/glitchtip/README.md', import.meta.url),
+  'utf8'
+);
+const envExample = readFileSync(
+  new URL('../ops/glitchtip/.env.example', import.meta.url),
+  'utf8'
+);
 
 it('passes the public GlitchTip DSN into the application container', () => {
   expect(appCompose).toContain(
     'PUBLIC_GLITCHTIP_DSN: ${PUBLIC_GLITCHTIP_DSN:-}'
   );
+  expect(appCompose).toContain('PUBLIC_APP_ENV: ${PUBLIC_APP_ENV:-production}');
+  expect(appCompose).toContain(
+    'PUBLIC_APP_BUILD_SHA: ${PUBLIC_APP_BUILD_SHA:-unknown}'
+  );
+});
+
+it('keeps deployment host samples neutral and configurable', () => {
+  expect(envExample).toContain('GLITCHTIP_HOSTNAME=glitchtip.example.com');
+  expect(setup).toMatch(
+    /route the\s+hostname configured by `GLITCHTIP_HOSTNAME`/u
+  );
+  expect(setup).not.toContain('glitchtip.advanceddigitalmarketingltda.com');
 });
 
 it('requires Coolify secrets and configures Proton mail and persistent services', () => {
