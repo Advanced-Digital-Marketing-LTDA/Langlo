@@ -12,7 +12,7 @@ export default defineConfig({
       'monocart-reporter',
       {
         name: 'Langlo Playwright E2E',
-        outputFile: '.ci-reports/playwright-test-report.html'
+        outputFile: '.ci-reports/playwright/playwright-test-report.html'
       }
     ]
   ],
