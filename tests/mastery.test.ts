@@ -27,6 +27,76 @@ afterEach(async () => {
 });
 
 describe('versioned grammar policy', () => {
+  it('records incorrect evidence with zero contribution and rolls back a failed ledger write', async () => {
+    const saved = await recordAttempt(client, learner, {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'wrong-response',
+      evidenceKind: 'independent',
+      answer: 'es'
+    });
+    await client.execute(
+      "CREATE TRIGGER reject_mastery BEFORE INSERT ON skill_evidence BEGIN SELECT RAISE(ABORT, 'synthetic ledger failure'); END"
+    );
+    await expect(getMastery(client, learner, 'fr')).rejects.toThrow(
+      'synthetic ledger failure'
+    );
+    expect((await client.execute('SELECT * FROM skill_evidence')).rows).toEqual(
+      []
+    );
+    await client.execute('DROP TRIGGER reject_mastery');
+    expect(
+      (await getMastery(client, learner, 'fr')).find(
+        (skill) => skill.skillId === 'fr-a1-001'
+      )
+    ).toMatchObject({
+      status: 'weak',
+      correct: 0,
+      incorrect: 1,
+      independentItems: 1
+    });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT contribution FROM skill_evidence WHERE attempt_id = ?',
+          args: [saved.id]
+        })
+      ).rows
+    ).toEqual([{ contribution: 0 }]);
+  });
+
+  it('orders multiple suggested foundations and skips secure or unavailable prerequisites', () => {
+    const topics = [
+      {
+        skillId: 'weak-topic',
+        status: 'weak' as const,
+        prerequisites: ['b', 'a', 'c']
+      },
+      { skillId: 'b', status: 'unknown' as const, prerequisites: [] },
+      { skillId: 'a', status: 'unknown' as const, prerequisites: [] },
+      { skillId: 'c', status: 'secure' as const, prerequisites: [] }
+    ];
+    expect(recommendTopics(topics)).toMatchObject({
+      skillId: 'a',
+      manualSkillIds: ['a', 'b', 'c', 'weak-topic']
+    });
+    expect(
+      recommendTopics(
+        topics.map((topic) => ({ ...topic, available: topic.skillId !== 'a' }))
+      )
+    ).toMatchObject({ skillId: 'b', manualSkillIds: ['b', 'c', 'weak-topic'] });
+    expect(
+      recommendTopics(
+        topics.map((topic) =>
+          topic.skillId === 'weak-topic'
+            ? topic
+            : { ...topic, status: 'secure' as const }
+        )
+      )
+    ).toMatchObject({ skillId: 'weak-topic' });
+    expect(recommendTopics([])).toBeNull();
+  });
+
   it.each([
     [0, 0, 0, 'unknown'],
     [0, 1, 1, 'weak'],

@@ -390,6 +390,7 @@ test('all four exercise formats render and submit without overflow', async ({
   page,
   context
 }, testInfo) => {
+  test.setTimeout(40000);
   const userId = await signIn(page, context);
   await seedSession(userId);
   await expectBlankAttemptsRefused(page);

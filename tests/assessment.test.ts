@@ -49,6 +49,75 @@ const answer = (
   });
 
 describe('saved placement plan', () => {
+  it('refuses start-token reuse by another owner or in a different mode without altering history', async () => {
+    const key = randomUUID();
+    const { id } = await start('fr', key);
+    await expect(
+      startAssessment(client, testSession('learner-b'), {
+        language: 'fr',
+        submissionKey: key
+      })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await client.execute({
+      sql: "UPDATE study_sessions SET mode = 'practice' WHERE id = ?",
+      args: [id]
+    });
+    await expect(start('fr', key)).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(start('xx')).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT owner_id, mode FROM study_sessions WHERE id = ?',
+          args: [id]
+        })
+      ).rows
+    ).toEqual([{ owner_id: 'learner-a', mode: 'practice' }]);
+  });
+
+  it('fails closed for unsupported, incomplete or oversized stored assessment plans', async () => {
+    const { id } = await start();
+    const saved = JSON.parse(
+      String(
+        (
+          await client.execute({
+            sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+            args: [id]
+          })
+        ).rows[0].assessment_plan
+      )
+    );
+    for (const plan of [
+      { ...saved, version: 'future-policy' },
+      { ...saved, questions: [...saved.questions, 'missing-item'] },
+      { ...saved, questions: Array(13).fill(saved.questions[0]) }
+    ]) {
+      await client.execute({
+        sql: 'UPDATE study_sessions SET assessment_plan = ? WHERE id = ?',
+        args: [JSON.stringify(plan), id]
+      });
+      await expect(getAssessment(client, learner, id)).rejects.toMatchObject({
+        code: 'CONTENT_UNAVAILABLE'
+      });
+    }
+    await expect(
+      getAssessment(client, learner, null as unknown as string)
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('keeps missing evaluation evidence uncertain after completion instead of manufacturing a correct result', async () => {
+    const { id } = await start();
+    const first = await answer(id, 'fr-a1-001@1:q2');
+    await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
+    await client.execute({
+      sql: 'DELETE FROM evaluations WHERE attempt_id = ?',
+      args: [first.id]
+    });
+    expect(await assessmentResults(client, learner, id)).toMatchObject({
+      counts: { correct: 1, incorrect: 0, uncertain: 1 },
+      a1Gaps: ['fr-a1-001']
+    });
+  });
+
   it('persists an ordered holdout-only plan with no answer leaks on reload', async () => {
     const { id } = await start();
     const first = await getAssessment(client, learner, id);

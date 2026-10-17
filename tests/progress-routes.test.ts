@@ -76,3 +76,17 @@ it('returns the owner’s versioned progress, preserves manual topics and shows 
   await client.execute("DELETE FROM enrollments WHERE owner_id = 'learner-a'");
   expect(await progressPage(event('learner-a'))).toMatchObject({ tracks: [] });
 });
+
+it('filters an enrolled track without leaking other tracks into the response', async () => {
+  await client.execute(
+    "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('enrollment-en', 'learner-a', 'en', 'A2', 'en')"
+  );
+  const onlyEnglish = await progressPage(event('learner-a', '?language=en'));
+  expect(onlyEnglish).toEqual({
+    tracks: [{ language: 'en', level: 'A2', skills: [], recommendation: null }]
+  });
+  const onlyFrench = (await mapPage(event('learner-a', '?language=fr'))) as {
+    tracks: { language: string }[];
+  };
+  expect(onlyFrench.tracks.map((track) => track.language)).toEqual(['fr']);
+});
