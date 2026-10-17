@@ -1,4 +1,5 @@
-import { expect, test as base, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { test as base } from './coverage-fixture';
 
 // Every prototype navigation waits for hydration: a click on a server-rendered
 // button before its handler attaches is silently lost.

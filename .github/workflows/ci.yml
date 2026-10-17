@@ -57,8 +57,19 @@ jobs:
           retention-days: 1
       - run: npm run test:property
       - run: npm run build
+      - run: npm run build:e2e-coverage
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Upload Playwright reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: playwright-reports-${{ github.sha }}
+          path: |
+            .ci-reports/playwright-test-report.html
+            .ci-reports/playwright-coverage/
+          if-no-files-found: ignore
+          retention-days: 1
       - name: Validate non-empty Vitest evidence
         if: always()
         run: node scripts/validate-vitest-evidence.mjs .ci-reports/vitest.json

@@ -1,9 +1,5 @@
-import {
-  expect,
-  test,
-  type APIRequestContext,
-  request
-} from '@playwright/test';
+import { expect, type APIRequestContext, request } from '@playwright/test';
+import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdtemp, readdir, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';

@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './coverage-fixture';
 
 test('reserved private paths retain no-store/noindex headers with trailing slashes', async ({
   request

@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from './coverage-fixture';
 
 test('unexpected server errors keep responses and diagnostics private', () => {
   const probe = spawnSync(

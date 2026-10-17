@@ -5,7 +5,17 @@ const browserEnvironment = prepareBrowserEnvironment();
 
 export default defineConfig({
   testDir: './tests/e2e',
-  globalSetup: './scripts/playwright-environment.mjs',
+  globalSetup: './scripts/playwright-coverage-setup.mjs',
+  reporter: [
+    ['list'],
+    [
+      'monocart-reporter',
+      {
+        name: 'Langlo Playwright E2E',
+        outputFile: '.ci-reports/playwright-test-report.html'
+      }
+    ]
+  ],
   fullyParallel: false,
   retries: 0,
   workers: 1,
