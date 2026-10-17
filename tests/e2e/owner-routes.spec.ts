@@ -12,7 +12,9 @@ import {
   createDeck,
   createNote
 } from '../../src/lib/server/flashcards';
+import { importContent } from '../../src/lib/server/content-import';
 import { privateState } from '../fixtures/owner-scope';
+import { approvedPackage } from '../fixtures/content-package';
 import {
   createFixtureDatabase,
   disposeFixtureDatabase,
@@ -123,6 +125,7 @@ test.beforeAll(async () => {
       ],
       'write'
     );
+    await importContent(client, approvedPackage());
     const learner = { userId: bobId };
     await createDeck(client, learner, { id: 'deck-bob', name: 'Bob FR' });
     await createNote(client, learner, {
@@ -238,4 +241,39 @@ test('anonymous and signed-out callers get no private data', async () => {
   } finally {
     await anon.dispose();
   }
+});
+
+test('the owner can pause, resume, and continue their study session', async () => {
+  const next = () =>
+    bob.get('/app/api/study-sessions/study-bob/next?skill=fr-a1-001');
+  const firstQuestion = await next();
+  expect(firstQuestion.status()).toBe(200);
+  const firstBody = await firstQuestion.json();
+  expect(firstBody.question).toMatchObject({ id: 'fr-a1-001@1:q1' });
+  expect(firstBody.question).not.toHaveProperty('answer');
+
+  const paused = await bob.post(
+    '/app/api/study-sessions/study-bob/pause',
+    json({})
+  );
+  expect(paused.status()).toBe(200);
+  expect(await paused.json()).toMatchObject({
+    studySession: { state: 'paused', pausedAt: expect.any(Number) }
+  });
+  expect((await next()).status()).toBe(409);
+
+  const resumed = await bob.post(
+    '/app/api/study-sessions/study-bob/resume',
+    json({})
+  );
+  expect(resumed.status()).toBe(200);
+  expect(await resumed.json()).toMatchObject({
+    studySession: { state: 'active', pausedAt: null }
+  });
+
+  const continued = await next();
+  expect(continued.status()).toBe(200);
+  const continuedBody = await continued.json();
+  expect(continuedBody.question).toMatchObject({ id: 'fr-a1-001@1:q1' });
+  expect(continuedBody.question).not.toHaveProperty('answer');
 });
