@@ -113,6 +113,12 @@ it('drops malformed private fields and validates retained metadata', () => {
       transaction: 'learner answer: secret'
     })
   ).toEqual({});
+  expect(
+    scrubTelemetryEvent({
+      request: 'token=secret',
+      breadcrumbs: 'answer=private'
+    })
+  ).toEqual({});
 });
 
 it('sanitizes method-prefixed transaction names and drops unsafe ones', () => {

@@ -5,6 +5,16 @@ const compose = readFileSync(
   new URL('../ops/glitchtip/compose.yaml', import.meta.url),
   'utf8'
 );
+const appCompose = readFileSync(
+  new URL('../compose.yaml', import.meta.url),
+  'utf8'
+);
+
+it('passes the public GlitchTip DSN into the application container', () => {
+  expect(appCompose).toContain(
+    'PUBLIC_GLITCHTIP_DSN: ${PUBLIC_GLITCHTIP_DSN:-}'
+  );
+});
 
 it('requires Coolify secrets and configures Proton mail and persistent services', () => {
   expect(compose).toContain(

@@ -336,10 +336,12 @@ export function scrubTelemetryEvent<T extends object>(event: T): T {
     }
   }
   if (breadcrumbs) scrubbed.breadcrumbs = breadcrumbs;
+  else delete scrubbed.breadcrumbs;
   if (exception) scrubbed.exception = exception;
   else delete scrubbed.exception;
   if (transaction) scrubbed.transaction = transaction;
   else delete scrubbed.transaction;
   if (safeRequest) scrubbed.request = safeRequest;
+  else delete scrubbed.request;
   return scrubbed as T;
 }
