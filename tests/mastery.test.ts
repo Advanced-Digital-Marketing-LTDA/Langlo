@@ -115,6 +115,42 @@ describe('versioned grammar policy', () => {
     }
   );
 
+  it('explains every grammar status and keeps both secure thresholds', () => {
+    expect(
+      scoreGrammar({ correct: 0, incorrect: 0, sessions: 0 })
+    ).toMatchObject({
+      status: 'unknown',
+      reason: 'No qualifying independent grammar evidence yet.'
+    });
+    expect(
+      scoreGrammar({ correct: 2, incorrect: 3, sessions: 2 })
+    ).toMatchObject({
+      status: 'weak',
+      reason:
+        'Fewer than 60% of the qualifying items were correct; revisit this topic.'
+    });
+    expect(
+      scoreGrammar({ correct: 1, incorrect: 0, sessions: 1 })
+    ).toMatchObject({
+      status: 'practising',
+      reason:
+        'Keep practising distinct items across sessions to build stronger evidence.'
+    });
+    expect(
+      scoreGrammar({ correct: 4, incorrect: 1, sessions: 2 })
+    ).toMatchObject({
+      status: 'secure',
+      reason:
+        'At least five distinct items across two sessions, with at least 80% correct.'
+    });
+    expect(scoreGrammar({ correct: 4, incorrect: 0, sessions: 2 }).status).toBe(
+      'practising'
+    );
+    expect(scoreGrammar({ correct: 5, incorrect: 0, sessions: 1 }).status).toBe(
+      'practising'
+    );
+  });
+
   it('excludes assisted and uncertain outcomes, hides unfinished assessments and scopes by owner', async () => {
     const uncertain = await recordAttempt(client, learner, {
       studySessionId: 'study-a',

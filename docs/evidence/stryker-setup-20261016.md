@@ -101,3 +101,31 @@ No new test-hardening changes are included. The mutation score remains
 provisional and the two moderate transitive audit findings remain unresolved.
 External review/provider calls were not invoked. This task has no checked-in
 Stryker implementation spec.
+
+## 2026-10-17 scoped setup repair follow-up
+
+Stryker now has six explicit source-to-test scopes and the package command runs
+them sequentially. The runner passes `stryker.config.mjs` explicitly so each
+`LANGLO_STRYKER_SCOPE` selection is loaded; the configuration breaks below an
+80% mutation score. `test-results` is ignored to prevent sandbox-copy failures
+from transient Playwright output.
+
+The focused mastery behavior test asserts all four status explanations and the
+five-item/two-session secure boundary. `npx vitest run tests/mastery.test.ts`
+passed (15 tests), and a targeted manual threshold mutation caused the existing
+and added secure-status assertions to fail as expected.
+
+A fresh Stryker run with the explicit mastery config instrumented 156 mutants,
+but reported 0 killed and 0% mutation score. This conflicts with the direct
+behavior-test mutation check, so the Stryker score is not accepted as a valid
+result and the new 80% gate correctly remains unmet for mastery until the
+Vitest/Stryker execution issue is resolved. The Stryker dry run itself passed.
+No broad mutation rerun, CI run, remote publication, or deployment was performed.
+
+Validation after this follow-up: `npm run check`, `npm run lint`,
+`npm run format:check`, `npm test` (58 files, 1,064 tests),
+`npm run test:property` (5 files, 7 tests), and `npm run build` passed. The
+standard E2E command could not bind its default port because `127.0.0.1:4173`
+was already occupied; the same built-server suite ran on an alternate local
+port and passed all 76 tests after rebasing onto the updated branch. Formatting
+and `git diff --check` also passed.
