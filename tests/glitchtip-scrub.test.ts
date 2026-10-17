@@ -59,6 +59,69 @@ it('removes learner data and secrets from captured errors', () => {
   expect(event.request.data).toEqual({ answer: 'learner response' });
 });
 
+it('drops malformed private fields and validates retained metadata', () => {
+  expect(
+    scrubTelemetryEvent({
+      request: { method: 'POST /learner-answer' },
+      breadcrumbs: [
+        { category: 'ui.click', level: 'info', type: 'ui' },
+        {
+          category: 'learner@example.test',
+          level: 'answer=secret',
+          type: 'user'
+        }
+      ],
+      exception: { values: [{ type: 'learner answer: secret' }] },
+      transaction: 'learner@example.test answer=secret'
+    })
+  ).toEqual({
+    request: {},
+    breadcrumbs: [
+      { category: 'ui.click', level: 'info', type: 'ui' },
+      { type: 'user' }
+    ],
+    exception: { values: [{}] }
+  });
+
+  expect(
+    scrubTelemetryEvent({
+      exception: 'learner answer: secret',
+      transaction: 'learner answer: secret'
+    })
+  ).toEqual({});
+});
+
+it('sanitizes method-prefixed transaction names and drops unsafe ones', () => {
+  expect(
+    scrubTelemetryEvent({
+      transaction: 'GET /app/assessment/session/123?token=secret'
+    }).transaction
+  ).toBe('GET /app/assessment/session/:id');
+
+  expect(
+    scrubTelemetryEvent({
+      transaction: 'GET /app/assessment/session/learner%40example.test'
+    })
+  ).toEqual({
+    transaction: 'GET /app/assessment/session/:id'
+  });
+});
+
+it.each([
+  ['/app/lesson', '/app/lesson'],
+  [
+    'https://langlo.example/app/lesson/123',
+    'https://langlo.example/app/lesson/:id'
+  ],
+  ['/app/users/learner%40example.test?token=secret#answer', '/app/users/:id'],
+  ['/app/attempts/abcdefghijklmnopqrstuvwxyz0123456789', '/app/attempts/:id'],
+  ['javascript:alert(1)', undefined]
+])('keeps only safe transaction locations: %s', (input, expected) => {
+  const result = scrubTelemetryEvent({ transaction: input });
+  if (expected === undefined) expect(result).toEqual({});
+  else expect(result.transaction).toBe(expected);
+});
+
 it('removes span details while retaining trace timing and operation names', () => {
   const scrubbed = scrubTelemetrySpan({
     trace_id: 'trace-id',
@@ -99,9 +162,20 @@ it('removes span details while retaining trace timing and operation names', () =
       span_id: 'span-id',
       name: 'learner-answer',
       start_timestamp: 1,
-      status: 'ok',
+      status: 'learner answer secret',
       is_segment: true,
       attributes: { 'sentry.op': 'learner-answer' }
     })
   ).toMatchObject({ name: 'operation', attributes: {} });
+  expect(
+    scrubTelemetrySpan({
+      trace_id: 'trace-id',
+      span_id: 'span-id',
+      name: 'learner-answer',
+      start_timestamp: 1,
+      status: 'learner answer secret',
+      is_segment: true,
+      attributes: {}
+    }).status
+  ).toBeUndefined();
 });

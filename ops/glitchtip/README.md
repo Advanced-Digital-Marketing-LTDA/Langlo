@@ -1,8 +1,9 @@
 # GlitchTip on Coolify
 
 This is a separate GlitchTip stack. Deploy `compose.yaml` as its own Coolify
-application and route `glitchtip.advanceddigitalmarketingltda.com` to service
-`glitchtip` on port `8000`. Keep the PostgreSQL and uploads volumes persistent.
+application and keep the PostgreSQL and uploads volumes persistent. Do not add
+the public domain route yet: on a fresh database, GlitchTip permits the first
+user and organization even when public registration is disabled.
 
 Set these variables in Coolify, not in this repository:
 
@@ -13,11 +14,13 @@ Set these variables in Coolify, not in this repository:
 - `DEFAULT_FROM_EMAIL`: verified sender address for alerts.
 
 The Compose file keeps account registration, organization creation, Django
-admin, OpenAPI, MCP, log ingestion, and uptime monitoring disabled. Create the
-initial administrator with `./manage.py createsuperuser` in the GlitchTip
-container, then create the organization and Langlo project in the UI. Configure
-email alert rules for the project and add the intended alert recipients. Copy
-the project DSN into Langlo's Coolify environment as `PUBLIC_GLITCHTIP_DSN`.
+admin, OpenAPI, MCP, log ingestion, and uptime monitoring disabled. After
+deploying without a public route, create the initial administrator with
+`./manage.py createsuperuser` in the GlitchTip container. Then route
+`glitchtip.advanceddigitalmarketingltda.com` to service `glitchtip` on port
+`8000`, create the organization and Langlo project, configure email alert rules
+and recipients, and copy the project DSN into Langlo's Coolify environment as
+`PUBLIC_GLITCHTIP_DSN`.
 
 Langlo also uses `APP_ENV` and `APP_BUILD_SHA` on the server. Set the matching
 public values `PUBLIC_APP_ENV` and `PUBLIC_APP_BUILD_SHA` for browser release

@@ -1,5 +1,54 @@
 type EventRecord = Record<string, unknown>;
 
+const httpMethods = new Set([
+  'GET',
+  'HEAD',
+  'POST',
+  'PUT',
+  'PATCH',
+  'DELETE',
+  'OPTIONS'
+]);
+const breadcrumbCategories = new Set([
+  'ui.click',
+  'ui.input',
+  'navigation',
+  'http'
+]);
+const breadcrumbLevels = new Set([
+  'fatal',
+  'error',
+  'warning',
+  'log',
+  'info',
+  'debug'
+]);
+const breadcrumbTypes = new Set([
+  'default',
+  'debug',
+  'error',
+  'http',
+  'info',
+  'navigation',
+  'query',
+  'transaction',
+  'ui',
+  'user'
+]);
+const exceptionTypes = new Set([
+  'Error',
+  'TypeError',
+  'RangeError',
+  'ReferenceError',
+  'SyntaxError',
+  'URIError',
+  'EvalError',
+  'AggregateError',
+  'DOMException',
+  'NetworkError',
+  'AbortError'
+]);
+
 function record(value: unknown): EventRecord | undefined {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
     ? (value as EventRecord)
@@ -35,14 +84,41 @@ function safeLocation(value: unknown): string | undefined {
   }
 }
 
+function safeTransaction(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const methodPath = /^([A-Z]+)\s+(\S+)$/u.exec(value);
+  if (methodPath && httpMethods.has(methodPath[1])) {
+    const location = safeLocation(methodPath[2]);
+    return location ? `${methodPath[1]} ${location}` : undefined;
+  }
+  return safeLocation(value);
+}
+
 function safeBreadcrumb(value: unknown): EventRecord | undefined {
   const breadcrumb = record(value);
   if (!breadcrumb) return undefined;
 
   const safe: EventRecord = {};
-  for (const key of ['timestamp', 'category', 'level', 'type']) {
-    if (key in breadcrumb) safe[key] = breadcrumb[key];
-  }
+  if (
+    typeof breadcrumb.timestamp === 'number' &&
+    Number.isFinite(breadcrumb.timestamp)
+  )
+    safe.timestamp = breadcrumb.timestamp;
+  if (
+    typeof breadcrumb.category === 'string' &&
+    breadcrumbCategories.has(breadcrumb.category)
+  )
+    safe.category = breadcrumb.category;
+  if (
+    typeof breadcrumb.level === 'string' &&
+    breadcrumbLevels.has(breadcrumb.level)
+  )
+    safe.level = breadcrumb.level;
+  if (
+    typeof breadcrumb.type === 'string' &&
+    breadcrumbTypes.has(breadcrumb.type)
+  )
+    safe.type = breadcrumb.type;
   return safe;
 }
 
@@ -55,7 +131,8 @@ function safeException(value: unknown): EventRecord | undefined {
     if (!item) return [];
 
     const safe: EventRecord = {};
-    if (typeof item.type === 'string') safe.type = item.type;
+    if (typeof item.type === 'string' && exceptionTypes.has(item.type))
+      safe.type = item.type;
     const stacktrace = record(item.stacktrace);
     const frames = Array.isArray(stacktrace?.frames)
       ? stacktrace.frames.flatMap((frame) => {
@@ -91,15 +168,6 @@ type TelemetrySpan = EventRecord & {
   attributes: EventRecord;
 };
 
-const httpMethods = new Set([
-  'GET',
-  'HEAD',
-  'POST',
-  'PUT',
-  'PATCH',
-  'DELETE',
-  'OPTIONS'
-]);
 const spanOperations = new Set([
   'http.server',
   'http.client',
@@ -109,6 +177,25 @@ const spanOperations = new Set([
   'ui.interaction',
   'function',
   'queue.process'
+]);
+const spanStatuses = new Set([
+  'ok',
+  'cancelled',
+  'unknown_error',
+  'invalid_argument',
+  'deadline_exceeded',
+  'not_found',
+  'already_exists',
+  'permission_denied',
+  'resource_exhausted',
+  'failed_precondition',
+  'aborted',
+  'out_of_range',
+  'unimplemented',
+  'internal_error',
+  'unavailable',
+  'data_loss',
+  'unauthenticated'
 ]);
 
 function safeSpanName(value: string): string {
@@ -167,7 +254,7 @@ export function scrubTelemetrySpan<T extends object>(span: T): T {
     ...(typeof source.end_timestamp === 'number'
       ? { end_timestamp: source.end_timestamp }
       : {}),
-    status: source.status,
+    ...(spanStatuses.has(source.status) ? { status: source.status } : {}),
     is_segment: source.is_segment,
     attributes
   } as T;
@@ -180,7 +267,8 @@ export function scrubTelemetryEvent<T extends object>(event: T): T {
   const safeRequest = request
     ? {
         ...(requestUrl ? { url: requestUrl } : {}),
-        ...(typeof request.method === 'string'
+        ...(typeof request.method === 'string' &&
+        httpMethods.has(request.method)
           ? { method: request.method }
           : {})
       }
@@ -193,7 +281,7 @@ export function scrubTelemetryEvent<T extends object>(event: T): T {
       })
     : undefined;
   const exception = safeException(scrubbed.exception);
-  const transaction = safeLocation(scrubbed.transaction);
+  const transaction = safeTransaction(scrubbed.transaction);
 
   for (const key of Object.keys(scrubbed)) {
     if (
@@ -215,7 +303,9 @@ export function scrubTelemetryEvent<T extends object>(event: T): T {
   }
   if (breadcrumbs) scrubbed.breadcrumbs = breadcrumbs;
   if (exception) scrubbed.exception = exception;
+  else delete scrubbed.exception;
   if (transaction) scrubbed.transaction = transaction;
+  else delete scrubbed.transaction;
   if (safeRequest) scrubbed.request = safeRequest;
   return scrubbed as T;
 }
