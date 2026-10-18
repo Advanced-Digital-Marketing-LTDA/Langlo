@@ -20,16 +20,17 @@ prototype screens, flashcards or CI policy changed.
 Runtime: Node `v22.22.0`, npm `10.9.4` (the pinned Node 24.19.0 / npm 11.9.0
 were not available; install used `--legacy-peer-deps --no-package-lock`).
 
-| Check                                             | Observed                                              |
-| ------------------------------------------------- | ----------------------------------------------------- |
-| First render run, components compiled in dev mode | Red: 9/9 failed (`push_element`); fixed in the helper |
-| Render tests after the helper fix                 | Green: 9 passed                                       |
-| Mutation: nav match without the exact `/app` rule | Red: nested-route test failed                         |
-| Mutation: loading branch disabled                 | Red: loading-state test failed                        |
-| Both mutations reverted                           | Green                                                 |
-| `npx vitest run tests/dashboard*.test.ts`         | Passed, 15 tests                                      |
-| `npm run check`                                   | Passed, 0 errors/0 warnings                           |
-| ESLint and Prettier on changed files              | Passed                                                |
+| Check                                                   | Observed                                              |
+| ------------------------------------------------------- | ----------------------------------------------------- |
+| First render run, components compiled in dev mode       | Red: 9/9 failed (`push_element`); fixed in the helper |
+| Render tests after the helper fix                       | Green: 9 passed                                       |
+| Mutation: nav match without the exact `/app` rule       | Red: nested-route test failed                         |
+| Mutation: loading branch disabled                       | Red: loading-state test failed                        |
+| Review finding: unavailable skills counted/listed (red) | Red: 3 new tests failed before the `available` filter |
+| Both mutations reverted                                 | Green                                                 |
+| `npx vitest run tests/dashboard*.test.ts`               | Passed, 18 tests                                      |
+| `npm run check`                                         | Passed, 0 errors/0 warnings                           |
+| ESLint and Prettier on changed files                    | Passed                                                |
 
 Svelte files cannot be measured by the v8 provider here (parse error), so their
 branches were checked by hand: every `{#if}` arm in `+page.svelte`,

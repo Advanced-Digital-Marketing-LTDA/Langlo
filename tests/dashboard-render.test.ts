@@ -53,6 +53,37 @@ it('omits the Continue card when nothing is recommended', async () => {
   expect(html).toContain('Grammar mastery');
 });
 
+it('hides unavailable skills from the list, counts and links', async () => {
+  const html = await renderSvelte(page, {
+    data: data([
+      {
+        ...track(null),
+        skills: [skill('fr-a1-001', 'weak'), skill('gone', 'unknown')].map(
+          (item) =>
+            item.skillId === 'gone' ? { ...item, available: false } : item
+        )
+      }
+    ])
+  });
+  expect(html).toContain('of 1 topics');
+  expect(html).toContain('Title fr-a1-001');
+  expect(html).not.toContain('Title gone');
+});
+
+it('says so when every skill is unavailable', async () => {
+  const html = await renderSvelte(page, {
+    data: data([
+      {
+        ...track(null),
+        skills: [{ ...skill('gone', 'unknown'), available: false }]
+      }
+    ])
+  });
+  expect(html).toContain(
+    'No published skills are available in this track yet.'
+  );
+});
+
 it('says so when a track has no published skills', async () => {
   const html = await renderSvelte(page, {
     data: data([{ ...track(null), skills: [] }])

@@ -6,8 +6,12 @@ import {
 } from '../src/lib/dashboard';
 import type { TrackProgress } from '../src/lib/server/progress';
 
-function skill(skillId: string, status: keyof typeof masteryLabels) {
-  return { skillId, title: `Title ${skillId}`, status } as never;
+function skill(
+  skillId: string,
+  status: keyof typeof masteryLabels,
+  available = true
+) {
+  return { skillId, title: `Title ${skillId}`, status, available } as never;
 }
 function track(
   statuses: [string, keyof typeof masteryLabels][],
@@ -42,6 +46,16 @@ it('counts each mastery status and the total', () => {
     practising: 1
   });
   expect(summary.total).toBe(5);
+});
+
+it('leaves unavailable skills out of the counts, total and list', () => {
+  const summary = summarizeTrack({
+    ...track([['a', 'secure']], null),
+    skills: [skill('a', 'secure'), skill('b', 'weak', false)]
+  });
+  expect(summary.total).toBe(1);
+  expect(summary.counts.weak).toBe(0);
+  expect(summary.skills.map((item) => item.skillId)).toEqual(['a']);
 });
 
 it('resolves the recommended skill and its reason', () => {

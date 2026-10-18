@@ -24,14 +24,18 @@ export function summarizeTrack(track: TrackProgress) {
     practising: 0,
     secure: 0
   };
-  for (const skill of track.skills) counts[skill.status] += 1;
+  // Unavailable skills (no published lesson, or quarantined) cannot be opened,
+  // so they are neither counted nor listed here; the skill map still shows them.
+  const skills = track.skills.filter((skill) => skill.available);
+  for (const skill of skills) counts[skill.status] += 1;
   const { recommendation } = track;
   const skill = recommendation
     ? track.skills.find((item) => item.skillId === recommendation.skillId)
     : undefined;
   return {
     counts,
-    total: track.skills.length,
+    skills,
+    total: skills.length,
     recommended:
       recommendation && skill ? { skill, reason: recommendation.reason } : null
   };

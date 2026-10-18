@@ -27,7 +27,7 @@
     </div>
   {/if}
 
-  {#if !track.skills.length}
+  {#if !summary.skills.length}
     <p>No published skills are available in this track yet.</p>
   {:else}
     <h3>Grammar mastery</h3>
@@ -46,7 +46,7 @@
       {/each}
     </ul>
     <ul class="skills">
-      {#each track.skills as skill (skill.skillId)}
+      {#each summary.skills as skill (skill.skillId)}
         <li>
           <a href={`/app/map#${skill.skillId}`}>{skill.title}</a>
           <Chip
