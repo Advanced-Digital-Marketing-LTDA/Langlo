@@ -250,14 +250,12 @@ export function generateReport(rootDir = process.cwd()) {
   return report;
 }
 
-if (
-  process.argv[1] &&
-  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
-) {
-  if (process.argv.length !== 2) {
+/** @param {string[]} argv @param {string} rootDir */
+export function runReportCli(argv = process.argv, rootDir = process.cwd()) {
+  if (argv.length !== 2) {
     throw new Error('Report paths are fixed; do not provide CLI arguments');
   }
-  const result = generateReport();
+  const result = generateReport(rootDir);
   console.log('Product observed-source coverage:', result.product.metrics);
   console.log(
     'Unfiltered observed-source coverage:',
@@ -270,4 +268,12 @@ if (
   );
   console.warn('New mapped sources:', result.diagnostics.new_mapped_sources);
   console.warn('These reports are NOT full application coverage gates.');
+  return result;
+}
+
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  runReportCli();
 }
