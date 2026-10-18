@@ -8,10 +8,11 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   generateReport,
   renderHtml,
+  runReportCli,
   summarizeCoverage
 } from '../scripts/report-product-coverage.mjs';
 
@@ -72,6 +73,30 @@ describe('Monocart product coverage validation', () => {
     expect(report.diagnostics.compiled_or_unmapped_entries).toEqual([
       'localhost/_app/immutable/main.js'
     ]);
+  });
+
+  it('rejects invalid root, source and telemetry-only coverage', () => {
+    expect(() => summarizeCoverage(null, expected)).toThrow(
+      /Missing Monocart total/
+    );
+    const invalid = fixture();
+    Object.assign(invalid, { [productA]: null });
+    expect(() => summarizeCoverage(invalid, expected)).toThrow(
+      /Invalid source coverage object/
+    );
+    const telemetryOnly = {
+      total: entry(),
+      [telemetry]: entry()
+    };
+    expect(() => summarizeCoverage(telemetryOnly, [telemetry])).toThrow(
+      /No product source files/
+    );
+  });
+
+  it('does not render a report with a missing metric', () => {
+    const report = summarizeCoverage(fixture(), expected);
+    delete report.product.metrics.lines;
+    expect(() => renderHtml(report)).toThrow(/Missing report metric/);
   });
 
   it('fails closed when one previously mapped product module vanishes', () => {
@@ -153,6 +178,26 @@ describe('Monocart coverage report output', () => {
       );
       const output = generateReport(dir);
       expect(output.product.metrics.lines.covered).toBeGreaterThan(0);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      try {
+        expect(() => runReportCli(['node', 'script', 'extra'], dir)).toThrow(
+          /do not provide CLI arguments/
+        );
+        expect(runReportCli(['node', 'script'], dir).product.metrics.lines)
+          .toEqual(output.product.metrics.lines);
+        expect(log).toHaveBeenCalledWith(
+          'Product observed-source coverage:',
+          output.product.metrics
+        );
+        expect(warn).toHaveBeenCalledWith(
+          'Generated/unmapped entries:',
+          1
+        );
+      } finally {
+        log.mockRestore();
+        warn.mockRestore();
+      }
       const json = JSON.parse(
         readFileSync(join(folder, 'product-source-summary.json'), 'utf8')
       );
