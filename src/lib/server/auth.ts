@@ -3,8 +3,8 @@ import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { RuntimeConfig } from './config.ts';
-import { safeDiagnostic } from './diagnostics.ts';
-import type { Mailer } from './mail.ts';
+import { mailFailureCode, safeDiagnostic } from './diagnostics.ts';
+import type { Mailer, MailMessage } from './mail.ts';
 import { currentCorrelationId } from './request-context.ts';
 import * as schema from './db/schema.ts';
 
@@ -23,6 +23,40 @@ const resetMessage = (url: string) => ({
     'If you did not request this, you can ignore this message.'
   ].join('\n')
 });
+
+const passwordChangedMessage = {
+  subject: 'Your Langlo password was changed',
+  text: [
+    'The password for this account was just changed.',
+    '',
+    'If you did not do this, request a password reset right away.'
+  ].join('\n')
+};
+
+/**
+ * Send without awaiting so SMTP latency cannot reveal whether an account exists.
+ * A failure is logged as a safe `mail-delivery` warning (template and allowlisted transport code only),
+ * never surfaced to the caller.
+ */
+function sendInBackground(
+  mailer: Mailer,
+  message: MailMessage,
+  template: 'reset' | 'password-changed'
+) {
+  const correlationId = currentCorrelationId();
+  void Promise.resolve()
+    .then(() => mailer.send(message))
+    .catch((error: unknown) => {
+      const code = mailFailureCode(error);
+      console.warn(
+        JSON.stringify({
+          ...safeDiagnostic('mail-delivery', error, correlationId),
+          template,
+          ...(code ? { code } : {})
+        })
+      );
+    });
+}
 
 /**
  * Contract implementation (docs/auth.md): email+password with public
@@ -88,17 +122,19 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
       resetPasswordTokenExpiresIn: 1800,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: ({ user, url }) => {
-        const correlationId = currentCorrelationId();
-        // SMTP latency must not reveal whether the submitted account exists.
-        void Promise.resolve()
-          .then(() =>
-            deps.mailer.send({ to: user.email, ...resetMessage(url) })
-          )
-          .catch((error: unknown) => {
-            console.warn(
-              JSON.stringify(safeDiagnostic('auth', error, correlationId))
-            );
-          });
+        sendInBackground(
+          deps.mailer,
+          { to: user.email, ...resetMessage(url) },
+          'reset'
+        );
+        return Promise.resolve();
+      },
+      onPasswordReset: ({ user }) => {
+        sendInBackground(
+          deps.mailer,
+          { to: user.email, ...passwordChangedMessage },
+          'password-changed'
+        );
         return Promise.resolve();
       }
     }
