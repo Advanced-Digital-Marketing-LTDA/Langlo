@@ -11,6 +11,7 @@ import {
 import { getTimezone, setTimezone } from '../src/lib/server/preferences';
 import {
   finishPractice,
+  practiceResultsPath,
   practiceSummary,
   startPractice
 } from '../src/lib/server/practice';
@@ -326,6 +327,25 @@ describe('practice sessions', () => {
     await expect(
       finishPractice(client, other, 'study-b')
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('only builds a results path for a well-formed practice session id', () => {
+    const id = 'practice:0b9f6f64-1f0a-4d5e-9a57-3c1d3a8f2e11';
+    expect(practiceResultsPath(id)).toBe(
+      `/app/session/${encodeURIComponent(id)}/results`
+    );
+    for (const bad of [
+      '//evil.example',
+      '/\\evil.example',
+      'https://evil.example',
+      '../../x',
+      'study-a',
+      `${id}/../x`,
+      ''
+    ])
+      expect(() => practiceResultsPath(bad)).toThrowError(
+        expect.objectContaining({ code: 'NOT_FOUND' })
+      );
   });
 
   it('runs start, session, finish and results through the pages', async () => {

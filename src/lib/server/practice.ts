@@ -5,6 +5,17 @@ import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
 import { StudyError } from './study-error';
 
 const KEY_PATTERN = /^[0-9a-f-]{36}$/i;
+const PRACTICE_ID_PATTERN = /^practice:[0-9a-f-]{36}$/i;
+
+/**
+ * The results page of a practice session. Only an id of the shape
+ * startPractice issues is accepted, so a request parameter can never steer
+ * the path anywhere else.
+ */
+export function practiceResultsPath(id: string): string {
+  if (!PRACTICE_ID_PATTERN.test(id)) throw new StudyError('NOT_FOUND');
+  return `/app/session/${encodeURIComponent(id)}/results`;
+}
 
 /**
  * Start a practice session in an enrolled track. The submission key makes the
