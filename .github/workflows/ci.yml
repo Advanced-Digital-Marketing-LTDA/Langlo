@@ -44,17 +44,6 @@ jobs:
       - run: npm run check
       - run: npm run lint
       - run: npm run format:check
-      - name: Capture Prettier suggestions (temporary, keeps gate failing)
-        if: failure()
-        run: |
-          ./node_modules/.bin/prettier --write docs/plans/langlo-80-percent-coverage-and-test-quality.md docs/evidence/monocart-product-coverage.md docs/evidence/langlo-e2e-qa-2026-10-18.md docs/evidence/langlo-e2e-qa-2026-10-18.html scripts/report-product-coverage.mjs scripts/monocart-observed-source-baseline.json tests/report-product-coverage.test.ts .github/workflows/ci.yml
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          paths = ["docs/plans/langlo-80-percent-coverage-and-test-quality.md","docs/evidence/monocart-product-coverage.md","docs/evidence/langlo-e2e-qa-2026-10-18.md","docs/evidence/langlo-e2e-qa-2026-10-18.html","scripts/report-product-coverage.mjs","scripts/monocart-observed-source-baseline.json","tests/report-product-coverage.test.ts",".github/workflows/ci.yml"]
-          for path in paths:
-              print('PRETTIER_FILE_JSON=' + json.dumps({'path': path, 'content': Path(path).read_text()}, ensure_ascii=True))
-          PY
       - name: Run tests with machine-readable evidence
         run: |
           mkdir -p .ci-reports
