@@ -60,6 +60,10 @@ jobs:
       - run: npm run build:e2e-coverage
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - name: Validate product-focused coverage reporting
+        run: |
+          node --test scripts/report-product-coverage.test.mjs
+          node scripts/report-product-coverage.mjs
       - name: Upload Playwright reports
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -68,8 +72,8 @@ jobs:
           path: |
             .ci-reports/playwright/playwright-test-report.html
             .ci-reports/playwright-coverage/
-          if-no-files-found: ignore
-          retention-days: 1
+          if-no-files-found: error
+          retention-days: 14
       - name: Validate non-empty Vitest evidence
         if: always()
         run: node scripts/validate-vitest-evidence.mjs .ci-reports/vitest.json
