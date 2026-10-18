@@ -40,6 +40,12 @@ const statusFor: Record<string, number> = {
 // share the generic text for their status.
 const messageForCode: Record<string, string> = {
   ALREADY_ENROLLED: 'You are already enrolled in this track.',
+  INVALID_DECK: 'Give the deck a name of up to 160 characters.',
+  INVALID_CONTENT:
+    'Fill in both sides of a basic note, or the text of a cloze note (up to 4096 characters each).',
+  INVALID_CLOZE:
+    'A cloze note needs one hidden part like {{c1::answer}} and no other cloze numbers.',
+  INVALID_RATING: 'Choose again, hard, good or easy.',
   INVALID_TIMEZONE: 'Choose a valid timezone, for example Europe/Lisbon.',
   INVALID_ENROLLMENT: 'Choose a track, a starting level and a lesson language.',
   INVALID_REPORT:

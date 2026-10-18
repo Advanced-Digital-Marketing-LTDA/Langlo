@@ -20,7 +20,11 @@
 <h1>Review</h1>
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
 {#if card}
-  <p>{data.cards.length} due. Deck: {card.deck}</p>
+  <p>
+    {data.total} due{data.total > data.cards.length
+      ? `, showing the first ${data.cards.length}`
+      : ''}. Deck: {card.deck}
+  </p>
   <p><strong>{front}</strong></p>
   {#if !revealed}
     <button type="button" onclick={() => (revealed = true)}>Show answer</button>

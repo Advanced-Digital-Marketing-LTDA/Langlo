@@ -36,6 +36,18 @@ same front different Anki identities` and the updated export layout) failed
   `tests/db-migrations.test.ts` and `tests/dashboard-render.test.ts` 25 passed.
   `svelte-check` (0 errors), `eslint` and `prettier --check .` are clean.
 
+- CI `foundation` job on `2e70f44`: `tests/db-remote-migrate.test.ts` failed 3
+  tests (it lists migrations and counts applied ones: 15 against 16). Updated
+  for migration 0015; 58 passed locally afterwards.
+- Review findings from the Claude review workflow, each shown to fail on broken
+  logic before relying on it: the stale-revision test now uses a fresh submission
+  key (the old one hit the idempotency conflict first); the newest-evaluation
+  test seeds a newer evaluation with the opposite outcome (reversing the
+  `ORDER BY` in `practice.ts` makes it fail); foreign-learner approve and rate
+  cases; the due count above the list cap; learner-facing messages for invalid
+  notes; a second approval of the same note succeeds. `tests/learner-journeys.test.ts`:
+  24 passed.
+
 ## What the tests assert
 
 Enrollment validation, French A1 only, duplicate conflict (409) leaving the first
@@ -54,6 +66,8 @@ quoting, a per-note GUID, owner-only access and private no-store headers.
 - The full suite, property tests, build and browser tests were not run locally
   (the full suite is too slow in the cloud environment); CI is the first full run.
 - No browser (Playwright) journey covers the new pages yet.
+- The saved timezone is stored only; due times and review scheduling still use
+  UTC, and the settings page says so.
 - The Anki export is Anki's tab-separated text import. Import into a real Anki
   client (including Windows) has not been checked, and no `.apkg` package is
   produced.

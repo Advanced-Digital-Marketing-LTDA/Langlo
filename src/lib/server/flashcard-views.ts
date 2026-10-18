@@ -1,6 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { Client } from '@libsql/client';
-import { createNote, FlashcardError, type LearnerSession } from './flashcards';
+import {
+  approveNote,
+  createNote,
+  FlashcardError,
+  type LearnerSession
+} from './flashcards';
 
 type Query = Pick<Client, 'execute'>;
 export type NoteKind = 'basic' | 'cloze';
@@ -72,6 +77,45 @@ export async function addNoteFromForm(
       content: { front: text('front'), back: text('back') }
     });
   throw new FlashcardError('INVALID_CONTENT');
+}
+
+/** How many approved, unsuspended cards are due now, however many are listed. */
+export async function countDueCards(
+  client: Query,
+  learner: LearnerSession,
+  now: number = Date.now()
+): Promise<number> {
+  const result = await client.execute({
+    sql: `SELECT count(*) AS total FROM native_flashcards c
+      JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
+      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at <= ?`,
+    args: [learner.userId, now]
+  });
+  return Number(result.rows[0].total);
+}
+
+/**
+ * Approve one of the caller's draft notes. Approving a note that is already
+ * approved (a double click, a second tab) succeeds; a missing or foreign note
+ * is still not found.
+ */
+export async function approveOwnNote(
+  client: Client,
+  learner: LearnerSession,
+  noteId: string
+): Promise<void> {
+  try {
+    await approveNote(client, learner, noteId);
+  } catch (thrown) {
+    if (thrown instanceof FlashcardError && thrown.code === 'NOT_FOUND') {
+      const approved = await client.execute({
+        sql: "SELECT 1 FROM native_flashcard_notes WHERE id = ? AND owner_id = ? AND status = 'approved'",
+        args: [noteId, learner.userId]
+      });
+      if (approved.rows[0]) return;
+    }
+    throw thrown;
+  }
 }
 
 /** Approved, unsuspended cards that are due now, oldest first. */

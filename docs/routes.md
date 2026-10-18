@@ -13,7 +13,7 @@ existing `/app/**` no-store/noindex policy and verified-session ownership guard.
 | `/app/map` and `/app/progress`         | Owner's versioned grammar evidence, explanations and manual lesson links; unenrolled language filters return 404. |
 | `/app/reports`                         | Owner's latest 100 content reports; no content-editing action.                                                    |
 | `/app/enroll`                          | Enroll in a track (French A1 only; German and English A1/A2); a second enrollment in a language is a 409.         |
-| `/app/settings`                        | Lesson language per enrollment and the learner's IANA timezone.                                                   |
+| `/app/settings`                        | Lesson language per enrollment and the learner's IANA timezone (stored only; due times still use UTC).            |
 | `/app/practice/[language]`             | Start an idempotent practice session for an enrolled language.                                                    |
 | `/app/session/[id]` and `.../results`  | Pick a topic in a practice session, finish it, and read its answer counts; foreign IDs return 404.                |
 | `/app/decks` and `/app/decks/[id]`     | Create decks, add basic or cloze draft notes, approve notes; `/export` downloads approved notes as Anki text.     |

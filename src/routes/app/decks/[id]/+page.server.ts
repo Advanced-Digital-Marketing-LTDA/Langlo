@@ -1,8 +1,8 @@
 import type { Actions, PageServerLoad } from './$types';
 import { studyForm, studyPage } from '../../../../lib/server/learner-api';
-import { approveNote } from '../../../../lib/server/flashcards';
 import {
   addNoteFromForm,
+  approveOwnNote,
   listNotes
 } from '../../../../lib/server/flashcard-views';
 
@@ -26,7 +26,7 @@ export const actions: Actions = {
     return studyForm(
       event,
       (client, learner) =>
-        approveNote(client, learner, String(form.get('noteId') ?? '')),
+        approveOwnNote(client, learner, String(form.get('noteId') ?? '')),
       { saved: true }
     );
   }

@@ -40,6 +40,7 @@
 {/each}
 
 <h2>Timezone</h2>
+<p>Saved to your account. Review due times still use UTC for now.</p>
 <form method="POST" action="?/timezone" use:enhance>
   <label
     >Timezone (for example Europe/Lisbon)

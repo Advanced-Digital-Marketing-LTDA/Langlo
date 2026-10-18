@@ -16,11 +16,16 @@ import {
 } from '../src/lib/server/practice';
 import {
   addNoteFromForm,
+  countDueCards,
   exportDeckForAnki,
   listDueCards,
   listNotes
 } from '../src/lib/server/flashcard-views';
-import { approveNote, createDeck } from '../src/lib/server/flashcards';
+import {
+  approveNote,
+  createDeck,
+  submitReview
+} from '../src/lib/server/flashcards';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -268,13 +273,26 @@ describe('practice sessions', () => {
   });
 
   it('summarises answers by newest evaluation and finishes only own practice sessions', async () => {
+    // attempt-a already has an older "incorrect" evaluation; a newer one says
+    // "correct". Two assisted attempts add an uncertain and an unevaluated one.
+    const attempt = (id: string) =>
+      `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('${id}', 'learner-a', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-${id}', 'assisted', 'un')`;
+    await client.batch(
+      [
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('evaluation-a2', 'learner-a', 'attempt-a', 'prepared-v2', 'rubric-v1', 'correct', unixepoch() * 1000 + 60000)",
+        attempt('attempt-b'),
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES ('evaluation-b', 'learner-a', 'attempt-b', 'prepared-v1', 'rubric-v1', 'uncertain')",
+        attempt('attempt-c')
+      ],
+      'write'
+    );
     const summary = await practiceSummary(client, learner, 'study-a');
     expect(summary).toMatchObject({
-      answered: 1,
-      correct: 0,
-      incorrect: 1,
-      uncertain: 0,
-      pending: 0,
+      answered: 3,
+      correct: 1,
+      incorrect: 0,
+      uncertain: 1,
+      pending: 1,
       skills: ['fr-articles'],
       state: 'active'
     });
@@ -409,22 +427,78 @@ describe('decks, review and Anki export', () => {
     const { submissionKey } = (await reviewLoad(event())) as {
       submissionKey: string;
     };
-    const rate = (revision: string, rating = 'good') =>
+    const rate = (
+      revision: string,
+      rating = 'good',
+      key = `${submissionKey}:${draft.cardId}:${revision}`
+    ) =>
       reviewActions.rate(
         event({
           fields: {
             cardId: draft.cardId,
             revision,
             rating,
-            submissionKey: `${submissionKey}:${draft.cardId}:${revision}`
+            submissionKey: key
           }
         })
       );
     expect(await rate('0')).toEqual({ reviewed: true });
     // The card is rescheduled out of today's queue and a stale revision conflicts.
     expect(await listDueCards(client, learner)).toEqual([]);
+    // Same key, different rating: an idempotency conflict, not a stale revision.
     expect(await rate('0', 'easy')).toMatchObject({ status: 409 });
+    // A fresh key against the old revision reaches the stale-revision check.
+    expect(await rate('0', 'easy', 'fresh-key')).toMatchObject({ status: 409 });
+    await expect(
+      submitReview(client, learner, {
+        cardId: draft.cardId,
+        submissionId: 'fresh-key-2',
+        expectedRevision: 0,
+        rating: 'easy'
+      })
+    ).rejects.toMatchObject({ code: 'STALE_REVIEW' });
     expect(await rate('1', 'nonsense')).toMatchObject({ status: 400 });
+    const events = await client.execute(
+      'SELECT count(*) AS total FROM native_flashcard_review_events'
+    );
+    expect(events.rows[0].total).toBe(1);
+    // Another learner cannot rate this card, and nothing is written.
+    expect(
+      await reviewActions.rate(
+        event({
+          userId: 'learner-b',
+          fields: {
+            cardId: draft.cardId,
+            revision: '1',
+            rating: 'good',
+            submissionKey: 'foreign-key'
+          }
+        })
+      )
+    ).toMatchObject({ status: 404 });
+    expect(
+      (
+        await client.execute(
+          'SELECT count(*) AS total FROM native_flashcard_review_events'
+        )
+      ).rows[0].total
+    ).toBe(1);
+  });
+
+  it('counts every due card even when the list is capped', async () => {
+    for (const front of ['One', 'Two', 'Three']) {
+      const note = await addNoteFromForm(
+        client,
+        learner,
+        deckId,
+        noteForm({ kind: 'basic', front, back: 'x' })
+      );
+      await approveNote(client, learner, note.id);
+    }
+    expect(await listDueCards(client, learner, Date.now(), 2)).toHaveLength(2);
+    expect(await countDueCards(client, learner)).toBe(3);
+    expect(await countDueCards(client, other)).toBe(0);
+    expect(await reviewLoad(event())).toMatchObject({ total: 3 });
   });
 
   it('stores the chosen rating for every rating button', async () => {
@@ -479,13 +553,38 @@ describe('decks, review and Anki export', () => {
         })
       )
     ).toEqual({ saved: true });
+    // A second approval of the same note (double click) is not an error.
+    expect(
+      await deckActions.approve(
+        event({ params: { id: deckId }, fields: { noteId: approved.id } })
+      )
+    ).toEqual({ saved: true });
     expect(
       await deckActions.approve(
         event({ params: { id: deckId }, fields: { noteId: 'missing' } })
       )
     ).toMatchObject({ status: 404 });
+    // Another learner cannot approve this learner's draft.
+    const draft = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Draft', back: 'Only' })
+    );
+    expect(
+      await deckActions.approve(
+        event({
+          userId: 'learner-b',
+          params: { id: deckId },
+          fields: { noteId: draft.id }
+        })
+      )
+    ).toMatchObject({ status: 404 });
+    expect(
+      (await listNotes(client, learner, deckId)).notes.at(-1)
+    ).toMatchObject({ id: draft.id, status: 'draft' });
     expect(await deckLoad(event({ params: { id: deckId } }))).toMatchObject({
-      notes: [{ status: 'approved' }, { status: 'draft' }]
+      notes: [{ status: 'approved' }, { status: 'draft' }, { status: 'draft' }]
     });
 
     const text = await exportDeckForAnki(client, learner, deckId);
@@ -537,6 +636,22 @@ describe('decks, review and Anki export', () => {
     const guids = rows.map((line) => line.split('\t')[0]);
     expect(new Set(guids).size).toBe(2);
     for (const guid of guids) expect(guid).toMatch(/^langlo:v1:[0-9a-f]{64}$/);
+  });
+
+  it('explains invalid notes on the deck page', async () => {
+    const add = (fields: Record<string, string>) =>
+      deckActions.addNote(event({ params: { id: deckId }, fields }));
+    expect(await add({ kind: 'cloze', text: 'no hidden part' })).toMatchObject({
+      status: 400,
+      data: { message: expect.stringContaining('cloze note needs one hidden') }
+    });
+    expect(await add({ kind: 'basic', front: '', back: 'x' })).toMatchObject({
+      status: 400,
+      data: { message: expect.stringContaining('Fill in both sides') }
+    });
+    expect(
+      await add({ kind: 'basic', front: 'Merci', back: 'Thanks' })
+    ).toEqual({ saved: true });
   });
 
   it('creates a deck through the page and rejects a blank name on the form', async () => {
