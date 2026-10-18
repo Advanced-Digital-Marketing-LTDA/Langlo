@@ -25,6 +25,9 @@
 {#each tracks as track (track.language)}
   <section aria-label={`${track.language.toUpperCase()} grammar`}>
     <h2>{track.language.toUpperCase()} · starting level {track.level}</h2>
+    <p>
+      <a href={`/app/practice/${track.language}`}>Start a practice session</a>
+    </p>
     {#if track.recommendation}
       <aside aria-label="Recommended topic">
         <p>

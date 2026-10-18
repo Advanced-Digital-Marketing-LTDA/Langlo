@@ -29,7 +29,8 @@
       No grammar history is available yet. Your skill map, mastery and
       recommended topics appear here once you begin.
     </p>
-    <a href="/app/assessment">Grammar assessment</a>
+    <a href="/app/assessment">Grammar assessment</a> ·
+    <a href="/app/enroll">Enroll in a track</a>
   </section>
 {:else}
   {#each data.tracks as track (track.language)}
@@ -38,7 +39,8 @@
   <p class="note">
     Grammar evidence is separate from flashcard recall.
     <a href="/app/assessment">Grammar assessment</a> ·
-    <a href="/app/reports">Your reports</a>
+    <a href="/app/reports">Your reports</a> ·
+    <a href="/app/enroll">Enroll in a track</a>
   </p>
 {/if}
 

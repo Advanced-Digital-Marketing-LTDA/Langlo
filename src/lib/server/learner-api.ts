@@ -16,6 +16,7 @@ type LearnerEvent = Pick<RequestEvent, 'locals' | 'request'>;
 const statusFor: Record<string, number> = {
   NOT_FOUND: 404,
   IDEMPOTENCY_CONFLICT: 409,
+  ALREADY_ENROLLED: 409,
   STALE_REVIEW: 409,
   NOT_APPROVED: 409,
   SUSPENDED: 409,
@@ -32,6 +33,9 @@ const statusFor: Record<string, number> = {
 // Codes whose cause the learner can act on get their own message; the rest
 // share the generic text for their status.
 const messageForCode: Record<string, string> = {
+  ALREADY_ENROLLED: 'You are already enrolled in this track.',
+  INVALID_TIMEZONE: 'Choose a valid timezone, for example Europe/Lisbon.',
+  INVALID_ENROLLMENT: 'Choose a track, a starting level and a lesson language.',
   INVALID_REPORT:
     'Choose a report category and keep the comment within 1000 characters.',
   SESSION_NOT_ACTIVE:
@@ -135,7 +139,8 @@ export async function studyPage<T>(
     return await run(client, learner);
   } catch (thrown) {
     const described =
-      thrown instanceof StudyError && describeLearnerError(thrown.code);
+      (thrown instanceof StudyError || thrown instanceof FlashcardError) &&
+      describeLearnerError(thrown.code);
     if (described) error(described.status, { message: described.message });
     throw thrown;
   } finally {

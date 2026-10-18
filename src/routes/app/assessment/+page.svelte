@@ -20,5 +20,8 @@
           >{track.language.toUpperCase()} {track.level}</a
         >
       </li>{/each}
-  </ul>{:else}<p>You have no enrolled tracks yet.</p>{/if}
+  </ul>{:else}<p>
+    You have no enrolled tracks yet. <a href="/app/enroll">Enroll in a track</a
+    >.
+  </p>{/if}
 <a href="/app">Back to home</a>
