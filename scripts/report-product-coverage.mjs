@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 export const metrics = ['lines', 'statements', 'functions', 'branches'];
 export const excludedTelemetry = ['src/lib/glitchtip/'];
+/** @param {string} a @param {string} b */
 const compareStrings = (a, b) => a.localeCompare(b, 'en');
 
 /** @param {unknown} value @returns {value is Record<string, unknown>} */
