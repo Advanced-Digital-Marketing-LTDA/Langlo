@@ -44,17 +44,6 @@ jobs:
       - run: npm run check
       - run: npm run lint
       - run: npm run format:check
-      - name: Capture Prettier suggestions (temporary, keeps gate failing)
-        if: failure()
-        run: |
-          ./node_modules/.bin/prettier --write scripts/report-product-coverage.mjs tests/report-product-coverage.test.ts .github/workflows/ci.yml
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          paths = ["scripts/report-product-coverage.mjs","tests/report-product-coverage.test.ts",".github/workflows/ci.yml"]
-          for path in paths:
-              print('PRETTIER_FILE_JSON=' + json.dumps({'path': path, 'content': Path(path).read_text()}, ensure_ascii=True))
-          PY
       - name: Run tests with machine-readable evidence
         run: |
           mkdir -p .ci-reports
