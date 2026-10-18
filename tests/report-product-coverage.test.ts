@@ -27,7 +27,10 @@ const entry = (covered = 1) => ({
   branches: { covered, total: 6 }
 });
 
-function fixture() {
+type CoverageMetric = { covered: number; total: number };
+type CoverageEntry = Record<'lines' | 'statements' | 'functions' | 'branches', CoverageMetric>;
+
+function fixture(): Record<string, CoverageEntry> {
   return {
     total: entry(),
     'localhost/_app/immutable/main.js': entry(),
@@ -78,11 +81,11 @@ describe('Monocart product coverage validation', () => {
 
   it('rejects malformed report metrics, not just missing metrics', () => {
     const data = fixture();
-    delete data[productA].branches;
+    Object.assign(data[productA]!, { branches: undefined });
     expect(() => summarizeCoverage(data, expected)).toThrow(
       /Invalid branches coverage/
     );
-    data[productA].branches = { covered: -1, total: 8 };
+    Object.assign(data[productA]!, { branches: { covered: -1, total: 8 } });
     expect(() => summarizeCoverage(data, expected)).toThrow(
       /Invalid branches coverage/
     );
@@ -115,7 +118,9 @@ describe('Monocart product coverage validation', () => {
     const html = renderHtml(report);
     expect(html).not.toContain('<img src=x');
     expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
-    report.product.metrics.lines.covered = '<script>alert(1)</script>';
+    Object.assign(report.product.metrics.lines, {
+      covered: '<script>alert(1)</script>'
+    });
     expect(renderHtml(report)).not.toContain('<script>');
   });
 });
