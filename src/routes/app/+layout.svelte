@@ -6,6 +6,9 @@
     { href: '/app/map', label: 'Skill map' },
     { href: '/app/progress', label: 'Progress' },
     { href: '/app/assessment', label: 'Assessment' },
+    { href: '/app/review', label: 'Review' },
+    { href: '/app/decks', label: 'Decks' },
+    { href: '/app/settings', label: 'Settings' },
     { href: '/app/reports', label: 'Reports' }
   ] as const;
   const pathname = $derived(page.url.pathname.replace(/\/+$/, '') || '/');

@@ -1,4 +1,10 @@
-import { error, json, type RequestEvent } from '@sveltejs/kit';
+import {
+  error,
+  fail,
+  isHttpError,
+  json,
+  type RequestEvent
+} from '@sveltejs/kit';
 import type { Client } from '@libsql/client';
 import { openAppDatabase } from './db/app';
 import { FlashcardError } from './flashcards';
@@ -16,6 +22,7 @@ type LearnerEvent = Pick<RequestEvent, 'locals' | 'request'>;
 const statusFor: Record<string, number> = {
   NOT_FOUND: 404,
   IDEMPOTENCY_CONFLICT: 409,
+  ALREADY_ENROLLED: 409,
   STALE_REVIEW: 409,
   NOT_APPROVED: 409,
   SUSPENDED: 409,
@@ -32,6 +39,15 @@ const statusFor: Record<string, number> = {
 // Codes whose cause the learner can act on get their own message; the rest
 // share the generic text for their status.
 const messageForCode: Record<string, string> = {
+  ALREADY_ENROLLED: 'You are already enrolled in this track.',
+  INVALID_DECK: 'Give the deck a name of up to 160 characters.',
+  INVALID_CONTENT:
+    'Fill in both sides of a basic note, or the text of a cloze note (up to 4096 characters each).',
+  INVALID_CLOZE:
+    'A cloze note needs one hidden part like {{c1::answer}} and no other cloze numbers.',
+  INVALID_RATING: 'Choose again, hard, good or easy.',
+  INVALID_TIMEZONE: 'Choose a valid timezone, for example Europe/Lisbon.',
+  INVALID_ENROLLMENT: 'Choose a track, a starting level and a lesson language.',
   INVALID_REPORT:
     'Choose a report category and keep the comment within 1000 characters.',
   SESSION_NOT_ACTIVE:
@@ -135,10 +151,40 @@ export async function studyPage<T>(
     return await run(client, learner);
   } catch (thrown) {
     const described =
-      thrown instanceof StudyError && describeLearnerError(thrown.code);
+      (thrown instanceof StudyError || thrown instanceof FlashcardError) &&
+      describeLearnerError(thrown.code);
     if (described) error(described.status, { message: described.message });
     throw thrown;
   } finally {
     close();
   }
+}
+
+/**
+ * Run a form action's work: 4xx repository failures come back as a form
+ * failure the page can show, anything else is rethrown. On success the given
+ * value is returned.
+ */
+export async function formResult<T>(run: () => Promise<unknown>, success: T) {
+  try {
+    await run();
+  } catch (thrown) {
+    if (isHttpError(thrown) && thrown.status < 500)
+      return fail(thrown.status, { message: thrown.body.message });
+    throw thrown;
+  }
+  return success;
+}
+
+/**
+ * A learner form action: the caller must be signed in (401 otherwise), the
+ * work runs on the study database, and 4xx failures come back to the form.
+ */
+export function studyForm<T>(
+  event: Pick<RequestEvent, 'locals'>,
+  run: (client: Client, learner: LearnerSession) => Promise<unknown>,
+  success: T
+) {
+  requireLearnerApi(event);
+  return formResult(() => studyPage(event, run), success);
 }

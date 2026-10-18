@@ -16,7 +16,8 @@ function viteServer() {
     plugins: [svelte({ compilerOptions: { runes: true, dev: false } })],
     resolve: {
       alias: {
-        '$app/state': resolve(import.meta.dirname, 'app-state-stub.ts')
+        '$app/state': resolve(import.meta.dirname, 'app-state-stub.ts'),
+        '$app/forms': resolve(import.meta.dirname, 'app-forms-stub.ts')
       }
     }
   });

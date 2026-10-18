@@ -978,3 +978,24 @@ export const aiUsage = sqliteTable(
     )
   ]
 );
+
+// Per-learner preferences. The timezone is an IANA name the learner chose; no
+// row means the learner has not chosen one.
+export const learnerPreferences = sqliteTable(
+  'learner_preferences',
+  {
+    ownerId: text('owner_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    timezone: text('timezone').notNull(),
+    updatedAt: integer('updated_at')
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`)
+  },
+  (table) => [
+    check(
+      'learner_preferences_timezone',
+      sql`length(trim(${table.timezone})) BETWEEN 1 AND 64 AND instr(${table.timezone}, char(0)) = 0`
+    )
+  ]
+);
