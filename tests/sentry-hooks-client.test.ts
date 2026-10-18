@@ -1,7 +1,5 @@
 import { expect, it, vi } from 'vitest';
 
-// overlock-ignore TEST_REMOVED tests/glitchtip-scrub.test.ts -- Custom telemetry filtering is intentionally removed for pass-through behavior.
-
 vi.mock('$app/env/public', () => ({
   PUBLIC_GLITCHTIP_DSN: 'https://public@example.test/1',
   PUBLIC_APP_ENV: 'test',

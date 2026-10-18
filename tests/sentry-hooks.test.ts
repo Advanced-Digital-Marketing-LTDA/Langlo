@@ -10,7 +10,6 @@ vi.mock('$app/env/public', () => ({
 import '../src/hooks.server';
 import * as Sentry from '@sentry/sveltekit';
 
-// overlock-ignore TEST_REMOVED -- Server telemetry filtering is intentionally removed for pass-through behavior.
 it('initializes server telemetry without Langlo field filtering', async () => {
   const options = Sentry.getClient()?.getOptions();
 
