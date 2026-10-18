@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 export const metrics = ['lines', 'statements', 'functions', 'branches'];
 export const excludedTelemetry = ['src/lib/glitchtip/'];
+const compareStrings = (a, b) => a.localeCompare(b, 'en');
 
 /** @param {unknown} value @returns {value is Record<string, unknown>} */
 const isRecord = (value) =>
@@ -86,7 +87,7 @@ export function summarizeCoverage(input, requiredMappedSources) {
 
   const keys = Object.keys(input)
     .filter((key) => key.startsWith('src/'))
-    .sort();
+    .sort(compareStrings);
   if (!keys.length) {
     throw new Error('Missing mapped original src/ files');
   }
@@ -109,7 +110,7 @@ export function summarizeCoverage(input, requiredMappedSources) {
   const newMappedSources = keys.filter((path) => !expected.has(path));
   const bundledEntries = Object.keys(input)
     .filter((key) => key !== 'total' && !key.startsWith('src/'))
-    .sort();
+    .sort(compareStrings);
 
   return {
     schema_version: 1,
@@ -152,7 +153,7 @@ function metricTable(title, section) {
         name,
         value.covered,
         value.total,
-        value.percent === null ? 'n/a' : String(value.percent) + '%'
+        String(value.percent) + '%'
       ];
       return (
         '<tr>' +
