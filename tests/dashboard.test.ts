@@ -1,6 +1,7 @@
 import { expect, it } from 'vitest';
 import {
   masteryLabels,
+  masteryStatuses,
   masterySymbols,
   summarizeTrack
 } from '../src/lib/dashboard';
@@ -11,19 +12,40 @@ function skill(
   status: keyof typeof masteryLabels,
   available = true
 ) {
-  return { skillId, title: `Title ${skillId}`, status, available } as never;
+  return {
+    skillId,
+    level: 'A1',
+    title: `Title ${skillId}`,
+    contentVersionId: `${skillId}@1`,
+    available,
+    prerequisites: [],
+    status,
+    correct: 0,
+    incorrect: 0,
+    sessions: 0,
+    independentItems: 0,
+    reason: `Reason ${skillId}`,
+    policyVersion: 'grammar-1'
+  } satisfies TrackProgress['skills'][number];
 }
 function track(
   statuses: [string, keyof typeof masteryLabels][],
   recommendedId: string | null,
   reason = 'Start here'
-) {
+): TrackProgress {
   return {
     language: 'fr',
     level: 'A1',
     skills: statuses.map(([id, status]) => skill(id, status)),
-    recommendation: recommendedId ? { skillId: recommendedId, reason } : null
-  } as unknown as TrackProgress;
+    recommendation: recommendedId
+      ? {
+          skillId: recommendedId,
+          reason,
+          policyVersion: 'grammar-1',
+          manualSkillIds: [recommendedId]
+        }
+      : null
+  };
 }
 
 it('counts each mastery status and the total', () => {
@@ -84,4 +106,5 @@ it('gives every status a distinct text label and symbol', () => {
   const statuses = Object.keys(masteryLabels) as (keyof typeof masteryLabels)[];
   expect(new Set(statuses.map((s) => masteryLabels[s])).size).toBe(4);
   expect(new Set(statuses.map((s) => masterySymbols[s])).size).toBe(4);
+  expect([...masteryStatuses].sort()).toEqual([...statuses].sort());
 });

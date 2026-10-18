@@ -10,7 +10,7 @@ function viteServer() {
   server ??= createServer({
     root,
     configFile: false,
-    logLevel: 'error',
+    logLevel: 'warn',
     appType: 'custom',
     server: { middlewareMode: true, hmr: false, ws: false },
     plugins: [svelte({ compilerOptions: { runes: true, dev: false } })],

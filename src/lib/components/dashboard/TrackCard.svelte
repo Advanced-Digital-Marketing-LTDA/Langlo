@@ -3,12 +3,12 @@
   import Chip from '../../prototype/Chip.svelte';
   import {
     masteryLabels,
+    masteryStatuses,
     masterySymbols,
     summarizeTrack
   } from '../../dashboard';
   let { track }: { track: TrackProgress } = $props();
   const summary = $derived(summarizeTrack(track));
-  const statuses = ['secure', 'practising', 'weak', 'unknown'] as const;
 </script>
 
 <section class="panel" aria-label={`${track.language.toUpperCase()} dashboard`}>
@@ -33,7 +33,7 @@
     <h3>Grammar mastery</h3>
     <p class="note">From exercise evidence — separate from flashcard recall.</p>
     <ul class="counts">
-      {#each statuses as status (status)}
+      {#each masteryStatuses as status (status)}
         <li>
           <Chip
             variant="mastery"

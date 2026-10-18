@@ -17,6 +17,14 @@ export const masterySymbols: Record<MasteryStatus, string> = {
   secure: '✓'
 };
 
+/** Display order of the statuses, strongest first. */
+export const masteryStatuses = [
+  'secure',
+  'practising',
+  'weak',
+  'unknown'
+] as const satisfies readonly MasteryStatus[];
+
 export function summarizeTrack(track: TrackProgress) {
   const counts: Record<MasteryStatus, number> = {
     unknown: 0,
