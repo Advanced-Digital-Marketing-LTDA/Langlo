@@ -427,6 +427,37 @@ describe('decks, review and Anki export', () => {
     expect(await rate('1', 'nonsense')).toMatchObject({ status: 400 });
   });
 
+  it('stores the chosen rating for every rating button', async () => {
+    const ratings = ['again', 'hard', 'good', 'easy'];
+    for (const rating of ratings) {
+      const note = await addNoteFromForm(
+        client,
+        learner,
+        deckId,
+        noteForm({ kind: 'basic', front: `Q ${rating}`, back: 'A' })
+      );
+      await approveNote(client, learner, note.id);
+      expect(
+        await reviewActions.rate(
+          event({
+            fields: {
+              cardId: note.cardId,
+              revision: '0',
+              rating,
+              submissionKey: `key-${rating}`
+            }
+          })
+        )
+      ).toEqual({ reviewed: true });
+    }
+    const stored = await client.execute(
+      "SELECT id, rating FROM native_flashcard_review_events WHERE owner_id = 'learner-a' ORDER BY id"
+    );
+    expect(stored.rows.map((row) => [row.id, row.rating])).toEqual(
+      ratings.map((rating) => [`key-${rating}`, rating]).sort()
+    );
+  });
+
   it('approves through the deck page and exports only approved notes for Anki', async () => {
     const approved = await addNoteFromForm(
       client,
