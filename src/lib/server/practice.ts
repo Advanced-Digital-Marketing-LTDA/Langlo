@@ -1,5 +1,4 @@
 import type { Client } from '@libsql/client';
-import { beginWrite } from './flashcards';
 import type { LearnerSession } from './learner-session';
 import { StudyError } from './study-error';
 
@@ -7,7 +6,8 @@ const KEY_PATTERN = /^[0-9a-f-]{36}$/i;
 
 /**
  * Start a practice session in an enrolled track. The submission key makes the
- * start idempotent: a repeated tap returns the same session.
+ * start idempotent: a repeated tap returns the same session. The insert
+ * names the caller's own enrollment, so an unenrolled language inserts nothing.
  */
 export async function startPractice(
   client: Client,
@@ -20,40 +20,26 @@ export async function startPractice(
   )
     throw new StudyError('INVALID_SUBMISSION_KEY');
   const id = `practice:${input.submissionKey}`;
-  const tx = await beginWrite(client);
-  try {
-    const previous = await tx.execute({
-      sql: 'SELECT owner_id, language, mode FROM study_sessions WHERE id = ?',
-      args: [id]
-    });
-    if (previous.rows[0]) {
-      const row = previous.rows[0];
-      if (
-        row.owner_id !== learner.userId ||
-        row.language !== input.language ||
-        row.mode !== 'practice'
-      )
-        throw new StudyError('NOT_FOUND');
-      await tx.commit();
-      return { id };
-    }
-    const enrolled = await tx.execute({
-      sql: 'SELECT id FROM enrollments WHERE owner_id = ? AND language = ?',
-      args: [learner.userId, input.language]
-    });
-    if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
-    await tx.execute({
-      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES (?, ?, ?, ?, 'practice')",
-      args: [id, learner.userId, String(enrolled.rows[0].id), input.language]
-    });
-    await tx.commit();
-    return { id };
-  } catch (error) {
-    await tx.rollback().catch(() => undefined);
-    throw error;
-  } finally {
-    tx.close();
-  }
+  await client.execute({
+    sql: `INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode)
+      SELECT ?, e.owner_id, e.id, e.language, 'practice' FROM enrollments e
+      WHERE e.owner_id = ? AND e.language = ? ON CONFLICT (id) DO NOTHING`,
+    args: [id, learner.userId, input.language]
+  });
+  const saved = await client.execute({
+    sql: 'SELECT owner_id, language, mode FROM study_sessions WHERE id = ?',
+    args: [id]
+  });
+  const row = saved.rows[0];
+  // Missing: not enrolled. Mismatched: the key belongs to someone else's session.
+  if (
+    !row ||
+    row.owner_id !== learner.userId ||
+    row.language !== input.language ||
+    row.mode !== 'practice'
+  )
+    throw new StudyError('NOT_FOUND');
+  return { id };
 }
 
 /** Mark one of the caller's own practice sessions as completed. */

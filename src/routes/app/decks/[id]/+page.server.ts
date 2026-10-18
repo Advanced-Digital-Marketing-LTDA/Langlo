@@ -1,6 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { formResult, studyPage } from '../../../../lib/server/learner-api';
-import { requireLearnerApi } from '../../../../lib/server/learner-session';
+import { studyForm, studyPage } from '../../../../lib/server/learner-api';
 import { approveNote } from '../../../../lib/server/flashcards';
 import {
   addNoteFromForm,
@@ -14,24 +13,20 @@ export const load: PageServerLoad = (event) =>
 
 export const actions: Actions = {
   addNote: async (event) => {
-    const learner = requireLearnerApi(event);
     const form = await event.request.formData();
-    return formResult(
-      () =>
-        studyPage(event, (client) =>
-          addNoteFromForm(client, learner, event.params.id, form)
-        ),
+    return studyForm(
+      event,
+      (client, learner) =>
+        addNoteFromForm(client, learner, event.params.id, form),
       { saved: true }
     );
   },
   approve: async (event) => {
-    const learner = requireLearnerApi(event);
     const form = await event.request.formData();
-    return formResult(
-      () =>
-        studyPage(event, (client) =>
-          approveNote(client, learner, String(form.get('noteId') ?? ''))
-        ),
+    return studyForm(
+      event,
+      (client, learner) =>
+        approveNote(client, learner, String(form.get('noteId') ?? '')),
       { saved: true }
     );
   }

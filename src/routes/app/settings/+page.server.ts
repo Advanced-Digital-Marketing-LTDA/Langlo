@@ -1,6 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { formResult, studyPage } from '../../../lib/server/learner-api';
-import { requireLearnerApi } from '../../../lib/server/learner-session';
+import { studyForm, studyPage } from '../../../lib/server/learner-api';
 import {
   EXPLANATION_LANGUAGES,
   listEnrollments,
@@ -17,27 +16,22 @@ export const load: PageServerLoad = (event) =>
 
 export const actions: Actions = {
   explanationLanguage: async (event) => {
-    const learner = requireLearnerApi(event);
     const form = await event.request.formData();
-    return formResult(
-      () =>
-        studyPage(event, (client) =>
-          setExplanationLanguage(client, learner, {
-            language: form.get('language'),
-            explanationLanguage: form.get('explanationLanguage')
-          })
-        ),
+    return studyForm(
+      event,
+      (client, learner) =>
+        setExplanationLanguage(client, learner, {
+          language: form.get('language'),
+          explanationLanguage: form.get('explanationLanguage')
+        }),
       { saved: 'Lesson language saved.' }
     );
   },
   timezone: async (event) => {
-    const learner = requireLearnerApi(event);
     const form = await event.request.formData();
-    return formResult(
-      () =>
-        studyPage(event, (client) =>
-          setTimezone(client, learner, form.get('timezone'))
-        ),
+    return studyForm(
+      event,
+      (client, learner) => setTimezone(client, learner, form.get('timezone')),
       { saved: 'Timezone saved.' }
     );
   }

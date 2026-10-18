@@ -169,3 +169,16 @@ export async function formResult<T>(run: () => Promise<unknown>, success: T) {
   }
   return success;
 }
+
+/**
+ * A learner form action: the caller must be signed in (401 otherwise), the
+ * work runs on the study database, and 4xx failures come back to the form.
+ */
+export function studyForm<T>(
+  event: Pick<RequestEvent, 'locals'>,
+  run: (client: Client, learner: LearnerSession) => Promise<unknown>,
+  success: T
+) {
+  requireLearnerApi(event);
+  return formResult(() => studyPage(event, run), success);
+}

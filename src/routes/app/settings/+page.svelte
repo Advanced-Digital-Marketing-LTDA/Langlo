@@ -1,13 +1,8 @@
 <script lang="ts">
+  import { languageNames as names } from '../../../lib/languageNames';
   import { enhance } from '$app/forms';
   import type { ActionData, PageData } from './$types';
   let { data, form }: { data: PageData; form: ActionData } = $props();
-  const names: Record<string, string> = {
-    fr: 'French',
-    de: 'German',
-    en: 'English',
-    pt: 'Portuguese'
-  };
 </script>
 
 <svelte:head>
