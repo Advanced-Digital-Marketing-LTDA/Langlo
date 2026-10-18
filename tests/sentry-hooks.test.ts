@@ -13,7 +13,7 @@ import * as Sentry from '@sentry/sveltekit';
 it('initializes server telemetry with sampled traces and event scrubbing', async () => {
   const options = Sentry.getClient()?.getOptions();
 
-  expect(options?.tracesSampleRate).toBe(0.01);
+  expect(options?.tracesSampleRate).toBe(0.1);
   expect(options?.traceLifecycle).toBe('static');
 
   const event = {

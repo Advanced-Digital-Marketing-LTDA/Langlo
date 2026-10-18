@@ -20,7 +20,7 @@ it('initializes browser telemetry with labels, sampling, and scrubbers', async (
       dsn: 'https://public@example.test/1',
       environment: 'test',
       release: 'test-sha',
-      tracesSampleRate: 0.01,
+      tracesSampleRate: 0.1,
       traceLifecycle: 'static',
       integrations: expect.any(Function),
       beforeSend: expect.any(Function),

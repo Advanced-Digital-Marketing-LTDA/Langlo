@@ -42,7 +42,7 @@ Leave the DSN empty to disable telemetry transmission.
 
 Use synthetic data to confirm browser and server errors reach the project,
 sampled performance transactions appear, and email alerts arrive. Langlo
-samples performance traces at 1% and scrubs event and span payloads before
+samples performance traces at 10% and scrubs event and span payloads before
 transmission. It uses the Sentry-compatible SDK with the static transaction
 lifecycle for GlitchTip 6 compatibility.
 

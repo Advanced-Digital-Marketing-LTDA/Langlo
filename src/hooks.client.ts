@@ -11,7 +11,7 @@ Sentry.init({
     publicEnv.PUBLIC_APP_ENV ??
     (import.meta.env.DEV ? 'development' : 'production'),
   release: publicEnv.PUBLIC_APP_BUILD_SHA,
-  tracesSampleRate: 0.01,
+  tracesSampleRate: 0.1,
   traceLifecycle: 'static',
   integrations: (integrations) =>
     integrations.filter((integration) => integration.name !== 'BrowserSession'),
