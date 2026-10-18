@@ -1,6 +1,5 @@
-import { fail, isHttpError } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { studyPage } from '../../../lib/server/learner-api';
+import { formResult, studyPage } from '../../../lib/server/learner-api';
 import { requireLearnerApi } from '../../../lib/server/learner-session';
 import {
   EXPLANATION_LANGUAGES,
@@ -16,23 +15,11 @@ export const load: PageServerLoad = (event) =>
     timezone: await getTimezone(client, learner)
   }));
 
-/** Show 4xx repository failures on the form instead of an error page. */
-async function toForm(run: () => Promise<unknown>, done: string) {
-  try {
-    await run();
-  } catch (thrown) {
-    if (isHttpError(thrown) && thrown.status < 500)
-      return fail(thrown.status, { message: thrown.body.message });
-    throw thrown;
-  }
-  return { saved: done };
-}
-
 export const actions: Actions = {
   explanationLanguage: async (event) => {
     const learner = requireLearnerApi(event);
     const form = await event.request.formData();
-    return toForm(
+    return formResult(
       () =>
         studyPage(event, (client) =>
           setExplanationLanguage(client, learner, {
@@ -40,18 +27,18 @@ export const actions: Actions = {
             explanationLanguage: form.get('explanationLanguage')
           })
         ),
-      'Lesson language saved.'
+      { saved: 'Lesson language saved.' }
     );
   },
   timezone: async (event) => {
     const learner = requireLearnerApi(event);
     const form = await event.request.formData();
-    return toForm(
+    return formResult(
       () =>
         studyPage(event, (client) =>
           setTimezone(client, learner, form.get('timezone'))
         ),
-      'Timezone saved.'
+      { saved: 'Timezone saved.' }
     );
   }
 };

@@ -1,4 +1,10 @@
-import { error, json, type RequestEvent } from '@sveltejs/kit';
+import {
+  error,
+  fail,
+  isHttpError,
+  json,
+  type RequestEvent
+} from '@sveltejs/kit';
 import type { Client } from '@libsql/client';
 import { openAppDatabase } from './db/app';
 import { FlashcardError } from './flashcards';
@@ -146,4 +152,20 @@ export async function studyPage<T>(
   } finally {
     close();
   }
+}
+
+/**
+ * Run a form action's work: 4xx repository failures come back as a form
+ * failure the page can show, anything else is rethrown. On success the given
+ * value is returned.
+ */
+export async function formResult<T>(run: () => Promise<unknown>, success: T) {
+  try {
+    await run();
+  } catch (thrown) {
+    if (isHttpError(thrown) && thrown.status < 500)
+      return fail(thrown.status, { message: thrown.body.message });
+    throw thrown;
+  }
+  return success;
 }
