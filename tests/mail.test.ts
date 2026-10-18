@@ -1,7 +1,11 @@
 import { createServer, type Server, type Socket } from 'node:net';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
-import { SmtpMailer, defaultSmtpTimeouts } from '../src/lib/server/mail';
+import {
+  SmtpMailer,
+  createMailer,
+  defaultSmtpTimeouts
+} from '../src/lib/server/mail';
 
 const message = { to: 'to@example.test', subject: 's', text: 't' };
 
@@ -42,5 +46,28 @@ describe('SmtpMailer timeouts', () => {
     const started = Date.now();
     await expect(mailer.send(message)).rejects.toThrow();
     expect(Date.now() - started).toBeLessThan(3000);
+  });
+});
+
+describe('createMailer', () => {
+  it('builds an SmtpMailer with the default timeouts for smtp config', () => {
+    const mailer = createMailer({
+      transport: 'smtp',
+      from: 'from@example.test',
+      protonSmtpToken: 'synthetic-token',
+      smtpHost: '127.0.0.1',
+      smtpPort: 587
+    });
+    expect(mailer).toBeInstanceOf(SmtpMailer);
+  });
+
+  it('refuses smtp config without a sender or token', () => {
+    expect(() =>
+      createMailer({
+        transport: 'smtp',
+        smtpHost: 'h.example.test',
+        smtpPort: 587
+      })
+    ).toThrow('SMTP mail requires MAIL_FROM and PROTON_SMTP_TOKEN');
   });
 });
