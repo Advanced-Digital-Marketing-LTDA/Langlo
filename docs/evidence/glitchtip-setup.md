@@ -18,6 +18,13 @@
   Unfiltered SDK payloads may include learner content, secrets, request
   metadata, or client identifiers.
 
+## Trace sampling update (2026-10-18)
+
+- Raised browser and server trace sampling from 1% to 10% in a separate change
+  from the telemetry pass-through update. Focused hook tests passed 2 files / 2
+  tests. Live event volume was not verified; the change may increase trace
+  ingestion and storage by roughly 10x at the same traffic level.
+
 ## Standalone hosting follow-up
 
 - Removed the GlitchTip hosting files from `ops/glitchtip/`. The service is now

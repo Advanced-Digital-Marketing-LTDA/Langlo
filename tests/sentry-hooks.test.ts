@@ -13,7 +13,7 @@ import * as Sentry from '@sentry/sveltekit';
 it('initializes server telemetry without Langlo field filtering', async () => {
   const options = Sentry.getClient()?.getOptions();
 
-  expect(options?.tracesSampleRate).toBe(0.01);
+  expect(options?.tracesSampleRate).toBe(0.1);
   expect(options?.traceLifecycle).toBe('static');
   expect(options).not.toHaveProperty('beforeSend');
   expect(options).not.toHaveProperty('beforeSendTransaction');

@@ -19,7 +19,7 @@ it('initializes browser telemetry without Langlo field filtering', async () => {
       dsn: 'https://public@example.test/1',
       environment: 'test',
       release: 'test-sha',
-      tracesSampleRate: 0.01,
+      tracesSampleRate: 0.1,
       traceLifecycle: 'static',
       integrations: expect.any(Function)
     })

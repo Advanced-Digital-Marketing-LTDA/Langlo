@@ -42,11 +42,11 @@ Leave the DSN empty to disable telemetry transmission.
 
 Use synthetic data to confirm browser and server errors reach the project,
 sampled performance transactions appear, and email alerts arrive. Langlo
-samples performance traces at 1% and forwards the event and span fields captured
+samples performance traces at 10% and forwards the event and span fields captured
 by the Sentry SDK without Langlo-side filtering. Langlo's custom telemetry
-scrubbers have been temporarily removed. The current SDK capture settings remain
-unchanged. Treat telemetry as potentially containing learner content,
-secrets, request metadata, and client identifiers. Langlo uses the
+scrubbers have been temporarily removed. The pass-through change did not alter
+SDK capture settings. Treat telemetry as potentially containing learner
+content, secrets, request metadata, and client identifiers. Langlo uses the
 Sentry-compatible SDK with the static transaction lifecycle for GlitchTip 6
 compatibility.
 
