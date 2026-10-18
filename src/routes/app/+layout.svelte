@@ -10,7 +10,7 @@
   ] as const;
   const pathname = $derived(page.url.pathname.replace(/\/+$/, '') || '/');
   const current = (href: string) =>
-    href === '/app' ? pathname === href : pathname.startsWith(href);
+    pathname === href || (href !== '/app' && pathname.startsWith(`${href}/`));
 </script>
 
 <nav class="appnav" aria-label="Study navigation">
