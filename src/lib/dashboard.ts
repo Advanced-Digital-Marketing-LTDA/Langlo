@@ -1,0 +1,39 @@
+import type { TrackProgress } from './server/progress';
+
+export type MasteryStatus = TrackProgress['skills'][number]['status'];
+
+export const masteryLabels: Record<MasteryStatus, string> = {
+  unknown: 'Unknown',
+  weak: 'Weak',
+  practising: 'Practising',
+  secure: 'Secure'
+};
+
+// Status is always shown as a symbol plus text, never by colour alone.
+export const masterySymbols: Record<MasteryStatus, string> = {
+  unknown: '○',
+  weak: '!',
+  practising: '◐',
+  secure: '✓'
+};
+
+export function summarizeTrack(track: TrackProgress) {
+  const counts: Record<MasteryStatus, number> = {
+    unknown: 0,
+    weak: 0,
+    practising: 0,
+    secure: 0
+  };
+  for (const skill of track.skills) counts[skill.status] += 1;
+  const recommended = track.recommendation
+    ? (track.skills.find(
+        (skill) => skill.skillId === track.recommendation?.skillId
+      ) ?? null)
+    : null;
+  return {
+    counts,
+    total: track.skills.length,
+    recommended,
+    reason: recommended ? (track.recommendation?.reason ?? null) : null
+  };
+}
