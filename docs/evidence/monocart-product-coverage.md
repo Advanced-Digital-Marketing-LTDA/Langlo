@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Use **two parallel browser E2E reporting views**. The original Monocart HTML, LCOV and JSON outputs are retained unchanged; the second generated product-only summary removes GlitchTip logging/telemetry sources from the *product E2E* denominator, while reporting their exclusion by exact path. Product source means every original-source file Monocart discovered under `src/` except `src/lib/glitchtip/`. The reporting filter affects no application runtime or test execution.
+Use **two parallel browser E2E reporting views**. The original Monocart HTML, LCOV and JSON outputs are retained unchanged; the second generated product-only summary removes GlitchTip logging/telemetry sources from the _product E2E_ denominator, while reporting their exclusion by exact path. Product source means every original-source file Monocart discovered under `src/` except `src/lib/glitchtip/`. The reporting filter affects no application runtime or test execution.
 
 - Raw generated and unfiltered browser reports: `.ci-reports/playwright-coverage/` and original `coverage-summary.json`.
 - Product-focused and unfiltered original-source comparison: `product-source-summary.json` and `product-source-summary.html`.
@@ -18,14 +18,14 @@ The pinned observed-source inventory in `scripts/monocart-observed-source-baseli
 Source: [CI run #39073448854, attempt 2](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/39073448854) on `c0f93036`.
 See `docs/evidence/langlo-e2e-qa-2026-10-18.md` for the original analysis and interpretation.
 
-| Metric | Product source observed (excluding GlitchTip) | Unfiltered mapped original `src/` |
-| --- | ---: | ---: |
-| Lines | 614/792 (77.53%) | 624/949 (65.75%) |
-| Statements | 796/1051 (75.74%) | 806/1226 (65.74%) |
-| Functions | 330/443 (74.49%) | 330/460 (71.74%) |
-| Branches | 271/482 (56.22%) | 271/695 (38.99%) |
+| Metric     | Product source observed (excluding GlitchTip) | Unfiltered mapped original `src/` |
+| ---------- | --------------------------------------------: | --------------------------------: |
+| Lines      |                              614/792 (77.53%) |                  624/949 (65.75%) |
+| Statements |                             796/1051 (75.74%) |                 806/1226 (65.74%) |
+| Functions  |                              330/443 (74.49%) |                  330/460 (71.74%) |
+| Branches   |                              271/482 (56.22%) |                  271/695 (38.99%) |
 
-These are **historical diagnostics**; regenerate for each new CI run. GlitchTip was low in E2E because its sanitization is mostly exercised in Vitest, not browser journeys. Its exclusion is a scope decision, *not* evidence that Langlo has reached 80%.
+These are **historical diagnostics**; regenerate for each new CI run. GlitchTip was low in E2E because its sanitization is mostly exercised in Vitest, not browser journeys. Its exclusion is a scope decision, _not_ evidence that Langlo has reached 80%.
 
 ## Quality-test guidelines
 
@@ -43,6 +43,6 @@ The report must distinguish: passed/failed/flaky/skipped tests; covered/total/pe
 ## Next work
 
 1. Fix generated bundle/port deduplication and map the three exercise components currently reported 0% despite passing real-browser exercise tests.
-2. Build a versioned full browser-eligible inventory including *unexecuted* product sources; reconcile source maps and code coverage before enforcing 80%.
+2. Build a versioned full browser-eligible inventory including _unexecuted_ product sources; reconcile source maps and code coverage before enforcing 80%.
 3. Add meaningful learner journey and alternative-path assertions, particularly real lesson feedback, answer handling, failed saves, retry, persistence and permissions.
 4. Run separate product Vitest/mutation coverage and GlitchTip integration verification, and improve actionable Playwright failure evidence.
