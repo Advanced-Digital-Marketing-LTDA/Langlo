@@ -37,6 +37,19 @@ export class FileCaptureMailer implements Mailer {
   }
 }
 
+export interface SmtpTimeouts {
+  connectionTimeout: number;
+  greetingTimeout: number;
+  socketTimeout: number;
+}
+
+/** Bound every SMTP phase so a hung provider connection fails loudly instead of lingering. */
+export const defaultSmtpTimeouts: SmtpTimeouts = {
+  connectionTimeout: 10_000,
+  greetingTimeout: 10_000,
+  socketTimeout: 30_000
+};
+
 /** Proton SMTP submission: PLAIN auth, username is the custom-domain sender. */
 export class SmtpMailer implements Mailer {
   #from: string;
@@ -46,11 +59,13 @@ export class SmtpMailer implements Mailer {
     port: number;
     from: string;
     token: string;
+    timeouts?: SmtpTimeouts;
   }) {
     this.#from = config.from;
     this.#transporter = createTransport({
       host: config.host,
       port: config.port,
+      ...(config.timeouts ?? defaultSmtpTimeouts),
       secure: false,
       requireTLS: true,
       auth: { user: config.from, pass: config.token }

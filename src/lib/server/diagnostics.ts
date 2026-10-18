@@ -6,7 +6,7 @@ const configVariableSet: ReadonlySet<string> = new Set(configVariables);
 
 /** Project only operation, error category and a valid request UUID; never copy exception payloads. */
 export function safeDiagnostic(
-  operation: 'request' | 'configuration' | 'auth',
+  operation: 'request' | 'configuration' | 'auth' | 'mail-delivery',
   error: unknown,
   correlationId: string
 ) {

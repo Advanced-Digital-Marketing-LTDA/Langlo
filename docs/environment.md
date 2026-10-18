@@ -28,7 +28,7 @@ All application values are explicit private dynamic declarations in src/env.ts, 
 
 The only AI provider is the OpenAI Decisions fallback for unmatched typed answers, active only when `OPENAI_API_KEY` is set and capped at 100,000 calls per UTC month. No analytics, billing, OAuth or Anki provider is activated. The SMTP transport is wired but has never been exercised against a live provider; capture remains the only verified mail path. Private environment configuration is not permission for live integration or production access. Storage resources and credentials must be provisioned separately under explicit authorization. APP_BUILD_SHA is safe provenance only, never evidence that a release occurred.
 
-SMTP delivery errors after a recovery request starts are logged without changing the response shared by known and unknown addresses. This preserves enumeration resistance but does not confirm delivery. See [auth.md](auth.md#6-provisioning-and-mail-delivery) for the current limitation.
+SMTP delivery errors after a recovery request starts are logged as `mail-delivery` diagnostics without changing the response shared by known and unknown addresses. This preserves enumeration resistance but does not confirm delivery. See [auth.md](auth.md#6-provisioning-and-mail-delivery) for the current limitation.
 
 Framework/adapter sources inspected 2026-10-06: https://svelte.dev/docs/kit/adapter-node and https://svelte.dev/docs/kit/server-only-modules. Node adapter uses runtime environment; production .env loading requires an explicit documented operator mechanism. Reverse-proxy trust settings remain a deployment gate.
 

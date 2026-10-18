@@ -600,6 +600,64 @@ describe('recovery lifecycle', () => {
     await fixture.client.execute('DELETE FROM sessions');
   });
 
+  it('emails a password-changed notice to the account after a successful reset', async () => {
+    await clearRateLimits(fixture);
+    const before = fixture.mailer.messages.length;
+    const token = await mintResetToken(
+      fixture.auth,
+      userId,
+      new Date(Date.now() + 1800_000)
+    );
+    const reset = await call(fixture.auth, '/reset-password', {
+      method: 'POST',
+      body: { token, newPassword: 'notice-password-1' }
+    });
+    expect(reset.status).toBe(200);
+    await vi.waitFor(() =>
+      expect(fixture.mailer.messages.length).toBe(before + 1)
+    );
+    const notice = fixture.mailer.messages[before];
+    expect(notice.to).toBe('a@example.test');
+    expect(notice.subject).toBe('Your Langlo password was changed');
+    expect(notice.text).not.toContain(token);
+    expect(notice.text).not.toContain('notice-password-1');
+  });
+
+  it('logs a mail-delivery diagnostic when the notice cannot be sent and still completes the reset', async () => {
+    await clearRateLimits(fixture);
+    const warnings: string[] = [];
+    const spy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation((...args) => warnings.push(args.join(' ')));
+    try {
+      const failing = new CaptureMailer();
+      failing.send = () => Promise.reject(new Error('smtp refused'));
+      const authWithFailingMail = createAuth(
+        config(fixture.target.databaseUrl),
+        { db: fixture.db, mailer: failing }
+      );
+      const token = await mintResetToken(
+        authWithFailingMail,
+        userId,
+        new Date(Date.now() + 1800_000)
+      );
+      const reset = await call(authWithFailingMail, '/reset-password', {
+        method: 'POST',
+        body: { token, newPassword: 'notice-password-2' }
+      });
+      expect(reset.status).toBe(200);
+      await vi.waitFor(() =>
+        expect(
+          warnings.some((line) => line.includes('"operation":"mail-delivery"'))
+        ).toBe(true)
+      );
+      expect(warnings.join('\n')).not.toContain('smtp refused');
+      expect(warnings.join('\n')).not.toContain('a@example.test');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('permits exactly one winner under concurrent redemption', async () => {
     await clearRateLimits(fixture);
     const token = await mintResetToken(

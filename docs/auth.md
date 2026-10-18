@@ -194,10 +194,17 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   `langlo-app` SMTP token; place it in the operator secret store as
   `PROTON_SMTP_TOKEN`; send a real recovery email end-to-end (a live-provider
   acceptance gate, not provable locally).
+- **SMTP timeouts:** `SmtpMailer` sets connection (10 s), greeting (10 s) and
+  socket (30 s) timeouts so a hung provider connection rejects and is logged.
+- **Password-changed notice:** after a successful reset
+  (`emailAndPassword.onPasswordReset`) the account receives a plain-text notice
+  through the same background send path; failures are logged the same way and
+  never change the reset response.
 - **Delivery-failure limitation:** no durable mail outbox or retry worker exists.
   Invalid configuration is detected before reset requests are handled, but an
-  SMTP failure after a request begins is logged without changing the generic
-  response. Do not present that response as proof of delivery. A future
+  SMTP failure after a request begins is logged as a `mail-delivery`
+  diagnostic (operation, error category and correlation id only) without
+  changing the generic response. Do not present that response as proof of delivery. A future
   outbox/status design must preserve unknown-vs-known account equivalence.
 
 ### 7. Safe logging
