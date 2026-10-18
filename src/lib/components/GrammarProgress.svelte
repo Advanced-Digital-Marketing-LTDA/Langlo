@@ -1,24 +1,15 @@
 <script lang="ts">
   import type { TrackProgress } from '../server/progress';
   import Chip from '../prototype/Chip.svelte';
+  import { masteryLabels, masterySymbols } from '../dashboard';
   let {
     tracks,
     details = false
   }: { tracks: TrackProgress[]; details?: boolean } = $props();
-  const labels = {
-    unknown: 'Unknown',
-    weak: 'Weak',
-    practising: 'Practising',
-    secure: 'Secure'
-  };
-  const symbols = { unknown: '○', weak: '!', practising: '◐', secure: '✓' };
+  const labels = masteryLabels;
+  const symbols = masterySymbols;
 </script>
 
-<nav aria-label="Study navigation">
-  <a href="/app">Home</a> · <a href="/app/map">Skill map</a> ·
-  <a href="/app/progress">Progress</a>
-  · <a href="/app/assessment">Assessment</a>
-</nav>
 <p>
   Grammar evidence comes from qualifying independent exercises and completed
   assessments. Flashcard recall, review due dates and session completion are

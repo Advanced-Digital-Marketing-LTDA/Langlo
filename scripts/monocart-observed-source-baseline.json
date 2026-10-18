@@ -9,7 +9,6 @@
     "src/lib/components/exercises/MultipleChoice.svelte",
     "src/lib/components/exercises/TextAnswer.svelte",
     "src/lib/components/exercises/answer.ts",
-    "src/lib/glitchtip/scrub-event.ts",
     "src/lib/prototype/Chip.svelte",
     "src/lib/prototype/StateSwitcher.svelte",
     "src/lib/prototype/data.ts",

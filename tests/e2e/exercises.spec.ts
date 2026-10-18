@@ -552,6 +552,30 @@ test('all four exercise formats render and submit without overflow', async ({
       () => document.documentElement.scrollWidth <= window.innerWidth
     )
   ).toBe(true);
+  await page.goto(`${base}/app`);
+  await expect(
+    page.getByRole('heading', { name: /^Welcome back,/ })
+  ).toBeVisible();
+  await expect(page.getByText(/Signed in as /)).toBeVisible();
+  await expect(
+    page
+      .getByRole('navigation', { name: 'Study navigation' })
+      .getByRole('link', {
+        name: 'Home',
+        exact: true
+      })
+  ).toHaveAttribute('aria-current', 'page');
+  await expect(
+    page.getByRole('heading', { name: 'Grammar mastery', exact: true })
+  ).toBeVisible();
+  await expect(page.getByText(/^\s*◐\s*Practising\s*$/).first()).toBeVisible();
+  await page.getByRole('link', { name: 'Full skill map', exact: true }).click();
+  await expect(page).toHaveURL(`${base}/app/map`);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth
+    )
+  ).toBe(true);
   await page.goto(`${base}/app/learn/fr/lesson/fr-a1-001`);
   await page.getByText('Report a content issue', { exact: true }).click();
   await page.getByLabel('What needs attention?').selectOption('unclear');

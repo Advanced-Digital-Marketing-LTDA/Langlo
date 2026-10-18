@@ -1,9 +1,5 @@
 import * as publicEnv from '$app/env/public';
 import * as Sentry from '@sentry/sveltekit';
-import {
-  scrubTelemetryEvent,
-  scrubTelemetrySpan
-} from './lib/glitchtip/scrub-event';
 
 Sentry.init({
   dsn: publicEnv.PUBLIC_GLITCHTIP_DSN,
@@ -14,10 +10,7 @@ Sentry.init({
   tracesSampleRate: 0.1,
   traceLifecycle: 'static',
   integrations: (integrations) =>
-    integrations.filter((integration) => integration.name !== 'BrowserSession'),
-  beforeSend: scrubTelemetryEvent,
-  beforeSendTransaction: scrubTelemetryEvent,
-  beforeSendSpan: Sentry.withStaticSpan(scrubTelemetrySpan)
+    integrations.filter((integration) => integration.name !== 'BrowserSession')
 });
 
 export const handleError = Sentry.handleErrorWithSentry();
