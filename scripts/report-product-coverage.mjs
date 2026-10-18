@@ -1,62 +1,237 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { lstatSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const metrics = ['lines', 'statements', 'functions', 'branches'];
 export const excludedTelemetry = ['src/lib/glitchtip/'];
 
-export function summarizeCoverage(input) {
-  if (!input || typeof input !== 'object' || !input.total) throw new Error('Missing Monocart total');
-  const keys = Object.keys(input).filter((key) => key.startsWith('src/')).sort();
-  if (!keys.length) throw new Error('Missing mapped original src/ files; refusing an empty success');
-  const excluded = keys.filter((key) => excludedTelemetry.some((path) => key.startsWith(path)));
-  const included = keys.filter((key) => !excluded.includes(key));
-  if (!included.length) throw new Error('No product source files to measure');
-  const rollup = (files) => Object.fromEntries(metrics.map((metric) => {
-    const totals = files.reduce((out, path) => {
-      const value = input[path]?.[metric];
-      if (!value || !Number.isInteger(value.total) || !Number.isInteger(value.covered) ||
-        value.covered < 0 || value.total < 0 || value.covered > value.total) {
-        throw new Error('Invalid '+metric+' coverage for '+path);
+const isRecord = (value) =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+function readMetric(input, sourcePath, name) {
+  if (!Object.hasOwn(input, sourcePath) || !isRecord(input[sourcePath])) {
+    throw new Error('Invalid source coverage object: ' + sourcePath);
+  }
+  const source = input[sourcePath];
+  if (!Object.hasOwn(source, name) || !isRecord(source[name])) {
+    throw new Error('Invalid ' + name + ' coverage for ' + sourcePath);
+  }
+  const { covered, total } = source[name];
+  if (
+    !Number.isSafeInteger(covered) ||
+    !Number.isSafeInteger(total) ||
+    covered < 0 ||
+    total < 0 ||
+    covered > total
+  ) {
+    throw new Error('Invalid ' + name + ' coverage for ' + sourcePath);
+  }
+  return { covered, total };
+}
+
+function rollup(input, paths) {
+  return Object.fromEntries(
+    metrics.map((name) => {
+      const { covered, total } = paths.reduce(
+        (sum, path) => {
+          const value = readMetric(input, path, name);
+          sum.covered += value.covered;
+          sum.total += value.total;
+          return sum;
+        },
+        { covered: 0, total: 0 }
+      );
+      if (total === 0) {
+        throw new Error('Empty ' + name + ' coverage denominator');
       }
-      out.covered += value.covered;
-      out.total += value.total;
-      return out;
-    }, { covered: 0, total: 0 });
-    return [metric, { ...totals, percent: totals.total ? +((totals.covered / totals.total) * 100).toFixed(2) : null }];
-  }));
-  const firstPartyBundles = Object.keys(input).filter((key) => key !== 'total' && !key.startsWith('src/')).sort();
+      return [
+        name,
+        { covered, total, percent: Number(((covered / total) * 100).toFixed(2)) }
+      ];
+    })
+  );
+}
+
+export function summarizeCoverage(input, requiredMappedSources) {
+  if (!isRecord(input) || !Object.hasOwn(input, 'total')) {
+    throw new Error('Missing Monocart total');
+  }
+  for (const name of metrics) readMetric(input, 'total', name);
+
+  if (
+    !Array.isArray(requiredMappedSources) ||
+    requiredMappedSources.length === 0 ||
+    requiredMappedSources.some(
+      (path) => typeof path !== 'string' || !path.startsWith('src/')
+    ) ||
+    new Set(requiredMappedSources).size !== requiredMappedSources.length
+  ) {
+    throw new Error('Invalid required mapped-source inventory');
+  }
+
+  const keys = Object.keys(input)
+    .filter((key) => key.startsWith('src/'))
+    .sort();
+  if (!keys.length) {
+    throw new Error('Missing mapped original src/ files');
+  }
+
+  const present = new Set(keys);
+  const missing = requiredMappedSources.filter((path) => !present.has(path));
+  if (missing.length) {
+    throw new Error('Missing baseline mapped source: ' + missing.join(', '));
+  }
+
+  const excluded = keys.filter((path) =>
+    excludedTelemetry.some((prefix) => path.startsWith(prefix))
+  );
+  const included = keys.filter((path) => !excluded.includes(path));
+  if (!included.length) {
+    throw new Error('No product source files to measure');
+  }
+
+  const expected = new Set(requiredMappedSources);
+  const newMappedSources = keys.filter((path) => !expected.has(path));
+  const bundledEntries = Object.keys(input)
+    .filter((key) => key !== 'total' && !key.startsWith('src/'))
+    .sort();
+
   return {
     schema_version: 1,
     scope: 'observed-source-only-not-whole-repository',
-    caveat: 'Only mapped original src/ entries emitted by Monocart are measured. Files not discovered by V8 are not in the denominator; this is NOT a verified repository-wide 80% gate.',
-    policy: 'Exclude only logging/telemetry integration from product-focused metrics. Never exclude learner-facing functionality.',
-    product: { metrics: rollup(included), files: included },
-    unfiltered_original_source: { metrics: rollup(keys), files: keys },
-    exclusions: excluded.map((path) => ({ path, reason: 'GlitchTip logging/telemetry integration; tested separately with Vitest' })),
-    diagnostics: { compiled_or_unmapped_entries: firstPartyBundles, warning: firstPartyBundles.length ? 'Monocart raw total includes generated/unmapped JavaScript. Not used as product coverage.' : null }
+    caveat:
+      'Only mapped original src/ entries emitted by Monocart are measured. Files never observed by V8 are absent from the denominator; this is NOT a full-application coverage gate.',
+    policy:
+      'Exclude only GlitchTip logging integration from product metrics. Preserve all raw data and test execution.',
+    product: { metrics: rollup(input, included), files: included },
+    unfiltered_original_source: { metrics: rollup(input, keys), files: keys },
+    exclusions: excluded.map((path) => ({
+      path,
+      reason: 'GlitchTip logging integration; separately covered by unit tests'
+    })),
+    diagnostics: {
+      compiled_or_unmapped_entries: bundledEntries,
+      new_mapped_sources: newMappedSources,
+      warning:
+        'Raw Monocart totals include generated bundles; observed-source metrics exclude those bundles, but do not account for source files V8 never mapped.'
+    }
   };
 }
 
-export function renderHtml(report) {
-  const esc = (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const table = (title, section) => '<h2>'+esc(title)+'</h2><table><thead><tr><th>Metric</th><th>Covered</th><th>Total</th><th>Percent</th></tr></thead><tbody>'+
-    metrics.map((m) => { const v=section.metrics[m]; return '<tr><td>'+esc(m)+'</td><td>'+v.covered+'</td><td>'+v.total+'</td><td>'+ (v.percent === null ? 'n/a' : v.percent+'%')+'</td></tr>'; }).join('')+'</tbody></table>';
-  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Langlo E2E coverage scopes</title><style>body{font:16px/1.5 system-ui;max-width:900px;margin:32px auto;padding:0 16px}table{border-collapse:collapse;width:100%}td,th{text-align:left;border-bottom:1px solid #aaa;padding:7px}code{overflow-wrap:anywhere}p{max-width:70ch}</style></head><body><h1>Langlo E2E source coverage</h1><p><strong>Observed-source diagnostic, not full application coverage.</strong> '+esc(report.caveat)+'</p>'+table('Product source (GlitchTip excluded)',report.product)+table('Unfiltered original source',report.unfiltered_original_source)+'<h2>Excluded telemetry</h2><ul>'+report.exclusions.map((x)=>'<li><code>'+esc(x.path)+'</code> — '+esc(x.reason)+'</li>').join('')+'</ul><h2>Attribution warnings</h2><p>'+esc(report.diagnostics.warning ?? 'None')+'</p><p>Generated/unmapped entries: '+report.diagnostics.compiled_or_unmapped_entries.length+'. See the original Monocart HTML report for individual source paths and uncovered branches.</p></body></html>';
+const escapeHtml = (value) =>
+  String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+
+function metricTable(title, section) {
+  const rows = metrics
+    .map((name) => {
+      const value = section.metrics[name];
+      const cells = [
+        name,
+        value.covered,
+        value.total,
+        value.percent === null ? 'n/a' : String(value.percent) + '%'
+      ];
+      return '<tr>' +
+        cells.map((cell) => '<td>' + escapeHtml(cell) + '</td>').join('') +
+        '</tr>';
+    })
+    .join('');
+  return '<h2>' + escapeHtml(title) +
+    '</h2><table><thead><tr><th>Metric</th><th>Covered</th><th>Total</th><th>Percent</th></tr></thead><tbody>' +
+    rows + '</tbody></table>';
 }
 
-export function generate(inputPath, outputPath) {
-  const input = JSON.parse(readFileSync(inputPath, 'utf8'));
-  const report = summarizeCoverage(input);
-  mkdirSync(dirname(outputPath), {recursive:true});
-  writeFileSync(outputPath, JSON.stringify(report, null, 2)+'\n');
-  writeFileSync(outputPath.replace(/\.json$/,'.html'), renderHtml(report));
+export function renderHtml(report) {
+  const excluded = report.exclusions
+    .map(
+      ({ path, reason }) =>
+        '<li><code>' + escapeHtml(path) + '</code> — ' +
+        escapeHtml(reason) + '</li>'
+    )
+    .join('');
+  const newSources = report.diagnostics.new_mapped_sources
+    .map((path) => '<li><code>' + escapeHtml(path) + '</code></li>')
+    .join('');
+  const parts = [
+    '<!doctype html><html lang="en"><head>',
+    '<meta charset="utf-8">',
+    '<meta name="viewport" content="width=device-width,initial-scale=1">',
+    '<title>Langlo observed-source E2E coverage</title>',
+    '<style>body{font:16px/1.5 system-ui;max-width:900px;margin:32px auto;padding:0 16px}table{border-collapse:collapse;width:100%}td,th{text-align:left;border-bottom:1px solid #aaa;padding:7px}code{overflow-wrap:anywhere}</style>',
+    '</head><body><h1>Langlo E2E source coverage</h1>',
+    '<p><strong>Observed-source diagnostic, not full application coverage.</strong> ' +
+      escapeHtml(report.caveat) + '</p>',
+    metricTable('Product source (GlitchTip excluded)', report.product),
+    metricTable('Unfiltered original source', report.unfiltered_original_source),
+    '<h2>Excluded telemetry</h2><ul>' + excluded + '</ul>',
+    '<h2>Attribution warnings</h2><p>' +
+      escapeHtml(report.diagnostics.warning) + '</p>',
+    '<p>Generated/unmapped entries: ' +
+      escapeHtml(report.diagnostics.compiled_or_unmapped_entries.length) + '</p>',
+    '<h2>New mapped sources not in baseline</h2><ul>' + newSources + '</ul>',
+    '</body></html>'
+  ];
+  return parts.join('\n') + '\n';
+}
+
+function assertNoSymlink(path) {
+  if (lstatSync(path, { throwIfNoEntry: false })?.isSymbolicLink()) {
+    throw new Error('Refusing symlinked coverage report path: ' + path);
+  }
+}
+
+export function generateReport(rootDir = process.cwd()) {
+  // Paths are fixed beneath the working directory. The CLI accepts no paths.
+  const root = realpathSync(rootDir);
+  const directory = join(root, '.ci-reports', 'playwright-coverage');
+  assertNoSymlink(join(root, '.ci-reports'));
+  assertNoSymlink(directory);
+  if (realpathSync(directory) !== directory) {
+    throw new Error('Coverage directory is outside the working tree');
+  }
+
+  const inputPath = join(directory, 'coverage-summary.json');
+  const jsonOutput = join(directory, 'product-source-summary.json');
+  const htmlOutput = join(directory, 'product-source-summary.html');
+  for (const path of [inputPath, jsonOutput, htmlOutput]) {
+    assertNoSymlink(path);
+  }
+
+  const inventoryPath = new URL(
+    './monocart-observed-source-baseline.json',
+    import.meta.url
+  );
+  const inventory = JSON.parse(readFileSync(inventoryPath, 'utf8'));
+  const source = JSON.parse(readFileSync(inputPath, 'utf8'));
+  const report = summarizeCoverage(source, inventory.required_mapped_sources);
+  writeFileSync(jsonOutput, JSON.stringify(report, null, 2) + '\n');
+  writeFileSync(htmlOutput, renderHtml(report));
   return report;
 }
 
-if (process.argv[1] && import.meta.url === new URL('file://' + process.argv[1]).href) {
-  const [input='.ci-reports/playwright-coverage/coverage-summary.json',output='.ci-reports/playwright-coverage/product-source-summary.json'] = process.argv.slice(2);
-  const result = generate(input,output);
-  console.log('Product observed-source percentages:',result.product.metrics);
-  console.log('Unfiltered observed-source percentages:',result.unfiltered_original_source.metrics);
-  console.log('Coverage scope is NOT a validated whole-application 80% gate.');
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  if (process.argv.length !== 2) {
+    throw new Error('Report paths are fixed; do not provide CLI arguments');
+  }
+  const result = generateReport();
+  console.log('Product observed-source coverage:', result.product.metrics);
+  console.log(
+    'Unfiltered observed-source coverage:',
+    result.unfiltered_original_source.metrics
+  );
+  console.warn(result.diagnostics.warning);
+  console.warn(
+    'Generated/unmapped entries:',
+    result.diagnostics.compiled_or_unmapped_entries.length
+  );
+  console.warn('New mapped sources:', result.diagnostics.new_mapped_sources);
+  console.warn('These reports are NOT full application coverage gates.');
 }
