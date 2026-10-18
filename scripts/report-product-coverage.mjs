@@ -5,19 +5,28 @@ import { fileURLToPath } from 'node:url';
 export const metrics = ['lines', 'statements', 'functions', 'branches'];
 export const excludedTelemetry = ['src/lib/glitchtip/'];
 
+/** @param {unknown} value @returns {value is Record<string, unknown>} */
 const isRecord = (value) =>
   value !== null && typeof value === 'object' && !Array.isArray(value);
 
+/**
+ * @param {Record<string, unknown>} input
+ * @param {string} sourcePath
+ * @param {string} name
+ */
 function readMetric(input, sourcePath, name) {
-  if (!Object.hasOwn(input, sourcePath) || !isRecord(input[sourcePath])) {
+  const source = input[sourcePath];
+  if (!Object.hasOwn(input, sourcePath) || !isRecord(source)) {
     throw new Error('Invalid source coverage object: ' + sourcePath);
   }
-  const source = input[sourcePath];
-  if (!Object.hasOwn(source, name) || !isRecord(source[name])) {
+  const value = source[name];
+  if (!Object.hasOwn(source, name) || !isRecord(value)) {
     throw new Error('Invalid ' + name + ' coverage for ' + sourcePath);
   }
-  const { covered, total } = source[name];
+  const { covered, total } = value;
   if (
+    typeof covered !== 'number' ||
+    typeof total !== 'number' ||
     !Number.isSafeInteger(covered) ||
     !Number.isSafeInteger(total) ||
     covered < 0 ||
@@ -29,6 +38,7 @@ function readMetric(input, sourcePath, name) {
   return { covered, total };
 }
 
+/** @param {Record<string, unknown>} input @param {string[]} paths */
 function rollup(input, paths) {
   return Object.fromEntries(
     metrics.map((name) => {
@@ -52,6 +62,7 @@ function rollup(input, paths) {
   );
 }
 
+/** @param {unknown} input @param {string[]} requiredMappedSources */
 export function summarizeCoverage(input, requiredMappedSources) {
   if (!isRecord(input) || !Object.hasOwn(input, 'total')) {
     throw new Error('Missing Monocart total');
@@ -118,6 +129,7 @@ export function summarizeCoverage(input, requiredMappedSources) {
   };
 }
 
+/** @param {unknown} value */
 const escapeHtml = (value) =>
   String(value)
     .replaceAll('&', '&amp;')
@@ -126,10 +138,12 @@ const escapeHtml = (value) =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
+/** @param {string} title @param {{ metrics: ReturnType<typeof rollup> }} section */
 function metricTable(title, section) {
   const rows = metrics
     .map((name) => {
       const value = section.metrics[name];
+      if (!value) throw new Error('Missing report metric ' + name);
       const cells = [
         name,
         value.covered,
@@ -146,6 +160,7 @@ function metricTable(title, section) {
     rows + '</tbody></table>';
 }
 
+/** @param {ReturnType<typeof summarizeCoverage>} report */
 export function renderHtml(report) {
   const excluded = report.exclusions
     .map(
@@ -179,12 +194,14 @@ export function renderHtml(report) {
   return parts.join('\n') + '\n';
 }
 
+/** @param {string} path */
 function assertNoSymlink(path) {
   if (lstatSync(path, { throwIfNoEntry: false })?.isSymbolicLink()) {
     throw new Error('Refusing symlinked coverage report path: ' + path);
   }
 }
 
+/** @param {string} rootDir */
 export function generateReport(rootDir = process.cwd()) {
   // Paths are fixed beneath the working directory. The CLI accepts no paths.
   const root = realpathSync(rootDir);
