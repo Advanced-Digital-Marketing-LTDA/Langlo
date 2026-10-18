@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "source_run": "https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/39073448854",
+  "source_commit": "c0f93036ace5279a5b843a292653e8e7f3209c06",
+  "required_mapped_sources": [
+    "src/hooks.client.ts",
+    "src/lib/components/ContentReportForm.svelte",
+    "src/lib/components/exercises/Exercise.svelte",
+    "src/lib/components/exercises/MultipleChoice.svelte",
+    "src/lib/components/exercises/TextAnswer.svelte",
+    "src/lib/components/exercises/answer.ts",
+    "src/lib/glitchtip/scrub-event.ts",
+    "src/lib/prototype/Chip.svelte",
+    "src/lib/prototype/StateSwitcher.svelte",
+    "src/lib/prototype/data.ts",
+    "src/lib/prototype/results.ts",
+    "src/lib/prototype/session.svelte.ts",
+    "src/routes/+error.svelte",
+    "src/routes/+layout.svelte",
+    "src/routes/+layout.ts",
+    "src/routes/app/learn/[language]/lesson/[skill]/+page.svelte",
+    "src/routes/app/reports/+page.svelte",
+    "src/routes/prototype/+layout.svelte",
+    "src/routes/prototype/decks/+page.svelte",
+    "src/routes/prototype/lesson/+page.svelte",
+    "src/routes/prototype/map/+page.svelte",
+    "src/routes/prototype/practice/+page.svelte",
+    "src/routes/prototype/results/+page.svelte",
+    "src/routes/prototype/review/+page.svelte",
+    "src/routes/prototype/settings/+page.svelte"
+  ]
+}
