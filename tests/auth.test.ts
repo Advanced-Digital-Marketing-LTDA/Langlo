@@ -658,6 +658,43 @@ describe('recovery lifecycle', () => {
     }
   });
 
+  it('logs a mail-delivery diagnostic when the reset email fails and keeps the response identical for unknown accounts', async () => {
+    await clearRateLimits(fixture);
+    const warnings: string[] = [];
+    const spy = vi
+      .spyOn(console, 'warn')
+      .mockImplementation((...args) => warnings.push(args.join(' ')));
+    try {
+      const failing = new CaptureMailer();
+      failing.send = () => Promise.reject(new Error('smtp refused'));
+      const authWithFailingMail = createAuth(
+        config(fixture.target.databaseUrl),
+        { db: fixture.db, mailer: failing }
+      );
+      const known = await call(authWithFailingMail, '/request-password-reset', {
+        method: 'POST',
+        body: { email: 'a@example.test' }
+      });
+      const unknown = await call(
+        authWithFailingMail,
+        '/request-password-reset',
+        { method: 'POST', body: { email: 'nobody@example.test' } }
+      );
+      expect(known.status).toBe(200);
+      expect(unknown.status).toBe(known.status);
+      expect(unknown.json).toEqual(known.json);
+      await vi.waitFor(() =>
+        expect(
+          warnings.filter((line) =>
+            line.includes('"operation":"mail-delivery"')
+          )
+        ).toHaveLength(1)
+      );
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('permits exactly one winner under concurrent redemption', async () => {
     await clearRateLimits(fixture);
     const token = await mintResetToken(
