@@ -489,13 +489,20 @@ describe('decks, review and Anki export', () => {
     });
 
     const text = await exportDeckForAnki(client, learner, deckId);
+    const source = (
+      await client.execute({
+        sql: 'SELECT source_id FROM native_flashcard_notes WHERE id = ?',
+        args: [approved.id]
+      })
+    ).rows[0].source_id;
     expect(text).toBe(
       [
         '#separator:tab',
         '#html:false',
-        '#notetype column:1',
-        '#deck column:2',
-        'Basic\tFrench basics\t"Say ""hi"""\t"Dis\tbonjour"',
+        '#guid column:1',
+        '#notetype column:2',
+        '#deck column:3',
+        `${source}\tBasic\tFrench basics\t"Say ""hi"""\t"Dis\tbonjour"`,
         ''
       ].join('\n')
     );
@@ -506,6 +513,30 @@ describe('decks, review and Anki export', () => {
     await expect(
       exportDeck(event({ userId: 'learner-b', params: { id: deckId } }))
     ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('gives notes with the same front different Anki identities', async () => {
+    const first = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Same', back: 'One' })
+    );
+    const second = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Same', back: 'Two' })
+    );
+    await approveNote(client, learner, first.id);
+    await approveNote(client, learner, second.id);
+    const rows = (await exportDeckForAnki(client, learner, deckId))
+      .split('\n')
+      .filter((line) => line.includes('Same'));
+    expect(rows).toHaveLength(2);
+    const guids = rows.map((line) => line.split('\t')[0]);
+    expect(new Set(guids).size).toBe(2);
+    for (const guid of guids) expect(guid).toMatch(/^langlo:v1:[0-9a-f]{64}$/);
   });
 
   it('creates a deck through the page and rejects a blank name on the form', async () => {

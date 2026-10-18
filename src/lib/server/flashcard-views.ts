@@ -6,6 +6,7 @@ type Query = Pick<Client, 'execute'>;
 export type NoteKind = 'basic' | 'cloze';
 export type NoteSummary = {
   id: string;
+  sourceId: string;
   kind: NoteKind;
   status: string;
   content: { front?: string; back?: string; text?: string };
@@ -28,13 +29,14 @@ export async function listNotes(
   });
   if (!deck.rows[0]) throw new FlashcardError('NOT_FOUND');
   const notes = await client.execute({
-    sql: 'SELECT id, kind, status, content_json FROM native_flashcard_notes WHERE deck_id = ? AND owner_id = ? ORDER BY created_at, rowid',
+    sql: 'SELECT id, source_id, kind, status, content_json FROM native_flashcard_notes WHERE deck_id = ? AND owner_id = ? ORDER BY created_at, rowid',
     args: [deckId, learner.userId]
   });
   return {
     deck: { id: String(deck.rows[0].id), name: String(deck.rows[0].name) },
     notes: notes.rows.map((row) => ({
       id: String(row.id),
+      sourceId: String(row.source_id),
       kind: String(row.kind) as NoteKind,
       status: String(row.status),
       content: JSON.parse(String(row.content_json))
@@ -103,8 +105,10 @@ function ankiField(value: string): string {
 }
 
 /**
- * The deck's approved notes as Anki tab-separated text. Drafts and rejected
- * notes are never exported.
+ * The deck's approved notes as Anki tab-separated text. Each row carries the
+ * note's persisted source id as its GUID, so Anki tells notes with the same
+ * first field apart and a re-export updates a note instead of duplicating it.
+ * Drafts and rejected notes are never exported.
  */
 export async function exportDeckForAnki(
   client: Query,
@@ -115,20 +119,22 @@ export async function exportDeckForAnki(
   const lines = [
     '#separator:tab',
     '#html:false',
-    '#notetype column:1',
-    '#deck column:2'
+    '#guid column:1',
+    '#notetype column:2',
+    '#deck column:3'
   ];
   for (const note of notes) {
     if (note.status !== 'approved') continue;
     const fields =
       note.kind === 'basic'
         ? [
+            note.sourceId,
             'Basic',
             deck.name,
             note.content.front ?? '',
             note.content.back ?? ''
           ]
-        : ['Cloze', deck.name, note.content.text ?? '', ''];
+        : [note.sourceId, 'Cloze', deck.name, note.content.text ?? '', ''];
     lines.push(fields.map(ankiField).join('\t'));
   }
   return `${lines.join('\n')}\n`;
