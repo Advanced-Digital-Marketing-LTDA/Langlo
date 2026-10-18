@@ -55,19 +55,15 @@ it('resolves the recommended skill and its reason', () => {
       'Foundations first'
     )
   );
-  expect(summary.recommended).toMatchObject({ skillId: 'b' });
-  expect(summary.reason).toBe('Foundations first');
+  expect(summary.recommended).toMatchObject({
+    skill: { skillId: 'b' },
+    reason: 'Foundations first'
+  });
 });
 
 it('has no recommendation when none is given or the skill is missing', () => {
-  expect(summarizeTrack(track([['a', 'weak']], null))).toMatchObject({
-    recommended: null,
-    reason: null
-  });
-  expect(summarizeTrack(track([['a', 'weak']], 'gone'))).toMatchObject({
-    recommended: null,
-    reason: null
-  });
+  expect(summarizeTrack(track([['a', 'weak']], null)).recommended).toBeNull();
+  expect(summarizeTrack(track([['a', 'weak']], 'gone')).recommended).toBeNull();
 });
 
 it('gives every status a distinct text label and symbol', () => {

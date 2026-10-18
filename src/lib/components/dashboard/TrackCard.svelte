@@ -17,11 +17,11 @@
   {#if summary.recommended}
     <div class="continue">
       <p class="eyebrow">Continue</p>
-      <h3>{summary.recommended.title}</h3>
-      {#if summary.reason}<p class="hint">{summary.reason}</p>{/if}
+      <h3>{summary.recommended.skill.title}</h3>
+      <p class="hint">{summary.recommended.reason}</p>
       <a
         class="button"
-        href={`/app/learn/${track.language}/lesson/${summary.recommended.skillId}`}
+        href={`/app/learn/${track.language}/lesson/${summary.recommended.skill.skillId}`}
         >Open lesson</a
       >
     </div>

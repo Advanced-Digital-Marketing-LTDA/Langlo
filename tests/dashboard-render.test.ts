@@ -53,6 +53,17 @@ it('omits the Continue card when nothing is recommended', async () => {
   expect(html).toContain('Grammar mastery');
 });
 
+it('says so when a track has no published skills', async () => {
+  const html = await renderSvelte(page, {
+    data: data([{ ...track(null), skills: [] }])
+  });
+  expect(html).toContain(
+    'No published skills are available in this track yet.'
+  );
+  expect(html).not.toContain('Grammar mastery');
+  expect(html).not.toContain('Full skill map');
+});
+
 it('shows the empty state with a way to start when there are no tracks', async () => {
   const html = await renderSvelte(page, { data: data([]) });
   expect(html).toContain('Start with the grammar assessment');

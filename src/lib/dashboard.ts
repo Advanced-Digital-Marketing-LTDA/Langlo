@@ -25,15 +25,14 @@ export function summarizeTrack(track: TrackProgress) {
     secure: 0
   };
   for (const skill of track.skills) counts[skill.status] += 1;
-  const recommended = track.recommendation
-    ? (track.skills.find(
-        (skill) => skill.skillId === track.recommendation?.skillId
-      ) ?? null)
-    : null;
+  const { recommendation } = track;
+  const skill = recommendation
+    ? track.skills.find((item) => item.skillId === recommendation.skillId)
+    : undefined;
   return {
     counts,
     total: track.skills.length,
-    recommended,
-    reason: recommended ? (track.recommendation?.reason ?? null) : null
+    recommended:
+      recommendation && skill ? { skill, reason: recommendation.reason } : null
   };
 }
