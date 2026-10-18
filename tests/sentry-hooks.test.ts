@@ -10,12 +10,11 @@ vi.mock('$app/env/public', () => ({
 import '../src/hooks.server';
 import * as Sentry from '@sentry/sveltekit';
 
-// overlock-ignore TEST_REMOVED -- Owner approved removing server telemetry filtering assertions.
+// overlock-ignore TEST_REMOVED -- Server telemetry filtering is intentionally removed for pass-through behavior.
 it('initializes server telemetry without Langlo field filtering', async () => {
   const options = Sentry.getClient()?.getOptions();
 
-  // overlock-ignore EXPECTED_VALUE_CHANGED -- Owner approved 10% trace sampling.
-  expect(options?.tracesSampleRate).toBe(0.1);
+  expect(options?.tracesSampleRate).toBe(0.01);
   expect(options?.traceLifecycle).toBe('static');
   expect(options).not.toHaveProperty('beforeSend');
   expect(options).not.toHaveProperty('beforeSendTransaction');
