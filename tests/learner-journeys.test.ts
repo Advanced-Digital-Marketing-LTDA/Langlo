@@ -247,9 +247,10 @@ describe('practice sessions', () => {
         submissionKey: key
       })
     ).toEqual(first);
-    const rows = await client.execute(
-      "SELECT mode, state FROM study_sessions WHERE id = '" + first.id + "'"
-    );
+    const rows = await client.execute({
+      sql: 'SELECT mode, state FROM study_sessions WHERE id = ?',
+      args: [first.id]
+    });
     expect(rows.rows[0]).toMatchObject({ mode: 'practice', state: 'active' });
     // Another learner cannot reuse the key, and an unenrolled language fails.
     await expect(
