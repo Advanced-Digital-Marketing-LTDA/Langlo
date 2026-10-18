@@ -1,5 +1,18 @@
 # GlitchTip setup evidence
 
+## SvelteKit 3 browser tracing variant fix (2026-10-18)
+
+- Added the Sentry Vite resolver before SvelteKit so `@sentry/sveltekit` selects
+  its SvelteKit 3 browser tracing variant. Source map uploading and automatic
+  load-function instrumentation are disabled.
+- With Node 24.19.0 and npm 11.9.0, `npm ci --ignore-scripts` completed. Before
+  the config change, `npm run build` succeeded but the client bundle contained
+  `kit/app_stores_removed` in `chunks/6FL_XCkK.js`. After the change, the build
+  succeeded and the same marker search found no matches in the client output.
+- The compiled artifact check verifies SDK variant selection only. No live
+  browser, production deployment, release tagging, or authentication flow was
+  tested; production acceptance remains pending.
+
 ## Telemetry pass-through update (2026-10-18)
 
 - Removed Langlo's custom `beforeSend`, `beforeSendTransaction`, and
