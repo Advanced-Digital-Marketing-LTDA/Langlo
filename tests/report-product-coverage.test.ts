@@ -28,7 +28,10 @@ const entry = (covered = 1) => ({
 });
 
 type CoverageMetric = { covered: number; total: number };
-type CoverageEntry = Record<'lines' | 'statements' | 'functions' | 'branches', CoverageMetric>;
+type CoverageEntry = Record<
+  'lines' | 'statements' | 'functions' | 'branches',
+  CoverageMetric
+>;
 
 function fixture(): Record<string, CoverageEntry> {
   return {
@@ -133,7 +136,10 @@ describe('Monocart coverage report output', () => {
     try {
       const inventory = JSON.parse(
         readFileSync(
-          new URL('../scripts/monocart-observed-source-baseline.json', import.meta.url),
+          new URL(
+            '../scripts/monocart-observed-source-baseline.json',
+            import.meta.url
+          ),
           'utf8'
         )
       );
@@ -152,8 +158,9 @@ describe('Monocart coverage report output', () => {
       );
       expect(json.product.files).not.toContain(telemetry);
       expect(json.unfiltered_original_source.files).toContain(telemetry);
-      expect(readFileSync(join(folder, 'product-source-summary.html'), 'utf8'))
-        .toContain('Observed-source diagnostic');
+      expect(
+        readFileSync(join(folder, 'product-source-summary.html'), 'utf8')
+      ).toContain('Observed-source diagnostic');
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
