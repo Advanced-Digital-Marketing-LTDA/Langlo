@@ -205,6 +205,7 @@ describe('settings', () => {
     await setTimezone(client, learner, 'America/Chicago');
     expect(await getTimezone(client, learner)).toBe('America/Chicago');
     expect(await getTimezone(client, other)).toBeNull();
+    expect(practiceResultsPath('study-a')).toBe('/app/session/study-a/results');
     for (const bad of ['Mars/Base', '', '   ', 7, 'x'.repeat(65)])
       await expect(setTimezone(client, learner, bad)).rejects.toMatchObject({
         code: 'INVALID_TIMEZONE'
@@ -329,7 +330,7 @@ describe('practice sessions', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
-  it('only builds a results path for a well-formed practice session id', () => {
+  it('only builds a results path for a safe session id', () => {
     const id = 'practice:0b9f6f64-1f0a-4d5e-9a57-3c1d3a8f2e11';
     expect(practiceResultsPath(id)).toBe(
       `/app/session/${encodeURIComponent(id)}/results`
@@ -339,8 +340,10 @@ describe('practice sessions', () => {
       '/\\evil.example',
       'https://evil.example',
       '../../x',
-      'study-a',
       `${id}/../x`,
+      'a b',
+      'a?b=c',
+      'a#b',
       ''
     ])
       expect(() => practiceResultsPath(bad)).toThrowError(

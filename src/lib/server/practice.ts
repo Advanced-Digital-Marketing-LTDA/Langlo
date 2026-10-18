@@ -5,15 +5,15 @@ import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
 import { StudyError } from './study-error';
 
 const KEY_PATTERN = /^[0-9a-f-]{36}$/i;
-const PRACTICE_ID_PATTERN = /^practice:[0-9a-f-]{36}$/i;
+const SESSION_ID_PATTERN = /^[A-Za-z0-9:_-]{1,128}$/;
 
 /**
- * The results page of a practice session. Only an id of the shape
- * startPractice issues is accepted, so a request parameter can never steer
- * the path anywhere else.
+ * The results page of a practice session. An id with a path, query or
+ * scheme character is rejected, so a request parameter can never steer the
+ * redirect anywhere else; any id the sessions table holds still passes.
  */
 export function practiceResultsPath(id: string): string {
-  if (!PRACTICE_ID_PATTERN.test(id)) throw new StudyError('NOT_FOUND');
+  if (!SESSION_ID_PATTERN.test(id)) throw new StudyError('NOT_FOUND');
   return `/app/session/${encodeURIComponent(id)}/results`;
 }
 
