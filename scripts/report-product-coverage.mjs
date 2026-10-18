@@ -56,7 +56,11 @@ function rollup(input, paths) {
       }
       return [
         name,
-        { covered, total, percent: Number(((covered / total) * 100).toFixed(2)) }
+        {
+          covered,
+          total,
+          percent: Number(((covered / total) * 100).toFixed(2))
+        }
       ];
     })
   );
@@ -150,14 +154,20 @@ function metricTable(title, section) {
         value.total,
         value.percent === null ? 'n/a' : String(value.percent) + '%'
       ];
-      return '<tr>' +
+      return (
+        '<tr>' +
         cells.map((cell) => '<td>' + escapeHtml(cell) + '</td>').join('') +
-        '</tr>';
+        '</tr>'
+      );
     })
     .join('');
-  return '<h2>' + escapeHtml(title) +
+  return (
+    '<h2>' +
+    escapeHtml(title) +
     '</h2><table><thead><tr><th>Metric</th><th>Covered</th><th>Total</th><th>Percent</th></tr></thead><tbody>' +
-    rows + '</tbody></table>';
+    rows +
+    '</tbody></table>'
+  );
 }
 
 /** @param {ReturnType<typeof summarizeCoverage>} report */
@@ -165,8 +175,11 @@ export function renderHtml(report) {
   const excluded = report.exclusions
     .map(
       ({ path, reason }) =>
-        '<li><code>' + escapeHtml(path) + '</code> — ' +
-        escapeHtml(reason) + '</li>'
+        '<li><code>' +
+        escapeHtml(path) +
+        '</code> — ' +
+        escapeHtml(reason) +
+        '</li>'
     )
     .join('');
   const newSources = report.diagnostics.new_mapped_sources
@@ -180,14 +193,20 @@ export function renderHtml(report) {
     '<style>body{font:16px/1.5 system-ui;max-width:900px;margin:32px auto;padding:0 16px}table{border-collapse:collapse;width:100%}td,th{text-align:left;border-bottom:1px solid #aaa;padding:7px}code{overflow-wrap:anywhere}</style>',
     '</head><body><h1>Langlo E2E source coverage</h1>',
     '<p><strong>Observed-source diagnostic, not full application coverage.</strong> ' +
-      escapeHtml(report.caveat) + '</p>',
+      escapeHtml(report.caveat) +
+      '</p>',
     metricTable('Product source (GlitchTip excluded)', report.product),
-    metricTable('Unfiltered original source', report.unfiltered_original_source),
+    metricTable(
+      'Unfiltered original source',
+      report.unfiltered_original_source
+    ),
     '<h2>Excluded telemetry</h2><ul>' + excluded + '</ul>',
     '<h2>Attribution warnings</h2><p>' +
-      escapeHtml(report.diagnostics.warning) + '</p>',
+      escapeHtml(report.diagnostics.warning) +
+      '</p>',
     '<p>Generated/unmapped entries: ' +
-      escapeHtml(report.diagnostics.compiled_or_unmapped_entries.length) + '</p>',
+      escapeHtml(report.diagnostics.compiled_or_unmapped_entries.length) +
+      '</p>',
     '<h2>New mapped sources not in baseline</h2><ul>' + newSources + '</ul>',
     '</body></html>'
   ];
