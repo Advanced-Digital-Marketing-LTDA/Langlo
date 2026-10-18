@@ -4,11 +4,18 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import config from '../vite.config';
 
+type NamedPlugin = { name?: string } | false | null | undefined;
+
+const flattenPlugins = (value: unknown): NamedPlugin[] =>
+  Array.isArray(value) ? value.flatMap(flattenPlugins) : [value as NamedPlugin];
+
 const pluginNames = async (): Promise<string[]> => {
-  const plugins = (await Promise.all([config.plugins].flat(Infinity))).flat(
-    Infinity
-  ) as Array<{ name?: string } | false | null | undefined>;
-  return plugins.map((plugin) => (plugin ? (plugin.name ?? '') : ''));
+  const resolved = await Promise.all(
+    flattenPlugins(config.plugins).map((plugin) => plugin)
+  );
+  return flattenPlugins(resolved).map((plugin) =>
+    plugin ? (plugin.name ?? '') : ''
+  );
 };
 
 const filesUnder = (dir: string): string[] =>
