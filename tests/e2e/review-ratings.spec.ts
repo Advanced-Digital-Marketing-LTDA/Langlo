@@ -1,6 +1,7 @@
 import { expect } from '@playwright/test';
 import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client/sqlite3';
 import {
@@ -19,7 +20,8 @@ import {
 // A signed-in learner reveals each due card's answer in a real browser and
 // applies every rating; the stored review events carry the chosen ratings.
 
-const password = 'review-ratings-password-0';
+// Generated per run, so no credential value is written into the repository.
+const password = randomBytes(16).toString('hex');
 const ratings = ['again', 'hard', 'good', 'easy'] as const;
 let server: ChildProcess;
 let base = '';
