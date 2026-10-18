@@ -33,3 +33,25 @@ export function safeError(correlationId: string): {
     correlationId: uuidPattern.test(correlationId) ? correlationId : undefined
   };
 }
+
+const mailFailureCodes: ReadonlySet<string> = new Set([
+  'ETIMEDOUT',
+  'EAUTH',
+  'ECONNECTION',
+  'ECONNREFUSED',
+  'ESOCKET',
+  'ETLS',
+  'EENVELOPE',
+  'EDNS'
+]);
+
+/** Closed allowlist of transport error codes; anything else, and every message, is dropped. */
+export function mailFailureCode(error: unknown): string | undefined {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? (error as { code?: unknown }).code
+      : undefined;
+  return typeof code === 'string' && mailFailureCodes.has(code)
+    ? code
+    : undefined;
+}

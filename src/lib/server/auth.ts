@@ -3,7 +3,7 @@ import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { RuntimeConfig } from './config.ts';
-import { safeDiagnostic } from './diagnostics.ts';
+import { mailFailureCode, safeDiagnostic } from './diagnostics.ts';
 import type { Mailer, MailMessage } from './mail.ts';
 import { currentCorrelationId } from './request-context.ts';
 import * as schema from './db/schema.ts';
@@ -35,15 +35,25 @@ const passwordChangedMessage = {
 
 /**
  * Send without awaiting so SMTP latency cannot reveal whether an account exists.
- * A failure is logged loudly as a safe `mail-delivery` diagnostic, never surfaced to the caller.
+ * A failure is logged as a safe `mail-delivery` warning (template and allowlisted transport code only),
+ * never surfaced to the caller.
  */
-function sendInBackground(mailer: Mailer, message: MailMessage) {
+function sendInBackground(
+  mailer: Mailer,
+  message: MailMessage,
+  template: 'reset' | 'password-changed'
+) {
   const correlationId = currentCorrelationId();
   void Promise.resolve()
     .then(() => mailer.send(message))
     .catch((error: unknown) => {
+      const code = mailFailureCode(error);
       console.warn(
-        JSON.stringify(safeDiagnostic('mail-delivery', error, correlationId))
+        JSON.stringify({
+          ...safeDiagnostic('mail-delivery', error, correlationId),
+          template,
+          ...(code ? { code } : {})
+        })
       );
     });
 }
@@ -112,14 +122,19 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
       resetPasswordTokenExpiresIn: 1800,
       revokeSessionsOnPasswordReset: true,
       sendResetPassword: ({ user, url }) => {
-        sendInBackground(deps.mailer, { to: user.email, ...resetMessage(url) });
+        sendInBackground(
+          deps.mailer,
+          { to: user.email, ...resetMessage(url) },
+          'reset'
+        );
         return Promise.resolve();
       },
       onPasswordReset: ({ user }) => {
-        sendInBackground(deps.mailer, {
-          to: user.email,
-          ...passwordChangedMessage
-        });
+        sendInBackground(
+          deps.mailer,
+          { to: user.email, ...passwordChangedMessage },
+          'password-changed'
+        );
         return Promise.resolve();
       }
     }

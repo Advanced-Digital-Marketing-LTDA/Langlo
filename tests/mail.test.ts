@@ -1,11 +1,17 @@
 import { createServer, type Server, type Socket } from 'node:net';
 import type { AddressInfo } from 'node:net';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createTransport } from 'nodemailer';
 import {
   SmtpMailer,
   createMailer,
   defaultSmtpTimeouts
 } from '../src/lib/server/mail';
+
+vi.mock('nodemailer', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('nodemailer')>();
+  return { ...actual, createTransport: vi.fn(actual.createTransport) };
+});
 
 const message = { to: 'to@example.test', subject: 's', text: 't' };
 
@@ -20,11 +26,12 @@ describe('SmtpMailer timeouts', () => {
     server = undefined;
   });
 
-  it('defines finite connection, greeting and socket limits', () => {
-    for (const value of Object.values(defaultSmtpTimeouts)) {
-      expect(Number.isFinite(value)).toBe(true);
-      expect(value).toBeGreaterThan(0);
-    }
+  it('pins the documented 10 s connection, 10 s greeting and 30 s socket limits', () => {
+    expect(defaultSmtpTimeouts).toEqual({
+      connectionTimeout: 10_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 30_000
+    });
   });
 
   it('rejects when the provider accepts the connection but never greets', async () => {
@@ -38,14 +45,19 @@ describe('SmtpMailer timeouts', () => {
       from: 'from@example.test',
       token: 'synthetic-token',
       timeouts: {
-        connectionTimeout: 500,
-        greetingTimeout: 200,
-        socketTimeout: 500
+        connectionTimeout: 5000,
+        greetingTimeout: 300,
+        socketTimeout: 5000
       }
     });
     const started = Date.now();
-    await expect(mailer.send(message)).rejects.toThrow();
-    expect(Date.now() - started).toBeLessThan(3000);
+    await expect(mailer.send(message)).rejects.toMatchObject({
+      code: 'ETIMEDOUT',
+      message: expect.stringMatching(/greeting/iu)
+    });
+    const elapsed = Date.now() - started;
+    expect(elapsed).toBeGreaterThanOrEqual(250);
+    expect(elapsed).toBeLessThan(2500);
   });
 });
 
@@ -59,6 +71,16 @@ describe('createMailer', () => {
       smtpPort: 587
     });
     expect(mailer).toBeInstanceOf(SmtpMailer);
+    expect(vi.mocked(createTransport)).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        host: '127.0.0.1',
+        port: 587,
+        connectionTimeout: 10_000,
+        greetingTimeout: 10_000,
+        socketTimeout: 30_000,
+        requireTLS: true
+      })
+    );
   });
 
   it('refuses smtp config without a sender or token', () => {

@@ -653,6 +653,7 @@ describe('recovery lifecycle', () => {
       );
       expect(warnings.join('\n')).not.toContain('smtp refused');
       expect(warnings.join('\n')).not.toContain('a@example.test');
+      expect(warnings.join('\n')).toContain('"template":"password-changed"');
     } finally {
       spy.mockRestore();
     }
@@ -666,7 +667,10 @@ describe('recovery lifecycle', () => {
       .mockImplementation((...args) => warnings.push(args.join(' ')));
     try {
       const failing = new CaptureMailer();
-      failing.send = () => Promise.reject(new Error('smtp refused'));
+      failing.send = () =>
+        Promise.reject(
+          Object.assign(new Error('smtp refused'), { code: 'EAUTH' })
+        );
       const authWithFailingMail = createAuth(
         config(fixture.target.databaseUrl),
         { db: fixture.db, mailer: failing }
@@ -690,6 +694,12 @@ describe('recovery lifecycle', () => {
           )
         ).toHaveLength(1)
       );
+      const line = warnings.find((entry) =>
+        entry.includes('"operation":"mail-delivery"')
+      );
+      expect(line).toContain('"template":"reset"');
+      expect(line).toContain('"code":"EAUTH"');
+      expect(line).not.toContain('smtp refused');
     } finally {
       spy.mockRestore();
     }
