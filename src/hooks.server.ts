@@ -12,10 +12,6 @@ import { safeDiagnostic, safeError } from './lib/server/diagnostics';
 import { resolveAuth } from './lib/server/auth-runtime';
 import { withCorrelationId } from './lib/server/request-context';
 import { authRequestHeaders } from './lib/server/auth-request';
-import {
-  scrubTelemetryEvent,
-  scrubTelemetrySpan
-} from './lib/glitchtip/scrub-event';
 
 Sentry.init({
   dsn: publicEnv.PUBLIC_GLITCHTIP_DSN,
@@ -24,7 +20,7 @@ Sentry.init({
     env.APP_BUILD_SHA && env.APP_BUILD_SHA !== 'unknown'
       ? env.APP_BUILD_SHA
       : undefined,
-  tracesSampleRate: 0.01,
+  tracesSampleRate: 0.1,
   traceLifecycle: 'static',
   integrations: (integrations) =>
     integrations.flatMap((integration) => {
@@ -32,10 +28,7 @@ Sentry.init({
       return integration.name === 'Http'
         ? [Sentry.httpIntegration({ sessions: false })]
         : [integration];
-    }),
-  beforeSend: scrubTelemetryEvent,
-  beforeSendTransaction: scrubTelemetryEvent,
-  beforeSendSpan: Sentry.withStaticSpan(scrubTelemetrySpan)
+    })
 });
 
 const appHandle: Handle = async ({ event, resolve }) => {

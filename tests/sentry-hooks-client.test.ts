@@ -7,10 +7,9 @@ vi.mock('$app/env/public', () => ({
 }));
 vi.mock('@sentry/sveltekit', () => ({
   init: vi.fn(),
-  withStaticSpan: vi.fn((callback) => callback),
   handleErrorWithSentry: vi.fn(() => vi.fn())
 }));
-it('initializes browser telemetry with labels, sampling, and scrubbers', async () => {
+it('initializes browser telemetry without Langlo field filtering', async () => {
   vi.resetModules();
   const Sentry = await import('@sentry/sveltekit');
   await import('../src/hooks.client');
@@ -20,15 +19,15 @@ it('initializes browser telemetry with labels, sampling, and scrubbers', async (
       dsn: 'https://public@example.test/1',
       environment: 'test',
       release: 'test-sha',
-      tracesSampleRate: 0.01,
+      tracesSampleRate: 0.1,
       traceLifecycle: 'static',
-      integrations: expect.any(Function),
-      beforeSend: expect.any(Function),
-      beforeSendTransaction: expect.any(Function),
-      beforeSendSpan: expect.any(Function)
+      integrations: expect.any(Function)
     })
   );
   const options = vi.mocked(Sentry.init).mock.calls[0]?.[0];
+  expect(options).not.toHaveProperty('beforeSend');
+  expect(options).not.toHaveProperty('beforeSendTransaction');
+  expect(options).not.toHaveProperty('beforeSendSpan');
   const browserSession = { name: 'BrowserSession' };
   const svelteKitTracing = { name: 'SvelteKitBrowserTracing' };
   const filterIntegrations = options?.integrations;
