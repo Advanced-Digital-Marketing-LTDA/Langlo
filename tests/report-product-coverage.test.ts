@@ -184,16 +184,14 @@ describe('Monocart coverage report output', () => {
         expect(() => runReportCli(['node', 'script', 'extra'], dir)).toThrow(
           /do not provide CLI arguments/
         );
-        expect(runReportCli(['node', 'script'], dir).product.metrics.lines)
-          .toEqual(output.product.metrics.lines);
+        expect(
+          runReportCli(['node', 'script'], dir).product.metrics.lines
+        ).toEqual(output.product.metrics.lines);
         expect(log).toHaveBeenCalledWith(
           'Product observed-source coverage:',
           output.product.metrics
         );
-        expect(warn).toHaveBeenCalledWith(
-          'Generated/unmapped entries:',
-          1
-        );
+        expect(warn).toHaveBeenCalledWith('Generated/unmapped entries:', 1);
       } finally {
         log.mockRestore();
         warn.mockRestore();
