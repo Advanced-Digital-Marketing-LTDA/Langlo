@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -18,7 +19,7 @@ import {
 
 const productA = 'src/routes/app/learn/+page.svelte';
 const productB = 'src/lib/components/exercises/answer.ts';
-const telemetry = 'src/lib/glitchtip/scrub-event.ts';
+const telemetry = 'src/lib/glitchtip/telemetry-fixture.ts';
 const expected = [productA, productB, telemetry];
 
 const entry = (covered = 1) => ({
@@ -154,6 +155,23 @@ describe('Monocart product coverage validation', () => {
 });
 
 describe('Monocart coverage report output', () => {
+  it('keeps the required mapped-source baseline aligned with the repository', () => {
+    const inventory = JSON.parse(
+      readFileSync(
+        new URL(
+          '../scripts/monocart-observed-source-baseline.json',
+          import.meta.url
+        ),
+        'utf8'
+      )
+    );
+    const missing = inventory.required_mapped_sources.filter(
+      (path: string) => !existsSync(new URL('../' + path, import.meta.url))
+    );
+
+    expect(missing).toEqual([]);
+  });
+
   it('writes both reports in the existing Monocart output folder', () => {
     const dir = mkdtempSync(join(tmpdir(), 'langlo-coverage-'));
     const folder = join(dir, '.ci-reports', 'playwright-coverage');

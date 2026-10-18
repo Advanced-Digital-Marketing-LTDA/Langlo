@@ -1,5 +1,23 @@
 # GlitchTip setup evidence
 
+## Telemetry pass-through update (2026-10-18)
+
+- Removed Langlo's custom `beforeSend`, `beforeSendTransaction`, and
+  `beforeSendSpan` callbacks from both SDK initializers, along with the scrubber
+  and its tests. GlitchTip now receives fields emitted by the SDK without
+  Langlo's custom field filtering. At that point, SDK capture settings were
+  unchanged.
+- `npm ci --ignore-scripts` completed under Node 24.19.0 and npm 11.9.0. The
+  focused red run failed in both hook-test files because `beforeSend` was still
+  configured; the focused green run passed 2 files / 2 tests. Full `npm test`
+  passed 65 files / 1,104 tests; property tests passed 5 files / 7 tests; check
+  reported 0 errors and 0 warnings; lint, format, and build passed. E2E started
+  but was interrupted at the owner's request after 30 of 88 tests had passed;
+  the remaining E2E tests are unverified. npm reported two moderate dependency
+  audit findings. No GlitchTip or Coolify settings were accessed or changed.
+  Unfiltered SDK payloads may include learner content, secrets, request
+  metadata, or client identifiers.
+
 ## Standalone hosting follow-up
 
 - Removed the GlitchTip hosting files from `ops/glitchtip/`. The service is now
@@ -10,8 +28,8 @@
 - Added `docs/glitchtip.md` and linked it from the README. The guide covers
   connecting the existing Langlo resource, matching browser/server labels,
   retaining existing GlitchTip data when switching resources, and pending live
-  acceptance. Existing runtime hooks, scrubbing, sampling, dependencies, and
-  root application Compose settings are unchanged.
+  acceptance. At that follow-up, the runtime hooks, scrubbing, sampling,
+  dependencies, and root application Compose settings were unchanged.
 - Removed the three tests tied to the relocated hosting files and retained the
   application Compose test for the DSN and public labels. This cleanup adds no
   runtime behavior, so no new behavior test or red/green cycle was introduced.
