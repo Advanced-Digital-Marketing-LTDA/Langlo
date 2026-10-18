@@ -11,7 +11,10 @@
 </svelte:head>
 
 <h1>Welcome back, {data.user.name}</h1>
-<p>This account is part of the private Langlo pilot.</p>
+<p>
+  Signed in as {data.user.name}. This account is part of the private Langlo
+  pilot.
+</p>
 
 {#if navigating.to}
   <div class="panel" aria-busy="true" aria-label="Loading dashboard">

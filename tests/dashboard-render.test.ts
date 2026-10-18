@@ -40,6 +40,7 @@ afterAll(closeRenderServer);
 it('shows the Continue card with the recommended skill and its lesson link', async () => {
   const html = await renderSvelte(page, { data: data([track('fr-a1-002')]) });
   expect(html).toContain('Welcome back, Ada');
+  expect(html).toContain('Signed in as Ada.');
   expect(html).toContain('Continue');
   expect(html).toContain('Title fr-a1-002');
   expect(html).toContain('Revisit this first');
