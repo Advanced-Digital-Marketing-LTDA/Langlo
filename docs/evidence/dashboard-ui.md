@@ -36,6 +36,24 @@ Svelte files cannot be measured by the v8 provider here (parse error), so their
 branches were checked by hand: every `{#if}` arm in `+page.svelte`,
 `TrackCard.svelte` and `+layout.svelte` has a rendering test.
 
+## Browser coverage (monocart)
+
+`npm run build:e2e-coverage`, then `playwright test tests/e2e/exercises.spec.ts`
+(desktop and mobile, both passed; the `/app` dashboard steps were added to that
+spec). Branch coverage from `.ci-reports/playwright-coverage`, covered/total:
+
+| File                                            | Branches | Lines |
+| ----------------------------------------------- | -------- | ----- |
+| `src/routes/app/+page.svelte`                   | 6/8      | 14/14 |
+| `src/routes/app/+layout.svelte`                 | 6/7      | 7/7   |
+| `src/lib/components/dashboard/TrackCard.svelte` | 4/8      | 28/29 |
+| `src/lib/dashboard.ts`                          | 4/6      | 10/10 |
+
+The uncovered browser branches are states the fixture never produces (loading,
+empty, no recommendation, unavailable skill, trailing-slash path). They are
+covered by the server-render tests above. `GrammarProgress.svelte` (17/30) was
+only changed to drop its nav and share labels.
+
 ## Pending, not proven here
 
 Full `npm test`, `npm run test:property`, `npm run build`, `npm run test:e2e`
