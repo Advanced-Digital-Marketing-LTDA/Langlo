@@ -9,6 +9,7 @@ import {
   setExplanationLanguage
 } from '../src/lib/server/enrollment';
 import { getTimezone, setTimezone } from '../src/lib/server/preferences';
+import { pauseStudySession } from '../src/lib/server/study';
 import {
   finishPractice,
   practiceResultsPath,
@@ -349,6 +350,31 @@ describe('practice sessions', () => {
       expect(() => practiceResultsPath(bad)).toThrowError(
         expect.objectContaining({ code: 'NOT_FOUND' })
       );
+  });
+
+  it('resumes a paused practice session from its page, for its owner only', async () => {
+    const { id } = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: '5b0c7a52-3f0e-4c2e-8f6e-0d6a3c9b7e10'
+    });
+    await pauseStudySession(client, learner, id);
+    expect(await sessionLoad(event({ params: { id } }))).toMatchObject({
+      summary: { id, state: 'paused' }
+    });
+    expect(
+      await sessionActions.resume(
+        event({ userId: 'learner-b', params: { id }, fields: {} })
+      )
+    ).toMatchObject({ status: 404 });
+    expect(await sessionLoad(event({ params: { id } }))).toMatchObject({
+      summary: { state: 'paused' }
+    });
+    expect(
+      await sessionActions.resume(event({ params: { id }, fields: {} }))
+    ).toEqual({ resumed: true });
+    expect(await sessionLoad(event({ params: { id } }))).toMatchObject({
+      summary: { state: 'active' }
+    });
   });
 
   it('runs start, session, finish and results through the pages', async () => {

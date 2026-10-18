@@ -1,8 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { studyPage } from '../../../../lib/server/learner-api';
+import { studyForm, studyPage } from '../../../../lib/server/learner-api';
 import { requireLearnerApi } from '../../../../lib/server/learner-session';
 import { loadProgress } from '../../../../lib/server/progress';
+import { resumeStudySession } from '../../../../lib/server/study';
 import {
   finishPractice,
   practiceResultsPath,
@@ -23,6 +24,12 @@ export const load: PageServerLoad = (event) =>
   });
 
 export const actions: Actions = {
+  resume: async (event) =>
+    studyForm(
+      event,
+      (client, learner) => resumeStudySession(client, learner, event.params.id),
+      { resumed: true }
+    ),
   finish: async (event) => {
     requireLearnerApi(event);
     await studyPage(event, (client, learner) =>
