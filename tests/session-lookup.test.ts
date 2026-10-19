@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { lookupSession } from '../src/lib/server/session-lookup';
+import {
+  lookupSession,
+  MAX_SESSION_COOKIES
+} from '../src/lib/server/session-lookup';
 
 const NAME = '__Secure-better-auth.session_token';
 const session = { user: { id: 'u1' }, session: { id: 's1' } };
@@ -48,6 +51,20 @@ describe('lookupSession', () => {
         headersWith(`${NAME}=good; ${NAME}=good-b`)
       )
     ).toBe(session);
+  });
+
+  it('tries at most MAX_SESSION_COOKIES duplicates', async () => {
+    getSession.mockClear();
+    const stale = Array.from(
+      { length: MAX_SESSION_COOKIES },
+      (_, i) => `${NAME}=stale-${i}`
+    );
+    const result = await lookupSession(
+      getSession,
+      headersWith([...stale, `${NAME}=good`].join('; '))
+    );
+    expect(result).toBeNull();
+    expect(getSession).toHaveBeenCalledTimes(MAX_SESSION_COOKIES);
   });
 
   it('returns null when every duplicate is stale', async () => {

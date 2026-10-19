@@ -3,6 +3,9 @@ const SESSION_COOKIES = new Set([
   '__Secure-better-auth.session_token'
 ]);
 
+/** Bounds the lookups one request can trigger (each is a database read). */
+export const MAX_SESSION_COOKIES = 4;
+
 type SessionLookup<T> = (input: { headers: Headers }) => Promise<T | null>;
 
 /**
@@ -21,7 +24,7 @@ export async function lookupSession<T>(
     SESSION_COOKIES.has(part.slice(0, Math.max(part.indexOf('='), 0)));
   const sessionParts = parts.filter(isSession);
   if (sessionParts.length < 2) return getSession({ headers });
-  for (const candidate of sessionParts) {
+  for (const candidate of sessionParts.slice(0, MAX_SESSION_COOKIES)) {
     const narrowed = new Headers(headers);
     narrowed.set(
       'cookie',
