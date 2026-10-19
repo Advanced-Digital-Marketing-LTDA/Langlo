@@ -3,7 +3,11 @@ import * as Sentry from '@sentry/sveltekit';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { requestLog } from '../src/lib/server/request-log';
 
-type Captured = { message: unknown; attributes?: Record<string, unknown> };
+type Captured = {
+  level: unknown;
+  message: unknown;
+  attributes?: Record<string, unknown>;
+};
 
 beforeAll(() => {
   Sentry.init({ dsn: 'https://public@example.test/1' });
@@ -12,7 +16,11 @@ beforeAll(() => {
 function run(path: string, status: number, correlationId = 'req-1') {
   const captured: Captured[] = [];
   const unsubscribe = Sentry.getClient()?.on('afterCaptureLog', (log) =>
-    captured.push({ message: log.message, attributes: log.attributes })
+    captured.push({
+      level: log.level,
+      message: log.message,
+      attributes: log.attributes
+    })
   );
   const event = {
     url: new URL(path, 'http://localhost:3000'),
@@ -50,10 +58,19 @@ it('logs one line per request with method, raw path, status and request id', asy
   expect(Number(value(captured[0], 'duration_ms'))).toBeGreaterThanOrEqual(0);
 });
 
-it('logs the raw path, including a password-reset token', async () => {
+it('redacts the password-reset token from the logged message and path', async () => {
   const { captured } = await run('/api/auth/reset-password/abc123', 302);
 
-  expect(captured[0].message).toBe('POST /api/auth/reset-password/abc123 302');
+  expect(captured).toHaveLength(1);
+  expect(captured[0].message).toBe('POST /api/auth/reset-password/:token 302');
+  expect(value(captured[0], 'path')).toBe('/api/auth/reset-password/:token');
+  expect(JSON.stringify(captured)).not.toContain('abc123');
+});
+
+it('logs the root path unchanged', async () => {
+  const { captured } = await run('/', 200);
+
+  expect(captured[0].message).toBe('POST / 200');
 });
 
 it.each(['/health/live', '/health/live/'])(
@@ -66,11 +83,19 @@ it.each(['/health/live', '/health/live/'])(
   }
 );
 
-it('does not swallow a request failure', async () => {
+it('logs a failed request at error level with status 500, then rethrows', async () => {
+  const captured: Captured[] = [];
+  const unsubscribe = Sentry.getClient()?.on('afterCaptureLog', (log) =>
+    captured.push({
+      level: log.level,
+      message: log.message,
+      attributes: log.attributes
+    })
+  );
   const event = {
     url: new URL('/boom', 'http://localhost:3000'),
     request: new Request('http://localhost:3000/boom'),
-    locals: {}
+    locals: { correlationId: 'req-9' }
   };
 
   await expect(
@@ -81,4 +106,10 @@ it('does not swallow a request failure', async () => {
       }
     } as unknown as Parameters<Handle>[0])
   ).rejects.toThrow('render failed');
+  unsubscribe?.();
+
+  expect(captured).toHaveLength(1);
+  expect(captured[0].level).toBe('error');
+  expect(captured[0].message).toBe('GET /boom 500');
+  expect(value(captured[0], 'correlation_id')).toBe('req-9');
 });
