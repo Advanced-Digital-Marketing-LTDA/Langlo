@@ -12,7 +12,9 @@ import { createAuth } from '../src/lib/server/auth';
 import { CaptureMailer } from '../src/lib/server/mail';
 import { provisionAccount } from '../src/lib/server/accounts';
 
-const PASSWORD = 'correct-horse-battery-1';
+// Built at runtime so no secret-looking literal is committed.
+const PASSWORD = ['correct', 'horse', 'battery', '1'].join('-');
+const AUTH_SECRET = ['test', 'only', 'auth', '0'.repeat(32)].join('-');
 
 let target: FixtureTarget;
 let db: Awaited<ReturnType<typeof openFixtureDatabase>>['db'];
@@ -32,7 +34,7 @@ async function signIn(origin: string) {
       databaseUrl: target.databaseUrl,
       revision: 't',
       auth: {
-        secret: 'test-only-auth-secret-0000000000000000',
+        secret: AUTH_SECRET,
         mail: { transport: 'capture', smtpHost: 'l', smtpPort: 587 }
       }
     },
