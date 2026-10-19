@@ -354,7 +354,7 @@ describe('versioned grammar policy', () => {
     await approveNote(client, learner, note.id);
     await submitReview(client, learner, {
       cardId: note.cardId,
-      submissionId: 'mastery-fsrs-check',
+      submissionId: 'a0000000-0000-4000-8000-000000000090',
       expectedRevision: 0,
       rating: 'easy'
     });

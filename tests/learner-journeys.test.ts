@@ -492,11 +492,7 @@ describe('decks, review and Anki export', () => {
     const { submissionKey } = (await reviewLoad(event())) as {
       submissionKey: string;
     };
-    const rate = (
-      revision: string,
-      rating = 'good',
-      key = `${submissionKey}:${draft.cardId}:${revision}`
-    ) =>
+    const rate = (revision: string, rating = 'good', key = submissionKey) =>
       reviewActions.rate(
         event({
           fields: {
@@ -514,14 +510,16 @@ describe('decks, review and Anki export', () => {
     expect(await rate('0', 'easy')).toMatchObject({ status: 409 });
     // A fresh key against the old revision reaches the stale-revision check,
     // which tells the learner to reload instead of silently overwriting.
-    expect(await rate('0', 'easy', 'fresh-key')).toMatchObject({
+    expect(
+      await rate('0', 'easy', 'b0000000-0000-4000-8000-000000000001')
+    ).toMatchObject({
       status: 409,
       data: { message: expect.stringContaining('Reload') }
     });
     await expect(
       submitReview(client, learner, {
         cardId: draft.cardId,
-        submissionId: 'fresh-key-2',
+        submissionId: 'b0000000-0000-4000-8000-000000000002',
         expectedRevision: 0,
         rating: 'easy'
       })
@@ -554,7 +552,7 @@ describe('decks, review and Anki export', () => {
             cardId: draft.cardId,
             revision: '0',
             rating: 'good',
-            submissionKey: 'foreign-key'
+            submissionKey: 'b0000000-0000-4000-8000-000000000003'
           }
         })
       )
@@ -595,7 +593,7 @@ describe('decks, review and Anki export', () => {
               cardId: note.cardId,
               revision: '0',
               rating,
-              submissionKey: `key-${rating}`
+              submissionKey: `10000000-0000-4000-8000-00000000002${ratings.indexOf(rating)}`
             }
           })
         )
@@ -605,7 +603,12 @@ describe('decks, review and Anki export', () => {
       "SELECT id, rating FROM native_flashcard_review_events WHERE owner_id = 'learner-a' ORDER BY id"
     );
     expect(stored.rows.map((row) => [row.id, row.rating])).toEqual(
-      ratings.map((rating) => [`key-${rating}`, rating]).sort()
+      ratings
+        .map((rating, index) => [
+          `10000000-0000-4000-8000-00000000002${index}`,
+          rating
+        ])
+        .sort()
     );
   });
 

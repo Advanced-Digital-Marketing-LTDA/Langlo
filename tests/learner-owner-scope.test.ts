@@ -49,7 +49,7 @@ beforeEach(async () => {
   await approveNote(client, ownerB, 'note-b');
   await submitReview(client, ownerB, {
     cardId: 'card:note-b',
-    submissionId: 'review-b',
+    submissionId: 'b0000000-0000-4000-8000-000000000001',
     expectedRevision: 0,
     rating: 'good'
   });
@@ -68,7 +68,7 @@ const guessed = [
   'deck-b',
   'note-b',
   'card:note-b',
-  'review-b',
+  'b0000000-0000-4000-8000-000000000001',
   '',
   ' ',
   "' OR 1=1 --",
@@ -335,7 +335,7 @@ describe('forged identifiers yield zero cross-owner reads and writes', () => {
       await expect(
         submitReview(client, ownerA, {
           cardId,
-          submissionId: `forged:${cardId}`,
+          submissionId: 'a0000000-0000-4000-8000-000000000001',
           expectedRevision: 1,
           rating: 'easy'
         })
@@ -348,7 +348,7 @@ describe('forged identifiers yield zero cross-owner reads and writes', () => {
     await expect(
       submitReview(client, ownerA, {
         cardId: 'card:note-b',
-        submissionId: 'review-b',
+        submissionId: 'b0000000-0000-4000-8000-000000000001',
         expectedRevision: 0,
         rating: 'good'
       })
@@ -356,7 +356,11 @@ describe('forged identifiers yield zero cross-owner reads and writes', () => {
     expect(await privateState(client)).toEqual(before);
     const events = await listReviewEvents(client, ownerB, 'card:note-b');
     expect(events).toMatchObject([
-      { id: 'review-b', expectedRevision: 0, rating: 'good' }
+      {
+        id: 'b0000000-0000-4000-8000-000000000001',
+        expectedRevision: 0,
+        rating: 'good'
+      }
     ]);
     expect(events[0]).not.toHaveProperty('ownerId');
   });

@@ -184,7 +184,7 @@ test('guessed cross-owner IDs answer 404 and write nothing', async () => {
     [
       '/app/api/cards/card:note-bob/reviews',
       {
-        submissionId: 'forged-review',
+        submissionId: 'a0000000-0000-4000-8000-000000000001',
         expectedRevision: 0,
         rating: 'easy',
         ownerId: bobId
@@ -212,7 +212,11 @@ test('guessed cross-owner IDs answer 404 and write nothing', async () => {
 test('the owner can review their card through the same route', async () => {
   const reviewed = await bob.post(
     '/app/api/cards/card:note-bob/reviews',
-    json({ submissionId: 'bob-review-1', expectedRevision: 0, rating: 'good' })
+    json({
+      submissionId: 'b0000000-0000-4000-8000-000000000001',
+      expectedRevision: 0,
+      rating: 'good'
+    })
   );
   expect(reviewed.status()).toBe(200);
   expect(await reviewed.json()).toMatchObject({

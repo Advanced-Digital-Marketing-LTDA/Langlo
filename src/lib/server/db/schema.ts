@@ -971,7 +971,8 @@ export const nativeFlashcardReviewEvents = sqliteTable(
     reviewedAt: integer('reviewed_at').notNull(),
     schedulerVersion: text('scheduler_version').notNull(),
     parametersJson: text('parameters_json').notNull(),
-    resultJson: text('result_json').notNull()
+    resultJson: text('result_json').notNull(),
+    stateJson: text('state_json')
   },
   (table) => [
     primaryKey({ columns: [table.ownerId, table.id] }),
@@ -1007,6 +1008,10 @@ export const nativeFlashcardReviewEvents = sqliteTable(
     check(
       'native_flashcard_review_events_result_json',
       sql`json_valid(${table.resultJson})`
+    ),
+    check(
+      'native_flashcard_review_events_state_json',
+      sql`${table.stateJson} IS NULL OR json_valid(${table.stateJson})`
     )
   ]
 );
