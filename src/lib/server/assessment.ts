@@ -237,12 +237,13 @@ export async function completeAssessment(
   learner: LearnerSession,
   id: string
 ) {
-  await client.execute({
+  const completed = await client.execute({
     sql: `UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND assessment_plan IS NOT NULL
       AND NOT EXISTS (SELECT 1 FROM json_each(study_sessions.assessment_plan, '$.questions') p
         WHERE NOT EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.question_id = p.value))`,
     args: [id, learner.userId]
   });
+  return completed.rowsAffected > 0;
 }
 
 /** Only recognized versioned verdicts participate; unresolved evidence is uncertain. */

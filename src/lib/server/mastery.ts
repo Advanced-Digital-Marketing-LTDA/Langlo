@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Client, Row } from '@libsql/client';
-import { beginWrite, type LearnerSession } from './flashcards';
+import type { LearnerSession } from './flashcards';
 import { feedbackEvaluation } from './assessment';
 import { StudyError } from './study-error';
 import { effectiveLineageKey } from './lineage';
@@ -269,6 +269,36 @@ async function recordEvidence(
     });
 }
 
+async function loadQualifyingEvidence(
+  tx: Tx,
+  ownerId: string,
+  language: string
+) {
+  const source = await span('mastery.load-evidence', async (active) => {
+    const rows = await loadEvidenceRows(tx, { ownerId, language });
+    active.setAttribute('rows', rows.length);
+    return rows;
+  });
+  return qualifyingGrammarEvidence(
+    source,
+    await span('mastery.current-content', () => currentContent(tx, language))
+  );
+}
+
+/** Sync trusted answer history inside the write transaction that records it. */
+export async function syncEvidenceLedger(
+  tx: Tx,
+  ownerId: string,
+  language: string
+) {
+  const evidence = await loadQualifyingEvidence(tx, ownerId, language);
+  await span(
+    'mastery.sync-evidence',
+    () => recordEvidence(tx, ownerId, language, evidence),
+    { rows: evidence.length }
+  );
+}
+
 /** One catalog row with its prerequisites and the status its evidence earns. */
 function skillStanding(row: Row, evidence: Evidence, prerequisites: Row[]) {
   const items = evidence.filter((item) => item.countsFor === row.id);
@@ -293,53 +323,22 @@ function skillStanding(row: Row, evidence: Evidence, prerequisites: Row[]) {
   };
 }
 
-/** Recompute from trusted history; the existing evidence ledger is idempotent. */
-export async function getMastery(
+/** Compute mastery from trusted answer history without changing learner state. */
+export async function computeMastery(
   client: Client,
   learner: LearnerSession,
   language: string
 ) {
-  const tx = await span('mastery.begin-write', () => beginWrite(client));
-  try {
-    const enrolled = await span('mastery.enrollment-check', () =>
-      tx.execute({
-        sql: 'SELECT 1 FROM enrollments WHERE owner_id = ? AND language = ?',
-        args: [learner.userId, language]
-      })
-    );
-    if (!enrolled.rows.length) throw new StudyError('NOT_FOUND');
-    const catalog = await span('mastery.catalog', () =>
-      loadCatalog(tx, language)
-    );
-    const prerequisites = await span('mastery.prerequisites', () =>
-      loadPrerequisites(tx, language)
-    );
-    const source = await span('mastery.load-evidence', async (active) => {
-      const rows = await loadEvidenceRows(tx, {
-        ownerId: learner.userId,
-        language
-      });
-      active.setAttribute('rows', rows.length);
-      return rows;
-    });
-    const evidence = qualifyingGrammarEvidence(
-      source,
-      await span('mastery.current-content', () => currentContent(tx, language))
-    );
-    await span(
-      'mastery.record-evidence',
-      () => recordEvidence(tx, learner.userId, language, evidence),
-      { rows: evidence.length }
-    );
-    const result = catalog.map((row) =>
-      skillStanding(row, evidence, prerequisites)
-    );
-    await span('mastery.commit', () => tx.commit());
-    return result;
-  } catch (error) {
-    await tx.rollback().catch(() => undefined);
-    throw error;
-  } finally {
-    tx.close();
-  }
+  const catalog = await span('mastery.catalog', () =>
+    loadCatalog(client, language)
+  );
+  const prerequisites = await span('mastery.prerequisites', () =>
+    loadPrerequisites(client, language)
+  );
+  const evidence = await loadQualifyingEvidence(
+    client,
+    learner.userId,
+    language
+  );
+  return catalog.map((row) => skillStanding(row, evidence, prerequisites));
 }

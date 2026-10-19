@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
-import { getMastery } from '../src/lib/server/mastery';
+import { computeMastery } from '../src/lib/server/mastery';
 import {
   importContent,
   type ContentPackage,
@@ -54,7 +54,9 @@ async function answer(questionId: string, value: string, session?: string) {
 }
 
 const skill = async (id: string) =>
-  (await getMastery(client, learner, 'fr')).find((item) => item.skillId === id);
+  (await computeMastery(client, learner, 'fr')).find(
+    (item) => item.skillId === id
+  );
 
 const question = (
   id: string,
@@ -145,7 +147,7 @@ describe('mastery after a content update', () => {
 
   it('never deletes or rewrites what the learner answered', async () => {
     await answer('fr-a1-001@1:q2', 'wrong');
-    await getMastery(client, learner, 'fr');
+    await computeMastery(client, learner, 'fr');
     const read = async () =>
       (
         await client.batch(
@@ -162,7 +164,7 @@ describe('mastery after a content update', () => {
       client,
       secondVersion('0.2.0', [question('fr-a1-001@2:q2', { change: 'new' })])
     );
-    await getMastery(client, learner, 'fr');
+    await computeMastery(client, learner, 'fr');
     expect(await read()).toEqual(before);
   });
 
@@ -220,7 +222,7 @@ describe('mastery for a retired skill', () => {
   it('leaves the catalog and keeps its history stored', async () => {
     await answer('fr-a1-002@1:q1', 'Nous sommes ici.');
     await importContent(client, renamed(false));
-    const catalog = await getMastery(client, learner, 'fr');
+    const catalog = await computeMastery(client, learner, 'fr');
     expect(catalog.map((item) => item.skillId)).not.toContain('fr-a1-002');
     expect(await skill('fr-a1-003')).toMatchObject({ independentItems: 0 });
     expect(

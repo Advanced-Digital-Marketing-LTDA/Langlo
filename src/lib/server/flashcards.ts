@@ -51,6 +51,8 @@ const maxCardTextLength = 4096;
 const maxExplanationLength = 1000;
 const maxSourceFieldLength = 512;
 const sourceIdPattern = /^langlo:v1:[0-9a-f]{64}$/u;
+// shortcut: remote writes serialize too; split if throughput proves limiting.
+const writeQueues = new WeakMap<Client, Promise<void>>();
 const ratings: Record<RatingName, Grade> = {
   again: Rating.Again,
   hard: Rating.Hard,
@@ -68,12 +70,60 @@ function exceedsCodePointLimit(value: string, limit: number): boolean {
 }
 
 export async function beginWrite(client: Client) {
+  const previous = writeQueues.get(client) ?? Promise.resolve();
+  let release!: () => void;
+  const queued = new Promise<void>((resolve) => (release = resolve));
+  const tail = previous.then(() => queued);
+  writeQueues.set(client, tail);
+  await previous;
+
+  let released = false;
+  const finish = () => {
+    if (released) return;
+    released = true;
+    release();
+    if (writeQueues.get(client) === tail) writeQueues.delete(client);
+  };
+
   for (let attempt = 0; ; attempt += 1) {
     try {
-      return await client.transaction('write');
+      const transaction = await client.transaction('write');
+      return new Proxy(transaction, {
+        get(target, property) {
+          if (property === 'commit')
+            return async () => {
+              const result = await target.commit();
+              finish();
+              return result;
+            };
+          if (property === 'rollback')
+            return async () => {
+              try {
+                return await target.rollback();
+              } finally {
+                finish();
+              }
+            };
+          if (property === 'close')
+            return () => {
+              try {
+                return target.close();
+              } finally {
+                finish();
+              }
+            };
+          const value = Reflect.get(target, property, target);
+          return typeof value === 'function' ? value.bind(target) : value;
+        }
+      });
     } catch (error) {
-      if ((error as { code?: string }).code !== 'SQLITE_BUSY' || attempt === 7)
+      if (
+        (error as { code?: string }).code !== 'SQLITE_BUSY' ||
+        attempt === 7
+      ) {
+        finish();
         throw error;
+      }
       // Back off only after the failed write attempt finishes, then retry serially.
       await delay(10 * (attempt + 1));
     }

@@ -35,7 +35,8 @@ import { learnerApi, studyPage } from '../src/lib/server/learner-api';
 import { FlashcardError } from '../src/lib/server/flashcards';
 import { isHttpError } from '@sveltejs/kit';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
-import { getMastery, loadEvidenceRows } from '../src/lib/server/mastery';
+import { computeMastery, loadEvidenceRows } from '../src/lib/server/mastery';
+import { loadProgress } from '../src/lib/server/progress';
 import { span } from '../src/lib/server/tracing';
 import { importContent } from '../src/lib/server/content-import';
 import { recordAttempt } from '../src/lib/server/study';
@@ -73,7 +74,7 @@ it('span propagates the step error unchanged', async () => {
   ).rejects.toBe(failure);
 });
 
-it('getMastery reports each phase and how many evidence rows it writes', async () => {
+it('computeMastery traces read phases while answer creation traces ledger sync', async () => {
   await recordAttempt(client, learner, {
     studySessionId: 'study-a',
     questionId: 'fr-a1-001@1:q1',
@@ -81,6 +82,10 @@ it('getMastery reports each phase and how many evidence rows it writes', async (
     evidenceKind: 'independent',
     answer: 'suis'
   });
+  expect(
+    recorded.filter((entry) => entry.name === 'mastery.sync-evidence')
+  ).toHaveLength(1);
+  recorded.length = 0;
   const other = testSession('learner-b');
   await recordAttempt(client, other, {
     studySessionId: 'study-b',
@@ -89,19 +94,16 @@ it('getMastery reports each phase and how many evidence rows it writes', async (
     evidenceKind: 'independent',
     answer: 'suis'
   });
-  const skills = await getMastery(client, learner, 'fr');
+  recorded.length = 0;
+  const skills = await computeMastery(client, learner, 'fr');
   expect(skills.find((skill) => skill.skillId === 'fr-a1-001')).toMatchObject({
     correct: 1
   });
   expect(recorded.map((entry) => entry.name)).toEqual([
-    'mastery.begin-write',
-    'mastery.enrollment-check',
     'mastery.catalog',
     'mastery.prerequisites',
     'mastery.load-evidence',
-    'mastery.current-content',
-    'mastery.record-evidence',
-    'mastery.commit'
+    'mastery.current-content'
   ]);
   const stored = await loadEvidenceRows(client, {
     ownerId: learner.userId,
@@ -113,20 +115,13 @@ it('getMastery reports each phase and how many evidence rows it writes', async (
   expect(
     recorded.find((entry) => entry.name === 'mastery.load-evidence')?.set
   ).toEqual({ rows: stored.length });
-  expect(
-    recorded.find((entry) => entry.name === 'mastery.record-evidence')
-      ?.attributes
-  ).toEqual({ rows: 1 });
 });
 
-it('getMastery lets a missing enrollment through unchanged and stops after the check', async () => {
-  await expect(getMastery(client, learner, 'de')).rejects.toMatchObject({
+it('loadProgress rejects a missing enrollment before computing mastery', async () => {
+  await expect(loadProgress(client, learner, 'de')).rejects.toMatchObject({
     code: 'NOT_FOUND'
   });
-  expect(recorded.map((entry) => entry.name)).toEqual([
-    'mastery.begin-write',
-    'mastery.enrollment-check'
-  ]);
+  expect(recorded).toEqual([]);
 });
 
 it('studyPage times opening the database and running the load, and still closes', async () => {

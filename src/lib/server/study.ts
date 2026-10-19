@@ -13,6 +13,7 @@ import {
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
 import { beginWrite, type LearnerSession } from './flashcards';
+import { syncEvidenceLedger } from './mastery';
 import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
@@ -328,6 +329,7 @@ async function attemptSource(
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
     language: String(studyRow.language),
+    mode: String(studyRow.mode),
     question: questionRow
   };
 }
@@ -471,17 +473,27 @@ async function recordFallbackEvaluation(
       await settleFallback(client, session, attempt);
       return;
     }
-    await client.execute({
-      sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [
-        randomUUID(),
-        session.userId,
-        attempt.id,
-        FALLBACK_EVALUATOR_VERSION,
-        `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`,
-        result.outcome
-      ]
-    });
+    const tx = await beginWrite(client);
+    try {
+      await tx.execute({
+        sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
+        args: [
+          randomUUID(),
+          session.userId,
+          attempt.id,
+          FALLBACK_EVALUATOR_VERSION,
+          `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`,
+          result.outcome
+        ]
+      });
+      await syncEvidenceLedger(tx, session.userId, attempt.language);
+      await tx.commit();
+    } catch (error) {
+      await tx.rollback().catch(() => undefined);
+      throw error;
+    } finally {
+      tx.close();
+    }
   } catch (error) {
     // The attempt is already saved; the answer stays uncertain for review.
     logFallback('failed');
@@ -590,7 +602,16 @@ async function recordAttemptWrite(
       notSure: input.notSure
     };
     const outcome = await recordPreparedEvaluation(tx, session, attempt);
-    await completeAssessment(tx, session, input.studySessionId);
+    const assessmentCompleted = await completeAssessment(
+      tx,
+      session,
+      input.studySessionId
+    );
+    if (
+      assessmentCompleted ||
+      (source.mode === 'practice' && outcome !== 'uncertain')
+    )
+      await syncEvidenceLedger(tx, session.userId, source.language);
     await tx.commit();
     const result = { id, duplicate: false as const };
     return outcome === 'uncertain' && !input.notSure

@@ -1,13 +1,13 @@
 import type { Client } from '@libsql/client';
 import type { LearnerSession } from './learner-session';
-import { getMastery } from './mastery';
+import { computeMastery } from './mastery';
 import { recommendTopics } from './recommendations';
 import { StudyError } from './study-error';
 
 export type TrackProgress = {
   language: string;
   level: string;
-  skills: Awaited<ReturnType<typeof getMastery>>;
+  skills: Awaited<ReturnType<typeof computeMastery>>;
   recommendation: ReturnType<typeof recommendTopics>;
 };
 
@@ -28,7 +28,7 @@ export async function loadProgress(
   const tracks: TrackProgress[] = [];
   for (const row of enrolled.rows) {
     if (language !== null && row.language !== language) continue;
-    const skills = await getMastery(client, learner, String(row.language));
+    const skills = await computeMastery(client, learner, String(row.language));
     tracks.push({
       language: String(row.language),
       level: String(row.starting_level),

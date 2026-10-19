@@ -2,10 +2,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
-  getMastery,
+  computeMastery,
   qualifyingGrammarEvidence,
   scoreGrammar
 } from '../src/lib/server/mastery';
+import { loadProgress } from '../src/lib/server/progress';
 import { recommendTopics } from '../src/lib/server/recommendations';
 import {
   disposeFlashcardFixtures,
@@ -72,26 +73,46 @@ it.each([
 });
 
 describe('versioned grammar policy', () => {
-  it('records incorrect evidence with zero contribution and rolls back a failed ledger write', async () => {
-    const saved = await recordAttempt(client, learner, {
+  it('writes evidence with the answer and computes mastery without writes', async () => {
+    const input = {
       studySessionId: 'study-a',
       questionId: 'fr-a1-001@1:q1',
       submissionKey: 'wrong-response',
       evidenceKind: 'independent',
       answer: 'es'
-    });
+    } as const;
     await client.execute(
       "CREATE TRIGGER reject_mastery BEFORE INSERT ON skill_evidence BEGIN SELECT RAISE(ABORT, 'synthetic ledger failure'); END"
     );
-    await expect(getMastery(client, learner, 'fr')).rejects.toThrow(
+    await expect(recordAttempt(client, learner, input)).rejects.toThrow(
       'synthetic ledger failure'
     );
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT * FROM attempts WHERE submission_key = ?',
+          args: [input.submissionKey]
+        })
+      ).rows
+    ).toEqual([]);
     expect((await client.execute('SELECT * FROM skill_evidence')).rows).toEqual(
       []
     );
     await client.execute('DROP TRIGGER reject_mastery');
+    const saved = await recordAttempt(client, learner, input);
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (
+        await client.execute({
+          sql: 'SELECT contribution FROM skill_evidence WHERE attempt_id = ?',
+          args: [saved.id]
+        })
+      ).rows
+    ).toEqual([{ contribution: 0 }]);
+    await client.execute(
+      "CREATE TRIGGER reject_mastery BEFORE INSERT ON skill_evidence BEGIN SELECT RAISE(ABORT, 'synthetic ledger failure'); END"
+    );
+    expect(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({
@@ -101,13 +122,8 @@ describe('versioned grammar policy', () => {
       independentItems: 1
     });
     expect(
-      (
-        await client.execute({
-          sql: 'SELECT contribution FROM skill_evidence WHERE attempt_id = ?',
-          args: [saved.id]
-        })
-      ).rows
-    ).toEqual([{ contribution: 0 }]);
+      (await client.execute('SELECT * FROM skill_evidence')).rows
+    ).toHaveLength(1);
   });
 
   it('orders multiple suggested foundations and skips secure or unavailable prerequisites', () => {
@@ -220,12 +236,12 @@ describe('versioned grammar policy', () => {
       answer: 'suis'
     });
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ status: 'unknown', independentItems: 0 });
     expect(
-      (await getMastery(client, b, 'fr')).find(
+      (await computeMastery(client, b, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ status: 'unknown' });
@@ -233,7 +249,7 @@ describe('versioned grammar policy', () => {
       "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-b'"
     );
     expect(
-      (await getMastery(client, b, 'fr')).find(
+      (await computeMastery(client, b, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ status: 'practising', independentItems: 1 });
@@ -255,13 +271,13 @@ describe('versioned grammar policy', () => {
       evidenceKind: 'independent',
       answer: 'suis'
     });
-    const a = await getMastery(client, learner, 'fr');
+    const a = await computeMastery(client, learner, 'fr');
     expect(a.find((skill) => skill.skillId === 'fr-a1-001')).toMatchObject({
       correct: 1,
       independentItems: 1,
       policyVersion: 'grammar-1'
     });
-    expect(await getMastery(client, learner, 'fr')).toEqual(a);
+    expect(await computeMastery(client, learner, 'fr')).toEqual(a);
     const note = await seedBasicNote(client, learner);
     await approveNote(client, learner, note.id);
     await submitReview(client, learner, {
@@ -270,7 +286,7 @@ describe('versioned grammar policy', () => {
       expectedRevision: 0,
       rating: 'easy'
     });
-    expect(await getMastery(client, learner, 'fr')).toEqual(a);
+    expect(await computeMastery(client, learner, 'fr')).toEqual(a);
     expect(
       (
         await client.execute({
@@ -291,15 +307,15 @@ describe('versioned grammar policy', () => {
       evidenceKind: 'independent',
       answer: 'suis'
     });
-    expect(await getMastery(client, learner, 'fr')).toEqual(a);
-    await expect(getMastery(client, learner, 'de')).rejects.toMatchObject({
+    expect(await computeMastery(client, learner, 'fr')).toEqual(a);
+    await expect(loadProgress(client, learner, 'de')).rejects.toMatchObject({
       code: 'NOT_FOUND'
     });
   });
 
   it('lists the skill from the newest version that is not quarantined', async () => {
     const entry = async () =>
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       );
     const before = await entry();
@@ -336,7 +352,7 @@ describe('versioned grammar policy', () => {
       answer: 'yes'
     });
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ independentItems: 1 });
@@ -344,7 +360,7 @@ describe('versioned grammar policy', () => {
       "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
     );
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ independentItems: 0, status: 'unknown' });

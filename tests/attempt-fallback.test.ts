@@ -138,7 +138,8 @@ describe('AI fallback for unmatched typed answers', () => {
     expect(fallback).toHaveBeenCalledOnce();
   });
 
-  it('records an uncertain verdict and logs why', async () => {
+  it('records an uncertain verdict without adding mastery evidence', async () => {
+    const evidence = await count('skill_evidence');
     const fallback = vi.fn(async (): Promise<FallbackResult> => ({
       outcome: 'uncertain',
       reason: 'injection',
@@ -156,12 +157,14 @@ describe('AI fallback for unmatched typed answers', () => {
     expect(logged()).toEqual([
       { operation: 'ai-fallback', reason: 'injection' }
     ]);
+    expect(await count('skill_evidence')).toBe(evidence);
     expect(JSON.stringify(warn.mock.calls)).not.toContain('Ignore the rubric');
   });
 
   it.each(['timeout', 'provider-error', 'cap-reached'] as const)(
     'keeps no AI verdict after %s, marks the fallback settled and logs it',
     async (reason) => {
+      const evidence = await count('skill_evidence');
       const fallback = vi.fn(async (): Promise<FallbackResult> => ({
         outcome: 'uncertain',
         reason,
@@ -173,6 +176,7 @@ describe('AI fallback for unmatched typed answers', () => {
         fallback
       );
       expect(await evaluationsOf(recorded.id)).toEqual([prepared, noVerdict]);
+      expect(await count('skill_evidence')).toBe(evidence);
       expect(logged()).toEqual([{ operation: 'ai-fallback', reason }]);
     }
   );
@@ -202,13 +206,23 @@ describe('AI fallback for unmatched typed answers', () => {
     ]);
   });
 
-  it('changes no mastery evidence and creates no mistake card', async () => {
+  it('records an incorrect fallback verdict as mastery evidence and creates no mistake card', async () => {
     const evidence = await count('skill_evidence');
     const drafts = await count('card_drafts');
-    await attempt('fr-a1-002@1:q1', 'Nous voilà ici.', async () =>
-      answered('incorrect')
+    const recorded = await attempt(
+      'fr-a1-002@1:q1',
+      'Nous voilà ici.',
+      async () => answered('incorrect')
     );
-    expect(await count('skill_evidence')).toBe(evidence);
+    expect(await count('skill_evidence')).toBe(evidence + 1);
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT contribution FROM skill_evidence WHERE attempt_id = ?',
+          args: [recorded.id]
+        })
+      ).rows
+    ).toEqual([{ contribution: 0 }]);
     expect(await count('card_drafts')).toBe(drafts);
   });
 });
