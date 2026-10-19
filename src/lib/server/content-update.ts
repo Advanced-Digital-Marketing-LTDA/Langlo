@@ -3,7 +3,8 @@ import type { Client, Transaction } from '@libsql/client';
 import {
   ContentImportError,
   type ContentPackage,
-  type QuestionChange
+  type QuestionChange,
+  type SkillRetirement
 } from './content-import';
 import { effectiveLineageKey } from './lineage';
 
@@ -75,8 +76,7 @@ export type VersionPlan = {
   level: BumpLevel;
 };
 
-/** Package-only checks of the declarations and retirements. */
-export function validateDeclarations(pkg: ContentPackage) {
+function checkQuestionDeclarations(pkg: ContentPackage) {
   for (const version of pkg.versions)
     for (const question of version.questions) {
       if (question.change === 'same' && question.continues === undefined)
@@ -84,24 +84,36 @@ export function validateDeclarations(pkg: ContentPackage) {
       if (question.change !== 'same' && question.continues !== undefined)
         fail('INVALID_CHANGE', `${question.id} continues without being same`);
     }
+}
+
+function checkRetirementEntry(
+  retirement: SkillRetirement,
+  retired: Set<string>
+) {
+  if (retired.has(retirement.skillId))
+    fail('INVALID_RETIREMENT', `${retirement.skillId} listed twice`);
+  retired.add(retirement.skillId);
+  if (retirement.carry === true && retirement.replacedBy === undefined)
+    fail('INVALID_RETIREMENT', `${retirement.skillId} carries no skill over`);
+  if (retirement.replacedBy === retirement.skillId)
+    fail('INVALID_RETIREMENT', `${retirement.skillId} replaces itself`);
+}
+
+function checkRetiredAbsent(pkg: ContentPackage, retired: Set<string>) {
+  const skill = pkg.skills.find((entry) => retired.has(entry.id));
+  const version = pkg.versions.find((entry) => retired.has(entry.skillId));
+  const clash = skill?.id ?? version?.skillId;
+  if (clash !== undefined)
+    fail('INVALID_RETIREMENT', `${clash} is retired and still in the package`);
+}
+
+/** Package-only checks of the declarations and retirements. */
+export function validateDeclarations(pkg: ContentPackage) {
+  checkQuestionDeclarations(pkg);
   const retired = new Set<string>();
-  for (const retirement of pkg.retirements ?? []) {
-    if (retired.has(retirement.skillId))
-      fail('INVALID_RETIREMENT', `${retirement.skillId} listed twice`);
-    retired.add(retirement.skillId);
-    if (retirement.carry === true && retirement.replacedBy === undefined)
-      fail('INVALID_RETIREMENT', `${retirement.skillId} carries no skill over`);
-    if (retirement.replacedBy === retirement.skillId)
-      fail('INVALID_RETIREMENT', `${retirement.skillId} replaces itself`);
-  }
-  const clash =
-    pkg.skills.find((skill) => retired.has(skill.id)) ??
-    pkg.versions.find((version) => retired.has(version.skillId));
-  if (clash)
-    fail(
-      'INVALID_RETIREMENT',
-      `${'skillId' in clash ? clash.skillId : clash.id} is retired and still in the package`
-    );
+  for (const retirement of pkg.retirements ?? [])
+    checkRetirementEntry(retirement, retired);
+  checkRetiredAbsent(pkg, retired);
 }
 
 /** Decide lineage keys, removals and the bump level for one new version. */
@@ -266,6 +278,23 @@ export function checkBump(
     );
 }
 
+/** The retired skill and its replacement must exist and share a language. */
+function checkRetirementTarget(
+  retirement: SkillRetirement,
+  known: Map<string, { language: string }>,
+  stored: { rows: unknown[] }
+) {
+  const skill = known.get(retirement.skillId);
+  if (skill === undefined || stored.rows.length === 0)
+    fail('MISSING_REFERENCE', `retired skill ${retirement.skillId}`);
+  if (retirement.replacedBy === undefined) return;
+  const replacement = known.get(retirement.replacedBy);
+  if (replacement === undefined)
+    fail('MISSING_REFERENCE', `replacement ${retirement.replacedBy}`);
+  if (replacement.language !== skill.language)
+    fail('INVALID_RETIREMENT', `${retirement.skillId} changes language`);
+}
+
 /** Apply the package's retirements; returns how many skills were newly retired. */
 export async function applyRetirements(
   tx: Transaction,
@@ -274,20 +303,11 @@ export async function applyRetirements(
   set: ChangeSet
 ) {
   for (const retirement of pkg.retirements ?? []) {
-    const skill = known.get(retirement.skillId);
     const stored = await tx.execute({
       sql: 'SELECT retired_at, replaced_by, carry_progress FROM skills WHERE id = ?',
       args: [retirement.skillId]
     });
-    if (skill === undefined || stored.rows.length === 0)
-      fail('MISSING_REFERENCE', `retired skill ${retirement.skillId}`);
-    if (retirement.replacedBy !== undefined) {
-      const replacement = known.get(retirement.replacedBy);
-      if (replacement === undefined)
-        fail('MISSING_REFERENCE', `replacement ${retirement.replacedBy}`);
-      if (replacement?.language !== skill.language)
-        fail('INVALID_RETIREMENT', `${retirement.skillId} changes language`);
-    }
+    checkRetirementTarget(retirement, known, stored);
     const [row] = stored.rows;
     const replacedBy = retirement.replacedBy ?? null;
     const carry = retirement.carry === true ? 1 : null;

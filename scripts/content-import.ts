@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import type { Client } from '@libsql/client';
 import {
   ContentImportError,
+  type ContentPackage,
   importContent,
   validatePackage
 } from '../src/lib/server/content-import.ts';
@@ -50,6 +51,72 @@ function parseTarget(env: Record<string, string | undefined>): Target {
   return { url: `libsql://${host}`, host, authToken };
 }
 
+function argsAreValid(argv: string[]) {
+  if (argv.length === 0) return true;
+  const mode = argv[0];
+  return (
+    (mode === '--apply' || mode === '--impact') &&
+    argv.length === 3 &&
+    argv[1] === '--confirm-host'
+  );
+}
+
+/** Open the confirmed target and refuse unless every migration is applied. */
+async function openMigrated(
+  open: Open,
+  env: Record<string, string | undefined>,
+  confirmHost: string | undefined
+) {
+  const target = parseTarget(env);
+  if (confirmHost !== target.host)
+    throw new ScriptError(
+      '--confirm-host does not match the DATABASE_URL host'
+    );
+  const client = await open(target.url, target.authToken);
+  try {
+    await client.execute('SELECT 1');
+    const state = await readMigrationState(
+      client,
+      loadMigrations(),
+      target.host
+    );
+    if (!state.ledgerPresent || state.pending.length > 0)
+      throw new ScriptError(
+        `migrations pending: ${state.pending.map((m) => m.tag).join(', ') || 'all'}; apply them first`
+      );
+  } catch (error) {
+    client.close();
+    throw error;
+  }
+  return { client, host: target.host };
+}
+
+/** Only our own fixed messages and error codes; never driver errors that may carry the URL. */
+function failureLine(error: unknown) {
+  const known =
+    error instanceof ScriptError ||
+    error instanceof ContentImportError ||
+    error instanceof RemoteMigrationError;
+  return `Content import failed. ${known ? (error as Error).message : 'UNEXPECTED: nothing was confirmed written'}`;
+}
+
+async function writeImpact(
+  client: Client,
+  pkg: ContentPackage,
+  host: string,
+  write: (line: string) => void
+) {
+  const lines = await contentImpact(client, pkg);
+  write(`target host: ${host}`);
+  if (lines.length === 0)
+    write('impact: no learner answers would stop counting');
+  for (const line of lines)
+    write(
+      `impact: ${line.skillId}: ${line.reason}; ${line.answers} independent answer(s) by ${line.learners} learner(s) would stop counting`
+    );
+  write('impact report only: nothing written');
+}
+
 /**
  * Import every authored module into the shared content tables. Dry run by
  * default: builds and counts the package only. Never prints the URL or token.
@@ -61,13 +128,8 @@ export async function runContentImport(
   open: Open = openClient,
   root = process.cwd()
 ): Promise<number> {
-  const apply = argv[0] === '--apply';
   const impact = argv[0] === '--impact';
-  const confirmHost = argv[2];
-  if (!(
-    argv.length === 0 ||
-    ((apply || impact) && argv.length === 3 && argv[1] === '--confirm-host')
-  )) {
+  if (!argsAreValid(argv)) {
     write(usage);
     return 1;
   }
@@ -80,53 +142,24 @@ export async function runContentImport(
     write(
       `package ${pkg.curriculumVersion}: ${pkg.skills.length} skills, ${pkg.versions.length} lessons, ${questions} questions`
     );
-    if (!apply && !impact) {
+    if (argv.length === 0) {
       write('dry run: nothing written');
       return 0;
     }
-    const target = parseTarget(env);
-    if (confirmHost !== target.host)
-      throw new ScriptError(
-        '--confirm-host does not match the DATABASE_URL host'
-      );
-    client = await open(target.url, target.authToken);
-    await client.execute('SELECT 1');
-    const state = await readMigrationState(
-      client,
-      loadMigrations(),
-      target.host
-    );
-    if (!state.ledgerPresent || state.pending.length > 0)
-      throw new ScriptError(
-        `migrations pending: ${state.pending.map((m) => m.tag).join(', ') || 'all'}; apply them first`
-      );
+    const opened = await openMigrated(open, env, argv[2]);
+    client = opened.client;
     if (impact) {
-      const lines = await contentImpact(client, pkg);
-      write(`target host: ${target.host}`);
-      if (lines.length === 0)
-        write('impact: no learner answers would stop counting');
-      for (const line of lines)
-        write(
-          `impact: ${line.skillId}: ${line.reason}; ${line.answers} independent answer(s) by ${line.learners} learner(s) would stop counting`
-        );
-      write('impact report only: nothing written');
+      await writeImpact(client, pkg, opened.host, write);
       return 0;
     }
     const result = await importContent(client, pkg);
-    write(`target host: ${target.host}`);
+    write(`target host: ${opened.host}`);
     write(
       `imported ${result.skills} skills, ${result.prerequisites} prerequisites, ${result.versions} lessons, ${result.questions} questions, ${result.quarantined} quarantined`
     );
     return 0;
   } catch (error) {
-    // Only our own fixed messages and error codes; never driver errors that may carry the URL.
-    const known =
-      error instanceof ScriptError ||
-      error instanceof ContentImportError ||
-      error instanceof RemoteMigrationError;
-    write(
-      `Content import failed. ${known ? (error as Error).message : 'UNEXPECTED: nothing was confirmed written'}`
-    );
+    write(failureLine(error));
     return 1;
   } finally {
     client?.close();

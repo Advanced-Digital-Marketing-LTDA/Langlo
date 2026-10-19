@@ -67,11 +67,8 @@ function carriedTo(skillId: string, carry: Map<string, string>) {
   return target;
 }
 
-/** First response to a logical item wins, across sessions and content versions. */
-export function qualifyingGrammarEvidence(
-  rows: Row[],
-  current?: CurrentContent
-) {
+/** Evaluation rows grouped per attempt, oldest attempt first. */
+function attemptsInOrder(rows: Row[]) {
   const grouped = new Map<string, Row[]>();
   for (const row of rows) {
     const id = String(row.attempt_id);
@@ -79,12 +76,30 @@ export function qualifyingGrammarEvidence(
     if (existing) existing.push(row);
     else grouped.set(id, [row]);
   }
-  const attempts = [...grouped.values()].sort(
+  return [...grouped.values()].sort(
     (a, b) =>
       Number(a[0].created_at) - Number(b[0].created_at) ||
       Number(a[0].sequence) - Number(b[0].sequence) ||
       String(a[0].attempt_id).localeCompare(String(b[0].attempt_id))
   );
+}
+
+/** Whether the attempt itself may count as independent grammar evidence. */
+function isIndependentEvidence(row: Row) {
+  return !(
+    row.evidence_kind !== 'independent' ||
+    row.not_sure ||
+    row.status === 'quarantined' ||
+    (row.mode === 'assessment' && row.state !== 'completed')
+  );
+}
+
+/** First response to a logical item wins, across sessions and content versions. */
+export function qualifyingGrammarEvidence(
+  rows: Row[],
+  current?: CurrentContent
+) {
+  const attempts = attemptsInOrder(rows);
   const seen = new Set<string>();
   const qualified: {
     attemptId: string;
@@ -108,13 +123,7 @@ export function qualifyingGrammarEvidence(
     const key = JSON.stringify([countsFor, itemKey]);
     if (seen.has(key)) continue;
     seen.add(key);
-    if (
-      row.evidence_kind !== 'independent' ||
-      row.not_sure ||
-      row.status === 'quarantined' ||
-      (row.mode === 'assessment' && row.state !== 'completed')
-    )
-      continue;
+    if (!isIndependentEvidence(row)) continue;
     const evaluation = feedbackEvaluation(
       evaluations,
       String(row.content_version_id)
