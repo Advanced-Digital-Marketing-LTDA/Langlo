@@ -1,7 +1,4 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import type { Client } from '@libsql/client';
-import type { RuntimeConfig } from '../src/lib/server/config';
-import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
   createDeck,
@@ -20,57 +17,16 @@ import {
   updateNote,
   rejectNote
 } from '../src/lib/server/mistake-cards';
+import { disposeFlashcardFixtures } from './fixtures/flashcards';
 import {
-  disposeFlashcardFixtures,
-  fixture,
-  testSession
-} from './fixtures/flashcards';
-import { POST as createDraft } from '../src/routes/app/api/attempts/[id]/card/+server';
-import { PATCH as editDraft } from '../src/routes/app/api/notes/[id]/+server';
-import { POST as rejectDraft } from '../src/routes/app/api/notes/[id]/reject/+server';
-import { actions as deckActions } from '../src/routes/app/decks/[id]/+page.server';
-import {
-  actions as resultsActions,
-  load as resultsLoad
-} from '../src/routes/app/session/[id]/results/+page.server';
+  attemptId,
+  learner,
+  noteCounts,
+  other,
+  setupMistakeCardFixture as setup
+} from './fixtures/mistake-cards';
 
 afterEach(disposeFlashcardFixtures);
-
-const learner = testSession('learner-a');
-const other = testSession('learner-b');
-const attemptId = 'attempt-a';
-
-/**
- * The seeded practice attempt is given a checked prompt, answer and lesson so
- * a contextual draft can be generated. The seeded evaluation is `incorrect`.
- */
-async function setup() {
-  const target = await fixture();
-  const db = await openFixtureDatabase(target);
-  await db.client.execute(
-    "UPDATE questions SET prompt = 'Je ___ étudiant.', answer = 'suis' WHERE id = 'question-1'"
-  );
-  await db.client.execute({
-    sql: "INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) VALUES ('content-v1', 'fr-articles', 'fr', 'Le présent', ?, '[]', '[]', ?)",
-    args: [
-      'Use the present tense of être: je suis. The blank needs the conjugated form, not the infinitive.',
-      'a'.repeat(64)
-    ]
-  });
-  return { db, target };
-}
-
-async function noteCounts(client: Client) {
-  const result = await client.batch(
-    [
-      'SELECT count(*) AS total FROM native_flashcard_notes',
-      'SELECT count(*) AS total FROM native_flashcards',
-      'SELECT count(*) AS total FROM native_flashcard_review_events'
-    ],
-    'read'
-  );
-  return result.map((query) => Number(query.rows[0].total));
-}
 
 const refusalCases = [
   {
@@ -617,6 +573,24 @@ describe('mistake-card editing and rejection', () => {
     }
   });
 
+  it('rejects a cloze answer containing a hint separator', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "UPDATE questions SET answer = 'suis::hint' WHERE id = 'question-1'"
+      );
+      await expect(
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'cloze'
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_CLOZE' });
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
   it('keeps the fallback verdict authoritative over a newer prepared one', async () => {
     const { db } = await setup();
     try {
@@ -640,6 +614,144 @@ describe('mistake-card editing and rejection', () => {
     }
   });
 
+  it('rejects source metadata that does not match an owner-bound attempt', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-prov', 'learner-a', 'Prov')"
+      );
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-prov-b', 'learner-b', 'Prov B')"
+      );
+      const insert = (
+        id: string,
+        sourceId: string,
+        owner: string,
+        deck: string,
+        skill: string
+      ) =>
+        db.client.execute({
+          sql: 'INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, source_attempt_id, source_skill_id, source_content_version_id) VALUES (?, ?, ?, ?, \'basic\', \'{"front":"a","back":"b"}\', \'attempt-a\', ?, \'content-v1\')',
+          args: [id, `langlo:v1:${sourceId}`, owner, deck, skill]
+        });
+      await expect(
+        insert(
+          'note-prov-skill',
+          '7'.repeat(64),
+          'learner-a',
+          'deck-prov',
+          'other-skill'
+        )
+      ).rejects.toThrow(/owner attempt/u);
+      await expect(
+        insert(
+          'note-prov-owner',
+          '8'.repeat(64),
+          'learner-b',
+          'deck-prov-b',
+          'fr-articles'
+        )
+      ).rejects.toThrow(/owner attempt/u);
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rejects a direct insert with a mismatched source content version', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-version', 'learner-a', 'Version')"
+      );
+      await expect(
+        db.client.execute({
+          sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, source_attempt_id, source_skill_id, source_content_version_id) VALUES ('note-version', ?, 'learner-a', 'deck-version', 'basic', '{\"front\":\"a\",\"back\":\"b\"}', 'attempt-a', 'fr-articles', 'content-v2')",
+          args: [`langlo:v1:${'9'.repeat(64)}`]
+        })
+      ).rejects.toThrow(/owner attempt/u);
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rejects source updates to owner-, skill- or content-mismatched attempts', async () => {
+    const { db } = await setup();
+    try {
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      await db.client.execute(
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-b', 'learner-b', 'study-b', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-b', 'independent', 'un')"
+      );
+      for (const update of [
+        "UPDATE native_flashcard_notes SET source_skill_id = 'other-skill' WHERE id = ?",
+        "UPDATE native_flashcard_notes SET source_content_version_id = 'content-v2' WHERE id = ?",
+        "UPDATE native_flashcard_notes SET source_attempt_id = 'attempt-b' WHERE id = ?"
+      ]) {
+        await expect(db.client.execute(update, [draft.id])).rejects.toThrow(
+          /owner attempt/u
+        );
+      }
+      expect((await getNote(db.client, learner, draft.id)).source).toEqual({
+        attemptId,
+        skillId: 'fr-articles',
+        contentVersionId: 'content-v1'
+      });
+    } finally {
+      db.close();
+    }
+  });
+
+  it('accepts valid source metadata after migration 0021', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-valid', 'learner-a', 'Valid')"
+      );
+      await db.client.execute({
+        sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, source_attempt_id, source_skill_id, source_content_version_id) VALUES ('note-valid', ?, 'learner-a', 'deck-valid', 'basic', '{\"front\":\"a\",\"back\":\"b\"}', 'attempt-a', 'fr-articles', 'content-v1')",
+        args: [`langlo:v1:${'a'.repeat(64)}`]
+      });
+      expect(
+        (
+          await db.client.execute(
+            "SELECT source_attempt_id, source_skill_id, source_content_version_id FROM native_flashcard_notes WHERE id = 'note-valid'"
+          )
+        ).rows[0]
+      ).toEqual({
+        source_attempt_id: attemptId,
+        source_skill_id: 'fr-articles',
+        source_content_version_id: 'content-v1'
+      });
+    } finally {
+      db.close();
+    }
+  });
+
+  it('revalidates provenance when a note owner is reassigned', async () => {
+    const { db } = await setup();
+    try {
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      await expect(
+        db.client.execute(
+          'UPDATE native_flashcard_notes SET owner_id = ? WHERE id = ?',
+          [other.userId, draft.id]
+        )
+      ).rejects.toThrow(/owner attempt/u);
+      expect(
+        (await getNote(db.client, learner, draft.id)).source
+      ).toMatchObject({ attemptId });
+    } finally {
+      db.close();
+    }
+  });
+
   it('rejects partially persisted source metadata from direct SQL', async () => {
     const { db } = await setup();
     try {
@@ -651,7 +763,7 @@ describe('mistake-card editing and rejection', () => {
           sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, status, source_attempt_id) VALUES ('note-direct-partial', ?, 'learner-a', 'deck-direct', 'basic', '{\"front\":\"a\",\"back\":\"b\"}', 'draft', 'attempt-a')",
           args: [`langlo:v1:${'2'.repeat(64)}`]
         })
-      ).rejects.toThrow(/source fields/u);
+      ).rejects.toThrow(/source fields|owner attempt/u);
 
       await db.client.execute({
         sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json) VALUES ('note-direct-null', ?, 'learner-a', 'deck-direct', 'basic', '{\"front\":\"a\",\"back\":\"b\"}')",
@@ -784,330 +896,6 @@ describe('mistake-card editing and rejection', () => {
       await expect(
         approveNote(db.client, learner, draft.id)
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
-    } finally {
-      db.close();
-    }
-  });
-});
-
-describe('mistake-card draft endpoints', () => {
-  function event(
-    options: {
-      userId?: string;
-      params?: Record<string, string>;
-      body?: Record<string, unknown>;
-      method?: string;
-      databaseUrl?: string;
-    } = {}
-  ) {
-    return {
-      params: options.params ?? {},
-      locals: {
-        user: { id: options.userId ?? learner.userId },
-        session: { userId: options.userId ?? learner.userId },
-        config: {
-          dataEnabled: true,
-          databaseUrl: options.databaseUrl
-        } as RuntimeConfig
-      },
-      request: new Request('http://127.0.0.1/app/api/test', {
-        method: options.method ?? 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(options.body ?? {})
-      })
-    } as never;
-  }
-
-  it('creates, edits and rejects through the authenticated endpoints', async () => {
-    const { db, target } = await setup();
-    try {
-      const created = await createDraft(
-        event({
-          params: { id: attemptId },
-          body: { format: 'basic' },
-          databaseUrl: target.databaseUrl
-        })
-      );
-      expect(created.status).toBe(201);
-      const { note } = (await created.json()) as {
-        note: { id: string; status: string };
-      };
-      expect(note.status).toBe('draft');
-
-      const edited = await editDraft(
-        event({
-          params: { id: note.id },
-          method: 'PATCH',
-          body: {
-            kind: 'basic',
-            content: { front: 'Je ___ étudiant.', back: 'suis' },
-            explanation: 'Use être.'
-          },
-          databaseUrl: target.databaseUrl
-        })
-      );
-      expect(edited.status).toBe(200);
-      expect(await edited.json()).toMatchObject({
-        note: {
-          id: note.id,
-          content: { front: 'Je ___ étudiant.', back: 'suis' },
-          explanation: 'Use être.'
-        }
-      });
-
-      const rejected = await rejectDraft(
-        event({
-          params: { id: note.id },
-          databaseUrl: target.databaseUrl
-        })
-      );
-      expect(rejected.status).toBe(200);
-      expect(await rejected.json()).toMatchObject({
-        id: note.id,
-        status: 'rejected'
-      });
-
-      let foreign: unknown;
-      try {
-        foreign = await editDraft(
-          event({
-            userId: other.userId,
-            params: { id: note.id },
-            method: 'PATCH',
-            body: {
-              kind: 'basic',
-              content: { front: 'a', back: 'b' }
-            },
-            databaseUrl: target.databaseUrl
-          })
-        );
-      } catch (thrown) {
-        foreign = thrown;
-      }
-      expect(foreign).toMatchObject({ status: 404 });
-      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
-    } finally {
-      db.close();
-    }
-  });
-
-  it('requires a signed-in learner before reading a request body', async () => {
-    const { db, target } = await setup();
-    try {
-      await expect(
-        createDraft({
-          params: { id: attemptId },
-          locals: { user: null, session: null, config: {} },
-          request: new Request('http://127.0.0.1/app/api/test', {
-            method: 'POST',
-            body: '{not json'
-          })
-        } as never)
-      ).rejects.toMatchObject({ status: 401 });
-      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
-    } finally {
-      db.close();
-      void target;
-    }
-  });
-});
-
-describe('mistake-card pages', () => {
-  function formEvent(
-    options: {
-      userId?: string;
-      params?: Record<string, string>;
-      fields?: Record<string, string>;
-      databaseUrl?: string;
-    } = {}
-  ) {
-    const form = new FormData();
-    for (const [key, value] of Object.entries(options.fields ?? {}))
-      form.set(key, value);
-    const userId = options.userId ?? learner.userId;
-    return {
-      params: options.params ?? {},
-      locals: {
-        user: { id: userId },
-        session: { userId },
-        config: {
-          dataEnabled: true,
-          databaseUrl: options.databaseUrl
-        } as RuntimeConfig
-      },
-      request: new Request('http://127.0.0.1/app', {
-        method: 'POST',
-        body: form
-      })
-    } as never;
-  }
-
-  it('rejects missing deck form fields before touching notes', async () => {
-    const { db, target } = await setup();
-    try {
-      const event = (fields: Record<string, string>) =>
-        formEvent({
-          params: { id: 'deck-missing' },
-          fields,
-          databaseUrl: target.databaseUrl
-        });
-      expect(await deckActions.edit(event({}))).toMatchObject({ status: 400 });
-      expect(
-        await deckActions.edit(event({ kind: 'basic', noteId: 'note-missing' }))
-      ).toMatchObject({ status: 404 });
-      expect(
-        await deckActions.edit(event({ kind: 'cloze', noteId: 'note-missing' }))
-      ).toMatchObject({ status: 404 });
-      expect(await deckActions.approve(event({}))).toMatchObject({
-        status: 404
-      });
-      expect(await deckActions.reject(event({}))).toMatchObject({
-        status: 404
-      });
-      expect(await deckActions.addNote(event({}))).toMatchObject({
-        status: 400
-      });
-      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
-    } finally {
-      db.close();
-    }
-  });
-
-  it('keeps a results-page mistake and edits it on the deck page', async () => {
-    const { db, target } = await setup();
-    try {
-      const loaded = (await resultsLoad(
-        formEvent({
-          params: { id: 'study-a' },
-          databaseUrl: target.databaseUrl
-        })
-      )) as { mistakes: Array<{ attemptId: string }> };
-      expect(loaded.mistakes).toEqual([expect.objectContaining({ attemptId })]);
-      expect(
-        await resultsActions.keep(
-          formEvent({
-            fields: { attemptId, format: 'basic' },
-            databaseUrl: target.databaseUrl
-          })
-        )
-      ).toEqual({ saved: true });
-      expect(
-        await resultsActions.keep(
-          formEvent({ databaseUrl: target.databaseUrl })
-        )
-      ).toMatchObject({ status: 404 });
-
-      const noteRow = (
-        await db.client.execute(
-          'SELECT id, deck_id FROM native_flashcard_notes WHERE owner_id = ?',
-          [learner.userId]
-        )
-      ).rows[0];
-      const noteId = String(noteRow.id);
-      const deckId = String(noteRow.deck_id);
-      expect(
-        await deckActions.edit(
-          formEvent({
-            params: { id: deckId },
-            fields: {
-              noteId,
-              kind: 'basic',
-              front: 'Je ___ étudiant.',
-              back: 'suis',
-              explanation: 'Use être.'
-            },
-            databaseUrl: target.databaseUrl
-          })
-        )
-      ).toEqual({ saved: true });
-      expect((await getNote(db.client, learner, noteId)).explanation).toBe(
-        'Use être.'
-      );
-      expect(
-        await deckActions.edit(
-          formEvent({
-            params: { id: deckId },
-            fields: { noteId, kind: 'other' },
-            databaseUrl: target.databaseUrl
-          })
-        )
-      ).toMatchObject({
-        status: 400,
-        data: { message: expect.stringContaining('basic front/back') }
-      });
-    } finally {
-      db.close();
-    }
-  });
-
-  it('adds and edits a cloze note on the deck page', async () => {
-    const { db, target } = await setup();
-    try {
-      const deckId = 'deck-page-cloze';
-      await createDeck(db.client, learner, { id: deckId, name: 'Cloze' });
-      expect(
-        await deckActions.addNote(
-          formEvent({
-            params: { id: deckId },
-            fields: {
-              kind: 'cloze',
-              text: 'Je {{c1::suis}} ici',
-              explanation: 'Cloze note'
-            },
-            databaseUrl: target.databaseUrl
-          })
-        )
-      ).toEqual({ saved: true });
-      const noteId = String(
-        (
-          await db.client.execute(
-            "SELECT id FROM native_flashcard_notes WHERE owner_id = ? AND kind = 'cloze'",
-            [learner.userId]
-          )
-        ).rows[0].id
-      );
-      expect(
-        await deckActions.edit(
-          formEvent({
-            params: { id: deckId },
-            fields: {
-              noteId,
-              kind: 'cloze',
-              text: 'Je {{c1::suis}} ici.',
-              explanation: 'Cloze note edited'
-            },
-            databaseUrl: target.databaseUrl
-          })
-        )
-      ).toEqual({ saved: true });
-      expect((await getNote(db.client, learner, noteId)).content).toEqual({
-        text: 'Je {{c1::suis}} ici.'
-      });
-    } finally {
-      db.close();
-    }
-  });
-
-  it('rejects a kept mistake on the deck page', async () => {
-    const { db, target } = await setup();
-    try {
-      const draft = await createMistakeDraft(db.client, learner, {
-        attemptId,
-        format: 'basic'
-      });
-      const note = await getNote(db.client, learner, draft.id);
-      expect(
-        await deckActions.reject(
-          formEvent({
-            params: { id: note.deckId },
-            fields: { noteId: draft.id },
-            databaseUrl: target.databaseUrl
-          })
-        )
-      ).toEqual({ saved: true });
-      expect((await getNote(db.client, learner, draft.id)).status).toBe(
-        'rejected'
-      );
     } finally {
       db.close();
     }

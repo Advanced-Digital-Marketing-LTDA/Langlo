@@ -162,7 +162,7 @@ function draftContent(row: MistakeRow, format: DraftFormat): DraftContent {
   const answer = row.expectedAnswer as string;
   if (format === 'basic')
     return { kind: 'basic' as const, content: { front: prompt, back: answer } };
-  if (!prompt.includes(clozeBlank) || /[{}]/u.test(answer))
+  if (!prompt.includes(clozeBlank) || /[{}]|::/u.test(answer))
     throw new FlashcardError('INVALID_CLOZE');
   // The callback keeps `$&`, `$'` and similar sequences in the checked answer
   // literal instead of letting String.replace expand them.
