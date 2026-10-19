@@ -6,6 +6,7 @@ import {
   createDeck,
   createNote,
   getNote,
+  listReviewEvents,
   submitReview
 } from '../src/lib/server/flashcards';
 import {
@@ -19,6 +20,45 @@ import {
 afterEach(disposeFlashcardFixtures);
 
 describe('native flashcard persistence feasibility', () => {
+  it('keeps draft notes out of scheduler state until approval', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      const note = await seedBasicNote(db.client, learner);
+      expect(
+        (
+          await db.client.execute(
+            'SELECT count(*) AS count FROM native_flashcards'
+          )
+        ).rows[0].count
+      ).toBe(0);
+      await expect(getNote(db.client, learner, note.id)).resolves.toMatchObject(
+        {
+          status: 'draft',
+          card: null
+        }
+      );
+
+      await approveNote(db.client, learner, note.id);
+      await expect(getNote(db.client, learner, note.id)).resolves.toMatchObject(
+        {
+          status: 'approved',
+          card: { id: note.cardId, revision: 0 }
+        }
+      );
+      expect(
+        (
+          await db.client.execute(
+            'SELECT count(*) AS count FROM native_flashcards'
+          )
+        ).rows[0].count
+      ).toBe(1);
+    } finally {
+      db.close();
+    }
+  });
+
   it('keeps two learners’ identical content as separate notes and cards', async () => {
     const target = await fixture();
     const ownerA = testSession('learner-a');
@@ -55,7 +95,7 @@ describe('native flashcard persistence feasibility', () => {
             'SELECT count(*) AS count FROM native_flashcards'
           )
         ).rows[0].count
-      ).toBe(2);
+      ).toBe(0);
       await expect(
         getNote(db.client, ownerA, 'note-identical-b')
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
@@ -109,7 +149,7 @@ describe('native flashcard persistence feasibility', () => {
       });
       const firstReview = await submitReview(second.client, ownerAReloaded, {
         cardId: 'card:note-10000000-0000-4000-8000-000000000001',
-        submissionId: 'review-10000000-0000-4000-8000-000000000008',
+        submissionId: '10000000-0000-4000-8000-000000000008',
         expectedRevision: 0,
         rating: 'good'
       });
@@ -142,7 +182,7 @@ describe('native flashcard persistence feasibility', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: note.cardId,
-          submissionId: 'review-10000000-0000-4000-8000-000000000001',
+          submissionId: '10000000-0000-4000-8000-000000000001',
           expectedRevision: 0,
           rating: 'good'
         })
@@ -152,12 +192,15 @@ describe('native flashcard persistence feasibility', () => {
       const submittedAt = Date.now();
       const review = {
         cardId: note.cardId,
-        submissionId: 'review-10000000-0000-4000-8000-000000000001',
+        submissionId: 'a0000000-0000-4000-8000-000000000001',
         expectedRevision: 0,
         rating: 'good' as const
       };
       const first = await submitReview(db.client, learner, review);
-      const retry = await submitReview(db.client, learner, review);
+      const retry = await submitReview(db.client, learner, {
+        ...review,
+        submissionId: review.submissionId.toUpperCase()
+      });
       expect(retry).toMatchObject({
         duplicate: true,
         revision: first.revision
@@ -180,7 +223,7 @@ describe('native flashcard persistence feasibility', () => {
       await expect(
         submitReview(db.client, learner, {
           ...review,
-          submissionId: 'review-10000000-0000-4000-8000-000000000002',
+          submissionId: '10000000-0000-4000-8000-000000000002',
           expectedRevision: 0,
           rating: 'again'
         })
@@ -190,7 +233,23 @@ describe('native flashcard persistence feasibility', () => {
         revision: 1,
         schedulerVersion: 'ts-fsrs@5.4.2'
       });
-      expect(persisted.card.dueAt).toBeGreaterThan(submittedAt);
+      expect(persisted.card!.dueAt).toBeGreaterThan(submittedAt);
+      await expect(
+        listReviewEvents(db.client, learner, note.cardId)
+      ).resolves.toMatchObject([
+        {
+          id: review.submissionId,
+          state: persisted.card!.state
+        }
+      ]);
+      expect(
+        (
+          await db.client.execute({
+            sql: 'SELECT state_json FROM native_flashcard_review_events WHERE owner_id = ? AND id = ?',
+            args: [learner.userId, review.submissionId]
+          })
+        ).rows[0].state_json
+      ).toBe(JSON.stringify(persisted.card!.state));
     } finally {
       db.close();
     }
@@ -204,7 +263,7 @@ describe('native flashcard persistence feasibility', () => {
       const note = await seedBasicNote(db.client, learner);
       await approveNote(db.client, learner, note.id);
       const submittedAt = Date.now();
-      const submissionId = 'review-10000000-0000-4000-8000-000000000001';
+      const submissionId = '10000000-0000-4000-8000-000000000001';
       await submitReview(db.client, learner, {
         cardId: note.cardId,
         submissionId,
@@ -244,7 +303,7 @@ describe('native flashcard persistence feasibility', () => {
           args: [
             1,
             ...replacementArgs(
-              'review-10000000-0000-4000-8000-000000000099',
+              '10000000-0000-4000-8000-000000000099',
               submittedAt + 2
             )
           ],
@@ -267,7 +326,7 @@ describe('native flashcard persistence feasibility', () => {
         revision: 1,
         schedulerVersion: 'ts-fsrs@5.4.2'
       });
-      expect(persisted.card.dueAt).toBeGreaterThan(submittedAt);
+      expect(persisted.card!.dueAt).toBeGreaterThan(submittedAt);
     } finally {
       db.close();
     }
@@ -348,7 +407,7 @@ describe('native flashcard persistence feasibility', () => {
       await expect(
         submitReview(db.client, ownerB, {
           cardId: note.cardId,
-          submissionId: 'review-10000000-0000-4000-8000-000000000003',
+          submissionId: '10000000-0000-4000-8000-000000000003',
           expectedRevision: 0,
           rating: 'easy'
         })
@@ -361,7 +420,9 @@ describe('native flashcard persistence feasibility', () => {
           )
         ).rows
       ).toEqual(evidenceBefore);
-      expect((await getNote(db.client, ownerA, note.id)).card.revision).toBe(0);
+      expect((await getNote(db.client, ownerA, note.id)).card?.revision).toBe(
+        0
+      );
     } finally {
       db.close();
     }
@@ -390,7 +451,7 @@ describe('native flashcard persistence feasibility', () => {
       );
       const review = {
         cardId: note.cardId,
-        submissionId: 'review-10000000-0000-4000-8000-000000000030',
+        submissionId: '10000000-0000-4000-8000-000000000030',
         expectedRevision: 0,
         rating: 'good' as const
       };
@@ -414,7 +475,7 @@ describe('native flashcard persistence feasibility', () => {
         revision: 1,
         duplicate: false
       });
-      expect((await getNote(db.client, learner, note.id)).card.revision).toBe(
+      expect((await getNote(db.client, learner, note.id)).card?.revision).toBe(
         1
       );
     } finally {
@@ -446,12 +507,12 @@ describe('native flashcard persistence feasibility', () => {
       const results = await Promise.allSettled([
         submitReview(db.client, learner, {
           ...common,
-          submissionId: 'review-10000000-0000-4000-8000-000000000006',
+          submissionId: '10000000-0000-4000-8000-000000000006',
           rating: 'good'
         }),
         submitReview(db.client, learner, {
           ...common,
-          submissionId: 'review-10000000-0000-4000-8000-000000000007',
+          submissionId: '10000000-0000-4000-8000-000000000007',
           rating: 'hard'
         })
       ]);
@@ -466,7 +527,7 @@ describe('native flashcard persistence feasibility', () => {
       ).toMatchObject({
         reason: { code: 'STALE_REVIEW' }
       });
-      expect((await getNote(db.client, learner, note.id)).card.revision).toBe(
+      expect((await getNote(db.client, learner, note.id)).card?.revision).toBe(
         1
       );
       expect(
@@ -501,7 +562,7 @@ describe('native flashcard persistence feasibility', () => {
       await approveNote(db.client, learner, note.id);
       await submitReview(db.client, learner, {
         cardId: note.cardId,
-        submissionId: 'review-10000000-0000-4000-8000-000000000010',
+        submissionId: '10000000-0000-4000-8000-000000000010',
         expectedRevision: 0,
         rating: 'good'
       });
@@ -549,12 +610,12 @@ describe('native flashcard persistence feasibility', () => {
         learning_steps: ['1d'],
         relearning_steps: ['1d']
       });
+      await approveNote(db.client, learner, note.id);
       await db.client.execute(
         'UPDATE native_flashcards SET parameters_json = ? WHERE id = ? AND owner_id = ?',
         [JSON.stringify(cardParameters), note.cardId, learner.userId]
       );
-      await approveNote(db.client, learner, note.id);
-      const submissionId = 'review-10000000-0000-4000-8000-000000000011';
+      const submissionId = 'a0000000-0000-4000-8000-000000000011';
       const result = await submitReview(db.client, learner, {
         cardId: note.cardId,
         submissionId,
@@ -607,7 +668,7 @@ describe('native flashcard persistence feasibility', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: note.cardId,
-          submissionId: 'review-10000000-0000-4000-8000-000000000012',
+          submissionId: '10000000-0000-4000-8000-000000000012',
           expectedRevision: 0,
           rating: 'good'
         })
@@ -619,7 +680,7 @@ describe('native flashcard persistence feasibility', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: note.cardId,
-          submissionId: 'review-10000000-0000-4000-8000-000000000013',
+          submissionId: '10000000-0000-4000-8000-000000000013',
           expectedRevision: 0,
           rating: 'good'
         })
@@ -668,6 +729,14 @@ describe('native flashcard persistence feasibility', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: note.cardId,
+          submissionId: 'not-a-uuid',
+          expectedRevision: 0,
+          rating: 'good'
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_SUBMISSION_ID' });
+      await expect(
+        submitReview(db.client, learner, {
+          cardId: note.cardId,
           submissionId: '𐐷'.repeat(257),
           expectedRevision: 0,
           rating: 'good'
@@ -689,7 +758,7 @@ describe('native flashcard persistence feasibility', () => {
           ]
         })
       ).rejects.toThrow(/CHECK|CONSTRAINT/iu);
-      expect((await getNote(db.client, learner, note.id)).card.revision).toBe(
+      expect((await getNote(db.client, learner, note.id)).card?.revision).toBe(
         0
       );
     } finally {
@@ -713,6 +782,7 @@ describe('native flashcard persistence feasibility', () => {
         kind: 'basic',
         content: { front: 'Bonjour', back: 'Hello' }
       });
+      await approveNote(db.client, learner, note.id);
       await db.client.execute('PRAGMA ignore_check_constraints = ON');
       await db.client.execute(
         "UPDATE native_flashcards SET state_json = 'not-json' WHERE id = ? AND owner_id = ?",
@@ -744,6 +814,7 @@ describe('native flashcard persistence feasibility', () => {
         kind: 'basic',
         content: { front: 'Bonjour', back: 'Hello' }
       });
+      await approveNote(db.client, learner, note.id);
       await db.client.execute(
         'UPDATE native_flashcards SET state_json = \'{"due":"2026-01-01T00:00:00.000Z"}\' WHERE id = ? AND owner_id = ?',
         [note.cardId, learner.userId]
@@ -775,7 +846,7 @@ describe('native flashcard persistence feasibility', () => {
       await approveNote(db.client, learner, note.id);
       const invalidRating = submitReview(db.client, learner, {
         cardId: note.cardId,
-        submissionId: 'review-10000000-0000-4000-8000-000000000031',
+        submissionId: '10000000-0000-4000-8000-000000000031',
         expectedRevision: 0,
         rating: 'constructor'
       } as unknown as Parameters<typeof submitReview>[2]);
@@ -789,7 +860,7 @@ describe('native flashcard persistence feasibility', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: note.cardId,
-          submissionId: 'review-10000000-0000-4000-8000-000000000032',
+          submissionId: '10000000-0000-4000-8000-000000000032',
           expectedRevision: 0,
           rating: 'good'
         })

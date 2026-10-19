@@ -199,10 +199,8 @@ async function findDraft(
   attemptId: string
 ) {
   const result = await client.execute({
-    sql: `SELECT n.id, c.id AS card_id, n.status
+    sql: `SELECT n.id, n.status
       FROM native_flashcard_notes n
-      JOIN native_flashcards c
-        ON c.note_id = n.id AND c.owner_id = n.owner_id
       WHERE n.owner_id = ? AND n.source_attempt_id = ?`,
     args: [learner.userId, attemptId]
   });
@@ -210,7 +208,7 @@ async function findDraft(
   return row
     ? {
         id: String(row.id),
-        cardId: String(row.card_id),
+        cardId: `card:${String(row.id)}`,
         status: String(row.status)
       }
     : null;

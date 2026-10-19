@@ -70,7 +70,7 @@ beforeEach(async () => {
   await approveNote(client, ownerB, 'note-b');
   await submitReview(client, ownerB, {
     cardId: 'card:note-b',
-    submissionId: 'review-b',
+    submissionId: 'b0000000-0000-4000-8000-000000000001',
     expectedRevision: 0,
     rating: 'good'
   });
@@ -195,7 +195,7 @@ describe('private learner routes', () => {
       event('learner-b', { params: { id: 'card:note-b' } })
     );
     expect(history.body.events.map((row: { id: string }) => row.id)).toEqual([
-      'review-b'
+      'b0000000-0000-4000-8000-000000000001'
     ]);
 
     expect(
@@ -236,12 +236,20 @@ describe('private learner routes', () => {
       [
         reviews.POST as Handler,
         'card:note-b',
-        { submissionId: 'forged', expectedRevision: 1, rating: 'easy' }
+        {
+          submissionId: 'a0000000-0000-4000-8000-000000000001',
+          expectedRevision: 1,
+          rating: 'easy'
+        }
       ],
       [
         reviews.POST as Handler,
         'card:note-b',
-        { submissionId: 'review-b', expectedRevision: 0, rating: 'good' }
+        {
+          submissionId: 'b0000000-0000-4000-8000-000000000001',
+          expectedRevision: 0,
+          rating: 'good'
+        }
       ]
     ];
     for (const [handler, id, body] of writes) {
@@ -303,7 +311,11 @@ describe('private learner routes', () => {
       reviews.POST as Handler,
       event('learner-b', {
         params: { id: 'card:note-b' },
-        body: { submissionId: 'r2', expectedRevision: 1, rating: 'perfect' }
+        body: {
+          submissionId: 'b0000000-0000-4000-8000-000000000002',
+          expectedRevision: 1,
+          rating: 'perfect'
+        }
       })
     );
     expect(rating.status).toBe(400);
@@ -342,7 +354,11 @@ describe('private learner routes', () => {
       reviews.POST as Handler,
       event('learner-b', {
         params: { id: 'card:note-b' },
-        body: { submissionId: 'review-b2', expectedRevision: 1, rating: 'hard' }
+        body: {
+          submissionId: 'b0000000-0000-4000-8000-000000000002',
+          expectedRevision: 1,
+          rating: 'hard'
+        }
       })
     );
     expect(reviewed.status).toBe(200);
@@ -351,7 +367,11 @@ describe('private learner routes', () => {
       reviews.POST as Handler,
       event('learner-b', {
         params: { id: 'card:note-b' },
-        body: { submissionId: 'review-b3', expectedRevision: 1, rating: 'hard' }
+        body: {
+          submissionId: 'b0000000-0000-4000-8000-000000000003',
+          expectedRevision: 1,
+          rating: 'hard'
+        }
       })
     );
     expect(stale.status).toBe(409);

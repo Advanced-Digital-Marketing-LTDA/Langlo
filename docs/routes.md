@@ -19,6 +19,12 @@ existing `/app/**` no-store/noindex policy and verified-session ownership guard.
 | `/app/decks` and `/app/decks/[id]`     | Create decks, add basic or cloze draft notes, approve notes; `/export` downloads approved notes as Anki text.     |
 | `/app/review`                          | Due, approved flashcards with a show-answer step and again/hard/good/easy ratings.                                |
 
+Confirmed eligible practice mistakes can be saved as editable Basic or
+T003-bounded Cloze drafts through `/app/api/attempts/[id]/card`. Drafts stay
+out of scheduler state until the owner approves them; their stable card ID is
+derived from the note ID. Review submissions use UUID idempotency keys, and
+their append-only events include the resulting scheduler snapshot.
+
 Lesson and completed-result `?/report` actions retain exact item/version and
 bounded plain text. The lesson answer action supports server-classified assisted
 retries and Not sure. Existing attempt API reads also hide active/paused

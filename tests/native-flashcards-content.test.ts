@@ -133,7 +133,7 @@ describe('native flashcard content feasibility', () => {
       try {
         await submitReview(reloaded.client, learnerReloaded, {
           cardId: note.cardId,
-          submissionId: 'review-10000000-0000-4000-8000-000000000009',
+          submissionId: '10000000-0000-4000-8000-000000000009',
           expectedRevision: 0,
           rating: 'again'
         });

@@ -23,6 +23,7 @@ import { seedStudy } from './fixtures/study';
 import { seedLegacyPackage } from './fixtures/content-package';
 import { importContent } from '../src/lib/server/content-import';
 import * as schema from '../src/lib/server/db/schema';
+import { createDeck, createNote } from '../src/lib/server/flashcards';
 
 const fixtures: FixtureTarget[] = [];
 afterEach(async () => {
@@ -36,6 +37,29 @@ async function fixture() {
   const target = await createDisposableFixture();
   fixtures.push(target);
   return target;
+}
+
+async function migrationPrefixBeforeLanglo10() {
+  const directory = await mkdtemp(join(tmpdir(), 'langlo-migrations-'));
+  const journal = JSON.parse(
+    await readFile('drizzle/meta/_journal.json', 'utf8')
+  );
+  const migrationIndex = journal.entries.findIndex(
+    (entry: { tag: string }) => entry.tag === '0023_solid_dazzler'
+  );
+  if (migrationIndex < 0) throw new Error('LANGLO-10 migration is missing');
+  journal.entries = journal.entries.slice(0, migrationIndex);
+  await mkdir(join(directory, 'meta'));
+  await writeFile(
+    join(directory, 'meta/_journal.json'),
+    JSON.stringify(journal)
+  );
+  for (const entry of journal.entries)
+    await copyFile(
+      `drizzle/${entry.tag}.sql`,
+      join(directory, `${entry.tag}.sql`)
+    );
+  return directory;
 }
 
 describe('disposable libSQL migrations', () => {
@@ -488,6 +512,196 @@ describe('disposable libSQL migrations', () => {
       ]);
     } finally {
       close();
+    }
+  });
+
+  it('adds review snapshots without losing history or unreviewed lifecycle cleanup', async () => {
+    const target = await fixture();
+    const previous = await migrationPrefixBeforeLanglo10();
+    try {
+      await migrateFixtureDatabase(target, previous);
+      await seedStudy(target);
+      const { client: beforeClient, close: closeBefore } =
+        await openFixtureDatabase(target);
+      try {
+        const owner = { userId: 'learner-a' };
+        await createDeck(beforeClient, owner, {
+          id: 'deck-langlo10',
+          name: 'French'
+        });
+        const notes = await Promise.all(
+          ['draft', 'rejected', 'rejected-reviewed', 'approved-reviewed'].map(
+            (id, index) =>
+              createNote(beforeClient, owner, {
+                id: `note-langlo10-${id}`,
+                sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
+                deckId: 'deck-langlo10',
+                kind: 'basic',
+                content: { front: `front ${id}`, back: `back ${id}` }
+              })
+          )
+        );
+        await beforeClient.execute({
+          sql: "UPDATE native_flashcard_notes SET status = 'rejected' WHERE id IN (?, ?)",
+          args: [notes[1].id, notes[2].id]
+        });
+        await beforeClient.execute({
+          sql: "UPDATE native_flashcard_notes SET status = 'approved' WHERE id = ?",
+          args: [notes[3].id]
+        });
+        for (const note of notes)
+          await beforeClient.execute({
+            sql: 'INSERT INTO native_flashcards (id, owner_id, note_id, ordinal, state_json, due_at, revision, suspended, scheduler_version, parameters_json) VALUES (?, ?, ?, 0, ?, 0, 0, 0, ?, ?)',
+            args: [note.cardId, owner.userId, note.id, '{}', 'legacy-v1', '{}']
+          });
+        for (const [index, note] of [notes[2], notes[3]].entries())
+          await beforeClient.execute({
+            sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)',
+            args: [
+              `legacy-review-${index}`,
+              owner.userId,
+              note.cardId,
+              'good',
+              index,
+              'legacy-v1',
+              '{}',
+              '{}'
+            ]
+          });
+      } finally {
+        closeBefore();
+      }
+
+      await migrateFixtureDatabase(target);
+      const { client: afterClient, close: closeAfter } =
+        await openFixtureDatabase(target);
+      try {
+        expect(
+          (
+            await afterClient.execute(
+              'SELECT id FROM native_flashcard_notes ORDER BY id'
+            )
+          ).rows
+        ).toHaveLength(4);
+        expect(
+          (
+            await afterClient.execute(
+              'SELECT note_id FROM native_flashcards ORDER BY note_id'
+            )
+          ).rows
+        ).toEqual([
+          { note_id: 'note-langlo10-approved-reviewed' },
+          { note_id: 'note-langlo10-rejected-reviewed' }
+        ]);
+        expect(
+          (
+            await afterClient.execute(
+              'SELECT id, state_json FROM native_flashcard_review_events ORDER BY id'
+            )
+          ).rows
+        ).toEqual([
+          { id: 'legacy-review-0', state_json: null },
+          { id: 'legacy-review-1', state_json: null }
+        ]);
+        const reviewTable = await afterClient.execute(
+          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'native_flashcard_review_events'"
+        );
+        expect(String(reviewTable.rows[0].sql)).toMatch(/WITHOUT ROWID/iu);
+        expect(
+          (
+            await afterClient.execute(
+              "SELECT name FROM sqlite_master WHERE type = 'trigger' AND name IN ('native_flashcard_review_events_no_delete', 'native_flashcard_review_events_no_replace', 'native_flashcard_review_events_no_update') ORDER BY name"
+            )
+          ).rows.map((row) => row.name)
+        ).toEqual([
+          'native_flashcard_review_events_no_delete',
+          'native_flashcard_review_events_no_replace',
+          'native_flashcard_review_events_no_update'
+        ]);
+        expect(
+          (await afterClient.execute('PRAGMA foreign_key_check')).rows
+        ).toEqual([]);
+      } finally {
+        closeAfter();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
+    }
+  });
+
+  it('fails closed when a draft note has review history', async () => {
+    const target = await fixture();
+    const previous = await migrationPrefixBeforeLanglo10();
+    try {
+      await migrateFixtureDatabase(target, previous);
+      await seedStudy(target);
+      const { client: beforeClient, close: closeBefore } =
+        await openFixtureDatabase(target);
+      try {
+        const owner = { userId: 'learner-a' };
+        await createDeck(beforeClient, owner, {
+          id: 'deck-langlo10-gate',
+          name: 'French'
+        });
+        const note = await createNote(beforeClient, owner, {
+          id: 'note-langlo10-draft-history',
+          sourceId: `langlo:v1:${'a'.repeat(64)}`,
+          deckId: 'deck-langlo10-gate',
+          kind: 'basic',
+          content: { front: 'front', back: 'back' }
+        });
+        await beforeClient.execute({
+          sql: 'INSERT INTO native_flashcards (id, owner_id, note_id, ordinal, state_json, due_at, revision, suspended, scheduler_version, parameters_json) VALUES (?, ?, ?, 0, ?, 0, 0, 0, ?, ?)',
+          args: [note.cardId, owner.userId, note.id, '{}', 'legacy-v1', '{}']
+        });
+        await beforeClient.execute({
+          sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES (?, ?, ?, 0, ?, 0, ?, ?, ?)',
+          args: [
+            'draft-review',
+            owner.userId,
+            note.cardId,
+            'good',
+            'legacy-v1',
+            '{}',
+            '{}'
+          ]
+        });
+      } finally {
+        closeBefore();
+      }
+
+      await expect(migrateFixtureDatabase(target)).rejects.toThrow();
+      const { client: afterClient, close: closeAfter } =
+        await openFixtureDatabase(target);
+      try {
+        expect(
+          (
+            await afterClient.execute(
+              'PRAGMA table_info(native_flashcard_review_events)'
+            )
+          ).rows.map((row) => row.name)
+        ).not.toContain('state_json');
+        expect(
+          (
+            await afterClient.execute(
+              'SELECT id FROM native_flashcards WHERE id = ?',
+              ['card:note-langlo10-draft-history']
+            )
+          ).rows
+        ).toHaveLength(1);
+        expect(
+          (
+            await afterClient.execute(
+              'SELECT id FROM native_flashcard_review_events WHERE id = ?',
+              ['draft-review']
+            )
+          ).rows
+        ).toHaveLength(1);
+      } finally {
+        closeAfter();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
     }
   });
 

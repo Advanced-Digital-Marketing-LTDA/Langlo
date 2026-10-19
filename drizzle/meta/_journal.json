@@ -162,6 +162,13 @@
       "when": 1792430185410,
       "tag": "0022_note_source_owner_update",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "6",
+      "when": 1792450297893,
+      "tag": "0023_solid_dazzler",
+      "breakpoints": true
     }
   ]
 }

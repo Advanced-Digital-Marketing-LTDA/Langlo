@@ -1,5 +1,5 @@
 import { afterEach, expect, it } from 'vitest';
-import { createNote } from '../src/lib/server/flashcards';
+import { approveNote, createNote } from '../src/lib/server/flashcards';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   disposeFlashcardFixtures,
@@ -124,6 +124,7 @@ it('accepts zero event timestamps and revisions as integer storage', async () =>
   const db = await openFixtureDatabase(await fixture());
   try {
     const note = await seedBasicNote(db.client, testSession('learner-a'));
+    await approveNote(db.client, testSession('learner-a'), note.id);
     await db.client.execute({
       sql: `INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES ('zero-event', 'learner-a', ?, 0, 'good', 0, 'test', '{}', '{}')`,
       args: [note.cardId]
@@ -137,6 +138,42 @@ it('accepts zero event timestamps and revisions as integer storage', async () =>
       revision_type: 'integer',
       time_type: 'integer'
     });
+  } finally {
+    db.close();
+  }
+});
+
+it('allows legacy event snapshots to be null and rejects malformed new snapshots', async () => {
+  const learner = testSession('learner-a');
+  const db = await openFixtureDatabase(await fixture());
+  try {
+    const note = await seedBasicNote(db.client, learner);
+    await approveNote(db.client, learner, note.id);
+    await db.client.execute({
+      sql: "INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES (?, ?, ?, 0, 'good', 0, 'legacy', '{}', '{}')",
+      args: [
+        '10000000-0000-4000-8000-000000000099',
+        learner.userId,
+        note.cardId
+      ]
+    });
+    expect(
+      (
+        await db.client.execute(
+          'SELECT state_json FROM native_flashcard_review_events'
+        )
+      ).rows[0].state_json
+    ).toBeNull();
+    await expect(
+      db.client.execute({
+        sql: "INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json, state_json) VALUES (?, ?, ?, 0, 'good', 0, 'test', '{}', '{}', 'not-json')",
+        args: [
+          '10000000-0000-4000-8000-000000000098',
+          learner.userId,
+          note.cardId
+        ]
+      })
+    ).rejects.toThrow(/CHECK|CONSTRAINT/iu);
   } finally {
     db.close();
   }
