@@ -658,6 +658,79 @@ describe('mistake-card editing and rejection', () => {
     }
   });
 
+  it('rejects a direct insert with a mismatched source content version', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-version', 'learner-a', 'Version')"
+      );
+      await expect(
+        db.client.execute({
+          sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, source_attempt_id, source_skill_id, source_content_version_id) VALUES ('note-version', ?, 'learner-a', 'deck-version', 'basic', '{\"front\":\"a\",\"back\":\"b\"}', 'attempt-a', 'fr-articles', 'content-v2')",
+          args: [`langlo:v1:${'9'.repeat(64)}`]
+        })
+      ).rejects.toThrow(/owner attempt/u);
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rejects source updates to owner-, skill- or content-mismatched attempts', async () => {
+    const { db } = await setup();
+    try {
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      await db.client.execute(
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-b', 'learner-b', 'study-b', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-b', 'independent', 'un')"
+      );
+      for (const update of [
+        "UPDATE native_flashcard_notes SET source_skill_id = 'other-skill' WHERE id = ?",
+        "UPDATE native_flashcard_notes SET source_content_version_id = 'content-v2' WHERE id = ?",
+        "UPDATE native_flashcard_notes SET source_attempt_id = 'attempt-b' WHERE id = ?"
+      ]) {
+        await expect(db.client.execute(update, [draft.id])).rejects.toThrow(
+          /owner attempt/u
+        );
+      }
+      expect((await getNote(db.client, learner, draft.id)).source).toEqual({
+        attemptId,
+        skillId: 'fr-articles',
+        contentVersionId: 'content-v1'
+      });
+    } finally {
+      db.close();
+    }
+  });
+
+  it('accepts valid source metadata after migration 0021', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-valid', 'learner-a', 'Valid')"
+      );
+      await db.client.execute({
+        sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, source_attempt_id, source_skill_id, source_content_version_id) VALUES ('note-valid', ?, 'learner-a', 'deck-valid', 'basic', '{\"front\":\"a\",\"back\":\"b\"}', 'attempt-a', 'fr-articles', 'content-v1')",
+        args: [`langlo:v1:${'a'.repeat(64)}`]
+      });
+      expect(
+        (
+          await db.client.execute(
+            "SELECT source_attempt_id, source_skill_id, source_content_version_id FROM native_flashcard_notes WHERE id = 'note-valid'"
+          )
+        ).rows[0]
+      ).toEqual({
+        source_attempt_id: attemptId,
+        source_skill_id: 'fr-articles',
+        source_content_version_id: 'content-v1'
+      });
+    } finally {
+      db.close();
+    }
+  });
+
   it('revalidates provenance when a note owner is reassigned', async () => {
     const { db } = await setup();
     try {
