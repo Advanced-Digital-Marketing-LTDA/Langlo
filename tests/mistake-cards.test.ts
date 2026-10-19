@@ -658,6 +658,27 @@ describe('mistake-card editing and rejection', () => {
     }
   });
 
+  it('revalidates provenance when a note owner is reassigned', async () => {
+    const { db } = await setup();
+    try {
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      await expect(
+        db.client.execute(
+          'UPDATE native_flashcard_notes SET owner_id = ? WHERE id = ?',
+          [other.userId, draft.id]
+        )
+      ).rejects.toThrow(/owner attempt/u);
+      expect(
+        (await getNote(db.client, learner, draft.id)).source
+      ).toMatchObject({ attemptId });
+    } finally {
+      db.close();
+    }
+  });
+
   it('rejects partially persisted source metadata from direct SQL', async () => {
     const { db } = await setup();
     try {
