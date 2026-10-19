@@ -20,6 +20,7 @@ import {
 
 const learnerSecret = randomBytes(16).toString('hex');
 let server: ChildProcess;
+let serverLog = '';
 let base = '';
 let fixtureRoot = '';
 let dbFile = '';
@@ -72,9 +73,24 @@ test.beforeEach(async () => {
       ORIGIN: base,
       PROTOCOL_HEADER: 'x-forwarded-proto'
     },
-    stdio: 'ignore'
+    stdio: ['ignore', 'ignore', 'pipe']
   });
-  await waitForLive(base);
+  serverLog = '';
+  server.stderr?.on('data', (chunk) => {
+    serverLog = (serverLog + chunk).slice(-2000);
+  });
+  await Promise.race([
+    waitForLive(base),
+    new Promise<never>((_, reject) =>
+      server.once('exit', (code) =>
+        reject(
+          new Error(
+            `Map test server exited (${code}) at startup:\n${serverLog}`
+          )
+        )
+      )
+    )
+  ]);
   learner = await request.newContext({
     baseURL: base,
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
@@ -97,9 +113,20 @@ test.beforeEach(async () => {
   });
 });
 
+async function stopServer(child: ChildProcess | undefined) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  const exited = new Promise<void>((resolve) =>
+    child.once('exit', () => resolve())
+  );
+  child.kill();
+  const timer = setTimeout(() => child.kill('SIGKILL'), 5000);
+  await exited;
+  clearTimeout(timer);
+}
+
 test.afterEach(async () => {
   await learner?.dispose();
-  server?.kill();
+  await stopServer(server);
   await disposeFixtureDatabase(fixtureRoot, dbFile);
 });
 
