@@ -8,7 +8,7 @@ import {
   type Grade,
   type FSRSParameters
 } from 'ts-fsrs';
-import type { Client, Row } from '@libsql/client';
+import type { Client, InStatement, Row } from '@libsql/client';
 import { setTimeout as delay } from 'node:timers/promises';
 
 export interface LearnerSession {
@@ -52,7 +52,7 @@ const maxExplanationLength = 1000;
 const maxSourceFieldLength = 512;
 const sourceIdPattern = /^langlo:v1:[0-9a-f]{64}$/u;
 // shortcut: remote writes serialize too; split if throughput proves limiting.
-const writeQueues = new WeakMap<Client, Promise<void>>();
+const writeQueues = new WeakMap<object, Promise<void>>();
 const ratings: Record<RatingName, Grade> = {
   again: Rating.Again,
   hard: Rating.Hard,
@@ -69,7 +69,7 @@ function exceedsCodePointLimit(value: string, limit: number): boolean {
   return false;
 }
 
-export async function beginWrite(client: Client) {
+async function acquireWrite(client: object) {
   const previous = writeQueues.get(client) ?? Promise.resolve();
   let release!: () => void;
   const queued = new Promise<void>((resolve) => (release = resolve));
@@ -85,6 +85,24 @@ export async function beginWrite(client: Client) {
     if (writeQueues.get(client) === tail) writeQueues.delete(client);
   };
 
+  return finish;
+}
+
+/** Serialize a standalone statement with transactions using the same client. */
+export async function executeWrite(
+  client: Pick<Client, 'execute'>,
+  statement: InStatement | string
+) {
+  const finish = await acquireWrite(client);
+  try {
+    return await client.execute(statement);
+  } finally {
+    finish();
+  }
+}
+
+export async function beginWrite(client: Client) {
+  const finish = await acquireWrite(client);
   for (let attempt = 0; ; attempt += 1) {
     try {
       const transaction = await client.transaction('write');
@@ -364,7 +382,7 @@ export async function createDeck(
     exceedsCodePointLimit(input.name, 160)
   )
     throw new FlashcardError('INVALID_DECK');
-  await client.execute({
+  await executeWrite(client, {
     sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?)',
     args: [input.id, session.userId, input.name]
   });
@@ -513,7 +531,7 @@ export async function approveNote(
   session: LearnerSession,
   noteId: string
 ) {
-  const result = await client.execute({
+  const result = await executeWrite(client, {
     sql: "UPDATE native_flashcard_notes SET status = 'approved' WHERE id = ? AND owner_id = ? AND status = 'draft'",
     args: [noteId, session.userId]
   });
@@ -652,7 +670,7 @@ export async function rejectNote(
   session: LearnerSession,
   noteId: string
 ) {
-  const changed = await client.execute({
+  const changed = await executeWrite(client, {
     sql: "UPDATE native_flashcard_notes SET status = 'rejected' WHERE id = ? AND owner_id = ? AND status IN ('draft', 'approved')",
     args: [noteId, session.userId]
   });

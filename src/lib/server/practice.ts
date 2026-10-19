@@ -3,6 +3,7 @@ import type { LearnerSession } from './learner-session';
 import { FALLBACK_EVALUATOR_VERSION } from './evaluation/fallback';
 import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
 import { StudyError } from './study-error';
+import { executeWrite } from './flashcards';
 
 const KEY_PATTERN = /^[0-9a-f-]{36}$/i;
 const SESSION_ID_PATTERN = /^[A-Za-z0-9:_-]{1,128}$/;
@@ -33,7 +34,7 @@ export async function startPractice(
   )
     throw new StudyError('INVALID_SUBMISSION_KEY');
   const id = `practice:${input.submissionKey}`;
-  await client.execute({
+  await executeWrite(client, {
     sql: `INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode)
       SELECT ?, e.owner_id, e.id, e.language, 'practice' FROM enrollments e
       WHERE e.owner_id = ? AND e.language = ? ON CONFLICT (id) DO NOTHING`,
@@ -61,7 +62,7 @@ export async function finishPractice(
   learner: LearnerSession,
   id: string
 ): Promise<void> {
-  const result = await client.execute({
+  const result = await executeWrite(client, {
     sql: "UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND mode = 'practice'",
     args: [id, learner.userId]
   });

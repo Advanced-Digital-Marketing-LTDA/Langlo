@@ -12,7 +12,7 @@ import {
   type FallbackReason
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
-import { beginWrite, type LearnerSession } from './flashcards';
+import { beginWrite, executeWrite, type LearnerSession } from './flashcards';
 import { syncEvidenceLedger } from './mastery';
 import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
@@ -428,7 +428,7 @@ async function settleFallback(
   session: LearnerSession,
   attempt: FallbackAttempt
 ) {
-  await client.execute({
+  await executeWrite(client, {
     sql: "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, 'uncertain')",
     args: [
       randomUUID(),
@@ -647,7 +647,7 @@ export async function pauseStudySession(
 ) {
   const { state } = await ownSession(client, session, studySessionId);
   if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
-  const paused = await client.execute({
+  const paused = await executeWrite(client, {
     sql: "UPDATE study_sessions SET state = 'paused', paused_at = COALESCE(paused_at, ?) WHERE id = ? AND owner_id = ? AND state <> 'completed'",
     args: [now, studySessionId, session.userId]
   });
@@ -664,7 +664,7 @@ export async function resumeStudySession(
 ) {
   const { state } = await ownSession(client, session, studySessionId);
   if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
-  const resumed = await client.execute({
+  const resumed = await executeWrite(client, {
     sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ? AND state <> 'completed'",
     args: [studySessionId, session.userId]
   });

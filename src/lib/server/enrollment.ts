@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { Client } from '@libsql/client';
 import type { LearnerSession } from './learner-session';
+import { executeWrite } from './flashcards';
 import { StudyError } from './study-error';
 
 export const TRACK_LANGUAGES = ['fr', 'de', 'en'] as const;
@@ -75,7 +76,7 @@ export async function enroll(
   };
   if (!levelsFor(enrollment.language).includes(enrollment.startingLevel))
     throw new StudyError('INVALID_ENROLLMENT');
-  const result = await client.execute({
+  const result = await executeWrite(client, {
     sql: `INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language)
       VALUES (?, ?, ?, ?, ?) ON CONFLICT (owner_id, language) DO NOTHING`,
     args: [
@@ -102,7 +103,7 @@ export async function setExplanationLanguage(
     input.explanationLanguage,
     'INVALID_ENROLLMENT'
   );
-  const result = await client.execute({
+  const result = await executeWrite(client, {
     sql: 'UPDATE enrollments SET explanation_language = ? WHERE owner_id = ? AND language = ?',
     args: [explanationLanguage, learner.userId, language]
   });

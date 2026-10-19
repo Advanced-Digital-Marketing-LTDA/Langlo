@@ -1,6 +1,7 @@
 import type { Client } from '@libsql/client';
 import type { LearnerSession } from './learner-session';
 import { StudyError } from './study-error';
+import { executeWrite } from './flashcards';
 
 /** True for an IANA timezone name the runtime knows, e.g. "Europe/Lisbon". */
 export function isTimezone(value: unknown): value is string {
@@ -33,7 +34,7 @@ export async function setTimezone(
   timezone: unknown
 ): Promise<void> {
   if (!isTimezone(timezone)) throw new StudyError('INVALID_TIMEZONE');
-  await client.execute({
+  await executeWrite(client, {
     sql: `INSERT INTO learner_preferences (owner_id, timezone) VALUES (?, ?)
       ON CONFLICT (owner_id) DO UPDATE SET timezone = excluded.timezone, updated_at = unixepoch() * 1000`,
     args: [learner.userId, timezone]

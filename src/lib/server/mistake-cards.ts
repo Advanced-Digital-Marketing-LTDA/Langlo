@@ -3,7 +3,12 @@ import type { Client, Row } from '@libsql/client';
 import { createSourceId } from './db/source-id';
 import { FALLBACK_EVALUATOR_VERSION } from './evaluation/fallback';
 import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
-import { createNote, FlashcardError, type LearnerSession } from './flashcards';
+import {
+  createNote,
+  executeWrite,
+  FlashcardError,
+  type LearnerSession
+} from './flashcards';
 
 export { rejectNote, updateNote } from './flashcards';
 
@@ -181,7 +186,7 @@ async function ensureMistakeDeck(
   const id = `deck:mistakes:${createHash('sha256')
     .update(`${learner.userId}\0${language}`)
     .digest('hex')}`;
-  await client.execute({
+  await executeWrite(client, {
     sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?) ON CONFLICT (id) DO NOTHING',
     args: [id, learner.userId, `Mistakes (${language})`]
   });

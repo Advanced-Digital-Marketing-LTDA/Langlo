@@ -1,7 +1,7 @@
 import { afterEach, expect, it } from 'vitest';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import { openAppDatabase } from '../src/lib/server/db/app';
-import { beginWrite } from '../src/lib/server/flashcards';
+import { beginWrite, executeWrite } from '../src/lib/server/flashcards';
 
 const opened: Array<{ close: () => void }> = [];
 
@@ -105,4 +105,24 @@ it('keeps foreign keys enabled and accepts concurrent writes through a shared cl
       )
     ).rows[0].count
   ).toBe(7);
+
+  const held = await beginWrite(second.client);
+  await held.execute(
+    "INSERT INTO shared_write_probe (id, value) VALUES (100, 'rolled back')"
+  );
+  const queued = executeWrite(second.client, {
+    sql: 'INSERT INTO shared_write_probe (id, value) VALUES (?, ?)',
+    args: [101, 'standalone request']
+  });
+  await held.rollback();
+  held.close();
+  await queued;
+
+  expect(
+    (
+      await second.client.execute(
+        'SELECT id FROM shared_write_probe WHERE id IN (100, 101) ORDER BY id'
+      )
+    ).rows.map((row) => Number(row.id))
+  ).toEqual([101]);
 });

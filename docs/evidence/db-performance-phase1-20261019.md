@@ -35,6 +35,7 @@
 - Failed commits roll back before releasing the shared-client write queue. A deferred foreign-key test verifies that a later transaction can commit after a rejected commit.
 - Mastery calculation is private behind the owner-scoped enrollment loader, which still reads enrollment once before computing each enrolled language.
 - Evidence synchronization now scans only the submitted attempt's lineage, or the completed assessment session's lineages, rather than replaying the learner's full history after every answer.
+- Standalone mutating statements now use the same per-client queue as transactions. The shared-client regression test holds a transaction open, queues a standalone write, rolls back the transaction, and confirms the standalone write persists after the rollback.
 - Follow-up validation: `npm run check` (0 errors, 0 warnings), `npm run format:check`, and 73 focused tests across five files passed.
 
 Mastery still reads its catalog, prerequisites, and evidence with separate autocommit queries. A read transaction cannot overlap a write transaction on the shared libSQL client (`TRANSACTION_ACTIVE`), and serializing every mastery read with writes would add latency to the hot path. A concurrent import could commit between these reads and produce a mixed-revision response; Phase 1 leaves this race documented for a separate snapshot design.

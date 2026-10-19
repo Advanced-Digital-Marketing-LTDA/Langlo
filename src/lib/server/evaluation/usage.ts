@@ -1,5 +1,6 @@
 import type { Client } from '@libsql/client';
 import { MONTHLY_CALL_CAP, type FallbackUsage } from './fallback';
+import { executeWrite } from '../flashcards';
 
 /** The UTC calendar month a call is counted in, as "YYYY-MM". */
 export const usageMonth = (now: number) =>
@@ -18,14 +19,14 @@ export function decisionsUsage(
   return {
     reserve: async () => {
       month = usageMonth(now());
-      const reserved = await client.execute({
+      const reserved = await executeWrite(client, {
         sql: "INSERT INTO ai_usage (month, api, calls) VALUES (?, 'decisions', 1) ON CONFLICT (month, api) DO UPDATE SET calls = calls + 1 WHERE calls < ?",
         args: [month, cap]
       });
       return reserved.rowsAffected === 1;
     },
     record: async ({ inputTokens, outputTokens }) => {
-      await client.execute({
+      await executeWrite(client, {
         sql: "UPDATE ai_usage SET input_tokens = input_tokens + ?, output_tokens = output_tokens + ? WHERE month = ? AND api = 'decisions'",
         args: [inputTokens, outputTokens, month]
       });
