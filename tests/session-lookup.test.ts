@@ -3,6 +3,7 @@ import { lookupSession } from '../src/lib/server/session-lookup';
 
 const NAME = '__Secure-better-auth.session_token';
 const session = { user: { id: 'u1' }, session: { id: 's1' } };
+const sessionB = { user: { id: 'u2' }, session: { id: 's2' } };
 
 /** Stands in for Better Auth: only the cookie value "good" has a session. */
 const getSession = vi.fn(async ({ headers }: { headers: Headers }) => {
@@ -10,7 +11,8 @@ const getSession = vi.fn(async ({ headers }: { headers: Headers }) => {
   const token = cookies
     .find((c) => c.startsWith(`${NAME}=`))
     ?.slice(NAME.length + 1);
-  return token === 'good' ? session : null;
+  if (token === 'good') return session;
+  return token === 'good-b' ? sessionB : null;
 });
 
 const headersWith = (cookie: string) => new Headers({ cookie });
@@ -31,6 +33,21 @@ describe('lookupSession', () => {
       headersWith(`${NAME}=good; ${NAME}=stale`)
     );
     expect(result).toBe(session);
+  });
+
+  it('returns the first valid session when several duplicates are valid', async () => {
+    expect(
+      await lookupSession(
+        getSession,
+        headersWith(`${NAME}=stale; ${NAME}=good-b; ${NAME}=good`)
+      )
+    ).toBe(sessionB);
+    expect(
+      await lookupSession(
+        getSession,
+        headersWith(`${NAME}=good; ${NAME}=good-b`)
+      )
+    ).toBe(session);
   });
 
   it('returns null when every duplicate is stale', async () => {
