@@ -12,7 +12,7 @@ Tests  1 failed | 2 passed (3)
 + []
 ```
 
-**Green (after):** `tests/tracing-spans.test.ts` 7 passed (adds `studyPage` span/close, `studyPage` failure closes the database and rethrows, `learnerApi` spans with a 200, `learnerApi` stale-review error still maps to 409 with its message). Existing `tests/mastery.test.ts` and `tests/mastery-updates.test.ts` pass with the new spans (31 passed across the three files). `learner-routes`, `assessment-routes`, `dashboard` and `mistake-card-routes` pass (60 passed). `eslint`, `prettier --check` and `svelte-check` (0 errors) are clean on the changed files.
+**Green (after):** `tests/tracing-spans.test.ts` 8 passed (adds `studyPage` span/close, `studyPage` failure closes the database and rethrows, `learnerApi` spans with a 200, `learnerApi` stale-review error still maps to 409 with its message, `getMastery` missing enrollment rethrows after the enrollment-check span). Existing `tests/mastery.test.ts` and `tests/mastery-updates.test.ts` pass with the new spans (31 passed across the three files). `learner-routes`, `assessment-routes`, `dashboard` and `mistake-card-routes` pass (60 passed). `eslint`, `prettier --check` and `svelte-check` (0 errors) are clean on the changed files.
 
 **Order of the tests:** the three `getMastery`/helper tests were written first and seen red/green as above. The `studyPage` and `learnerApi` tests were added after the instrumentation, in response to review, and were not seen red.
 

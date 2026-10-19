@@ -119,6 +119,16 @@ it('getMastery reports each phase and how many evidence rows it writes', async (
   ).toEqual({ rows: 1 });
 });
 
+it('getMastery lets a missing enrollment through unchanged and stops after the check', async () => {
+  await expect(getMastery(client, learner, 'de')).rejects.toMatchObject({
+    code: 'NOT_FOUND'
+  });
+  expect(recorded.map((entry) => entry.name)).toEqual([
+    'mastery.begin-write',
+    'mastery.enrollment-check'
+  ]);
+});
+
 it('studyPage times opening the database and running the load, and still closes', async () => {
   const { openAppDatabase } = await import('../src/lib/server/db/app');
   const close = vi.fn();
