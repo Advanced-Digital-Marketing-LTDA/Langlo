@@ -22,9 +22,10 @@
 - `npm run build`: passed.
 - `npm run lint`: passed after a fixture-only unused-variable correction.
 - `npm run format:check`: passed.
+- Follow-up regression coverage on main `406d391` after PR #122 merged: 38 focused mastery and progress-route tests passed; `npm test` passed 87 files / 1,363 tests; property tests passed 5 files / 7 tests; check, lint, formatting, and build passed; all 102 desktop and mobile Playwright tests passed with no failures, flaky tests, or skips.
 
 ## Limits and pending acceptance
 
 - The catalog-first map path reads the catalog and prerequisites once before mastery reloads them in its own snapshot. This adds those repeated reads per language to enable progressive rendering; the practice counts themselves add no query. No latency claim was measured.
-- The full test suite was not run during the focused implementation work; CI runs it (the merge-evidence gate reports 1359 tests passing on head `10f83a0`). The PR description also lists local `npm test`, `npm run test:property` and `npm run test:e2e` runs; their output is not recorded in this file. No authenticated browser, live development app, remote database, Coolify proxy or Bunny CDN was accessed, so deployed streaming behavior and the reported development-app enrollment state remain unverified.
+- The full test suite was not run during the original focused implementation work; the follow-up results above are from the test-only coverage update on merged main. No authenticated browser, live development app, remote database, Coolify proxy or Bunny CDN was accessed, so deployed streaming behavior and the reported development-app enrollment state remain unverified.
 - No deployment or release acceptance was performed.

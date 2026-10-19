@@ -61,6 +61,9 @@ it('requires a verified learner and rejects an unenrolled language', async () =>
     progressPage(event('learner-a', '?language=de'))
   ).rejects.toMatchObject({ status: 404 });
   await expect(
+    mapPage(event('learner-a', '?language=de'))
+  ).rejects.toMatchObject({ status: 404 });
+  await expect(
     practicePage(practiceEvent('learner-a', 'de'))
   ).rejects.toMatchObject({
     status: 404
@@ -164,6 +167,24 @@ it('logs a catalog failure once when its dependent progress also rejects', async
   await expect(data.tracks[0].catalog).rejects.toThrow();
   await expect(data.tracks[0].progress).rejects.toThrow();
   expect(log).toHaveBeenCalledTimes(1);
+  log.mockRestore();
+});
+
+it('logs a progress failure after its catalog resolves', async () => {
+  await client.execute('DROP TABLE attempts');
+  const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  const data = (await mapPage(event('learner-a'))) as {
+    tracks: {
+      catalog: Promise<{ language: string }>;
+      progress: Promise<unknown>;
+    }[];
+  };
+  await expect(data.tracks[0].catalog).resolves.toMatchObject({
+    language: 'fr'
+  });
+  await expect(data.tracks[0].progress).rejects.toThrow();
+  expect(log).toHaveBeenCalledTimes(1);
+  expect(log.mock.calls[0][0]).toBe('Failed to load fr map progress');
   log.mockRestore();
 });
 
