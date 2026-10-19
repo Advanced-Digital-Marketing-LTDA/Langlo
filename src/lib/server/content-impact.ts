@@ -207,6 +207,22 @@ async function versionImpact(
   };
 }
 
+/**
+ * The keys a replacement holds once the package is applied. The importer adds
+ * a package's versions before its retirements, so a replacement the package
+ * adds is matched by what the package plans.
+ */
+async function carriedKeys(
+  client: Client,
+  skillId: string,
+  planned: Map<string, Earlier>
+) {
+  const plan = planned.get(skillId);
+  if (plan) return plannedKeys(plan);
+  const target = await currentVersion(client, skillId);
+  return target === undefined ? new Set<string>() : versionKeys(client, target);
+}
+
 /** The impact of retiring one skill that is still live, if any. */
 async function retirementImpact(
   client: Client,
@@ -225,25 +241,7 @@ async function retirementImpact(
       reason: 'retired, answers no longer shown',
       ...(await countedAnswers(client, retirement.skillId, () => true))
     };
-  // Applying the package adds its versions before it applies retirements, so
-  // a replacement the package adds is matched by what the package plans.
-  const plan = planned.get(retirement.replacedBy);
-  const target = plan
-    ? undefined
-    : await currentVersion(client, retirement.replacedBy);
-  const carried = plan
-    ? new Set(
-        plan.questions.map((question) =>
-          effectiveLineageKey({
-            lineageKey: question.lineageKey,
-            contentVersionId: question.contentVersionId,
-            questionId: question.id
-          })
-        )
-      )
-    : target === undefined
-      ? new Set<string>()
-      : await versionKeys(client, target);
+  const carried = await carriedKeys(client, retirement.replacedBy, planned);
   return {
     skillId: retirement.skillId,
     reason: `retired, answers carry to ${retirement.replacedBy} where the items match`,
@@ -255,36 +253,49 @@ async function retirementImpact(
   };
 }
 
-export async function contentImpact(
+/** Remember a planned version: it continues the chain, and is current unless quarantined. */
+function recordPlan(
+  plans: Map<string, SkillPlan>,
+  version: PackageVersion,
+  planned: Earlier
+) {
+  const before = plans.get(version.skillId);
+  plans.set(version.skillId, {
+    chain: planned,
+    current: version.review === 'quarantined' ? before?.current : planned
+  });
+}
+
+/** Impact lines of the package's versions, and what each skill is planned to hold. */
+async function packageVersionImpact(
   client: Client,
-  pkg: ContentPackage
-): Promise<ImpactLine[]> {
+  versions: PackageVersion[]
+) {
   const lines: ImpactLine[] = [];
-  const ordered = [...pkg.versions].sort(
-    (a, b) => a.skillId.localeCompare(b.skillId) || a.version - b.version
-  );
   const plans = new Map<string, SkillPlan>();
-  for (const version of ordered) {
+  for (const version of versions) {
     const { line, planned } = await versionImpact(
       client,
       version,
       plans.get(version.skillId)
     );
     if (line) lines.push(line);
-    if (planned)
-      plans.set(version.skillId, {
-        chain: planned,
-        current:
-          version.review === 'quarantined'
-            ? plans.get(version.skillId)?.current
-            : planned
-      });
+    if (planned) recordPlan(plans, version, planned);
   }
-  const projected = new Map(
-    [...plans].flatMap(([skillId, plan]) =>
-      plan.current ? [[skillId, plan.current] as const] : []
-    )
+  const projected = new Map<string, Earlier>();
+  for (const [skillId, plan] of plans)
+    if (plan.current) projected.set(skillId, plan.current);
+  return { lines, projected };
+}
+
+export async function contentImpact(
+  client: Client,
+  pkg: ContentPackage
+): Promise<ImpactLine[]> {
+  const ordered = [...pkg.versions].sort(
+    (a, b) => a.skillId.localeCompare(b.skillId) || a.version - b.version
   );
+  const { lines, projected } = await packageVersionImpact(client, ordered);
   for (const retirement of pkg.retirements ?? []) {
     const line = await retirementImpact(client, retirement, projected);
     if (line) lines.push(line);

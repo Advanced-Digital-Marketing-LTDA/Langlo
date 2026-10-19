@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Client, Transaction } from '@libsql/client';
+import type { Client, Row, Transaction } from '@libsql/client';
 import {
   ContentImportError,
   type ContentPackage,
@@ -338,34 +338,53 @@ async function checkCarryTargetLive(
     );
 }
 
-/** Apply the package's retirements; returns how many skills were newly retired. */
+/** Whether a stored retirement is the one the package declares. */
+function sameRetirement(row: Row, retirement: SkillRetirement) {
+  return (
+    row.replaced_by === (retirement.replacedBy ?? null) &&
+    row.carry_progress === (retirement.carry === true ? 1 : null)
+  );
+}
+
+/** Retire one skill, or confirm that it is already retired the same way. */
+async function applyRetirement(
+  tx: Transaction,
+  retirement: SkillRetirement,
+  known: Map<string, { language: string }>,
+  set: ChangeSet
+) {
+  const stored = await tx.execute({
+    sql: 'SELECT retired_at, replaced_by, carry_progress FROM skills WHERE id = ?',
+    args: [retirement.skillId]
+  });
+  checkRetirementTarget(retirement, known, stored);
+  const [row] = stored.rows;
+  if (row.retired_at !== null) {
+    if (!sameRetirement(row, retirement))
+      fail('CONTENT_CONFLICT', `skill ${retirement.skillId} retirement`);
+    return;
+  }
+  await checkCarryTargetLive(tx, retirement);
+  await tx.execute({
+    sql: 'UPDATE skills SET retired_at = unixepoch() * 1000, replaced_by = ?, carry_progress = ? WHERE id = ? AND retired_at IS NULL',
+    args: [
+      retirement.replacedBy ?? null,
+      retirement.carry === true ? 1 : null,
+      retirement.skillId
+    ]
+  });
+  set.add({ kind: 'skill-retired', skillId: retirement.skillId }, 'major');
+}
+
+/** Apply the package's retirements. */
 export async function applyRetirements(
   tx: Transaction,
   pkg: ContentPackage,
   known: Map<string, { language: string }>,
   set: ChangeSet
 ) {
-  for (const retirement of pkg.retirements ?? []) {
-    const stored = await tx.execute({
-      sql: 'SELECT retired_at, replaced_by, carry_progress FROM skills WHERE id = ?',
-      args: [retirement.skillId]
-    });
-    checkRetirementTarget(retirement, known, stored);
-    const [row] = stored.rows;
-    const replacedBy = retirement.replacedBy ?? null;
-    const carry = retirement.carry === true ? 1 : null;
-    if (row.retired_at !== null) {
-      if (row.replaced_by !== replacedBy || row.carry_progress !== carry)
-        fail('CONTENT_CONFLICT', `skill ${retirement.skillId} retirement`);
-      continue;
-    }
-    await checkCarryTargetLive(tx, retirement);
-    await tx.execute({
-      sql: 'UPDATE skills SET retired_at = unixepoch() * 1000, replaced_by = ?, carry_progress = ? WHERE id = ? AND retired_at IS NULL',
-      args: [replacedBy, carry, retirement.skillId]
-    });
-    set.add({ kind: 'skill-retired', skillId: retirement.skillId }, 'major');
-  }
+  for (const retirement of pkg.retirements ?? [])
+    await applyRetirement(tx, retirement, known, set);
 }
 
 export async function writeChanges(

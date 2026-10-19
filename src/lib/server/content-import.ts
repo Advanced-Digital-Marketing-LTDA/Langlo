@@ -614,6 +614,49 @@ async function importLesson(tx: Transaction, version: PackageVersion) {
   });
 }
 
+/** A version the database already holds: it must match, and may be quarantined. */
+async function reimportVersion(
+  tx: Transaction,
+  version: ContentPackage['versions'][number],
+  stored: NonNullable<Awaited<ReturnType<typeof storedVersion>>>,
+  verifiedOriginal: boolean,
+  result: ImportResult,
+  set: ChangeSet
+) {
+  if (!(await sameQuestions(tx, version)))
+    fail('CONTENT_CONFLICT', `version ${version.id}`);
+  const hash = versionFingerprint(version);
+  if (stored.fingerprint === null) {
+    if (!verifiedOriginal)
+      fail(
+        'LEGACY_CONTENT_UNVERIFIED',
+        `version ${version.id}: re-import the recorded original package or publish a new content version with new question IDs`
+      );
+    await tx.execute({
+      sql: 'UPDATE content_versions SET fingerprint = ? WHERE id = ? AND fingerprint IS NULL',
+      args: [hash, version.id]
+    });
+  } else if (stored.fingerprint !== hash)
+    fail('CONTENT_CONFLICT', `version ${version.id}`);
+  await backfillPayloads(tx, version);
+  await importLesson(tx, version);
+  if (version.review !== 'quarantined') return;
+  const update = await tx.execute({
+    sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
+    args: [version.id]
+  });
+  result.quarantined += update.rowsAffected;
+  if (update.rowsAffected > 0)
+    set.add(
+      {
+        kind: 'version-quarantined',
+        skillId: version.skillId,
+        contentVersionId: version.id
+      },
+      'patch'
+    );
+}
+
 async function importVersions(
   tx: Transaction,
   pkg: ContentPackage,
@@ -655,39 +698,7 @@ async function importVersions(
       result.quarantined += Number(version.review === 'quarantined');
       continue;
     }
-    if (!(await sameQuestions(tx, version)))
-      fail('CONTENT_CONFLICT', `version ${version.id}`);
-    const hash = versionFingerprint(version);
-    if (stored.fingerprint === null) {
-      if (!verifiedOriginal)
-        fail(
-          'LEGACY_CONTENT_UNVERIFIED',
-          `version ${version.id}: re-import the recorded original package or publish a new content version with new question IDs`
-        );
-      await tx.execute({
-        sql: 'UPDATE content_versions SET fingerprint = ? WHERE id = ? AND fingerprint IS NULL',
-        args: [hash, version.id]
-      });
-    } else if (stored.fingerprint !== hash)
-      fail('CONTENT_CONFLICT', `version ${version.id}`);
-    await backfillPayloads(tx, version);
-    await importLesson(tx, version);
-    if (version.review === 'quarantined') {
-      const update = await tx.execute({
-        sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
-        args: [version.id]
-      });
-      result.quarantined += update.rowsAffected;
-      if (update.rowsAffected > 0)
-        set.add(
-          {
-            kind: 'version-quarantined',
-            skillId: version.skillId,
-            contentVersionId: version.id
-          },
-          'patch'
-        );
-    }
+    await reimportVersion(tx, version, stored, verifiedOriginal, result, set);
   }
 }
 
