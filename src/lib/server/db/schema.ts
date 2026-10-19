@@ -198,7 +198,16 @@ export const skills = sqliteTable(
   {
     id: text('id').primaryKey(),
     language: text('language', { enum: ['fr', 'de', 'en'] }).notNull(),
-    level: text('level', { enum: ['A1', 'A2'] }).notNull()
+    level: text('level', { enum: ['A1', 'A2'] }).notNull(),
+    // Set when a content update retires the skill; it leaves the catalog and
+    // recommendations, and its history stays readable. Null while active.
+    retiredAt: integer('retired_at'),
+    // The skill that replaces a retired one, when there is one.
+    replacedBy: text('replaced_by'),
+    // 1 when the owner approved carrying a retired skill's answers over to
+    // its replacement (a pure rename); null otherwise. SQLite cannot add a
+    // CHECK to an existing table without a rebuild, so the importer keeps it.
+    carryProgress: integer('carry_progress')
   },
   (table) => [
     uniqueIndex('skills_identity_language').on(table.id, table.language),
@@ -305,6 +314,10 @@ export const questions = sqliteTable(
     answer: text('answer'),
     // JSON array of strings, null when the question has no alternatives.
     alternatives: text('alternatives'),
+    // Identity of the logical item across lesson versions. Mastery counts the
+    // first independent answer per lineage key. Null on rows imported before
+    // 0016, where the key is the number after the version prefix (`q03`).
+    lineageKey: text('lineage_key'),
     contentVersionId: text('content_version_id').notNull(),
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
@@ -996,6 +1009,43 @@ export const learnerPreferences = sqliteTable(
     check(
       'learner_preferences_timezone',
       sql`length(trim(${table.timezone})) BETWEEN 1 AND 64 AND instr(${table.timezone}, char(0)) = 0`
+    )
+  ]
+);
+
+// What each curriculum import changed in existing content, written in the
+// importer's transaction so a learner-facing notice and an audit can read it.
+export const contentChanges = sqliteTable(
+  'content_changes',
+  {
+    id: text('id').primaryKey(),
+    curriculumVersion: text('curriculum_version')
+      .notNull()
+      .references(() => curriculumImports.curriculumVersion),
+    kind: text('kind', {
+      enum: [
+        'skill-added',
+        'skill-retired',
+        'version-added',
+        'question-same',
+        'question-changed',
+        'question-new',
+        'question-removed',
+        'version-quarantined'
+      ]
+    }).notNull(),
+    skillId: text('skill_id').notNull(),
+    contentVersionId: text('content_version_id'),
+    questionId: text('question_id'),
+    // The earlier question this one continues, or the removed one.
+    previousQuestionId: text('previous_question_id'),
+    createdAt: createdAt()
+  },
+  (table) => [
+    index('content_changes_skill').on(table.skillId),
+    check(
+      'content_changes_kind',
+      sql`${table.kind} IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'version-quarantined')`
     )
   ]
 );

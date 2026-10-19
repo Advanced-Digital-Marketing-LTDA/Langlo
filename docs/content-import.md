@@ -4,7 +4,8 @@
 
 - **Dry run (default):** `npm run content:import` builds and validates the package and prints its counts. It writes nothing and needs no database.
 - **Apply:** `DATABASE_URL=... TURSO_AUTH_TOKEN=... npm run content:import -- --apply --confirm-host HOST`. `DATABASE_URL` is a `file:` URL (HOST is `local`) or a bare `libsql://<name>.turso.io` URL (HOST is that host name). The script refuses a database with any migration still pending, so a target must have every checked-in migration applied first.
-- **Repeatable:** the importer is idempotent. Re-running the same package is a no-op; a changed package needs a new curriculum version.
+- **Impact report:** `npm run content:import -- --impact --confirm-host HOST` is read-only. It lists the independent answers a package would stop counting toward mastery. See [content-update.md](content-update.md).
+- **Repeatable:** the importer is idempotent. Re-running the same package is a no-op; a changed package needs a new curriculum version of the size its changes need ([content-update.md](content-update.md)).
 - **Runner:** the script runs through `tsx` (a pinned dev dependency) because the importer uses extensionless imports that plain Node cannot resolve.
 
 Applying to a production database is an owner action.

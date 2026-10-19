@@ -163,8 +163,10 @@ it('keeps original attempt rubrics and reports when a reviewed correction create
     examples: [],
     references: []
   };
-  for (const question of version.questions)
+  for (const question of version.questions) {
     question.id = question.id.replace('@1:', '@2:');
+    question.change = 'new';
+  }
   version.questions[1].holdout = true;
   await importContent(client, corrected);
   expect(
