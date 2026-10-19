@@ -29,8 +29,15 @@
       <li>
         <strong>{mistake.prompt}</strong>
         — {mistake.answer}
-        {#if mistake.draftNoteId}
-          <span>Kept as a draft.</span>
+        {#if mistake.draftStatus === 'draft'}
+          <span
+            >Kept as a draft. Approve it in <a href="/app/decks">Decks</a
+            >.</span
+          >
+        {:else if mistake.draftStatus === 'approved'}
+          <span>Approved as a flashcard.</span>
+        {:else if mistake.draftStatus === 'rejected'}
+          <span>Rejected; this mistake will not become a flashcard.</span>
         {:else}
           <form method="POST" action="?/keep" use:enhance>
             <input type="hidden" name="attemptId" value={mistake.attemptId} />

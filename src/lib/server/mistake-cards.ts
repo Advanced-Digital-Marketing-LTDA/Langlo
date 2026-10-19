@@ -303,9 +303,10 @@ export async function listMistakeCandidates(
 
   const result = await client.execute({
     sql: `SELECT a.id AS attempt_id, a.skill_id, q.prompt, q.answer,
-        (SELECT n.id FROM native_flashcard_notes n
-          WHERE n.owner_id = a.owner_id AND n.source_attempt_id = a.id) AS draft_note_id
+        n.id AS draft_note_id, n.status AS draft_note_status
       FROM attempts a
+      LEFT JOIN native_flashcard_notes n
+        ON n.owner_id = a.owner_id AND n.source_attempt_id = a.id
       JOIN questions q
         ON q.id = a.question_id
         AND q.content_version_id = a.content_version_id
@@ -334,6 +335,8 @@ export async function listMistakeCandidates(
     skillId: String(row.skill_id),
     prompt: String(row.prompt),
     answer: String(row.answer),
-    draftNoteId: row.draft_note_id === null ? null : String(row.draft_note_id)
+    draftNoteId: row.draft_note_id === null ? null : String(row.draft_note_id),
+    draftStatus:
+      row.draft_note_status === null ? null : String(row.draft_note_status)
   }));
 }

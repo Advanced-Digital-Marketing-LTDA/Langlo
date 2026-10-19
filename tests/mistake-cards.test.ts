@@ -254,7 +254,8 @@ describe('mistake-card draft generation', () => {
           skillId: 'fr-articles',
           prompt: 'Je ___ étudiant.',
           answer: 'suis',
-          draftNoteId: null
+          draftNoteId: null,
+          draftStatus: null
         }
       ]);
       const draft = await createMistakeDraft(db.client, learner, {
@@ -263,7 +264,30 @@ describe('mistake-card draft generation', () => {
       });
       expect(
         await listMistakeCandidates(db.client, learner, 'study-a')
-      ).toEqual([expect.objectContaining({ draftNoteId: draft.id })]);
+      ).toEqual([
+        expect.objectContaining({
+          draftNoteId: draft.id,
+          draftStatus: 'draft'
+        })
+      ]);
+      await approveOwnNote(db.client, learner, draft.id);
+      expect(
+        await listMistakeCandidates(db.client, learner, 'study-a')
+      ).toEqual([
+        expect.objectContaining({
+          draftNoteId: draft.id,
+          draftStatus: 'approved'
+        })
+      ]);
+      await rejectNote(db.client, learner, draft.id);
+      expect(
+        await listMistakeCandidates(db.client, learner, 'study-a')
+      ).toEqual([
+        expect.objectContaining({
+          draftNoteId: draft.id,
+          draftStatus: 'rejected'
+        })
+      ]);
       await expect(
         listMistakeCandidates(db.client, other, 'study-a')
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
