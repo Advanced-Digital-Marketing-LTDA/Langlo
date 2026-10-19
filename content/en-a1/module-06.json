@@ -183,7 +183,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "There is e there are",
+            "explanation": "Use there is para dizer que uma coisa existe ou para falar de um substantivo incontável; use there are com substantivos no plural: There is a book on the table. There is some milk. There are two chairs in the room. Nas perguntas, coloque o verbo primeiro: Is there a bank near here? Are there any chairs? Respostas curtas: Yes, there is. No, there aren't. Negativas: There isn't any milk. There aren't any chairs.",
+            "examples": [
+              {
+                "en": "There is a book on the table.",
+                "pt": "Há um livro sobre a mesa."
+              },
+              {
+                "en": "There are two chairs in the room.",
+                "pt": "Há duas cadeiras no quarto."
+              },
+              {
+                "en": "Is there a bank near here?",
+                "pt": "Há um banco aqui perto?"
+              }
+            ],
+            "references": ["BC-A1-A2"]
+          }
+        }
       }
     },
     {
@@ -348,7 +369,28 @@
             "near_misses": ["Does she wants to swim?", "Do she want to swim?"],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Want to + infinitivo",
+            "explanation": "Use want to mais a forma base do verbo para dizer o que você deseja fazer: I want to learn English. She wants to go home. Acrescente -s a want depois de he, she e it. Perguntas e negativas usam do ou does: Do you want to play tennis? She doesn't want to stay. Depois de doesn't e don't, want não recebe -s. Não omita to nem use -ing: não diga I want learn ou I want to learning.",
+            "examples": [
+              {
+                "en": "I want to learn English.",
+                "pt": "Quero aprender inglês."
+              },
+              {
+                "en": "She wants to go home.",
+                "pt": "Ela quer ir para casa."
+              },
+              {
+                "en": "Do you want to play tennis?",
+                "pt": "Você quer jogar tênis?"
+              }
+            ],
+            "references": ["CAM-A1-YLE", "BC-A1-A2"]
+          }
+        }
       }
     }
   ]

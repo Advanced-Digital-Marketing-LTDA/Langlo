@@ -152,7 +152,28 @@
             "near_misses": ["Four babys sleep.", "Four baby sleep."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Substantivos no plural: formas regulares e irregulares",
+            "explanation": "A maioria dos substantivos recebe -s no plural: book, books. Os substantivos terminados em -s, -sh, -ch, -x ou -z recebem -es: box, boxes; watch, watches; bus, buses. Nos substantivos terminados em consoante + -y, troque y por -ies: baby, babies (mas boy, boys). Alguns substantivos frequentes são irregulares e precisam ser aprendidos: man, men; woman, women; child, children; foot, feet; person, people. Depois de um sujeito no plural, o verbo não recebe -s: Two women work here.",
+            "examples": [
+              {
+                "en": "I have two books.",
+                "pt": "Tenho dois livros."
+              },
+              {
+                "en": "Two women work here.",
+                "pt": "Duas mulheres trabalham aqui."
+              },
+              {
+                "en": "The children are happy.",
+                "pt": "As crianças estão felizes."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -295,7 +316,28 @@
             "near_misses": ["He has a eraser.", "He has the eraser."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Artigos a, an e the; demonstrativos",
+            "explanation": "Use a antes de um som de consoante (a book) e an antes de um som de vogal (an apple, an hour). Use a ou an ao mencionar algo pela primeira vez e the quando a coisa já é conhecida: I have a book. The book is new. This e that apontam para uma coisa (perto e longe); these e those apontam para várias: This book is new. Those shoes are old. O demonstrativo concorda com o substantivo em número.",
+            "examples": [
+              {
+                "en": "I have an apple.",
+                "pt": "Tenho uma maçã."
+              },
+              {
+                "en": "This book is new.",
+                "pt": "Este livro é novo."
+              },
+              {
+                "en": "Those shoes are old.",
+                "pt": "Aqueles sapatos são velhos."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -438,7 +480,28 @@
             "near_misses": ["We see he.", "We sees him."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Pronomes de sujeito e de objeto",
+            "explanation": "Os pronomes de sujeito vêm antes do verbo: I, you, he, she, it, we, they. Os pronomes de objeto vêm depois do verbo ou de uma preposição: me, you, him, her, it, us, them. She sees me. I help them. This is for her. Depois de um verbo ou de uma preposição, não use a forma de sujeito: não diga She sees I. Demonstrativos como this e that também podem aparecer sozinhos: This is for her.",
+            "examples": [
+              {
+                "en": "She sees me.",
+                "pt": "Ela me vê."
+              },
+              {
+                "en": "I help them.",
+                "pt": "Eu os ajudo."
+              },
+              {
+                "en": "This is for her.",
+                "pt": "Isto é para ela."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -585,7 +648,28 @@
             "near_misses": ["He car is new.", "Him car is new."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Determinantes e pronomes possessivos",
+            "explanation": "Os determinantes possessivos vêm antes de um substantivo: my, your, his, her, our, their (my bag, her house). Os pronomes possessivos substituem o substantivo e aparecem sozinhos: mine, yours, his, hers, ours, theirs (This bag is mine). Não use my quando a frase pede mine: não diga This bag is my. Não use mine antes de um substantivo: não diga This is mine bag.",
+            "examples": [
+              {
+                "en": "This is my bag.",
+                "pt": "Esta é a minha bolsa."
+              },
+              {
+                "en": "That bag is mine.",
+                "pt": "Aquela bolsa é minha."
+              },
+              {
+                "en": "Her house is big.",
+                "pt": "A casa dela é grande."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     }
   ]

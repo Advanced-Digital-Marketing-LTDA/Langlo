@@ -15,11 +15,11 @@ Imported content is immutable. A correction is a new lesson version of the same 
 3. A skill's first version carries no declarations; declaring one there is refused.
 4. Raise `curriculum_version` in `content/curriculum-manifest.json` by hand. The importer never increments it. It checks that the bump matches the changes it finds:
 
-   | Bump  | Needed when the import contains                                                                  |
-   | ----- | ------------------------------------------------------------------------------------------------ |
-   | patch | only `same` questions and no removal, or a version quarantined                                   |
-   | minor | a new skill, new prerequisites, a new first version, or any `changed`, `new` or removed question |
-   | major | a retired skill                                                                                  |
+   | Bump  | Needed when the import contains                                                                                        |
+   | ----- | ---------------------------------------------------------------------------------------------------------------------- |
+   | patch | only `same` questions and no removal, or a version quarantined                                                         |
+   | minor | a new skill, new prerequisites, a new first version, a lesson translation, or any `changed`, `new` or removed question |
+   | major | a retired skill                                                                                                        |
 
    A package that changes no rows (a reissued bundle) may take any newer version. A wrong bump fails with `VERSION_BUMP`.
 
@@ -42,12 +42,12 @@ A session keeps the version of its first answer for a skill, so a half-finished 
 
 ## Record and reversal
 
-Each import writes `content_changes` rows (skills added or retired, versions added or quarantined, questions same, changed, new or removed) in its own transaction. Nothing learner-side is rewritten, so mastery is recomputed on every read and there is nothing to restore. To reverse an update, publish a newer version that restores the content under new question ids with the matching declarations. Quarantine withdraws a version and is logged as `version-quarantined`; the newest version that is not quarantined is then what lessons, the mastery catalog, the update notice, assessments and mastery use, and the quarantined version stays readable in `content_versions` and `content_changes`.
+Each import writes `content_changes` rows (skills added or retired, versions added or quarantined, lesson translations added, questions same, changed, new or removed) in its own transaction. Adding a translation to an already-stored lesson is logged as `lesson-translation-added` and requires a minor curriculum bump. Nothing learner-side is rewritten, so mastery is recomputed on every read and there is nothing to restore. To reverse an update, publish a newer version that restores the content under new question ids with the matching declarations. Quarantine withdraws a version and is logged as `version-quarantined`; the newest version that is not quarantined is then what lessons, the mastery catalog, the update notice, assessments and mastery use, and the quarantined version stays readable in `content_versions` and `content_changes`.
 
 ## Production runbook (owner)
 
-1. Confirm all migrations are applied (`node scripts/db-remote-test.ts status` shows `pending: 0`); 0016 adds the lineage, retirement and change-log columns.
+1. Confirm all migrations are applied (`node scripts/db-remote-test.ts status` shows `pending: 0`); 0016 adds the lineage, retirement and change-log columns, and 0017 adds lesson translations.
 2. Back up the database.
 3. Dry run, then the impact report, then review the report.
 4. Apply with `--apply --confirm-host HOST`.
-5. A non-production database that already holds the bundle alone under `1.0.0` rejects the combined package (same version, different content); reset or re-seed it. Production holds nothing from `1.0.0`, so the combined package imports there as `1.0.0`.
+5. A database that already holds the bundle under `1.0.0` rejects a changed package under that same version. The translation bundle is `1.1.0`; the production ledger was previously reported to hold `1.0.0`, so verify its migration state and impact report before any live apply.

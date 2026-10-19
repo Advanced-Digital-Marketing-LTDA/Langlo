@@ -23,7 +23,33 @@ import {
 // The import script against a real, disposable local database. Expected
 // counts come from the raw module JSON, not from the code under test.
 
-type RawModule = { lessons: { version: { questions: unknown[] } }[] };
+type RawLesson = {
+  skill_id: string;
+  title: string;
+  explanation: string;
+  examples: Record<string, string>[];
+  references: string[];
+  version: {
+    id: string;
+    version: number;
+    questions: {
+      id: string;
+      format: string;
+      prompt: string;
+      answer: string;
+      holdout?: boolean;
+    }[];
+    translations?: {
+      pt: {
+        title: string;
+        explanation: string;
+        examples: Record<string, string>[];
+        references: string[];
+      };
+    };
+  };
+};
+type RawModule = { lessons: RawLesson[] };
 const root = process.cwd();
 const modules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
@@ -39,6 +65,14 @@ const modules = readdirSync(join(root, 'content'), { withFileTypes: true })
   );
 const lessons = modules.flatMap((module) => module.lessons);
 const questions = lessons.reduce((n, l) => n + l.version.questions.length, 0);
+const latestMigrationTag = (
+  JSON.parse(
+    readFileSync(join(root, 'drizzle/meta/_journal.json'), 'utf8')
+  ) as {
+    entries: { tag: string }[];
+  }
+).entries.at(-1)?.tag;
+if (!latestMigrationTag) throw new Error('migration journal has no entries');
 
 let target: FixtureTarget;
 beforeEach(async () => {
@@ -188,7 +222,7 @@ describe('content import script', () => {
       DATABASE_URL: target.databaseUrl
     });
     expect(code).toBe(1);
-    expect(out).toContain('migrations pending: 0016');
+    expect(out).toContain(`migrations pending: ${latestMigrationTag}`);
     expect(await count('skills')).toBe(0);
   });
 
@@ -297,5 +331,122 @@ describe('module package', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+
+  it('passes every authored Portuguese translation through the import package', () => {
+    const authored = lessons.filter(
+      (lesson) => lesson.version.translations?.pt
+    );
+    expect(authored).toHaveLength(45);
+
+    const importedById = new Map(
+      modulesPackage(root).versions.map((version) => [version.id, version])
+    );
+    expect(importedById.size).toBe(lessons.length);
+    for (const source of lessons) {
+      const imported = importedById.get(source.version.id);
+      expect(imported, source.version.id).toBeDefined();
+      expect(imported!.skillId, source.version.id).toBe(source.skill_id);
+      expect(imported!.version, source.version.id).toBe(source.version.version);
+      expect(imported!.lesson, source.version.id).toEqual({
+        title: source.title,
+        explanation: source.explanation,
+        examples: source.examples,
+        references: source.references
+      });
+      expect(
+        imported!.questions.map(({ id, format, prompt, answer, holdout }) => [
+          id,
+          format,
+          prompt,
+          answer,
+          holdout
+        ])
+      ).toEqual(
+        source.version.questions.map(
+          ({ id, format, prompt, answer, holdout }) => [
+            id,
+            format,
+            prompt,
+            answer,
+            holdout
+          ]
+        )
+      );
+    }
+
+    for (const source of authored) {
+      const imported = importedById.get(source.version.id)!;
+      const portuguese = source.version.translations!.pt;
+      expect(imported.translations?.pt, source.version.id).toEqual(portuguese);
+      expect(portuguese.title.trim(), source.version.id).not.toBe('');
+      expect(portuguese.explanation.trim(), source.version.id).not.toBe('');
+      expect(
+        portuguese.examples.length,
+        source.version.id
+      ).toBeGreaterThanOrEqual(3);
+      for (const example of portuguese.examples) {
+        expect(example.en?.trim(), source.version.id).not.toBe('');
+        expect(example.pt?.trim(), source.version.id).not.toBe('');
+      }
+      expect(portuguese.references, source.version.id).toEqual(
+        source.references
+      );
+    }
+    for (const source of lessons.filter(
+      (lesson) => !lesson.version.translations
+    ))
+      expect(
+        importedById.get(source.version.id)?.translations,
+        source.version.id
+      ).toBeUndefined();
+
+    const questionWords = importedById.get('en-a1-007@1')?.translations?.pt;
+    expect(
+      questionWords?.examples.find(
+        (example) => example.en === 'When is the class?'
+      )?.pt
+    ).toBe('Quando é a aula?');
+  });
+
+  function rejectsBadTranslation(
+    mutate: (
+      lesson: Record<string, unknown>,
+      version: Record<string, unknown>
+    ) => void
+  ) {
+    const module = JSON.parse(
+      readFileSync(join(root, 'content/en-a1/module-02.json'), 'utf8')
+    ) as { lessons: Record<string, unknown>[] };
+    const lesson = module.lessons.find((item) => {
+      const version = item.version as Record<string, unknown>;
+      return version.translations !== undefined;
+    });
+    if (!lesson) throw new Error('module fixture has no translation');
+    mutate(lesson, lesson.version as Record<string, unknown>);
+    withModule(JSON.stringify(module), (dir) =>
+      expect(() => modulesPackage(dir)).toThrow(/INVALID_MODULE/u)
+    );
+  }
+
+  it('rejects a misspelled translation field instead of dropping it', () => {
+    rejectsBadTranslation((_, version) => {
+      version.translation = version.translations;
+      delete version.translations;
+    });
+  });
+
+  it('rejects a translation block placed at lesson level', () => {
+    rejectsBadTranslation((lesson, version) => {
+      lesson.translations = version.translations;
+      delete version.translations;
+    });
+  });
+
+  it('rejects an unsupported explanation language in a module', () => {
+    rejectsBadTranslation((_, version) => {
+      const translations = version.translations as Record<string, unknown>;
+      translations['pt-BR'] = translations.pt;
+    });
   });
 });

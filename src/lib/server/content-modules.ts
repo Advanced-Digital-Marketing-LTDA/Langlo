@@ -1,7 +1,12 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { z } from 'zod';
 import { bundlePackage } from './content-bundle';
-import { ContentImportError, type ContentPackage } from './content-import';
+import {
+  ContentImportError,
+  formats,
+  type ContentPackage
+} from './content-import';
 
 // Reads the authored curriculum modules (content/<track>/module-NN.json) and
 // adds their lessons to the approved bundle as one importer package. Skills
@@ -21,22 +26,87 @@ export type ModuleFile = {
       id: string;
       version: number;
       questions: ContentPackage['versions'][number]['questions'];
+      translations?: NonNullable<
+        ContentPackage['versions'][number]['translations']
+      >;
     };
   }[];
 };
 
 const modulePath = /^module-\d+\.json$/u;
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const moduleLessonContent = z
+  .object({
+    title: z.string(),
+    explanation: z.string(),
+    examples: z.array(z.record(z.string(), z.string())),
+    references: z.array(z.string())
+  })
+  .strict();
+
+const moduleShape = z
+  .object({
+    module_id: z.string(),
+    track: z.string().optional(),
+    title: z.string().optional(),
+    instruction_language: z.string().optional(),
+    review_status: z.string(),
+    matching: z.string().optional(),
+    lessons: z.array(
+      z
+        .object({
+          skill_id: z.string(),
+          ...moduleLessonContent.shape,
+          version: z
+            .object({
+              id: z.string(),
+              version: z.number().int().min(1),
+              questions: z.array(
+                z.object({
+                  id: z.string(),
+                  format: z.enum(formats),
+                  prompt: z.string(),
+                  answer: z.string(),
+                  alternatives: z.array(z.string()).optional(),
+                  holdout: z.boolean().optional(),
+                  change: z.enum(['same', 'changed', 'new']).optional(),
+                  continues: z.string().optional()
+                })
+              ),
+              translations: z
+                .object({ pt: moduleLessonContent.optional() })
+                .strict()
+                .optional()
+            })
+            .strict()
+        })
+        .strict()
+    )
+  })
+  .strict();
 
 function readModule(path: string): ModuleFile {
-  let module: ModuleFile;
+  let module: unknown;
   try {
-    module = JSON.parse(readFileSync(path, 'utf8')) as ModuleFile;
+    module = JSON.parse(readFileSync(path, 'utf8')) as unknown;
   } catch {
     throw new ContentImportError('INVALID_MODULE', `${path} is not valid JSON`);
   }
-  if (typeof module?.module_id !== 'string' || !Array.isArray(module.lessons))
+  if (
+    !isRecord(module) ||
+    typeof module.module_id !== 'string' ||
+    !Array.isArray(module.lessons)
+  )
     throw new ContentImportError('INVALID_MODULE', `${path} has no lessons`);
-  return module;
+  const parsed = moduleShape.safeParse(module);
+  if (!parsed.success)
+    throw new ContentImportError(
+      'INVALID_MODULE',
+      `${path} has invalid module structure: ${z.prettifyError(parsed.error)}`
+    );
+  return parsed.data;
 }
 
 /** Every module file under content/, in a stable order. */
@@ -71,6 +141,7 @@ export function modulesPackage(root: string): ContentPackage {
         skillId: lesson.skill_id,
         version: lesson.version.version,
         review: module.review_status,
+        translations: lesson.version.translations,
         lesson: {
           title: lesson.title,
           explanation: lesson.explanation,

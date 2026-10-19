@@ -172,7 +172,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Instruções curtas e imperativos",
+            "explanation": "O imperativo dá uma instrução e usa a forma base do verbo, sem sujeito: Open your books. Listen to the teacher. Para dar uma instrução negativa, coloque Don't (ou Do not) antes da forma base: Don't talk in class. Acrescente please para ser mais gentil: Open the door, please. No imperativo, o verbo nunca recebe -s nem -ing.",
+            "examples": [
+              {
+                "en": "Open your books.",
+                "pt": "Abram os livros."
+              },
+              {
+                "en": "Don't talk, please.",
+                "pt": "Não conversem, por favor."
+              },
+              {
+                "en": "Listen to the teacher.",
+                "pt": "Ouçam o professor."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -346,7 +367,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Ligando ideias com and, but e or",
+            "explanation": "And acrescenta uma ideia a outra: I like tea and coffee. But contrasta duas ideias: I like tea, but I don't like coffee. Or oferece uma escolha: Do you want tea or coffee? Coloque uma vírgula antes de but quando ele ligar duas orações. Esses conectores unem palavras, expressões ou orações do mesmo tipo.",
+            "examples": [
+              {
+                "en": "I like tea and coffee.",
+                "pt": "Gosto de chá e café."
+              },
+              {
+                "en": "I like tea, but I don't like coffee.",
+                "pt": "Gosto de chá, mas não gosto de café."
+              },
+              {
+                "en": "Do you want tea or coffee?",
+                "pt": "Você quer chá ou café?"
+              }
+            ],
+            "references": ["CAM-A1-YLE", "COE-CV20"]
+          }
+        }
       }
     },
     {
@@ -507,7 +549,28 @@
             "near_misses": ["She haven't got a pen.", "She hasn't get a pen."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Have got para falar de posse",
+            "explanation": "Use have got para dizer o que alguém tem: I have got a brother. She has got a new bike. Use have got com I, you, we e they e has got com he, she e it. Negativas: haven't got, hasn't got. Nas perguntas, coloque have ou has primeiro: Have you got a pen? Nas respostas curtas, repita have ou has: Yes, I have. No, she hasn't. As formas contraídas I've got e she's got são comuns na fala.",
+            "examples": [
+              {
+                "en": "I have got a brother.",
+                "pt": "Tenho um irmão."
+              },
+              {
+                "en": "She has got a new bike.",
+                "pt": "Ela tem uma bicicleta nova."
+              },
+              {
+                "en": "Have you got a pen?",
+                "pt": "Você tem uma caneta?"
+              }
+            ],
+            "references": ["CAM-A1-YLE", "BC-A1-A2"]
+          }
+        }
       }
     },
     {
@@ -667,7 +730,28 @@
             "near_misses": ["They cans run fast.", "They can runs fast."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Can para habilidade e permissão",
+            "explanation": "Can é um verbo modal. Use can mais a forma base do verbo para falar de habilidade (I can swim) e can't (cannot) para falar de incapacidade (She can't drive). A forma não muda: não diga She cans. Nas perguntas, coloque can primeiro: Can you swim? Respostas curtas: Yes, I can. No, I can't. Can também serve para pedir permissão: Can I open the window? Não use do nem does com can.",
+            "examples": [
+              {
+                "en": "I can swim.",
+                "pt": "Sei nadar."
+              },
+              {
+                "en": "She can't drive.",
+                "pt": "Ela não sabe dirigir."
+              },
+              {
+                "en": "Can I open the window?",
+                "pt": "Posso abrir a janela?"
+              }
+            ],
+            "references": ["CAM-A1-YLE", "BC-A1-A2"]
+          }
+        }
       }
     }
   ]

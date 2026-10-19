@@ -169,7 +169,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Preposições de tempo e de lugar",
+            "explanation": "Use at para horários e pontos exatos: at six o'clock, at the station. Use on para dias e datas: on Monday, on 5 May. Use in para meses, anos, estações do ano e lugares maiores: in July, in 2020, in winter, in London. Para lugar, in indica que algo está dentro, on indica contato com uma superfície, e next to ou between indicam posição: The keys are on the table. The shop is next to the bank.",
+            "examples": [
+              {
+                "en": "The class starts at nine o'clock.",
+                "pt": "A aula começa às nove."
+              },
+              {
+                "en": "My birthday is on 5 May.",
+                "pt": "Meu aniversário é em 5 de maio."
+              },
+              {
+                "en": "The keys are on the table.",
+                "pt": "As chaves estão sobre a mesa."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -341,7 +362,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Infinitivo para indicar finalidade",
+            "explanation": "Use to mais a forma base do verbo para dizer por que alguém faz algo: I went to the shop to buy milk. She is studying to become a nurse. Isso responde à pergunta por quê? e tem o mesmo sentido de in order to. Não use for seguido diretamente pela forma base do verbo: não diga I went to the shop for buy milk. Se quiser, use for mais um substantivo: I went to the shop for milk.",
+            "examples": [
+              {
+                "en": "I went to the shop to buy milk.",
+                "pt": "Fui à loja para comprar leite."
+              },
+              {
+                "en": "She is studying to become a nurse.",
+                "pt": "Ela está estudando para se tornar enfermeira."
+              },
+              {
+                "en": "We use a map to find the way.",
+                "pt": "Usamos um mapa para encontrar o caminho."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -513,7 +555,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Padrões com verbo + -ing",
+            "explanation": "Depois de alguns verbos e de preposições, use a forma do verbo terminada em -ing: I enjoy swimming. She finished writing. We are interested in learning Spanish. He is good at cooking. Enjoy e finish são seguidos por -ing. Like, love, hate e start podem ser seguidos por -ing ou pelo infinitivo com to; stop to do something tem um sentido diferente de stop doing it. Depois de uma preposição, use sempre -ing: thank you for helping, before leaving. Depois de enjoy, não use a forma base nem o infinitivo com to: não diga I enjoy to swim.",
+            "examples": [
+              {
+                "en": "I enjoy swimming.",
+                "pt": "Gosto de nadar."
+              },
+              {
+                "en": "She finished writing the email.",
+                "pt": "Ela terminou de escrever o e-mail."
+              },
+              {
+                "en": "He is good at cooking.",
+                "pt": "Ele é bom em cozinhar."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "BC-A1-A2"]
+          }
+        }
       }
     }
   ]

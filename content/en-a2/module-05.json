@@ -181,7 +181,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Reconhecendo a voz passiva no presente e no passado simples",
+            "explanation": "Em uma frase na voz passiva, a coisa que recebe a ação é o sujeito. Reconheça a passiva no presente por am, is ou are mais o particípio passado: English is spoken here. Reconheça a passiva no passado por was ou were mais o particípio passado: The window was broken yesterday. Avisos e descrições costumam usar a voz passiva. By indica quem realizou a ação: The book was written by Orwell.",
+            "examples": [
+              {
+                "en": "English is spoken here.",
+                "pt": "Fala-se inglês aqui."
+              },
+              {
+                "en": "The window was broken yesterday.",
+                "pt": "A janela foi quebrada ontem."
+              },
+              {
+                "en": "The book was written by Orwell.",
+                "pt": "O livro foi escrito por Orwell."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -353,7 +374,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Quantificadores com substantivos contáveis e incontáveis",
+            "explanation": "Substantivos contáveis (apples, books) podem ser contados; substantivos incontáveis (water, money) não podem. Use many e a few com contáveis: many books, a few apples. Use much e a little com incontáveis: much water, a little milk. A lot of e some podem ser usados com os dois tipos. Em perguntas e negativas, use many e much: How many eggs? How much sugar? There aren't many chairs.",
+            "examples": [
+              {
+                "en": "There are a few apples on the table.",
+                "pt": "Há algumas maçãs sobre a mesa."
+              },
+              {
+                "en": "How much sugar do you want?",
+                "pt": "Quanto açúcar você quer?"
+              },
+              {
+                "en": "We have a lot of time.",
+                "pt": "Temos bastante tempo."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -512,7 +554,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Perguntas de confirmação (question tags) e respostas curtas",
+            "explanation": "Uma pergunta de confirmação (question tag) é uma pergunta curta acrescentada a uma afirmação para confirmar uma informação. Depois de uma afirmação positiva, use uma pergunta de confirmação negativa; depois de uma afirmação negativa, use uma positiva: You are tired, aren't you? She can't swim, can she? A pergunta repete o verbo auxiliar. Em uma resposta curta, repita o auxiliar: Yes, I am. No, she can't. Não repita a frase inteira.",
+            "examples": [
+              {
+                "en": "You are tired, aren't you?",
+                "pt": "Você está cansado(a), não está?"
+              },
+              {
+                "en": "She can't swim, can she?",
+                "pt": "Ela não sabe nadar, sabe?"
+              },
+              {
+                "en": "Yes, I am.",
+                "pt": "Sim, estou."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -682,7 +745,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Advérbios de frequência e de modo em orações simples",
+            "explanation": "Advérbios de frequência (always, usually, often, sometimes, never) aparecem antes do verbo principal e depois de be: She often reads. He is always late. Advérbios de modo (quickly, carefully, well) normalmente aparecem depois do verbo ou do objeto: He drives carefully. She speaks English well. Não coloque um advérbio de modo entre o verbo e seu objeto: não diga She speaks well English.",
+            "examples": [
+              {
+                "en": "She often reads in bed.",
+                "pt": "Ela costuma ler na cama."
+              },
+              {
+                "en": "He is always late.",
+                "pt": "Ele está sempre atrasado."
+              },
+              {
+                "en": "She speaks English well.",
+                "pt": "Ela fala inglês bem."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     }
   ]

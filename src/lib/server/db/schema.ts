@@ -348,19 +348,23 @@ export const questions = sqliteTable(
   ]
 );
 
+const lessonContentColumns = () => ({
+  title: text('title').notNull(),
+  explanation: text('explanation').notNull(),
+  // JSON array of objects whose values are strings.
+  examples: text('examples').notNull(),
+  // JSON array of strings.
+  refs: text('refs').notNull(),
+  fingerprint: text('fingerprint').notNull()
+});
+
 export const lessons = sqliteTable(
   'lessons',
   {
     contentVersionId: text('content_version_id').primaryKey(),
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
-    title: text('title').notNull(),
-    explanation: text('explanation').notNull(),
-    // JSON array of objects whose values are strings.
-    examples: text('examples').notNull(),
-    // JSON array of strings.
-    refs: text('refs').notNull(),
-    fingerprint: text('fingerprint').notNull()
+    ...lessonContentColumns()
   },
   (table) => [
     foreignKey({
@@ -376,6 +380,35 @@ export const lessons = sqliteTable(
       sql`length(${table.fingerprint}) = 64 AND ${table.fingerprint} NOT GLOB '*[^0-9a-f]*'`
     ),
     check('lessons_title', sql`length(trim(${table.title})) > 0`)
+  ]
+);
+
+// A lesson's explanation in another language, one row per version and language.
+// The English `lessons` row stays the source; a missing row means no translation.
+export const lessonTranslations = sqliteTable(
+  'lesson_translations',
+  {
+    contentVersionId: text('content_version_id')
+      .notNull()
+      .references(() => lessons.contentVersionId),
+    explanationLanguage: text('explanation_language', {
+      enum: ['pt']
+    }).notNull(),
+    ...lessonContentColumns()
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.contentVersionId, table.explanationLanguage]
+    }),
+    check(
+      'lesson_translations_language',
+      sql`${table.explanationLanguage} IN ('pt')`
+    ),
+    check(
+      'lesson_translations_fingerprint',
+      sql`length(${table.fingerprint}) = 64 AND ${table.fingerprint} NOT GLOB '*[^0-9a-f]*'`
+    ),
+    check('lesson_translations_title', sql`length(trim(${table.title})) > 0`)
   ]
 );
 
@@ -1015,6 +1048,22 @@ export const learnerPreferences = sqliteTable(
 
 // What each curriculum import changed in existing content, written in the
 // importer's transaction so a learner-facing notice and an audit can read it.
+const contentChangeKinds = [
+  'skill-added',
+  'skill-retired',
+  'version-added',
+  'question-same',
+  'question-changed',
+  'question-new',
+  'question-removed',
+  'lesson-translation-added',
+  'version-quarantined'
+] as const;
+const contentChangeKindsSql = sql.join(
+  contentChangeKinds.map((kind) => sql.raw(`'${kind}'`)),
+  sql`, `
+);
+
 export const contentChanges = sqliteTable(
   'content_changes',
   {
@@ -1022,18 +1071,7 @@ export const contentChanges = sqliteTable(
     curriculumVersion: text('curriculum_version')
       .notNull()
       .references(() => curriculumImports.curriculumVersion),
-    kind: text('kind', {
-      enum: [
-        'skill-added',
-        'skill-retired',
-        'version-added',
-        'question-same',
-        'question-changed',
-        'question-new',
-        'question-removed',
-        'version-quarantined'
-      ]
-    }).notNull(),
+    kind: text('kind', { enum: contentChangeKinds }).notNull(),
     skillId: text('skill_id').notNull(),
     contentVersionId: text('content_version_id'),
     questionId: text('question_id'),
@@ -1045,7 +1083,7 @@ export const contentChanges = sqliteTable(
     index('content_changes_skill').on(table.skillId),
     check(
       'content_changes_kind',
-      sql`${table.kind} IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'version-quarantined')`
+      sql`${table.kind} IN (${contentChangeKindsSql})`
     )
   ]
 );

@@ -181,7 +181,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Orações relativas com who, which e that",
+            "explanation": "Uma oração relativa indica de qual pessoa ou coisa você está falando. Use who para pessoas, which para coisas e that para ambos: The woman who lives next door is a nurse. This is the book which I bought. The man that called is my uncle. A palavra relativa substitui o substantivo, então não acrescente outro pronome: não diga The book which I bought it.",
+            "examples": [
+              {
+                "en": "The woman who lives next door is a nurse.",
+                "pt": "A mulher que mora ao lado é enfermeira."
+              },
+              {
+                "en": "This is the book which I bought.",
+                "pt": "Este é o livro que comprei."
+              },
+              {
+                "en": "The man that called is my uncle.",
+                "pt": "O homem que ligou é meu tio."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "COE-CV20"]
+          }
+        }
       }
     },
     {
@@ -357,7 +378,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Conectores de causa, tempo e resultado",
+            "explanation": "Conectores unem orações curtas. Use because para apresentar um motivo: I stayed home because I was ill. Use so para apresentar um resultado: I was ill, so I stayed home. Use when, before e after para falar de tempo: Call me when you arrive. Wash your hands before you eat. Because responde à pergunta por quê; so apresenta o resultado. Não use because e so na mesma frase.",
+            "examples": [
+              {
+                "en": "I stayed home because I was ill.",
+                "pt": "Fiquei em casa porque estava doente."
+              },
+              {
+                "en": "I was ill, so I stayed home.",
+                "pt": "Eu estava doente, então fiquei em casa."
+              },
+              {
+                "en": "Call me when you arrive.",
+                "pt": "Ligue para mim quando chegar."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "COE-CV20"]
+          }
+        }
       }
     },
     {
@@ -550,7 +592,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Primeiro condicional para possibilidades prováveis",
+            "explanation": "Use if mais o presente simples para uma condição provável e will mais a forma base do verbo para seu resultado: If it rains, we will stay at home. Na oração com if, use o presente, e não will: não diga If it will rain. Você também pode colocar a oração com if no fim, sem vírgula: We will stay at home if it rains. Perguntas: What will you do if you miss the bus?",
+            "examples": [
+              {
+                "en": "If it rains, we will stay at home.",
+                "pt": "Se chover, vamos ficar em casa."
+              },
+              {
+                "en": "I will call you if I am late.",
+                "pt": "Vou ligar para você se me atrasar."
+              },
+              {
+                "en": "What will you do if you miss the bus?",
+                "pt": "O que você vai fazer se perder o ônibus?"
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -730,7 +793,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Relatando afirmações e pedidos",
+            "explanation": "Para relatar o que alguém diz no presente, use says that mais uma oração: She says that she is tired. That é opcional. Mude o pronome quando a pessoa que fala mudar: 'I am tired' vira She says she is tired. Para relatar um pedido ou uma ordem, use asked ou told mais um objeto, seguido de to e da forma base do verbo: He asked me to open the door. She told us not to be late.",
+            "examples": [
+              {
+                "en": "She says that she is tired.",
+                "pt": "Ela diz que está cansada."
+              },
+              {
+                "en": "He asked me to open the door.",
+                "pt": "Ele me pediu para abrir a porta."
+              },
+              {
+                "en": "She told us not to be late.",
+                "pt": "Ela nos disse para não nos atrasarmos."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     }
   ]
