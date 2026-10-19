@@ -120,12 +120,12 @@ describe('mistake-card draft generation', () => {
         }
       });
       expect(note.id).toMatch(/^note:/u);
-      expect(note.card.id).toBe(`card:${note.id}`);
+      expect(note.card).toBeNull();
 
       // A draft is editable content, not schedulable study material.
       expect(await listDueCards(db.client, learner)).toEqual([]);
       expect(await countDueCards(db.client, learner)).toBe(0);
-      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
+      expect(await noteCounts(db.client)).toEqual([1, 0, 0]);
     } finally {
       db.close();
     }
@@ -166,7 +166,7 @@ describe('mistake-card draft generation', () => {
         cardId: first.cardId,
         duplicate: true
       });
-      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
+      expect(await noteCounts(db.client)).toEqual([1, 0, 0]);
     } finally {
       db.close();
     }
@@ -355,7 +355,7 @@ describe('mistake-card validation and explanation fallbacks', () => {
       ]);
       expect(second.id).toBe(first.id);
       expect(first.duplicate).not.toBe(second.duplicate);
-      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
+      expect(await noteCounts(db.client)).toEqual([1, 0, 0]);
     } finally {
       db.close();
     }
@@ -443,9 +443,7 @@ describe('mistake-card editing and rejection', () => {
         explanation: 'Être is irregular.',
         status: 'draft'
       });
-      expect((await getNote(db.client, learner, draft.id)).card.id).toBe(
-        before.card.id
-      );
+      expect((await getNote(db.client, learner, draft.id)).card).toBeNull();
       expect((await getNote(db.client, learner, draft.id)).sourceId).toBe(
         before.sourceId
       );
@@ -454,7 +452,7 @@ describe('mistake-card editing and rejection', () => {
       await approveOwnNote(db.client, learner, draft.id);
       const approved = await getNote(db.client, learner, draft.id);
       expect(approved.status).toBe('approved');
-      expect(approved.card.id).toBe(before.card.id);
+      expect(approved.card?.id).toBe(draft.cardId);
       await updateNote(db.client, learner, draft.id, {
         kind: 'basic',
         content: { front: 'Je ___ étudiant.', back: 'suis' },
@@ -467,8 +465,8 @@ describe('mistake-card editing and rejection', () => {
         content: { front: 'Je ___ étudiant.', back: 'suis' },
         sourceId: before.sourceId
       });
-      expect(after.card.id).toBe(before.card.id);
-      expect(after.card.revision).toBe(1);
+      expect(after.card?.id).toBe(draft.cardId);
+      expect(after.card?.revision).toBe(1);
       expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
       expect(await listDueCards(db.client, learner)).toHaveLength(1);
     } finally {
@@ -484,7 +482,7 @@ describe('mistake-card editing and rejection', () => {
         format: 'basic'
       });
       await approveOwnNote(db.client, learner, draft.id);
-      expect((await getNote(db.client, learner, draft.id)).card.revision).toBe(
+      expect((await getNote(db.client, learner, draft.id)).card?.revision).toBe(
         0
       );
 
@@ -493,13 +491,13 @@ describe('mistake-card editing and rejection', () => {
         content: { front: 'Je ___ étudiant.', back: 'suis (être)' }
       });
       const edited = await getNote(db.client, learner, draft.id);
-      expect(edited.card.revision).toBe(1);
+      expect(edited.card?.revision).toBe(1);
 
       // The form loaded before the edit carries revision 0 and must not apply.
       await expect(
         submitReview(db.client, learner, {
           cardId: draft.cardId,
-          submissionId: 'review-stale-after-edit',
+          submissionId: '10000000-0000-4000-8000-000000000100',
           expectedRevision: 0,
           rating: 'good'
         })
@@ -507,7 +505,7 @@ describe('mistake-card editing and rejection', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: draft.cardId,
-          submissionId: 'review-after-edit',
+          submissionId: '10000000-0000-4000-8000-000000000101',
           expectedRevision: 1,
           rating: 'good'
         })
@@ -812,12 +810,12 @@ describe('mistake-card editing and rejection', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: draft.cardId,
-          submissionId: 'review-rejected',
+          submissionId: '10000000-0000-4000-8000-000000000102',
           expectedRevision: 0,
           rating: 'good'
         })
       ).rejects.toMatchObject({ code: 'NOT_APPROVED' });
-      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
+      expect(await noteCounts(db.client)).toEqual([1, 0, 0]);
     } finally {
       db.close();
     }
@@ -837,7 +835,7 @@ describe('mistake-card editing and rejection', () => {
       await expect(
         submitReview(db.client, learner, {
           cardId: draft.cardId,
-          submissionId: 'review-rejected-approved',
+          submissionId: '10000000-0000-4000-8000-000000000103',
           expectedRevision: 0,
           rating: 'good'
         })
@@ -873,7 +871,7 @@ describe('mistake-card editing and rejection', () => {
       expect((await getNote(db.client, learner, draft.id)).status).toBe(
         'draft'
       );
-      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
+      expect(await noteCounts(db.client)).toEqual([1, 0, 0]);
     } finally {
       db.close();
     }

@@ -128,7 +128,7 @@ describe('mistake-card draft endpoints', () => {
         .catch((thrown: unknown) => thrown);
       expect(foreign).toHaveProperty('status', 404);
       expect(foreign).toHaveProperty('body.message', 'Not found.');
-      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
+      expect(await noteCounts(db.client)).toEqual([1, 0, 0]);
     } finally {
       db.close();
     }

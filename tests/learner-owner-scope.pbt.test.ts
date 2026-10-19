@@ -48,7 +48,7 @@ it('guessed identifiers give another owner zero reads and zero writes', async ()
     await approveNote(client, ownerA, 'note-a');
     await submitReview(client, ownerA, {
       cardId: 'card:note-a',
-      submissionId: 'review-a',
+      submissionId: 'a0000000-0000-4000-8000-000000000001',
       expectedRevision: 0,
       rating: 'good'
     });
