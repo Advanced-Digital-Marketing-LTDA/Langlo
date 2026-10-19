@@ -35,6 +35,19 @@ const computeMastery = async (
   language: string
 ) => (await loadProgress(client, session, language)).tracks[0].skills;
 
+const withoutPracticeCounts = <
+  T extends {
+    practisedSessions: number;
+    answers: number;
+    lastPractisedAt: number | null;
+  }
+>({
+  practisedSessions: _practisedSessions,
+  answers: _answers,
+  lastPractisedAt: _lastPractisedAt,
+  ...skill
+}: T) => skill;
+
 const practiceTopic = (
   skillId: string,
   overrides: Partial<{
@@ -376,24 +389,8 @@ describe('versioned grammar policy', () => {
       practisedSessions: 2,
       answers: 2
     });
-    expect(
-      afterRepeat.map(
-        ({
-          practisedSessions: _practisedSessions,
-          answers: _answers,
-          lastPractisedAt: _lastPractisedAt,
-          ...skill
-        }) => skill
-      )
-    ).toEqual(
-      a.map(
-        ({
-          practisedSessions: _practisedSessions,
-          answers: _answers,
-          lastPractisedAt: _lastPractisedAt,
-          ...skill
-        }) => skill
-      )
+    expect(afterRepeat.map(withoutPracticeCounts)).toEqual(
+      a.map(withoutPracticeCounts)
     );
     await expect(loadProgress(client, learner, 'de')).rejects.toMatchObject({
       code: 'NOT_FOUND'

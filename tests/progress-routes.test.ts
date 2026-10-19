@@ -31,27 +31,26 @@ afterEach(async () => {
   close?.();
   await disposeFlashcardFixtures();
 });
-function event(userId: string | null, query = '') {
-  return {
-    locals: {
-      config: { dataEnabled: true, databaseUrl } as RuntimeConfig,
-      user: userId ? { id: userId } : null,
-      session: userId ? { userId } : null
-    },
-    url: new URL(`http://127.0.0.1/app/map${query}`)
-  } as never;
-}
-
-const practiceEvent = (userId: string | null, language = 'fr') =>
+const learnerEvent = (
+  userId: string | null,
+  url: string,
+  params?: { language: string }
+) =>
   ({
     locals: {
       config: { dataEnabled: true, databaseUrl } as RuntimeConfig,
       user: userId ? { id: userId } : null,
       session: userId ? { userId } : null
     },
-    url: new URL(`http://127.0.0.1/app/practice/${language}`),
-    params: { language }
+    url: new URL(url),
+    ...(params && { params })
   }) as never;
+const event = (userId: string | null, query = '') =>
+  learnerEvent(userId, `http://127.0.0.1/app/map${query}`);
+const practiceEvent = (userId: string | null, language = 'fr') =>
+  learnerEvent(userId, `http://127.0.0.1/app/practice/${language}`, {
+    language
+  });
 
 it('requires a verified learner and rejects an unenrolled language', async () => {
   await expect(mapPage(event(null))).rejects.toMatchObject({
@@ -133,8 +132,13 @@ it('returns a catalog before the same track progress finishes', async () => {
   ).toEqual([{ language: 'fr', level: 'A1' }]);
   expect(data.tracks[0].catalog).toBeInstanceOf(Promise);
   expect(data.tracks[0].progress).toBeInstanceOf(Promise);
+  let progressSettled = false;
+  const progressDone = data.tracks[0].progress.finally(() => {
+    progressSettled = true;
+  });
   const catalog = await data.tracks[0].catalog;
-  const progress = await data.tracks[0].progress;
+  expect(progressSettled).toBe(false);
+  const progress = await progressDone;
   expect(catalog).toMatchObject({ language: 'fr', level: 'A1' });
   expect(catalog.skills[0]).toMatchObject({
     skillId: 'fr-a1-001',

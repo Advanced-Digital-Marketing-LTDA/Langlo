@@ -65,14 +65,16 @@ function compareRecency(a: PracticeTopic, b: PracticeTopic) {
   return recentA !== recentB ? recentA - recentB : 0;
 }
 
-const statusTieBreakers: Partial<
-  Record<GrammarStatus, (a: PracticeTopic, b: PracticeTopic) => number>
-> = { weak: compareAccuracy, practising: compareRecency };
+function compareWithinStatus(a: PracticeTopic, b: PracticeTopic) {
+  if (a.status === 'weak') return compareAccuracy(a, b);
+  if (a.status === 'practising') return compareRecency(a, b);
+  return 0;
+}
 
 function comparePractice(a: PracticeTopic, b: PracticeTopic) {
   return (
     priority[a.status] - priority[b.status] ||
-    statusTieBreakers[a.status]?.(a, b) ||
+    compareWithinStatus(a, b) ||
     a.skillId.localeCompare(b.skillId)
   );
 }

@@ -17,7 +17,7 @@
 - Before `recommendPractice` and the practice counts existed, the mastery tests reported the recommendation function missing and practice-count fields absent. Before the practice route loader was updated, its integration test received no recommendations. These tests passed after implementation.
 - The three practice-page render tests first failed on the missing recommendation list, empty state and recoverable error state. They passed after rendering both status chips, counts, lesson links and error handling.
 - A local fixture regression drops its `lessons` table to force catalog failure. It confirms the server logs that failure once even though dependent progress rejects too.
-- Focused tests: 6 files, 57 tests passed (mastery, progress routes, map rendering, practice rendering and dashboard coverage).
+- Focused tests: 6 files, 60 tests passed (mastery, progress routes, map rendering, practice rendering and dashboard coverage).
 - `npm run check`: 0 errors and 0 warnings.
 - `npm run build`: passed.
 - `npm run lint`: passed after a fixture-only unused-variable correction.
