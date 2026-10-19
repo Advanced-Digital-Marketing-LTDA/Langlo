@@ -21,6 +21,7 @@ export type ModuleFile = {
       id: string;
       version: number;
       questions: ContentPackage['versions'][number]['questions'];
+      translations?: ContentPackage['versions'][number]['translations'];
     };
   }[];
 };
@@ -71,6 +72,7 @@ export function modulesPackage(root: string): ContentPackage {
         skillId: lesson.skill_id,
         version: lesson.version.version,
         review: module.review_status,
+        translations: lesson.version.translations,
         lesson: {
           title: lesson.title,
           explanation: lesson.explanation,

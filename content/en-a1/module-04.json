@@ -166,7 +166,28 @@
             "near_misses": ["He has any apples.", "He has a apples."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Some e any com substantivos contáveis e incontáveis",
+            "explanation": "Use some em frases afirmativas e any em frases negativas e perguntas. Os dois podem ser usados com substantivos contáveis no plural (apples) e incontáveis (water, milk, bread): I have some apples. I don't have any milk. Do you have any bread? Substantivos incontáveis não têm plural e não usam a/an: não diga a milk. Some também pode aparecer em ofertas, mas, neste nível, fique com a regra básica.",
+            "examples": [
+              {
+                "en": "I have some apples.",
+                "pt": "Tenho algumas maçãs."
+              },
+              {
+                "en": "I don't have any milk.",
+                "pt": "Não tenho leite."
+              },
+              {
+                "en": "Do you have any bread?",
+                "pt": "Você tem pão?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -328,7 +349,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Adjetivos e comparativos",
+            "explanation": "Adjetivos descrevem pessoas e coisas e aparecem depois de be ou antes de um substantivo: My brother is tall. Forme o comparativo com -er para adjetivos curtos: tall, taller; old, older; big, bigger (dobre a consoante final); happy, happier (y vira i). Use more com adjetivos mais longos: more interesting. Good é irregular: good, better. Use than para comparar: This bag is bigger than that bag.",
+            "examples": [
+              {
+                "en": "My brother is tall.",
+                "pt": "Meu irmão é alto."
+              },
+              {
+                "en": "This bag is bigger than that bag.",
+                "pt": "Esta bolsa é maior do que aquela."
+              },
+              {
+                "en": "She is happier today.",
+                "pt": "Ela está mais feliz hoje."
+              }
+            ],
+            "references": ["CAM-A1-YLE", "BC-A1-A2"]
+          }
+        }
       }
     },
     {
@@ -493,7 +535,28 @@
             "near_misses": ["He often is tired.", "He is tired often."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Advérbios de frequência e de lugar",
+            "explanation": "Advérbios de frequência (always, usually, often, sometimes, never) aparecem antes do verbo principal e depois de be: I always drink tea. She is never late. Advérbios de lugar (here, there, outside, inside, upstairs) normalmente aparecem no fim da oração: The children play outside. Não coloque um advérbio de frequência entre o verbo e seu objeto: não diga I drink always tea.",
+            "examples": [
+              {
+                "en": "I always drink tea.",
+                "pt": "Eu sempre tomo chá."
+              },
+              {
+                "en": "She is never late.",
+                "pt": "Ela nunca se atrasa."
+              },
+              {
+                "en": "The children play outside.",
+                "pt": "As crianças brincam lá fora."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -654,7 +717,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Preposições de lugar e de tempo",
+            "explanation": "Use at com horários exatos (at seven o'clock), on com dias (on Monday) e in com meses (in June). Para lugar, on indica contato com a superfície (on the table), in indica que algo está dentro (in the box), under significa abaixo, next to significa ao lado e between indica que algo está no meio de duas coisas. Aprenda essas combinações como blocos: at home, on Monday, in June.",
+            "examples": [
+              {
+                "en": "The book is on the table.",
+                "pt": "O livro está sobre a mesa."
+              },
+              {
+                "en": "The class starts at seven o'clock.",
+                "pt": "A aula começa às sete."
+              },
+              {
+                "en": "My birthday is in June.",
+                "pt": "Meu aniversário é em junho."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     }
   ]

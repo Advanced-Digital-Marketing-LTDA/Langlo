@@ -46,8 +46,8 @@ Each import writes `content_changes` rows (skills added or retired, versions add
 
 ## Production runbook (owner)
 
-1. Confirm all migrations are applied (`node scripts/db-remote-test.ts status` shows `pending: 0`); 0016 adds the lineage, retirement and change-log columns.
+1. Confirm all migrations are applied (`node scripts/db-remote-test.ts status` shows `pending: 0`); 0016 adds the lineage, retirement and change-log columns, and 0017 adds lesson translations.
 2. Back up the database.
 3. Dry run, then the impact report, then review the report.
 4. Apply with `--apply --confirm-host HOST`.
-5. A non-production database that already holds the bundle alone under `1.0.0` rejects the combined package (same version, different content); reset or re-seed it. Production holds nothing from `1.0.0`, so the combined package imports there as `1.0.0`.
+5. A database that already holds the bundle under `1.0.0` rejects a changed package under that same version. The translation bundle is `1.1.0`; the production ledger was previously reported to hold `1.0.0`, so verify its migration state and impact report before any live apply.

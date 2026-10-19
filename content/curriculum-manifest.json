@@ -1,6 +1,6 @@
 {
   "manifest_version": 1,
-  "curriculum_version": "1.0.0",
+  "curriculum_version": "1.1.0",
   "publication_status": "approved",
   "coverage_file": "docs/curriculum-coverage.csv",
   "coverage_sha256": "60f5280cf7d8414f516e5bf87021cbb1883294ffccc2db85dcaf61e2dfac57cb",

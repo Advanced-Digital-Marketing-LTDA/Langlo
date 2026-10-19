@@ -173,7 +173,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Should para conselhos e need to para necessidade",
+            "explanation": "Use should mais a forma base do verbo para dar um conselho simples: You should see a doctor. A negativa é shouldn't (should not): You shouldn't eat so much sugar. Should não muda conforme o sujeito e não é seguido por to. Use need to para algo necessário: I need to buy a ticket. Need to muda depois de he, she e it (she needs to leave) e usa don't ou doesn't nas negativas.",
+            "examples": [
+              {
+                "en": "You should see a doctor.",
+                "pt": "Você deveria consultar um médico."
+              },
+              {
+                "en": "You shouldn't eat so much sugar.",
+                "pt": "Você não deveria comer tanto açúcar."
+              },
+              {
+                "en": "I need to buy a ticket.",
+                "pt": "Preciso comprar uma passagem."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -343,7 +364,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Infinitivo com to depois de verbos comuns",
+            "explanation": "Depois de alguns verbos frequentes, o próximo verbo aparece com to mais a forma base: want to, need to, decide to, hope to, plan to, learn to, would like to. Exemplos: I want to learn English. She decided to move. We hope to see you soon. Esses verbos não são seguidos por -ing. Não omita to nem coloque depois dele uma forma no passado ou com -s: não diga I want to learns.",
+            "examples": [
+              {
+                "en": "I want to learn English.",
+                "pt": "Quero aprender inglês."
+              },
+              {
+                "en": "She decided to move.",
+                "pt": "Ela decidiu se mudar."
+              },
+              {
+                "en": "We hope to see you soon.",
+                "pt": "Esperamos ver você em breve."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "BC-A1-A2"]
+          }
+        }
       }
     },
     {
@@ -512,7 +554,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Superlativos com the most e -est",
+            "explanation": "Use o superlativo para dizer que algo ocupa o primeiro lugar em um grupo. Adjetivos curtos recebem -est: the tallest, the oldest; nos terminados em -y, troque -y por -iest: the happiest. Adjetivos mais longos usam the most: the most expensive. Use the antes de uma expressão com superlativo, a menos que um possessivo o substitua: the best day, mas my best friend. Alguns são irregulares: the best, the worst. Use in ou of para indicar o grupo: the tallest in the class.",
+            "examples": [
+              {
+                "en": "She is the tallest girl in the class.",
+                "pt": "Ela é a garota mais alta da turma."
+              },
+              {
+                "en": "This is the most expensive hotel.",
+                "pt": "Este é o hotel mais caro."
+              },
+              {
+                "en": "It was the best day of my life.",
+                "pt": "Foi o melhor dia da minha vida."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "BC-A1-A2"]
+          }
+        }
       }
     },
     {
@@ -681,7 +744,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Comparando como as ações são feitas",
+            "explanation": "Compare ações usando advérbios. Use as ... as para indicar igualdade: She runs as fast as me. Use not as ... as para indicar menor intensidade: He doesn't drive as carefully as she does. Use more mais um advérbio longo ou a forma com -er de um advérbio curto: more slowly, faster, harder, earlier. A forma irregular de well é better. Depois de than, use um pronome de objeto ou uma oração curta: She speaks better than me.",
+            "examples": [
+              {
+                "en": "She runs as fast as me.",
+                "pt": "Ela corre tão rápido quanto eu."
+              },
+              {
+                "en": "He drives more carefully than his brother.",
+                "pt": "Ele dirige com mais cuidado do que o irmão."
+              },
+              {
+                "en": "She speaks better than me.",
+                "pt": "Ela fala melhor do que eu."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     }
   ]

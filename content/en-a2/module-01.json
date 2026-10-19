@@ -166,7 +166,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Passado simples: afirmações, negativas e perguntas",
+            "explanation": "Use o passado simples para ações concluídas. Verbos regulares recebem -ed (visited); verbos irregulares têm formas próprias (bought, wrote, saw). Para negar, use didn't (did not) mais a forma base do verbo: She didn't go to school. Para perguntar, use did antes do sujeito e a forma base do verbo: Did you see the film? Depois de did e didn't, o verbo principal não fica no passado: não diga She didn't went.",
+            "examples": [
+              {
+                "en": "I visited my aunt last week.",
+                "pt": "Visitei minha tia na semana passada."
+              },
+              {
+                "en": "She didn't go to school.",
+                "pt": "Ela não foi à escola."
+              },
+              {
+                "en": "Did you see the film?",
+                "pt": "Você viu o filme?"
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -329,7 +350,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Passado contínuo para ações em andamento e interrompidas",
+            "explanation": "Use was ou were mais a forma do verbo terminada em -ing para uma ação que estava acontecendo em determinado momento do passado: They were playing football. Use was com I, he, she e it; use were com you, we e they. O passado contínuo costuma descrever uma ação mais longa que foi interrompida por outra, mais curta, no passado simples; elas podem ser ligadas por when: I was cooking when the phone rang.",
+            "examples": [
+              {
+                "en": "I was cooking when the phone rang.",
+                "pt": "Eu estava cozinhando quando o telefone tocou."
+              },
+              {
+                "en": "They were playing football.",
+                "pt": "Eles estavam jogando futebol."
+              },
+              {
+                "en": "What were you doing at eight o'clock?",
+                "pt": "O que você estava fazendo às oito?"
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -489,7 +531,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Presente perfeito para experiências e acontecimentos recentes",
+            "explanation": "Forme o presente perfeito com have ou has mais o particípio passado: I have visited Paris. She has just finished. Use esse tempo para falar de experiências de vida e de acontecimentos recentes sem indicar um momento passado concluído. Marcadores frequentes: ever (em perguntas), never, just, already, yet. Particípios: verbos regulares recebem -ed; os irregulares precisam ser aprendidos (eaten, seen, been, gone). Não use esse tempo com um momento passado concluído, como yesterday.",
+            "examples": [
+              {
+                "en": "I have visited Paris.",
+                "pt": "Já visitei Paris."
+              },
+              {
+                "en": "She has just finished.",
+                "pt": "Ela acabou de terminar."
+              },
+              {
+                "en": "Have you ever eaten sushi?",
+                "pt": "Você já comeu sushi alguma vez?"
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -669,7 +732,28 @@
             "near_misses": ["It is going to snowing.", "It is going snow."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Going to para planos e previsões",
+            "explanation": "Use am, is ou are mais going to e a forma base do verbo para falar de planos e intenções: I am going to visit my aunt. Use essa estrutura também para previsões baseadas no que você consegue ver agora: Look at the clouds. It is going to rain. Nas perguntas, coloque be primeiro: What are you going to do? Não omita be e não acrescente -s nem -ing ao verbo principal.",
+            "examples": [
+              {
+                "en": "I am going to visit my aunt.",
+                "pt": "Vou visitar minha tia."
+              },
+              {
+                "en": "Look at the clouds. It is going to rain.",
+                "pt": "Olhe as nuvens. Vai chover."
+              },
+              {
+                "en": "What are you going to do?",
+                "pt": "O que você vai fazer?"
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     }
   ]

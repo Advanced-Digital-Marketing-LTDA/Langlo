@@ -176,7 +176,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Will para previsões, ofertas e promessas",
+            "explanation": "Use will mais a forma base do verbo para previsões simples, ofertas feitas na hora e promessas: It will be sunny tomorrow. I'll carry your bag. I won't be late. A forma contraída de will é 'll, e a negativa é won't (will not). Will não muda conforme o sujeito e nunca é seguido por to nem por uma forma do verbo com -s. Nas perguntas, coloque will primeiro: Will you help me?",
+            "examples": [
+              {
+                "en": "It will be sunny tomorrow.",
+                "pt": "Vai fazer sol amanhã."
+              },
+              {
+                "en": "I'll carry your bag.",
+                "pt": "Vou carregar sua bolsa."
+              },
+              {
+                "en": "I won't be late.",
+                "pt": "Não vou me atrasar."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -359,7 +380,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Presente contínuo para planos combinados",
+            "explanation": "Use am, is ou are mais a forma do verbo terminada em -ing para um compromisso definido no futuro próximo, normalmente com uma expressão de tempo: I'm meeting Anna on Friday. We're flying to Rome next week. Inclua uma expressão de tempo para deixar claro que a frase fala do futuro. Nas perguntas, coloque be primeiro: Are you working tomorrow? Use going to para intenções gerais e o presente contínuo para um plano que já tem horário ou lugar definido.",
+            "examples": [
+              {
+                "en": "I'm meeting Anna on Friday.",
+                "pt": "Vou encontrar Anna na sexta-feira."
+              },
+              {
+                "en": "We're flying to Rome next week.",
+                "pt": "Vamos voar para Roma na semana que vem."
+              },
+              {
+                "en": "Are you working tomorrow?",
+                "pt": "Você vai trabalhar amanhã?"
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -535,7 +577,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Could para habilidade passada e pedidos educados",
+            "explanation": "Use could mais a forma base do verbo para falar de uma habilidade geral no passado: I could swim when I was five. A negativa é couldn't (could not). Could não muda conforme o sujeito. Could também deixa pedidos mais educados: Could you open the window, please? Could I sit here? Para uma única conquista em um momento específico do passado, use was able to ou managed to, e não could.",
+            "examples": [
+              {
+                "en": "I could swim when I was five.",
+                "pt": "Eu sabia nadar quando tinha cinco anos."
+              },
+              {
+                "en": "Could you open the window, please?",
+                "pt": "Você poderia abrir a janela, por favor?"
+              },
+              {
+                "en": "She couldn't find her keys.",
+                "pt": "Ela não conseguiu encontrar as chaves."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     },
     {
@@ -715,7 +778,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Must, have to e mustn't",
+            "explanation": "Use must ou have to para falar de obrigação: You must wear a seat belt. I have to get up early. Have to muda conforme o sujeito: she has to work. Use mustn't (must not) para proibição: You mustn't smoke here. Não confunda mustn't com don't have to: mustn't significa que algo é proibido; don't have to significa que algo não é necessário. Depois de must, use a forma base do verbo, sem to.",
+            "examples": [
+              {
+                "en": "You must wear a seat belt.",
+                "pt": "Você precisa usar cinto de segurança."
+              },
+              {
+                "en": "She has to work on Saturday.",
+                "pt": "Ela precisa trabalhar no sábado."
+              },
+              {
+                "en": "You mustn't smoke here.",
+                "pt": "É proibido fumar aqui."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
       }
     }
   ]

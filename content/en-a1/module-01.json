@@ -153,7 +153,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Frases curtas: sujeito e verbo",
+            "explanation": "Uma frase afirmativa em inglês precisa de um sujeito (quem ou o que) e de um verbo conjugado (com tempo verbal e concordância). Normalmente, o sujeito vem antes do verbo: Anna works. No presente simples, acrescente -s ao verbo depois de he, she, it ou de um nome no singular: Anna lives in London. Depois de I, you, we, they ou de um substantivo no plural, use a forma base do verbo: We play football. The children sleep.",
+            "examples": [
+              {
+                "en": "Anna works.",
+                "pt": "Anna trabalha."
+              },
+              {
+                "en": "We play football.",
+                "pt": "Nós jogamos futebol."
+              },
+              {
+                "en": "The children sleep.",
+                "pt": "As crianças dormem."
+              }
+            ],
+            "references": ["COE-CV20", "CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -305,7 +326,28 @@
             "near_misses": ["We is happy.", "We am happy."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "O verbo be: afirmações, perguntas e respostas curtas",
+            "explanation": "O verbo be tem três formas no presente: I am, he/she/it is e you/we/they are. Em perguntas, coloque be antes do sujeito: Are you ready? Is she at home? Nas respostas curtas, repita be: Yes, I am. No, she isn't. Na fala, use as formas contraídas (I'm, she's, they're); em uma afirmação, tanto a forma completa quanto a contraída estão corretas.",
+            "examples": [
+              {
+                "en": "I am a student.",
+                "pt": "Eu sou estudante."
+              },
+              {
+                "en": "She is at home.",
+                "pt": "Ela está em casa."
+              },
+              {
+                "en": "Are you ready?",
+                "pt": "Você está pronto(a)?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -458,7 +500,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Presente simples para rotinas e preferências",
+            "explanation": "Use o presente simples para falar de rotinas, fatos e preferências: I get up at seven. She likes tea. Acrescente -s ao verbo depois de he, she ou it: she works. Acrescente -es depois de -s, -sh, -ch, -x e -o: he goes, it watches. Have muda para has: he has a dog. Depois de I, you, we e they, use a forma base do verbo: They play tennis on Sundays.",
+            "examples": [
+              {
+                "en": "I get up at seven.",
+                "pt": "Eu me levanto às sete."
+              },
+              {
+                "en": "She likes tea.",
+                "pt": "Ela gosta de chá."
+              },
+              {
+                "en": "They play tennis on Sundays.",
+                "pt": "Eles jogam tênis aos domingos."
+              }
+            ],
+            "references": ["CAM-A1-YLE", "COE-CV20"]
+          }
+        }
       }
     },
     {
@@ -614,7 +677,28 @@
             "near_misses": ["We eating lunch.", "We is eating lunch."],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Presente contínuo para ações que acontecem agora",
+            "explanation": "Use am, is ou are mais a forma do verbo terminada em -ing para falar de uma ação que está acontecendo agora: I am reading. She is cooking dinner. They are playing in the garden. Na ortografia, retire o -e final antes de acrescentar -ing (make, making; write, writing) e dobre a consoante final quando houver uma vogal curta antes dela (run, running; sit, sitting). Não omita be: We are playing, e não We playing.",
+            "examples": [
+              {
+                "en": "I am reading.",
+                "pt": "Estou lendo."
+              },
+              {
+                "en": "She is cooking dinner.",
+                "pt": "Ela está preparando o jantar."
+              },
+              {
+                "en": "They are playing in the garden.",
+                "pt": "Eles estão brincando no jardim."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     }
   ]

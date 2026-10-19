@@ -152,7 +152,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Passado simples: verbos regulares e irregulares frequentes",
+            "explanation": "Use o passado simples para ações concluídas, geralmente com uma expressão de tempo como yesterday. Verbos regulares recebem -ed (play, played; work, worked; watch, watched). Há mudanças de grafia: study vira studied; stop vira stopped. Verbos irregulares têm formas próprias que precisam ser aprendidas: go, went; have, had; see, saw; eat, ate; buy, bought; make, made. A forma do passado é igual para todas as pessoas: I went, she went, they went.",
+            "examples": [
+              {
+                "en": "I played football yesterday.",
+                "pt": "Joguei futebol ontem."
+              },
+              {
+                "en": "She went to the market.",
+                "pt": "Ela foi ao mercado."
+              },
+              {
+                "en": "We ate pizza.",
+                "pt": "Nós comemos pizza."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -307,7 +328,28 @@
             "near_misses": ["Is they at school?", "Do they at school?"],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Perguntas de sim ou não com be e do",
+            "explanation": "Em perguntas de sim ou não com be, coloque be antes do sujeito: Are you a teacher? Is she at home? Com outros verbos no presente simples, use do ou does antes do sujeito e a forma base do verbo: Do you like tea? Does she work here? Use does com he, she e it. Nas respostas curtas, repita o auxiliar: Yes, I do. No, he doesn't. Yes, she is. No, they aren't.",
+            "examples": [
+              {
+                "en": "Are you a teacher?",
+                "pt": "Você é professor(a)?"
+              },
+              {
+                "en": "Do you like tea?",
+                "pt": "Você gosta de chá?"
+              },
+              {
+                "en": "Does she work here?",
+                "pt": "Ela trabalha aqui?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -457,7 +499,28 @@
             "near_misses": ["Who he meets?", "Who do he meet?"],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Perguntas com who, what, where, when e how",
+            "explanation": "As palavras interrogativas abrem a pergunta. Who pergunta sobre pessoas, what sobre coisas, where sobre lugares, when sobre tempo e how sobre modo ou estado. No presente simples, acrescente do ou does e use a forma base do verbo: Where do you live? What does she like? When does the class start? Com be, coloque be depois da palavra interrogativa: When is the class? Who is your teacher? How are you? Não use a ordem de uma afirmação: Where you live? está errado.",
+            "examples": [
+              {
+                "en": "Where do you live?",
+                "pt": "Onde você mora?"
+              },
+              {
+                "en": "What does she like?",
+                "pt": "Do que ela gosta?"
+              },
+              {
+                "en": "When is the class?",
+                "pt": "Quando a aula começa?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     },
     {
@@ -630,7 +693,28 @@
             ],
             "holdout": true
           }
-        ]
+        ],
+        "translations": {
+          "pt": {
+            "title": "Frases negativas com be e do",
+            "explanation": "Com be, coloque not depois do verbo: I am not tired. He isn't at home. They aren't here. Com outros verbos no presente simples, use don't (do not) ou doesn't (does not) antes da forma base do verbo: They don't live here. She doesn't like coffee. Depois de doesn't, o verbo principal não recebe -s. Tanto as formas completas quanto as contraídas estão corretas.",
+            "examples": [
+              {
+                "en": "I am not tired.",
+                "pt": "Não estou cansado(a)."
+              },
+              {
+                "en": "She doesn't like coffee.",
+                "pt": "Ela não gosta de café."
+              },
+              {
+                "en": "They don't live here.",
+                "pt": "Eles não moram aqui."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
       }
     }
   ]
