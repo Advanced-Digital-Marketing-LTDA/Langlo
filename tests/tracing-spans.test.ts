@@ -81,6 +81,14 @@ it('getMastery reports each phase and how many evidence rows it writes', async (
     evidenceKind: 'independent',
     answer: 'suis'
   });
+  const other = testSession('learner-b');
+  await recordAttempt(client, other, {
+    studySessionId: 'study-b',
+    questionId: 'fr-a1-001@1:q1',
+    submissionKey: 'traced-other',
+    evidenceKind: 'independent',
+    answer: 'suis'
+  });
   const skills = await getMastery(client, learner, 'fr');
   expect(skills.find((skill) => skill.skillId === 'fr-a1-001')).toMatchObject({
     correct: 1
@@ -99,7 +107,9 @@ it('getMastery reports each phase and how many evidence rows it writes', async (
     ownerId: learner.userId,
     language: 'fr'
   });
+  const everyone = await loadEvidenceRows(client, { language: 'fr' });
   expect(stored.length).toBeGreaterThan(0);
+  expect(everyone.length).toBeGreaterThan(stored.length);
   expect(
     recorded.find((entry) => entry.name === 'mastery.load-evidence')?.set
   ).toEqual({ rows: stored.length });
