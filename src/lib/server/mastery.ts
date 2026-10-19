@@ -393,6 +393,50 @@ async function computeMastery(
   return catalog.map((row) => skillStanding(row, evidence, prerequisites));
 }
 
+/** Load the public topic catalog for a learner's enrolled track. */
+export async function loadEnrolledCatalog(
+  client: Client,
+  learner: LearnerSession,
+  language: string
+) {
+  const tx = await beginRead(client);
+  try {
+    const enrolled = await tx.execute({
+      sql: 'SELECT starting_level FROM enrollments WHERE owner_id = ? AND language = ?',
+      args: [learner.userId, language]
+    });
+    const enrollment = enrolled.rows[0];
+    if (!enrollment) throw new StudyError('NOT_FOUND');
+    const catalog = await loadCatalog(tx, language);
+    const prerequisites = await loadPrerequisites(tx, language);
+    const result = {
+      language,
+      level: String(enrollment.starting_level),
+      skills: catalog.map((row) => ({
+        skillId: String(row.id),
+        level: String(row.level),
+        title: String(row.title),
+        contentVersionId:
+          row.content_version_id === null ? null : String(row.content_version_id),
+        available:
+          row.content_version_id !== null &&
+          row.lesson_title !== null &&
+          row.status !== 'quarantined',
+        prerequisites: prerequisites
+          .filter((edge) => edge.skill_id === row.id)
+          .map((edge) => String(edge.prerequisite_id))
+      }))
+    };
+    await tx.commit();
+    return result;
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
 /** Read mastery only for languages this learner is enrolled in. */
 export async function loadEnrolledMastery(
   client: Client,

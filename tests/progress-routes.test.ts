@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
@@ -57,22 +57,25 @@ it('returns the owner’s versioned progress, preserves manual topics and shows 
   const data = (await mapPage(event('learner-a'))) as {
     tracks: {
       language: string;
-      skills: {
-        skillId: string;
-        available: boolean;
-        status: string;
-        prerequisites: string[];
-      }[];
+      progress: Promise<{
+        skills: {
+          skillId: string;
+          available: boolean;
+          status: string;
+          prerequisites: string[];
+        }[];
+      }>;
     }[];
   };
+  const progress = await data.tracks[0].progress;
   expect(data.tracks).toHaveLength(1);
   expect(
-    data.tracks[0].skills.find((skill) => skill.skillId === 'fr-a1-001')
+    progress.skills.find((skill) => skill.skillId === 'fr-a1-001')
   ).toMatchObject({ available: false, status: 'unknown' });
   expect(
-    data.tracks[0].skills.find((skill) => skill.skillId === 'fr-a1-002')
+    progress.skills.find((skill) => skill.skillId === 'fr-a1-002')
   ).toMatchObject({ available: true, prerequisites: ['fr-a1-001'] });
-  expect(JSON.stringify(data)).not.toContain('learner-b');
+  expect(JSON.stringify(progress)).not.toContain('learner-b');
   await client.execute("DELETE FROM enrollments WHERE owner_id = 'learner-a'");
   expect(await progressPage(event('learner-a'))).toMatchObject({ tracks: [] });
 });
@@ -89,4 +92,55 @@ it('filters an enrolled track without leaking other tracks into the response', a
     tracks: { language: string }[];
   };
   expect(onlyFrench.tracks.map((track) => track.language)).toEqual(['fr']);
+});
+
+it('returns a catalog before the same track progress finishes', async () => {
+  const data = (await mapPage(event('learner-a'))) as {
+    tracks: {
+      language: string;
+      level: string;
+      catalog: Promise<{
+        language: string;
+        level: string;
+        skills: { skillId: string; title: string; available: boolean }[];
+      }>;
+      progress: Promise<{
+        language: string;
+        skills: { skillId: string; status: string }[];
+      }>;
+    }[];
+  };
+  expect(
+    data.tracks.map(({ language, level }) => ({ language, level }))
+  ).toEqual([{ language: 'fr', level: 'A1' }]);
+  expect(data.tracks[0].catalog).toBeInstanceOf(Promise);
+  expect(data.tracks[0].progress).toBeInstanceOf(Promise);
+  const catalog = await data.tracks[0].catalog;
+  const progress = await data.tracks[0].progress;
+  expect(catalog).toMatchObject({ language: 'fr', level: 'A1' });
+  expect(catalog.skills[0]).toMatchObject({
+    skillId: 'fr-a1-001',
+    title: 'Lesson fr-a1-001',
+    available: true
+  });
+  expect(progress.language).toBe('fr');
+  expect(progress.skills[0]).toMatchObject({
+    skillId: 'fr-a1-001',
+    status: 'unknown'
+  });
+});
+
+it('logs a catalog failure once when its dependent progress also rejects', async () => {
+  await client.execute('DROP TABLE lessons');
+  const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  const data = (await mapPage(event('learner-a'))) as {
+    tracks: {
+      catalog: Promise<unknown>;
+      progress: Promise<unknown>;
+    }[];
+  };
+  await expect(data.tracks[0].catalog).rejects.toThrow();
+  await expect(data.tracks[0].progress).rejects.toThrow();
+  expect(log).toHaveBeenCalledTimes(1);
+  log.mockRestore();
 });
