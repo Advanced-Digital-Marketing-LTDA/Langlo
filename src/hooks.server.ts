@@ -12,6 +12,7 @@ import { safeDiagnostic, safeError } from './lib/server/diagnostics';
 import { resolveAuth } from './lib/server/auth-runtime';
 import { withCorrelationId } from './lib/server/request-context';
 import { authRequestHeaders } from './lib/server/auth-request';
+import { lookupSession } from './lib/server/session-lookup';
 
 Sentry.init({
   dsn: publicEnv.PUBLIC_GLITCHTIP_DSN,
@@ -101,9 +102,10 @@ const appHandle: Handle = async ({ event, resolve }) => {
   if (auth && (appPath || accountPage || signupApi)) {
     let session: Awaited<ReturnType<typeof auth.api.getSession>> | null = null;
     try {
-      session = await auth.api.getSession({
-        headers: event.request.headers
-      });
+      session = await lookupSession(
+        (input) => auth.api.getSession(input),
+        event.request.headers
+      );
     } catch {
       // A backend outage is not a missing session; reporting it as one
       // would convert 503 service failures into misleading 401s/redirects.
