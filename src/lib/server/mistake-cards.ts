@@ -117,21 +117,27 @@ async function readMistake(
 /** Only a confirmed, incorrect, editable practice answer may become a card. */
 function assertEligible(row: MistakeRow): void {
   // Assessment answers stay hidden until their results are available; those
-  // results are handled by the assessment flow, not by card drafts.
-  if (row.mode !== 'practice') throw new FlashcardError('NOT_ELIGIBLE');
-  if (row.outcome === null) throw new FlashcardError('NOT_CONFIRMED');
-  if (row.outcome === 'uncertain') throw new FlashcardError('NOT_ELIGIBLE');
-  if (row.outcome !== 'incorrect') throw new FlashcardError('NOT_A_MISTAKE');
-  if (row.notSure !== 0) throw new FlashcardError('NOT_ELIGIBLE');
-  if (row.holdout !== 0) throw new FlashcardError('NOT_ELIGIBLE');
-  if (row.versionStatus === 'quarantined')
-    throw new FlashcardError('CONTENT_UNAVAILABLE');
-  if (
-    !isNonEmptyString(row.prompt) ||
-    !isNonEmptyString(row.expectedAnswer) ||
-    typeof row.expectedAnswer !== 'string'
-  )
-    throw new FlashcardError('CONTENT_UNAVAILABLE');
+  // results are handled by the assessment flow, not by card drafts. Keeping
+  // the checks in one table also keeps the branch count stable as the rules
+  // grow.
+  const refusal = (
+    [
+      [row.mode !== 'practice', 'NOT_ELIGIBLE'],
+      [row.outcome === null, 'NOT_CONFIRMED'],
+      [row.outcome === 'uncertain', 'NOT_ELIGIBLE'],
+      [row.outcome !== 'incorrect', 'NOT_A_MISTAKE'],
+      [row.notSure !== 0, 'NOT_ELIGIBLE'],
+      [row.holdout !== 0, 'NOT_ELIGIBLE'],
+      [row.versionStatus === 'quarantined', 'CONTENT_UNAVAILABLE'],
+      [
+        !isNonEmptyString(row.prompt) ||
+          !isNonEmptyString(row.expectedAnswer) ||
+          typeof row.expectedAnswer !== 'string',
+        'CONTENT_UNAVAILABLE'
+      ]
+    ] as const
+  ).find(([refuse]) => refuse);
+  if (refusal) throw new FlashcardError(refusal[1]);
 }
 
 type DraftContent =
