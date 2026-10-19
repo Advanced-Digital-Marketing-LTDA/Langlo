@@ -15,9 +15,9 @@ export const requestLog: Handle = async ({ event, resolve }) => {
   const method = event.request.method;
   const skipped =
     (event.url.pathname.replace(/\/+$/, '') || '/') === '/health/live';
-  const emit = (level: 'info' | 'error', status: number) => {
+  const emit = (log: typeof Sentry.logger.info, status: number) => {
     if (skipped) return;
-    Sentry.logger[level](`${method} ${path} ${status}`, {
+    log(`${method} ${path} ${status}`, {
       method,
       path,
       status,
@@ -29,9 +29,9 @@ export const requestLog: Handle = async ({ event, resolve }) => {
   try {
     response = await resolve(event);
   } catch (error) {
-    emit('error', 500);
+    emit(Sentry.logger.error, 500);
     throw error;
   }
-  emit('info', response.status);
+  emit(Sentry.logger.info, response.status);
   return response;
 };
