@@ -4,6 +4,7 @@ import { beginWrite, type LearnerSession } from './flashcards';
 import { feedbackEvaluation } from './assessment';
 import { StudyError } from './study-error';
 import { effectiveLineageKey } from './lineage';
+import { span } from './tracing';
 
 export const GRAMMAR_POLICY_VERSION = 'grammar-1';
 export type GrammarStatus = 'unknown' | 'weak' | 'practising' | 'secure';
@@ -298,28 +299,42 @@ export async function getMastery(
   learner: LearnerSession,
   language: string
 ) {
-  const tx = await beginWrite(client);
+  const tx = await span('mastery.begin-write', () => beginWrite(client));
   try {
-    const enrolled = await tx.execute({
-      sql: 'SELECT 1 FROM enrollments WHERE owner_id = ? AND language = ?',
-      args: [learner.userId, language]
-    });
+    const enrolled = await span('mastery.enrollment-check', () =>
+      tx.execute({
+        sql: 'SELECT 1 FROM enrollments WHERE owner_id = ? AND language = ?',
+        args: [learner.userId, language]
+      })
+    );
     if (!enrolled.rows.length) throw new StudyError('NOT_FOUND');
-    const catalog = await loadCatalog(tx, language);
-    const prerequisites = await loadPrerequisites(tx, language);
-    const source = await loadEvidenceRows(tx, {
-      ownerId: learner.userId,
-      language
+    const catalog = await span('mastery.catalog', () =>
+      loadCatalog(tx, language)
+    );
+    const prerequisites = await span('mastery.prerequisites', () =>
+      loadPrerequisites(tx, language)
+    );
+    const source = await span('mastery.load-evidence', async (active) => {
+      const rows = await loadEvidenceRows(tx, {
+        ownerId: learner.userId,
+        language
+      });
+      active.setAttribute('rows', rows.length);
+      return rows;
     });
     const evidence = qualifyingGrammarEvidence(
       source,
-      await currentContent(tx, language)
+      await span('mastery.current-content', () => currentContent(tx, language))
     );
-    await recordEvidence(tx, learner.userId, language, evidence);
+    await span(
+      'mastery.record-evidence',
+      () => recordEvidence(tx, learner.userId, language, evidence),
+      { rows: evidence.length }
+    );
     const result = catalog.map((row) =>
       skillStanding(row, evidence, prerequisites)
     );
-    await tx.commit();
+    await span('mastery.commit', () => tx.commit());
     return result;
   } catch (error) {
     await tx.rollback().catch(() => undefined);
