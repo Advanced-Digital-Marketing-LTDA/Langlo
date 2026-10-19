@@ -47,7 +47,7 @@ async function withDatabase(
   }
 }
 
-test.beforeAll(async () => {
+test.beforeEach(async () => {
   const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
   ({ fixtureRoot, dbFile } = createFixtureDatabase());
@@ -97,7 +97,7 @@ test.beforeAll(async () => {
   });
 });
 
-test.afterAll(async () => {
+test.afterEach(async () => {
   await learner?.dispose();
   server?.kill();
   await disposeFixtureDatabase(fixtureRoot, dbFile);
