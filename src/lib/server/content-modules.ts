@@ -21,7 +21,9 @@ export type ModuleFile = {
       id: string;
       version: number;
       questions: ContentPackage['versions'][number]['questions'];
-      translations?: ContentPackage['versions'][number]['translations'];
+      translations?: NonNullable<
+        ContentPackage['versions'][number]['translations']
+      >;
     };
   }[];
 };
