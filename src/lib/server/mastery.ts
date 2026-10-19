@@ -60,9 +60,11 @@ export type CurrentContent = {
 
 function carriedTo(skillId: string, carry: Map<string, string>) {
   let target = skillId;
-  for (let hops = 0; carry.has(target); hops += 1) {
+  let hops = 0;
+  while (carry.has(target)) {
     if (hops > carry.size) throw new StudyError('NOT_FOUND');
     target = carry.get(target) as string;
+    hops += 1;
   }
   return target;
 }
