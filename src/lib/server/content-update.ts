@@ -107,6 +107,20 @@ function checkRetiredAbsent(pkg: ContentPackage, retired: Set<string>) {
     fail('INVALID_RETIREMENT', `${clash} is retired and still in the package`);
 }
 
+/** Carried progress must land on a live skill, or carries could loop. */
+function checkCarryTargets(pkg: ContentPackage, retired: Set<string>) {
+  for (const retirement of pkg.retirements ?? [])
+    if (
+      retirement.carry === true &&
+      retirement.replacedBy !== undefined &&
+      retired.has(retirement.replacedBy)
+    )
+      fail(
+        'INVALID_RETIREMENT',
+        `${retirement.replacedBy} is retired and cannot receive carried progress`
+      );
+}
+
 /** Package-only checks of the declarations and retirements. */
 export function validateDeclarations(pkg: ContentPackage) {
   checkQuestionDeclarations(pkg);
@@ -114,6 +128,7 @@ export function validateDeclarations(pkg: ContentPackage) {
   for (const retirement of pkg.retirements ?? [])
     checkRetirementEntry(retirement, retired);
   checkRetiredAbsent(pkg, retired);
+  checkCarryTargets(pkg, retired);
 }
 
 /** Decide lineage keys, removals and the bump level for one new version. */
@@ -252,7 +267,8 @@ const parts = (version: string) =>
 /** The component of the version that rose from `previous` to `next`. */
 export function bumpLevel(previous: string, next: string): BumpLevel {
   const [a, b] = [parts(previous), parts(next)];
-  return b[0] > a[0] ? 'major' : b[1] > a[1] ? 'minor' : 'patch';
+  if (b[0] > a[0]) return 'major';
+  return b[1] > a[1] ? 'minor' : 'patch';
 }
 
 /**
@@ -269,7 +285,7 @@ export function checkBump(
   const newest = stored.reduce((best, version) => {
     const [a, b] = [parts(best), parts(version)];
     return (a[0] - b[0] || a[1] - b[1] || a[2] - b[2]) < 0n ? version : best;
-  });
+  }, stored[0]);
   const declared = bumpLevel(newest, incoming);
   if (declared !== needed)
     fail(
@@ -295,6 +311,23 @@ function checkRetirementTarget(
     fail('INVALID_RETIREMENT', `${retirement.skillId} changes language`);
 }
 
+/** A stored replacement that is already retired cannot receive carried progress. */
+async function checkCarryTargetLive(
+  tx: Transaction,
+  retirement: SkillRetirement
+) {
+  if (retirement.carry !== true || retirement.replacedBy === undefined) return;
+  const target = await tx.execute({
+    sql: 'SELECT retired_at FROM skills WHERE id = ?',
+    args: [retirement.replacedBy]
+  });
+  if (target.rows[0]?.retired_at != null)
+    fail(
+      'INVALID_RETIREMENT',
+      `${retirement.replacedBy} is retired and cannot receive carried progress`
+    );
+}
+
 /** Apply the package's retirements; returns how many skills were newly retired. */
 export async function applyRetirements(
   tx: Transaction,
@@ -308,6 +341,7 @@ export async function applyRetirements(
       args: [retirement.skillId]
     });
     checkRetirementTarget(retirement, known, stored);
+    await checkCarryTargetLive(tx, retirement);
     const [row] = stored.rows;
     const replacedBy = retirement.replacedBy ?? null;
     const carry = retirement.carry === true ? 1 : null;

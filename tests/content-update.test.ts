@@ -387,6 +387,42 @@ describe('retiring a skill', () => {
     await rejects(pkg, 'INVALID_RETIREMENT');
   });
 
+  it('refuses carrying progress into a skill that is retired, so carries cannot loop', async () => {
+    const both = approvedPackage();
+    both.curriculumVersion = '1.0.0';
+    both.skills = both.skills
+      .filter((skill) => !['fr-a1-002', 'fr-a1-003'].includes(skill.id))
+      .map((skill) => ({ ...skill, prerequisites: [] }));
+    both.versions = both.versions.filter(
+      (version) => !['fr-a1-002', 'fr-a1-003'].includes(version.skillId)
+    );
+    both.retirements = [
+      { skillId: 'fr-a1-002', replacedBy: 'fr-a1-003', carry: true },
+      { skillId: 'fr-a1-003', replacedBy: 'fr-a1-002', carry: true }
+    ];
+    await rejects(both, 'INVALID_RETIREMENT', /cannot receive carried/u);
+
+    const first = retire('1.0.0', {
+      skillId: 'fr-a1-002',
+      replacedBy: 'fr-a1-003',
+      carry: true
+    });
+    first.skills = first.skills.map((skill) => ({
+      ...skill,
+      prerequisites: skill.prerequisites.filter((id) => id !== 'fr-a1-002')
+    }));
+    await importContent(client, first);
+    const back = retire('2.0.0', {
+      skillId: 'fr-a1-003',
+      replacedBy: 'fr-a1-002',
+      carry: true
+    });
+    back.skills = approvedPackage().skills.filter(
+      (skill) => skill.id !== 'fr-a1-003'
+    );
+    await rejects(back, 'INVALID_RETIREMENT', /cannot receive carried/u);
+  });
+
   it('refuses to change an earlier retirement', async () => {
     await importContent(client, retire('1.0.0', { skillId: 'fr-a1-002' }));
     await rejects(
@@ -397,18 +433,18 @@ describe('retiring a skill', () => {
 });
 
 describe('the impact report', () => {
-  const answer = (questionId: string, key: string) =>
+  const answer = (questionId: string, key: string, value = 'réponse') =>
     recordAttempt(client, testSession('learner-a'), {
       studySessionId: 'study-a',
       questionId,
       submissionKey: key,
       evidenceKind: 'independent',
-      answer: 'réponse'
+      answer: value
     });
 
   it('counts the independent answers that would stop counting, and writes nothing', async () => {
     await answer('fr-a1-001@1:q1', 'one');
-    await answer('fr-a1-001@1:q2', 'two');
+    await answer('fr-a1-001@1:q2', 'two', 'es');
     const pkg = update('0.2.0', [
       same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
       question('fr-a1-001@2:q3', { change: 'new' })
@@ -423,6 +459,24 @@ describe('the impact report', () => {
       }
     ]);
     expect(await storedState()).toEqual(before);
+  });
+
+  it('leaves out answers that mastery does not count, such as Not sure', async () => {
+    await answer('fr-a1-001@1:q1', 'one');
+    await recordAttempt(client, testSession('learner-a'), {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-001@1:q2',
+      submissionKey: 'unsure',
+      evidenceKind: 'independent',
+      answer: '',
+      notSure: true
+    });
+    const pkg = update('0.2.0', [
+      question('fr-a1-001@2:q3', { change: 'new' })
+    ]);
+    expect(await contentImpact(client, pkg)).toMatchObject([
+      { skillId: 'fr-a1-001', answers: 1, learners: 1 }
+    ]);
   });
 
   it('reports nothing for wording-only changes, and refuses an undeclared version', async () => {
@@ -442,7 +496,7 @@ describe('the impact report', () => {
   });
 
   it('counts a retired skill that does not carry over, and not one that does', async () => {
-    await answer('fr-a1-002@1:q1', 'three');
+    await answer('fr-a1-002@1:q1', 'three', 'On est ici.');
     const retire = (carry: boolean) => {
       const pkg = approvedPackage();
       pkg.curriculumVersion = '1.0.0';

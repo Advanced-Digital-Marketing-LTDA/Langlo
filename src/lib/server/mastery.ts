@@ -105,6 +105,7 @@ export function qualifyingGrammarEvidence(
   const seen = new Set<string>();
   const qualified: {
     attemptId: string;
+    itemKey: string;
     evaluationId: string;
     skillId: string;
     countsFor: string;
@@ -137,6 +138,7 @@ export function qualifyingGrammarEvidence(
       continue;
     qualified.push({
       attemptId: String(row.attempt_id),
+      itemKey,
       evaluationId: String(evaluation.evaluation_id),
       skillId: String(row.skill_id),
       countsFor,
@@ -187,6 +189,39 @@ async function currentContent(
   };
 }
 
+/** The stored attempts and evaluations the evidence rules read, oldest first. */
+export async function loadEvidenceRows(
+  tx: Pick<Client, 'execute'>,
+  filter: { ownerId?: string; language?: string; skillId?: string }
+) {
+  const clauses: string[] = [];
+  const args: string[] = [];
+  if (filter.ownerId !== undefined) {
+    clauses.push('a.owner_id = ?');
+    args.push(filter.ownerId);
+  }
+  if (filter.language !== undefined) {
+    clauses.push('a.language = ?');
+    args.push(filter.language);
+  }
+  if (filter.skillId !== undefined) {
+    clauses.push('a.skill_id = ?');
+    args.push(filter.skillId);
+  }
+  const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+  const result = await tx.execute({
+    sql: `SELECT a.id AS attempt_id, a.owner_id, a.rowid AS sequence, a.created_at, a.question_id, a.content_version_id, a.skill_id, a.study_session_id, a.evidence_kind, a.not_sure,
+        s.mode, s.state, v.status, aq.lineage_key, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
+        FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
+        JOIN content_versions v ON v.id = a.content_version_id
+        LEFT JOIN questions aq ON aq.id = a.question_id
+        LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+        ${where} ORDER BY a.created_at, a.rowid, e.created_at, e.id`,
+    args
+  });
+  return result.rows;
+}
+
 /** Recompute from trusted history; the existing evidence ledger is idempotent. */
 export async function getMastery(
   client: Client,
@@ -210,18 +245,12 @@ export async function getMastery(
       sql: 'SELECT skill_id, prerequisite_id FROM prerequisites WHERE language = ? ORDER BY skill_id, prerequisite_id',
       args: [language]
     });
-    const source = await tx.execute({
-      sql: `SELECT a.id AS attempt_id, a.rowid AS sequence, a.created_at, a.question_id, a.content_version_id, a.skill_id, a.study_session_id, a.evidence_kind, a.not_sure,
-        s.mode, s.state, v.status, aq.lineage_key, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
-        FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
-        JOIN content_versions v ON v.id = a.content_version_id
-        LEFT JOIN questions aq ON aq.id = a.question_id
-        LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
-        WHERE a.owner_id = ? AND a.language = ? ORDER BY a.created_at, a.rowid, e.created_at, e.id`,
-      args: [learner.userId, language]
+    const source = await loadEvidenceRows(tx, {
+      ownerId: learner.userId,
+      language
     });
     const evidence = qualifyingGrammarEvidence(
-      source.rows,
+      source,
       await currentContent(tx, language)
     );
     for (const item of evidence) {

@@ -57,8 +57,8 @@ export type ContentQuestion = {
   // Required on every question of a lesson version that follows an earlier
   // version of the same skill: `same` keeps the earlier question's meaning
   // (and names it in `continues`), `changed` and `new` start a fresh item.
-  change?: QuestionChange | undefined;
-  continues?: string | undefined;
+  change?: QuestionChange;
+  continues?: string;
 };
 
 export type QuestionChange = 'same' | 'changed' | 'new';
@@ -66,10 +66,10 @@ export type QuestionChange = 'same' | 'changed' | 'new';
 /** A skill taken out of the catalog; its history stays readable. */
 export type SkillRetirement = {
   skillId: string;
-  replacedBy?: string | undefined;
+  replacedBy?: string;
   // Owner-approved: answers to the retired skill count for its replacement
   // (a pure rename, same content under a new id).
-  carry?: boolean | undefined;
+  carry?: boolean;
 };
 
 export type ContentLesson = {
@@ -104,7 +104,7 @@ export type ContentPackage = {
     // Optional so packages without lessons keep their fingerprints.
     lesson?: ContentLesson | undefined;
   }[];
-  retirements?: SkillRetirement[] | undefined;
+  retirements?: SkillRetirement[];
 };
 
 type PackageVersion = ContentPackage['versions'][number];

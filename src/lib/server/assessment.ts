@@ -75,7 +75,7 @@ export async function startAssessment(
         WHERE q.language = ? AND q.holdout = 1 AND q.prompt IS NOT NULL AND q.answer IS NOT NULL
           AND sk.retired_at IS NULL
           AND v.status IN ('schema-validated', 'pilot-ready')
-          AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id)
+          AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id AND v2.status <> 'quarantined')
           AND NOT EXISTS (SELECT 1 FROM attempts a JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND a.skill_id = q.skill_id
             AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')})
         ORDER BY sk.level, q.skill_id, q.id`,

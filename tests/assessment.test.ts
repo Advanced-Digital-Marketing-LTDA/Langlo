@@ -341,6 +341,18 @@ describe('saved placement plan', () => {
     expect(String(plan.rows[0].assessment_plan)).toContain('fr-a1-001@2:q2');
   });
 
+  it('plans from the newest version that is not quarantined', async () => {
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'quarantined')"
+    );
+    const { id } = await start();
+    const plan = await client.execute({
+      sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+      args: [id]
+    });
+    expect(String(plan.rows[0].assessment_plan)).toContain('fr-a1-001@1:q2');
+  });
+
   it('rejects a planned item the learner already answered in another session', async () => {
     const first = await start();
     const second = await start();
