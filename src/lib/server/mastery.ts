@@ -3,6 +3,7 @@ import type { Client, Row } from '@libsql/client';
 import { beginWrite, type LearnerSession } from './flashcards';
 import { feedbackEvaluation } from './assessment';
 import { StudyError } from './study-error';
+import { effectiveLineageKey } from './lineage';
 
 export const GRAMMAR_POLICY_VERSION = 'grammar-1';
 export type GrammarStatus = 'unknown' | 'weak' | 'practising' | 'secure';
@@ -46,8 +47,31 @@ export function scoreGrammar({
   };
 }
 
+/**
+ * What counts now. `keys` holds, per skill, the lineage keys of its current
+ * version; an answer to a key outside it (a changed or removed question) stays
+ * stored but no longer counts. `carry` maps a retired skill to the skill its
+ * answers count for.
+ */
+export type CurrentContent = {
+  keys: Map<string, Set<string>>;
+  carry: Map<string, string>;
+};
+
+function carriedTo(skillId: string, carry: Map<string, string>) {
+  let target = skillId;
+  for (let hops = 0; carry.has(target); hops += 1) {
+    if (hops > carry.size) throw new StudyError('NOT_FOUND');
+    target = carry.get(target) as string;
+  }
+  return target;
+}
+
 /** First response to a logical item wins, across sessions and content versions. */
-export function qualifyingGrammarEvidence(rows: Row[]) {
+export function qualifyingGrammarEvidence(
+  rows: Row[],
+  current?: CurrentContent
+) {
   const grouped = new Map<string, Row[]>();
   for (const row of rows) {
     const id = String(row.attempt_id);
@@ -66,17 +90,22 @@ export function qualifyingGrammarEvidence(rows: Row[]) {
     attemptId: string;
     evaluationId: string;
     skillId: string;
+    countsFor: string;
     sessionId: string;
     correct: boolean;
   }[] = [];
   for (const evaluations of attempts) {
     const row = evaluations[0];
-    const prefix = `${row.content_version_id}:`;
-    const question = String(row.question_id);
-    const key = JSON.stringify([
-      row.skill_id,
-      question.startsWith(prefix) ? question.slice(prefix.length) : question
-    ]);
+    const itemKey = effectiveLineageKey({
+      lineageKey: row.lineage_key == null ? null : String(row.lineage_key),
+      contentVersionId: String(row.content_version_id),
+      questionId: String(row.question_id)
+    });
+    const countsFor = current
+      ? carriedTo(String(row.skill_id), current.carry)
+      : String(row.skill_id);
+    if (current && !current.keys.get(countsFor)?.has(itemKey)) continue;
+    const key = JSON.stringify([countsFor, itemKey]);
     if (seen.has(key)) continue;
     seen.add(key);
     if (
@@ -99,11 +128,52 @@ export function qualifyingGrammarEvidence(rows: Row[]) {
       attemptId: String(row.attempt_id),
       evaluationId: String(evaluation.evaluation_id),
       skillId: String(row.skill_id),
+      countsFor,
       sessionId: String(row.study_session_id),
       correct: evaluation.outcome === 'correct'
     });
   }
   return qualified;
+}
+
+/**
+ * The lineage keys each skill's current version holds (its newest version that
+ * is not quarantined), and which retired skills carry their answers over.
+ */
+async function currentContent(
+  tx: Pick<Client, 'execute'>,
+  language: string
+): Promise<CurrentContent> {
+  const questions = await tx.execute({
+    sql: `SELECT q.skill_id, q.id, q.content_version_id, q.lineage_key
+      FROM questions q JOIN content_versions v ON v.id = q.content_version_id
+      WHERE q.language = ? AND v.status <> 'quarantined'
+        AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id AND v2.status <> 'quarantined')`,
+    args: [language]
+  });
+  const keys = new Map<string, Set<string>>();
+  for (const row of questions.rows) {
+    const skill = String(row.skill_id);
+    const set = keys.get(skill) ?? new Set<string>();
+    set.add(
+      effectiveLineageKey({
+        lineageKey: row.lineage_key === null ? null : String(row.lineage_key),
+        contentVersionId: String(row.content_version_id),
+        questionId: String(row.id)
+      })
+    );
+    keys.set(skill, set);
+  }
+  const retired = await tx.execute({
+    sql: 'SELECT id, replaced_by FROM skills WHERE language = ? AND retired_at IS NOT NULL AND carry_progress = 1 AND replaced_by IS NOT NULL',
+    args: [language]
+  });
+  return {
+    keys,
+    carry: new Map(
+      retired.rows.map((r) => [String(r.id), String(r.replaced_by)])
+    )
+  };
 }
 
 /** Recompute from trusted history; the existing evidence ledger is idempotent. */
@@ -122,7 +192,7 @@ export async function getMastery(
     const catalog = await tx.execute({
       sql: `SELECT sk.id, sk.level, l.title AS lesson_title, COALESCE(l.title, sk.id) AS title, v.id AS content_version_id, v.status
         FROM skills sk LEFT JOIN content_versions v ON v.skill_id = sk.id AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = sk.id)
-        LEFT JOIN lessons l ON l.content_version_id = v.id WHERE sk.language = ? ORDER BY sk.level, sk.id`,
+        LEFT JOIN lessons l ON l.content_version_id = v.id WHERE sk.language = ? AND sk.retired_at IS NULL ORDER BY sk.level, sk.id`,
       args: [language]
     });
     const prerequisites = await tx.execute({
@@ -131,14 +201,18 @@ export async function getMastery(
     });
     const source = await tx.execute({
       sql: `SELECT a.id AS attempt_id, a.rowid AS sequence, a.created_at, a.question_id, a.content_version_id, a.skill_id, a.study_session_id, a.evidence_kind, a.not_sure,
-        s.mode, s.state, v.status, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
+        s.mode, s.state, v.status, aq.lineage_key, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
         FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
         JOIN content_versions v ON v.id = a.content_version_id
+        LEFT JOIN questions aq ON aq.id = a.question_id
         LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
         WHERE a.owner_id = ? AND a.language = ? ORDER BY a.created_at, a.rowid, e.created_at, e.id`,
       args: [learner.userId, language]
     });
-    const evidence = qualifyingGrammarEvidence(source.rows);
+    const evidence = qualifyingGrammarEvidence(
+      source.rows,
+      await currentContent(tx, language)
+    );
     for (const item of evidence) {
       await tx.execute({
         sql: 'INSERT INTO skill_evidence (id, owner_id, attempt_id, evaluation_id, skill_id, language, scoring_version, contribution) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(owner_id, attempt_id, scoring_version) DO NOTHING',
@@ -155,7 +229,7 @@ export async function getMastery(
       });
     }
     const result = catalog.rows.map((row) => {
-      const items = evidence.filter((item) => item.skillId === row.id);
+      const items = evidence.filter((item) => item.countsFor === row.id);
       return {
         skillId: String(row.id),
         level: String(row.level),

@@ -302,14 +302,43 @@ describe('saved placement plan', () => {
     republished.questions = republished.questions.map((question) => ({
       ...question,
       id: question.id.replace('@1:', '@2:'),
-      holdout: question.id.endsWith(':q2')
+      holdout: question.id.endsWith(':q2'),
+      change: 'same' as const,
+      continues: question.id
     }));
-    pkg.curriculumVersion = '0.2.0';
+    pkg.curriculumVersion = '0.1.1';
     pkg.versions = [republished];
     await importContent(client, pkg);
     await expect(start()).rejects.toMatchObject({
       code: 'CONTENT_UNAVAILABLE'
     });
+  });
+
+  it('offers a holdout again when a later content version changes its meaning', async () => {
+    const first = await start();
+    await answer(first.id, 'fr-a1-001@1:q2');
+    await answer(first.id, 'fr-a1-002@1:q1', 'On est ici.');
+    const pkg = approvedPackage();
+    const revised = structuredClone(pkg.versions[0]);
+    revised.id = 'fr-a1-001@2';
+    revised.version = 2;
+    revised.questions = revised.questions.map((question) => ({
+      ...question,
+      id: question.id.replace('@1:', '@2:'),
+      holdout: question.id.endsWith(':q2'),
+      ...(question.id.endsWith(':q2')
+        ? { change: 'changed' as const }
+        : { change: 'same' as const, continues: question.id })
+    }));
+    pkg.curriculumVersion = '0.2.0';
+    pkg.versions = [revised];
+    await importContent(client, pkg);
+    const second = await start();
+    const plan = await client.execute({
+      sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+      args: [second.id]
+    });
+    expect(String(plan.rows[0].assessment_plan)).toContain('fr-a1-001@2:q2');
   });
 
   it('rejects a planned item the learner already answered in another session', async () => {
