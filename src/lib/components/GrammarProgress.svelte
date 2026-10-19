@@ -102,6 +102,7 @@
 {#if !tracks.length}<p>You have no enrolled tracks yet.</p>{/if}
 {#each tracks as track (track.language)}
   <section
+    id={`track-${track.language}`}
     aria-label={`${track.language.toUpperCase()} grammar`}
   >
     <h2>{track.language.toUpperCase()} · starting level {track.level}</h2>

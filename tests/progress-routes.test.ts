@@ -144,3 +144,23 @@ it('logs a catalog failure once when its dependent progress also rejects', async
   expect(log).toHaveBeenCalledTimes(1);
   log.mockRestore();
 });
+
+it('returns every enrollment on the map without waiting for track progress', async () => {
+  await client.execute(
+    "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('enrollment-de', 'learner-a', 'de', 'A1', 'en')"
+  );
+  const data = (await mapPage(event('learner-a'))) as {
+    tracks: {
+      language: string;
+      catalog: Promise<unknown>;
+      progress: Promise<{ language: string }>;
+    }[];
+  };
+  expect(data.tracks.map(({ language }) => language)).toEqual(['de', 'fr']);
+  expect(data.tracks.every((track) => track.progress instanceof Promise)).toBe(
+    true
+  );
+  await expect(
+    Promise.all(data.tracks.map((track) => track.progress))
+  ).resolves.toMatchObject([{ language: 'de' }, { language: 'fr' }]);
+});
