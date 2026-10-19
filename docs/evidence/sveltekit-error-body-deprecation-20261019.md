@@ -3,7 +3,8 @@
 Observed locally on 2026-10-19 with Node 24.19.0 and npm 11.9.0. The two route
 suites capture `console.warn` and fail if the SvelteKit
 `error_body_deprecated` marker is emitted. Assertions cover status and
-learner-safe message bodies for API, endpoint, lesson-page, and form paths.
+learner-safe message bodies for API, endpoint, lesson-page, and form paths,
+including the 409 assessment-mode lesson-page response.
 
 ## Observed RED and GREEN
 
@@ -53,3 +54,21 @@ were left untouched and are not part of this follow-up commit. The full
 repository check, format, and test results above describe that shared dirty
 checkout, not a clean run of the PR commit. Hosted CI on the committed PR is
 the clean-commit result.
+
+## Review-gate follow-up (2026-10-19)
+
+The first hosted Quality runs found the lesson-page route's existing `NOT_FOUND`
+line was not formatted by Prettier. After formatting was corrected, Codecov
+reported the other outcome of that conditional was not covered. The route tests
+now exercise an assessment session opening a lesson page and assert the safe
+409 response.
+
+Re-verified in the shared checkout after that addition:
+
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm test -- --coverage --coverage.reporter=lcov tests/mistake-card-routes.test.ts tests/learner-routes.test.ts`: 2 files, 46 tests passed.
+- In `coverage/lcov.info`, both outcomes for `lessonFailure` line 26 ran: branch counts 2 and 1.
+- Prettier and ESLint passed for both route suites and this evidence file.
+
+The Codecov patch check for the commit containing this coverage follow-up has
+not run yet.

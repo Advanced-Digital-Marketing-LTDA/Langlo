@@ -543,6 +543,22 @@ describe('lesson page load', () => {
     });
   });
 
+  it('answers 409 when an assessment session opens a lesson page', async () => {
+    const e = Object.assign(event('learner-b'), {
+      params: { language: 'fr', skill: 'fr-a1-001' },
+      url: new URL(
+        'http://127.0.0.1/app/learn/fr/lesson/fr-a1-001?session=study-b'
+      )
+    });
+    await expect(lessonPage(e as never)).rejects.toMatchObject({
+      status: 409,
+      body: {
+        message:
+          'Use the assessment page to continue. Lessons and feedback are hidden during assessments.'
+      }
+    });
+  });
+
   it('answers 503 with a safe message when study data is not configured', async () => {
     const e = Object.assign(event('learner-a', { config: undefined }), {
       params: { language: 'fr', skill: 'fr-a1-001' }
