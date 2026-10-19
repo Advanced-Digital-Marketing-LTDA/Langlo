@@ -23,8 +23,7 @@ function lessonFailure(thrown: unknown, language: string) {
   if (thrown instanceof StudyError) {
     if (thrown.code === 'CONTENT_UNAVAILABLE')
       return { language, unavailable: true as const, lesson: null };
-    if (thrown.code === 'NOT_FOUND')
-      error(404, 'Lesson not found.');
+    if (thrown.code === 'NOT_FOUND') error(404, 'Lesson not found.');
     const described = describeLearnerError(thrown.code);
     if (described) error(described.status, described.message);
   }

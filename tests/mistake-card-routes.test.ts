@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import { createDeck, getNote } from '../src/lib/server/flashcards';
 import { createMistakeDraft } from '../src/lib/server/mistake-cards';
@@ -19,7 +19,22 @@ import {
   load as resultsLoad
 } from '../src/routes/app/session/[id]/results/+page.server';
 
-afterEach(disposeFlashcardFixtures);
+let deprecatedErrorWarning = false;
+
+beforeEach(() => {
+  deprecatedErrorWarning = false;
+  vi.spyOn(console, 'warn').mockImplementation((...args) => {
+    if (args.some((arg) => String(arg).includes('error_body_deprecated')))
+      deprecatedErrorWarning = true;
+  });
+});
+
+afterEach(async () => {
+  const warned = deprecatedErrorWarning;
+  vi.restoreAllMocks();
+  await disposeFlashcardFixtures();
+  expect(warned).toBe(false);
+});
 
 describe('mistake-card draft endpoints', () => {
   function event(
@@ -98,24 +113,21 @@ describe('mistake-card draft endpoints', () => {
         status: 'rejected'
       });
 
-      let foreign: unknown;
-      try {
-        foreign = await editDraft(
-          event({
-            userId: other.userId,
-            params: { id: note.id },
-            method: 'PATCH',
-            body: {
-              kind: 'basic',
-              content: { front: 'a', back: 'b' }
-            },
-            databaseUrl: target.databaseUrl
-          })
-        );
-      } catch (thrown) {
-        foreign = thrown;
-      }
-      expect(foreign).toMatchObject({ status: 404 });
+      const foreign = await Promise.resolve()
+        .then(() =>
+          editDraft(
+            event({
+              userId: other.userId,
+              params: { id: note.id },
+              method: 'PATCH',
+              body: { kind: 'basic', content: { front: 'a', back: 'b' } },
+              databaseUrl: target.databaseUrl
+            })
+          )
+        )
+        .catch((thrown: unknown) => thrown);
+      expect(foreign).toHaveProperty('status', 404);
+      expect(foreign).toHaveProperty('body.message', 'Not found.');
       expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
     } finally {
       db.close();
@@ -134,7 +146,10 @@ describe('mistake-card draft endpoints', () => {
             body: '{not json'
           })
         } as never)
-      ).rejects.toMatchObject({ status: 401 });
+      ).rejects.toMatchObject({
+        status: 401,
+        body: { message: 'Sign in required.' }
+      });
       expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
     } finally {
       db.close();
@@ -226,7 +241,7 @@ describe('mistake-card pages', () => {
         await resultsActions.keep(
           formEvent({ databaseUrl: target.databaseUrl })
         )
-      ).toMatchObject({ status: 404 });
+      ).toMatchObject({ status: 404, data: { message: 'Not found.' } });
 
       const noteRow = (
         await db.client.execute(
@@ -264,7 +279,7 @@ describe('mistake-card pages', () => {
         )
       ).toMatchObject({
         status: 400,
-        data: { message: expect.stringContaining('basic front/back') }
+        data: { message: 'Choose a basic front/back card or a cloze card.' }
       });
     } finally {
       db.close();
