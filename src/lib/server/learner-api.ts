@@ -114,7 +114,7 @@ export async function learnerApi(
   const learner = requireLearnerApi(event);
   const config = event.locals.config;
   if (!config?.dataEnabled || !config.databaseUrl)
-    error(503, { message: 'Study data is not available yet.' });
+    error(503, 'Study data is not available yet.');
   const { client, close } = await span('study.open-database', () =>
     openAppDatabase(config)
   );
@@ -125,7 +125,7 @@ export async function learnerApi(
   } catch (error_) {
     if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
       const described = describeLearnerError(error_.code);
-      if (described) error(described.status, { message: described.message });
+      if (described) error(described.status, described.message);
     }
     throw error_;
   } finally {
@@ -141,10 +141,10 @@ export async function readJsonObject(
   try {
     body = await request.json();
   } catch {
-    error(400, { message: messageFor[400] });
+    error(400, messageFor[400]);
   }
   if (typeof body !== 'object' || body === null || Array.isArray(body))
-    error(400, { message: messageFor[400] });
+    error(400, messageFor[400]);
   return body as Record<string, unknown>;
 }
 
@@ -165,7 +165,7 @@ export async function studyPage<T>(
   const learner = requireLearnerPage(event);
   const config = event.locals.config;
   if (!config?.dataEnabled || !config.databaseUrl)
-    error(503, { message: 'Study data is not available yet.' });
+    error(503, 'Study data is not available yet.');
   const { client, close } = await span('study.open-database', () =>
     openAppDatabase(config)
   );
@@ -175,7 +175,7 @@ export async function studyPage<T>(
     const described =
       (thrown instanceof StudyError || thrown instanceof FlashcardError) &&
       describeLearnerError(thrown.code);
-    if (described) error(described.status, { message: described.message });
+    if (described) error(described.status, described.message);
     throw thrown;
   } finally {
     close();

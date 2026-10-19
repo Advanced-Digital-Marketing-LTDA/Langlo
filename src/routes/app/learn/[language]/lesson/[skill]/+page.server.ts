@@ -24,9 +24,9 @@ function lessonFailure(thrown: unknown, language: string) {
     if (thrown.code === 'CONTENT_UNAVAILABLE')
       return { language, unavailable: true as const, lesson: null };
     if (thrown.code === 'NOT_FOUND')
-      error(404, { message: 'Lesson not found.' });
+      error(404, 'Lesson not found.');
     const described = describeLearnerError(thrown.code);
-    if (described) error(described.status, { message: described.message });
+    if (described) error(described.status, described.message);
   }
   throw thrown;
 }
@@ -37,7 +37,7 @@ async function withDatabase<T>(
   run: (client: Client) => Promise<T>
 ): Promise<T> {
   if (!config?.dataEnabled || !config.databaseUrl)
-    error(503, { message: 'Study data is not available yet.' });
+    error(503, 'Study data is not available yet.');
   const { client, close } = await openAppDatabase(config);
   try {
     return await run(client);
