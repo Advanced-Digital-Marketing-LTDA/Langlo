@@ -451,6 +451,37 @@ describe('retiring a skill', () => {
     await rejects(back, 'INVALID_RETIREMENT', /cannot receive carried/u);
   });
 
+  it('treats a historical carried retirement as a no-op after its replacement is retired', async () => {
+    const strip = (pkg: ContentPackage, gone: string[]) => {
+      pkg.skills = pkg.skills.map((skill) => ({
+        ...skill,
+        prerequisites: skill.prerequisites.filter((id) => !gone.includes(id))
+      }));
+      return pkg;
+    };
+    const first = strip(
+      retire('1.0.0', {
+        skillId: 'fr-a1-002',
+        replacedBy: 'fr-a1-003',
+        carry: true
+      }),
+      ['fr-a1-002']
+    );
+    await importContent(client, first);
+    const later = strip(retire('2.0.0', { skillId: 'fr-a1-003' }), [
+      'fr-a1-002',
+      'fr-a1-003'
+    ]);
+    later.skills = later.skills.filter((skill) => skill.id !== 'fr-a1-002');
+    later.versions = later.versions.filter(
+      (version) => version.skillId !== 'fr-a1-002'
+    );
+    await importContent(client, later);
+    const before = await storedState();
+    await importContent(client, first);
+    expect(await storedState()).toEqual(before);
+  });
+
   it('refuses to change an earlier retirement', async () => {
     await importContent(client, retire('1.0.0', { skillId: 'fr-a1-002' }));
     await rejects(
@@ -567,6 +598,23 @@ describe('the impact report', () => {
     ]);
   });
 
+  it('ignores answers to items the skill no longer holds when an older version is quarantined', async () => {
+    await answer('fr-a1-001@1:q2', 'two', 'es');
+    await importContent(
+      client,
+      update('0.2.0', [
+        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+        question('fr-a1-001@2:q2', { change: 'changed' })
+      ])
+    );
+    const withdrawn = approvedPackage();
+    withdrawn.curriculumVersion = '0.2.1';
+    withdrawn.versions[0].review = 'quarantined';
+    expect(await contentImpact(client, withdrawn)).toMatchObject([
+      { skillId: 'fr-a1-001', answers: 0, learners: 0 }
+    ]);
+  });
+
   it('plans successive new versions of a skill against each other', async () => {
     const pkg = update('0.2.0', [
       same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
@@ -659,6 +707,56 @@ describe('the impact report', () => {
     ];
     expect(await contentImpact(client, pkg)).toMatchObject([
       { skillId: 'fr-a1-002', answers: 0, learners: 0 }
+    ]);
+  });
+
+  it('keeps a carry target plan across a newer version the package quarantines', async () => {
+    await answer('fr-a1-002@1:q1', 'three', 'On est ici.');
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '1.0.0';
+    pkg.versions.push(
+      {
+        id: 'fr-a1-003@1',
+        skillId: 'fr-a1-003',
+        version: 1,
+        review: 'approved',
+        questions: [question('fr-a1-003@1:q1')]
+      },
+      {
+        id: 'fr-a1-003@2',
+        skillId: 'fr-a1-003',
+        version: 2,
+        review: 'quarantined',
+        questions: [question('fr-a1-003@2:q9', { change: 'new' })]
+      }
+    );
+    pkg.retirements = [
+      { skillId: 'fr-a1-002', replacedBy: 'fr-a1-003', carry: true }
+    ];
+    expect(await contentImpact(client, pkg)).toMatchObject([
+      { skillId: 'fr-a1-002', answers: 0, learners: 0 }
+    ]);
+  });
+
+  it('counts answers carried into a skill when that skill is retired without carry', async () => {
+    await answer('fr-a1-002@1:q1', 'three', 'On est ici.');
+    const twin = approvedPackage();
+    twin.curriculumVersion = '0.2.0';
+    twin.versions.push({
+      id: 'fr-a1-003@1',
+      skillId: 'fr-a1-003',
+      version: 1,
+      review: 'approved',
+      questions: [question('fr-a1-003@1:q1')]
+    });
+    await importContent(client, twin);
+    await client.execute(
+      "UPDATE skills SET retired_at = 1, replaced_by = 'fr-a1-003', carry_progress = 1 WHERE id = 'fr-a1-002'"
+    );
+    const pkg = approvedPackage();
+    pkg.retirements = [{ skillId: 'fr-a1-003' }];
+    expect(await contentImpact(client, pkg)).toMatchObject([
+      { skillId: 'fr-a1-003', answers: 1, learners: 1 }
     ]);
   });
 });

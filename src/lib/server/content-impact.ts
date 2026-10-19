@@ -1,4 +1,4 @@
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import { type ContentPackage } from './content-import';
 import {
   planVersion,
@@ -6,7 +6,12 @@ import {
   type PriorQuestion
 } from './content-update';
 import { effectiveLineageKey } from './lineage';
-import { loadEvidenceRows, qualifyingGrammarEvidence } from './mastery';
+import {
+  carriedTo,
+  currentContent,
+  loadEvidenceRows,
+  qualifyingGrammarEvidence
+} from './mastery';
 
 // Read-only report of what a package would do to learner progress, printed
 // before an owner applies it. It counts the answers that would stop counting
@@ -24,25 +29,42 @@ type Earlier = { questions: PriorQuestion[] };
 type Counted = { itemKey: string; contentVersionId: string };
 
 /**
- * The answers mastery counts now whose item key `stops` matches, by the same
- * rules mastery applies: the first response to an item, independent,
- * evaluated, from a version that is not quarantined.
+ * The answers mastery counts now for `skillId` whose item `stops` matches, by
+ * the same rules mastery applies: the first response to an item, independent,
+ * evaluated, from a version that is not quarantined, to an item in the
+ * skill's current version. Answers given on retired skills that carry to it
+ * (directly or through other carries) count for it.
  */
 async function countedAnswers(
   client: Client,
   skillId: string,
   stops: (answer: Counted) => boolean
 ) {
-  const rows = await loadEvidenceRows(client, { skillId });
-  const byOwner = new Map<string, typeof rows>();
-  for (const row of rows) {
-    const owner = String(row.owner_id);
-    byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
-  }
+  const skill = await client.execute({
+    sql: 'SELECT language FROM skills WHERE id = ?',
+    args: [skillId]
+  });
+  if (skill.rows.length === 0)
+    throw new Error(`impact report: skill ${skillId} is not stored`);
+  const current = await currentContent(client, String(skill.rows[0].language));
+  const sources = [
+    skillId,
+    ...[...current.carry.keys()].filter(
+      (id) => carriedTo(id, current.carry) === skillId
+    )
+  ];
+  const byOwner = new Map<string, Row[]>();
+  for (const source of sources)
+    for (const row of await loadEvidenceRows(client, { skillId: source })) {
+      const owner = String(row.owner_id);
+      byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
+    }
   let answers = 0;
   let learners = 0;
   for (const ownerRows of byOwner.values()) {
-    const counted = qualifyingGrammarEvidence(ownerRows).filter(stops);
+    const counted = qualifyingGrammarEvidence(ownerRows, current).filter(
+      (item) => item.countsFor === skillId && stops(item)
+    );
     answers += counted.length;
     if (counted.length > 0) learners += 1;
   }
@@ -221,7 +243,6 @@ export async function contentImpact(
     );
     if (line) lines.push(line);
     if (plan) planned.set(version.skillId, plan);
-    else planned.delete(version.skillId);
   }
   for (const retirement of pkg.retirements ?? []) {
     const line = await retirementImpact(client, retirement, planned);

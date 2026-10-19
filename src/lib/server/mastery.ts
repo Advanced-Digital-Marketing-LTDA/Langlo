@@ -58,7 +58,7 @@ export type CurrentContent = {
   carry: Map<string, string>;
 };
 
-function carriedTo(skillId: string, carry: Map<string, string>) {
+export function carriedTo(skillId: string, carry: Map<string, string>) {
   let target = skillId;
   let hops = 0;
   while (carry.has(target)) {
@@ -155,7 +155,7 @@ export function qualifyingGrammarEvidence(
  * The lineage keys each skill's current version holds (its newest version that
  * is not quarantined), and which retired skills carry their answers over.
  */
-async function currentContent(
+export async function currentContent(
   tx: Pick<Client, 'execute'>,
   language: string
 ): Promise<CurrentContent> {

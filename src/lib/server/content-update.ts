@@ -342,7 +342,6 @@ export async function applyRetirements(
       args: [retirement.skillId]
     });
     checkRetirementTarget(retirement, known, stored);
-    await checkCarryTargetLive(tx, retirement);
     const [row] = stored.rows;
     const replacedBy = retirement.replacedBy ?? null;
     const carry = retirement.carry === true ? 1 : null;
@@ -351,6 +350,7 @@ export async function applyRetirements(
         fail('CONTENT_CONFLICT', `skill ${retirement.skillId} retirement`);
       continue;
     }
+    await checkCarryTargetLive(tx, retirement);
     await tx.execute({
       sql: 'UPDATE skills SET retired_at = unixepoch() * 1000, replaced_by = ?, carry_progress = ? WHERE id = ? AND retired_at IS NULL',
       args: [replacedBy, carry, retirement.skillId]
