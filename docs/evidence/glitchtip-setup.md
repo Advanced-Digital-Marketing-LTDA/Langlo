@@ -1,5 +1,22 @@
 # GlitchTip setup evidence
 
+## Per-request logs (2026-10-19)
+
+- After console capture shipped, only the startup line reached GlitchTip:
+  `src/` has no `console.log`, `info` or `debug` calls, only `warn` and `error`
+  on failures. At the owner's request ("start sending everything through"),
+  added `requestLog` (`src/lib/server/request-log.ts`), run between the Sentry
+  handle and the app handle in `src/hooks.server.ts`. It sends one
+  `Sentry.logger.info` per request, skipping `/health/live`.
+- The owner chose the raw path over the route pattern, knowing password-reset
+  tokens in `/api/auth/reset-password/<token>` are then sent to GlitchTip.
+  The query string is not logged.
+- Red then green: `tests/request-log.test.ts` failed before the module existed
+  and passed after; breaking the liveness skip failed two of its tests.
+  `tests/request-log-wiring.test.ts` pins the handle order. Only focused test
+  files were run (request log, wiring, signup boundary, Sentry hooks). Not
+  verified: delivery to a live GlitchTip.
+
 ## Console log capture (2026-10-19)
 
 - No logs reached GlitchTip because neither SDK initializer registered log

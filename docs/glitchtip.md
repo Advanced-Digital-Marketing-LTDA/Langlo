@@ -62,6 +62,13 @@ the other telemetry above, including raw error objects such as the
 `@sentry/core` and `@sentry/sveltekit` 11.8.0 shows no `enableLogs` option, so
 none is set; delivery to GlitchTip itself is not yet verified.
 
+Langlo itself writes few console lines, so the server also sends one `info`
+log per request (`METHOD /path status`, with method, path, status,
+`duration_ms` and `correlation_id` attributes) from `src/lib/server/request-log.ts`.
+The path is the raw URL path with no query string, so password-reset links
+(`/api/auth/reset-password/<token>`) put live tokens in GlitchTip; the owner
+chose this on 2026-10-19. `/health/live` is skipped.
+
 The GlitchTip service must accept logs: set `GLITCHTIP_ENABLE_LOGS=True` on the
 standalone resource and redeploy it, and set log retention to 30 days there.
 To verify, call `console.warn` with a recognizable message from the deployed
