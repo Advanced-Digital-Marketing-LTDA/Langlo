@@ -62,6 +62,35 @@ it('keeps foreign keys enabled and accepts concurrent writes through a shared cl
   await expect(insert(99)).rejects.toThrow('intentional failure');
   await second.client.execute('DROP TRIGGER reject_shared_write');
 
+  await second.client.execute(
+    'CREATE TABLE commit_parent (id INTEGER PRIMARY KEY)'
+  );
+  await second.client.execute(`CREATE TABLE commit_child (
+    parent_id INTEGER REFERENCES commit_parent(id) DEFERRABLE INITIALLY DEFERRED
+  )`);
+  const rejectedCommit = async () => {
+    const tx = await beginWrite(second.client);
+    try {
+      await tx.execute('INSERT INTO commit_child (parent_id) VALUES (99)');
+      await tx.commit();
+    } catch (error) {
+      await tx.rollback().catch(() => undefined);
+      throw error;
+    } finally {
+      tx.close();
+    }
+  };
+  await expect(rejectedCommit()).rejects.toThrow(
+    'FOREIGN KEY constraint failed'
+  );
+
+  const afterRejectedCommit = await beginWrite(second.client);
+  await afterRejectedCommit.execute(
+    'INSERT INTO commit_parent (id) VALUES (1)'
+  );
+  await afterRejectedCommit.commit();
+  afterRejectedCommit.close();
+
   const results = await Promise.allSettled(
     Array.from({ length: 6 }, (_, id) => insert(id + 1))
   );

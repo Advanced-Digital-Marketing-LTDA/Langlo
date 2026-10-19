@@ -324,7 +324,7 @@ function skillStanding(row: Row, evidence: Evidence, prerequisites: Row[]) {
 }
 
 /** Compute mastery from trusted answer history without changing learner state. */
-export async function computeMastery(
+async function computeMastery(
   client: Client,
   learner: LearnerSession,
   language: string
@@ -341,4 +341,32 @@ export async function computeMastery(
     language
   );
   return catalog.map((row) => skillStanding(row, evidence, prerequisites));
+}
+
+/** Read mastery only for languages this learner is enrolled in. */
+export async function loadEnrolledMastery(
+  client: Client,
+  learner: LearnerSession,
+  language: string | null = null
+) {
+  const enrolled = await client.execute({
+    sql: 'SELECT language, starting_level FROM enrollments WHERE owner_id = ? ORDER BY language',
+    args: [learner.userId]
+  });
+  if (
+    language !== null &&
+    !enrolled.rows.some((row) => row.language === language)
+  )
+    throw new StudyError('NOT_FOUND');
+
+  const tracks = [];
+  for (const row of enrolled.rows) {
+    if (language !== null && row.language !== language) continue;
+    tracks.push({
+      language: String(row.language),
+      level: String(row.starting_level),
+      skills: await computeMastery(client, learner, String(row.language))
+    });
+  }
+  return tracks;
 }

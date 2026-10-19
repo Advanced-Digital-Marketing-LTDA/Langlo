@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
-import { computeMastery } from '../src/lib/server/mastery';
+import { loadProgress } from '../src/lib/server/progress';
 import {
   importContent,
   type ContentPackage,
@@ -31,6 +31,12 @@ afterEach(async () => {
   close?.();
   await disposeFlashcardFixtures();
 });
+
+const computeMastery = async (
+  client: Client,
+  session: typeof learner,
+  language: string
+) => (await loadProgress(client, session, language)).tracks[0].skills;
 
 /** A fresh practice session, so each content version pins its own. */
 async function newSession() {

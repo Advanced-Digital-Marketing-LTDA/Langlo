@@ -35,7 +35,7 @@ import { learnerApi, studyPage } from '../src/lib/server/learner-api';
 import { FlashcardError } from '../src/lib/server/flashcards';
 import { isHttpError } from '@sveltejs/kit';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
-import { computeMastery, loadEvidenceRows } from '../src/lib/server/mastery';
+import { loadEvidenceRows } from '../src/lib/server/mastery';
 import { loadProgress } from '../src/lib/server/progress';
 import { span } from '../src/lib/server/tracing';
 import { importContent } from '../src/lib/server/content-import';
@@ -95,7 +95,7 @@ it('computeMastery traces read phases while answer creation traces ledger sync',
     answer: 'suis'
   });
   recorded.length = 0;
-  const skills = await computeMastery(client, learner, 'fr');
+  const skills = (await loadProgress(client, learner, 'fr')).tracks[0].skills;
   expect(skills.find((skill) => skill.skillId === 'fr-a1-001')).toMatchObject({
     correct: 1
   });

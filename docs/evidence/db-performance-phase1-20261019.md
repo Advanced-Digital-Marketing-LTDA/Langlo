@@ -29,3 +29,9 @@
 - No traces were available and no timing gate was set, so this work makes no request-latency claim. The Sentry sample rate was not changed.
 - The shared-client test verifies FK enforcement, client reuse across concurrent first opens, rollback release, and six concurrent transactions against a local in-memory libSQL client. The adapter rejects overlapping write transactions (`TRANSACTION_ACTIVE` in memory and `SQLITE_BUSY` for a file); application writes now queue per client. Concurrent transaction behavior against Turso was not verified because this phase uses only disposable local fixtures and no remote database access.
 - Phase 2 content caching and the selected epoch-table freshness mechanism are deferred until Phase 1 review; no epoch migration is included here. No embedded replica spike was run.
+
+## Review follow-up
+
+- Failed commits roll back before releasing the shared-client write queue. A deferred foreign-key test verifies that a later transaction can commit after a rejected commit.
+- Mastery calculation is private behind the owner-scoped enrollment loader, which still reads enrollment once before computing each enrolled language.
+- Follow-up validation: `npm run check` (0 errors, 0 warnings), `npm run format:check`, and 36 focused tests across four files passed.

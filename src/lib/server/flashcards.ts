@@ -92,9 +92,14 @@ export async function beginWrite(client: Client) {
         get(target, property) {
           if (property === 'commit')
             return async () => {
-              const result = await target.commit();
-              finish();
-              return result;
+              try {
+                return await target.commit();
+              } catch (error) {
+                await target.rollback().catch(() => undefined);
+                throw error;
+              } finally {
+                finish();
+              }
             };
           if (property === 'rollback')
             return async () => {

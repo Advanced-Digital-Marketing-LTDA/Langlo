@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
-  computeMastery,
   qualifyingGrammarEvidence,
   scoreGrammar
 } from '../src/lib/server/mastery';
@@ -22,6 +21,12 @@ import { recordAttempt } from '../src/lib/server/study';
 let client: Client;
 let close: () => void;
 const learner = testSession('learner-a');
+const computeMastery = async (
+  client: Client,
+  session: typeof learner,
+  language: string
+) => (await loadProgress(client, session, language)).tracks[0].skills;
+
 beforeEach(async () => {
   ({ client, close } = await openFixtureDatabase(await fixture()));
   await importContent(client, approvedPackage());
