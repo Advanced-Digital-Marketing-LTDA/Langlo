@@ -6,6 +6,7 @@ const sentry = vi.hoisted(() => ({
     name: 'Http',
     options
   })),
+  consoleLoggingIntegration: vi.fn(() => ({ name: 'ConsoleLogs' })),
   sentryHandle: vi.fn(() => vi.fn()),
   withStaticSpan: vi.fn((callback) => callback),
   handleErrorWithSentry: vi.fn(() => vi.fn())
@@ -39,6 +40,7 @@ it('disables server release-health sessions and preserves SvelteKit integrations
   expect(sentry.httpIntegration).toHaveBeenCalledWith({ sessions: false });
   expect(result).toEqual([
     { name: 'Http', options: { sessions: false } },
-    { name: 'SvelteKitSpans' }
+    { name: 'SvelteKitSpans' },
+    { name: 'ConsoleLogs' }
   ]);
 });
