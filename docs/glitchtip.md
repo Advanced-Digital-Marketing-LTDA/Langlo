@@ -54,10 +54,13 @@ compatibility.
 ## Logs
 
 Langlo registers the SDK's console log capture on the server and in the
-browser, so every `console.*` call is sent to GlitchTip as a log at its own
-level, with no Langlo-side filtering. This is intentional for the alpha and
-carries the same exposure as the other telemetry above. The SDK in use needs
-no `enableLogs` option.
+browser, so `console.*` calls are recorded as logs at their own level (a
+`console.log` is recorded as `info`) and sent to GlitchTip with no Langlo-side
+filtering. This is intentional for the alpha and carries the same exposure as
+the other telemetry above, including raw error objects such as the
+`console.error` calls in `src/lib/server/study.ts`. Source inspection of
+`@sentry/core` and `@sentry/sveltekit` 11.8.0 shows no `enableLogs` option, so
+none is set; delivery to GlitchTip itself is not yet verified.
 
 The GlitchTip service must accept logs: set `GLITCHTIP_ENABLE_LOGS=True` on the
 standalone resource and redeploy it, and set log retention to 30 days there.

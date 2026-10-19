@@ -3,8 +3,12 @@
 ## Console log capture (2026-10-19)
 
 - No logs reached GlitchTip because neither SDK initializer registered log
-  capture and nothing called `Sentry.logger`. `@sentry/sveltekit` 11.8.0 has no
-  `enableLogs` option, so none was added.
+  capture and nothing called `Sentry.logger`. Inspecting the published
+  `@sentry/core` 11.8.0 and `@sentry/sveltekit` 11.8.0 packages found no
+  `enableLogs` option or check anywhere in the build (`logs/internal.js`
+  captures without one), so none was added. `consoleLoggingIntegration` maps
+  `console.log` to `info` and is exported by the server entry; the client
+  production build contains the `ConsoleLogs` integration.
 - Registered `Sentry.consoleLoggingIntegration()` (all levels, no filtering) in
   `src/hooks.server.ts` and `src/hooks.client.ts`, per the owner's decisions of
   2026-10-19: all levels, pass-through, server and browser.
