@@ -113,23 +113,15 @@ describe('mistake-card draft endpoints', () => {
         status: 'rejected'
       });
 
-      let foreign: unknown;
-      try {
-        foreign = await editDraft(
-          event({
-            userId: other.userId,
-            params: { id: note.id },
-            method: 'PATCH',
-            body: {
-              kind: 'basic',
-              content: { front: 'a', back: 'b' }
-            },
-            databaseUrl: target.databaseUrl
-          })
-        );
-      } catch (thrown) {
-        foreign = thrown;
-      }
+      const foreign = await editDraft(
+        event({
+          userId: other.userId,
+          params: { id: note.id },
+          method: 'PATCH',
+          body: { kind: 'basic', content: { front: 'a', back: 'b' } },
+          databaseUrl: target.databaseUrl
+        })
+      ).catch((thrown: unknown) => thrown);
       expect(foreign).toHaveProperty('status', 404);
       expect(foreign).toHaveProperty('body.message', 'Not found.');
       expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
