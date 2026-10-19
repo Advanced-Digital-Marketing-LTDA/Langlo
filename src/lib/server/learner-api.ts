@@ -14,6 +14,7 @@ import {
   type LearnerSession
 } from './learner-session';
 import { StudyError } from './study';
+import { span } from './tracing';
 
 type LearnerEvent = Pick<RequestEvent, 'locals' | 'request'>;
 
@@ -114,9 +115,13 @@ export async function learnerApi(
   const config = event.locals.config;
   if (!config?.dataEnabled || !config.databaseUrl)
     error(503, { message: 'Study data is not available yet.' });
-  const { client, close } = await openAppDatabase(config);
+  const { client, close } = await span('study.open-database', () =>
+    openAppDatabase(config)
+  );
   try {
-    return json(await run(client, learner), { status });
+    return json(await span('study.run', () => run(client, learner)), {
+      status
+    });
   } catch (error_) {
     if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
       const described = describeLearnerError(error_.code);
@@ -161,9 +166,11 @@ export async function studyPage<T>(
   const config = event.locals.config;
   if (!config?.dataEnabled || !config.databaseUrl)
     error(503, { message: 'Study data is not available yet.' });
-  const { client, close } = await openAppDatabase(config);
+  const { client, close } = await span('study.open-database', () =>
+    openAppDatabase(config)
+  );
   try {
-    return await run(client, learner);
+    return await span('study.run', () => run(client, learner));
   } catch (thrown) {
     const described =
       (thrown instanceof StudyError || thrown instanceof FlashcardError) &&
