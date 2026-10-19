@@ -45,6 +45,10 @@ Test Files 17 passed (17)   Tests 653 passed (653)
 - assessment item identity by number: 1 failed in `assessment`
 - notice never shown: 1 failed in `study-resume`; shown for a withdrawn version: 1 failed; newest version without a lesson counted: 1 failed
 
+## Fingerprint unchanged for existing packages
+
+`validatePackage(modulesPackage(root))` on `main` (`ce8f05f`) and on this branch both give `8fc7b34c891e7d015f0ef107937b03583555316c470147231cca29c1c45a2af4` for the 32 authored modules, so a database that already imported them under `1.0.0` re-imports the same package as a no-op.
+
 ## Pending acceptance
 
 - Not run against a real Turso database. Migration 0016 must be applied before any import that carries declarations or retirements; the owner applies it.
