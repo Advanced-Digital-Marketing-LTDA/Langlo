@@ -32,6 +32,7 @@
     "db:test:reset": "node tests/fixtures/cli.ts reset",
     "db:fixture:dispose": "node tests/fixtures/cli.ts dispose",
     "db:remote-test": "node scripts/db-remote-test.ts",
+    "content:import": "tsx scripts/content-import.ts",
     "accounts:provision": "node scripts/accounts-provision.ts"
   },
   "dependencies": {

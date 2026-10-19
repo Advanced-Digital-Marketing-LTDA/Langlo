@@ -85,7 +85,7 @@ function isDnsHost(hostname: string): boolean {
  * A libsql:// Turso host with no port, credentials, query, fragment or path.
  * The token is sent on connect, so any other domain is refused before then.
  */
-function isBareRemoteUrl(url: URL): boolean {
+export function isBareRemoteUrl(url: URL): boolean {
   const hostname = url.hostname.toLowerCase();
   return (
     url.protocol === 'libsql:' &&
