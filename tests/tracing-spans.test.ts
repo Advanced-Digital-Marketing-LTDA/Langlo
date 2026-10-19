@@ -31,7 +31,9 @@ vi.mock('../src/lib/server/db/app', () => ({
   openAppDatabase: vi.fn(async () => ({ client: {}, close: vi.fn() }))
 }));
 
-import { studyPage } from '../src/lib/server/learner-api';
+import { learnerApi, studyPage } from '../src/lib/server/learner-api';
+import { FlashcardError } from '../src/lib/server/flashcards';
+import { isHttpError } from '@sveltejs/kit';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { getMastery, loadEvidenceRows } from '../src/lib/server/mastery';
 import { span } from '../src/lib/server/tracing';
@@ -121,6 +123,70 @@ it('studyPage times opening the database and running the load, and still closes'
     }
   } as never;
   await expect(studyPage(event, async () => 'ok')).resolves.toBe('ok');
+  expect(recorded.map((entry) => entry.name)).toEqual([
+    'study.open-database',
+    'study.run'
+  ]);
+  expect(close).toHaveBeenCalledOnce();
+});
+
+const learnerEvent = {
+  request: new Request('http://localhost/api'),
+  locals: {
+    user: { id: 'learner-a' },
+    config: { dataEnabled: true, databaseUrl: 'file:test.db' }
+  }
+} as never;
+
+async function openWithClose() {
+  const { openAppDatabase } = await import('../src/lib/server/db/app');
+  const close = vi.fn();
+  vi.mocked(openAppDatabase).mockResolvedValueOnce({
+    client: {},
+    close
+  } as never);
+  return close;
+}
+
+it('studyPage closes the database and rethrows when the wrapped load fails', async () => {
+  const close = await openWithClose();
+  const failure = new Error('synthetic load failure');
+  await expect(
+    studyPage(learnerEvent, async () => {
+      throw failure;
+    })
+  ).rejects.toBe(failure);
+  expect(recorded.map((entry) => entry.name)).toEqual([
+    'study.open-database',
+    'study.run'
+  ]);
+  expect(close).toHaveBeenCalledOnce();
+});
+
+it('learnerApi times opening the database and running the work, and answers 200', async () => {
+  const close = await openWithClose();
+  const response = await learnerApi(learnerEvent, async () => ({ ok: true }));
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ ok: true });
+  expect(recorded.map((entry) => entry.name)).toEqual([
+    'study.open-database',
+    'study.run'
+  ]);
+  expect(close).toHaveBeenCalledOnce();
+});
+
+it('learnerApi keeps mapping repository errors to a learner-safe status while traced', async () => {
+  const close = await openWithClose();
+  const thrown = await learnerApi(learnerEvent, async () => {
+    throw new FlashcardError('STALE_REVIEW');
+  }).catch((error: unknown) => error);
+  expect(isHttpError(thrown, 409)).toBe(true);
+  expect(thrown).toMatchObject({
+    body: {
+      message:
+        'This card changed in another tab. Reload to see the current version before rating it again.'
+    }
+  });
   expect(recorded.map((entry) => entry.name)).toEqual([
     'study.open-database',
     'study.run'
