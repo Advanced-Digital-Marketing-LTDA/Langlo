@@ -115,6 +115,17 @@ it('computeMastery traces read phases while answer creation traces ledger sync',
   expect(
     recorded.find((entry) => entry.name === 'mastery.load-evidence')?.set
   ).toEqual({ rows: stored.length });
+  recorded.length = 0;
+  await recordAttempt(client, learner, {
+    studySessionId: 'study-a',
+    questionId: 'fr-a1-001@1:q2',
+    submissionKey: 'traced-second-item',
+    evidenceKind: 'independent',
+    answer: 'es'
+  });
+  expect(
+    recorded.find((entry) => entry.name === 'mastery.sync-evidence')?.attributes
+  ).toEqual({ rows: 1 });
 });
 
 it('loadProgress rejects a missing enrollment before computing mastery', async () => {

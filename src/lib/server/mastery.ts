@@ -195,8 +195,17 @@ export async function currentContent(
 /** The stored attempts and evaluations the evidence rules read, oldest first. */
 export async function loadEvidenceRows(
   tx: Pick<Client, 'execute'>,
-  filter: { ownerId?: string; language?: string; skillId?: string }
+  filter: {
+    ownerId?: string;
+    language?: string;
+    skillId?: string;
+    attemptIds?: string[];
+    studySessionId?: string;
+    lineageKeys?: string[];
+  }
 ) {
+  if (filter.attemptIds?.length === 0 || filter.lineageKeys?.length === 0)
+    return [];
   const clauses: string[] = [];
   const args: string[] = [];
   if (filter.ownerId !== undefined) {
@@ -210,6 +219,22 @@ export async function loadEvidenceRows(
   if (filter.skillId !== undefined) {
     clauses.push('a.skill_id = ?');
     args.push(filter.skillId);
+  }
+  if (filter.attemptIds !== undefined) {
+    clauses.push(`a.id IN (${filter.attemptIds.map(() => '?').join(', ')})`);
+    args.push(...filter.attemptIds);
+  }
+  if (filter.studySessionId !== undefined) {
+    clauses.push('a.study_session_id = ?');
+    args.push(filter.studySessionId);
+  }
+  if (filter.lineageKeys !== undefined) {
+    const placeholders = filter.lineageKeys.map(() => '?').join(', ');
+    const legacyKey = `CASE WHEN substr(a.question_id, 1, length(a.content_version_id) + 1) = a.content_version_id || ':' THEN substr(a.question_id, length(a.content_version_id) + 2) ELSE a.question_id END`;
+    clauses.push(
+      `(aq.lineage_key IN (${placeholders}) OR (aq.lineage_key IS NULL AND ${legacyKey} IN (${placeholders})))`
+    );
+    args.push(...filter.lineageKeys, ...filter.lineageKeys);
   }
   const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
   const result = await tx.execute({
@@ -289,9 +314,32 @@ async function loadQualifyingEvidence(
 export async function syncEvidenceLedger(
   tx: Tx,
   ownerId: string,
-  language: string
+  language: string,
+  scope: { attemptIds?: string[]; studySessionId?: string }
 ) {
-  const evidence = await loadQualifyingEvidence(tx, ownerId, language);
+  const seeds = await loadEvidenceRows(tx, { ownerId, language, ...scope });
+  if (seeds.length === 0) return;
+  const lineageKeys = [
+    ...new Set(
+      seeds.map((row) =>
+        effectiveLineageKey({
+          lineageKey: row.lineage_key === null ? null : String(row.lineage_key),
+          contentVersionId: String(row.content_version_id),
+          questionId: String(row.question_id)
+        })
+      )
+    )
+  ];
+  const history = await loadEvidenceRows(tx, {
+    ownerId,
+    language,
+    lineageKeys
+  });
+  const seedIds = new Set(seeds.map((row) => String(row.attempt_id)));
+  const evidence = qualifyingGrammarEvidence(
+    history,
+    await currentContent(tx, language)
+  ).filter((item) => seedIds.has(item.attemptId));
   await span(
     'mastery.sync-evidence',
     () => recordEvidence(tx, ownerId, language, evidence),

@@ -486,7 +486,9 @@ async function recordFallbackEvaluation(
           result.outcome
         ]
       });
-      await syncEvidenceLedger(tx, session.userId, attempt.language);
+      await syncEvidenceLedger(tx, session.userId, attempt.language, {
+        attemptIds: [attempt.id]
+      });
       await tx.commit();
     } catch (error) {
       await tx.rollback().catch(() => undefined);
@@ -611,7 +613,14 @@ async function recordAttemptWrite(
       assessmentCompleted ||
       (source.mode === 'practice' && outcome !== 'uncertain')
     )
-      await syncEvidenceLedger(tx, session.userId, source.language);
+      await syncEvidenceLedger(
+        tx,
+        session.userId,
+        source.language,
+        assessmentCompleted
+          ? { studySessionId: input.studySessionId }
+          : { attemptIds: [id] }
+      );
     await tx.commit();
     const result = { id, duplicate: false as const };
     return outcome === 'uncertain' && !input.notSure
