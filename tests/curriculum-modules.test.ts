@@ -354,7 +354,12 @@ describe.each(files)('%s', (path) => {
 
     if (module.lessons.some((lesson) => revisedSkills.has(lesson.skill_id))) {
       it('imports corrected revisions alongside historical version and question IDs', async () => {
-        const historical = modulePackage(root, module);
+        const historical = modulePackage(
+          root,
+          module,
+          module.review_status,
+          '1.0.0'
+        );
         const revised = historical.versions.filter((version) =>
           revisedSkills.has(version.skillId)
         );
