@@ -32,5 +32,5 @@ The tests were written after the implementation, so red output comes from removi
 
 - Not run against a real Turso database or production. Production still lacks migrations 0013 to 0015, which must be applied before `--apply` there.
 - A database that already holds the bundle alone under curriculum version `1.0.0` rejects the combined package (same version, different content), as `tests/fr-a1-module-01.test.ts` shows for the importer. Resolving it needs a curriculum version decision by the owner.
-- `tsx` runs the script and is only a transitive dependency of `drizzle-kit`; declaring it is the owner's call.
+- `tsx` runs the script and is now declared as an exact-pinned dev dependency (`4.23.15`, the version already locked). The lockfile change is the one root `devDependencies` line; `npm ci --dry-run --legacy-peer-deps` gives the same result before and after on npm 10.9.4. It was not run on the pinned npm 11.9.
 - Full suite, browser tests and CI results are not claimed here.
