@@ -51,9 +51,9 @@ export type ContentQuestion = {
   format: Format;
   prompt: string;
   answer: string;
-  alternatives?: string[] | undefined;
+  alternatives?: string[];
   // Omitted legacy flags stay omitted in fingerprints; storage defaults to practice.
-  holdout?: boolean | undefined;
+  holdout?: boolean;
   // Required on every question of a lesson version that follows an earlier
   // version of the same skill: `same` keeps the earlier question's meaning
   // (and names it in `continues`), `changed` and `new` start a fresh item.
@@ -87,7 +87,7 @@ export type ContentPackage = {
   // Identity of the source bundle, when there is one. It is part of the
   // version fingerprint, so a reissued bundle needs a new version even when
   // the imported rows are unchanged.
-  bundleDigest?: string | undefined;
+  bundleDigest?: string;
   skills: {
     id: string;
     language: Language;
@@ -102,9 +102,9 @@ export type ContentPackage = {
     review: string;
     questions: ContentQuestion[];
     // Optional so packages without lessons keep their fingerprints.
-    lesson?: ContentLesson | undefined;
+    lesson?: ContentLesson;
     // Explanations in other languages; only valid next to the English lesson.
-    translations?: { pt?: ContentLesson | undefined } | undefined;
+    translations?: { pt?: ContentLesson };
   }[];
   retirements?: SkillRetirement[];
 };
@@ -200,15 +200,20 @@ const packageShape = z.object({
   bundleDigest: z.string().optional(),
   skills: z.array(skillShape),
   versions: z.array(
-    z.object({
-      id: text,
-      skillId: text,
-      version: z.int().min(1),
-      review: z.unknown().optional(),
-      questions: z.array(questionShape).min(1),
-      lesson: lessonShape.optional(),
-      translations: z.object({ pt: lessonShape.optional() }).optional()
-    })
+    z
+      .object({
+        id: text,
+        skillId: text,
+        version: z.int().min(1),
+        review: z.unknown().optional(),
+        questions: z.array(questionShape).min(1),
+        lesson: lessonShape.optional(),
+        translations: z
+          .object({ pt: lessonShape.optional() })
+          .strict()
+          .optional()
+      })
+      .strict()
   ),
   retirements: z
     .array(
@@ -304,6 +309,18 @@ const versionFingerprint = (version: PackageVersion) =>
 export function validatePackage(pkg: ContentPackage) {
   validatePackageHeader(pkg);
   const data = validateShape(pkg);
+  for (const version of data.versions) {
+    const skill = data.skills.find((item) => item.id === version.skillId);
+    if (
+      version.translations?.pt !== undefined &&
+      skill !== undefined &&
+      skill.language !== 'en'
+    )
+      fail(
+        'INVALID_PACKAGE',
+        `translation requires an English lesson ${version.id}`
+      );
+  }
   validateReviews(pkg);
   validateDeclarations(pkg);
   for (const version of pkg.versions)
@@ -591,7 +608,11 @@ const canonicalLesson = (lesson: ContentLesson) => ({
 
 // A lesson is immutable once stored: a different text under the same version
 // is a conflict. A version imported before it had a lesson may gain one.
-async function importLesson(tx: Transaction, version: PackageVersion) {
+async function importLesson(
+  tx: Transaction,
+  version: PackageVersion,
+  set: ChangeSet
+) {
   if (version.lesson === undefined) {
     if (hasTranslations(version))
       fail('INVALID_PACKAGE', `translations without lesson ${version.id}`);
@@ -618,7 +639,7 @@ async function importLesson(tx: Transaction, version: PackageVersion) {
         version.id
       ]
     });
-  await importTranslations(tx, version);
+  await importTranslations(tx, version, set);
 }
 
 const hasTranslations = (version: PackageVersion) =>
@@ -626,7 +647,11 @@ const hasTranslations = (version: PackageVersion) =>
 
 // A translation is immutable like the lesson it explains: a different text
 // under the same version and language is a conflict.
-async function importTranslations(tx: Transaction, version: PackageVersion) {
+async function importTranslations(
+  tx: Transaction,
+  version: PackageVersion,
+  set: ChangeSet
+) {
   const pt = version.translations?.pt;
   if (pt === undefined) return;
   const lesson = canonicalLesson(pt);
@@ -651,6 +676,14 @@ async function importTranslations(tx: Transaction, version: PackageVersion) {
       hash
     ]
   });
+  set.add(
+    {
+      kind: 'lesson-translation-added',
+      skillId: version.skillId,
+      contentVersionId: version.id
+    },
+    'minor'
+  );
 }
 
 /** A version the database already holds: it must match, and may be quarantined. */
@@ -678,7 +711,7 @@ async function reimportVersion(
   } else if (stored.fingerprint !== hash)
     fail('CONTENT_CONFLICT', `version ${version.id}`);
   await backfillPayloads(tx, version);
-  await importLesson(tx, version);
+  await importLesson(tx, version, set);
   if (version.review !== 'quarantined') return;
   const update = await tx.execute({
     sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
@@ -731,7 +764,7 @@ async function importVersions(
       const plan = planVersion(version, await priorVersion(tx, version));
       await insertVersion(tx, version, skill.language, plan.questions);
       logVersion(set, version, plan);
-      await importLesson(tx, version);
+      await importLesson(tx, version, set);
       result.versions += 1;
       result.questions += version.questions.length;
       result.quarantined += Number(version.review === 'quarantined');

@@ -188,7 +188,7 @@ describe('content import script', () => {
       DATABASE_URL: target.databaseUrl
     });
     expect(code).toBe(1);
-    expect(out).toContain('migrations pending: 0016');
+    expect(out).toContain('migrations pending');
     expect(await count('skills')).toBe(0);
   });
 

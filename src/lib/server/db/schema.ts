@@ -1066,6 +1066,7 @@ export const contentChanges = sqliteTable(
         'question-changed',
         'question-new',
         'question-removed',
+        'lesson-translation-added',
         'version-quarantined'
       ]
     }).notNull(),
@@ -1080,7 +1081,7 @@ export const contentChanges = sqliteTable(
     index('content_changes_skill').on(table.skillId),
     check(
       'content_changes_kind',
-      sql`${table.kind} IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'version-quarantined')`
+      sql`${table.kind} IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'lesson-translation-added', 'version-quarantined')`
     )
   ]
 );

@@ -373,9 +373,89 @@ describe('disposable libSQL migrations', () => {
             'SELECT count(*) AS count FROM __drizzle_migrations'
           )
         ).rows[0].count
-      ).toBe(18);
+      ).toBe(
+        JSON.parse(await readFile('drizzle/meta/_journal.json', 'utf8')).entries
+          .length
+      );
     } finally {
       close();
+    }
+  });
+
+  it('preserves content change rows while adding the translation audit kind', async () => {
+    const target = await fixture();
+    const previous = await mkdtemp(join(tmpdir(), 'langlo-migrations-'));
+    try {
+      const journal = JSON.parse(
+        await readFile('drizzle/meta/_journal.json', 'utf8')
+      );
+      journal.entries = journal.entries.slice(0, -1);
+      await mkdir(join(previous, 'meta'));
+      await writeFile(
+        join(previous, 'meta/_journal.json'),
+        JSON.stringify(journal)
+      );
+      for (const entry of journal.entries)
+        await copyFile(
+          `drizzle/${entry.tag}.sql`,
+          join(previous, `${entry.tag}.sql`)
+        );
+      await migrateFixtureDatabase(target, previous);
+      const before = await openFixtureDatabase(target);
+      try {
+        await before.client.execute({
+          sql: 'INSERT INTO curriculum_imports (curriculum_version, fingerprint) VALUES (?, ?)',
+          args: ['0.1.0', 'a'.repeat(64)]
+        });
+        await before.client.execute({
+          sql: 'INSERT INTO content_changes (id, curriculum_version, kind, skill_id, content_version_id) VALUES (?, ?, ?, ?, ?)',
+          args: [
+            'change-before-0018',
+            '0.1.0',
+            'version-added',
+            'en-a1-001',
+            'en-a1-001@1'
+          ]
+        });
+      } finally {
+        before.close();
+      }
+
+      await migrateFixtureDatabase(target);
+      const after = await openFixtureDatabase(target);
+      try {
+        expect(
+          (
+            await after.client.execute(
+              'SELECT kind, skill_id, content_version_id FROM content_changes WHERE id = ?',
+              ['change-before-0018']
+            )
+          ).rows
+        ).toEqual([
+          {
+            kind: 'version-added',
+            skill_id: 'en-a1-001',
+            content_version_id: 'en-a1-001@1'
+          }
+        ]);
+        await after.client.execute({
+          sql: 'INSERT INTO content_changes (id, curriculum_version, kind, skill_id, content_version_id) VALUES (?, ?, ?, ?, ?)',
+          args: [
+            'change-after-0018',
+            '0.1.0',
+            'lesson-translation-added',
+            'en-a1-001',
+            'en-a1-001@1'
+          ]
+        });
+        expect(
+          (await after.client.execute('PRAGMA foreign_key_check')).rows
+        ).toEqual([]);
+      } finally {
+        after.close();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
     }
   });
 

@@ -33,6 +33,7 @@ export type ChangeKind =
   | 'question-changed'
   | 'question-new'
   | 'question-removed'
+  | 'lesson-translation-added'
   | 'version-quarantined';
 
 export type ChangeRow = {
