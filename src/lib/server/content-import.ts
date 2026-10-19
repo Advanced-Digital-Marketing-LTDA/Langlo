@@ -245,7 +245,7 @@ const versionFingerprint = (version: PackageVersion) =>
       .sort((a, b) => Number(a.id > b.id) - Number(a.id < b.id))
   );
 
-function validatePackage(pkg: ContentPackage) {
+export function validatePackage(pkg: ContentPackage) {
   validatePackageHeader(pkg);
   const data = validateShape(pkg);
   validateReviews(pkg);

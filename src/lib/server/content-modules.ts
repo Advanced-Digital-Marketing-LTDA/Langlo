@@ -27,6 +27,18 @@ export type ModuleFile = {
 
 const modulePath = /^module-\d+\.json$/u;
 
+function readModule(path: string): ModuleFile {
+  let module: ModuleFile;
+  try {
+    module = JSON.parse(readFileSync(path, 'utf8')) as ModuleFile;
+  } catch {
+    throw new ContentImportError('INVALID_MODULE', `${path} is not valid JSON`);
+  }
+  if (typeof module?.module_id !== 'string' || !Array.isArray(module.lessons))
+    throw new ContentImportError('INVALID_MODULE', `${path} has no lessons`);
+  return module;
+}
+
 /** Every module file under content/, in a stable order. */
 export function loadModules(root: string): ModuleFile[] {
   const content = join(root, 'content');
@@ -38,7 +50,7 @@ export function loadModules(root: string): ModuleFile[] {
         .map((name) => join(content, dir.name, name))
     )
     .sort()
-    .map((path) => JSON.parse(readFileSync(path, 'utf8')) as ModuleFile);
+    .map(readModule);
   if (modules.length === 0)
     throw new ContentImportError('NO_MODULES', 'no module files found');
   return modules;

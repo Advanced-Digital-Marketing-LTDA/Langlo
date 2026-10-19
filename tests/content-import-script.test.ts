@@ -1,4 +1,5 @@
 import {
+  cpSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -83,6 +84,41 @@ describe('content import script', () => {
     expect(out).toContain('nothing written');
   });
 
+  it('dry run fails on a package the importer would refuse', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'langlo-root-'));
+    try {
+      cpSync(join(root, 'content'), join(dir, 'content'), { recursive: true });
+      mkdirSync(join(dir, 'docs'));
+      cpSync(join(root, 'docs', 'evidence'), join(dir, 'docs', 'evidence'), {
+        recursive: true
+      });
+      cpSync(
+        join(root, 'docs', 'curriculum-coverage.csv'),
+        join(dir, 'docs', 'curriculum-coverage.csv')
+      );
+      const path = join(dir, 'content', 'fr-a1', 'module-01.json');
+      const module = JSON.parse(readFileSync(path, 'utf8')) as {
+        lessons: { version: { questions: { answer: string }[] } }[];
+      };
+      // A multiple-choice answer that is not one of its options.
+      module.lessons[0].version.questions[0].answer = 'not an option';
+      writeFileSync(path, JSON.stringify(module));
+      const lines: string[] = [];
+      const code = await runContentImport(
+        [],
+        {},
+        (l) => lines.push(l),
+        undefined,
+        dir
+      );
+      expect(code).toBe(1);
+      expect(lines.join('\n')).toContain('INVALID_ALTERNATIVES');
+      expect(lines.join('\n')).not.toContain('dry run: nothing written');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('applies every module once and is a no-op the second time', async () => {
     await migrateFixtureDatabase(target);
     const env = { DATABASE_URL: target.databaseUrl };
@@ -112,6 +148,25 @@ describe('content import script', () => {
     });
     expect(code).toBe(1);
     expect(out).toContain('migrations pending');
+  });
+
+  it('refuses a partly migrated database', async () => {
+    await migrateFixtureDatabase(target);
+    const client = createClient({ url: target.databaseUrl });
+    try {
+      const removed = await client.execute(
+        'DELETE FROM __drizzle_migrations WHERE rowid = (SELECT MAX(rowid) FROM __drizzle_migrations)'
+      );
+      expect(removed.rowsAffected).toBe(1);
+    } finally {
+      client.close();
+    }
+    const { code, out } = await run(['--apply', '--confirm-host', 'local'], {
+      DATABASE_URL: target.databaseUrl
+    });
+    expect(code).toBe(1);
+    expect(out).toContain('migrations pending: 0015');
+    expect(await count('skills')).toBe(0);
   });
 
   it('refuses a remote URL that is not a bare Turso host', async () => {
@@ -166,6 +221,41 @@ describe('content import script', () => {
 });
 
 describe('module package', () => {
+  function withModule(content: string, check: (dir: string) => void) {
+    const dir = mkdtempSync(join(tmpdir(), 'langlo-modules-'));
+    try {
+      mkdirSync(join(dir, 'content', 'fr-a1'), { recursive: true });
+      writeFileSync(join(dir, 'content', 'fr-a1', 'module-01.json'), content);
+      check(dir);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }
+
+  it('names a module file that is not valid JSON', () => {
+    withModule('{ "module_id": ', (dir) =>
+      expect(() => modulesPackage(dir)).toThrow(
+        /INVALID_MODULE.*module-01\.json/u
+      )
+    );
+  });
+
+  it('names a module file without lessons', () => {
+    withModule('{"module_id":"x","review_status":"approved"}', (dir) =>
+      expect(() => modulesPackage(dir)).toThrow(/INVALID_MODULE.*no lessons/u)
+    );
+  });
+
+  it('refuses a directory with no module files', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'langlo-modules-'));
+    try {
+      mkdirSync(join(dir, 'content'));
+      expect(() => modulesPackage(dir)).toThrow(/NO_MODULES/u);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('rejects a module that is not approved', () => {
     const dir = mkdtempSync(join(tmpdir(), 'langlo-modules-'));
     try {
@@ -174,7 +264,7 @@ describe('module package', () => {
         join(dir, 'content', 'fr-a1', 'module-01.json'),
         JSON.stringify({
           module_id: 'fr-a1-module-01',
-          review_status: 'draft',
+          review_status: 'quarantined',
           lessons: []
         })
       );

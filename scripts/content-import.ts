@@ -2,7 +2,8 @@ import { fileURLToPath } from 'node:url';
 import type { Client } from '@libsql/client';
 import {
   ContentImportError,
-  importContent
+  importContent,
+  validatePackage
 } from '../src/lib/server/content-import.ts';
 import { modulesPackage } from '../src/lib/server/content-modules.ts';
 import {
@@ -14,6 +15,9 @@ import {
 
 const usage =
   'Usage: npm run content:import -- [--apply --confirm-host HOST]. Without --apply nothing is written. HOST is the DATABASE_URL host, or "local" for a file: URL.';
+
+/** This script's own fixed messages: the only errors whose text may be printed. */
+class ScriptError extends Error {}
 
 type Open = (url: string, authToken: string | undefined) => Promise<Client>;
 
@@ -27,20 +31,20 @@ type Target = { url: string; host: string; authToken?: string };
 /** A local file: URL or a bare Turso libsql:// URL; anything else is refused before connecting. */
 function parseTarget(env: Record<string, string | undefined>): Target {
   const raw = env.DATABASE_URL?.trim();
-  if (!raw) throw new Error('DATABASE_URL is not set');
+  if (!raw) throw new ScriptError('DATABASE_URL is not set');
   if (raw.startsWith('file:')) return { url: raw, host: 'local' };
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    throw new Error('DATABASE_URL is not a valid URL');
+    throw new ScriptError('DATABASE_URL is not a valid URL');
   }
   if (!isBareRemoteUrl(url))
-    throw new Error(
+    throw new ScriptError(
       'DATABASE_URL must be a file: URL or a bare libsql://<name>.turso.io URL'
     );
   const authToken = env.TURSO_AUTH_TOKEN?.trim();
-  if (!authToken) throw new Error('TURSO_AUTH_TOKEN is not set');
+  if (!authToken) throw new ScriptError('TURSO_AUTH_TOKEN is not set');
   const host = url.hostname.toLowerCase();
   return { url: `libsql://${host}`, host, authToken };
 }
@@ -68,6 +72,8 @@ export async function runContentImport(
   let client: Client | undefined;
   try {
     const pkg = modulesPackage(root);
+    // The importer's own checks, so a defective package fails the dry run too.
+    validatePackage(pkg);
     const questions = pkg.versions.reduce((n, v) => n + v.questions.length, 0);
     write(
       `package ${pkg.curriculumVersion}: ${pkg.skills.length} skills, ${pkg.versions.length} lessons, ${questions} questions`
@@ -78,7 +84,9 @@ export async function runContentImport(
     }
     const target = parseTarget(env);
     if (confirmHost !== target.host)
-      throw new Error('--confirm-host does not match the DATABASE_URL host');
+      throw new ScriptError(
+        '--confirm-host does not match the DATABASE_URL host'
+      );
     client = await open(target.url, target.authToken);
     await client.execute('SELECT 1');
     const state = await readMigrationState(
@@ -87,7 +95,7 @@ export async function runContentImport(
       target.host
     );
     if (!state.ledgerPresent || state.pending.length > 0)
-      throw new Error(
+      throw new ScriptError(
         `migrations pending: ${state.pending.map((m) => m.tag).join(', ') || 'all'}; apply them first`
       );
     const result = await importContent(client, pkg);
@@ -99,9 +107,9 @@ export async function runContentImport(
   } catch (error) {
     // Only our own fixed messages and error codes; never driver errors that may carry the URL.
     const known =
+      error instanceof ScriptError ||
       error instanceof ContentImportError ||
-      error instanceof RemoteMigrationError ||
-      (error instanceof Error && error.constructor === Error);
+      error instanceof RemoteMigrationError;
     write(
       `Content import failed. ${known ? (error as Error).message : 'UNEXPECTED: nothing was confirmed written'}`
     );
