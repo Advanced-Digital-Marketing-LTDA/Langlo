@@ -28,11 +28,26 @@ imported, and no production state was changed.
 
 ## Local validation
 
-- `npm run check`, `npm run lint`, `npm run format:check`, `npm run build`,
-  `npm run validate:curriculum`, and `npm run content:import` (dry run): pass.
-- A focused assert-based check confirms the loader passes all 45 translations
-  into the import package and that English lessons, questions, references, and
-  IDs are unchanged.
-- Test suites were not run. Hosted checks are pending.
+- Behavior tests were run before the fix with:
+  `npm test -- tests/content-import-script.test.ts -t 'passes every authored Portuguese translation|rejects a misspelled translation field|rejects a translation block placed at lesson level|rejects an unsupported explanation language|refuses a partly migrated database'`.
+  The 4 new behavior cases failed: the “When is the class?” example had the
+  wrong Portuguese meaning, and three malformed translation shapes were
+  silently accepted until package loading failed for an unrelated missing
+  bundle. The partial-migration assertion passed.
+- The same focused command passed after the fixes: 5 passed, 15 skipped.
+  It checks all 45 Portuguese translations reach the import package, the
+  source lessons and questions remain unchanged across all modules, malformed
+  or misplaced translation keys are rejected, the corrected example is
+  present, and the partial-migration message names the latest journal tag.
+- `npm test`: 78 files and 1,270 tests passed.
+- `npm run test:property`: 5 files and 7 tests passed.
+- `npm run test:e2e`: 90 passed, 0 failed, 0 flaky, 0 skipped.
+- `npm run check`, `npm run lint`, `npm run format:check`,
+  `npm run validate:curriculum`, `npm run content:import` (dry run),
+  `npm run build`, and `git diff --check`: passed. The import dry run reported
+  package 1.1.0 with 124 skills, 124 lessons, and 1,860 questions; nothing was
+  written.
+- No production database was connected and no content was imported. Hosted
+  checks for the updated head are pending.
 - `npm ci --ignore-scripts` completed with the pinned toolchain; npm reported
   two moderate dependency advisories. No dependency files were changed.
