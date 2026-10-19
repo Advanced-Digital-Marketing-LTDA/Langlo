@@ -74,6 +74,16 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
     telemetry: { enabled: false },
     logger: { disabled: true },
     advanced: {
+      // `__Host-` cookies cannot carry a Domain, so a sibling subdomain can
+      // neither shadow nor replace the session cookie. Better Auth always
+      // prepends `__Secure-` on secure origins, so the prefix is set here and
+      // only on HTTPS, where the browser accepts it.
+      ...(config.origin.startsWith('https:')
+        ? {
+            useSecureCookies: false,
+            cookies: { session_token: { name: '__Host-langlo.session_token' } }
+          }
+        : {}),
       ipAddress: { ipAddressHeaders: ['x-langlo-client-address'] },
       defaultCookieAttributes: {
         secure: config.origin.startsWith('https:')

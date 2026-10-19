@@ -84,6 +84,12 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   scheme rather than NODE_ENV). `applyAuthCookies` forwards framework cookie
   attributes through `event.cookies` without adding `Secure` on HTTP and
   decodes the already-percent-encoded signed value so it round-trips intact.
+- On HTTPS origins the session cookie is named `__Host-langlo.session_token`
+  (`advanced.cookies.session_token.name`, with `useSecureCookies: false`
+  because Better Auth would otherwise prepend `__Secure-`). A `__Host-` cookie
+  cannot carry a Domain, so a sibling subdomain cannot shadow or replace it,
+  and a stale `__Secure-better-auth.session_token` cookie from earlier deploys
+  is never read. HTTP origins keep the plain `better-auth.session_token` name.
 - Request protections: `trustedOrigins: [APP_ORIGIN]`; Better Auth's CSRF/origin
   checks stay enabled (`advanced.disableCSRFCheck` never set); SvelteKit's
   built-in form-action origin checking remains untouched.
