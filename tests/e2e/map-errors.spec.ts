@@ -113,8 +113,11 @@ test.beforeEach(async () => {
   });
 });
 
+const hasExited = (child: ChildProcess) =>
+  child.exitCode !== null || child.signalCode !== null;
+
 async function stopServer(child: ChildProcess | undefined) {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+  if (!child || hasExited(child)) return;
   const exited = new Promise<void>((resolve) =>
     child.once('exit', () => resolve())
   );
