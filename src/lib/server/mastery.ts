@@ -260,6 +260,12 @@ export async function loadEvidenceRows(
 type Tx = Pick<Client, 'execute'>;
 type Evidence = ReturnType<typeof qualifyingGrammarEvidence>;
 type EvidenceScope = { ownerId: string; language: string };
+type PracticeCount = {
+  sessions: Set<string>;
+  answers: number;
+  lastPractisedAt: number | null;
+};
+type PracticeCounts = Map<string, PracticeCount>;
 
 async function loadCatalog(tx: Tx, language: string) {
   const catalog = await tx.execute({
@@ -278,6 +284,15 @@ async function loadPrerequisites(tx: Tx, language: string) {
   });
   return prerequisites.rows;
 }
+
+export type SkillCatalogEntry = {
+  skillId: string;
+  level: string;
+  title: string;
+  contentVersionId: string | null;
+  available: boolean;
+  prerequisites: string[];
+};
 
 /** Write the qualifying evidence to the ledger; replays change nothing. */
 async function recordEvidence(
@@ -301,18 +316,45 @@ async function recordEvidence(
     });
 }
 
+function countPracticeAnswers(rows: Row[], carry: Map<string, string>) {
+  const attempts = new Map(
+    rows
+      .filter((row) => row.mode === 'practice')
+      .map((row) => [String(row.attempt_id), row])
+  );
+  const counts: PracticeCounts = new Map();
+  for (const row of attempts.values()) {
+    const skillId = carriedTo(String(row.skill_id), carry);
+    const count = counts.get(skillId) ?? {
+      sessions: new Set<string>(),
+      answers: 0,
+      lastPractisedAt: null
+    };
+    const createdAt = Number(row.created_at);
+    count.sessions.add(String(row.study_session_id));
+    count.answers += 1;
+    count.lastPractisedAt = Math.max(
+      count.lastPractisedAt ?? createdAt,
+      createdAt
+    );
+    counts.set(skillId, count);
+  }
+  return counts;
+}
+
 async function loadQualifyingEvidence(tx: Tx, scope: EvidenceScope) {
   const source = await span('mastery.load-evidence', async (active) => {
     const rows = await loadEvidenceRows(tx, scope);
     active.setAttribute('rows', rows.length);
     return rows;
   });
-  return qualifyingGrammarEvidence(
-    source,
-    await span('mastery.current-content', () =>
-      currentContent(tx, scope.language)
-    )
+  const current = await span('mastery.current-content', () =>
+    currentContent(tx, scope.language)
   );
+  return {
+    evidence: qualifyingGrammarEvidence(source, current),
+    practiceCounts: countPracticeAnswers(source, current.carry)
+  };
 }
 
 /** Sync trusted answer history inside the write transaction that records it. */
@@ -350,9 +392,8 @@ export async function syncEvidenceLedger(
   );
 }
 
-/** One catalog row with its prerequisites and the status its evidence earns. */
-function skillStanding(row: Row, evidence: Evidence, prerequisites: Row[]) {
-  const items = evidence.filter((item) => item.countsFor === row.id);
+/** One catalog row before progress evidence is loaded. */
+function skillCatalogEntry(row: Row, prerequisites: Row[]): SkillCatalogEntry {
   return {
     skillId: String(row.id),
     level: String(row.level),
@@ -365,7 +406,24 @@ function skillStanding(row: Row, evidence: Evidence, prerequisites: Row[]) {
       row.status !== 'quarantined',
     prerequisites: prerequisites
       .filter((edge) => edge.skill_id === row.id)
-      .map((edge) => String(edge.prerequisite_id)),
+      .map((edge) => String(edge.prerequisite_id))
+  };
+}
+
+/** One catalog row with the status its evidence earns. */
+function skillStanding(
+  row: Row,
+  evidence: Evidence,
+  prerequisites: Row[],
+  practiceCounts: PracticeCounts
+) {
+  const items = evidence.filter((item) => item.countsFor === row.id);
+  const practice = practiceCounts.get(String(row.id));
+  return {
+    ...skillCatalogEntry(row, prerequisites),
+    practisedSessions: practice?.sessions.size ?? 0,
+    answers: practice?.answers ?? 0,
+    lastPractisedAt: practice?.lastPractisedAt ?? null,
     ...scoreGrammar({
       correct: items.filter((item) => item.correct).length,
       incorrect: items.filter((item) => !item.correct).length,
@@ -386,11 +444,44 @@ async function computeMastery(
   const prerequisites = await span('mastery.prerequisites', () =>
     loadPrerequisites(tx, language)
   );
-  const evidence = await loadQualifyingEvidence(tx, {
+  const { evidence, practiceCounts } = await loadQualifyingEvidence(tx, {
     ownerId: learner.userId,
     language
   });
-  return catalog.map((row) => skillStanding(row, evidence, prerequisites));
+  return catalog.map((row) =>
+    skillStanding(row, evidence, prerequisites, practiceCounts)
+  );
+}
+
+/** Load the public topic catalog for a learner's enrolled track. */
+export async function loadEnrolledCatalog(
+  client: Client,
+  learner: LearnerSession,
+  language: string
+) {
+  const tx = await beginRead(client);
+  try {
+    const enrolled = await tx.execute({
+      sql: 'SELECT starting_level FROM enrollments WHERE owner_id = ? AND language = ?',
+      args: [learner.userId, language]
+    });
+    const enrollment = enrolled.rows[0];
+    if (!enrollment) throw new StudyError('NOT_FOUND');
+    const catalog = await loadCatalog(tx, language);
+    const prerequisites = await loadPrerequisites(tx, language);
+    const result = {
+      language,
+      level: String(enrollment.starting_level),
+      skills: catalog.map((row) => skillCatalogEntry(row, prerequisites))
+    };
+    await tx.commit();
+    return result;
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
 }
 
 /** Read mastery only for languages this learner is enrolled in. */

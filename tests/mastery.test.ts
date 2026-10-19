@@ -6,7 +6,10 @@ import {
   scoreGrammar
 } from '../src/lib/server/mastery';
 import { loadProgress } from '../src/lib/server/progress';
-import { recommendTopics } from '../src/lib/server/recommendations';
+import {
+  recommendPractice,
+  recommendTopics
+} from '../src/lib/server/recommendations';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -21,6 +24,7 @@ import {
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { recordAttempt } from '../src/lib/server/study';
+import type { GrammarStatus } from '../src/lib/server/mastery';
 
 let client: Client;
 let close: () => void;
@@ -30,6 +34,46 @@ const computeMastery = async (
   session: typeof learner,
   language: string
 ) => (await loadProgress(client, session, language)).tracks[0].skills;
+
+const withoutPracticeCounts = <
+  T extends {
+    practisedSessions: number;
+    answers: number;
+    lastPractisedAt: number | null;
+  }
+>({
+  practisedSessions: _practisedSessions,
+  answers: _answers,
+  lastPractisedAt: _lastPractisedAt,
+  ...skill
+}: T) => skill;
+
+const practiceTopic = (
+  skillId: string,
+  overrides: Partial<{
+    status: GrammarStatus;
+    prerequisites: string[];
+    available: boolean;
+    correct: number;
+    independentItems: number;
+    practisedSessions: number;
+    answers: number;
+    lastPractisedAt: number | null;
+    reason: string;
+  }> = {}
+) => ({
+  skillId,
+  status: 'weak' as const,
+  prerequisites: [],
+  available: true,
+  correct: 0,
+  independentItems: 1,
+  practisedSessions: 1,
+  answers: 1,
+  lastPractisedAt: 100,
+  reason: 'Revisit this topic.',
+  ...overrides
+});
 
 beforeEach(async () => {
   ({ client, close } = await openFixtureDatabase(await fixture()));
@@ -335,7 +379,19 @@ describe('versioned grammar policy', () => {
       evidenceKind: 'independent',
       answer: 'suis'
     });
-    expect(await computeMastery(client, learner, 'fr')).toEqual(a);
+    const afterRepeat = await computeMastery(client, learner, 'fr');
+    expect(
+      afterRepeat.find((skill) => skill.skillId === 'fr-a1-001')
+    ).toMatchObject({
+      correct: 1,
+      incorrect: 0,
+      independentItems: 1,
+      practisedSessions: 2,
+      answers: 2
+    });
+    expect(afterRepeat.map(withoutPracticeCounts)).toEqual(
+      a.map(withoutPracticeCounts)
+    );
     await expect(loadProgress(client, learner, 'de')).rejects.toMatchObject({
       code: 'NOT_FOUND'
     });
@@ -461,5 +517,156 @@ describe('versioned grammar policy', () => {
     expect(recommendTopics([...skills].reverse())).toEqual(
       recommendTopics(skills)
     );
+  });
+
+  it('recommends only started, available weak or practising topics', () => {
+    const result = recommendPractice([
+      practiceTopic('weak'),
+      practiceTopic('practising', { status: 'practising' }),
+      practiceTopic('secure', { status: 'secure' }),
+      practiceTopic('unknown', { status: 'unknown' }),
+      practiceTopic('unstarted', { answers: 0, practisedSessions: 0 }),
+      practiceTopic('unavailable', { available: false })
+    ]);
+    expect(result.map((topic) => topic.skillId)).toEqual([
+      'weak',
+      'practising'
+    ]);
+  });
+
+  it('orders weak topics by accuracy and practising topics by recency then id', () => {
+    const topics = [
+      practiceTopic('weak-b', { correct: 0, independentItems: 2 }),
+      practiceTopic('weak-a', { correct: 2, independentItems: 10 }),
+      practiceTopic('weak-later', { correct: 1, independentItems: 10 }),
+      practiceTopic('practice-recent', {
+        status: 'practising',
+        lastPractisedAt: 30
+      }),
+      practiceTopic('practice-b', {
+        status: 'practising',
+        lastPractisedAt: 20
+      }),
+      practiceTopic('practice-a', {
+        status: 'practising',
+        lastPractisedAt: 20
+      }),
+      practiceTopic('practice-old', {
+        status: 'practising',
+        lastPractisedAt: 10
+      })
+    ];
+    const result = recommendPractice(topics);
+    expect(result.map((topic) => topic.skillId)).toEqual([
+      'weak-b',
+      'weak-later',
+      'weak-a',
+      'practice-old',
+      'practice-a'
+    ]);
+    expect(result).toHaveLength(5);
+    expect(recommendPractice([...topics].reverse())).toEqual(result);
+  });
+
+  it('ranks a started weak or practising prerequisite before its dependent', () => {
+    const result = recommendPractice([
+      practiceTopic('dependent', { prerequisites: ['foundation'] }),
+      practiceTopic('foundation', { status: 'practising' })
+    ]);
+    expect(result.map((topic) => topic.skillId)).toEqual([
+      'foundation',
+      'dependent'
+    ]);
+  });
+
+  it('keeps the existing ranking when imported prerequisites form a cycle', () => {
+    const result = recommendPractice([
+      practiceTopic('cycle-b', { prerequisites: ['cycle-a'] }),
+      practiceTopic('cycle-a', { prerequisites: ['cycle-b'] })
+    ]);
+    expect(result.map((topic) => topic.skillId)).toEqual([
+      'cycle-a',
+      'cycle-b'
+    ]);
+  });
+
+  it('returns no practice recommendations when no started topic needs work', () => {
+    expect(
+      recommendPractice([
+        practiceTopic('secure', { status: 'secure' }),
+        practiceTopic('unstarted', { answers: 0 })
+      ])
+    ).toEqual([]);
+  });
+
+  it('counts practice answers and sessions separately from evidence and assessments', async () => {
+    await recordAttempt(client, learner, {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'count-correct',
+      evidenceKind: 'independent',
+      answer: 'suis'
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-001@1:q2',
+      submissionKey: 'count-unsure',
+      evidenceKind: 'independent',
+      answer: '',
+      notSure: true
+    });
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('practice-count-two', 'learner-a', 'enrollment-a', 'fr', 'practice')"
+    );
+    await recordAttempt(client, learner, {
+      studySessionId: 'practice-count-two',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'count-assisted',
+      evidenceKind: 'independent',
+      answer: 'suis'
+    });
+    await client.batch(
+      [
+        "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, state) VALUES ('assessment-count', 'learner-a', 'enrollment-a', 'fr', 'assessment', 'completed')",
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('assessment-count-attempt', 'learner-a', 'assessment-count', 'fr-a1-001@1:q1', 'fr-a1-001@1', 'fr-a1-001', 'fr', 'assessment-count-key', 'independent', 'suis')",
+        "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('other-practice-count', 'learner-b', 'enrollment-b', 'fr', 'practice')",
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('other-practice-attempt', 'learner-b', 'other-practice-count', 'fr-a1-001@1:q1', 'fr-a1-001@1', 'fr-a1-001', 'fr', 'other-practice-key', 'independent', 'suis')"
+      ],
+      'write'
+    );
+    for (const [submissionKey, createdAt] of [
+      ['count-correct', 2000],
+      ['count-assisted', 3000],
+      ['count-unsure', 1000],
+      ['assessment-count-key', 9000],
+      ['other-practice-key', 9500]
+    ] as const)
+      await client.execute({
+        sql: 'UPDATE attempts SET created_at = ? WHERE submission_key = ?',
+        args: [createdAt, submissionKey]
+      });
+    const topic = (await computeMastery(client, learner, 'fr')).find(
+      (skill) => skill.skillId === 'fr-a1-001'
+    );
+    expect(topic).toMatchObject({ practisedSessions: 2, answers: 3 });
+    expect(topic?.lastPractisedAt).toBe(3000);
+    expect(topic?.independentItems).toBe(1);
+  });
+
+  it('carries raw practice counts from a retired topic to its replacement', async () => {
+    await client.batch(
+      [
+        "INSERT INTO skills (id, language, level, retired_at, replaced_by, carry_progress) VALUES ('fr-a1-old', 'fr', 'A1', 1, 'fr-a1-002', 1)",
+        "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-old@1', 'fr-a1-old', 'fr', 1, 'pilot-ready')",
+        "INSERT INTO questions (id, content_version_id, skill_id, language, format, prompt) VALUES ('fr-a1-old@1:q1', 'fr-a1-old@1', 'fr-a1-old', 'fr', 'typed-blank', 'retired question')",
+        "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('retired-practice', 'learner-a', 'enrollment-a', 'fr', 'practice')",
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('retired-practice-attempt', 'learner-a', 'retired-practice', 'fr-a1-old@1:q1', 'fr-a1-old@1', 'fr-a1-old', 'fr', 'retired-practice-key', 'assisted', 'suis')"
+      ],
+      'write'
+    );
+    const replacement = (await computeMastery(client, learner, 'fr')).find(
+      (skill) => skill.skillId === 'fr-a1-002'
+    );
+    expect(replacement).toMatchObject({ practisedSessions: 1, answers: 1 });
   });
 });
