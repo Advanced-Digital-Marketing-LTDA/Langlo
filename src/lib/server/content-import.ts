@@ -3,6 +3,18 @@ import { createHash } from 'node:crypto';
 import type { Client, Transaction } from '@libsql/client';
 import { z } from 'zod';
 import { beginWrite } from './flashcards';
+import {
+  applyRetirements,
+  ChangeSet,
+  checkBump,
+  logVersion,
+  planVersion,
+  priorVersion,
+  validateDeclarations,
+  writeChanges,
+  type BumpLevel,
+  type PlannedQuestion
+} from './content-update';
 
 // Checked grammar-content import (T012). Writes only the shared, unowned
 // content tables of the current migration: skills, prerequisites,
@@ -42,6 +54,22 @@ export type ContentQuestion = {
   alternatives?: string[] | undefined;
   // Omitted legacy flags stay omitted in fingerprints; storage defaults to practice.
   holdout?: boolean | undefined;
+  // Required on every question of a lesson version that follows an earlier
+  // version of the same skill: `same` keeps the earlier question's meaning
+  // (and names it in `continues`), `changed` and `new` start a fresh item.
+  change?: QuestionChange;
+  continues?: string;
+};
+
+export type QuestionChange = 'same' | 'changed' | 'new';
+
+/** A skill taken out of the catalog; its history stays readable. */
+export type SkillRetirement = {
+  skillId: string;
+  replacedBy?: string;
+  // Owner-approved: answers to the retired skill count for its replacement
+  // (a pure rename, same content under a new id).
+  carry?: boolean;
 };
 
 export type ContentLesson = {
@@ -78,6 +106,7 @@ export type ContentPackage = {
     // Explanations in other languages; only valid next to the English lesson.
     translations?: { pt?: ContentLesson | undefined } | undefined;
   }[];
+  retirements?: SkillRetirement[];
 };
 
 type PackageVersion = ContentPackage['versions'][number];
@@ -145,7 +174,9 @@ const questionShape = z.object({
   prompt: text,
   answer: text,
   alternatives: z.unknown().optional(),
-  holdout: z.boolean().optional()
+  holdout: z.boolean().optional(),
+  change: z.enum(['same', 'changed', 'new']).optional(),
+  continues: text.optional()
 });
 
 // Example keys are language codes whose source order carries no meaning, so
@@ -178,7 +209,16 @@ const packageShape = z.object({
       lesson: lessonShape.optional(),
       translations: z.object({ pt: lessonShape.optional() }).optional()
     })
-  )
+  ),
+  retirements: z
+    .array(
+      z.object({
+        skillId: text,
+        replacedBy: text.optional(),
+        carry: z.boolean().optional()
+      })
+    )
+    .optional()
 });
 
 const hasDuplicates = (ids: string[]) => new Set(ids).size !== ids.length;
@@ -237,14 +277,27 @@ const fingerprint = (data: unknown) =>
 const versionFingerprint = (version: PackageVersion) =>
   fingerprint(
     version.questions
-      .map(({ id, format, prompt, answer, alternatives, holdout }) => ({
-        id,
-        format,
-        prompt,
-        answer,
-        alternatives,
-        holdout
-      }))
+      .map(
+        ({
+          id,
+          format,
+          prompt,
+          answer,
+          alternatives,
+          holdout,
+          change,
+          continues
+        }) => ({
+          id,
+          format,
+          prompt,
+          answer,
+          alternatives,
+          holdout,
+          change,
+          continues
+        })
+      )
       .sort((a, b) => Number(a.id > b.id) - Number(a.id < b.id))
   );
 
@@ -252,6 +305,7 @@ export function validatePackage(pkg: ContentPackage) {
   validatePackageHeader(pkg);
   const data = validateShape(pkg);
   validateReviews(pkg);
+  validateDeclarations(pkg);
   for (const version of pkg.versions)
     for (const question of version.questions) validateAlternatives(question);
   return fingerprint(data);
@@ -269,7 +323,12 @@ const newer = (a: bigint[], b: bigint[]) =>
   (a[0] - b[0] || a[1] - b[1] || a[2] - b[2]) > 0n;
 
 /** Record a new curriculum version, or confirm a re-import of the same package. */
-async function recordVersion(tx: Transaction, version: string, hash: string) {
+async function recordVersion(
+  tx: Transaction,
+  version: string,
+  hash: string,
+  needed: BumpLevel
+) {
   const rows = await tx.execute(
     'SELECT curriculum_version, fingerprint FROM curriculum_imports'
   );
@@ -286,6 +345,11 @@ async function recordVersion(tx: Transaction, version: string, hash: string) {
     )
   )
     fail('CONTENT_CONFLICT', `curriculum version ${version} is not newer`);
+  checkBump(
+    rows.rows.map((row) => String(row.curriculum_version)),
+    version,
+    needed
+  );
   await tx.execute({
     sql: 'INSERT INTO curriculum_imports (curriculum_version, fingerprint) VALUES (?, ?)',
     args: [version, hash]
@@ -459,7 +523,8 @@ async function sameQuestions(tx: Transaction, version: PackageVersion) {
 async function insertVersion(
   tx: Transaction,
   version: PackageVersion,
-  language: string
+  language: string,
+  planned: PlannedQuestion[]
 ) {
   const taken = await tx.execute({
     sql: `SELECT id FROM questions WHERE id IN (${version.questions.map(() => '?').join(', ')})`,
@@ -478,9 +543,10 @@ async function insertVersion(
       versionFingerprint(version)
     ]
   });
+  const lineage = new Map(planned.map((item) => [item.id, item.lineageKey]));
   for (const question of version.questions)
     await tx.execute({
-      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer, alternatives) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer, alternatives, lineage_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
         question.id,
         version.id,
@@ -488,7 +554,8 @@ async function insertVersion(
         language,
         question.format,
         Number(question.holdout ?? false),
-        ...payloadArgs(question)
+        ...payloadArgs(question),
+        lineage.get(question.id) ?? null
       ]
     });
 }
@@ -586,12 +653,56 @@ async function importTranslations(tx: Transaction, version: PackageVersion) {
   });
 }
 
+/** A version the database already holds: it must match, and may be quarantined. */
+async function reimportVersion(
+  tx: Transaction,
+  version: ContentPackage['versions'][number],
+  stored: NonNullable<Awaited<ReturnType<typeof storedVersion>>>,
+  verifiedOriginal: boolean,
+  result: ImportResult,
+  set: ChangeSet
+) {
+  if (!(await sameQuestions(tx, version)))
+    fail('CONTENT_CONFLICT', `version ${version.id}`);
+  const hash = versionFingerprint(version);
+  if (stored.fingerprint === null) {
+    if (!verifiedOriginal)
+      fail(
+        'LEGACY_CONTENT_UNVERIFIED',
+        `version ${version.id}: re-import the recorded original package or publish a new content version with new question IDs`
+      );
+    await tx.execute({
+      sql: 'UPDATE content_versions SET fingerprint = ? WHERE id = ? AND fingerprint IS NULL',
+      args: [hash, version.id]
+    });
+  } else if (stored.fingerprint !== hash)
+    fail('CONTENT_CONFLICT', `version ${version.id}`);
+  await backfillPayloads(tx, version);
+  await importLesson(tx, version);
+  if (version.review !== 'quarantined') return;
+  const update = await tx.execute({
+    sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
+    args: [version.id]
+  });
+  result.quarantined += update.rowsAffected;
+  if (update.rowsAffected > 0)
+    set.add(
+      {
+        kind: 'version-quarantined',
+        skillId: version.skillId,
+        contentVersionId: version.id
+      },
+      'patch'
+    );
+}
+
 async function importVersions(
   tx: Transaction,
   pkg: ContentPackage,
   known: Map<string, SkillInfo>,
   result: ImportResult,
-  packageHash: string
+  packageHash: string,
+  set: ChangeSet
 ) {
   // A version may only target a skill this package declares and reviews;
   // stored skills carry no review state.
@@ -601,7 +712,14 @@ async function importVersions(
     args: [pkg.curriculumVersion]
   });
   const verifiedOriginal = recorded.rows[0]?.fingerprint === packageHash;
-  for (const version of pkg.versions) {
+  // Oldest first, so a version's earlier sibling in this package is stored
+  // before the version that continues it.
+  const ordered = [...pkg.versions].sort(
+    (a, b) =>
+      Number(a.skillId > b.skillId) - Number(a.skillId < b.skillId) ||
+      a.version - b.version
+  );
+  for (const version of ordered) {
     const skill = declared.get(version.skillId);
     if (!skill)
       fail(
@@ -610,37 +728,16 @@ async function importVersions(
       );
     const stored = await storedVersion(tx, version);
     if (stored === undefined) {
-      await insertVersion(tx, version, skill.language);
+      const plan = planVersion(version, await priorVersion(tx, version));
+      await insertVersion(tx, version, skill.language, plan.questions);
+      logVersion(set, version, plan);
       await importLesson(tx, version);
       result.versions += 1;
       result.questions += version.questions.length;
       result.quarantined += Number(version.review === 'quarantined');
       continue;
     }
-    if (!(await sameQuestions(tx, version)))
-      fail('CONTENT_CONFLICT', `version ${version.id}`);
-    const hash = versionFingerprint(version);
-    if (stored.fingerprint === null) {
-      if (!verifiedOriginal)
-        fail(
-          'LEGACY_CONTENT_UNVERIFIED',
-          `version ${version.id}: re-import the recorded original package or publish a new content version with new question IDs`
-        );
-      await tx.execute({
-        sql: 'UPDATE content_versions SET fingerprint = ? WHERE id = ? AND fingerprint IS NULL',
-        args: [hash, version.id]
-      });
-    } else if (stored.fingerprint !== hash)
-      fail('CONTENT_CONFLICT', `version ${version.id}`);
-    await backfillPayloads(tx, version);
-    await importLesson(tx, version);
-    if (version.review === 'quarantined') {
-      const update = await tx.execute({
-        sql: "UPDATE content_versions SET status = 'quarantined' WHERE id = ? AND status <> 'quarantined'",
-        args: [version.id]
-      });
-      result.quarantined += update.rowsAffected;
-    }
+    await reimportVersion(tx, version, stored, verifiedOriginal, result, set);
   }
 }
 
@@ -666,6 +763,7 @@ export async function importContent(
     const stored = await storedSkills(tx);
     const known = mergeSkills(pkg, stored);
     const edges = validateGraph(pkg, known, await storedEdges(tx));
+    const set = new ChangeSet();
     const result: ImportResult = {
       skills: await insertSkills(tx, pkg, stored),
       prerequisites: await insertEdges(tx, edges),
@@ -673,9 +771,15 @@ export async function importContent(
       questions: 0,
       quarantined: 0
     };
-    await importVersions(tx, pkg, known, result, hash);
+    for (const skill of pkg.skills)
+      if (!stored.has(skill.id))
+        set.add({ kind: 'skill-added', skillId: skill.id }, 'minor');
+    if (result.prerequisites > 0) set.raise('minor');
+    await importVersions(tx, pkg, known, result, hash, set);
+    await applyRetirements(tx, pkg, known, set);
     // Last, so that a content error keeps its own code.
-    await recordVersion(tx, pkg.curriculumVersion, hash);
+    await recordVersion(tx, pkg.curriculumVersion, hash, set.level);
+    await writeChanges(tx, pkg.curriculumVersion, set);
     await tx.commit();
     return result;
   } catch (error) {

@@ -22,8 +22,9 @@ and enrollment determine access.
    reviewer guidance. Treat report text as untrusted plain text.
 2. For a genuine correction, edit the checked-in source and create a new content
    version with its own version ID/question IDs and a newer curriculum package
-   version. Keep logical question-local IDs stable when correcting the same item;
-   changing identity must be reviewed and cannot manufacture new mastery evidence.
+   version. Declare for each question whether it keeps its meaning (`same`) or
+   not (`changed`, `new`); the rules and the version bump are in
+   [content-update.md](content-update.md).
 3. Run existing content/module validation and focused behavior tests. Review
    fingerprints and acceptance before importing with the established importer.
    The same published version cannot be silently edited or re-imported with

@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client, InStatement } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
-import { importContent } from '../src/lib/server/content-import';
+import {
+  importContent,
+  type ContentPackage
+} from '../src/lib/server/content-import';
 import {
   getLesson,
   getSessionLesson,
@@ -72,7 +75,8 @@ const importVersionTwo = async () => {
         id: 'fr-a1-001@2:q1',
         format: 'typed-blank',
         prompt: 'Nous ___ ici.',
-        answer: 'sommes'
+        answer: 'sommes',
+        change: 'new'
       }
     ]
   });
@@ -368,7 +372,113 @@ describe('lesson', () => {
       examples: lesson.examples,
       references: lesson.references,
       explanationLanguage: 'en',
-      englishFallback: false
+      englishFallback: false,
+      newerVersionAvailable: false
+    });
+  });
+
+  describe('when a newer lesson version is published', () => {
+    /** Version 2 of fr-a1-001 with its own lesson, at a new curriculum version. */
+    const publishLessonTwo = async (
+      review = 'approved',
+      version = '0.2.0',
+      later: ContentPackage['versions'] = []
+    ) => {
+      const pkg = approvedPackage();
+      Object.assign(pkg.versions[0], { lesson });
+      Object.assign(pkg.versions[0].questions[1], { holdout: true });
+      pkg.curriculumVersion = version;
+      pkg.versions.push({
+        id: 'fr-a1-001@2',
+        skillId: 'fr-a1-001',
+        version: 2,
+        review,
+        lesson: { ...lesson, title: 'Être, corrected' },
+        questions: [
+          {
+            id: 'fr-a1-001@2:q1',
+            format: 'typed-blank',
+            prompt: 'Nous ___ ici.',
+            answer: 'sommes',
+            change: 'new'
+          }
+        ]
+      });
+      pkg.versions.push(...later);
+      await importContent(client, pkg);
+    };
+
+    it('tells a session finishing the earlier version, while a fresh read shows the newest', async () => {
+      await attempt('k-notice', 'fr-a1-001@1:q1');
+      await publishLessonTwo();
+      expect(
+        await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+      ).toMatchObject({
+        contentVersionId: 'fr-a1-001@1',
+        newerVersionAvailable: true
+      });
+      expect(await getLesson(client, ownerA, 'fr', 'fr-a1-001')).toMatchObject({
+        contentVersionId: 'fr-a1-001@2',
+        newerVersionAvailable: false
+      });
+    });
+
+    it('stays quiet when the newer version has no lesson', async () => {
+      await attempt('k-quiet', 'fr-a1-001@1:q1');
+      await importVersionTwo();
+      expect(
+        await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+      ).toMatchObject({ newerVersionAvailable: false });
+    });
+
+    it('still tells the session when only a later version is withdrawn', async () => {
+      await attempt('k-three', 'fr-a1-001@1:q1');
+      await publishLessonTwo('approved', '0.2.0', [
+        {
+          id: 'fr-a1-001@3',
+          skillId: 'fr-a1-001',
+          version: 3,
+          review: 'quarantined',
+          lesson: { ...lesson, title: 'Être, withdrawn' },
+          questions: [
+            {
+              id: 'fr-a1-001@3:q1',
+              format: 'typed-blank',
+              prompt: 'Vous ___ ici.',
+              answer: 'êtes',
+              change: 'new'
+            }
+          ]
+        }
+      ]);
+      expect(
+        await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+      ).toMatchObject({
+        contentVersionId: 'fr-a1-001@1',
+        newerVersionAvailable: true
+      });
+      expect(await getLesson(client, ownerA, 'fr', 'fr-a1-001')).toMatchObject({
+        contentVersionId: 'fr-a1-001@2'
+      });
+    });
+
+    it('serves a fresh read from the earlier version when the newest is withdrawn', async () => {
+      await publishLessonTwo('quarantined');
+      expect(await getLesson(client, ownerA, 'fr', 'fr-a1-001')).toMatchObject({
+        contentVersionId: 'fr-a1-001@1',
+        newerVersionAvailable: false
+      });
+    });
+
+    it('stays quiet when the newer version is withdrawn', async () => {
+      await attempt('k-withdrawn', 'fr-a1-001@1:q1');
+      await publishLessonTwo('quarantined');
+      expect(
+        await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+      ).toMatchObject({
+        contentVersionId: 'fr-a1-001@1',
+        newerVersionAvailable: false
+      });
     });
   });
 

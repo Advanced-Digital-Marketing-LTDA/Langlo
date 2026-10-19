@@ -376,10 +376,17 @@ describe.each(files)('%s', (path) => {
         const oldQuestions = (
           await db.client.execute('SELECT * FROM questions ORDER BY id')
         ).rows;
-        const result = await importContent(
-          db.client,
-          modulePackage(root, module, module.review_status, '1.1.0')
+        const corrected = modulePackage(
+          root,
+          module,
+          module.review_status,
+          '1.1.0'
         );
+        // A correction follows the historical version, so it declares itself.
+        for (const version of corrected.versions)
+          if (revisedSkills.has(version.skillId))
+            for (const question of version.questions) question.change = 'new';
+        const result = await importContent(db.client, corrected);
         expect(result.versions).toBe(revised.length);
         expect(result.questions).toBe(revised.length * 15);
         expect(

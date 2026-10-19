@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "cd47a47a-165d-4e7b-9f31-493f11c63c1b",
+  "id": "25c8e7aa-30b0-440b-8fa6-8c610dc462c3",
   "prevId": "f7c2ad72-164d-4e8e-bee4-0acacea62d1d",
   "tables": {
     "accounts": {
@@ -484,6 +484,94 @@
         "card_drafts_fields_json": {
           "name": "card_drafts_fields_json",
           "value": "json_valid(\"card_drafts\".\"fields_json\")"
+        }
+      }
+    },
+    "content_changes": {
+      "name": "content_changes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "curriculum_version": {
+          "name": "curriculum_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "skill_id": {
+          "name": "skill_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_version_id": {
+          "name": "content_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "previous_question_id": {
+          "name": "previous_question_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(unixepoch() * 1000)"
+        }
+      },
+      "indexes": {
+        "content_changes_skill": {
+          "name": "content_changes_skill",
+          "columns": ["skill_id"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "content_changes_curriculum_version_curriculum_imports_curriculum_version_fk": {
+          "name": "content_changes_curriculum_version_curriculum_imports_curriculum_version_fk",
+          "tableFrom": "content_changes",
+          "tableTo": "curriculum_imports",
+          "columnsFrom": ["curriculum_version"],
+          "columnsTo": ["curriculum_version"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "content_changes_kind": {
+          "name": "content_changes_kind",
+          "value": "\"content_changes\".\"kind\" IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'version-quarantined')"
         }
       }
     },
@@ -1169,93 +1257,6 @@
         }
       }
     },
-    "lesson_translations": {
-      "name": "lesson_translations",
-      "columns": {
-        "content_version_id": {
-          "name": "content_version_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "explanation_language": {
-          "name": "explanation_language",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "explanation": {
-          "name": "explanation",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "examples": {
-          "name": "examples",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "refs": {
-          "name": "refs",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "fingerprint": {
-          "name": "fingerprint",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "lesson_translations_content_version_id_lessons_content_version_id_fk": {
-          "name": "lesson_translations_content_version_id_lessons_content_version_id_fk",
-          "tableFrom": "lesson_translations",
-          "tableTo": "lessons",
-          "columnsFrom": ["content_version_id"],
-          "columnsTo": ["content_version_id"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "lesson_translations_content_version_id_explanation_language_pk": {
-          "columns": ["content_version_id", "explanation_language"],
-          "name": "lesson_translations_content_version_id_explanation_language_pk"
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "lesson_translations_language": {
-          "name": "lesson_translations_language",
-          "value": "\"lesson_translations\".\"explanation_language\" IN ('pt')"
-        },
-        "lesson_translations_fingerprint": {
-          "name": "lesson_translations_fingerprint",
-          "value": "length(\"lesson_translations\".\"fingerprint\") = 64 AND \"lesson_translations\".\"fingerprint\" NOT GLOB '*[^0-9a-f]*'"
-        },
-        "lesson_translations_title": {
-          "name": "lesson_translations_title",
-          "value": "length(trim(\"lesson_translations\".\"title\")) > 0"
-        }
-      }
-    },
     "lessons": {
       "name": "lessons",
       "columns": {
@@ -1882,6 +1883,13 @@
           "notNull": false,
           "autoincrement": false
         },
+        "lineage_key": {
+          "name": "lineage_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "content_version_id": {
           "name": "content_version_id",
           "type": "text",
@@ -2214,6 +2222,27 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "retired_at": {
+          "name": "retired_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "replaced_by": {
+          "name": "replaced_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "carry_progress": {
+          "name": "carry_progress",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         }
       },

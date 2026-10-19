@@ -395,7 +395,7 @@ describe('content import', () => {
     await importContent(client, pkg);
     expect(await sharedContent()).toEqual(adopted);
     expect(await privateState(client)).toEqual(learnerBefore);
-    pkg.curriculumVersion = '0.2.0';
+    pkg.curriculumVersion = '0.1.1';
     pkg.versions[0].review = 'quarantined';
     expect((await importContent(client, pkg)).quarantined).toBe(1);
   });
@@ -462,7 +462,8 @@ describe('content import', () => {
             id: 'fr-a1-001@2:q1',
             format: 'correction',
             prompt: 'Je es là.',
-            answer: 'Je suis là.'
+            answer: 'Je suis là.',
+            change: 'new'
           }
         ]
       }
@@ -479,7 +480,7 @@ describe('content import', () => {
   it('quarantines an imported version and never un-quarantines it', async () => {
     await importContent(client, approvedPackage());
     const pulled = approvedPackage();
-    pulled.curriculumVersion = '0.2.0';
+    pulled.curriculumVersion = '0.1.1';
     pulled.versions[0].review = 'quarantined';
     expect((await importContent(client, pulled)).quarantined).toBe(1);
     const restored = approvedPackage();

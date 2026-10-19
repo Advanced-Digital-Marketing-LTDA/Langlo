@@ -14,12 +14,17 @@ supersedes the prepared uncertainty, even when fallback remains uncertain.
 Unknown evaluator/rubric versions are excluded until a reviewed policy update.
 
 The first response to a logical item is the only candidate. Item identity is
-skill ID plus question ID after removing its exact `<contentVersionId>:` prefix
-when present. This preserves local item identity across content versions. IDs
-without that prefix retain their whole question ID. A resubmission, repeated
-session, additional evaluation or republished copy cannot inflate the count.
-Changing an item's identity or meaning requires content maintenance review;
-replacement skill IDs never inherit evidence from retired skills.
+skill ID plus the question's lineage key. A question's lineage key is stored
+with it; for rows imported before lineage keys it is the question ID after
+removing its exact `<contentVersionId>:` prefix when present (IDs without that
+prefix retain their whole ID). A question that keeps its meaning in a later
+version continues the earlier key; a changed or new question has its own. Only
+keys present in the skill's current version (its newest version that is not
+quarantined) count, so an answer to a changed or removed question stays stored
+but stops counting. A resubmission, repeated session, additional evaluation or
+republished copy cannot inflate the count. Replacement skill IDs never inherit
+evidence from retired skills unless the owner approved carrying a pure rename
+over; see [content-update.md](content-update.md).
 
 | Status     | Rule                                                                                        |
 | ---------- | ------------------------------------------------------------------------------------------- |

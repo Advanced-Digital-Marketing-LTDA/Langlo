@@ -13,17 +13,18 @@ import { getAssessment } from './assessment';
  * content withdrawn by a quarantine import is never served after the check.
  */
 const latestVersion =
-  '(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1)';
+  "(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1)";
 
 /**
  * The version a session reads for a skill: the one its first attempt at the
  * skill was recorded against, so a session that spans an import is finished on
- * the questions it started, and the newest version otherwise. Takes the
+ * the questions it started, and the newest version that is not quarantined
+ * otherwise (the newest of all when every version is quarantined). Takes the
  * owner, session and skill, then the skill and language of the fallback.
  */
 const sessionVersionId = `COALESCE(
     (SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1),
-    (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY version DESC LIMIT 1))`;
+    (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1))`;
 const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = ${sessionVersionId})`;
 
 export type SessionRow = {
@@ -201,6 +202,30 @@ async function lessonRow(
   return row;
 }
 
+/**
+ * True when a session is finishing an earlier version of the lesson while a
+ * newer, available one with a lesson has been published: the page says so, and the learner's
+ * next session starts on the newer version. Without a session the newest is
+ * what is shown, so there is nothing to say.
+ */
+async function newerVersionAvailable(
+  client: Pick<Client, 'execute'>,
+  read: LessonRead,
+  shown: Row
+) {
+  if (read.studySessionId === undefined) return false;
+  const newest = await client.execute({
+    sql: "SELECT v.id, v.status FROM content_versions v JOIN lessons l ON l.content_version_id = v.id WHERE v.skill_id = ? AND v.language = ? ORDER BY v.status = 'quarantined', v.version DESC LIMIT 1",
+    args: [String(read.skillId), read.language]
+  });
+  const row = newest.rows[0];
+  return (
+    row !== undefined &&
+    String(row.id) !== String(shown.version_id) &&
+    row.status !== 'quarantined'
+  );
+}
+
 /** The lesson for an enrollment's explanation language, as the page shows it. */
 async function readLesson(client: Client, read: LessonRead) {
   if (typeof read.language !== 'string') throw new StudyError('NOT_FOUND');
@@ -215,6 +240,7 @@ async function readLesson(client: Client, read: LessonRead) {
   const pick = (own: string, english: string) =>
     String(translated ? row[own] : row[english]);
   return {
+    newerVersionAvailable: await newerVersionAvailable(client, read, row),
     skillId: String(read.skillId),
     contentVersionId: String(row.version_id),
     title: pick('t_title', 'title'),

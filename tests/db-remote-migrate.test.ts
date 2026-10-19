@@ -261,7 +261,8 @@ describe('migration inventory', () => {
       '0013_assessment_feedback',
       '0014_content_reports',
       '0015_learner_preferences',
-      '0016_lesson_translations'
+      '0016_content_updates',
+      '0017_lesson_translations'
     ]);
     const whens = migrations.map((m) => m.when);
     expect([...whens].sort((a, b) => a - b)).toEqual(whens);
@@ -352,7 +353,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       '0013_assessment_feedback',
       '0014_content_reports',
       '0015_learner_preferences',
-      '0016_lesson_translations'
+      '0016_content_updates',
+      '0017_lesson_translations'
     ]);
     const result = await applyRemoteTestPlan(client, all, {
       host,
@@ -372,7 +374,8 @@ describe('remote-test status, plan and apply (file stand-in)', () => {
       '0013_assessment_feedback',
       '0014_content_reports',
       '0015_learner_preferences',
-      '0016_lesson_translations'
+      '0016_content_updates',
+      '0017_lesson_translations'
     ]);
   });
 
@@ -689,7 +692,7 @@ describe('remote-test CLI', () => {
         open
       )
     ).toBe(0);
-    expect(ok.lines.join('\n')).toContain('applied 17 migration(s)');
+    expect(ok.lines.join('\n')).toContain('applied 18 migration(s)');
   });
 
   it('prints table names from the target without control characters', async () => {
