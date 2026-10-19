@@ -48,60 +48,78 @@ async function questionsWithKeys(
     .map((row) => String(row.id));
 }
 
+/** The impact of one version the database does not hold yet, if it drops questions. */
+async function versionImpact(
+  client: Client,
+  version: ContentPackage['versions'][number]
+): Promise<ImpactLine | undefined> {
+  const stored = await client.execute({
+    sql: 'SELECT 1 FROM content_versions WHERE id = ?',
+    args: [version.id]
+  });
+  if (stored.rows.length > 0) return undefined;
+  const prior = await priorVersion(client, version);
+  if (prior === undefined) return undefined;
+  const plan = planVersion(version, prior);
+  const keys = new Set(
+    plan.removed.map((question) =>
+      effectiveLineageKey({
+        lineageKey: question.lineageKey,
+        contentVersionId: question.contentVersionId,
+        questionId: question.id
+      })
+    )
+  );
+  if (keys.size === 0) return undefined;
+  const ids = await questionsWithKeys(client, version.skillId, keys);
+  return {
+    skillId: version.skillId,
+    reason: `${keys.size} question(s) changed or removed in ${version.id}`,
+    ...(await independentAnswers(client, ids))
+  };
+}
+
+/** The impact of retiring one skill that is still live, if any. */
+async function retirementImpact(
+  client: Client,
+  retirement: NonNullable<ContentPackage['retirements']>[number]
+): Promise<ImpactLine | undefined> {
+  const skill = await client.execute({
+    sql: 'SELECT retired_at FROM skills WHERE id = ?',
+    args: [retirement.skillId]
+  });
+  if (skill.rows.length === 0 || skill.rows[0].retired_at !== null)
+    return undefined;
+  const carried = retirement.carry === true;
+  const ids = carried
+    ? []
+    : (
+        await client.execute({
+          sql: 'SELECT id FROM questions WHERE skill_id = ?',
+          args: [retirement.skillId]
+        })
+      ).rows.map((row) => String(row.id));
+  return {
+    skillId: retirement.skillId,
+    reason: carried
+      ? `retired, answers carry to ${retirement.replacedBy}`
+      : 'retired, answers no longer shown',
+    ...(await independentAnswers(client, ids))
+  };
+}
+
 export async function contentImpact(
   client: Client,
   pkg: ContentPackage
 ): Promise<ImpactLine[]> {
   const lines: ImpactLine[] = [];
   for (const version of pkg.versions) {
-    const stored = await client.execute({
-      sql: 'SELECT 1 FROM content_versions WHERE id = ?',
-      args: [version.id]
-    });
-    if (stored.rows.length > 0) continue;
-    const prior = await priorVersion(client, version);
-    if (prior === undefined) continue;
-    const plan = planVersion(version, prior);
-    const keys = new Set(
-      plan.removed.map((question) =>
-        effectiveLineageKey({
-          lineageKey: question.lineageKey,
-          contentVersionId: question.contentVersionId,
-          questionId: question.id
-        })
-      )
-    );
-    if (keys.size === 0) continue;
-    const ids = await questionsWithKeys(client, version.skillId, keys);
-    lines.push({
-      skillId: version.skillId,
-      reason: `${keys.size} question(s) changed or removed in ${version.id}`,
-      ...(await independentAnswers(client, ids))
-    });
+    const line = await versionImpact(client, version);
+    if (line) lines.push(line);
   }
   for (const retirement of pkg.retirements ?? []) {
-    const skill = await client.execute({
-      sql: 'SELECT retired_at FROM skills WHERE id = ?',
-      args: [retirement.skillId]
-    });
-    if (skill.rows.length === 0 || skill.rows[0].retired_at !== null) continue;
-    const ids = await client.execute({
-      sql: 'SELECT id FROM questions WHERE skill_id = ?',
-      args: [retirement.skillId]
-    });
-    lines.push({
-      skillId: retirement.skillId,
-      reason:
-        retirement.carry === true
-          ? `retired, answers carry to ${retirement.replacedBy}`
-          : 'retired, answers no longer shown',
-      ...(retirement.carry === true
-        ? { answers: 0, learners: 0 }
-        : await independentAnswers(
-            client,
-            ids.rows.map((row) => String(row.id))
-          ))
-    });
+    const line = await retirementImpact(client, retirement);
+    if (line) lines.push(line);
   }
   return lines;
 }
