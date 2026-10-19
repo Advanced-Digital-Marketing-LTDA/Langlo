@@ -62,6 +62,9 @@ reports no high-severity findings. Its one medium expected-value finding is the
 intentional change from a hard-coded migration identifier to the stable pending-
 migrations refusal prefix.
 
+Codacy's completed analysis on `32e3933` reports zero new issues, zero duplication
+units (threshold one), and complexity 23 (threshold 100).
+
 ## Pending acceptance and limits
 
 - The full test suite, property tests, build, browser tests, and hosted CI have not
@@ -69,6 +72,3 @@ migrations refusal prefix.
 - The production Portuguese curriculum translation remains separate work under
   curriculum version 1.1.0 after the schema/import PR lands; native-speaker review
   and production import are not established by these synthetic tests.
-- The earlier Codacy scan reported two duplication units against a limit of one;
-  the audit-kind list is now shared by the Drizzle enum and SQL check. The refreshed
-  scan must be checked after the push.
