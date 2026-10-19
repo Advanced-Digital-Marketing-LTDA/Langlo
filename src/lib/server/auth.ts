@@ -1,7 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
-import { dash } from '@better-auth/infra';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { RuntimeConfig } from './config.ts';
 import { mailFailureCode, safeDiagnostic } from './diagnostics.ts';
@@ -73,9 +72,18 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
     secret: config.auth.secret,
     trustedOrigins: [config.origin],
     telemetry: { enabled: false },
-    plugins: [dash()],
     logger: { disabled: true },
     advanced: {
+      // `__Host-` cookies cannot carry a Domain, so a sibling subdomain can
+      // neither shadow nor replace the session cookie. Better Auth always
+      // prepends `__Secure-` on secure origins, so the prefix is set here and
+      // only on HTTPS, where the browser accepts it.
+      ...(config.origin.startsWith('https:')
+        ? {
+            useSecureCookies: false,
+            cookies: { session_token: { name: '__Host-langlo.session_token' } }
+          }
+        : {}),
       ipAddress: { ipAddressHeaders: ['x-langlo-client-address'] },
       defaultCookieAttributes: {
         secure: config.origin.startsWith('https:')

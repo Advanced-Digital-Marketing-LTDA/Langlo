@@ -36,7 +36,6 @@
   },
   "dependencies": {
     "@better-auth/drizzle-adapter": "1.7.7",
-    "@better-auth/infra": "0.4.20",
     "@libsql/client": "0.18.0",
     "@sentry/sveltekit": "11.8.0",
     "better-auth": "1.7.7",
