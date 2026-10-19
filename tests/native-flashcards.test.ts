@@ -173,7 +173,7 @@ describe('native flashcard persistence feasibility', () => {
     }
   });
 
-  it('requires approval and persists a real FSRS review exactly once, rejecting a stale revision', async () => {
+  it('requires approval before a native card can be reviewed', async () => {
     const target = await fixture();
     const learner = testSession('learner-a');
     const db = await openFixtureDatabase(target);
@@ -187,7 +187,17 @@ describe('native flashcard persistence feasibility', () => {
           rating: 'good'
         })
       ).rejects.toMatchObject({ code: 'NOT_APPROVED' });
+    } finally {
+      db.close();
+    }
+  });
 
+  it('persists a real FSRS review exactly once and rejects stale revisions', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      const note = await seedBasicNote(db.client, learner);
       await approveNote(db.client, learner, note.id);
       const submittedAt = Date.now();
       const review = {

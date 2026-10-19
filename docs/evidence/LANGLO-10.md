@@ -52,3 +52,31 @@ migration cases passed.
 
 - Anki client import behavior, hosted CI, production login/storage, and release
   behavior remain outside this local evidence.
+
+## PR #125 review follow-up
+
+This follow-up corrects the stale migration guidance and splits the long review
+and migration paths into small helpers. It does not change scheduling behavior,
+ownership checks, transaction boundaries, SQL effects, or error codes. No
+migration or Drizzle metadata file was changed.
+
+- The focused migration and native flashcard tests passed before this
+  follow-up (2 files, 31 tests). After splitting the long tests and refactoring
+  the service methods, they passed again (2 files, 32 tests).
+- Final local checks passed with Node `24.19.0` and pinned npm `11.9.0`:
+  `npm run check` (0 errors and 0 warnings), `npm run lint`,
+  `npm run format:check`, `npm test` (87 files, 1,367 tests),
+  `npm run test:property` (5 files, 7 tests), `npm run build`, and
+  `npm run test:e2e` (102 desktop/mobile browser tests). The build and browser
+  runner printed the existing `NO_COLOR`/`FORCE_COLOR` warning. `git diff
+--check` passed.
+- The PR's SonarCloud summary reported 0.0% coverage on new code. The repository
+  quality workflow generates `coverage/lcov.info` for Codecov but has no
+  SonarScanner step, so SonarCloud coverage import remains unresolved. Sonar's
+  [JavaScript/TypeScript coverage guidance](https://docs.sonarsource.com/sonarqube-cloud/analyzing-source-code/test-coverage/javascript-typescript-test-coverage)
+  says coverage requires a CI-based scanner to import the LCOV report; automatic
+  analysis does not support coverage. No scanner workflow, credentials, or
+  external SonarCloud settings were changed here.
+- Production database migration and rollback remain unverified release gates.
+  Only disposable local fixtures were migrated, as required by repository
+  policy.

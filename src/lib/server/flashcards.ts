@@ -51,6 +51,13 @@ type CreateNoteInput = {
   | { kind: 'cloze'; content: ClozeContent }
 );
 type RatingName = 'again' | 'hard' | 'good' | 'easy';
+type ReviewInput = {
+  cardId: string;
+  submissionId: string;
+  expectedRevision: number;
+  rating: RatingName;
+};
+type ReviewResult = { revision: number; dueAt: number; duplicate: boolean };
 
 const schedulerVersion = 'ts-fsrs@5.4.2';
 const parameters = generatorParameters();
@@ -732,6 +739,51 @@ export async function rejectNote(
   throw new FlashcardError('NOT_EDITABLE');
 }
 
+function cardFromNoteRow(row: Row) {
+  if (row.card_id === null) throw new FlashcardError('INVALID_CARD_STATE');
+  return {
+    id: String(row.card_id),
+    state: decodeCard(String(row.state_json)),
+    dueAt: Number(row.due_at),
+    revision: Number(row.revision),
+    suspended: Boolean(row.suspended),
+    schedulerVersion: String(row.scheduler_version),
+    parameters: readCardScheduler(
+      row.scheduler_version,
+      String(row.parameters_json)
+    ).parameters
+  };
+}
+
+function noteFromRow(row: Row) {
+  if (row.status === 'approved') {
+    const card = cardFromNoteRow(row);
+    return {
+      ...noteContentFromRow(row),
+      status: 'approved' as const,
+      card
+    };
+  }
+  const note = noteContentFromRow(row);
+  if (row.status !== 'draft' && row.status !== 'rejected')
+    throw new FlashcardError('INVALID_NOTE_STATE');
+  return { ...note, status: row.status, card: null };
+}
+
+function noteContentFromRow(row: Row) {
+  return {
+    id: String(row.id),
+    cardId: `card:${String(row.id)}`,
+    sourceId: String(row.source_id),
+    ownerId: String(row.owner_id),
+    deckId: String(row.deck_id),
+    kind: String(row.kind),
+    content: JSON.parse(String(row.content_json)) as Content,
+    explanation: String(row.explanation),
+    source: noteSourceFrom(row)
+  };
+}
+
 export async function getNote(
   client: Client,
   session: LearnerSession,
@@ -743,50 +795,126 @@ export async function getNote(
   });
   const row = result.rows[0];
   if (!row) throw new FlashcardError('NOT_FOUND');
-  const card =
-    row.status !== 'approved' || row.card_id === null
-      ? null
-      : {
-          id: String(row.card_id),
-          state: decodeCard(String(row.state_json)),
-          dueAt: Number(row.due_at),
-          revision: Number(row.revision),
-          suspended: Boolean(row.suspended),
-          schedulerVersion: String(row.scheduler_version),
-          parameters: readCardScheduler(
-            row.scheduler_version,
-            String(row.parameters_json)
-          ).parameters
-        };
-  const note = {
-    id: String(row.id),
-    cardId: `card:${String(row.id)}`,
-    sourceId: String(row.source_id),
-    ownerId: String(row.owner_id),
-    deckId: String(row.deck_id),
-    kind: String(row.kind),
-    content: JSON.parse(String(row.content_json)) as Content,
-    explanation: String(row.explanation),
-    source: noteSourceFrom(row)
+  return noteFromRow(row);
+}
+
+async function replayReview(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: ReviewInput,
+  submissionId: string
+): Promise<ReviewResult | null> {
+  const previous = await tx.execute({
+    sql: 'SELECT card_id, expected_revision, rating, reviewed_at, result_json FROM native_flashcard_review_events WHERE owner_id = ? AND id = ?',
+    args: [session.userId, submissionId]
+  });
+  const row = previous.rows[0];
+  if (!row) return null;
+  if (
+    row.card_id !== input.cardId ||
+    Number(row.expected_revision) !== input.expectedRevision ||
+    row.rating !== input.rating
+  )
+    throw new FlashcardError('IDEMPOTENCY_CONFLICT');
+  await tx.commit();
+  return {
+    ...(JSON.parse(String(row.result_json)) as {
+      revision: number;
+      dueAt: number;
+    }),
+    duplicate: true
   };
-  if (row.status === 'approved') {
-    if (!card) throw new FlashcardError('INVALID_CARD_STATE');
-    return { ...note, status: 'approved' as const, card };
-  }
-  if (row.status !== 'draft' && row.status !== 'rejected')
-    throw new FlashcardError('INVALID_NOTE_STATE');
-  return { ...note, status: row.status, card: null };
+}
+
+async function missingReviewCard(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  cardId: string
+): Promise<never> {
+  const noteId = cardId.startsWith('card:') ? cardId.slice('card:'.length) : '';
+  const note = await tx.execute({
+    sql: 'SELECT status FROM native_flashcard_notes WHERE id = ? AND owner_id = ?',
+    args: [noteId, session.userId]
+  });
+  const row = note.rows[0];
+  if (!row) throw new FlashcardError('NOT_FOUND');
+  if (row.status !== 'approved') throw new FlashcardError('NOT_APPROVED');
+  throw new FlashcardError('INVALID_CARD_STATE');
+}
+
+async function reviewableCard(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: ReviewInput
+) {
+  const found = await tx.execute({
+    sql: 'SELECT c.state_json, c.revision, c.suspended, c.scheduler_version, c.parameters_json, n.status FROM native_flashcards c JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id WHERE c.id = ? AND c.owner_id = ?',
+    args: [input.cardId, session.userId]
+  });
+  const row =
+    found.rows[0] ?? (await missingReviewCard(tx, session, input.cardId));
+  if (row.status !== 'approved') throw new FlashcardError('NOT_APPROVED');
+  if (Number(row.suspended) !== 0) throw new FlashcardError('SUSPENDED');
+  if (Number(row.revision) !== input.expectedRevision)
+    throw new FlashcardError('STALE_REVIEW');
+  return row;
+}
+
+async function applyReview(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: ReviewInput,
+  submissionId: string,
+  cardRow: Row
+) {
+  const cardScheduler = readCardScheduler(
+    cardRow.scheduler_version,
+    String(cardRow.parameters_json)
+  );
+  const reviewedAt = new Date();
+  const updated = cardScheduler.scheduler.next(
+    decodeCard(String(cardRow.state_json)),
+    reviewedAt,
+    ratings[input.rating]
+  ).card;
+  const result = {
+    revision: input.expectedRevision + 1,
+    dueAt: updated.due.getTime()
+  };
+  const changed = await tx.execute({
+    sql: 'UPDATE native_flashcards SET state_json = ?, due_at = ?, revision = ? WHERE id = ? AND owner_id = ? AND revision = ?',
+    args: [
+      encodeCard(updated),
+      result.dueAt,
+      result.revision,
+      input.cardId,
+      session.userId,
+      input.expectedRevision
+    ]
+  });
+  if (changed.rowsAffected !== 1) throw new FlashcardError('STALE_REVIEW');
+  await tx.execute({
+    sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json, state_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [
+      submissionId,
+      session.userId,
+      input.cardId,
+      input.expectedRevision,
+      input.rating,
+      reviewedAt.getTime(),
+      String(cardRow.scheduler_version),
+      JSON.stringify(cardScheduler.parameters),
+      JSON.stringify(result),
+      encodeCard(updated)
+    ]
+  });
+  return result;
 }
 
 export async function submitReview(
   client: Client,
   session: LearnerSession,
-  input: {
-    cardId: string;
-    submissionId: string;
-    expectedRevision: number;
-    rating: RatingName;
-  }
+  input: ReviewInput
 ) {
   if (
     typeof input.submissionId !== 'string' ||
@@ -799,91 +927,10 @@ export async function submitReview(
     throw new FlashcardError('INVALID_RATING');
   const tx = await beginWrite(client);
   try {
-    const previous = await tx.execute({
-      sql: 'SELECT card_id, expected_revision, rating, reviewed_at, result_json FROM native_flashcard_review_events WHERE owner_id = ? AND id = ?',
-      args: [session.userId, submissionId]
-    });
-    if (previous.rows[0]) {
-      const row = previous.rows[0];
-      if (
-        row.card_id !== input.cardId ||
-        Number(row.expected_revision) !== input.expectedRevision ||
-        row.rating !== input.rating
-      )
-        throw new FlashcardError('IDEMPOTENCY_CONFLICT');
-      await tx.commit();
-      return {
-        ...(JSON.parse(String(row.result_json)) as {
-          revision: number;
-          dueAt: number;
-        }),
-        duplicate: true
-      };
-    }
-
-    const found = await tx.execute({
-      sql: 'SELECT c.state_json, c.revision, c.suspended, c.scheduler_version, c.parameters_json, n.status FROM native_flashcards c JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id WHERE c.id = ? AND c.owner_id = ?',
-      args: [input.cardId, session.userId]
-    });
-    const cardRow = found.rows[0];
-    if (!cardRow) {
-      const noteId = input.cardId.startsWith('card:')
-        ? input.cardId.slice('card:'.length)
-        : '';
-      const note = await tx.execute({
-        sql: 'SELECT status FROM native_flashcard_notes WHERE id = ? AND owner_id = ?',
-        args: [noteId, session.userId]
-      });
-      if (!note.rows[0]) throw new FlashcardError('NOT_FOUND');
-      if (note.rows[0].status !== 'approved')
-        throw new FlashcardError('NOT_APPROVED');
-      throw new FlashcardError('INVALID_CARD_STATE');
-    }
-    if (cardRow.status !== 'approved') throw new FlashcardError('NOT_APPROVED');
-    if (Number(cardRow.suspended) !== 0) throw new FlashcardError('SUSPENDED');
-    if (Number(cardRow.revision) !== input.expectedRevision)
-      throw new FlashcardError('STALE_REVIEW');
-
-    const cardScheduler = readCardScheduler(
-      cardRow.scheduler_version,
-      String(cardRow.parameters_json)
-    );
-
-    const reviewedAt = new Date();
-    const updated = cardScheduler.scheduler.next(
-      decodeCard(String(cardRow.state_json)),
-      reviewedAt,
-      ratings[input.rating]
-    ).card;
-    const revision = input.expectedRevision + 1;
-    const result = { revision, dueAt: updated.due.getTime() };
-    const changed = await tx.execute({
-      sql: 'UPDATE native_flashcards SET state_json = ?, due_at = ?, revision = ? WHERE id = ? AND owner_id = ? AND revision = ?',
-      args: [
-        encodeCard(updated),
-        result.dueAt,
-        revision,
-        input.cardId,
-        session.userId,
-        input.expectedRevision
-      ]
-    });
-    if (changed.rowsAffected !== 1) throw new FlashcardError('STALE_REVIEW');
-    await tx.execute({
-      sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json, state_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [
-        submissionId,
-        session.userId,
-        input.cardId,
-        input.expectedRevision,
-        input.rating,
-        reviewedAt.getTime(),
-        String(cardRow.scheduler_version),
-        JSON.stringify(cardScheduler.parameters),
-        JSON.stringify(result),
-        encodeCard(updated)
-      ]
-    });
+    const previous = await replayReview(tx, session, input, submissionId);
+    if (previous) return previous;
+    const cardRow = await reviewableCard(tx, session, input);
+    const result = await applyReview(tx, session, input, submissionId, cardRow);
     await tx.commit();
     return { ...result, duplicate: false };
   } catch (error) {

@@ -62,6 +62,180 @@ async function migrationPrefixBeforeLanglo10() {
   return directory;
 }
 
+async function seedLegacyReviewHistory(
+  target: FixtureTarget,
+  previous: string
+) {
+  await migrateFixtureDatabase(target, previous);
+  await seedStudy(target);
+  const { client, close } = await openFixtureDatabase(target);
+  try {
+    const owner = { userId: 'learner-a' };
+    await createDeck(client, owner, {
+      id: 'deck-langlo10',
+      name: 'French'
+    });
+    const notes = await Promise.all(
+      ['draft', 'rejected', 'rejected-reviewed', 'approved-reviewed'].map(
+        (id, index) =>
+          createNote(client, owner, {
+            id: `note-langlo10-${id}`,
+            sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
+            deckId: 'deck-langlo10',
+            kind: 'basic',
+            content: { front: `front ${id}`, back: `back ${id}` }
+          })
+      )
+    );
+    await client.execute({
+      sql: "UPDATE native_flashcard_notes SET status = 'rejected' WHERE id IN (?, ?)",
+      args: [notes[1].id, notes[2].id]
+    });
+    await client.execute({
+      sql: "UPDATE native_flashcard_notes SET status = 'approved' WHERE id = ?",
+      args: [notes[3].id]
+    });
+    for (const note of notes)
+      await client.execute({
+        sql: 'INSERT INTO native_flashcards (id, owner_id, note_id, ordinal, state_json, due_at, revision, suspended, scheduler_version, parameters_json) VALUES (?, ?, ?, 0, ?, 0, 0, 0, ?, ?)',
+        args: [note.cardId, owner.userId, note.id, '{}', 'legacy-v1', '{}']
+      });
+    for (const [index, note] of [notes[2], notes[3]].entries())
+      await client.execute({
+        sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)',
+        args: [
+          `legacy-review-${index}`,
+          owner.userId,
+          note.cardId,
+          'good',
+          index,
+          'legacy-v1',
+          '{}',
+          '{}'
+        ]
+      });
+  } finally {
+    close();
+  }
+}
+
+async function expectMigratedReviewHistory(
+  client: Awaited<ReturnType<typeof openFixtureDatabase>>['client']
+) {
+  expect(
+    (await client.execute('SELECT id FROM native_flashcard_notes ORDER BY id'))
+      .rows
+  ).toHaveLength(4);
+  expect(
+    (
+      await client.execute(
+        'SELECT note_id FROM native_flashcards ORDER BY note_id'
+      )
+    ).rows
+  ).toEqual([
+    { note_id: 'note-langlo10-approved-reviewed' },
+    { note_id: 'note-langlo10-rejected-reviewed' }
+  ]);
+  expect(
+    (
+      await client.execute(
+        'SELECT id, state_json FROM native_flashcard_review_events ORDER BY id'
+      )
+    ).rows
+  ).toEqual([
+    { id: 'legacy-review-0', state_json: null },
+    { id: 'legacy-review-1', state_json: null }
+  ]);
+  const reviewTable = await client.execute(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'native_flashcard_review_events'"
+  );
+  expect(String(reviewTable.rows[0].sql)).toMatch(/WITHOUT ROWID/iu);
+  expect(
+    (
+      await client.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'trigger' AND name IN ('native_flashcard_review_events_no_delete', 'native_flashcard_review_events_no_replace', 'native_flashcard_review_events_no_update') ORDER BY name"
+      )
+    ).rows.map((row) => row.name)
+  ).toEqual([
+    'native_flashcard_review_events_no_delete',
+    'native_flashcard_review_events_no_replace',
+    'native_flashcard_review_events_no_update'
+  ]);
+  expect((await client.execute('PRAGMA foreign_key_check')).rows).toEqual([]);
+}
+
+async function seedDraftWithReviewHistory(
+  target: FixtureTarget,
+  previous: string
+) {
+  await migrateFixtureDatabase(target, previous);
+  await seedStudy(target);
+  const { client, close } = await openFixtureDatabase(target);
+  try {
+    const owner = { userId: 'learner-a' };
+    await createDeck(client, owner, {
+      id: 'deck-langlo10-gate',
+      name: 'French'
+    });
+    const note = await createNote(client, owner, {
+      id: 'note-langlo10-draft-history',
+      sourceId: `langlo:v1:${'a'.repeat(64)}`,
+      deckId: 'deck-langlo10-gate',
+      kind: 'basic',
+      content: { front: 'front', back: 'back' }
+    });
+    await client.execute({
+      sql: 'INSERT INTO native_flashcards (id, owner_id, note_id, ordinal, state_json, due_at, revision, suspended, scheduler_version, parameters_json) VALUES (?, ?, ?, 0, ?, 0, 0, 0, ?, ?)',
+      args: [note.cardId, owner.userId, note.id, '{}', 'legacy-v1', '{}']
+    });
+    await client.execute({
+      sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES (?, ?, ?, 0, ?, 0, ?, ?, ?)',
+      args: [
+        'draft-review',
+        owner.userId,
+        note.cardId,
+        'good',
+        'legacy-v1',
+        '{}',
+        '{}'
+      ]
+    });
+  } finally {
+    close();
+  }
+}
+
+async function expectFailedDraftReviewMigration(target: FixtureTarget) {
+  await expect(migrateFixtureDatabase(target)).rejects.toThrow();
+  const { client, close } = await openFixtureDatabase(target);
+  try {
+    expect(
+      (
+        await client.execute(
+          'PRAGMA table_info(native_flashcard_review_events)'
+        )
+      ).rows.map((row) => row.name)
+    ).not.toContain('state_json');
+    expect(
+      (
+        await client.execute('SELECT id FROM native_flashcards WHERE id = ?', [
+          'card:note-langlo10-draft-history'
+        ])
+      ).rows
+    ).toHaveLength(1);
+    expect(
+      (
+        await client.execute(
+          'SELECT id FROM native_flashcard_review_events WHERE id = ?',
+          ['draft-review']
+        )
+      ).rows
+    ).toHaveLength(1);
+  } finally {
+    close();
+  }
+}
+
 describe('disposable libSQL migrations', () => {
   it('preserves legacy data and adopts verified content after a pre-0007 upgrade', async () => {
     const target = await fixture();
@@ -519,110 +693,13 @@ describe('disposable libSQL migrations', () => {
     const target = await fixture();
     const previous = await migrationPrefixBeforeLanglo10();
     try {
-      await migrateFixtureDatabase(target, previous);
-      await seedStudy(target);
-      const { client: beforeClient, close: closeBefore } =
-        await openFixtureDatabase(target);
-      try {
-        const owner = { userId: 'learner-a' };
-        await createDeck(beforeClient, owner, {
-          id: 'deck-langlo10',
-          name: 'French'
-        });
-        const notes = await Promise.all(
-          ['draft', 'rejected', 'rejected-reviewed', 'approved-reviewed'].map(
-            (id, index) =>
-              createNote(beforeClient, owner, {
-                id: `note-langlo10-${id}`,
-                sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
-                deckId: 'deck-langlo10',
-                kind: 'basic',
-                content: { front: `front ${id}`, back: `back ${id}` }
-              })
-          )
-        );
-        await beforeClient.execute({
-          sql: "UPDATE native_flashcard_notes SET status = 'rejected' WHERE id IN (?, ?)",
-          args: [notes[1].id, notes[2].id]
-        });
-        await beforeClient.execute({
-          sql: "UPDATE native_flashcard_notes SET status = 'approved' WHERE id = ?",
-          args: [notes[3].id]
-        });
-        for (const note of notes)
-          await beforeClient.execute({
-            sql: 'INSERT INTO native_flashcards (id, owner_id, note_id, ordinal, state_json, due_at, revision, suspended, scheduler_version, parameters_json) VALUES (?, ?, ?, 0, ?, 0, 0, 0, ?, ?)',
-            args: [note.cardId, owner.userId, note.id, '{}', 'legacy-v1', '{}']
-          });
-        for (const [index, note] of [notes[2], notes[3]].entries())
-          await beforeClient.execute({
-            sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?)',
-            args: [
-              `legacy-review-${index}`,
-              owner.userId,
-              note.cardId,
-              'good',
-              index,
-              'legacy-v1',
-              '{}',
-              '{}'
-            ]
-          });
-      } finally {
-        closeBefore();
-      }
-
+      await seedLegacyReviewHistory(target, previous);
       await migrateFixtureDatabase(target);
-      const { client: afterClient, close: closeAfter } =
-        await openFixtureDatabase(target);
+      const { client, close } = await openFixtureDatabase(target);
       try {
-        expect(
-          (
-            await afterClient.execute(
-              'SELECT id FROM native_flashcard_notes ORDER BY id'
-            )
-          ).rows
-        ).toHaveLength(4);
-        expect(
-          (
-            await afterClient.execute(
-              'SELECT note_id FROM native_flashcards ORDER BY note_id'
-            )
-          ).rows
-        ).toEqual([
-          { note_id: 'note-langlo10-approved-reviewed' },
-          { note_id: 'note-langlo10-rejected-reviewed' }
-        ]);
-        expect(
-          (
-            await afterClient.execute(
-              'SELECT id, state_json FROM native_flashcard_review_events ORDER BY id'
-            )
-          ).rows
-        ).toEqual([
-          { id: 'legacy-review-0', state_json: null },
-          { id: 'legacy-review-1', state_json: null }
-        ]);
-        const reviewTable = await afterClient.execute(
-          "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'native_flashcard_review_events'"
-        );
-        expect(String(reviewTable.rows[0].sql)).toMatch(/WITHOUT ROWID/iu);
-        expect(
-          (
-            await afterClient.execute(
-              "SELECT name FROM sqlite_master WHERE type = 'trigger' AND name IN ('native_flashcard_review_events_no_delete', 'native_flashcard_review_events_no_replace', 'native_flashcard_review_events_no_update') ORDER BY name"
-            )
-          ).rows.map((row) => row.name)
-        ).toEqual([
-          'native_flashcard_review_events_no_delete',
-          'native_flashcard_review_events_no_replace',
-          'native_flashcard_review_events_no_update'
-        ]);
-        expect(
-          (await afterClient.execute('PRAGMA foreign_key_check')).rows
-        ).toEqual([]);
+        await expectMigratedReviewHistory(client);
       } finally {
-        closeAfter();
+        close();
       }
     } finally {
       await rm(previous, { recursive: true, force: true });
@@ -633,73 +710,8 @@ describe('disposable libSQL migrations', () => {
     const target = await fixture();
     const previous = await migrationPrefixBeforeLanglo10();
     try {
-      await migrateFixtureDatabase(target, previous);
-      await seedStudy(target);
-      const { client: beforeClient, close: closeBefore } =
-        await openFixtureDatabase(target);
-      try {
-        const owner = { userId: 'learner-a' };
-        await createDeck(beforeClient, owner, {
-          id: 'deck-langlo10-gate',
-          name: 'French'
-        });
-        const note = await createNote(beforeClient, owner, {
-          id: 'note-langlo10-draft-history',
-          sourceId: `langlo:v1:${'a'.repeat(64)}`,
-          deckId: 'deck-langlo10-gate',
-          kind: 'basic',
-          content: { front: 'front', back: 'back' }
-        });
-        await beforeClient.execute({
-          sql: 'INSERT INTO native_flashcards (id, owner_id, note_id, ordinal, state_json, due_at, revision, suspended, scheduler_version, parameters_json) VALUES (?, ?, ?, 0, ?, 0, 0, 0, ?, ?)',
-          args: [note.cardId, owner.userId, note.id, '{}', 'legacy-v1', '{}']
-        });
-        await beforeClient.execute({
-          sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json) VALUES (?, ?, ?, 0, ?, 0, ?, ?, ?)',
-          args: [
-            'draft-review',
-            owner.userId,
-            note.cardId,
-            'good',
-            'legacy-v1',
-            '{}',
-            '{}'
-          ]
-        });
-      } finally {
-        closeBefore();
-      }
-
-      await expect(migrateFixtureDatabase(target)).rejects.toThrow();
-      const { client: afterClient, close: closeAfter } =
-        await openFixtureDatabase(target);
-      try {
-        expect(
-          (
-            await afterClient.execute(
-              'PRAGMA table_info(native_flashcard_review_events)'
-            )
-          ).rows.map((row) => row.name)
-        ).not.toContain('state_json');
-        expect(
-          (
-            await afterClient.execute(
-              'SELECT id FROM native_flashcards WHERE id = ?',
-              ['card:note-langlo10-draft-history']
-            )
-          ).rows
-        ).toHaveLength(1);
-        expect(
-          (
-            await afterClient.execute(
-              'SELECT id FROM native_flashcard_review_events WHERE id = ?',
-              ['draft-review']
-            )
-          ).rows
-        ).toHaveLength(1);
-      } finally {
-        closeAfter();
-      }
+      await seedDraftWithReviewHistory(target, previous);
+      await expectFailedDraftReviewMigration(target);
     } finally {
       await rm(previous, { recursive: true, force: true });
     }
