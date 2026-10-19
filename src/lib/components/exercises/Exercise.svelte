@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { getContext, onDestroy } from 'svelte';
   import {
     answerActionUrl,
     checkAnswer,
@@ -39,10 +40,27 @@
   let value = $state('');
   let problem = $state('');
   let pending = $state(false);
+  let failed = $state(false);
+  let refreshBlocked = false;
+  const setRefreshBlocked = getContext<(blocked: boolean) => void>(
+    'app-version-refresh-blocked'
+  );
   const message = $derived(problem || failure || '');
   const legendId = $derived(`instruction-${question.id}`);
   const fieldId = $derived(`answer-${question.id}`);
   const problemId = $derived(`exercise-problem-${question.id}`);
+
+  $effect(() => {
+    const blocked = value !== '' || pending || failed;
+    if (blocked !== refreshBlocked) {
+      refreshBlocked = blocked;
+      setRefreshBlocked(blocked);
+    }
+  });
+
+  onDestroy(() => {
+    if (refreshBlocked) setRefreshBlocked(false);
+  });
 </script>
 
 <form
@@ -67,6 +85,7 @@
       // Keep what was typed when the server refused it.
       await update({ reset: result.type === 'success' });
       if (result.type === 'success') value = '';
+      failed = result.type === 'failure';
       pending = false;
     };
   }}
