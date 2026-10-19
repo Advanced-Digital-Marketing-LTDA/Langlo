@@ -7,9 +7,13 @@
   import { masteryLabels, masterySymbols } from '../dashboard';
   let {
     tracks,
-    details = false
-  }: { tracks: (TrackProgress | StreamingTrackProgress)[]; details?: boolean } =
-    $props();
+    details = false,
+    practiceCounts = false
+  }: {
+    tracks: (TrackProgress | StreamingTrackProgress)[];
+    details?: boolean;
+    practiceCounts?: boolean;
+  } = $props();
   const labels = masteryLabels;
   const symbols = masterySymbols;
 </script>
@@ -47,11 +51,11 @@
             <p>
               {skill.independentItems} qualifying items · {skill.sessions} sessions
             </p>
-            <p>
-              {skill.answers > 0
-                ? `Practised ${skill.practisedSessions} ${skill.practisedSessions === 1 ? 'time' : 'times'} · ${skill.answers} ${skill.answers === 1 ? 'answer' : 'answers'}`
-                : 'Not practised yet'}
-            </p>
+            {#if practiceCounts}<p>
+                {skill.answers > 0
+                  ? `Practised ${skill.practisedSessions} ${skill.practisedSessions === 1 ? 'time' : 'times'} · ${skill.answers} ${skill.answers === 1 ? 'answer' : 'answers'}`
+                  : 'Not practised yet'}
+              </p>{/if}
             <p>{skill.reason}</p>
             {#if skill.prerequisites.length}<p>Recommended foundations:</p>
               <ul>
@@ -98,10 +102,10 @@
   assessments. Flashcard recall, review due dates and session completion are
   separate signals.
 </p>
-<p>
-  Practice counts include any practice answer and are separate from grammar
-  evidence.
-</p>
+{#if practiceCounts}<p>
+    Practice counts include any practice answer and are separate from grammar
+    evidence.
+  </p>{/if}
 <p>
   Unknown means there is no qualifying evidence; weak topics need attention;
   practising means more evidence is needed; secure means the current evidence

@@ -170,3 +170,21 @@ it('no longer renders its own navigation', async () => {
   const html = await renderSvelte(progress, { tracks: [track(null)] });
   expect(html).not.toContain('Study navigation');
 });
+
+it('shows practice counts only when GrammarProgress is asked to', async () => {
+  const counted = {
+    ...track(null),
+    skills: [
+      { ...skill('fr-a1-001', 'weak'), practisedSessions: 2, answers: 3 }
+    ]
+  };
+  const without = await renderSvelte(progress, { tracks: [counted] });
+  expect(without).not.toContain('Practice counts include');
+  expect(without).not.toContain('Practised 2 times');
+  const withCounts = await renderSvelte(progress, {
+    tracks: [counted],
+    practiceCounts: true
+  });
+  expect(withCounts).toContain('Practice counts include');
+  expect(withCounts).toContain('Practised 2 times · 3 answers');
+});

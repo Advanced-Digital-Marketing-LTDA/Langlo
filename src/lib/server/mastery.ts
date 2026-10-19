@@ -317,10 +317,11 @@ async function recordEvidence(
 }
 
 function countPracticeAnswers(rows: Row[], carry: Map<string, string>) {
-  const attempts = new Map<string, Row>();
-  for (const row of rows) {
-    if (row.mode === 'practice') attempts.set(String(row.attempt_id), row);
-  }
+  const attempts = new Map(
+    rows
+      .filter((row) => row.mode === 'practice')
+      .map((row) => [String(row.attempt_id), row])
+  );
   const counts: PracticeCounts = new Map();
   for (const row of attempts.values()) {
     const skillId = carriedTo(String(row.skill_id), carry);
@@ -329,11 +330,13 @@ function countPracticeAnswers(rows: Row[], carry: Map<string, string>) {
       answers: 0,
       lastPractisedAt: null
     };
+    const createdAt = Number(row.created_at);
     count.sessions.add(String(row.study_session_id));
     count.answers += 1;
-    const createdAt = Number(row.created_at);
-    if (count.lastPractisedAt === null || createdAt > count.lastPractisedAt)
-      count.lastPractisedAt = createdAt;
+    count.lastPractisedAt = Math.max(
+      count.lastPractisedAt ?? createdAt,
+      createdAt
+    );
     counts.set(skillId, count);
   }
   return counts;

@@ -26,5 +26,5 @@
 ## Limits and pending acceptance
 
 - The catalog-first map path reads the catalog and prerequisites once before mastery reloads them in its own snapshot. This adds those repeated reads per language to enable progressive rendering; the practice counts themselves add no query. No latency claim was measured.
-- No full test suite was run; the plan leaves it to CI. No authenticated browser, live development app, remote database, Coolify proxy or Bunny CDN was accessed, so deployed streaming behavior and the reported development-app enrollment state remain unverified.
+- The full test suite was not run during the focused implementation work; CI runs it (the merge-evidence gate reports 1359 tests passing on head `10f83a0`). The PR description also lists local `npm test`, `npm run test:property` and `npm run test:e2e` runs; their output is not recorded in this file. No authenticated browser, live development app, remote database, Coolify proxy or Bunny CDN was accessed, so deployed streaming behavior and the reported development-app enrollment state remain unverified.
 - No deployment or release acceptance was performed.

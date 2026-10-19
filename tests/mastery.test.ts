@@ -540,8 +540,8 @@ describe('versioned grammar policy', () => {
   it('orders weak topics by accuracy and practising topics by recency then id', () => {
     const topics = [
       practiceTopic('weak-b', { correct: 0, independentItems: 2 }),
-      practiceTopic('weak-a', { correct: 0, independentItems: 1 }),
-      practiceTopic('weak-later', { correct: 2, independentItems: 10 }),
+      practiceTopic('weak-a', { correct: 2, independentItems: 10 }),
+      practiceTopic('weak-later', { correct: 1, independentItems: 10 }),
       practiceTopic('practice-recent', {
         status: 'practising',
         lastPractisedAt: 30
@@ -561,9 +561,9 @@ describe('versioned grammar policy', () => {
     ];
     const result = recommendPractice(topics);
     expect(result.map((topic) => topic.skillId)).toEqual([
-      'weak-a',
       'weak-b',
       'weak-later',
+      'weak-a',
       'practice-old',
       'practice-a'
     ]);
@@ -579,6 +579,17 @@ describe('versioned grammar policy', () => {
     expect(result.map((topic) => topic.skillId)).toEqual([
       'foundation',
       'dependent'
+    ]);
+  });
+
+  it('keeps the existing ranking when imported prerequisites form a cycle', () => {
+    const result = recommendPractice([
+      practiceTopic('cycle-b', { prerequisites: ['cycle-a'] }),
+      practiceTopic('cycle-a', { prerequisites: ['cycle-b'] })
+    ]);
+    expect(result.map((topic) => topic.skillId)).toEqual([
+      'cycle-a',
+      'cycle-b'
     ]);
   });
 
@@ -626,11 +637,22 @@ describe('versioned grammar policy', () => {
       ],
       'write'
     );
+    for (const [submissionKey, createdAt] of [
+      ['count-correct', 2000],
+      ['count-assisted', 3000],
+      ['count-unsure', 1000],
+      ['assessment-count-key', 9000],
+      ['other-practice-key', 9500]
+    ] as const)
+      await client.execute({
+        sql: 'UPDATE attempts SET created_at = ? WHERE submission_key = ?',
+        args: [createdAt, submissionKey]
+      });
     const topic = (await computeMastery(client, learner, 'fr')).find(
       (skill) => skill.skillId === 'fr-a1-001'
     );
     expect(topic).toMatchObject({ practisedSessions: 2, answers: 3 });
-    expect(topic?.lastPractisedAt).toEqual(expect.any(Number));
+    expect(topic?.lastPractisedAt).toBe(3000);
     expect(topic?.independentItems).toBe(1);
   });
 

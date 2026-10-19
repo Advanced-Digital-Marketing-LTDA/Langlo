@@ -13,4 +13,4 @@
     {/each}
   </nav>
 {/if}
-<GrammarProgress tracks={data.tracks} />
+<GrammarProgress tracks={data.tracks} practiceCounts />

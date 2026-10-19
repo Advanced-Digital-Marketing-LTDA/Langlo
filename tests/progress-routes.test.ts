@@ -221,3 +221,25 @@ it('loads practice recommendations and counts for the enrolled language', async 
     answers: 1
   });
 });
+
+it('logs and shows an error state when practice recommendations cannot load', async () => {
+  const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  await client.execute('DROP TABLE lessons');
+  const data = (await practicePage(practiceEvent('learner-a'))) as {
+    language: string;
+    recommendations: unknown[];
+    skills: unknown[];
+    error: string;
+  };
+  expect(data).toMatchObject({
+    language: 'fr',
+    recommendations: [],
+    skills: [],
+    error: 'Practice recommendations could not be loaded. Refresh to try again.'
+  });
+  expect(log).toHaveBeenCalledWith(
+    'Failed to load practice recommendations',
+    expect.any(Error)
+  );
+  log.mockRestore();
+});
