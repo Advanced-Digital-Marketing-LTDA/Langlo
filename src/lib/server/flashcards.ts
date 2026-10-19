@@ -8,7 +8,7 @@ import {
   type Grade,
   type FSRSParameters
 } from 'ts-fsrs';
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import { setTimeout as delay } from 'node:timers/promises';
 
 export interface LearnerSession {
@@ -18,11 +18,21 @@ export interface LearnerSession {
 type BasicContent = { front: string; back: string };
 type ClozeContent = { text: string };
 type Content = BasicContent | ClozeContent;
-type NoteSource = {
+export type NoteSource = {
   attemptId: string;
   skillId: string;
   contentVersionId: string;
 };
+
+/** Map the persisted source columns of a note row, shared by every reader. */
+export function noteSourceFrom(row: Row): NoteSource | null {
+  if (row.source_attempt_id === null) return null;
+  return {
+    attemptId: String(row.source_attempt_id),
+    skillId: String(row.source_skill_id),
+    contentVersionId: String(row.source_content_version_id)
+  };
+}
 type CreateNoteInput = {
   id: string;
   sourceId: string;
@@ -522,14 +532,7 @@ export async function getNote(
     content: JSON.parse(String(row.content_json)) as Content,
     status: String(row.status),
     explanation: String(row.explanation),
-    source:
-      row.source_attempt_id === null
-        ? null
-        : {
-            attemptId: String(row.source_attempt_id),
-            skillId: String(row.source_skill_id),
-            contentVersionId: String(row.source_content_version_id)
-          },
+    source: noteSourceFrom(row),
     card: {
       id: String(row.card_id),
       state: decodeCard(String(row.state_json)),

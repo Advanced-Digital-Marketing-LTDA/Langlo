@@ -4,7 +4,8 @@ import {
   approveNote,
   createNote,
   FlashcardError,
-  type LearnerSession
+  type LearnerSession,
+  noteSourceFrom
 } from './flashcards';
 
 type Query = Pick<Client, 'execute'>;
@@ -52,14 +53,7 @@ export async function listNotes(
       status: String(row.status),
       content: JSON.parse(String(row.content_json)),
       explanation: String(row.explanation),
-      source:
-        row.source_attempt_id === null
-          ? null
-          : {
-              attemptId: String(row.source_attempt_id),
-              skillId: String(row.source_skill_id),
-              contentVersionId: String(row.source_content_version_id)
-            }
+      source: noteSourceFrom(row)
     }))
   };
 }
