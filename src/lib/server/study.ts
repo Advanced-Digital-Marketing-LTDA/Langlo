@@ -611,7 +611,8 @@ async function recordAttemptWrite(
     );
     if (
       assessmentCompleted ||
-      (source.mode === 'practice' && outcome !== 'uncertain')
+      ((source.mode === 'practice' || source.mode === 'mixed-review') &&
+        outcome !== 'uncertain')
     )
       await syncEvidenceLedger(
         tx,

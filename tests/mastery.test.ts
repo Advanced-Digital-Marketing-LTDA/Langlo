@@ -350,6 +350,27 @@ describe('versioned grammar policy', () => {
     ).toEqual([{ attempt_id: first.id }]);
   });
 
+  it('records resolved mixed-review answers in the evidence ledger', async () => {
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('mixed-review', 'learner-a', 'enrollment-a', 'fr', 'mixed-review')"
+    );
+    const attempt = await recordAttempt(client, learner, {
+      studySessionId: 'mixed-review',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'mixed-review-evidence',
+      evidenceKind: 'independent',
+      answer: 'suis'
+    });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT attempt_id FROM skill_evidence WHERE attempt_id = ?',
+          args: [attempt.id]
+        })
+      ).rows
+    ).toEqual([{ attempt_id: attempt.id }]);
+  });
+
   it('lists the skill from the newest version that is not quarantined', async () => {
     const entry = async () =>
       (await computeMastery(client, learner, 'fr')).find(

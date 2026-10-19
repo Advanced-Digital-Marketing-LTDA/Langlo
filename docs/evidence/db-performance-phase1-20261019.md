@@ -7,7 +7,7 @@
 - `openAppDatabase` now shares its in-flight initialization, libSQL client, and Drizzle database per database URL and token. Foreign-key and local-file busy-timeout pragmas run once. Failed initialization closes and evicts the client so the next request can retry. Request cleanup retains its `close()` API but cannot close the process-wide connection.
 - `beginWrite` now serializes write transactions for each shared libSQL client through commit or rollback, while preserving retries for external SQLite busy errors. This prevents overlapping transactions from colliding on the shared single connection.
 - `computeMastery` reads the catalog, prerequisites, content status, attempts, and evaluations without opening a write transaction or writing `skill_evidence`. `loadProgress` keeps the owner-scoped enrollment check and no longer repeats that lookup once per language.
-- A resolved practice answer synchronizes qualifying evidence in the answer transaction. The final assessment answer synchronizes only after the plan completes. A resolved fallback verdict and its evidence sync commit together. Uncertain and unfinished assessment answers add no evidence.
+- A resolved practice or mixed-review answer synchronizes qualifying evidence in the answer transaction. The final assessment answer synchronizes only after the plan completes. A resolved fallback verdict and its evidence sync commit together. Uncertain and unfinished assessment answers add no evidence.
 - No migration was added. Session verification remains uncached. No trace sampling, database region, auth setting, or replica setting changed.
 
 ## Red and green checks
@@ -36,9 +36,10 @@
 - Mastery calculation is private behind the owner-scoped enrollment loader, which still reads enrollment once before computing each enrolled language.
 - Evidence synchronization now scans only the submitted attempt's lineage, or the completed assessment session's lineages, rather than replaying the learner's full history after every answer.
 - Evidence synchronization now reconciles any missing qualifying row from those lineages, including an earlier attempt; a regression test deletes the first ledger row, repeats that lineage, and confirms the earlier attempt is restored.
+- Resolved mixed-review answers now synchronize their evidence in the answer transaction, matching practice and assessment behavior; a focused test verifies the ledger entry.
 - Standalone mutating statements now use the same per-client queue as transactions. The shared-client regression test holds a transaction open, queues a standalone write, rolls back the transaction, and confirms the standalone write persists after the rollback.
 - Follow-up validation: `npm run check` (0 errors, 0 warnings), `npm run format:check`, and 73 focused tests across five files passed.
 
 Mastery still reads its catalog, prerequisites, and evidence with separate autocommit queries. A read transaction cannot overlap a write transaction on the shared libSQL client (`TRANSACTION_ACTIVE`), and serializing every mastery read with writes would add latency to the hot path. A concurrent import could commit between these reads and produce a mixed-revision response; Phase 1 leaves this race documented for a separate snapshot design.
 
-Historical ledger reconciliation is lazy: a qualifying old attempt is restored when its lineage is next answered in a practice session or a completed assessment. This avoids a full-history scan on every answer; lineages never answered again are not backfilled by this phase.
+Historical ledger reconciliation is lazy: a qualifying old attempt is restored when its lineage is next answered in a practice or mixed-review session or a completed assessment. This avoids a full-history scan on every answer; lineages never answered again are not backfilled by this phase.
