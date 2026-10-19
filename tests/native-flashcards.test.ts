@@ -192,7 +192,54 @@ describe('native flashcard persistence feasibility', () => {
     }
   });
 
-  it('persists a real FSRS review exactly once and rejects stale revisions', async () => {
+  it('persists FSRS review state and its immutable event snapshot', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      const note = await seedBasicNote(db.client, learner);
+      await approveNote(db.client, learner, note.id);
+      const submittedAt = Date.now();
+      const review = {
+        cardId: note.cardId,
+        submissionId: 'a0000000-0000-4000-8000-000000000001',
+        expectedRevision: 0,
+        rating: 'good' as const
+      };
+      await expect(
+        submitReview(db.client, learner, review)
+      ).resolves.toMatchObject({
+        duplicate: false,
+        revision: 1
+      });
+      const persisted = await getNote(db.client, learner, note.id);
+      expect(persisted.card).toMatchObject({
+        revision: 1,
+        schedulerVersion: 'ts-fsrs@5.4.2'
+      });
+      expect(persisted.card!.dueAt).toBeGreaterThan(submittedAt);
+      await expect(
+        listReviewEvents(db.client, learner, note.cardId)
+      ).resolves.toMatchObject([
+        {
+          id: review.submissionId,
+          state: persisted.card!.state
+        }
+      ]);
+      expect(
+        (
+          await db.client.execute({
+            sql: 'SELECT state_json FROM native_flashcard_review_events WHERE owner_id = ? AND id = ?',
+            args: [learner.userId, review.submissionId]
+          })
+        ).rows[0].state_json
+      ).toBe(JSON.stringify(persisted.card!.state));
+    } finally {
+      db.close();
+    }
+  });
+
+  it('replays a review once and rejects a conflicting submission', async () => {
     const target = await fixture();
     const learner = testSession('learner-a');
     const db = await openFixtureDatabase(target);
@@ -230,36 +277,32 @@ describe('native flashcard persistence feasibility', () => {
       ]) {
         expect((await db.client.execute(query)).rows[0].count).toBe(1);
       }
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rejects stale review revisions', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      const note = await seedBasicNote(db.client, learner);
+      await approveNote(db.client, learner, note.id);
+      const review = {
+        cardId: note.cardId,
+        submissionId: 'a0000000-0000-4000-8000-000000000001',
+        expectedRevision: 0,
+        rating: 'good' as const
+      };
+      await submitReview(db.client, learner, review);
       await expect(
         submitReview(db.client, learner, {
           ...review,
           submissionId: '10000000-0000-4000-8000-000000000002',
-          expectedRevision: 0,
           rating: 'again'
         })
       ).rejects.toMatchObject({ code: 'STALE_REVIEW' });
-      const persisted = await getNote(db.client, learner, note.id);
-      expect(persisted.card).toMatchObject({
-        revision: 1,
-        schedulerVersion: 'ts-fsrs@5.4.2'
-      });
-      expect(persisted.card!.dueAt).toBeGreaterThan(submittedAt);
-      await expect(
-        listReviewEvents(db.client, learner, note.cardId)
-      ).resolves.toMatchObject([
-        {
-          id: review.submissionId,
-          state: persisted.card!.state
-        }
-      ]);
-      expect(
-        (
-          await db.client.execute({
-            sql: 'SELECT state_json FROM native_flashcard_review_events WHERE owner_id = ? AND id = ?',
-            args: [learner.userId, review.submissionId]
-          })
-        ).rows[0].state_json
-      ).toBe(JSON.stringify(persisted.card!.state));
     } finally {
       db.close();
     }

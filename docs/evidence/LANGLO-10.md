@@ -63,13 +63,22 @@ migration or Drizzle metadata file was changed.
 - The focused migration and native flashcard tests passed before this
   follow-up (2 files, 31 tests). After splitting the long tests and refactoring
   the service methods, they passed again (2 files, 32 tests).
+- The follow-up for the remaining CodeScene findings reduces `applyReview`'s
+  parameter count and separates persisted state, idempotency, and stale-revision
+  assertions into focused native flashcard tests. The focused suite passed
+  again (19 tests).
 - Final local checks passed with Node `24.19.0` and pinned npm `11.9.0`:
   `npm run check` (0 errors and 0 warnings), `npm run lint`,
-  `npm run format:check`, `npm test` (87 files, 1,367 tests),
+  `npm run format:check`, `npm test` (87 files, 1,369 tests),
   `npm run test:property` (5 files, 7 tests), `npm run build`, and
   `npm run test:e2e` (102 desktop/mobile browser tests). The build and browser
   runner printed the existing `NO_COLOR`/`FORCE_COLOR` warning. `git diff
 --check` passed.
+- `npm test -- --coverage --coverage.reporter=lcov` passed (87 files, 1,369
+  tests). Comparing local LCOV with the PR base shows 56 of 58 added executable
+  lines in `src/lib/server/flashcards.ts` covered (96.55%), above the previous
+  hosted Codecov target of 87.08%. Codecov must rerun on this updated revision
+  to confirm its own diff calculation.
 - The PR's SonarCloud summary reported 0.0% coverage on new code. The repository
   quality workflow generates `coverage/lcov.info` for Codecov but has no
   SonarScanner step, so SonarCloud coverage import remains unresolved. Sonar's

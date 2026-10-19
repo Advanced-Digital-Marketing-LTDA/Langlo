@@ -801,12 +801,11 @@ export async function getNote(
 async function replayReview(
   tx: WriteTransaction,
   session: LearnerSession,
-  input: ReviewInput,
-  submissionId: string
+  input: ReviewInput
 ): Promise<ReviewResult | null> {
   const previous = await tx.execute({
     sql: 'SELECT card_id, expected_revision, rating, reviewed_at, result_json FROM native_flashcard_review_events WHERE owner_id = ? AND id = ?',
-    args: [session.userId, submissionId]
+    args: [session.userId, input.submissionId]
   });
   const row = previous.rows[0];
   if (!row) return null;
@@ -864,7 +863,6 @@ async function applyReview(
   tx: WriteTransaction,
   session: LearnerSession,
   input: ReviewInput,
-  submissionId: string,
   cardRow: Row
 ) {
   const cardScheduler = readCardScheduler(
@@ -896,7 +894,7 @@ async function applyReview(
   await tx.execute({
     sql: 'INSERT INTO native_flashcard_review_events (id, owner_id, card_id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json, state_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     args: [
-      submissionId,
+      input.submissionId,
       session.userId,
       input.cardId,
       input.expectedRevision,
@@ -922,15 +920,18 @@ export async function submitReview(
   ) {
     throw new FlashcardError('INVALID_SUBMISSION_ID');
   }
-  const submissionId = input.submissionId.toLowerCase();
+  const reviewInput = {
+    ...input,
+    submissionId: input.submissionId.toLowerCase()
+  };
   if (!Object.hasOwn(ratings, input.rating))
     throw new FlashcardError('INVALID_RATING');
   const tx = await beginWrite(client);
   try {
-    const previous = await replayReview(tx, session, input, submissionId);
+    const previous = await replayReview(tx, session, reviewInput);
     if (previous) return previous;
-    const cardRow = await reviewableCard(tx, session, input);
-    const result = await applyReview(tx, session, input, submissionId, cardRow);
+    const cardRow = await reviewableCard(tx, session, reviewInput);
+    const result = await applyReview(tx, session, reviewInput, cardRow);
     await tx.commit();
     return { ...result, duplicate: false };
   } catch (error) {
