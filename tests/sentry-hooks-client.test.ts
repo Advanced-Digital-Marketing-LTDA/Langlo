@@ -7,6 +7,7 @@ vi.mock('$app/env/public', () => ({
 }));
 vi.mock('@sentry/sveltekit', () => ({
   init: vi.fn(),
+  consoleLoggingIntegration: vi.fn(() => ({ name: 'ConsoleLogs' })),
   handleErrorWithSentry: vi.fn(() => vi.fn())
 }));
 it('initializes browser telemetry without Langlo field filtering', async () => {
@@ -35,5 +36,6 @@ it('initializes browser telemetry without Langlo field filtering', async () => {
   if (typeof filterIntegrations === 'function')
     expect(
       filterIntegrations([browserSession, svelteKitTracing] as never)
-    ).toEqual([svelteKitTracing]);
+    ).toEqual([svelteKitTracing, { name: 'ConsoleLogs' }]);
+  expect(Sentry.consoleLoggingIntegration).toHaveBeenCalledWith();
 });

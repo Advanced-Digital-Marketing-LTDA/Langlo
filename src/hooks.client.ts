@@ -9,8 +9,12 @@ Sentry.init({
   release: publicEnv.PUBLIC_APP_BUILD_SHA,
   tracesSampleRate: 0.25,
   traceLifecycle: 'static',
-  integrations: (integrations) =>
-    integrations.filter((integration) => integration.name !== 'BrowserSession')
+  integrations: (integrations) => [
+    ...integrations.filter(
+      (integration) => integration.name !== 'BrowserSession'
+    ),
+    Sentry.consoleLoggingIntegration()
+  ]
 });
 
 export const handleError = Sentry.handleErrorWithSentry();
