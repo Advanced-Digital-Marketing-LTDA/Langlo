@@ -447,39 +447,67 @@ export async function updateNote(
     explanation?: unknown;
   }
 ) {
-  const found = await client.execute({
-    sql: 'SELECT kind, content_json, explanation, status FROM native_flashcard_notes WHERE id = ? AND owner_id = ?',
-    args: [noteId, session.userId]
-  });
-  const row = found.rows[0];
-  if (!row) throw new FlashcardError('NOT_FOUND');
-  if (row.status === 'rejected') throw new FlashcardError('NOT_EDITABLE');
+  const tx = await beginWrite(client);
+  try {
+    const found = await tx.execute({
+      sql: 'SELECT kind, content_json, explanation, status FROM native_flashcard_notes WHERE id = ? AND owner_id = ?',
+      args: [noteId, session.userId]
+    });
+    const row = found.rows[0];
+    if (!row) throw new FlashcardError('NOT_FOUND');
+    if (row.status === 'rejected') throw new FlashcardError('NOT_EDITABLE');
 
-  const kind = input.kind === undefined ? String(row.kind) : input.kind;
-  if (kind !== 'basic' && kind !== 'cloze')
-    throw new FlashcardError('INVALID_CONTENT');
-  const content =
-    input.content === undefined
-      ? JSON.parse(String(row.content_json))
-      : input.content;
-  validateContent(kind, content);
-  const explanation =
-    input.explanation === undefined
-      ? String(row.explanation)
-      : validateExplanation(input.explanation);
+    const kind = input.kind === undefined ? String(row.kind) : input.kind;
+    if (kind !== 'basic' && kind !== 'cloze')
+      throw new FlashcardError('INVALID_CONTENT');
+    const content =
+      input.content === undefined
+        ? JSON.parse(String(row.content_json))
+        : input.content;
+    validateContent(kind, content);
+    const explanation =
+      input.explanation === undefined
+        ? String(row.explanation)
+        : validateExplanation(input.explanation);
 
-  const changed = await client.execute({
-    sql: "UPDATE native_flashcard_notes SET kind = ?, content_json = ?, explanation = ? WHERE id = ? AND owner_id = ? AND status <> 'rejected'",
-    args: [kind, JSON.stringify(content), explanation, noteId, session.userId]
-  });
-  if (changed.rowsAffected !== 1) throw new FlashcardError('NOT_EDITABLE');
-  return {
-    id: noteId,
-    kind,
-    content: content as Content,
-    explanation,
-    status: String(row.status)
-  };
+    const changed = await tx.execute({
+      sql: "UPDATE native_flashcard_notes SET kind = ?, content_json = ?, explanation = ? WHERE id = ? AND owner_id = ? AND status <> 'rejected'",
+      args: [kind, JSON.stringify(content), explanation, noteId, session.userId]
+    });
+    if (changed.rowsAffected !== 1) throw new FlashcardError('NOT_EDITABLE');
+
+    // An open review form carries the revision it loaded. Bumping the card
+    // revision in the same transaction invalidates that stale form instead of
+    // letting a rating for the old content be recorded against the new content.
+    let revision: number | null = null;
+    if (row.status === 'approved') {
+      const bumped = await tx.execute({
+        sql: 'UPDATE native_flashcards SET revision = revision + 1 WHERE note_id = ? AND owner_id = ?',
+        args: [noteId, session.userId]
+      });
+      if (bumped.rowsAffected < 1) throw new FlashcardError('NOT_FOUND');
+      const current = await tx.execute({
+        sql: 'SELECT revision FROM native_flashcards WHERE note_id = ? AND owner_id = ?',
+        args: [noteId, session.userId]
+      });
+      revision = Number(current.rows[0].revision);
+    }
+
+    await tx.commit();
+    return {
+      id: noteId,
+      kind,
+      content: content as Content,
+      explanation,
+      status: String(row.status),
+      revision
+    };
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
 }
 
 /**

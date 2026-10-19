@@ -318,8 +318,163 @@ describe('mistake-card editing and rejection', () => {
         sourceId: before.sourceId
       });
       expect(after.card.id).toBe(before.card.id);
+      expect(after.card.revision).toBe(1);
       expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
       expect(await listDueCards(db.client, learner)).toHaveLength(1);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('invalidates an open review form when an approved note changes', async () => {
+    const { db } = await setup();
+    try {
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      await approveOwnNote(db.client, learner, draft.id);
+      expect((await getNote(db.client, learner, draft.id)).card.revision).toBe(
+        0
+      );
+
+      await updateNote(db.client, learner, draft.id, {
+        kind: 'basic',
+        content: { front: 'Je ___ étudiant.', back: 'suis (être)' }
+      });
+      const edited = await getNote(db.client, learner, draft.id);
+      expect(edited.card.revision).toBe(1);
+
+      // The form loaded before the edit carries revision 0 and must not apply.
+      await expect(
+        submitReview(db.client, learner, {
+          cardId: draft.cardId,
+          submissionId: 'review-stale-after-edit',
+          expectedRevision: 0,
+          rating: 'good'
+        })
+      ).rejects.toMatchObject({ code: 'STALE_REVIEW' });
+      await expect(
+        submitReview(db.client, learner, {
+          cardId: draft.cardId,
+          submissionId: 'review-after-edit',
+          expectedRevision: 1,
+          rating: 'good'
+        })
+      ).resolves.toMatchObject({ revision: 2, duplicate: false });
+      expect(await noteCounts(db.client)).toEqual([1, 1, 1]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('uses the enrollment explanation language, falling back to English', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "UPDATE enrollments SET explanation_language = 'pt' WHERE owner_id = 'learner-a' AND language = 'fr'"
+      );
+      await db.client.execute({
+        sql: "INSERT INTO lesson_translations (content_version_id, explanation_language, title, explanation, examples, refs, fingerprint) VALUES ('content-v1', 'pt', 'O presente', ?, '[]', '[]', ?)",
+        args: ['Use o presente do verbo être: je suis.', 'b'.repeat(64)]
+      });
+      const translated = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      expect(
+        (await getNote(db.client, learner, translated.id)).explanation
+      ).toBe('Use o presente do verbo être: je suis.');
+
+      await db.client.execute(
+        "DELETE FROM lesson_translations WHERE content_version_id = 'content-v1'"
+      );
+      await db.client.execute(
+        'DELETE FROM native_flashcard_notes WHERE owner_id = ?',
+        [learner.userId]
+      );
+      const fallback = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      expect((await getNote(db.client, learner, fallback.id)).explanation).toBe(
+        'Use the present tense of être: je suis. The blank needs the conjugated form, not the infinitive.'
+      );
+    } finally {
+      db.close();
+    }
+  });
+
+  it('inserts dollar sequences in a cloze answer literally', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "UPDATE questions SET answer = '$&' WHERE id = 'question-1'"
+      );
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'cloze'
+      });
+      expect((await getNote(db.client, learner, draft.id)).content).toEqual({
+        text: 'Je {{c1::$&}} étudiant.'
+      });
+    } finally {
+      db.close();
+    }
+  });
+
+  it('keeps the fallback verdict authoritative over a newer prepared one', async () => {
+    const { db } = await setup();
+    try {
+      // The prepared verdict is newer, but the fallback verdict is the one the
+      // results summary counts, so it also decides draft eligibility.
+      await db.client.execute(
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('evaluation-fallback', 'learner-a', 'attempt-a', 'decisions-1', 'fallback-rubric-1', 'correct', unixepoch() * 1000 - 60000)"
+      );
+      await expect(
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'basic'
+        })
+      ).rejects.toMatchObject({ code: 'NOT_A_MISTAKE' });
+      expect(
+        await listMistakeCandidates(db.client, learner, 'study-a')
+      ).toEqual([]);
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rejects partially persisted source metadata from direct SQL', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-direct', 'learner-a', 'Direct')"
+      );
+      await expect(
+        db.client.execute({
+          sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, status, source_attempt_id) VALUES ('note-direct-partial', ?, 'learner-a', 'deck-direct', 'basic', '{\"front\":\"a\",\"back\":\"b\"}', 'draft', 'attempt-a')",
+          args: [`langlo:v1:${'2'.repeat(64)}`]
+        })
+      ).rejects.toThrow(/source fields/u);
+
+      await db.client.execute({
+        sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json) VALUES ('note-direct-null', ?, 'learner-a', 'deck-direct', 'basic', '{\"front\":\"a\",\"back\":\"b\"}')",
+        args: [`langlo:v1:${'3'.repeat(64)}`]
+      });
+      await expect(
+        db.client.execute(
+          "UPDATE native_flashcard_notes SET source_skill_id = 'fr-articles' WHERE id = 'note-direct-null'"
+        )
+      ).rejects.toThrow(/source fields/u);
+      expect(
+        (
+          await db.client.execute(
+            'SELECT count(*) AS count FROM native_flashcard_notes WHERE source_attempt_id IS NOT NULL AND (source_skill_id IS NULL OR source_content_version_id IS NULL)'
+          )
+        ).rows[0].count
+      ).toBe(0);
     } finally {
       db.close();
     }
@@ -635,6 +790,18 @@ describe('mistake-card pages', () => {
       expect((await getNote(db.client, learner, noteId)).explanation).toBe(
         'Use être.'
       );
+      expect(
+        await deckActions.edit(
+          formEvent({
+            params: { id: deckId },
+            fields: { noteId, kind: 'other' },
+            databaseUrl: target.databaseUrl
+          })
+        )
+      ).toMatchObject({
+        status: 400,
+        data: { message: expect.stringContaining('basic front/back') }
+      });
       expect(
         await deckActions.reject(
           formEvent({

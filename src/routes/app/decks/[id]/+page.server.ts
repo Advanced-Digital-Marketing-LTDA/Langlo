@@ -1,6 +1,10 @@
 import type { Actions, PageServerLoad } from './$types';
 import { studyForm, studyPage } from '../../../../lib/server/learner-api';
-import { rejectNote, updateNote } from '../../../../lib/server/flashcards';
+import {
+  FlashcardError,
+  rejectNote,
+  updateNote
+} from '../../../../lib/server/flashcards';
 import {
   addNoteFromForm,
   approveOwnNote,
@@ -33,22 +37,25 @@ export const actions: Actions = {
   },
   edit: async (event) => {
     const form = await event.request.formData();
-    const kind = form.get('kind') === 'cloze' ? 'cloze' : 'basic';
-    const content =
-      kind === 'cloze'
-        ? { text: String(form.get('text') ?? '') }
-        : {
-            front: String(form.get('front') ?? ''),
-            back: String(form.get('back') ?? '')
-          };
     return studyForm(
       event,
-      (client, learner) =>
-        updateNote(client, learner, String(form.get('noteId') ?? ''), {
+      (client, learner) => {
+        const kind = form.get('kind');
+        if (kind !== 'basic' && kind !== 'cloze')
+          throw new FlashcardError('INVALID_FORMAT');
+        const content =
+          kind === 'cloze'
+            ? { text: String(form.get('text') ?? '') }
+            : {
+                front: String(form.get('front') ?? ''),
+                back: String(form.get('back') ?? '')
+              };
+        return updateNote(client, learner, String(form.get('noteId') ?? ''), {
           kind,
           content,
           explanation: String(form.get('explanation') ?? '')
-        }),
+        });
+      },
       { saved: true }
     );
   },

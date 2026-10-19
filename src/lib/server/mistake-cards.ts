@@ -13,7 +13,17 @@ const maxExplanationLength = 600;
 // Cloze form. This is the one place draft generation depends on that subset;
 // widening it is a T003/T024 decision, not a generator detail.
 const clozeBlank = '___';
-const clozePattern = /\{\{c1::[^{}]+\}\}/gu;
+const clozeSpanPattern = /\{\{c1::[^{}]+\}\}/gu;
+const clozeNumberPattern = /\{\{c\d+::/u;
+
+// The results page counts each attempt by the AI fallback's verdict, else the
+// prepared verdict, else the newest evaluation (see practiceSummary). Card
+// eligibility uses the same rule so the results list and this service cannot
+// disagree about whether an answer is a confirmed mistake.
+const evaluationOutcome = `(SELECT e.outcome FROM evaluations e
+  WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
+  ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END,
+    e.created_at DESC, e.id DESC LIMIT 1)`;
 
 type DraftFormat = 'basic' | 'cloze';
 
@@ -68,11 +78,8 @@ async function readMistake(
         a.skill_id, a.language, a.content_version_id, a.not_sure,
         s.mode, q.prompt, q.answer AS expected_answer, q.holdout,
         v.status AS version_status,
-        (SELECT e.outcome FROM evaluations e
-          WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
-          ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END,
-            e.created_at DESC, e.id DESC LIMIT 1) AS outcome,
-        l.explanation AS lesson_explanation
+        ${evaluationOutcome} AS outcome,
+        COALESCE(lt.explanation, l.explanation) AS lesson_explanation
       FROM attempts a
       JOIN study_sessions s
         ON s.id = a.study_session_id AND s.owner_id = a.owner_id
@@ -86,6 +93,11 @@ async function readMistake(
         AND v.skill_id = a.skill_id
         AND v.language = a.language
       LEFT JOIN lessons l ON l.content_version_id = a.content_version_id
+      LEFT JOIN enrollments en
+        ON en.owner_id = a.owner_id AND en.language = a.language
+      LEFT JOIN lesson_translations lt
+        ON lt.content_version_id = a.content_version_id
+        AND lt.explanation_language = en.explanation_language
       WHERE a.id = ? AND a.owner_id = ?`,
     args: [
       FALLBACK_EVALUATOR_VERSION,
@@ -152,11 +164,10 @@ function draftContent(row: MistakeRow, format: DraftFormat): DraftContent {
     return { kind: 'basic' as const, content: { front: prompt, back: answer } };
   if (!prompt.includes(clozeBlank) || /[{}]/u.test(answer))
     throw new FlashcardError('INVALID_CLOZE');
-  const text = prompt.replace(clozeBlank, `{{c1::${answer}}}`);
-  if (
-    !clozePattern.test(text) ||
-    /\{\{c\d+::/u.test(text.replace(clozePattern, ''))
-  )
+  // The callback keeps `$&`, `$'` and similar sequences in the checked answer
+  // literal instead of letting String.replace expand them.
+  const text = prompt.replace(clozeBlank, () => `{{c1::${answer}}}`);
+  if (clozeNumberPattern.test(text.replace(clozeSpanPattern, '')))
     throw new FlashcardError('INVALID_CLOZE');
   return { kind: 'cloze' as const, content: { text } };
 }
@@ -201,7 +212,8 @@ async function findDraft(
 }
 
 function isDuplicateAttempt(error: unknown): boolean {
-  const message = String((error as { message?: unknown }).message ?? '');
+  const candidate = (error as { message?: unknown }).message;
+  const message = typeof candidate === 'string' ? candidate : '';
   return (
     message.includes('native_flashcard_notes_owner_source_attempt_unique') ||
     message.includes('source_attempt_id')
@@ -308,10 +320,7 @@ export async function listMistakeCandidates(
         AND q.prompt IS NOT NULL AND q.answer IS NOT NULL
         AND q.holdout = 0
         AND v.status <> 'quarantined'
-        AND (SELECT e.outcome FROM evaluations e
-          WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
-          ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END,
-            e.created_at DESC, e.id DESC LIMIT 1) = 'incorrect'
+        AND ${evaluationOutcome} = 'incorrect'
       ORDER BY a.created_at, a.id`,
     args: [
       studySessionId,
