@@ -297,6 +297,19 @@ describe('the curriculum version bump', () => {
     ]);
   });
 
+  it('takes a patch bump for a quarantine, and logs which version was withdrawn', async () => {
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '0.1.1';
+    pkg.versions[0].review = 'quarantined';
+    await importContent(client, pkg);
+    const log = await client.execute(
+      "SELECT skill_id, content_version_id FROM content_changes WHERE kind = 'version-quarantined'"
+    );
+    expect(log.rows.map((row) => ({ ...row }))).toEqual([
+      { skill_id: 'fr-a1-001', content_version_id: 'fr-a1-001@1' }
+    ]);
+  });
+
   it('needs a minor bump for a new skill', async () => {
     const pkg = approvedPackage();
     pkg.curriculumVersion = '0.1.1';
@@ -378,6 +391,21 @@ describe('retiring a skill', () => {
       retire('1.0.0', { skillId: 'fr-a1-002', carry: true }),
       'INVALID_RETIREMENT'
     );
+  });
+
+  it('refuses a replacement in another language', async () => {
+    const pkg = retire('1.0.0', {
+      skillId: 'fr-a1-002',
+      replacedBy: 'en-a1-001'
+    });
+    pkg.skills.push({
+      id: 'en-a1-001',
+      language: 'en',
+      level: 'A1',
+      review: 'approved',
+      prerequisites: []
+    });
+    await rejects(pkg, 'INVALID_RETIREMENT', /changes language/u);
   });
 
   it('refuses a skill that is retired and still in the package', async () => {
@@ -479,6 +507,52 @@ describe('the impact report', () => {
     ]);
   });
 
+  it('reports the answers lost when a stored current version is quarantined', async () => {
+    const pkg = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      question('fr-a1-001@2:q3', { change: 'new' })
+    ]);
+    await importContent(client, pkg);
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('study-two', 'learner-a', 'enrollment-a', 'fr', 'practice')"
+    );
+    await recordAttempt(client, testSession('learner-a'), {
+      studySessionId: 'study-two',
+      questionId: 'fr-a1-001@2:q3',
+      submissionKey: 'three',
+      evidenceKind: 'independent',
+      answer: 'réponse'
+    });
+    const withdrawn = structuredClone(pkg);
+    withdrawn.versions[0].review = 'quarantined';
+    expect(await contentImpact(client, withdrawn)).toMatchObject([
+      { skillId: 'fr-a1-001', answers: 1, learners: 1 }
+    ]);
+  });
+
+  it('plans successive new versions of a skill against each other', async () => {
+    const pkg = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+    ]);
+    pkg.versions.push({
+      id: 'fr-a1-001@3',
+      skillId: 'fr-a1-001',
+      version: 3,
+      review: 'approved',
+      questions: [same('fr-a1-001@3:q1', 'fr-a1-001@2:q1')]
+    });
+    await answer('fr-a1-001@1:q2', 'two', 'es');
+    expect(await contentImpact(client, pkg)).toMatchObject([
+      {
+        skillId: 'fr-a1-001',
+        reason: '1 question(s) changed or removed in fr-a1-001@3',
+        answers: 1,
+        learners: 1
+      }
+    ]);
+  });
+
   it('reports nothing for wording-only changes, and refuses an undeclared version', async () => {
     await answer('fr-a1-001@1:q1', 'one');
     expect(
@@ -495,7 +569,7 @@ describe('the impact report', () => {
     ).rejects.toMatchObject({ code: 'MISSING_CHANGE' });
   });
 
-  it('counts a retired skill that does not carry over, and not one that does', async () => {
+  it('counts a retired skill that does not carry over, and only the unmatched items of one that does', async () => {
     await answer('fr-a1-002@1:q1', 'three', 'On est ici.');
     const retire = (carry: boolean) => {
       const pkg = approvedPackage();
@@ -510,6 +584,21 @@ describe('the impact report', () => {
     expect(await contentImpact(client, retire(false))).toMatchObject([
       { skillId: 'fr-a1-002', answers: 1, learners: 1 }
     ]);
+    // fr-a1-003 has no content yet, so nothing it could count matches.
+    expect(await contentImpact(client, retire(true))).toMatchObject([
+      { skillId: 'fr-a1-002', answers: 1, learners: 1 }
+    ]);
+    const twin = approvedPackage();
+    twin.curriculumVersion = '0.2.0';
+    twin.versions.push({
+      id: 'fr-a1-003@1',
+      skillId: 'fr-a1-003',
+      version: 1,
+      review: 'approved',
+      questions: [question('fr-a1-003@1:q1')]
+    });
+    await importContent(client, twin);
+    // fr-a1-003 now holds an item with the same key, so the answer carries.
     expect(await contentImpact(client, retire(true))).toMatchObject([
       { skillId: 'fr-a1-002', answers: 0, learners: 0 }
     ]);

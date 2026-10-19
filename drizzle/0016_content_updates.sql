@@ -8,7 +8,7 @@ CREATE TABLE `content_changes` (
 	`previous_question_id` text,
 	`created_at` integer DEFAULT (unixepoch() * 1000) NOT NULL,
 	FOREIGN KEY (`curriculum_version`) REFERENCES `curriculum_imports`(`curriculum_version`) ON UPDATE no action ON DELETE no action,
-	CONSTRAINT "content_changes_kind" CHECK("content_changes"."kind" IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed'))
+	CONSTRAINT "content_changes_kind" CHECK("content_changes"."kind" IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'version-quarantined'))
 );
 --> statement-breakpoint
 CREATE INDEX `content_changes_skill` ON `content_changes` (`skill_id`);--> statement-breakpoint

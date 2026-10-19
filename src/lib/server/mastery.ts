@@ -237,7 +237,7 @@ export async function getMastery(
     if (!enrolled.rows.length) throw new StudyError('NOT_FOUND');
     const catalog = await tx.execute({
       sql: `SELECT sk.id, sk.level, l.title AS lesson_title, COALESCE(l.title, sk.id) AS title, v.id AS content_version_id, v.status
-        FROM skills sk LEFT JOIN content_versions v ON v.skill_id = sk.id AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = sk.id)
+        FROM skills sk LEFT JOIN content_versions v ON v.skill_id = sk.id AND v.id = (SELECT v2.id FROM content_versions v2 WHERE v2.skill_id = sk.id ORDER BY v2.status = 'quarantined', v2.version DESC LIMIT 1)
         LEFT JOIN lessons l ON l.content_version_id = v.id WHERE sk.language = ? AND sk.retired_at IS NULL ORDER BY sk.level, sk.id`,
       args: [language]
     });

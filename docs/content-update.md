@@ -42,7 +42,7 @@ A session keeps the version of its first answer for a skill, so a half-finished 
 
 ## Record and reversal
 
-Each import writes `content_changes` rows (skills added or retired, versions added, questions same, changed, new or removed) in its own transaction. Nothing learner-side is rewritten, so mastery is recomputed on every read and there is nothing to restore. To reverse an update, publish a newer version that restores the content under new question ids with the matching declarations. Quarantine withdraws a version; it does not roll the skill back to the earlier version for new learners beyond making the earlier version current again.
+Each import writes `content_changes` rows (skills added or retired, versions added or quarantined, questions same, changed, new or removed) in its own transaction. Nothing learner-side is rewritten, so mastery is recomputed on every read and there is nothing to restore. To reverse an update, publish a newer version that restores the content under new question ids with the matching declarations. Quarantine withdraws a version and is logged as `version-quarantined`; the newest version that is not quarantined is then what lessons, the mastery catalog, the update notice, assessments and mastery use, and the quarantined version stays readable in `content_versions` and `content_changes`.
 
 ## Production runbook (owner)
 

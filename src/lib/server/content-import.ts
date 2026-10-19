@@ -678,7 +678,15 @@ async function importVersions(
         args: [version.id]
       });
       result.quarantined += update.rowsAffected;
-      if (update.rowsAffected > 0) set.raise('patch');
+      if (update.rowsAffected > 0)
+        set.add(
+          {
+            kind: 'version-quarantined',
+            skillId: version.skillId,
+            contentVersionId: version.id
+          },
+          'patch'
+        );
     }
   }
 }

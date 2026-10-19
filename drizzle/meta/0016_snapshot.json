@@ -571,7 +571,7 @@
       "checkConstraints": {
         "content_changes_kind": {
           "name": "content_changes_kind",
-          "value": "\"content_changes\".\"kind\" IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed')"
+          "value": "\"content_changes\".\"kind\" IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'version-quarantined')"
         }
       }
     },

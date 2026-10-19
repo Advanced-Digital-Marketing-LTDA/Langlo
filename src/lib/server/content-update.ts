@@ -32,7 +32,8 @@ export type ChangeKind =
   | 'question-same'
   | 'question-changed'
   | 'question-new'
-  | 'question-removed';
+  | 'question-removed'
+  | 'version-quarantined';
 
 export type ChangeRow = {
   kind: ChangeKind;

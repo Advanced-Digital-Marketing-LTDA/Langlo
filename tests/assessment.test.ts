@@ -353,6 +353,27 @@ describe('saved placement plan', () => {
     expect(String(plan.rows[0].assessment_plan)).toContain('fr-a1-001@1:q2');
   });
 
+  it('offers a holdout another learner answered, since exposure is per learner', async () => {
+    const other = testSession('learner-b');
+    const theirs = await startAssessment(client, other, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, other, {
+      studySessionId: theirs.id,
+      questionId: 'fr-a1-001@1:q2',
+      submissionKey: randomUUID(),
+      evidenceKind: 'independent',
+      answer: 'es'
+    });
+    const { id } = await start();
+    const plan = await client.execute({
+      sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+      args: [id]
+    });
+    expect(String(plan.rows[0].assessment_plan)).toContain('fr-a1-001@1:q2');
+  });
+
   it('rejects a planned item the learner already answered in another session', async () => {
     const first = await start();
     const second = await start();

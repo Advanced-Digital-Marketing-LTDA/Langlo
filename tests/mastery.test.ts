@@ -297,6 +297,21 @@ describe('versioned grammar policy', () => {
     });
   });
 
+  it('lists the skill from the newest version that is not quarantined', async () => {
+    const entry = async () =>
+      (await getMastery(client, learner, 'fr')).find(
+        (skill) => skill.skillId === 'fr-a1-001'
+      );
+    const before = await entry();
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'quarantined')"
+    );
+    expect(await entry()).toMatchObject({
+      contentVersionId: 'fr-a1-001@1',
+      available: before?.available
+    });
+  });
+
   it('does not count replacement versions or quarantined evidence as fresh items', async () => {
     await recordAttempt(client, learner, {
       studySessionId: 'study-a',
