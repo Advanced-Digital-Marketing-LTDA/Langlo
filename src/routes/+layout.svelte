@@ -1,6 +1,20 @@
 <script lang="ts">
+  import { updated } from '$app/state';
   import { resolve } from '$app/paths';
+  import { setContext } from 'svelte';
   let { children } = $props();
+
+  let blockedAnswers = $state(0);
+  setContext<(blocked: boolean) => void>(
+    'app-version-refresh-blocked',
+    (blocked) => {
+      blockedAnswers += blocked ? 1 : -1;
+    }
+  );
+
+  $effect(() => {
+    if (updated.current && blockedAnswers === 0) window.location.reload();
+  });
 </script>
 
 <svelte:head><title>Langlo | Language Grammar Coach</title></svelte:head>

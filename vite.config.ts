@@ -6,6 +6,6 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   plugins: [
     sentrySvelteKit({ autoUploadSourceMaps: false, autoInstrument: false }),
-    sveltekit({ adapter: adapter() })
+    sveltekit({ adapter: adapter(), version: { pollInterval: 300_000 } })
   ]
 });

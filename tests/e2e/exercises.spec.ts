@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { createClient, type Client } from '@libsql/client/sqlite3';
 import {
@@ -154,30 +155,32 @@ async function signIn(page: Page, context: BrowserContext) {
   return user.id as string;
 }
 
-async function seedSession(userId: string) {
-  await withDatabase((client) =>
-    client.batch(
-      [
-        {
-          sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('exercise-enrollment', ?, 'fr', 'A1', 'en')",
-          args: [userId]
-        },
-        {
-          sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('exercise-session', ?, 'exercise-enrollment', 'fr', 'practice')",
-          args: [userId]
-        }
-      ],
-      'write'
-    )
-  );
+async function seedSession(userId: string, sessionId = 'exercise-session') {
+  await withDatabase(async (client) => {
+    await client.execute({
+      sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('exercise-enrollment', ?, 'fr', 'A1', 'en') ON CONFLICT(owner_id, language) DO NOTHING",
+      args: [userId]
+    });
+    const enrollment = await client.execute({
+      sql: 'SELECT id FROM enrollments WHERE owner_id = ? AND language = ?',
+      args: [userId, 'fr']
+    });
+    await client.execute({
+      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES (?, ?, ?, 'fr', 'practice')",
+      args: [sessionId, userId, String(enrollment.rows[0]?.id)]
+    });
+  });
 }
 
-const storedAnswers = async (userId: string) =>
+const storedAnswers = async (
+  userId: string,
+  studySessionId = 'exercise-session'
+) =>
   (
     await withDatabase((client) =>
       client.execute({
-        sql: "SELECT question_id, answer, evidence_kind FROM attempts WHERE owner_id = ? AND study_session_id = 'exercise-session' ORDER BY question_id",
-        args: [userId]
+        sql: 'SELECT question_id, answer, evidence_kind FROM attempts WHERE owner_id = ? AND study_session_id = ? ORDER BY question_id',
+        args: [userId, studySessionId]
       })
     )
   ).rows;
@@ -601,4 +604,111 @@ test('all four exercise formats render and submit without overflow', async ({
   await expect(
     page.getByText('fr-a1-001@1', { exact: true }).first()
   ).toBeVisible();
+});
+
+test('waits for a saved answer before refreshing to the detected app version', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const userId = await signIn(page, context);
+  const studySessionId = `refresh-session-${randomUUID()}`;
+  await seedSession(userId, studySessionId);
+  const currentVersion = await (
+    await page.request.get(`${base}/_app/version.json`)
+  ).json();
+  await page.goto('about:blank');
+  await page.clock.install();
+  let documentRequests = 0;
+  page.on('request', (request) => {
+    if (request.isNavigationRequest() && request.resourceType() === 'document')
+      documentRequests += 1;
+  });
+  let versionChecks = 0;
+  let reportUpdate = false;
+  await page.route('**/version.json', (route) => {
+    versionChecks += 1;
+    return route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        version: reportUpdate
+          ? 'next-synthetic-version'
+          : currentVersion.version
+      })
+    });
+  });
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=${studySessionId}`
+  );
+  expect(await storedAnswers(userId, studySessionId)).toHaveLength(0);
+  await expect(page.locator('input[name="retryAttemptId"]')).toHaveCount(0);
+  const answer = page.getByRole('radio', { name: 'suis', exact: true });
+  await answer.check();
+  const firstCheck = page.waitForResponse(
+    (response) => new URL(response.url()).pathname.endsWith('/version.json'),
+    { timeout: 5000 }
+  );
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await firstCheck;
+  await new Promise((resolve) => setTimeout(resolve, 25));
+  const initialChecks = versionChecks;
+  reportUpdate = true;
+  await page.clock.fastForward(299_999);
+  expect(versionChecks).toBe(initialChecks);
+  const versionResponse = page.waitForResponse(
+    (response) => new URL(response.url()).pathname.endsWith('/version.json'),
+    { timeout: 5000 }
+  );
+  await page.clock.fastForward(1);
+  await versionResponse;
+  await expect(answer).toBeChecked();
+  expect(documentRequests).toBe(1);
+
+  await withDatabase((client) =>
+    client.execute({
+      sql: "UPDATE study_sessions SET state = 'paused', paused_at = ? WHERE id = ? AND owner_id = ?",
+      args: [Date.now(), studySessionId, userId]
+    })
+  );
+  const submit = page.getByRole('button', {
+    name: 'Submit answer',
+    exact: true
+  });
+  await submit.click();
+  await expect(page.getByRole('alert')).toContainText(
+    'This session is paused or finished.'
+  );
+  await expect(answer).toBeChecked();
+  await expect(page.locator('input[name="retryAttemptId"]')).toHaveCount(0);
+  expect(await storedAnswers(userId, studySessionId)).toHaveLength(0);
+  expect(documentRequests).toBe(1);
+
+  await withDatabase((client) =>
+    client.execute({
+      sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ?",
+      args: [studySessionId, userId]
+    })
+  );
+  await submit.click();
+  await expect.poll(() => documentRequests, { timeout: 5000 }).toBe(2);
+  await expect(
+    page.getByText('Question 2 of 4', { exact: true })
+  ).toBeVisible();
+  expect(await storedAnswers(userId, studySessionId)).toEqual([
+    expect.objectContaining({
+      question_id: 'fr-a1-001@1:q1',
+      answer: 'suis'
+    })
+  ]);
+  const version = await withDatabase((client) =>
+    client.execute({
+      sql: 'SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ?',
+      args: [userId, studySessionId]
+    })
+  );
+  expect(version.rows).toEqual([{ content_version_id: 'fr-a1-001@1' }]);
+  const session = await (
+    await page.request.get(`${base}/api/auth/get-session`)
+  ).json();
+  expect(session.user.id).toBe(userId);
 });
