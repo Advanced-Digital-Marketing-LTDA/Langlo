@@ -6,4 +6,11 @@
 
 <svelte:head><title>Grammar skill map · Langlo</title></svelte:head>
 <h1>Grammar skill map</h1>
-<GrammarProgress tracks={data.tracks} />
+{#if data.tracks.length}
+  <nav aria-label="Enrolled languages">
+    {#each data.tracks as track (track.language)}
+      <a href={`#track-${track.language}`}>{track.language.toUpperCase()}</a>
+    {/each}
+  </nav>
+{/if}
+<GrammarProgress tracks={data.tracks} practiceCounts />
