@@ -16,6 +16,10 @@
   passed); the full suite was not run. Check reported 0 errors / 0 warnings;
   lint and formatting passed on the changed files. Node 22.22.0 with npm
   11.9.0 was used instead of the pinned Node 24.19.x.
+- Per-level tests cover debug, info, log (recorded as info), warn, error,
+  trace and a failed assert. On Node, `console.trace` and a failed
+  `console.assert` are also recorded once more at error and warn level,
+  because Node implements them through `console.error` and `console.warn`.
 - Not verified: delivery to a live GlitchTip. The owner sets
   `GLITCHTIP_ENABLE_LOGS=True` and 30-day log retention on the standalone
   resource; acceptance needs a synthetic server log and browser log visible in
