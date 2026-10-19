@@ -4,6 +4,8 @@ import type { RuntimeConfig } from '../src/lib/server/config';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
+  createDeck,
+  createNote,
   getNote,
   submitReview
 } from '../src/lib/server/flashcards';
@@ -291,6 +293,170 @@ describe('mistake-card draft generation', () => {
       await expect(
         listMistakeCandidates(db.client, other, 'study-a')
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    } finally {
+      db.close();
+    }
+  });
+});
+
+describe('mistake-card validation and explanation fallbacks', () => {
+  it('validates draft input before querying', async () => {
+    const { db } = await setup();
+    try {
+      for (const input of [
+        { attemptId: '' },
+        { attemptId: 7 },
+        { attemptId, format: 'other' },
+        { attemptId, format: 5 }
+      ]) {
+        await expect(
+          createMistakeDraft(db.client, learner, input as never)
+        ).rejects.toMatchObject({
+          code: input.attemptId === attemptId ? 'INVALID_FORMAT' : 'NOT_FOUND'
+        });
+      }
+      await expect(
+        listMistakeCandidates(db.client, learner, '')
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('falls back to the answer text when the lesson has no explanation', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "DELETE FROM lessons WHERE content_version_id = 'content-v1'"
+      );
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      expect((await getNote(db.client, learner, draft.id)).explanation).toBe(
+        'Correct answer: suis.'
+      );
+    } finally {
+      db.close();
+    }
+  });
+
+  it('truncates a long lesson explanation to the short-card bound', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute({
+        sql: "UPDATE lessons SET explanation = ? WHERE content_version_id = 'content-v1'",
+        args: ['x'.repeat(700)]
+      });
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      const explanation = (await getNote(db.client, learner, draft.id))
+        .explanation;
+      expect(Array.from(explanation)).toHaveLength(601);
+      expect(explanation.endsWith('…')).toBe(true);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rejects a cloze prompt that already contains another numbered group', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "UPDATE questions SET prompt = 'Je ___ {{c2::suis}} étudiant.' WHERE id = 'question-1'"
+      );
+      await expect(
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'cloze'
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_CLOZE' });
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('serves one draft when duplicate requests race', async () => {
+    const { db } = await setup();
+    try {
+      const [first, second] = await Promise.all([
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'basic'
+        }),
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'basic'
+        })
+      ]);
+      expect(second.id).toBe(first.id);
+      expect(first.duplicate).not.toBe(second.duplicate);
+      expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('validates note content, source metadata and explanation bounds', async () => {
+    const { db } = await setup();
+    try {
+      const deckId = 'deck-validation';
+      await createDeck(db.client, learner, { id: deckId, name: 'Validation' });
+      const validContent = { front: 'Bonjour', back: 'Hello' };
+
+      await expect(
+        createNote(db.client, learner, {
+          id: 'note-invalid-explanation',
+          sourceId: `langlo:v1:${'4'.repeat(64)}`,
+          deckId,
+          kind: 'basic',
+          content: validContent,
+          explanation: 'x'.repeat(1001)
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_EXPLANATION' });
+      await expect(
+        createNote(db.client, learner, {
+          id: 'note-invalid-source',
+          sourceId: `langlo:v1:${'5'.repeat(64)}`,
+          deckId,
+          kind: 'basic',
+          content: validContent,
+          source: { attemptId: '', skillId: '', contentVersionId: '' }
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_SOURCE' });
+
+      const manual = await createNote(db.client, learner, {
+        id: 'note-manual',
+        sourceId: `langlo:v1:${'6'.repeat(64)}`,
+        deckId,
+        kind: 'basic',
+        content: validContent
+      });
+      expect((await getNote(db.client, learner, manual.id)).source).toBeNull();
+
+      await expect(
+        updateNote(db.client, learner, 'note-missing', { kind: 'basic' })
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(
+        updateNote(db.client, learner, manual.id, { kind: 'other' })
+      ).rejects.toMatchObject({ code: 'INVALID_CONTENT' });
+      await expect(
+        updateNote(db.client, learner, manual.id, {
+          kind: 'basic',
+          content: { front: '', back: 'Hello' }
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_CONTENT' });
+      await expect(
+        updateNote(db.client, learner, manual.id, {
+          kind: 'basic',
+          content: validContent,
+          explanation: 'x'.repeat(1001)
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_EXPLANATION' });
     } finally {
       db.close();
     }
@@ -585,6 +751,9 @@ describe('mistake-card editing and rejection', () => {
       await expect(
         rejectNote(db.client, other, draft.id)
       ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(
+        approveOwnNote(db.client, other, draft.id)
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
       expect((await getNote(db.client, learner, draft.id)).status).toBe(
         'draft'
       );
@@ -769,6 +938,37 @@ describe('mistake-card pages', () => {
     } as never;
   }
 
+  it('rejects missing deck form fields before touching notes', async () => {
+    const { db, target } = await setup();
+    try {
+      const event = (fields: Record<string, string>) =>
+        formEvent({
+          params: { id: 'deck-missing' },
+          fields,
+          databaseUrl: target.databaseUrl
+        });
+      expect(await deckActions.edit(event({}))).toMatchObject({ status: 400 });
+      expect(
+        await deckActions.edit(event({ kind: 'basic', noteId: 'note-missing' }))
+      ).toMatchObject({ status: 404 });
+      expect(
+        await deckActions.edit(event({ kind: 'cloze', noteId: 'note-missing' }))
+      ).toMatchObject({ status: 404 });
+      expect(await deckActions.approve(event({}))).toMatchObject({
+        status: 404
+      });
+      expect(await deckActions.reject(event({}))).toMatchObject({
+        status: 404
+      });
+      expect(await deckActions.addNote(event({}))).toMatchObject({
+        status: 400
+      });
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
   it('keeps a results-page mistake and edits or rejects it on the deck page', async () => {
     const { db, target } = await setup();
     try {
@@ -787,6 +987,11 @@ describe('mistake-card pages', () => {
           })
         )
       ).toEqual({ saved: true });
+      expect(
+        await resultsActions.keep(
+          formEvent({ databaseUrl: target.databaseUrl })
+        )
+      ).toMatchObject({ status: 404 });
 
       const noteRow = (
         await db.client.execute(
@@ -826,6 +1031,39 @@ describe('mistake-card pages', () => {
         status: 400,
         data: { message: expect.stringContaining('basic front/back') }
       });
+      expect(
+        await deckActions.addNote(
+          formEvent({
+            params: { id: deckId },
+            fields: {
+              kind: 'cloze',
+              text: 'Je {{c1::suis}} ici',
+              explanation: 'Cloze note'
+            },
+            databaseUrl: target.databaseUrl
+          })
+        )
+      ).toEqual({ saved: true });
+      const clozeNote = (
+        await db.client.execute(
+          "SELECT id FROM native_flashcard_notes WHERE owner_id = ? AND kind = 'cloze'",
+          [learner.userId]
+        )
+      ).rows[0];
+      expect(
+        await deckActions.edit(
+          formEvent({
+            params: { id: deckId },
+            fields: {
+              noteId: String(clozeNote.id),
+              kind: 'cloze',
+              text: 'Je {{c1::suis}} ici.',
+              explanation: 'Cloze note edited'
+            },
+            databaseUrl: target.databaseUrl
+          })
+        )
+      ).toEqual({ saved: true });
       expect(
         await deckActions.reject(
           formEvent({
