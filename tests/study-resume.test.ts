@@ -72,7 +72,8 @@ const importVersionTwo = async () => {
         id: 'fr-a1-001@2:q1',
         format: 'typed-blank',
         prompt: 'Nous ___ ici.',
-        answer: 'sommes'
+        answer: 'sommes',
+        change: 'new'
       }
     ]
   });
@@ -368,7 +369,69 @@ describe('lesson', () => {
       examples: lesson.examples,
       references: lesson.references,
       explanationLanguage: 'en',
-      englishFallback: false
+      englishFallback: false,
+      newerVersionAvailable: false
+    });
+  });
+
+  describe('when a newer lesson version is published', () => {
+    /** Version 2 of fr-a1-001 with its own lesson, at a new curriculum version. */
+    const publishLessonTwo = async (review = 'approved', version = '0.2.0') => {
+      const pkg = approvedPackage();
+      Object.assign(pkg.versions[0], { lesson });
+      Object.assign(pkg.versions[0].questions[1], { holdout: true });
+      pkg.curriculumVersion = version;
+      pkg.versions.push({
+        id: 'fr-a1-001@2',
+        skillId: 'fr-a1-001',
+        version: 2,
+        review,
+        lesson: { ...lesson, title: 'Être, corrected' },
+        questions: [
+          {
+            id: 'fr-a1-001@2:q1',
+            format: 'typed-blank',
+            prompt: 'Nous ___ ici.',
+            answer: 'sommes',
+            change: 'new'
+          }
+        ]
+      });
+      await importContent(client, pkg);
+    };
+
+    it('tells a session finishing the earlier version, while a fresh read shows the newest', async () => {
+      await attempt('k-notice', 'fr-a1-001@1:q1');
+      await publishLessonTwo();
+      expect(
+        await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+      ).toMatchObject({
+        contentVersionId: 'fr-a1-001@1',
+        newerVersionAvailable: true
+      });
+      expect(await getLesson(client, ownerA, 'fr', 'fr-a1-001')).toMatchObject({
+        contentVersionId: 'fr-a1-001@2',
+        newerVersionAvailable: false
+      });
+    });
+
+    it('stays quiet when the newer version has no lesson', async () => {
+      await attempt('k-quiet', 'fr-a1-001@1:q1');
+      await importVersionTwo();
+      expect(
+        await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+      ).toMatchObject({ newerVersionAvailable: false });
+    });
+
+    it('stays quiet when the newer version is withdrawn', async () => {
+      await attempt('k-withdrawn', 'fr-a1-001@1:q1');
+      await publishLessonTwo('quarantined');
+      expect(
+        await getSessionLesson(client, ownerA, 'study-a', 'fr-a1-001')
+      ).toMatchObject({
+        contentVersionId: 'fr-a1-001@1',
+        newerVersionAvailable: false
+      });
     });
   });
 

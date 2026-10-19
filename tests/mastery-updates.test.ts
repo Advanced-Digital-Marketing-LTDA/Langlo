@@ -122,6 +122,7 @@ describe('mastery after a content update', () => {
       ])
     );
     expect(await skill('fr-a1-001')).toMatchObject({
+      contentVersionId: 'fr-a1-001@2',
       independentItems: 0,
       status: 'unknown'
     });

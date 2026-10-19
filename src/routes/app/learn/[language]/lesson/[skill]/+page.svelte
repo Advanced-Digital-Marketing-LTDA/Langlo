@@ -28,6 +28,13 @@
     </p>{/if}
   <p><a href="/app/reports">Your reports</a></p>
 
+  {#if data.lesson.newerVersionAvailable}
+    <p class="callout" role="status">
+      This lesson was updated. You are finishing the version you started; your
+      next session uses the new one.
+    </p>
+  {/if}
+
   {#if data.lesson.englishFallback}
     <p class="callout" role="status">
       This lesson is only available in English for now. Your explanation

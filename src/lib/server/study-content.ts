@@ -188,6 +188,30 @@ async function lessonRow(client: Pick<Client, 'execute'>, read: LessonRead) {
   return row;
 }
 
+/**
+ * True when a session is finishing an earlier version of the lesson while a
+ * newer, available one with a lesson has been published: the page says so, and the learner's
+ * next session starts on the newer version. Without a session the newest is
+ * what is shown, so there is nothing to say.
+ */
+async function newerVersionAvailable(
+  client: Pick<Client, 'execute'>,
+  read: LessonRead,
+  shown: Row
+) {
+  if (read.studySessionId === undefined) return false;
+  const newest = await client.execute({
+    sql: 'SELECT v.id, v.status FROM content_versions v JOIN lessons l ON l.content_version_id = v.id WHERE v.skill_id = ? AND v.language = ? ORDER BY v.version DESC LIMIT 1',
+    args: [String(read.skillId), read.language]
+  });
+  const row = newest.rows[0];
+  return (
+    row !== undefined &&
+    String(row.id) !== String(shown.version_id) &&
+    row.status !== 'quarantined'
+  );
+}
+
 /** The lesson for an enrollment's explanation language, as the page shows it. */
 async function readLesson(client: Client, read: LessonRead) {
   if (typeof read.language !== 'string') throw new StudyError('NOT_FOUND');
@@ -198,6 +222,7 @@ async function readLesson(client: Client, read: LessonRead) {
   if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
   const row = await lessonRow(client, read);
   return {
+    newerVersionAvailable: await newerVersionAvailable(client, read, row),
     skillId: String(read.skillId),
     contentVersionId: String(row.version_id),
     title: String(row.title),
