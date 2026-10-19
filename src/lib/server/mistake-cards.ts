@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import { createSourceId } from './db/source-id';
 import { FALLBACK_EVALUATOR_VERSION } from './evaluation/fallback';
 import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
@@ -235,6 +235,23 @@ function validateDraftInput(input: CreateMistakeDraftInput): DraftInput {
   return { attemptId: input.attemptId, format: format as DraftFormat };
 }
 
+function draftSource(row: MistakeRow) {
+  return {
+    attemptId: row.attemptId,
+    skillId: row.skillId,
+    contentVersionId: row.contentVersionId
+  };
+}
+
+function draftSourceId(row: MistakeRow, learner: LearnerSession): string {
+  return createSourceId({
+    ownerId: learner.userId,
+    language: row.language,
+    skillId: row.skillId,
+    canonicalMistake: `practice-mistake:${row.attemptId}`
+  });
+}
+
 async function findOrCreateDraft(
   client: Client,
   learner: LearnerSession,
@@ -248,19 +265,10 @@ async function findOrCreateDraft(
   const deckId = await ensureMistakeDeck(client, learner, row.language);
   const common = {
     id: `note:${randomUUID()}`,
-    sourceId: createSourceId({
-      ownerId: learner.userId,
-      language: row.language,
-      skillId: row.skillId,
-      canonicalMistake: `practice-mistake:${row.attemptId}`
-    }),
+    sourceId: draftSourceId(row, learner),
     deckId,
     explanation: explanationFor(row, row.expectedAnswer as string),
-    source: {
-      attemptId: row.attemptId,
-      skillId: row.skillId,
-      contentVersionId: row.contentVersionId
-    }
+    source: draftSource(row)
   };
   try {
     const created =
@@ -300,6 +308,18 @@ export async function createMistakeDraft(
   const row = await readMistake(client, learner, attemptId);
   assertEligible(row);
   return findOrCreateDraft(client, learner, row, format);
+}
+
+function candidateFrom(row: Row) {
+  return {
+    attemptId: String(row.attempt_id),
+    skillId: String(row.skill_id),
+    prompt: String(row.prompt),
+    answer: String(row.answer),
+    draftNoteId: row.draft_note_id === null ? null : String(row.draft_note_id),
+    draftStatus:
+      row.draft_note_status === null ? null : String(row.draft_note_status)
+  };
 }
 
 /** The confirmed mistakes of one practice session, with any draft already kept. */
@@ -344,13 +364,5 @@ export async function listMistakeCandidates(
       PREPARED_EVALUATOR_VERSION
     ]
   });
-  return result.rows.map((row) => ({
-    attemptId: String(row.attempt_id),
-    skillId: String(row.skill_id),
-    prompt: String(row.prompt),
-    answer: String(row.answer),
-    draftNoteId: row.draft_note_id === null ? null : String(row.draft_note_id),
-    draftStatus:
-      row.draft_note_status === null ? null : String(row.draft_note_status)
-  }));
+  return result.rows.map(candidateFrom);
 }

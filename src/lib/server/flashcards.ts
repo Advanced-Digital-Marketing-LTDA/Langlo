@@ -159,15 +159,12 @@ function isSourceField(value: unknown): value is string {
 function validateNoteSource(value: unknown): NoteSource | null {
   if (value === undefined) return null;
   if (!isRecord(value)) throw new FlashcardError('INVALID_SOURCE');
-  if (!isSourceField(value.attemptId))
-    throw new FlashcardError('INVALID_SOURCE');
-  if (!isSourceField(value.skillId)) throw new FlashcardError('INVALID_SOURCE');
-  if (!isSourceField(value.contentVersionId))
-    throw new FlashcardError('INVALID_SOURCE');
+  const fields = [value.attemptId, value.skillId, value.contentVersionId];
+  if (!fields.every(isSourceField)) throw new FlashcardError('INVALID_SOURCE');
   return {
-    attemptId: value.attemptId,
-    skillId: value.skillId,
-    contentVersionId: value.contentVersionId
+    attemptId: value.attemptId as string,
+    skillId: value.skillId as string,
+    contentVersionId: value.contentVersionId as string
   };
 }
 
@@ -320,25 +317,33 @@ export async function createDeck(
 
 type WriteTransaction = Awaited<ReturnType<typeof beginWrite>>;
 
+function requireIdentityText(value: unknown) {
+  if (!isNonEmptyBoundedText(value, maxCardTextLength))
+    throw new FlashcardError('INVALID_NOTE');
+}
+
 function validateNoteIdentity(input: CreateNoteInput) {
   if (!isRecord(input)) throw new FlashcardError('INVALID_NOTE');
-  if (!isNonEmptyBoundedText(input.id, maxCardTextLength))
-    throw new FlashcardError('INVALID_NOTE');
-  if (!isNonEmptyBoundedText(input.deckId, maxCardTextLength))
-    throw new FlashcardError('INVALID_NOTE');
+  requireIdentityText(input.id);
+  requireIdentityText(input.deckId);
   if (!isSourceId(input.sourceId))
     throw new FlashcardError('INVALID_SOURCE_ID');
 }
 
+type NewNote = {
+  input: CreateNoteInput;
+  explanation: string;
+  source: NoteSource | null;
+  cardId: string;
+  now: number;
+};
+
 async function insertNoteAndCard(
   tx: WriteTransaction,
   session: LearnerSession,
-  input: CreateNoteInput,
-  explanation: string,
-  source: NoteSource | null,
-  cardId: string,
-  now: number
+  note: NewNote
 ) {
+  const { input, explanation, source, cardId, now } = note;
   const deck = await tx.execute({
     sql: 'SELECT 1 FROM native_flashcard_decks WHERE id = ? AND owner_id = ?',
     args: [input.deckId, session.userId]
@@ -386,15 +391,13 @@ export async function createNote(
   const now = newCard().due.getTime();
   const tx = await beginWrite(client);
   try {
-    await insertNoteAndCard(
-      tx,
-      session,
+    await insertNoteAndCard(tx, session, {
       input,
       explanation,
       source,
       cardId,
       now
-    );
+    });
     await tx.commit();
     return { id: input.id, cardId, status: 'draft' as const };
   } catch (error) {
