@@ -41,7 +41,8 @@ Leave the DSN empty to disable telemetry transmission.
 ## Verify the connection
 
 Use synthetic data to confirm browser and server errors reach the project,
-sampled performance transactions appear, and email alerts arrive. Langlo
+sampled performance transactions appear, logs appear in the project's Logs
+view, and email alerts arrive. Langlo
 samples performance traces at 10% and forwards the event and span fields captured
 by the Sentry SDK without Langlo-side filtering. Langlo's custom telemetry
 scrubbers have been temporarily removed. The pass-through change did not alter
@@ -49,6 +50,19 @@ SDK capture settings. Treat telemetry as potentially containing learner
 content, secrets, request metadata, and client identifiers. Langlo uses the
 Sentry-compatible SDK with the static transaction lifecycle for GlitchTip 6
 compatibility.
+
+## Logs
+
+Langlo registers the SDK's console log capture on the server and in the
+browser, so every `console.*` call is sent to GlitchTip as a log at its own
+level, with no Langlo-side filtering. This is intentional for the alpha and
+carries the same exposure as the other telemetry above. The SDK in use needs
+no `enableLogs` option.
+
+The GlitchTip service must accept logs: set `GLITCHTIP_ENABLE_LOGS=True` on the
+standalone resource and redeploy it, and set log retention to 30 days there.
+To verify, call `console.warn` with a recognizable message from the deployed
+server and from a browser session, then find both in the Logs view.
 
 Langlo's tests validate SDK configuration and verify that no custom telemetry
 field filtering is configured. They do not prove live event ingestion, email

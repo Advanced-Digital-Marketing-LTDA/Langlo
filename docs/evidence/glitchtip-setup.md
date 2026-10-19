@@ -1,5 +1,26 @@
 # GlitchTip setup evidence
 
+## Console log capture (2026-10-19)
+
+- No logs reached GlitchTip because neither SDK initializer registered log
+  capture and nothing called `Sentry.logger`. `@sentry/sveltekit` 11.8.0 has no
+  `enableLogs` option, so none was added.
+- Registered `Sentry.consoleLoggingIntegration()` (all levels, no filtering) in
+  `src/hooks.server.ts` and `src/hooks.client.ts`, per the owner's decisions of
+  2026-10-19: all levels, pass-through, server and browser.
+- Red then green: the new server test (integration registered, and a
+  `console.warn` produces a `warn` log) and the updated client and
+  server-integration tests failed before the change and passed after it. Only
+  the focused Sentry test files were run (hooks server and client, server
+  sessions, Vite config, tracing spans, lint runtime, signup boundary: all
+  passed); the full suite was not run. Check reported 0 errors / 0 warnings;
+  lint and formatting passed on the changed files. Node 22.22.0 with npm
+  11.9.0 was used instead of the pinned Node 24.19.x.
+- Not verified: delivery to a live GlitchTip. The owner sets
+  `GLITCHTIP_ENABLE_LOGS=True` and 30-day log retention on the standalone
+  resource; acceptance needs a synthetic server log and browser log visible in
+  the Logs view.
+
 ## SvelteKit 3 browser tracing variant fix (2026-10-18)
 
 - Added the Sentry Vite resolver before SvelteKit so `@sentry/sveltekit` selects

@@ -22,13 +22,15 @@ Sentry.init({
       : undefined,
   tracesSampleRate: 0.25,
   traceLifecycle: 'static',
-  integrations: (integrations) =>
-    integrations.flatMap((integration) => {
+  integrations: (integrations) => [
+    ...integrations.flatMap((integration) => {
       if (integration.name === 'ProcessSession') return [];
       return integration.name === 'Http'
         ? [Sentry.httpIntegration({ sessions: false })]
         : [integration];
-    })
+    }),
+    Sentry.consoleLoggingIntegration()
+  ]
 });
 
 const appHandle: Handle = async ({ event, resolve }) => {

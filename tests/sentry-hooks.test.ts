@@ -19,3 +19,20 @@ it('initializes server telemetry without Langlo field filtering', async () => {
   expect(options).not.toHaveProperty('beforeSendTransaction');
   expect(options).not.toHaveProperty('beforeSendSpan');
 });
+
+it('registers console log capture and turns console calls into logs', () => {
+  const client = Sentry.getClient();
+  expect(client?.getIntegrationByName('ConsoleLogs')).toBeDefined();
+
+  const captured: { level: string; message: unknown }[] = [];
+  const unsubscribe = client?.on('afterCaptureLog', (log) =>
+    captured.push({ level: log.level, message: log.message })
+  );
+  console.warn('glitchtip-log-delivery-probe');
+  unsubscribe?.();
+
+  expect(captured).toContainEqual({
+    level: 'warn',
+    message: 'glitchtip-log-delivery-probe'
+  });
+});
