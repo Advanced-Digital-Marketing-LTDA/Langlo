@@ -185,6 +185,88 @@ const storedAnswers = async (
     )
   ).rows;
 
+async function startRefreshScenario(page: Page, context: BrowserContext) {
+  const userId = await signIn(page, context);
+  const studySessionId = `refresh-session-${randomUUID()}`;
+  await seedSession(userId, studySessionId);
+  const currentVersion = await (
+    await page.request.get(`${base}/_app/version.json`)
+  ).json();
+  await page.goto('about:blank');
+  await page.clock.install();
+  let documentRequests = 0;
+  page.on('request', (request) => {
+    if (request.isNavigationRequest() && request.resourceType() === 'document')
+      documentRequests += 1;
+  });
+  let versionChecks = 0;
+  let reportUpdate = false;
+  await page.route('**/version.json', (route) => {
+    versionChecks += 1;
+    return route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        version: reportUpdate
+          ? 'next-synthetic-version'
+          : currentVersion.version
+      })
+    });
+  });
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=${studySessionId}`
+  );
+  return {
+    userId,
+    studySessionId,
+    documentRequests: () => documentRequests,
+    versionChecks: () => versionChecks,
+    reportUpdate: () => {
+      reportUpdate = true;
+    }
+  };
+}
+
+async function detectUpdateAfterFiveMinutes(
+  page: Page,
+  scenario: Awaited<ReturnType<typeof startRefreshScenario>>
+) {
+  const firstCheck = page.waitForResponse(
+    (response) => new URL(response.url()).pathname.endsWith('/version.json'),
+    { timeout: 5000 }
+  );
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await firstCheck;
+  await new Promise((resolve) => setTimeout(resolve, 25));
+  const initialChecks = scenario.versionChecks();
+  scenario.reportUpdate();
+  await page.clock.fastForward(299_999);
+  expect(scenario.versionChecks()).toBe(initialChecks);
+  const versionResponse = page.waitForResponse(
+    (response) => new URL(response.url()).pathname.endsWith('/version.json'),
+    { timeout: 5000 }
+  );
+  await page.clock.fastForward(1);
+  await versionResponse;
+}
+
+async function setSessionState(
+  userId: string,
+  studySessionId: string,
+  state: 'active' | 'paused'
+) {
+  await withDatabase((client) =>
+    client.execute({
+      sql: 'UPDATE study_sessions SET state = ?, paused_at = ? WHERE id = ? AND owner_id = ?',
+      args: [
+        state,
+        state === 'paused' ? Date.now() : null,
+        studySessionId,
+        userId
+      ]
+    })
+  );
+}
+
 /** Exercise the JSON boundary with the same authenticated browser session. */
 async function expectBlankAttemptsRefused(page: Page) {
   for (const answer of ['', ' \n\t\u00a0']) {
@@ -611,65 +693,17 @@ test('waits for a saved answer before refreshing to the detected app version', a
   context
 }) => {
   test.setTimeout(40000);
-  const userId = await signIn(page, context);
-  const studySessionId = `refresh-session-${randomUUID()}`;
-  await seedSession(userId, studySessionId);
-  const currentVersion = await (
-    await page.request.get(`${base}/_app/version.json`)
-  ).json();
-  await page.goto('about:blank');
-  await page.clock.install();
-  let documentRequests = 0;
-  page.on('request', (request) => {
-    if (request.isNavigationRequest() && request.resourceType() === 'document')
-      documentRequests += 1;
-  });
-  let versionChecks = 0;
-  let reportUpdate = false;
-  await page.route('**/version.json', (route) => {
-    versionChecks += 1;
-    return route.fulfill({
-      contentType: 'application/json',
-      body: JSON.stringify({
-        version: reportUpdate
-          ? 'next-synthetic-version'
-          : currentVersion.version
-      })
-    });
-  });
-  await page.goto(
-    `${base}/app/learn/fr/lesson/fr-a1-001?session=${studySessionId}`
-  );
+  const scenario = await startRefreshScenario(page, context);
+  const { userId, studySessionId } = scenario;
   expect(await storedAnswers(userId, studySessionId)).toHaveLength(0);
   await expect(page.locator('input[name="retryAttemptId"]')).toHaveCount(0);
   const answer = page.getByRole('radio', { name: 'suis', exact: true });
   await answer.check();
-  const firstCheck = page.waitForResponse(
-    (response) => new URL(response.url()).pathname.endsWith('/version.json'),
-    { timeout: 5000 }
-  );
-  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await firstCheck;
-  await new Promise((resolve) => setTimeout(resolve, 25));
-  const initialChecks = versionChecks;
-  reportUpdate = true;
-  await page.clock.fastForward(299_999);
-  expect(versionChecks).toBe(initialChecks);
-  const versionResponse = page.waitForResponse(
-    (response) => new URL(response.url()).pathname.endsWith('/version.json'),
-    { timeout: 5000 }
-  );
-  await page.clock.fastForward(1);
-  await versionResponse;
+  await detectUpdateAfterFiveMinutes(page, scenario);
   await expect(answer).toBeChecked();
-  expect(documentRequests).toBe(1);
+  expect(scenario.documentRequests()).toBe(1);
 
-  await withDatabase((client) =>
-    client.execute({
-      sql: "UPDATE study_sessions SET state = 'paused', paused_at = ? WHERE id = ? AND owner_id = ?",
-      args: [Date.now(), studySessionId, userId]
-    })
-  );
+  await setSessionState(userId, studySessionId, 'paused');
   const submit = page.getByRole('button', {
     name: 'Submit answer',
     exact: true
@@ -681,16 +715,13 @@ test('waits for a saved answer before refreshing to the detected app version', a
   await expect(answer).toBeChecked();
   await expect(page.locator('input[name="retryAttemptId"]')).toHaveCount(0);
   expect(await storedAnswers(userId, studySessionId)).toHaveLength(0);
-  expect(documentRequests).toBe(1);
+  expect(scenario.documentRequests()).toBe(1);
 
-  await withDatabase((client) =>
-    client.execute({
-      sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ?",
-      args: [studySessionId, userId]
-    })
-  );
+  await setSessionState(userId, studySessionId, 'active');
   await submit.click();
-  await expect.poll(() => documentRequests, { timeout: 5000 }).toBe(2);
+  await expect
+    .poll(() => scenario.documentRequests(), { timeout: 5000 })
+    .toBe(2);
   await expect(
     page.getByText('Question 2 of 4', { exact: true })
   ).toBeVisible();
@@ -711,4 +742,75 @@ test('waits for a saved answer before refreshing to the detected app version', a
     await page.request.get(`${base}/api/auth/get-session`)
   ).json();
   expect(session.user.id).toBe(userId);
+});
+
+test('releases the refresh block when a dirty exercise is destroyed', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const scenario = await startRefreshScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await detectUpdateAfterFiveMinutes(page, scenario);
+  expect(scenario.documentRequests()).toBe(1);
+
+  await page.getByRole('link', { name: 'Your reports', exact: true }).click();
+  await expect
+    .poll(() => scenario.documentRequests(), { timeout: 5000 })
+    .toBe(2);
+  await expect(
+    page.getByRole('heading', { name: 'Your content reports', exact: true })
+  ).toBeVisible();
+});
+
+test('keeps refresh blocked until every mounted exercise is clear', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const scenario = await startRefreshScenario(page, context);
+  const { userId, studySessionId } = scenario;
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await feedback.getByText('Try this question again (assisted)').click();
+  await expect(page.locator('input[name="studySessionId"]')).toHaveCount(2);
+  await feedback.getByRole('radio', { name: 'suis', exact: true }).check();
+  const currentAnswer = page.getByRole('textbox', {
+    name: 'Your answer',
+    exact: true
+  });
+  await currentAnswer.fill('es');
+  await detectUpdateAfterFiveMinutes(page, scenario);
+  expect(scenario.documentRequests()).toBe(1);
+
+  await feedback
+    .getByRole('button', { name: 'Submit assisted retry', exact: true })
+    .click();
+  await expect(
+    feedback.getByRole('radio', { name: 'suis', exact: true })
+  ).not.toBeChecked();
+  await expect(currentAnswer).toHaveValue('es');
+  expect(scenario.documentRequests()).toBe(1);
+
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect
+    .poll(() => scenario.documentRequests(), { timeout: 5000 })
+    .toBe(2);
+  await expect(
+    page.getByText('Question 3 of 4', { exact: true })
+  ).toBeVisible();
+  const answers = await storedAnswers(userId, studySessionId);
+  expect(
+    answers
+      .filter(({ question_id }) => question_id === 'fr-a1-001@1:q1')
+      .map(({ answer }) => answer)
+  ).toEqual(['suis', 'suis']);
+  expect(answers).toContainEqual(
+    expect.objectContaining({ question_id: 'fr-a1-001@1:q2', answer: 'es' })
+  );
 });
