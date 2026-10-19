@@ -617,6 +617,24 @@ describe('mistake-card editing and rejection', () => {
     }
   });
 
+  it('rejects a cloze answer containing a hint separator', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "UPDATE questions SET answer = 'suis::hint' WHERE id = 'question-1'"
+      );
+      await expect(
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'cloze'
+        })
+      ).rejects.toMatchObject({ code: 'INVALID_CLOZE' });
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
   it('keeps the fallback verdict authoritative over a newer prepared one', async () => {
     const { db } = await setup();
     try {
@@ -640,6 +658,50 @@ describe('mistake-card editing and rejection', () => {
     }
   });
 
+  it('rejects source metadata that does not match an owner-bound attempt', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-prov', 'learner-a', 'Prov')"
+      );
+      await db.client.execute(
+        "INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES ('deck-prov-b', 'learner-b', 'Prov B')"
+      );
+      const insert = (
+        id: string,
+        sourceId: string,
+        owner: string,
+        deck: string,
+        skill: string
+      ) =>
+        db.client.execute({
+          sql: 'INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, source_attempt_id, source_skill_id, source_content_version_id) VALUES (?, ?, ?, ?, \'basic\', \'{"front":"a","back":"b"}\', \'attempt-a\', ?, \'content-v1\')',
+          args: [id, `langlo:v1:${sourceId}`, owner, deck, skill]
+        });
+      await expect(
+        insert(
+          'note-prov-skill',
+          '7'.repeat(64),
+          'learner-a',
+          'deck-prov',
+          'other-skill'
+        )
+      ).rejects.toThrow(/owner attempt/u);
+      await expect(
+        insert(
+          'note-prov-owner',
+          '8'.repeat(64),
+          'learner-b',
+          'deck-prov-b',
+          'fr-articles'
+        )
+      ).rejects.toThrow(/owner attempt/u);
+      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
   it('rejects partially persisted source metadata from direct SQL', async () => {
     const { db } = await setup();
     try {
@@ -651,7 +713,7 @@ describe('mistake-card editing and rejection', () => {
           sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, status, source_attempt_id) VALUES ('note-direct-partial', ?, 'learner-a', 'deck-direct', 'basic', '{\"front\":\"a\",\"back\":\"b\"}', 'draft', 'attempt-a')",
           args: [`langlo:v1:${'2'.repeat(64)}`]
         })
-      ).rejects.toThrow(/source fields/u);
+      ).rejects.toThrow(/source fields|owner attempt/u);
 
       await db.client.execute({
         sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json) VALUES ('note-direct-null', ?, 'learner-a', 'deck-direct', 'basic', '{\"front\":\"a\",\"back\":\"b\"}')",
