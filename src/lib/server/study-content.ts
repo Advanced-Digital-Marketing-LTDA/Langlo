@@ -170,17 +170,30 @@ type LessonRead = {
  * The version of a skill with its lesson, which must exist and be available:
  * the session's version when a session is given, the newest otherwise.
  */
-async function lessonRow(client: Pick<Client, 'execute'>, read: LessonRead) {
+async function lessonRow(
+  client: Pick<Client, 'execute'>,
+  read: LessonRead,
+  explanationLanguage: string
+) {
   if (typeof read.skillId !== 'string') throw new StudyError('NOT_FOUND');
   const { userId, studySessionId, language, skillId } = read;
   const found = await client.execute({
-    sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs
+    sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs,
+            t.title AS t_title, t.explanation AS t_explanation, t.examples AS t_examples, t.refs AS t_refs
           FROM ${studySessionId === undefined ? latestVersion : sessionVersion} v
-          LEFT JOIN lessons l ON l.content_version_id = v.id`,
+          LEFT JOIN lessons l ON l.content_version_id = v.id
+          LEFT JOIN lesson_translations t ON t.content_version_id = v.id AND t.explanation_language = ?`,
     args:
       studySessionId === undefined
-        ? [skillId, language]
-        : [userId, studySessionId, skillId, skillId, language]
+        ? [skillId, language, explanationLanguage]
+        : [
+            userId,
+            studySessionId,
+            skillId,
+            skillId,
+            language,
+            explanationLanguage
+          ]
   });
   const row = found.rows[0];
   assertAvailable(row);
@@ -196,22 +209,29 @@ async function readLesson(client: Client, read: LessonRead) {
     args: [read.userId, read.language]
   });
   if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
-  const row = await lessonRow(client, read);
+  const chosen = String(enrolled.rows[0].explanation_language);
+  const row = await lessonRow(client, read, chosen);
+  const translated = chosen !== 'en' && row.t_title !== null;
+  const pick = (own: string, english: string) =>
+    String(translated ? row[own] : row[english]);
   return {
     skillId: String(read.skillId),
     contentVersionId: String(row.version_id),
-    title: String(row.title),
-    explanation: String(row.explanation),
-    examples: JSON.parse(String(row.examples)) as Record<string, string>[],
-    references: JSON.parse(String(row.refs)) as string[],
-    explanationLanguage: 'en',
-    englishFallback: enrolled.rows[0].explanation_language !== 'en'
+    title: pick('t_title', 'title'),
+    explanation: pick('t_explanation', 'explanation'),
+    examples: JSON.parse(pick('t_examples', 'examples')) as Record<
+      string,
+      string
+    >[],
+    references: JSON.parse(pick('t_refs', 'refs')) as string[],
+    explanationLanguage: translated ? chosen : 'en',
+    englishFallback: chosen !== 'en' && !translated
   };
 }
 
 /**
- * The stored lesson for a skill in a track the caller is enrolled in. Authored
- * explanations are English only; for another enrollment language the English
+ * The stored lesson for a skill in a track the caller is enrolled in, in the
+ * enrollment's explanation language. Without a stored translation the English
  * text is returned with `englishFallback` set so the page can say so.
  */
 export function getLesson(

@@ -75,6 +75,8 @@ export type ContentPackage = {
     questions: ContentQuestion[];
     // Optional so packages without lessons keep their fingerprints.
     lesson?: ContentLesson | undefined;
+    // Explanations in other languages; only valid next to the English lesson.
+    translations?: { pt?: ContentLesson | undefined } | undefined;
   }[];
 };
 
@@ -173,7 +175,8 @@ const packageShape = z.object({
       version: z.int().min(1),
       review: z.unknown().optional(),
       questions: z.array(questionShape).min(1),
-      lesson: lessonShape.optional()
+      lesson: lessonShape.optional(),
+      translations: z.object({ pt: lessonShape.optional() }).optional()
     })
   )
 });
@@ -522,7 +525,11 @@ const canonicalLesson = (lesson: ContentLesson) => ({
 // A lesson is immutable once stored: a different text under the same version
 // is a conflict. A version imported before it had a lesson may gain one.
 async function importLesson(tx: Transaction, version: PackageVersion) {
-  if (version.lesson === undefined) return;
+  if (version.lesson === undefined) {
+    if (hasTranslations(version))
+      fail('INVALID_PACKAGE', `translations without lesson ${version.id}`);
+    return;
+  }
   const lesson = canonicalLesson(version.lesson);
   const hash = fingerprint(lesson);
   const stored = await tx.execute({
@@ -532,17 +539,49 @@ async function importLesson(tx: Transaction, version: PackageVersion) {
   if (stored.rows[0]) {
     if (stored.rows[0].fingerprint !== hash)
       fail('CONTENT_CONFLICT', `lesson ${version.id}`);
+  } else
+    await tx.execute({
+      sql: 'INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) SELECT id, skill_id, language, ?, ?, ?, ?, ? FROM content_versions WHERE id = ?',
+      args: [
+        lesson.title,
+        lesson.explanation,
+        JSON.stringify(lesson.examples),
+        JSON.stringify(lesson.references),
+        hash,
+        version.id
+      ]
+    });
+  await importTranslations(tx, version);
+}
+
+const hasTranslations = (version: PackageVersion) =>
+  version.translations?.pt !== undefined;
+
+// A translation is immutable like the lesson it explains: a different text
+// under the same version and language is a conflict.
+async function importTranslations(tx: Transaction, version: PackageVersion) {
+  const pt = version.translations?.pt;
+  if (pt === undefined) return;
+  const lesson = canonicalLesson(pt);
+  const hash = fingerprint(lesson);
+  const stored = await tx.execute({
+    sql: "SELECT fingerprint FROM lesson_translations WHERE content_version_id = ? AND explanation_language = 'pt'",
+    args: [version.id]
+  });
+  if (stored.rows[0]) {
+    if (stored.rows[0].fingerprint !== hash)
+      fail('CONTENT_CONFLICT', `lesson translation pt ${version.id}`);
     return;
   }
   await tx.execute({
-    sql: 'INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) SELECT id, skill_id, language, ?, ?, ?, ?, ? FROM content_versions WHERE id = ?',
+    sql: "INSERT INTO lesson_translations (content_version_id, explanation_language, title, explanation, examples, refs, fingerprint) VALUES (?, 'pt', ?, ?, ?, ?, ?)",
     args: [
+      version.id,
       lesson.title,
       lesson.explanation,
       JSON.stringify(lesson.examples),
       JSON.stringify(lesson.references),
-      hash,
-      version.id
+      hash
     ]
   });
 }

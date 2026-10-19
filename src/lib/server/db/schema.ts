@@ -366,6 +366,41 @@ export const lessons = sqliteTable(
   ]
 );
 
+// A lesson's explanation in another language, one row per version and language.
+// The English `lessons` row stays the source; a missing row means no translation.
+export const lessonTranslations = sqliteTable(
+  'lesson_translations',
+  {
+    contentVersionId: text('content_version_id')
+      .notNull()
+      .references(() => lessons.contentVersionId),
+    explanationLanguage: text('explanation_language', {
+      enum: ['pt']
+    }).notNull(),
+    title: text('title').notNull(),
+    explanation: text('explanation').notNull(),
+    // JSON array of objects whose values are strings.
+    examples: text('examples').notNull(),
+    // JSON array of strings.
+    refs: text('refs').notNull(),
+    fingerprint: text('fingerprint').notNull()
+  },
+  (table) => [
+    primaryKey({
+      columns: [table.contentVersionId, table.explanationLanguage]
+    }),
+    check(
+      'lesson_translations_language',
+      sql`${table.explanationLanguage} IN ('pt')`
+    ),
+    check(
+      'lesson_translations_fingerprint',
+      sql`length(${table.fingerprint}) = 64 AND ${table.fingerprint} NOT GLOB '*[^0-9a-f]*'`
+    ),
+    check('lesson_translations_title', sql`length(trim(${table.title})) > 0`)
+  ]
+);
+
 export const studySessions = sqliteTable(
   'study_sessions',
   {
