@@ -7,6 +7,8 @@ import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 import { approvedPackage } from './fixtures/content-package';
 import { load as mapPage } from '../src/routes/app/map/+page.server';
 import { load as progressPage } from '../src/routes/app/progress/+page.server';
+import { load as practicePage } from '../src/routes/app/practice/[language]/+page.server';
+import { recordAttempt } from '../src/lib/server/study';
 
 let client: Client;
 let close: () => void;
@@ -40,6 +42,17 @@ function event(userId: string | null, query = '') {
   } as never;
 }
 
+const practiceEvent = (userId: string | null, language = 'fr') =>
+  ({
+    locals: {
+      config: { dataEnabled: true, databaseUrl } as RuntimeConfig,
+      user: userId ? { id: userId } : null,
+      session: userId ? { userId } : null
+    },
+    url: new URL(`http://127.0.0.1/app/practice/${language}`),
+    params: { language }
+  }) as never;
+
 it('requires a verified learner and rejects an unenrolled language', async () => {
   await expect(mapPage(event(null))).rejects.toMatchObject({
     status: 303,
@@ -48,6 +61,11 @@ it('requires a verified learner and rejects an unenrolled language', async () =>
   await expect(
     progressPage(event('learner-a', '?language=de'))
   ).rejects.toMatchObject({ status: 404 });
+  await expect(
+    practicePage(practiceEvent('learner-a', 'de'))
+  ).rejects.toMatchObject({
+    status: 404
+  });
 });
 
 it('returns the owner’s versioned progress, preserves manual topics and shows unavailable content', async () => {
@@ -163,4 +181,43 @@ it('returns every enrollment on the map without waiting for track progress', asy
   await expect(
     Promise.all(data.tracks.map((track) => track.progress))
   ).resolves.toMatchObject([{ language: 'de' }, { language: 'fr' }]);
+});
+
+it('loads practice recommendations and counts for the enrolled language', async () => {
+  await recordAttempt(
+    client,
+    { userId: 'learner-a' },
+    {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'practice-page-weak',
+      evidenceKind: 'independent',
+      answer: 'es'
+    }
+  );
+  const data = (await practicePage(practiceEvent('learner-a'))) as {
+    language: string;
+    recommendations: {
+      skillId: string;
+      status: string;
+      practisedSessions: number;
+      answers: number;
+    }[];
+    skills: { skillId: string; practisedSessions: number; answers: number }[];
+  };
+  expect(data.language).toBe('fr');
+  expect(data.recommendations).toMatchObject([
+    {
+      skillId: 'fr-a1-001',
+      status: 'weak',
+      practisedSessions: 1,
+      answers: 1
+    }
+  ]);
+  expect(
+    data.skills.find((skill) => skill.skillId === 'fr-a1-001')
+  ).toMatchObject({
+    practisedSessions: 1,
+    answers: 1
+  });
 });
