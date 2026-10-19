@@ -1,6 +1,7 @@
 <script lang="ts">
-  import type { PageData } from './$types';
-  let { data }: { data: PageData } = $props();
+  import { enhance } from '$app/forms';
+  import type { ActionData, PageData } from './$types';
+  let { data, form }: { data: PageData; form: ActionData } = $props();
   const summary = $derived(data.summary);
 </script>
 
@@ -16,6 +17,41 @@
     still being checked{/if}.
 </p>
 <p>Practice answers are separate from assessments and from flashcard recall.</p>
+{#if form?.saved}
+  <p role="status">
+    Saved as a draft. <a href="/app/decks">Approve it in Decks</a>.
+  </p>
+{/if}
+{#if data.mistakes.length}
+  <h2>Mistakes to keep</h2>
+  <ul>
+    {#each data.mistakes as mistake (mistake.attemptId)}
+      <li>
+        <strong>{mistake.prompt}</strong>
+        — {mistake.answer}
+        {#if mistake.draftNoteId}
+          <span>Kept as a draft.</span>
+        {:else}
+          <form method="POST" action="?/keep" use:enhance>
+            <input type="hidden" name="attemptId" value={mistake.attemptId} />
+            {#if mistake.prompt.includes('___')}
+              <label
+                >Card type
+                <select name="format">
+                  <option value="basic">Basic (front and back)</option>
+                  <option value="cloze">Cloze (hide the answer)</option>
+                </select>
+              </label>
+            {:else}
+              <input type="hidden" name="format" value="basic" />
+            {/if}
+            <button type="submit">Keep as flashcard</button>
+          </form>
+        {/if}
+      </li>
+    {/each}
+  </ul>
+{/if}
 {#if summary.state !== 'completed'}
   <p>
     <a href={`/app/session/${encodeURIComponent(summary.id)}`}

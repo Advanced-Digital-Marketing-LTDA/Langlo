@@ -25,6 +25,10 @@ const statusFor: Record<string, number> = {
   ALREADY_ENROLLED: 409,
   STALE_REVIEW: 409,
   NOT_APPROVED: 409,
+  NOT_ELIGIBLE: 409,
+  NOT_CONFIRMED: 409,
+  NOT_A_MISTAKE: 409,
+  NOT_EDITABLE: 409,
   SUSPENDED: 409,
   SESSION_NOT_ACTIVE: 409,
   CONTENT_UNAVAILABLE: 409,
@@ -46,6 +50,17 @@ const messageForCode: Record<string, string> = {
   INVALID_CLOZE:
     'A cloze note needs one hidden part like {{c1::answer}} and no other cloze numbers.',
   INVALID_RATING: 'Choose again, hard, good or easy.',
+  INVALID_FORMAT: 'Choose a basic front/back card or a cloze card.',
+  INVALID_EXPLANATION: 'Keep the explanation within 1000 characters.',
+  INVALID_SOURCE:
+    'A generated card must carry its practice attempt, skill and content version.',
+  STALE_REVIEW:
+    'This card changed in another tab. Reload to see the current version before rating it again.',
+  NOT_ELIGIBLE:
+    'Only a confirmed incorrect practice answer can become a flashcard.',
+  NOT_CONFIRMED: 'This answer is still being checked. Try again shortly.',
+  NOT_A_MISTAKE: 'Correct answers do not create mistake cards.',
+  NOT_EDITABLE: 'A rejected card cannot be edited.',
   INVALID_TIMEZONE: 'Choose a valid timezone, for example Europe/Lisbon.',
   INVALID_ENROLLMENT: 'Choose a track, a starting level and a lesson language.',
   INVALID_REPORT:

@@ -845,6 +845,12 @@ export const nativeFlashcardNotes = sqliteTable(
     status: text('status', { enum: ['draft', 'approved', 'rejected'] })
       .notNull()
       .default('draft'),
+    // Generated mistake cards carry the lesson explanation and the practice
+    // evidence they came from. Manual notes leave the source columns null.
+    explanation: text('explanation').notNull().default(''),
+    sourceSkillId: text('source_skill_id'),
+    sourceContentVersionId: text('source_content_version_id'),
+    sourceAttemptId: text('source_attempt_id'),
     createdAt: createdAt()
   },
   (table) => [
@@ -856,6 +862,10 @@ export const nativeFlashcardNotes = sqliteTable(
       table.ownerId,
       table.sourceId
     ),
+    // At most one draft per practice attempt, however often the learner taps.
+    uniqueIndex('native_flashcard_notes_owner_source_attempt_unique')
+      .on(table.ownerId, table.sourceAttemptId)
+      .where(sql`${table.sourceAttemptId} IS NOT NULL`),
     foreignKey({
       columns: [table.deckId, table.ownerId],
       foreignColumns: [nativeFlashcardDecks.id, nativeFlashcardDecks.ownerId]

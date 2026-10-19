@@ -15,6 +15,12 @@ export type NoteSummary = {
   kind: NoteKind;
   status: string;
   content: { front?: string; back?: string; text?: string };
+  explanation: string;
+  source: {
+    attemptId: string;
+    skillId: string;
+    contentVersionId: string;
+  } | null;
 };
 
 /** A note with a stable, opaque source id derived from a fresh random value. */
@@ -34,7 +40,7 @@ export async function listNotes(
   });
   if (!deck.rows[0]) throw new FlashcardError('NOT_FOUND');
   const notes = await client.execute({
-    sql: 'SELECT id, source_id, kind, status, content_json FROM native_flashcard_notes WHERE deck_id = ? AND owner_id = ? ORDER BY created_at, rowid',
+    sql: 'SELECT id, source_id, kind, status, content_json, explanation, source_skill_id, source_content_version_id, source_attempt_id FROM native_flashcard_notes WHERE deck_id = ? AND owner_id = ? ORDER BY created_at, rowid',
     args: [deckId, learner.userId]
   });
   return {
@@ -44,7 +50,16 @@ export async function listNotes(
       sourceId: String(row.source_id),
       kind: String(row.kind) as NoteKind,
       status: String(row.status),
-      content: JSON.parse(String(row.content_json))
+      content: JSON.parse(String(row.content_json)),
+      explanation: String(row.explanation),
+      source:
+        row.source_attempt_id === null
+          ? null
+          : {
+              attemptId: String(row.source_attempt_id),
+              skillId: String(row.source_skill_id),
+              contentVersionId: String(row.source_content_version_id)
+            }
     }))
   };
 }
@@ -66,7 +81,8 @@ export async function addNoteFromForm(
       sourceId,
       deckId,
       kind,
-      content: { text: text('text') }
+      content: { text: text('text') },
+      explanation: text('explanation')
     });
   if (kind === 'basic')
     return createNote(client, learner, {
@@ -74,7 +90,8 @@ export async function addNoteFromForm(
       sourceId,
       deckId,
       kind,
-      content: { front: text('front'), back: text('back') }
+      content: { front: text('front'), back: text('back') },
+      explanation: text('explanation')
     });
   throw new FlashcardError('INVALID_CONTENT');
 }
