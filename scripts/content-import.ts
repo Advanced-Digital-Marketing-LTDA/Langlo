@@ -5,6 +5,7 @@ import {
   importContent,
   validatePackage
 } from '../src/lib/server/content-import.ts';
+import { contentImpact } from '../src/lib/server/content-impact.ts';
 import { modulesPackage } from '../src/lib/server/content-modules.ts';
 import {
   isBareRemoteUrl,
@@ -14,7 +15,7 @@ import {
 } from '../src/lib/server/db/remote-migrate.ts';
 
 const usage =
-  'Usage: npm run content:import -- [--apply --confirm-host HOST]. Without --apply nothing is written. HOST is the DATABASE_URL host, or "local" for a file: URL.';
+  'Usage: npm run content:import -- [--apply|--impact --confirm-host HOST]. Without --apply nothing is written; --impact only reads. HOST is the DATABASE_URL host, or "local" for a file: URL.';
 
 /** This script's own fixed messages: the only errors whose text may be printed. */
 class ScriptError extends Error {}
@@ -61,10 +62,11 @@ export async function runContentImport(
   root = process.cwd()
 ): Promise<number> {
   const apply = argv[0] === '--apply';
+  const impact = argv[0] === '--impact';
   const confirmHost = argv[2];
   if (!(
     argv.length === 0 ||
-    (apply && argv.length === 3 && argv[1] === '--confirm-host')
+    ((apply || impact) && argv.length === 3 && argv[1] === '--confirm-host')
   )) {
     write(usage);
     return 1;
@@ -78,7 +80,7 @@ export async function runContentImport(
     write(
       `package ${pkg.curriculumVersion}: ${pkg.skills.length} skills, ${pkg.versions.length} lessons, ${questions} questions`
     );
-    if (!apply) {
+    if (!apply && !impact) {
       write('dry run: nothing written');
       return 0;
     }
@@ -98,6 +100,18 @@ export async function runContentImport(
       throw new ScriptError(
         `migrations pending: ${state.pending.map((m) => m.tag).join(', ') || 'all'}; apply them first`
       );
+    if (impact) {
+      const lines = await contentImpact(client, pkg);
+      write(`target host: ${target.host}`);
+      if (lines.length === 0)
+        write('impact: no learner answers would stop counting');
+      for (const line of lines)
+        write(
+          `impact: ${line.skillId}: ${line.reason}; ${line.answers} independent answer(s) by ${line.learners} learner(s) would stop counting`
+        );
+      write('impact report only: nothing written');
+      return 0;
+    }
     const result = await importContent(client, pkg);
     write(`target host: ${target.host}`);
     write(

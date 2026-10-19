@@ -132,6 +132,29 @@ describe('content import script', () => {
     expect(await count('curriculum_imports')).toBe(1);
   });
 
+  it('reports the impact of a package on a database without writing', async () => {
+    await migrateFixtureDatabase(target);
+    const env = { DATABASE_URL: target.databaseUrl };
+    const { code, out } = await run(
+      ['--impact', '--confirm-host', 'local'],
+      env
+    );
+    expect(code).toBe(0);
+    expect(out).toContain('impact: no learner answers would stop counting');
+    expect(out).toContain('impact report only: nothing written');
+    expect(await count('skills')).toBe(0);
+    expect(await count('curriculum_imports')).toBe(0);
+  });
+
+  it('refuses an impact report without a confirmed host or on an unmigrated database', async () => {
+    expect((await run(['--impact'])).code).toBe(1);
+    const { code, out } = await run(['--impact', '--confirm-host', 'local'], {
+      DATABASE_URL: target.databaseUrl
+    });
+    expect(code).toBe(1);
+    expect(out).toContain('migrations pending');
+  });
+
   it('writes nothing when the confirmed host does not match', async () => {
     await migrateFixtureDatabase(target);
     const { code, out } = await run(['--apply', '--confirm-host', 'other'], {

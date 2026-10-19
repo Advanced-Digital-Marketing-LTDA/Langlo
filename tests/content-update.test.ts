@@ -7,7 +7,13 @@ import {
   type ContentPackage,
   type ContentQuestion
 } from '../src/lib/server/content-import';
-import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
+import {
+  disposeFlashcardFixtures,
+  fixture,
+  testSession
+} from './fixtures/flashcards';
+import { contentImpact } from '../src/lib/server/content-impact';
+import { recordAttempt } from '../src/lib/server/study';
 import { approvedPackage } from './fixtures/content-package';
 
 // LANGLO-167: rules for updating content that is already imported. The base
@@ -387,5 +393,71 @@ describe('retiring a skill', () => {
       retire('2.0.0', { skillId: 'fr-a1-002', replacedBy: 'fr-a1-003' }),
       'CONTENT_CONFLICT'
     );
+  });
+});
+
+describe('the impact report', () => {
+  const answer = (questionId: string, key: string) =>
+    recordAttempt(client, testSession('learner-a'), {
+      studySessionId: 'study-a',
+      questionId,
+      submissionKey: key,
+      evidenceKind: 'independent',
+      answer: 'réponse'
+    });
+
+  it('counts the independent answers that would stop counting, and writes nothing', async () => {
+    await answer('fr-a1-001@1:q1', 'one');
+    await answer('fr-a1-001@1:q2', 'two');
+    const pkg = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      question('fr-a1-001@2:q3', { change: 'new' })
+    ]);
+    const before = await storedState();
+    expect(await contentImpact(client, pkg)).toEqual([
+      {
+        skillId: 'fr-a1-001',
+        reason: '1 question(s) changed or removed in fr-a1-001@2',
+        answers: 1,
+        learners: 1
+      }
+    ]);
+    expect(await storedState()).toEqual(before);
+  });
+
+  it('reports nothing for wording-only changes, and refuses an undeclared version', async () => {
+    await answer('fr-a1-001@1:q1', 'one');
+    expect(
+      await contentImpact(
+        client,
+        update('0.1.1', [
+          same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+          same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+        ])
+      )
+    ).toEqual([]);
+    await expect(
+      contentImpact(client, update('0.2.0', [question('fr-a1-001@2:q1')]))
+    ).rejects.toMatchObject({ code: 'MISSING_CHANGE' });
+  });
+
+  it('counts a retired skill that does not carry over, and not one that does', async () => {
+    await answer('fr-a1-002@1:q1', 'three');
+    const retire = (carry: boolean) => {
+      const pkg = approvedPackage();
+      pkg.curriculumVersion = '1.0.0';
+      pkg.skills = pkg.skills.filter((skill) => skill.id !== 'fr-a1-002');
+      pkg.versions = pkg.versions.filter((v) => v.skillId !== 'fr-a1-002');
+      pkg.retirements = [
+        { skillId: 'fr-a1-002', replacedBy: 'fr-a1-003', carry }
+      ];
+      return pkg;
+    };
+    expect(await contentImpact(client, retire(false))).toMatchObject([
+      { skillId: 'fr-a1-002', answers: 1, learners: 1 }
+    ]);
+    expect(await contentImpact(client, retire(true))).toMatchObject([
+      { skillId: 'fr-a1-002', answers: 0, learners: 0 }
+    ]);
   });
 });
