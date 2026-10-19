@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Client, InStatement } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
@@ -45,6 +45,15 @@ type Handler = (event: never) => Promise<Response>;
 let target: FixtureTarget;
 let client: Client;
 let close: (() => void) | undefined;
+let deprecatedErrorWarning = false;
+
+beforeEach(() => {
+  deprecatedErrorWarning = false;
+  vi.spyOn(console, 'warn').mockImplementation((...args) => {
+    if (args.some((arg) => String(arg).includes('error_body_deprecated')))
+      deprecatedErrorWarning = true;
+  });
+});
 
 beforeEach(async () => {
   target = await fixture();
@@ -68,9 +77,12 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  const warned = deprecatedErrorWarning;
+  vi.restoreAllMocks();
   close?.();
   close = undefined;
   await disposeFlashcardFixtures();
+  expect(warned).toBe(false);
 });
 
 function event(
@@ -156,7 +168,10 @@ describe('private learner routes', () => {
       decks.GET as Handler,
       event('learner-a', { config: undefined })
     );
-    expect(response.status).toBe(503);
+    expect(response).toMatchObject({
+      status: 503,
+      body: { message: 'Study data is not available yet.' }
+    });
   });
 
   it('list and read only the signed-in learner’s own rows', async () => {
@@ -279,7 +294,10 @@ describe('private learner routes', () => {
         reviews.POST as Handler,
         event('learner-b', { params: { id: 'card:note-b' }, body })
       );
-      expect(response.status).toBe(400);
+      expect(response).toMatchObject({
+        status: 400,
+        body: { message: 'Invalid request.' }
+      });
     }
     const rating = await call(
       reviews.POST as Handler,
@@ -479,7 +497,10 @@ describe('pause, resume and next-question routes', () => {
       next.GET as Handler,
       event('learner-a', { params })
     );
-    expect(response.status).toBe(400);
+    expect(response).toMatchObject({
+      status: 400,
+      body: { message: 'Invalid request.' }
+    });
   });
 });
 
@@ -517,7 +538,34 @@ describe('lesson page load', () => {
 
   it('answers 404 for a track the learner is not enrolled in', async () => {
     await expect(load('learner-a', 'de')).rejects.toMatchObject({
-      status: 404
+      status: 404,
+      body: { message: 'Lesson not found.' }
+    });
+  });
+
+  it('answers 409 when an assessment session opens a lesson page', async () => {
+    const e = Object.assign(event('learner-b'), {
+      params: { language: 'fr', skill: 'fr-a1-001' },
+      url: new URL(
+        'http://127.0.0.1/app/learn/fr/lesson/fr-a1-001?session=study-b'
+      )
+    });
+    await expect(lessonPage(e as never)).rejects.toMatchObject({
+      status: 409,
+      body: {
+        message:
+          'Use the assessment page to continue. Lessons and feedback are hidden during assessments.'
+      }
+    });
+  });
+
+  it('answers 503 with a safe message when study data is not configured', async () => {
+    const e = Object.assign(event('learner-a', { config: undefined }), {
+      params: { language: 'fr', skill: 'fr-a1-001' }
+    });
+    await expect(lessonPage(e as never)).rejects.toMatchObject({
+      status: 503,
+      body: { message: 'Study data is not available yet.' }
     });
   });
 
