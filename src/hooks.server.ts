@@ -12,6 +12,7 @@ import { safeDiagnostic, safeError } from './lib/server/diagnostics';
 import { resolveAuth } from './lib/server/auth-runtime';
 import { withCorrelationId } from './lib/server/request-context';
 import { authRequestHeaders } from './lib/server/auth-request';
+import { requestLog } from './lib/server/request-log';
 
 Sentry.init({
   dsn: publicEnv.PUBLIC_GLITCHTIP_DSN,
@@ -221,7 +222,7 @@ const appHandle: Handle = async ({ event, resolve }) => {
   return output;
 };
 
-export const handle = sequence(Sentry.sentryHandle(), appHandle);
+export const handle = sequence(Sentry.sentryHandle(), requestLog, appHandle);
 
 export const handleError: HandleServerError = Sentry.handleErrorWithSentry(
   ({ error, event }) => {
