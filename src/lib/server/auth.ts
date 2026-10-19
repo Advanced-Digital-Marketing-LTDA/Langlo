@@ -1,6 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from '@better-auth/drizzle-adapter';
+import { dash } from '@better-auth/infra';
 import type { LibSQLDatabase } from 'drizzle-orm/libsql';
 import type { RuntimeConfig } from './config.ts';
 import { mailFailureCode, safeDiagnostic } from './diagnostics.ts';
@@ -72,6 +73,7 @@ export function createAuth(config: RuntimeConfig, deps: AuthDeps) {
     secret: config.auth.secret,
     trustedOrigins: [config.origin],
     telemetry: { enabled: false },
+    plugins: [dash()],
     logger: { disabled: true },
     advanced: {
       ipAddress: { ipAddressHeaders: ['x-langlo-client-address'] },
