@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
-  getMastery,
   qualifyingGrammarEvidence,
   scoreGrammar
 } from '../src/lib/server/mastery';
+import { loadProgress } from '../src/lib/server/progress';
 import { recommendTopics } from '../src/lib/server/recommendations';
 import {
   disposeFlashcardFixtures,
@@ -13,7 +13,11 @@ import {
   testSession
 } from './fixtures/flashcards';
 import { seedBasicNote } from './fixtures/flashcards';
-import { approveNote, submitReview } from '../src/lib/server/flashcards';
+import {
+  approveNote,
+  beginWrite,
+  submitReview
+} from '../src/lib/server/flashcards';
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { recordAttempt } from '../src/lib/server/study';
@@ -21,6 +25,12 @@ import { recordAttempt } from '../src/lib/server/study';
 let client: Client;
 let close: () => void;
 const learner = testSession('learner-a');
+const computeMastery = async (
+  client: Client,
+  session: typeof learner,
+  language: string
+) => (await loadProgress(client, session, language)).tracks[0].skills;
+
 beforeEach(async () => {
   ({ client, close } = await openFixtureDatabase(await fixture()));
   await importContent(client, approvedPackage());
@@ -72,26 +82,65 @@ it.each([
 });
 
 describe('versioned grammar policy', () => {
-  it('records incorrect evidence with zero contribution and rolls back a failed ledger write', async () => {
-    const saved = await recordAttempt(client, learner, {
+  it('waits for an active write before reading a consistent mastery snapshot', async () => {
+    const before = await computeMastery(client, learner, 'fr');
+    const held = await beginWrite(client);
+    await held.execute(
+      "UPDATE lessons SET title = 'Uncommitted title' WHERE content_version_id = 'fr-a1-001@1'"
+    );
+    let completed = false;
+    const loading = computeMastery(client, learner, 'fr').then((skills) => {
+      completed = true;
+      return skills;
+    });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const completedDuringWrite = completed;
+    await held.rollback();
+    held.close();
+    expect(completedDuringWrite).toBe(false);
+    expect(await loading).toEqual(before);
+  });
+
+  it('writes evidence with the answer and computes mastery without writes', async () => {
+    const input = {
       studySessionId: 'study-a',
       questionId: 'fr-a1-001@1:q1',
       submissionKey: 'wrong-response',
       evidenceKind: 'independent',
       answer: 'es'
-    });
+    } as const;
     await client.execute(
       "CREATE TRIGGER reject_mastery BEFORE INSERT ON skill_evidence BEGIN SELECT RAISE(ABORT, 'synthetic ledger failure'); END"
     );
-    await expect(getMastery(client, learner, 'fr')).rejects.toThrow(
+    await expect(recordAttempt(client, learner, input)).rejects.toThrow(
       'synthetic ledger failure'
     );
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT * FROM attempts WHERE submission_key = ?',
+          args: [input.submissionKey]
+        })
+      ).rows
+    ).toEqual([]);
     expect((await client.execute('SELECT * FROM skill_evidence')).rows).toEqual(
       []
     );
     await client.execute('DROP TRIGGER reject_mastery');
+    const saved = await recordAttempt(client, learner, input);
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (
+        await client.execute({
+          sql: 'SELECT contribution FROM skill_evidence WHERE attempt_id = ?',
+          args: [saved.id]
+        })
+      ).rows
+    ).toEqual([{ contribution: 0 }]);
+    await client.execute(
+      "CREATE TRIGGER reject_mastery BEFORE INSERT ON skill_evidence BEGIN SELECT RAISE(ABORT, 'synthetic ledger failure'); END"
+    );
+    expect(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({
@@ -101,13 +150,8 @@ describe('versioned grammar policy', () => {
       independentItems: 1
     });
     expect(
-      (
-        await client.execute({
-          sql: 'SELECT contribution FROM skill_evidence WHERE attempt_id = ?',
-          args: [saved.id]
-        })
-      ).rows
-    ).toEqual([{ contribution: 0 }]);
+      (await client.execute('SELECT * FROM skill_evidence')).rows
+    ).toHaveLength(1);
   });
 
   it('orders multiple suggested foundations and skips secure or unavailable prerequisites', () => {
@@ -220,12 +264,12 @@ describe('versioned grammar policy', () => {
       answer: 'suis'
     });
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ status: 'unknown', independentItems: 0 });
     expect(
-      (await getMastery(client, b, 'fr')).find(
+      (await computeMastery(client, b, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ status: 'unknown' });
@@ -233,7 +277,7 @@ describe('versioned grammar policy', () => {
       "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-b'"
     );
     expect(
-      (await getMastery(client, b, 'fr')).find(
+      (await computeMastery(client, b, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ status: 'practising', independentItems: 1 });
@@ -255,13 +299,13 @@ describe('versioned grammar policy', () => {
       evidenceKind: 'independent',
       answer: 'suis'
     });
-    const a = await getMastery(client, learner, 'fr');
+    const a = await computeMastery(client, learner, 'fr');
     expect(a.find((skill) => skill.skillId === 'fr-a1-001')).toMatchObject({
       correct: 1,
       independentItems: 1,
       policyVersion: 'grammar-1'
     });
-    expect(await getMastery(client, learner, 'fr')).toEqual(a);
+    expect(await computeMastery(client, learner, 'fr')).toEqual(a);
     const note = await seedBasicNote(client, learner);
     await approveNote(client, learner, note.id);
     await submitReview(client, learner, {
@@ -270,7 +314,7 @@ describe('versioned grammar policy', () => {
       expectedRevision: 0,
       rating: 'easy'
     });
-    expect(await getMastery(client, learner, 'fr')).toEqual(a);
+    expect(await computeMastery(client, learner, 'fr')).toEqual(a);
     expect(
       (
         await client.execute({
@@ -291,15 +335,68 @@ describe('versioned grammar policy', () => {
       evidenceKind: 'independent',
       answer: 'suis'
     });
-    expect(await getMastery(client, learner, 'fr')).toEqual(a);
-    await expect(getMastery(client, learner, 'de')).rejects.toMatchObject({
+    expect(await computeMastery(client, learner, 'fr')).toEqual(a);
+    await expect(loadProgress(client, learner, 'de')).rejects.toMatchObject({
       code: 'NOT_FOUND'
     });
   });
 
+  it('reconciles missing ledger evidence when the learner answers its lineage again', async () => {
+    const first = await recordAttempt(client, learner, {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'backfill-first',
+      evidenceKind: 'independent',
+      answer: 'suis'
+    });
+    await client.execute({
+      sql: 'DELETE FROM skill_evidence WHERE attempt_id = ?',
+      args: [first.id]
+    });
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('backfill-repeat', 'learner-a', 'enrollment-a', 'fr', 'practice')"
+    );
+    await recordAttempt(client, learner, {
+      studySessionId: 'backfill-repeat',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'backfill-again',
+      evidenceKind: 'independent',
+      answer: 'suis'
+    });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT attempt_id FROM skill_evidence WHERE attempt_id = ?',
+          args: [first.id]
+        })
+      ).rows
+    ).toEqual([{ attempt_id: first.id }]);
+  });
+
+  it('records resolved mixed-review answers in the evidence ledger', async () => {
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('mixed-review', 'learner-a', 'enrollment-a', 'fr', 'mixed-review')"
+    );
+    const attempt = await recordAttempt(client, learner, {
+      studySessionId: 'mixed-review',
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: 'mixed-review-evidence',
+      evidenceKind: 'independent',
+      answer: 'suis'
+    });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT attempt_id FROM skill_evidence WHERE attempt_id = ?',
+          args: [attempt.id]
+        })
+      ).rows
+    ).toEqual([{ attempt_id: attempt.id }]);
+  });
+
   it('lists the skill from the newest version that is not quarantined', async () => {
     const entry = async () =>
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       );
     const before = await entry();
@@ -336,7 +433,7 @@ describe('versioned grammar policy', () => {
       answer: 'yes'
     });
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ independentItems: 1 });
@@ -344,7 +441,7 @@ describe('versioned grammar policy', () => {
       "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
     );
     expect(
-      (await getMastery(client, learner, 'fr')).find(
+      (await computeMastery(client, learner, 'fr')).find(
         (skill) => skill.skillId === 'fr-a1-001'
       )
     ).toMatchObject({ independentItems: 0, status: 'unknown' });

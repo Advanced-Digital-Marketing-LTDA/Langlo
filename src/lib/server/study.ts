@@ -12,7 +12,8 @@ import {
   type FallbackReason
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
-import { beginWrite, type LearnerSession } from './flashcards';
+import { beginWrite, executeWrite, type LearnerSession } from './flashcards';
+import { syncEvidenceLedger } from './mastery';
 import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
@@ -328,6 +329,7 @@ async function attemptSource(
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
     language: String(studyRow.language),
+    mode: String(studyRow.mode),
     question: questionRow
   };
 }
@@ -426,7 +428,7 @@ async function settleFallback(
   session: LearnerSession,
   attempt: FallbackAttempt
 ) {
-  await client.execute({
+  await executeWrite(client, {
     sql: "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, 'uncertain')",
     args: [
       randomUUID(),
@@ -436,6 +438,39 @@ async function settleFallback(
       `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
     ]
   });
+}
+
+async function recordFallbackVerdict(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt,
+  outcome: string
+) {
+  const tx = await beginWrite(client);
+  try {
+    await tx.execute({
+      sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [
+        randomUUID(),
+        session.userId,
+        attempt.id,
+        FALLBACK_EVALUATOR_VERSION,
+        `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`,
+        outcome
+      ]
+    });
+    await syncEvidenceLedger(tx, {
+      ownerId: session.userId,
+      language: attempt.language,
+      attemptIds: [attempt.id]
+    });
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
 }
 
 /**
@@ -471,17 +506,7 @@ async function recordFallbackEvaluation(
       await settleFallback(client, session, attempt);
       return;
     }
-    await client.execute({
-      sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [
-        randomUUID(),
-        session.userId,
-        attempt.id,
-        FALLBACK_EVALUATOR_VERSION,
-        `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`,
-        result.outcome
-      ]
-    });
+    await recordFallbackVerdict(client, session, attempt, result.outcome);
   } catch (error) {
     // The attempt is already saved; the answer stays uncertain for review.
     logFallback('failed');
@@ -546,6 +571,34 @@ export async function recordAttempt(
   return recorded.result;
 }
 
+async function syncAttemptEvidence(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  attempt: {
+    attemptId: string;
+    language: string;
+    mode: string;
+    studySessionId: string;
+    outcome: string;
+  }
+) {
+  const scope = { ownerId: session.userId, language: attempt.language };
+  const completed = await completeAssessment(
+    tx,
+    session,
+    attempt.studySessionId
+  );
+  if (completed) {
+    await syncEvidenceLedger(tx, {
+      ...scope,
+      studySessionId: attempt.studySessionId
+    });
+    return;
+  }
+  if (attempt.mode === 'assessment' || attempt.outcome === 'uncertain') return;
+  await syncEvidenceLedger(tx, { ...scope, attemptIds: [attempt.attemptId] });
+}
+
 async function recordAttemptWrite(
   client: Client,
   session: LearnerSession,
@@ -590,7 +643,13 @@ async function recordAttemptWrite(
       notSure: input.notSure
     };
     const outcome = await recordPreparedEvaluation(tx, session, attempt);
-    await completeAssessment(tx, session, input.studySessionId);
+    await syncAttemptEvidence(tx, session, {
+      attemptId: id,
+      language: source.language,
+      mode: source.mode,
+      studySessionId: input.studySessionId,
+      outcome
+    });
     await tx.commit();
     const result = { id, duplicate: false as const };
     return outcome === 'uncertain' && !input.notSure
@@ -617,7 +676,7 @@ export async function pauseStudySession(
 ) {
   const { state } = await ownSession(client, session, studySessionId);
   if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
-  const paused = await client.execute({
+  const paused = await executeWrite(client, {
     sql: "UPDATE study_sessions SET state = 'paused', paused_at = COALESCE(paused_at, ?) WHERE id = ? AND owner_id = ? AND state <> 'completed'",
     args: [now, studySessionId, session.userId]
   });
@@ -634,7 +693,7 @@ export async function resumeStudySession(
 ) {
   const { state } = await ownSession(client, session, studySessionId);
   if (state === 'completed') throw new StudyError('SESSION_NOT_ACTIVE');
-  const resumed = await client.execute({
+  const resumed = await executeWrite(client, {
     sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ? AND state <> 'completed'",
     args: [studySessionId, session.userId]
   });

@@ -405,18 +405,25 @@ describe('saved placement plan', () => {
     ).toHaveLength(0);
   });
 
-  it('records uncertainty and identifies A1 gaps without writing mastery or cards', async () => {
+  it('records assessment evidence only after completion and excludes uncertainty', async () => {
     const { id } = await start();
     await answer(id, 'fr-a1-001@1:q2', '', true);
-    await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
+    expect(
+      (await client.execute('SELECT * FROM skill_evidence')).rows
+    ).toHaveLength(0);
+    const correct = await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
     const results = await assessmentResults(client, learner, id);
     expect(results).toMatchObject({
       counts: { correct: 1, incorrect: 0, uncertain: 1 },
       a1Gaps: ['fr-a1-001']
     });
     expect(
-      (await client.execute('SELECT * FROM skill_evidence')).rows
-    ).toHaveLength(0);
+      (
+        await client.execute({
+          sql: 'SELECT attempt_id, contribution FROM skill_evidence'
+        })
+      ).rows
+    ).toEqual([{ attempt_id: correct.id, contribution: 1 }]);
     expect(
       (await client.execute('SELECT * FROM card_drafts')).rows
     ).toHaveLength(0);
