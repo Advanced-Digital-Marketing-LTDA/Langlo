@@ -53,6 +53,15 @@ The migration test upgrades a disposable database from 0017 to 0018, confirms an
 existing change row survives, inserts a `lesson-translation-added` row, and checks
 foreign-key integrity. No production database was accessed.
 
+## Latest review-fix validation
+
+After consolidating the audit-kind list and making the remote-migration assertion
+derive its count from the journal, the focused migration and translation tests
+passed (28 tests) and the remote-migration tests passed (58 tests). `overlock`
+reports no high-severity findings. Its one medium expected-value finding is the
+intentional change from a hard-coded migration identifier to the stable pending-
+migrations refusal prefix.
+
 ## Pending acceptance and limits
 
 - The full test suite, property tests, build, browser tests, and hosted CI have not
@@ -60,6 +69,6 @@ foreign-key integrity. No production database was accessed.
 - The production Portuguese curriculum translation remains separate work under
   curriculum version 1.1.0 after the schema/import PR lands; native-speaker review
   and production import are not established by these synthetic tests.
-- The Codacy duplication metric shown on the earlier PR head was 2 against a limit
-  of 1. It is a metric notice, not a file-level correctness finding; the refreshed
-  result must be checked after the push.
+- The earlier Codacy scan reported two duplication units against a limit of one;
+  the audit-kind list is now shared by the Drizzle enum and SQL check. The refreshed
+  scan must be checked after the push.

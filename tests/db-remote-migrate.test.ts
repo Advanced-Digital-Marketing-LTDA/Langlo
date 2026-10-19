@@ -646,9 +646,8 @@ describe('remote-test CLI', () => {
         open
       )
     ).toBe(0);
-    expect(ok.lines.join('\n')).toContain(
-      `applied ${loadMigrations().length} migration(s)`
-    );
+    const count = loadMigrations().length;
+    expect(ok.lines.join('\n')).toContain('applied ' + count + ' migration(s)');
   });
 
   it('prints table names from the target without control characters', async () => {

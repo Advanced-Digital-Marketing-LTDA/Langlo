@@ -1050,6 +1050,22 @@ export const learnerPreferences = sqliteTable(
 
 // What each curriculum import changed in existing content, written in the
 // importer's transaction so a learner-facing notice and an audit can read it.
+const contentChangeKinds = [
+  'skill-added',
+  'skill-retired',
+  'version-added',
+  'question-same',
+  'question-changed',
+  'question-new',
+  'question-removed',
+  'lesson-translation-added',
+  'version-quarantined'
+] as const;
+const contentChangeKindsSql = sql.join(
+  contentChangeKinds.map((kind) => sql.raw(`'${kind}'`)),
+  sql`, `
+);
+
 export const contentChanges = sqliteTable(
   'content_changes',
   {
@@ -1057,19 +1073,7 @@ export const contentChanges = sqliteTable(
     curriculumVersion: text('curriculum_version')
       .notNull()
       .references(() => curriculumImports.curriculumVersion),
-    kind: text('kind', {
-      enum: [
-        'skill-added',
-        'skill-retired',
-        'version-added',
-        'question-same',
-        'question-changed',
-        'question-new',
-        'question-removed',
-        'lesson-translation-added',
-        'version-quarantined'
-      ]
-    }).notNull(),
+    kind: text('kind', { enum: contentChangeKinds }).notNull(),
     skillId: text('skill_id').notNull(),
     contentVersionId: text('content_version_id'),
     questionId: text('question_id'),
@@ -1081,7 +1085,7 @@ export const contentChanges = sqliteTable(
     index('content_changes_skill').on(table.skillId),
     check(
       'content_changes_kind',
-      sql`${table.kind} IN ('skill-added', 'skill-retired', 'version-added', 'question-same', 'question-changed', 'question-new', 'question-removed', 'lesson-translation-added', 'version-quarantined')`
+      sql`${table.kind} IN (${contentChangeKindsSql})`
     )
   ]
 );
