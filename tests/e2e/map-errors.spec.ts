@@ -1,6 +1,7 @@
 import { expect, request, type APIRequestContext } from '@playwright/test';
 import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client/sqlite3';
 import { importContent } from '../../src/lib/server/content-import';
@@ -17,7 +18,7 @@ import {
 // only draws the loading state, so the per-track error alerts are checked in
 // a real browser against a built server whose tables are broken on purpose.
 
-const password = 'map-errors-password-0';
+const learnerSecret = randomBytes(16).toString('hex');
 let server: ChildProcess;
 let base = '';
 let fixtureRoot = '';
@@ -59,7 +60,7 @@ test.beforeAll(async () => {
       '--name',
       'Mapper'
     ],
-    password,
+    learnerSecret,
     appEnv()
   );
   server = spawn(process.execPath, ['build'], {
@@ -79,7 +80,7 @@ test.beforeAll(async () => {
     extraHTTPHeaders: { 'x-forwarded-proto': 'http' }
   });
   const login = await learner.post('/login', {
-    form: { email: 'mapper@example.test', password },
+    form: { email: 'mapper@example.test', password: learnerSecret },
     maxRedirects: 0,
     headers: { origin: base, accept: 'text/html' }
   });
