@@ -33,6 +33,6 @@ export function requireLearnerApi(event: {
   locals: Partial<VerifiedLocals>;
 }): LearnerSession {
   const learner = learnerSessionFrom(event.locals);
-  if (!learner) error(401, { message: 'Sign in required.' });
+  if (!learner) error(401, 'Sign in required.');
   return learner;
 }
