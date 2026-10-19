@@ -531,27 +531,35 @@ describe('decks, review and Anki export', () => {
       'SELECT count(*) AS total FROM native_flashcard_review_events'
     );
     expect(events.rows[0].total).toBe(1);
-    // Another learner cannot rate this card, and nothing is written.
+  });
+
+  it('refuses a foreign review without writing history', async () => {
+    const draft = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Foreign', back: 'No' })
+    );
+    await approveNote(client, learner, draft.id);
+    const events = () =>
+      client.execute(
+        'SELECT count(*) AS total FROM native_flashcard_review_events'
+      );
+    const before = (await events()).rows[0].total;
     expect(
       await reviewActions.rate(
         event({
           userId: 'learner-b',
           fields: {
             cardId: draft.cardId,
-            revision: '1',
+            revision: '0',
             rating: 'good',
             submissionKey: 'foreign-key'
           }
         })
       )
     ).toMatchObject({ status: 404 });
-    expect(
-      (
-        await client.execute(
-          'SELECT count(*) AS total FROM native_flashcard_review_events'
-        )
-      ).rows[0].total
-    ).toBe(1);
+    expect((await events()).rows[0].total).toBe(before);
   });
 
   it('counts every due card even when the list is capped', async () => {

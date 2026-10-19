@@ -225,27 +225,26 @@ export type CreateMistakeDraftInput = {
   format?: unknown;
 };
 
-/**
- * Generate one editable draft note from a confirmed eligible practice
- * mistake. Repeating the request returns the same native note and card.
- */
-export async function createMistakeDraft(
-  client: Client,
-  learner: LearnerSession,
-  input: CreateMistakeDraftInput
-) {
+type DraftInput = { attemptId: string; format: DraftFormat };
+
+function validateDraftInput(input: CreateMistakeDraftInput): DraftInput {
   if (!isNonEmptyString(input.attemptId)) throw new FlashcardError('NOT_FOUND');
   const format = input.format ?? 'basic';
   if (typeof format !== 'string' || !draftFormats.has(format))
     throw new FlashcardError('INVALID_FORMAT');
+  return { attemptId: input.attemptId, format: format as DraftFormat };
+}
 
-  const row = await readMistake(client, learner, input.attemptId);
-  assertEligible(row);
-
+async function findOrCreateDraft(
+  client: Client,
+  learner: LearnerSession,
+  row: MistakeRow,
+  format: DraftFormat
+) {
   const existing = await findDraft(client, learner, row.attemptId);
   if (existing) return { ...existing, duplicate: true };
 
-  const draft = draftContent(row, format as DraftFormat);
+  const draft = draftContent(row, format);
   const deckId = await ensureMistakeDeck(client, learner, row.language);
   const common = {
     id: `note:${randomUUID()}`,
@@ -286,6 +285,21 @@ export async function createMistakeDraft(
     }
     throw error;
   }
+}
+
+/**
+ * Generate one editable draft note from a confirmed eligible practice
+ * mistake. Repeating the request returns the same native note and card.
+ */
+export async function createMistakeDraft(
+  client: Client,
+  learner: LearnerSession,
+  input: CreateMistakeDraftInput
+) {
+  const { attemptId, format } = validateDraftInput(input);
+  const row = await readMistake(client, learner, attemptId);
+  assertEligible(row);
+  return findOrCreateDraft(client, learner, row, format);
 }
 
 /** The confirmed mistakes of one practice session, with any draft already kept. */

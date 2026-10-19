@@ -72,6 +72,74 @@ async function noteCounts(client: Client) {
   return result.map((query) => Number(query.rows[0].total));
 }
 
+const refusalCases = [
+  {
+    name: 'pending evaluation',
+    change: 'DELETE FROM evaluations',
+    code: 'NOT_CONFIRMED'
+  },
+  {
+    name: 'correct answer',
+    change: "UPDATE evaluations SET outcome = 'correct'",
+    code: 'NOT_A_MISTAKE'
+  },
+  {
+    name: 'uncertain answer',
+    change: "UPDATE evaluations SET outcome = 'uncertain'",
+    code: 'NOT_ELIGIBLE'
+  },
+  {
+    name: 'AI refusal',
+    change:
+      "UPDATE evaluations SET evaluator_version = 'decisions-1', outcome = 'uncertain'",
+    code: 'NOT_ELIGIBLE'
+  },
+  {
+    name: 'not-sure answer',
+    change: 'UPDATE attempts SET not_sure = 1',
+    code: 'NOT_ELIGIBLE'
+  },
+  {
+    name: 'assessment answer before results',
+    change:
+      "UPDATE study_sessions SET mode = 'assessment' WHERE id = 'study-a'",
+    code: 'NOT_ELIGIBLE'
+  },
+  {
+    name: 'hidden holdout',
+    change: "UPDATE questions SET holdout = 1 WHERE id = 'question-1'",
+    code: 'NOT_ELIGIBLE'
+  },
+  {
+    name: 'withdrawn content',
+    change:
+      "UPDATE content_versions SET status = 'quarantined' WHERE id = 'content-v1'",
+    code: 'CONTENT_UNAVAILABLE'
+  },
+  {
+    name: 'missing checked payload',
+    change: "UPDATE questions SET prompt = NULL WHERE id = 'question-1'",
+    code: 'CONTENT_UNAVAILABLE'
+  }
+];
+
+async function expectDraftRefusal(name: string, change: string, code: string) {
+  const fresh = await setup();
+  try {
+    await fresh.db.client.execute(change);
+    await expect(
+      createMistakeDraft(fresh.db.client, learner, {
+        attemptId,
+        format: 'basic'
+      }),
+      name
+    ).rejects.toMatchObject({ code });
+    expect(await noteCounts(fresh.db.client), name).toEqual([0, 0, 0]);
+  } finally {
+    fresh.db.close();
+  }
+}
+
 describe('mistake-card draft generation', () => {
   it('creates a contextual draft only from a confirmed incorrect practice answer', async () => {
     const { db } = await setup();
@@ -110,72 +178,8 @@ describe('mistake-card draft generation', () => {
   it('refuses drafts for pending, correct, uncertain, unsure, assessment and foreign answers', async () => {
     const { db } = await setup();
     try {
-      const attempts = [
-        {
-          name: 'pending evaluation',
-          change: 'DELETE FROM evaluations',
-          code: 'NOT_CONFIRMED'
-        },
-        {
-          name: 'correct answer',
-          change: "UPDATE evaluations SET outcome = 'correct'",
-          code: 'NOT_A_MISTAKE'
-        },
-        {
-          name: 'uncertain answer',
-          change: "UPDATE evaluations SET outcome = 'uncertain'",
-          code: 'NOT_ELIGIBLE'
-        },
-        {
-          name: 'AI refusal',
-          change:
-            "UPDATE evaluations SET evaluator_version = 'decisions-1', outcome = 'uncertain'",
-          code: 'NOT_ELIGIBLE'
-        },
-        {
-          name: 'not-sure answer',
-          change: 'UPDATE attempts SET not_sure = 1',
-          code: 'NOT_ELIGIBLE'
-        },
-        {
-          name: 'assessment answer before results',
-          change:
-            "UPDATE study_sessions SET mode = 'assessment' WHERE id = 'study-a'",
-          code: 'NOT_ELIGIBLE'
-        },
-        {
-          name: 'hidden holdout',
-          change: "UPDATE questions SET holdout = 1 WHERE id = 'question-1'",
-          code: 'NOT_ELIGIBLE'
-        },
-        {
-          name: 'withdrawn content',
-          change:
-            "UPDATE content_versions SET status = 'quarantined' WHERE id = 'content-v1'",
-          code: 'CONTENT_UNAVAILABLE'
-        },
-        {
-          name: 'missing checked payload',
-          change: "UPDATE questions SET prompt = NULL WHERE id = 'question-1'",
-          code: 'CONTENT_UNAVAILABLE'
-        }
-      ];
-      for (const { name, change, code } of attempts) {
-        const fresh = await setup();
-        try {
-          await fresh.db.client.execute(change);
-          await expect(
-            createMistakeDraft(fresh.db.client, learner, {
-              attemptId,
-              format: 'basic'
-            }),
-            name
-          ).rejects.toMatchObject({ code });
-          expect(await noteCounts(fresh.db.client), name).toEqual([0, 0, 0]);
-        } finally {
-          fresh.db.close();
-        }
-      }
+      for (const { name, change, code } of refusalCases)
+        await expectDraftRefusal(name, change, code);
 
       // The attempt exists, but it is not the caller's answer.
       await expect(
@@ -969,7 +973,7 @@ describe('mistake-card pages', () => {
     }
   });
 
-  it('keeps a results-page mistake and edits or rejects it on the deck page', async () => {
+  it('keeps a results-page mistake and edits it on the deck page', async () => {
     const { db, target } = await setup();
     try {
       const loaded = (await resultsLoad(
@@ -1031,6 +1035,16 @@ describe('mistake-card pages', () => {
         status: 400,
         data: { message: expect.stringContaining('basic front/back') }
       });
+    } finally {
+      db.close();
+    }
+  });
+
+  it('adds and edits a cloze note on the deck page', async () => {
+    const { db, target } = await setup();
+    try {
+      const deckId = 'deck-page-cloze';
+      await createDeck(db.client, learner, { id: deckId, name: 'Cloze' });
       expect(
         await deckActions.addNote(
           formEvent({
@@ -1044,18 +1058,20 @@ describe('mistake-card pages', () => {
           })
         )
       ).toEqual({ saved: true });
-      const clozeNote = (
-        await db.client.execute(
-          "SELECT id FROM native_flashcard_notes WHERE owner_id = ? AND kind = 'cloze'",
-          [learner.userId]
-        )
-      ).rows[0];
+      const noteId = String(
+        (
+          await db.client.execute(
+            "SELECT id FROM native_flashcard_notes WHERE owner_id = ? AND kind = 'cloze'",
+            [learner.userId]
+          )
+        ).rows[0].id
+      );
       expect(
         await deckActions.edit(
           formEvent({
             params: { id: deckId },
             fields: {
-              noteId: String(clozeNote.id),
+              noteId,
               kind: 'cloze',
               text: 'Je {{c1::suis}} ici.',
               explanation: 'Cloze note edited'
@@ -1064,16 +1080,32 @@ describe('mistake-card pages', () => {
           })
         )
       ).toEqual({ saved: true });
+      expect((await getNote(db.client, learner, noteId)).content).toEqual({
+        text: 'Je {{c1::suis}} ici.'
+      });
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rejects a kept mistake on the deck page', async () => {
+    const { db, target } = await setup();
+    try {
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      const note = await getNote(db.client, learner, draft.id);
       expect(
         await deckActions.reject(
           formEvent({
-            params: { id: deckId },
-            fields: { noteId },
+            params: { id: note.deckId },
+            fields: { noteId: draft.id },
             databaseUrl: target.databaseUrl
           })
         )
       ).toEqual({ saved: true });
-      expect((await getNote(db.client, learner, noteId)).status).toBe(
+      expect((await getNote(db.client, learner, draft.id)).status).toBe(
         'rejected'
       );
     } finally {
