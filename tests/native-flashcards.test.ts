@@ -19,6 +19,54 @@ import {
 afterEach(disposeFlashcardFixtures);
 
 describe('native flashcard persistence feasibility', () => {
+  it('keeps two learners’ identical content as separate notes and cards', async () => {
+    const target = await fixture();
+    const ownerA = testSession('learner-a');
+    const ownerB = testSession('learner-b');
+    const db = await openFixtureDatabase(target);
+    try {
+      const sourceId = `langlo:v1:${'1'.repeat(64)}`;
+      for (const [label, owner] of [
+        ['a', ownerA],
+        ['b', ownerB]
+      ] as const) {
+        await createDeck(db.client, owner, {
+          id: `deck-identical-${label}`,
+          name: 'French'
+        });
+        await createNote(db.client, owner, {
+          id: `note-identical-${label}`,
+          sourceId,
+          deckId: `deck-identical-${label}`,
+          kind: 'basic',
+          content: { front: 'Merci', back: 'Thank you' }
+        });
+      }
+      expect(
+        (
+          await db.client.execute(
+            'SELECT count(*) AS count FROM native_flashcard_notes'
+          )
+        ).rows[0].count
+      ).toBe(2);
+      expect(
+        (
+          await db.client.execute(
+            'SELECT count(*) AS count FROM native_flashcards'
+          )
+        ).rows[0].count
+      ).toBe(2);
+      await expect(
+        getNote(db.client, ownerA, 'note-identical-b')
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(
+        getNote(db.client, ownerB, 'note-identical-a')
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    } finally {
+      db.close();
+    }
+  });
+
   it('persists an approved Basic note across fresh test sessions and scopes it to its owner', async () => {
     const target = await fixture();
     const ownerA = testSession('learner-a');
@@ -314,6 +362,61 @@ describe('native flashcard persistence feasibility', () => {
         ).rows
       ).toEqual(evidenceBefore);
       expect((await getNote(db.client, ownerA, note.id)).card.revision).toBe(0);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('rolls back the card snapshot when the review event cannot be appended', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      await createDeck(db.client, learner, {
+        id: 'deck-10000000-0000-4000-8000-000000000030',
+        name: 'French'
+      });
+      const note = await createNote(db.client, learner, {
+        id: 'note-10000000-0000-4000-8000-000000000030',
+        sourceId: testSourceId('10000000-0000-4000-8000-000000000030'),
+        deckId: 'deck-10000000-0000-4000-8000-000000000030',
+        kind: 'basic',
+        content: { front: 'Merci', back: 'Thank you' }
+      });
+      await approveNote(db.client, learner, note.id);
+      const before = await getNote(db.client, learner, note.id);
+      await db.client.execute(
+        "CREATE TRIGGER review_event_failure BEFORE INSERT ON native_flashcard_review_events BEGIN SELECT RAISE(ABORT, 'synthetic event failure'); END"
+      );
+      const review = {
+        cardId: note.cardId,
+        submissionId: 'review-10000000-0000-4000-8000-000000000030',
+        expectedRevision: 0,
+        rating: 'good' as const
+      };
+      await expect(submitReview(db.client, learner, review)).rejects.toThrow(
+        /synthetic event failure/u
+      );
+      // The failed event append must leave the scheduler snapshot untouched.
+      const after = await getNote(db.client, learner, note.id);
+      expect(after.card).toEqual(before.card);
+      expect(
+        (
+          await db.client.execute(
+            'SELECT count(*) AS count FROM native_flashcard_review_events WHERE owner_id = ?',
+            [learner.userId]
+          )
+        ).rows[0].count
+      ).toBe(0);
+
+      await db.client.execute('DROP TRIGGER review_event_failure');
+      expect(await submitReview(db.client, learner, review)).toMatchObject({
+        revision: 1,
+        duplicate: false
+      });
+      expect((await getNote(db.client, learner, note.id)).card.revision).toBe(
+        1
+      );
     } finally {
       db.close();
     }
