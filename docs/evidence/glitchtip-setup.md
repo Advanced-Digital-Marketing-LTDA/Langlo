@@ -1,5 +1,25 @@
 # GlitchTip setup evidence
 
+## Per-request logs (2026-10-19)
+
+- After console capture shipped, only the startup line reached GlitchTip:
+  `src/` has no `console.log`, `info` or `debug` calls, only `warn` and `error`
+  on failures. At the owner's request ("start sending everything through"),
+  added `requestLog` (`src/lib/server/request-log.ts`), run between the Sentry
+  handle and the app handle in `src/hooks.server.ts`. It sends one
+  `Sentry.logger.info` per request, skipping `/health/live`.
+- The owner chose the raw path over the route pattern, then (2026-10-19, after
+  the adversarial-review check flagged live reset tokens in the path) asked to
+  redact the tokens: `/api/auth/reset-password/<token>` is logged as
+  `/api/auth/reset-password/:token`. Every other path stays raw; the query
+  string is not logged. A request that throws is now logged at `error` level
+  with status 500 before the error is rethrown.
+- Red then green: `tests/request-log.test.ts` failed before the module existed
+  and passed after; breaking the liveness skip failed two of its tests.
+  `tests/request-log-wiring.test.ts` pins the handle order. Only focused test
+  files were run (request log, wiring, signup boundary, Sentry hooks). Not
+  verified: delivery to a live GlitchTip.
+
 ## Console log capture (2026-10-19)
 
 - No logs reached GlitchTip because neither SDK initializer registered log
