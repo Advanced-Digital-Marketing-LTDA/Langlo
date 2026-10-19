@@ -566,6 +566,24 @@ describe('versioned grammar policy', () => {
     ]);
     expect(result).toHaveLength(5);
     expect(recommendPractice([...topics].reverse())).toEqual(result);
+    const undatedTopics = [
+      practiceTopic('practice-recent', {
+        status: 'practising',
+        lastPractisedAt: 30
+      }),
+      practiceTopic('practice-undated', {
+        status: 'practising',
+        lastPractisedAt: null
+      })
+    ];
+    expect(
+      recommendPractice(undatedTopics).map((topic) => topic.skillId)
+    ).toEqual(['practice-recent', 'practice-undated']);
+    expect(
+      recommendPractice([...undatedTopics].reverse()).map(
+        (topic) => topic.skillId
+      )
+    ).toEqual(['practice-recent', 'practice-undated']);
   });
 
   it('ranks a started weak or practising prerequisite before its dependent', () => {
