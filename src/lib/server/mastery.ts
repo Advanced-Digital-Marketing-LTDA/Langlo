@@ -335,11 +335,10 @@ export async function syncEvidenceLedger(
     language,
     lineageKeys
   });
-  const seedIds = new Set(seeds.map((row) => String(row.attempt_id)));
   const evidence = qualifyingGrammarEvidence(
     history,
     await currentContent(tx, language)
-  ).filter((item) => seedIds.has(item.attemptId));
+  );
   await span(
     'mastery.sync-evidence',
     () => recordEvidence(tx, ownerId, language, evidence),
