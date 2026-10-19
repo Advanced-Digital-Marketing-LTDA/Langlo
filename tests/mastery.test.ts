@@ -13,7 +13,11 @@ import {
   testSession
 } from './fixtures/flashcards';
 import { seedBasicNote } from './fixtures/flashcards';
-import { approveNote, submitReview } from '../src/lib/server/flashcards';
+import {
+  approveNote,
+  beginWrite,
+  submitReview
+} from '../src/lib/server/flashcards';
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { recordAttempt } from '../src/lib/server/study';
@@ -78,6 +82,25 @@ it.each([
 });
 
 describe('versioned grammar policy', () => {
+  it('waits for an active write before reading a consistent mastery snapshot', async () => {
+    const before = await computeMastery(client, learner, 'fr');
+    const held = await beginWrite(client);
+    await held.execute(
+      "UPDATE lessons SET title = 'Uncommitted title' WHERE content_version_id = 'fr-a1-001@1'"
+    );
+    let completed = false;
+    const loading = computeMastery(client, learner, 'fr').then((skills) => {
+      completed = true;
+      return skills;
+    });
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    const completedDuringWrite = completed;
+    await held.rollback();
+    held.close();
+    expect(completedDuringWrite).toBe(false);
+    expect(await loading).toEqual(before);
+  });
+
   it('writes evidence with the answer and computes mastery without writes', async () => {
     const input = {
       studySessionId: 'study-a',

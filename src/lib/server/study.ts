@@ -440,6 +440,39 @@ async function settleFallback(
   });
 }
 
+async function recordFallbackVerdict(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt,
+  outcome: string
+) {
+  const tx = await beginWrite(client);
+  try {
+    await tx.execute({
+      sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [
+        randomUUID(),
+        session.userId,
+        attempt.id,
+        FALLBACK_EVALUATOR_VERSION,
+        `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`,
+        outcome
+      ]
+    });
+    await syncEvidenceLedger(tx, {
+      ownerId: session.userId,
+      language: attempt.language,
+      attemptIds: [attempt.id]
+    });
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
 /**
  * Ask the AI fallback about a typed answer the prepared answers did not
  * match. It runs after the attempt commits, so a slow or failed call never
@@ -473,29 +506,7 @@ async function recordFallbackEvaluation(
       await settleFallback(client, session, attempt);
       return;
     }
-    const tx = await beginWrite(client);
-    try {
-      await tx.execute({
-        sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
-        args: [
-          randomUUID(),
-          session.userId,
-          attempt.id,
-          FALLBACK_EVALUATOR_VERSION,
-          `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`,
-          result.outcome
-        ]
-      });
-      await syncEvidenceLedger(tx, session.userId, attempt.language, {
-        attemptIds: [attempt.id]
-      });
-      await tx.commit();
-    } catch (error) {
-      await tx.rollback().catch(() => undefined);
-      throw error;
-    } finally {
-      tx.close();
-    }
+    await recordFallbackVerdict(client, session, attempt, result.outcome);
   } catch (error) {
     // The attempt is already saved; the answer stays uncertain for review.
     logFallback('failed');
@@ -560,6 +571,34 @@ export async function recordAttempt(
   return recorded.result;
 }
 
+async function syncAttemptEvidence(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  attempt: {
+    attemptId: string;
+    language: string;
+    mode: string;
+    studySessionId: string;
+    outcome: string;
+  }
+) {
+  const scope = { ownerId: session.userId, language: attempt.language };
+  const completed = await completeAssessment(
+    tx,
+    session,
+    attempt.studySessionId
+  );
+  if (completed) {
+    await syncEvidenceLedger(tx, {
+      ...scope,
+      studySessionId: attempt.studySessionId
+    });
+    return;
+  }
+  if (attempt.mode === 'assessment' || attempt.outcome === 'uncertain') return;
+  await syncEvidenceLedger(tx, { ...scope, attemptIds: [attempt.attemptId] });
+}
+
 async function recordAttemptWrite(
   client: Client,
   session: LearnerSession,
@@ -604,24 +643,13 @@ async function recordAttemptWrite(
       notSure: input.notSure
     };
     const outcome = await recordPreparedEvaluation(tx, session, attempt);
-    const assessmentCompleted = await completeAssessment(
-      tx,
-      session,
-      input.studySessionId
-    );
-    if (
-      assessmentCompleted ||
-      ((source.mode === 'practice' || source.mode === 'mixed-review') &&
-        outcome !== 'uncertain')
-    )
-      await syncEvidenceLedger(
-        tx,
-        session.userId,
-        source.language,
-        assessmentCompleted
-          ? { studySessionId: input.studySessionId }
-          : { attemptIds: [id] }
-      );
+    await syncAttemptEvidence(tx, session, {
+      attemptId: id,
+      language: source.language,
+      mode: source.mode,
+      studySessionId: input.studySessionId,
+      outcome
+    });
     await tx.commit();
     const result = { id, duplicate: false as const };
     return outcome === 'uncertain' && !input.notSure

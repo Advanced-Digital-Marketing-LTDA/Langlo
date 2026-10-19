@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { Client, Row } from '@libsql/client';
-import type { LearnerSession } from './flashcards';
+import { beginRead, type LearnerSession } from './flashcards';
 import { feedbackEvaluation } from './assessment';
 import { StudyError } from './study-error';
 import { effectiveLineageKey } from './lineage';
@@ -192,20 +192,16 @@ export async function currentContent(
   };
 }
 
-/** The stored attempts and evaluations the evidence rules read, oldest first. */
-export async function loadEvidenceRows(
-  tx: Pick<Client, 'execute'>,
-  filter: {
-    ownerId?: string;
-    language?: string;
-    skillId?: string;
-    attemptIds?: string[];
-    studySessionId?: string;
-    lineageKeys?: string[];
-  }
-) {
-  if (filter.attemptIds?.length === 0 || filter.lineageKeys?.length === 0)
-    return [];
+type EvidenceFilter = {
+  ownerId?: string;
+  language?: string;
+  skillId?: string;
+  attemptIds?: string[];
+  studySessionId?: string;
+  lineageKeys?: string[];
+};
+
+function evidenceWhere(filter: EvidenceFilter) {
   const clauses: string[] = [];
   const args: string[] = [];
   if (filter.ownerId !== undefined) {
@@ -237,6 +233,17 @@ export async function loadEvidenceRows(
     args.push(...filter.lineageKeys, ...filter.lineageKeys);
   }
   const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+  return { where, args };
+}
+
+/** The stored attempts and evaluations the evidence rules read, oldest first. */
+export async function loadEvidenceRows(
+  tx: Pick<Client, 'execute'>,
+  filter: EvidenceFilter
+) {
+  if (filter.attemptIds?.length === 0 || filter.lineageKeys?.length === 0)
+    return [];
+  const { where, args } = evidenceWhere(filter);
   const result = await tx.execute({
     sql: `SELECT a.id AS attempt_id, a.owner_id, a.rowid AS sequence, a.created_at, a.question_id, a.content_version_id, a.skill_id, a.study_session_id, a.evidence_kind, a.not_sure,
         s.mode, s.state, v.status, aq.lineage_key, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
@@ -252,6 +259,7 @@ export async function loadEvidenceRows(
 
 type Tx = Pick<Client, 'execute'>;
 type Evidence = ReturnType<typeof qualifyingGrammarEvidence>;
+type EvidenceScope = { ownerId: string; language: string };
 
 async function loadCatalog(tx: Tx, language: string) {
   const catalog = await tx.execute({
@@ -274,8 +282,7 @@ async function loadPrerequisites(tx: Tx, language: string) {
 /** Write the qualifying evidence to the ledger; replays change nothing. */
 async function recordEvidence(
   tx: Tx,
-  ownerId: string,
-  language: string,
+  scope: EvidenceScope,
   evidence: Evidence
 ) {
   for (const item of evidence)
@@ -283,41 +290,38 @@ async function recordEvidence(
       sql: 'INSERT INTO skill_evidence (id, owner_id, attempt_id, evaluation_id, skill_id, language, scoring_version, contribution) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(owner_id, attempt_id, scoring_version) DO NOTHING',
       args: [
         randomUUID(),
-        ownerId,
+        scope.ownerId,
         item.attemptId,
         item.evaluationId,
         item.skillId,
-        language,
+        scope.language,
         GRAMMAR_POLICY_VERSION,
         item.correct ? 1 : 0
       ]
     });
 }
 
-async function loadQualifyingEvidence(
-  tx: Tx,
-  ownerId: string,
-  language: string
-) {
+async function loadQualifyingEvidence(tx: Tx, scope: EvidenceScope) {
   const source = await span('mastery.load-evidence', async (active) => {
-    const rows = await loadEvidenceRows(tx, { ownerId, language });
+    const rows = await loadEvidenceRows(tx, scope);
     active.setAttribute('rows', rows.length);
     return rows;
   });
   return qualifyingGrammarEvidence(
     source,
-    await span('mastery.current-content', () => currentContent(tx, language))
+    await span('mastery.current-content', () =>
+      currentContent(tx, scope.language)
+    )
   );
 }
 
 /** Sync trusted answer history inside the write transaction that records it. */
 export async function syncEvidenceLedger(
   tx: Tx,
-  ownerId: string,
-  language: string,
-  scope: { attemptIds?: string[]; studySessionId?: string }
+  scope: EvidenceScope & { attemptIds?: string[]; studySessionId?: string }
 ) {
-  const seeds = await loadEvidenceRows(tx, { ownerId, language, ...scope });
+  const { ownerId, language } = scope;
+  const seeds = await loadEvidenceRows(tx, scope);
   if (seeds.length === 0) return;
   const lineageKeys = [
     ...new Set(
@@ -341,7 +345,7 @@ export async function syncEvidenceLedger(
   );
   await span(
     'mastery.sync-evidence',
-    () => recordEvidence(tx, ownerId, language, evidence),
+    () => recordEvidence(tx, scope, evidence),
     { rows: evidence.length }
   );
 }
@@ -372,21 +376,20 @@ function skillStanding(row: Row, evidence: Evidence, prerequisites: Row[]) {
 
 /** Compute mastery from trusted answer history without changing learner state. */
 async function computeMastery(
-  client: Client,
+  tx: Tx,
   learner: LearnerSession,
   language: string
 ) {
   const catalog = await span('mastery.catalog', () =>
-    loadCatalog(client, language)
+    loadCatalog(tx, language)
   );
   const prerequisites = await span('mastery.prerequisites', () =>
-    loadPrerequisites(client, language)
+    loadPrerequisites(tx, language)
   );
-  const evidence = await loadQualifyingEvidence(
-    client,
-    learner.userId,
+  const evidence = await loadQualifyingEvidence(tx, {
+    ownerId: learner.userId,
     language
-  );
+  });
   return catalog.map((row) => skillStanding(row, evidence, prerequisites));
 }
 
@@ -396,24 +399,33 @@ export async function loadEnrolledMastery(
   learner: LearnerSession,
   language: string | null = null
 ) {
-  const enrolled = await client.execute({
-    sql: 'SELECT language, starting_level FROM enrollments WHERE owner_id = ? ORDER BY language',
-    args: [learner.userId]
-  });
-  if (
-    language !== null &&
-    !enrolled.rows.some((row) => row.language === language)
-  )
-    throw new StudyError('NOT_FOUND');
-
-  const tracks = [];
-  for (const row of enrolled.rows) {
-    if (language !== null && row.language !== language) continue;
-    tracks.push({
-      language: String(row.language),
-      level: String(row.starting_level),
-      skills: await computeMastery(client, learner, String(row.language))
+  const tx = await beginRead(client);
+  try {
+    const enrolled = await tx.execute({
+      sql: 'SELECT language, starting_level FROM enrollments WHERE owner_id = ? ORDER BY language',
+      args: [learner.userId]
     });
+    if (
+      language !== null &&
+      !enrolled.rows.some((row) => row.language === language)
+    )
+      throw new StudyError('NOT_FOUND');
+
+    const tracks = await Promise.all(
+      enrolled.rows
+        .filter((row) => language === null || row.language === language)
+        .map(async (row) => ({
+          language: String(row.language),
+          level: String(row.starting_level),
+          skills: await computeMastery(tx, learner, String(row.language))
+        }))
+    );
+    await tx.commit();
+    return tracks;
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
   }
-  return tracks;
 }

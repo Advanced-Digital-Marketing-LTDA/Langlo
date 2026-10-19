@@ -8,7 +8,14 @@ import {
   type Grade,
   type FSRSParameters
 } from 'ts-fsrs';
-import type { Client, InStatement, Row } from '@libsql/client';
+import type {
+  Client,
+  InStatement,
+  Row,
+  Transaction,
+  TransactionMode
+} from '@libsql/client';
+import { LibsqlError } from '@libsql/client';
 import { setTimeout as delay } from 'node:timers/promises';
 
 export interface LearnerSession {
@@ -51,8 +58,8 @@ const maxCardTextLength = 4096;
 const maxExplanationLength = 1000;
 const maxSourceFieldLength = 512;
 const sourceIdPattern = /^langlo:v1:[0-9a-f]{64}$/u;
-// shortcut: remote writes serialize too; split if throughput proves limiting.
-const writeQueues = new WeakMap<object, Promise<void>>();
+// shortcut: remote transactions serialize too; split if throughput proves limiting.
+const connectionQueues = new WeakMap<object, Set<() => void>>();
 const ratings: Record<RatingName, Grade> = {
   again: Rating.Again,
   hard: Rating.Hard,
@@ -69,23 +76,45 @@ function exceedsCodePointLimit(value: string, limit: number): boolean {
   return false;
 }
 
-async function acquireWrite(client: object) {
-  const previous = writeQueues.get(client) ?? Promise.resolve();
-  let release!: () => void;
-  const queued = new Promise<void>((resolve) => (release = resolve));
-  const tail = previous.then(() => queued);
-  writeQueues.set(client, tail);
-  await previous;
-
+function releaseConnection(client: object, queue: Set<() => void>) {
   let released = false;
-  const finish = () => {
+  return () => {
     if (released) return;
     released = true;
-    release();
-    if (writeQueues.get(client) === tail) writeQueues.delete(client);
+    const next = queue.values().next().value;
+    if (next) {
+      queue.delete(next);
+      next();
+    } else {
+      connectionQueues.delete(client);
+    }
   };
+}
 
-  return finish;
+function acquireConnection(client: object): Promise<() => void> {
+  const active = connectionQueues.get(client);
+  if (!active) {
+    const queue = new Set<() => void>();
+    connectionQueues.set(client, queue);
+    return Promise.resolve(releaseConnection(client, queue));
+  }
+  return new Promise((resolve, reject) => {
+    const resume = () => {
+      clearTimeout(timer);
+      resolve(releaseConnection(client, active));
+    };
+    const timer = setTimeout(() => {
+      // Remove this waiter without releasing another request's active slot.
+      active.delete(resume);
+      reject(
+        new LibsqlError(
+          'Timed out waiting for the database connection',
+          'SQLITE_BUSY'
+        )
+      );
+    }, 5000);
+    active.add(resume);
+  });
 }
 
 /** Serialize a standalone statement with transactions using the same client. */
@@ -93,7 +122,7 @@ export async function executeWrite(
   client: Pick<Client, 'execute'>,
   statement: InStatement | string
 ) {
-  const finish = await acquireWrite(client);
+  const finish = await acquireConnection(client);
   try {
     return await client.execute(statement);
   } finally {
@@ -101,44 +130,48 @@ export async function executeWrite(
   }
 }
 
-export async function beginWrite(client: Client) {
-  const finish = await acquireWrite(client);
+function releaseTransaction(transaction: Transaction, finish: () => void) {
+  const terminal = {
+    commit: async () => {
+      try {
+        await transaction.commit();
+      } catch (error) {
+        await transaction.rollback().catch(() => undefined);
+        throw error;
+      } finally {
+        finish();
+      }
+    },
+    rollback: async () => {
+      try {
+        await transaction.rollback();
+      } finally {
+        finish();
+      }
+    },
+    close: () => {
+      try {
+        transaction.close();
+      } finally {
+        finish();
+      }
+    }
+  };
+  return new Proxy(transaction, {
+    get(target, property) {
+      if (Object.hasOwn(terminal, property))
+        return terminal[property as keyof typeof terminal];
+      const value = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    }
+  });
+}
+
+async function beginTransaction(client: Client, mode: TransactionMode) {
+  const finish = await acquireConnection(client);
   for (let attempt = 0; ; attempt += 1) {
     try {
-      const transaction = await client.transaction('write');
-      return new Proxy(transaction, {
-        get(target, property) {
-          if (property === 'commit')
-            return async () => {
-              try {
-                return await target.commit();
-              } catch (error) {
-                await target.rollback().catch(() => undefined);
-                throw error;
-              } finally {
-                finish();
-              }
-            };
-          if (property === 'rollback')
-            return async () => {
-              try {
-                return await target.rollback();
-              } finally {
-                finish();
-              }
-            };
-          if (property === 'close')
-            return () => {
-              try {
-                return target.close();
-              } finally {
-                finish();
-              }
-            };
-          const value = Reflect.get(target, property, target);
-          return typeof value === 'function' ? value.bind(target) : value;
-        }
-      });
+      return releaseTransaction(await client.transaction(mode), finish);
     } catch (error) {
       if (
         (error as { code?: string }).code !== 'SQLITE_BUSY' ||
@@ -147,11 +180,14 @@ export async function beginWrite(client: Client) {
         finish();
         throw error;
       }
-      // Back off only after the failed write attempt finishes, then retry serially.
+      // Back off only after the failed attempt finishes, then retry serially.
       await delay(10 * (attempt + 1));
     }
   }
 }
+
+export const beginWrite = (client: Client) => beginTransaction(client, 'write');
+export const beginRead = (client: Client) => beginTransaction(client, 'read');
 
 export class FlashcardError extends Error {
   constructor(readonly code: string) {
