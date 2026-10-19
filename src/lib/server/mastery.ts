@@ -222,6 +222,74 @@ export async function loadEvidenceRows(
   return result.rows;
 }
 
+type Tx = Pick<Client, 'execute'>;
+type Evidence = ReturnType<typeof qualifyingGrammarEvidence>;
+
+async function loadCatalog(tx: Tx, language: string) {
+  const catalog = await tx.execute({
+    sql: `SELECT sk.id, sk.level, l.title AS lesson_title, COALESCE(l.title, sk.id) AS title, v.id AS content_version_id, v.status
+        FROM skills sk LEFT JOIN content_versions v ON v.skill_id = sk.id AND v.id = (SELECT v2.id FROM content_versions v2 WHERE v2.skill_id = sk.id ORDER BY v2.status = 'quarantined', v2.version DESC LIMIT 1)
+        LEFT JOIN lessons l ON l.content_version_id = v.id WHERE sk.language = ? AND sk.retired_at IS NULL ORDER BY sk.level, sk.id`,
+    args: [language]
+  });
+  return catalog.rows;
+}
+
+async function loadPrerequisites(tx: Tx, language: string) {
+  const prerequisites = await tx.execute({
+    sql: 'SELECT skill_id, prerequisite_id FROM prerequisites WHERE language = ? ORDER BY skill_id, prerequisite_id',
+    args: [language]
+  });
+  return prerequisites.rows;
+}
+
+/** Write the qualifying evidence to the ledger; replays change nothing. */
+async function recordEvidence(
+  tx: Tx,
+  ownerId: string,
+  language: string,
+  evidence: Evidence
+) {
+  for (const item of evidence)
+    await tx.execute({
+      sql: 'INSERT INTO skill_evidence (id, owner_id, attempt_id, evaluation_id, skill_id, language, scoring_version, contribution) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(owner_id, attempt_id, scoring_version) DO NOTHING',
+      args: [
+        randomUUID(),
+        ownerId,
+        item.attemptId,
+        item.evaluationId,
+        item.skillId,
+        language,
+        GRAMMAR_POLICY_VERSION,
+        item.correct ? 1 : 0
+      ]
+    });
+}
+
+/** One catalog row with its prerequisites and the status its evidence earns. */
+function skillStanding(row: Row, evidence: Evidence, prerequisites: Row[]) {
+  const items = evidence.filter((item) => item.countsFor === row.id);
+  return {
+    skillId: String(row.id),
+    level: String(row.level),
+    title: String(row.title),
+    contentVersionId:
+      row.content_version_id === null ? null : String(row.content_version_id),
+    available:
+      row.content_version_id !== null &&
+      row.lesson_title !== null &&
+      row.status !== 'quarantined',
+    prerequisites: prerequisites
+      .filter((edge) => edge.skill_id === row.id)
+      .map((edge) => String(edge.prerequisite_id)),
+    ...scoreGrammar({
+      correct: items.filter((item) => item.correct).length,
+      incorrect: items.filter((item) => !item.correct).length,
+      sessions: new Set(items.map((item) => item.sessionId)).size
+    })
+  };
+}
+
 /** Recompute from trusted history; the existing evidence ledger is idempotent. */
 export async function getMastery(
   client: Client,
@@ -235,16 +303,8 @@ export async function getMastery(
       args: [learner.userId, language]
     });
     if (!enrolled.rows.length) throw new StudyError('NOT_FOUND');
-    const catalog = await tx.execute({
-      sql: `SELECT sk.id, sk.level, l.title AS lesson_title, COALESCE(l.title, sk.id) AS title, v.id AS content_version_id, v.status
-        FROM skills sk LEFT JOIN content_versions v ON v.skill_id = sk.id AND v.id = (SELECT v2.id FROM content_versions v2 WHERE v2.skill_id = sk.id ORDER BY v2.status = 'quarantined', v2.version DESC LIMIT 1)
-        LEFT JOIN lessons l ON l.content_version_id = v.id WHERE sk.language = ? AND sk.retired_at IS NULL ORDER BY sk.level, sk.id`,
-      args: [language]
-    });
-    const prerequisites = await tx.execute({
-      sql: 'SELECT skill_id, prerequisite_id FROM prerequisites WHERE language = ? ORDER BY skill_id, prerequisite_id',
-      args: [language]
-    });
+    const catalog = await loadCatalog(tx, language);
+    const prerequisites = await loadPrerequisites(tx, language);
     const source = await loadEvidenceRows(tx, {
       ownerId: learner.userId,
       language
@@ -253,45 +313,10 @@ export async function getMastery(
       source,
       await currentContent(tx, language)
     );
-    for (const item of evidence) {
-      await tx.execute({
-        sql: 'INSERT INTO skill_evidence (id, owner_id, attempt_id, evaluation_id, skill_id, language, scoring_version, contribution) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(owner_id, attempt_id, scoring_version) DO NOTHING',
-        args: [
-          randomUUID(),
-          learner.userId,
-          item.attemptId,
-          item.evaluationId,
-          item.skillId,
-          language,
-          GRAMMAR_POLICY_VERSION,
-          item.correct ? 1 : 0
-        ]
-      });
-    }
-    const result = catalog.rows.map((row) => {
-      const items = evidence.filter((item) => item.countsFor === row.id);
-      return {
-        skillId: String(row.id),
-        level: String(row.level),
-        title: String(row.title),
-        contentVersionId:
-          row.content_version_id === null
-            ? null
-            : String(row.content_version_id),
-        available:
-          row.content_version_id !== null &&
-          row.lesson_title !== null &&
-          row.status !== 'quarantined',
-        prerequisites: prerequisites.rows
-          .filter((edge) => edge.skill_id === row.id)
-          .map((edge) => String(edge.prerequisite_id)),
-        ...scoreGrammar({
-          correct: items.filter((item) => item.correct).length,
-          incorrect: items.filter((item) => !item.correct).length,
-          sessions: new Set(items.map((item) => item.sessionId)).size
-        })
-      };
-    });
+    await recordEvidence(tx, learner.userId, language, evidence);
+    const result = catalog.map((row) =>
+      skillStanding(row, evidence, prerequisites)
+    );
     await tx.commit();
     return result;
   } catch (error) {
