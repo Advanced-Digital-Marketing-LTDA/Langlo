@@ -32,6 +32,7 @@
     "db:test:reset": "node tests/fixtures/cli.ts reset",
     "db:fixture:dispose": "node tests/fixtures/cli.ts dispose",
     "db:remote-test": "node scripts/db-remote-test.ts",
+    "content:import": "tsx scripts/content-import.ts",
     "accounts:provision": "node scripts/accounts-provision.ts"
   },
   "dependencies": {
@@ -77,6 +78,7 @@
     "prettier-plugin-svelte": "4.1.1",
     "svelte": "5.57.2",
     "svelte-check": "4.7.6",
+    "tsx": "4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.1",
     "vite": "8.3.3",
