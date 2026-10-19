@@ -13,7 +13,8 @@
   );
 
   $effect(() => {
-    if (updated.current && blockedAnswers === 0) window.location.reload();
+    if (updated.current && blockedAnswers === 0)
+      window.location.href = window.location.href;
   });
 </script>
 
