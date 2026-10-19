@@ -217,6 +217,20 @@ describe('declaring a change to an existing skill', () => {
     ]);
   });
 
+  it('refuses a version lower than one already stored for the skill', async () => {
+    const third = update('0.2.0', [same('fr-a1-001@3:q1', 'fr-a1-001@1:q1')]);
+    third.versions[0].id = 'fr-a1-001@3';
+    third.versions[0].version = 3;
+    await importContent(client, third);
+    const lower = update('0.3.0', [
+      question('fr-a1-001@2:q9', { change: 'new' })
+    ]);
+    await rejects(lower, 'VERSION_ORDER');
+    await expect(contentImpact(client, lower)).rejects.toMatchObject({
+      code: 'VERSION_ORDER'
+    });
+  });
+
   it('records the first import as skills and versions added', async () => {
     const log = await client.execute(
       "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '0.1.0' GROUP BY kind ORDER BY kind"
@@ -612,6 +626,41 @@ describe('the impact report', () => {
     withdrawn.versions[0].review = 'quarantined';
     expect(await contentImpact(client, withdrawn)).toMatchObject([
       { skillId: 'fr-a1-001', answers: 0, learners: 0 }
+    ]);
+  });
+
+  it('plans a version against a quarantined one before it in the same package', async () => {
+    await answer('fr-a1-001@1:q2', 'two', 'es');
+    const pkg = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+    ]);
+    pkg.versions.push(
+      {
+        id: 'fr-a1-001@3',
+        skillId: 'fr-a1-001',
+        version: 3,
+        review: 'quarantined',
+        questions: [
+          same('fr-a1-001@3:q1', 'fr-a1-001@2:q1'),
+          question('fr-a1-001@3:q2', { change: 'changed' })
+        ]
+      },
+      {
+        id: 'fr-a1-001@4',
+        skillId: 'fr-a1-001',
+        version: 4,
+        review: 'approved',
+        questions: [
+          same('fr-a1-001@4:q1', 'fr-a1-001@3:q1'),
+          same('fr-a1-001@4:q2', 'fr-a1-001@3:q2')
+        ]
+      }
+    );
+    // v4 is current, and its q2 descends from the changed v3 q2, so the
+    // answer to the original q2 stops counting.
+    expect(await contentImpact(client, pkg)).toMatchObject([
+      { skillId: 'fr-a1-001', answers: 1, learners: 1 }
     ]);
   });
 

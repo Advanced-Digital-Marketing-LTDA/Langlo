@@ -232,6 +232,12 @@ describe('mastery for a retired skill', () => {
     ).toHaveLength(1);
   });
 
+  it('stops listing the retired skill as a prerequisite', async () => {
+    expect((await skill('fr-a1-003'))?.prerequisites).toContain('fr-a1-002');
+    await importContent(client, renamed(false));
+    expect((await skill('fr-a1-003'))?.prerequisites).toEqual(['fr-a1-001']);
+  });
+
   it('counts the answers for the replacement when the owner approved a carry', async () => {
     await answer('fr-a1-002@1:q1', 'Nous sommes ici.');
     await importContent(client, renamed(true));

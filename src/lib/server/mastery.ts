@@ -239,7 +239,7 @@ async function loadCatalog(tx: Tx, language: string) {
 
 async function loadPrerequisites(tx: Tx, language: string) {
   const prerequisites = await tx.execute({
-    sql: 'SELECT skill_id, prerequisite_id FROM prerequisites WHERE language = ? ORDER BY skill_id, prerequisite_id',
+    sql: 'SELECT p.skill_id, p.prerequisite_id FROM prerequisites p JOIN skills r ON r.id = p.prerequisite_id WHERE p.language = ? AND r.retired_at IS NULL ORDER BY p.skill_id, p.prerequisite_id',
     args: [language]
   });
   return prerequisites.rows;

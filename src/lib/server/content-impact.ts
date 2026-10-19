@@ -101,25 +101,10 @@ async function currentVersion(
   return found.rows[0] === undefined ? undefined : String(found.rows[0].id);
 }
 
-/** The impact of one version the database does not hold yet, if it drops questions. */
-async function newVersionImpact(
-  client: Client,
-  version: PackageVersion,
-  earlier: Earlier | undefined
-) {
-  // A version imported quarantined never becomes current, so it drops nothing.
-  if (version.review === 'quarantined') return {};
-  const prior = earlier ?? (await priorVersion(client, version));
-  const plan = planVersion(version, prior);
-  const planned: Earlier = {
-    questions: plan.questions.map((question) => ({
-      id: question.id,
-      lineageKey: question.lineageKey,
-      contentVersionId: version.id
-    }))
-  };
-  const keys = new Set(
-    plan.removed.map((question) =>
+/** The effective lineage keys of a planned version. */
+const plannedKeys = (plan: Earlier) =>
+  new Set(
+    plan.questions.map((question) =>
       effectiveLineageKey({
         lineageKey: question.lineageKey,
         contentVersionId: question.contentVersionId,
@@ -127,7 +112,52 @@ async function newVersionImpact(
       })
     )
   );
-  if (prior === undefined || keys.size === 0) return { planned };
+
+/**
+ * What a package has planned for a skill so far: `chain` is the newest planned
+ * version of any review state (the next version continues it), `current` the
+ * newest one that is not quarantined (what learners will see).
+ */
+type SkillPlan = { chain?: Earlier; current?: Earlier };
+
+/** The keys the skill's current version holds before this version arrives. */
+async function keysBefore(
+  client: Client,
+  skillId: string,
+  current: Earlier | undefined
+) {
+  if (current !== undefined) return plannedKeys(current);
+  const stored = await currentVersion(client, skillId);
+  return stored === undefined ? undefined : versionKeys(client, stored);
+}
+
+/**
+ * The impact of one version the database does not hold yet: the answers on
+ * items of the current version that it leaves out. A version imported
+ * quarantined never becomes current, so it drops nothing.
+ */
+async function newVersionImpact(
+  client: Client,
+  version: PackageVersion,
+  plans: SkillPlan | undefined
+): Promise<{ line?: ImpactLine; planned: Earlier }> {
+  const plan = planVersion(
+    version,
+    plans?.chain ?? (await priorVersion(client, version))
+  );
+  const planned: Earlier = {
+    questions: plan.questions.map((question) => ({
+      id: question.id,
+      lineageKey: question.lineageKey,
+      contentVersionId: version.id
+    }))
+  };
+  if (version.review === 'quarantined') return { planned };
+  const before = await keysBefore(client, version.skillId, plans?.current);
+  if (before === undefined) return { planned };
+  const after = plannedKeys(planned);
+  const keys = new Set([...before].filter((key) => !after.has(key)));
+  if (keys.size === 0) return { planned };
   return {
     planned,
     line: {
@@ -165,14 +195,13 @@ async function quarantineImpact(
 async function versionImpact(
   client: Client,
   version: PackageVersion,
-  earlier: Earlier | undefined
+  plans: SkillPlan | undefined
 ): Promise<{ line?: ImpactLine; planned?: Earlier }> {
   const stored = await client.execute({
     sql: 'SELECT status FROM content_versions WHERE id = ?',
     args: [version.id]
   });
-  if (stored.rows.length === 0)
-    return newVersionImpact(client, version, earlier);
+  if (stored.rows.length === 0) return newVersionImpact(client, version, plans);
   return {
     line: await quarantineImpact(client, version, String(stored.rows[0].status))
   };
@@ -234,18 +263,30 @@ export async function contentImpact(
   const ordered = [...pkg.versions].sort(
     (a, b) => a.skillId.localeCompare(b.skillId) || a.version - b.version
   );
-  const planned = new Map<string, Earlier>();
+  const plans = new Map<string, SkillPlan>();
   for (const version of ordered) {
-    const { line, planned: plan } = await versionImpact(
+    const { line, planned } = await versionImpact(
       client,
       version,
-      planned.get(version.skillId)
+      plans.get(version.skillId)
     );
     if (line) lines.push(line);
-    if (plan) planned.set(version.skillId, plan);
+    if (planned)
+      plans.set(version.skillId, {
+        chain: planned,
+        current:
+          version.review === 'quarantined'
+            ? plans.get(version.skillId)?.current
+            : planned
+      });
   }
+  const projected = new Map(
+    [...plans].flatMap(([skillId, plan]) =>
+      plan.current ? [[skillId, plan.current] as const] : []
+    )
+  );
   for (const retirement of pkg.retirements ?? []) {
-    const line = await retirementImpact(client, retirement, planned);
+    const line = await retirementImpact(client, retirement, projected);
     if (line) lines.push(line);
   }
   return lines;

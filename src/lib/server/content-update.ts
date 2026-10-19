@@ -199,6 +199,15 @@ export function planVersion(
 
 /** The newest earlier version of the skill that has questions, with them. */
 export async function priorVersion(db: Executor, version: PackageVersion) {
+  const newest = await db.execute({
+    sql: 'SELECT MAX(version) AS newest FROM content_versions WHERE skill_id = ?',
+    args: [version.skillId]
+  });
+  if (Number(newest.rows[0]?.newest ?? 0) > version.version)
+    fail(
+      'VERSION_ORDER',
+      `${version.id} is older than a version of ${version.skillId} that is already stored`
+    );
   const found = await db.execute({
     sql: 'SELECT v.id FROM content_versions v WHERE v.skill_id = ? AND v.version < ? AND EXISTS (SELECT 1 FROM questions q WHERE q.content_version_id = v.id) ORDER BY v.version DESC LIMIT 1',
     args: [version.skillId, version.version]

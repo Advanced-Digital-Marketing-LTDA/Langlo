@@ -4,7 +4,7 @@ Imported content is immutable. A correction is a new lesson version of the same 
 
 ## Authoring an edit
 
-1. Create the next version of the skill (`skill@N+1`) with its own question ids. The earlier version stays untouched.
+1. Create the next version of the skill (`skill@N+1`) with its own question ids. The earlier version stays untouched. A version lower than one already stored for the skill fails with `VERSION_ORDER`.
 2. Every question of that version declares `change`:
    - `same`: the question keeps its meaning (a wording fix). It also names the earlier question it continues in `continues`, which must belong to the immediately earlier version, and no earlier question may be continued twice.
    - `changed`: the question has a new meaning, whatever its number.
