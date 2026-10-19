@@ -31,6 +31,18 @@ const logicalItem = (questionId: string, versionId: string) =>
 const itemOf = (alias: string, questionId: string, versionId: string) =>
   `COALESCE(${alias}.lineage_key, ${logicalItem(questionId, versionId)})`;
 
+/**
+ * Whether attempt `a` was an answer for the skill of question `q`: on that
+ * skill, or on a retired skill whose progress carries to it, directly or
+ * through other carries (as mastery counts them).
+ */
+const answersForSkillOf = (attempt: string, question: string) =>
+  `${attempt}.skill_id IN (WITH RECURSIVE source(id) AS (
+    SELECT ${question}.skill_id
+    UNION SELECT r.id FROM skills r JOIN source ON r.replaced_by = source.id
+      WHERE r.retired_at IS NOT NULL AND r.carry_progress = 1
+  ) SELECT id FROM source)`;
+
 /** A saved plan freezes item identities; newly imported content cannot extend it. */
 export async function startAssessment(
   client: Client,
@@ -76,7 +88,7 @@ export async function startAssessment(
           AND sk.retired_at IS NULL
           AND v.status IN ('schema-validated', 'pilot-ready')
           AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id AND v2.status <> 'quarantined')
-          AND NOT EXISTS (SELECT 1 FROM attempts a JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND a.skill_id = q.skill_id
+          AND NOT EXISTS (SELECT 1 FROM attempts a JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND ${answersForSkillOf('a', 'q')}
             AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')})
         ORDER BY sk.level, q.skill_id, q.id`,
       args: [input.language, learner.userId]
@@ -210,7 +222,7 @@ export async function assertAssessmentQuestion(
   // The plan was frozen at start: an item answered in another session since
   // then is no longer unseen, and counting it would reward a revealed answer.
   const seenElsewhere = await client.execute({
-    sql: `SELECT 1 FROM questions q JOIN attempts a ON a.owner_id = ? AND a.study_session_id <> ? AND a.skill_id = q.skill_id
+    sql: `SELECT 1 FROM questions q JOIN attempts a ON a.owner_id = ? AND a.study_session_id <> ? AND ${answersForSkillOf('a', 'q')}
       JOIN questions aq ON aq.id = a.question_id
       AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')}
       WHERE q.id = ? LIMIT 1`,

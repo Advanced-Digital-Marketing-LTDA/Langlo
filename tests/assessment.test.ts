@@ -353,6 +353,20 @@ describe('saved placement plan', () => {
     expect(String(plan.rows[0].assessment_plan)).toContain('fr-a1-001@1:q2');
   });
 
+  it('does not offer a holdout again when a retired skill carried its answer over', async () => {
+    const first = await start();
+    await answer(first.id, 'fr-a1-001@1:q2');
+    await client.execute(
+      "UPDATE skills SET retired_at = 1, replaced_by = 'fr-a1-002', carry_progress = 1 WHERE id = 'fr-a1-001'"
+    );
+    await client.execute(
+      "UPDATE questions SET lineage_key = 'q2' WHERE id = 'fr-a1-002@1:q1'"
+    );
+    await expect(start()).rejects.toMatchObject({
+      code: 'CONTENT_UNAVAILABLE'
+    });
+  });
+
   it('offers a holdout another learner answered, since exposure is per learner', async () => {
     const other = testSession('learner-b');
     const theirs = await startAssessment(client, other, {

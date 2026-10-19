@@ -106,6 +106,7 @@ export function qualifyingGrammarEvidence(
   const qualified: {
     attemptId: string;
     itemKey: string;
+    contentVersionId: string;
     evaluationId: string;
     skillId: string;
     countsFor: string;
@@ -139,6 +140,7 @@ export function qualifyingGrammarEvidence(
     qualified.push({
       attemptId: String(row.attempt_id),
       itemKey,
+      contentVersionId: String(row.content_version_id),
       evaluationId: String(evaluation.evaluation_id),
       skillId: String(row.skill_id),
       countsFor,

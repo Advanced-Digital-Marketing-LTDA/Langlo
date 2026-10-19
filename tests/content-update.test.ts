@@ -530,6 +530,43 @@ describe('the impact report', () => {
     ]);
   });
 
+  it('reports nothing for a new version the package quarantines on arrival', async () => {
+    await answer('fr-a1-001@1:q2', 'two', 'es');
+    const pkg = update('0.2.1', [
+      question('fr-a1-001@2:q3', { change: 'new' })
+    ]);
+    pkg.versions[0].review = 'quarantined';
+    expect(await contentImpact(client, pkg)).toEqual([]);
+  });
+
+  it('counts an answer lost to quarantine although the fallback version shares its key', async () => {
+    await importContent(
+      client,
+      update('0.1.1', [
+        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+        same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+      ])
+    );
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('study-two', 'learner-a', 'enrollment-a', 'fr', 'practice')"
+    );
+    await recordAttempt(client, testSession('learner-a'), {
+      studySessionId: 'study-two',
+      questionId: 'fr-a1-001@2:q2',
+      submissionKey: 'shared',
+      evidenceKind: 'independent',
+      answer: 'réponse'
+    });
+    const withdrawn = update('0.1.2', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+    ]);
+    withdrawn.versions[0].review = 'quarantined';
+    expect(await contentImpact(client, withdrawn)).toMatchObject([
+      { skillId: 'fr-a1-001', answers: 1, learners: 1 }
+    ]);
+  });
+
   it('plans successive new versions of a skill against each other', async () => {
     const pkg = update('0.2.0', [
       same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
@@ -600,6 +637,27 @@ describe('the impact report', () => {
     await importContent(client, twin);
     // fr-a1-003 now holds an item with the same key, so the answer carries.
     expect(await contentImpact(client, retire(true))).toMatchObject([
+      { skillId: 'fr-a1-002', answers: 0, learners: 0 }
+    ]);
+  });
+
+  it('plans a carry against a replacement the same package adds', async () => {
+    await answer('fr-a1-002@1:q1', 'three', 'On est ici.');
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '1.0.0';
+    pkg.skills = pkg.skills.filter((skill) => skill.id !== 'fr-a1-002');
+    pkg.versions = pkg.versions.filter((v) => v.skillId !== 'fr-a1-002');
+    pkg.versions.push({
+      id: 'fr-a1-003@1',
+      skillId: 'fr-a1-003',
+      version: 1,
+      review: 'approved',
+      questions: [question('fr-a1-003@1:q1')]
+    });
+    pkg.retirements = [
+      { skillId: 'fr-a1-002', replacedBy: 'fr-a1-003', carry: true }
+    ];
+    expect(await contentImpact(client, pkg)).toMatchObject([
       { skillId: 'fr-a1-002', answers: 0, learners: 0 }
     ]);
   });

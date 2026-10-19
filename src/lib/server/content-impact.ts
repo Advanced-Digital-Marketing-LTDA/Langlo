@@ -21,6 +21,7 @@ export type ImpactLine = {
 
 type PackageVersion = ContentPackage['versions'][number];
 type Earlier = { questions: PriorQuestion[] };
+type Counted = { itemKey: string; contentVersionId: string };
 
 /**
  * The answers mastery counts now whose item key `stops` matches, by the same
@@ -30,7 +31,7 @@ type Earlier = { questions: PriorQuestion[] };
 async function countedAnswers(
   client: Client,
   skillId: string,
-  stops: (key: string) => boolean
+  stops: (answer: Counted) => boolean
 ) {
   const rows = await loadEvidenceRows(client, { skillId });
   const byOwner = new Map<string, typeof rows>();
@@ -41,9 +42,7 @@ async function countedAnswers(
   let answers = 0;
   let learners = 0;
   for (const ownerRows of byOwner.values()) {
-    const counted = qualifyingGrammarEvidence(ownerRows).filter((item) =>
-      stops(item.itemKey)
-    );
+    const counted = qualifyingGrammarEvidence(ownerRows).filter(stops);
     answers += counted.length;
     if (counted.length > 0) learners += 1;
   }
@@ -86,6 +85,8 @@ async function newVersionImpact(
   version: PackageVersion,
   earlier: Earlier | undefined
 ) {
+  // A version imported quarantined never becomes current, so it drops nothing.
+  if (version.review === 'quarantined') return {};
   const prior = earlier ?? (await priorVersion(client, version));
   const plan = planVersion(version, prior);
   const planned: Earlier = {
@@ -110,12 +111,14 @@ async function newVersionImpact(
     line: {
       skillId: version.skillId,
       reason: `${keys.size} question(s) changed or removed in ${version.id}`,
-      ...(await countedAnswers(client, version.skillId, (key) => keys.has(key)))
+      ...(await countedAnswers(client, version.skillId, (item) =>
+        keys.has(item.itemKey)
+      ))
     }
   };
 }
 
-/** Quarantining the current version makes the one before it current again. */
+/** Quarantining a version drops the answers first given in it. */
 async function quarantineImpact(
   client: Client,
   version: PackageVersion,
@@ -123,19 +126,15 @@ async function quarantineImpact(
 ): Promise<ImpactLine | undefined> {
   if (version.review !== 'quarantined' || status === 'quarantined')
     return undefined;
-  if ((await currentVersion(client, version.skillId)) !== version.id)
-    return undefined;
-  const before = await currentVersion(client, version.skillId, version.version);
-  const lost = await versionKeys(client, version.id);
-  const kept =
-    before === undefined ? new Set() : await versionKeys(client, before);
-  const keys = [...lost].filter((key) => !kept.has(key));
-  if (keys.length === 0) return undefined;
+  // Mastery ignores every answer first given in a quarantined version, even
+  // to an item an earlier version also holds.
   return {
     skillId: version.skillId,
-    reason: `${keys.length} question(s) withdrawn with ${version.id}`,
-    ...(await countedAnswers(client, version.skillId, (key) =>
-      keys.includes(key)
+    reason: `answers given in ${version.id} stop counting`,
+    ...(await countedAnswers(
+      client,
+      version.skillId,
+      (item) => item.contentVersionId === version.id
     ))
   };
 }
@@ -160,7 +159,8 @@ async function versionImpact(
 /** The impact of retiring one skill that is still live, if any. */
 async function retirementImpact(
   client: Client,
-  retirement: NonNullable<ContentPackage['retirements']>[number]
+  retirement: NonNullable<ContentPackage['retirements']>[number],
+  planned: Map<string, Earlier>
 ): Promise<ImpactLine | undefined> {
   const skill = await client.execute({
     sql: 'SELECT retired_at FROM skills WHERE id = ?',
@@ -174,9 +174,23 @@ async function retirementImpact(
       reason: 'retired, answers no longer shown',
       ...(await countedAnswers(client, retirement.skillId, () => true))
     };
-  const target = await currentVersion(client, retirement.replacedBy);
-  const carried =
-    target === undefined
+  // Applying the package adds its versions before it applies retirements, so
+  // a replacement the package adds is matched by what the package plans.
+  const plan = planned.get(retirement.replacedBy);
+  const target = plan
+    ? undefined
+    : await currentVersion(client, retirement.replacedBy);
+  const carried = plan
+    ? new Set(
+        plan.questions.map((question) =>
+          effectiveLineageKey({
+            lineageKey: question.lineageKey,
+            contentVersionId: question.contentVersionId,
+            questionId: question.id
+          })
+        )
+      )
+    : target === undefined
       ? new Set<string>()
       : await versionKeys(client, target);
   return {
@@ -185,7 +199,7 @@ async function retirementImpact(
     ...(await countedAnswers(
       client,
       retirement.skillId,
-      (key) => !carried.has(key)
+      (item) => !carried.has(item.itemKey)
     ))
   };
 }
@@ -198,16 +212,19 @@ export async function contentImpact(
   const ordered = [...pkg.versions].sort(
     (a, b) => a.skillId.localeCompare(b.skillId) || a.version - b.version
   );
-  let earlier: { skillId: string; plan: Earlier } | undefined;
+  const planned = new Map<string, Earlier>();
   for (const version of ordered) {
-    const before =
-      earlier?.skillId === version.skillId ? earlier.plan : undefined;
-    const { line, planned } = await versionImpact(client, version, before);
+    const { line, planned: plan } = await versionImpact(
+      client,
+      version,
+      planned.get(version.skillId)
+    );
     if (line) lines.push(line);
-    earlier = planned && { skillId: version.skillId, plan: planned };
+    if (plan) planned.set(version.skillId, plan);
+    else planned.delete(version.skillId);
   }
   for (const retirement of pkg.retirements ?? []) {
-    const line = await retirementImpact(client, retirement);
+    const line = await retirementImpact(client, retirement, planned);
     if (line) lines.push(line);
   }
   return lines;
