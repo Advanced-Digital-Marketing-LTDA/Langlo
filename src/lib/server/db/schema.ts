@@ -831,6 +831,7 @@ export const nativeFlashcardDecks = sqliteTable(
 );
 
 // Migration 0004 guards restricted Cloze syntax on INSERT/UPDATE; preserve these triggers in rebuilds.
+// Migrations 0020-0022 add the source-shape and owner-attempt provenance triggers; preserve those too.
 export const nativeFlashcardNotes = sqliteTable(
   'native_flashcard_notes',
   {
