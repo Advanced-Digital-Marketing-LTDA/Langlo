@@ -1,8 +1,17 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync
+} from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { runContentImport } from '../scripts/content-import';
+import { modulesPackage } from '../src/lib/server/content-modules';
 import { migrateFixtureDatabase } from '../src/lib/server/db/migrate';
 import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
 import {
@@ -38,9 +47,18 @@ afterEach(async () => {
   await disposeDisposableFixture(target);
 });
 
-async function run(argv: string[], env: Record<string, string> = {}) {
+async function run(
+  argv: string[],
+  env: Record<string, string> = {},
+  open?: Parameters<typeof runContentImport>[3]
+) {
   const lines: string[] = [];
-  const code = await runContentImport(argv, env, (line) => lines.push(line));
+  const code = await runContentImport(
+    argv,
+    env,
+    (line) => lines.push(line),
+    open
+  );
   return { code, out: lines.join('\n') };
 }
 
@@ -111,5 +129,60 @@ describe('content import script', () => {
 
   it('prints usage for unknown arguments', async () => {
     expect((await run(['--apply'])).code).toBe(1);
+  });
+
+  it('rejects a missing or malformed DATABASE_URL before connecting', async () => {
+    const argv = ['--apply', '--confirm-host', 'local'];
+    const missing = await run(argv, {});
+    expect(missing.code).toBe(1);
+    expect(missing.out).toContain('DATABASE_URL is not set');
+    const malformed = await run(argv, { DATABASE_URL: 'not a url' });
+    expect(malformed.code).toBe(1);
+    expect(malformed.out).toContain('DATABASE_URL is not a valid URL');
+  });
+
+  it('accepts a bare Turso URL and connects to its normalized form', async () => {
+    const opened: { url: string; token: string | undefined }[] = [];
+    class Stop extends Error {}
+    const { code, out } = await run(
+      ['--apply', '--confirm-host', 'langlo-test.turso.io'],
+      {
+        DATABASE_URL: 'libsql://Langlo-Test.Turso.io/',
+        TURSO_AUTH_TOKEN: ' secret-token '
+      },
+      async (url, token) => {
+        opened.push({ url, token });
+        throw new Stop('boom secret-token');
+      }
+    );
+    expect(opened).toEqual([
+      { url: 'libsql://langlo-test.turso.io', token: 'secret-token' }
+    ]);
+    // The connection failure is reported without its message or the token.
+    expect(code).toBe(1);
+    expect(out).toContain('UNEXPECTED');
+    expect(out).not.toContain('secret-token');
+  });
+});
+
+describe('module package', () => {
+  it('rejects a module that is not approved', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'langlo-modules-'));
+    try {
+      mkdirSync(join(dir, 'content', 'fr-a1'), { recursive: true });
+      writeFileSync(
+        join(dir, 'content', 'fr-a1', 'module-01.json'),
+        JSON.stringify({
+          module_id: 'fr-a1-module-01',
+          review_status: 'draft',
+          lessons: []
+        })
+      );
+      expect(() => modulesPackage(dir)).toThrow(
+        /NOT_APPROVED.*fr-a1-module-01/u
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
