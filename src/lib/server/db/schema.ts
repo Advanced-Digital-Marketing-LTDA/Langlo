@@ -348,19 +348,23 @@ export const questions = sqliteTable(
   ]
 );
 
+const lessonContentColumns = () => ({
+  title: text('title').notNull(),
+  explanation: text('explanation').notNull(),
+  // JSON array of objects whose values are strings.
+  examples: text('examples').notNull(),
+  // JSON array of strings.
+  refs: text('refs').notNull(),
+  fingerprint: text('fingerprint').notNull()
+});
+
 export const lessons = sqliteTable(
   'lessons',
   {
     contentVersionId: text('content_version_id').primaryKey(),
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
-    title: text('title').notNull(),
-    explanation: text('explanation').notNull(),
-    // JSON array of objects whose values are strings.
-    examples: text('examples').notNull(),
-    // JSON array of strings.
-    refs: text('refs').notNull(),
-    fingerprint: text('fingerprint').notNull()
+    ...lessonContentColumns()
   },
   (table) => [
     foreignKey({
@@ -390,13 +394,7 @@ export const lessonTranslations = sqliteTable(
     explanationLanguage: text('explanation_language', {
       enum: ['pt']
     }).notNull(),
-    title: text('title').notNull(),
-    explanation: text('explanation').notNull(),
-    // JSON array of objects whose values are strings.
-    examples: text('examples').notNull(),
-    // JSON array of strings.
-    refs: text('refs').notNull(),
-    fingerprint: text('fingerprint').notNull()
+    ...lessonContentColumns()
   },
   (table) => [
     primaryKey({
