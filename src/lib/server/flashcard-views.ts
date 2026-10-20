@@ -122,12 +122,17 @@ export async function searchNotes(
   }[] = [];
   // SQLite's lower() only folds ASCII; inspect one bounded page for Unicode matches.
   const result = await client.execute({
-    sql: `SELECT n.rowid AS cursor, n.id, n.kind, n.status, n.content_json, n.tags_json,
+    sql: `SELECT n.cursor, n.id, n.kind, n.status, n.content_json, n.tags_json,
         n.explanation,
         d.id AS deck_id, d.name AS deck_name
-      FROM native_flashcard_notes n
+      FROM (
+        SELECT rowid AS cursor, id, kind, status, content_json, tags_json,
+          explanation, deck_id, owner_id
+        FROM native_flashcard_notes
+        WHERE owner_id = ? AND rowid > ? ORDER BY rowid LIMIT ?
+      ) n
       JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
-      WHERE n.owner_id = ? AND n.rowid > ? ORDER BY n.rowid LIMIT ?`,
+      ORDER BY n.cursor`,
     args: [learner.userId, after, searchScanLimit + 1]
   });
   let cursor = after;
@@ -223,16 +228,26 @@ export async function listDueCards(
   });
   const schedule = await getStudySchedule(client, learner);
   const reviewedAt = new Date(now);
-  return result.rows.map((row) => ({
-    id: String(row.id),
-    revision: Number(row.revision),
-    kind: String(row.kind) as NoteKind,
-    deck: String(row.deck_name),
-    content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
-    explanation: String(row.explanation),
-    scheduleKey: JSON.stringify(schedule),
-    intervals: ratingIntervalsForStoredCard(row, schedule, reviewedAt)
-  }));
+  return result.rows.map((row) => {
+    let intervals: ReturnType<typeof ratingIntervalsForStoredCard> | null;
+    try {
+      intervals = ratingIntervalsForStoredCard(row, schedule, reviewedAt);
+    } catch (error) {
+      if (!(error instanceof FlashcardError)) throw error;
+      intervals = null;
+    }
+    return {
+      id: String(row.id),
+      revision: Number(row.revision),
+      kind: String(row.kind) as NoteKind,
+      deck: String(row.deck_name),
+      content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
+      explanation: String(row.explanation),
+      scheduleKey: JSON.stringify(schedule),
+      unavailable: intervals === null,
+      intervals
+    };
+  });
 }
 
 /** Quote an Anki text-import field when it holds a tab, newline or quote. */

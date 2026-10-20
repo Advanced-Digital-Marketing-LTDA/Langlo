@@ -1,0 +1,1 @@
+CREATE INDEX `native_flashcard_notes_owner_cursor` ON `native_flashcard_notes` (`owner_id`);

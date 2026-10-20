@@ -50,6 +50,26 @@ it('says nothing is due when there are no cards', async () => {
   expect(html).not.toContain('Show answer');
 });
 
+it('shows a readable due card while reporting one unavailable card', async () => {
+  const html = await renderSvelte(page, {
+    data: data([
+      {
+        ...card('basic', { front: 'Broken', back: 'Hidden' }),
+        unavailable: true,
+        intervals: null
+      },
+      {
+        ...card('basic', { front: 'Bonjour', back: 'Hello' }),
+        unavailable: false
+      }
+    ]),
+    form: null
+  });
+  expect(html).toContain('1 due card needs repair');
+  expect(html).toContain('Bonjour');
+  expect(html).not.toContain('Broken');
+});
+
 it('explains that saved timezones set day-based review times', async () => {
   const html = await renderSvelte(settingsPage, {
     data: {

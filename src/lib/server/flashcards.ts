@@ -96,6 +96,7 @@ const defaultStudySchedule: StudySchedule = {
   relearningPreset: '10m'
 };
 const previewCardLimit = 500;
+const previewReviewLimit = 4096;
 const newCardSteps = {
   '10m': ['10m'],
   '1m+10m': ['1m', '10m'],
@@ -218,37 +219,53 @@ async function simulateGoodReviews(
   now: Date,
   boundaries: Date[],
   timezone: string
-): Promise<number[]> {
+): Promise<{ counts: number[]; skipped: number; limited: boolean }> {
   const counts = Array.from({ length: 7 }, () => 0);
   const end = boundaries[7].getTime();
   let reviews = 0;
+  let skipped = 0;
+  let limited = false;
   for (const row of rows) {
     const cardId = String(row.id);
-    const base = readCardScheduler(
-      row.scheduler_version,
-      String(row.parameters_json)
-    ).parameters;
-    const scheduler = deterministicScheduler(
-      parametersForSchedule(schedule, base)
-    );
-    let state = decodeCard(String(row.state_json));
-    let dueAt = Number(row.due_at);
-    while (dueAt < end) {
-      const reviewedAt = Math.max(now.getTime(), dueAt);
-      counts[previewDay(boundaries, reviewedAt)] += 1;
-      const reviewTime = new Date(reviewedAt);
-      const updated = scheduler.next(
-        cardWithId(state, cardId),
-        reviewTime,
-        Rating.Good
-      ).card;
-      state = scheduledCard(updated, reviewTime, timezone);
-      dueAt = state.due.getTime();
-      if (dueAt <= reviewedAt) dueAt = reviewedAt + 60_000;
-      if (++reviews % 64 === 0) await yieldLoop();
+    const cardCounts = Array.from({ length: 7 }, () => 0);
+    try {
+      const base = readCardScheduler(
+        row.scheduler_version,
+        String(row.parameters_json)
+      ).parameters;
+      const scheduler = deterministicScheduler(
+        parametersForSchedule(schedule, base)
+      );
+      let state = decodeCard(String(row.state_json));
+      let dueAt = Number(row.due_at);
+      while (dueAt < end) {
+        const reviewedAt = Math.max(now.getTime(), dueAt);
+        cardCounts[previewDay(boundaries, reviewedAt)] += 1;
+        const reviewTime = new Date(reviewedAt);
+        const updated = scheduler.next(
+          cardWithId(state, cardId),
+          reviewTime,
+          Rating.Good
+        ).card;
+        state = scheduledCard(updated, reviewTime, timezone);
+        dueAt = state.due.getTime();
+        if (dueAt <= reviewedAt) dueAt = reviewedAt + 60_000;
+        if (++reviews % 64 === 0) await yieldLoop();
+        if (reviews >= previewReviewLimit) {
+          limited = true;
+          break;
+        }
+      }
+    } catch (error) {
+      if (!(error instanceof FlashcardError)) throw error;
+      skipped += 1;
+      continue;
     }
+    for (let index = 0; index < 7; index += 1)
+      counts[index] += cardCounts[index];
+    if (limited) break;
   }
-  return counts;
+  return { counts, skipped, limited };
 }
 
 function previewDay(boundaries: Date[], reviewedAt: number): number {
@@ -287,24 +304,24 @@ export async function previewStudySchedule(
   });
   const capped = cards.rows.length > previewCardLimit;
   const rows = cards.rows.slice(0, previewCardLimit);
-  const savedCounts = await simulateGoodReviews(
+  const savedResult = await simulateGoodReviews(
     rows,
     saved,
     now,
     boundaries,
     timezone
   );
-  const selectedCounts = await simulateGoodReviews(
+  const selectedResult = await simulateGoodReviews(
     rows,
     selected,
     now,
     boundaries,
     timezone
   );
-  const days = savedCounts.map((count, index) => ({
+  const days = savedResult.counts.map((count, index) => ({
     date: localDate(boundaries[index], timezone),
     saved: count,
-    selected: selectedCounts[index]
+    selected: selectedResult.counts[index]
   }));
   const busiest = (key: 'saved' | 'selected') => {
     const day = days.reduce(
@@ -315,15 +332,27 @@ export async function previewStudySchedule(
   };
   const average = (key: 'saved' | 'selected') =>
     Math.round((days.reduce((sum, day) => sum + day[key], 0) / 7) * 10) / 10;
+  const skipped = Math.max(savedResult.skipped, selectedResult.skipped);
   return {
     saved,
     selected,
     days,
     averagePerDay: { saved: average('saved'), selected: average('selected') },
     busiestDay: { saved: busiest('saved'), selected: busiest('selected') },
-    scenario: capped
-      ? `Illustrative scenario: assumes Good on every simulated review; shows the earliest ${previewCardLimit} eligible cards due in these seven days.`
-      : 'Illustrative scenario: assumes Good on every simulated review.'
+    scenario: [
+      'Illustrative scenario: assumes Good on every simulated review.',
+      capped
+        ? `Shows the earliest ${previewCardLimit} eligible cards due in these seven days.`
+        : '',
+      savedResult.limited || selectedResult.limited
+        ? `Limits work to ${previewReviewLimit} simulated reviews per schedule.`
+        : '',
+      skipped
+        ? `Skips ${skipped} unreadable ${skipped === 1 ? 'card' : 'cards'}.`
+        : ''
+    ]
+      .filter(Boolean)
+      .join(' ')
   };
 }
 

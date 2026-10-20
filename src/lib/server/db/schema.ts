@@ -873,6 +873,7 @@ export const nativeFlashcardNotes = sqliteTable(
       foreignColumns: [nativeFlashcardDecks.id, nativeFlashcardDecks.ownerId]
     }).onDelete('cascade'),
     index('native_flashcard_notes_owner_deck').on(table.ownerId, table.deckId),
+    index('native_flashcard_notes_owner_cursor').on(table.ownerId),
     check(
       'native_flashcard_notes_kind',
       sql`${table.kind} IN ('basic', 'cloze')`

@@ -21,19 +21,23 @@ import {
   countDueCards,
   exportDeckForAnki,
   listDueCards,
-  listNotes
+  listNotes,
+  searchNotes
 } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
   createDeck,
   createNote,
+  getStudySchedule,
   getNote,
   listReviewEvents,
+  previewStudySchedule,
   rejectNote,
-  submitReview
+  saveStudySchedule,
+  setCardSuspended,
+  submitReview,
+  updateNote
 } from '../src/lib/server/flashcards';
-import * as flashcardModule from '../src/lib/server/flashcards';
-import * as flashcardViewModule from '../src/lib/server/flashcard-views';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -70,24 +74,9 @@ import {
 
 const learner = testSession('learner-a');
 const other = testSession('learner-b');
-const flashcardNamespace = flashcardModule as unknown as Record<
-  string,
-  unknown
->;
-const flashcardViewNamespace = flashcardViewModule as unknown as Record<
-  string,
-  unknown
->;
 let client: Client;
 let close: () => void;
 let databaseUrl: string;
-
-function feature(module: Record<string, unknown>, name: string) {
-  const candidate = module[name];
-  expect(candidate, `${name} should be implemented`).toBeTypeOf('function');
-  if (typeof candidate !== 'function') throw new Error(`${name} is missing`);
-  return candidate as (...args: unknown[]) => Promise<unknown>;
-}
 
 beforeEach(async () => {
   const target = await fixture();
@@ -279,10 +268,9 @@ describe('settings', () => {
       newCardPreset: '30m',
       relearningPreset: '1h'
     };
-    const preview = await feature(
-      settingsActions as unknown as Record<string, unknown>,
-      'previewStudySchedule'
-    )(event({ fields }));
+    const preview = await settingsActions.previewStudySchedule(
+      event({ fields })
+    );
     expect(preview).toMatchObject({
       preview: {
         selected: {
@@ -293,26 +281,16 @@ describe('settings', () => {
         days: expect.any(Array)
       }
     });
-    expect(
-      await feature(flashcardNamespace, 'getStudySchedule')(client, learner)
-    ).toEqual({
+    expect(await getStudySchedule(client, learner)).toEqual({
       desiredRetention: 90,
       newCardPreset: '1m+10m',
       relearningPreset: '10m'
     });
-    expect(
-      await feature(
-        settingsActions as unknown as Record<string, unknown>,
-        'saveStudySchedule'
-      )(event({ fields }))
-    ).toEqual({
+    expect(await settingsActions.saveStudySchedule(event({ fields }))).toEqual({
       saved: 'Study schedule saved.'
     });
     expect(
-      await feature(
-        settingsActions as unknown as Record<string, unknown>,
-        'saveStudySchedule'
-      )(
+      await settingsActions.saveStudySchedule(
         event({
           fields: { ...fields, desiredRetention: '98' }
         })
@@ -625,7 +603,7 @@ describe('decks, review and Anki export', () => {
       submissionKey: string;
     };
     const before = await getNote(client, learner, draft.id);
-    await feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+    await saveStudySchedule(client, learner, {
       desiredRetention: 95,
       newCardPreset: '30m',
       relearningPreset: '30m'
@@ -910,21 +888,17 @@ describe('decks, review and Anki export', () => {
       learner,
       'card:note-fsrs-settings'
     );
-    expect(
-      await feature(flashcardNamespace, 'getStudySchedule')(client, learner)
-    ).toEqual({
+    expect(await getStudySchedule(client, learner)).toEqual({
       desiredRetention: 90,
       newCardPreset: '1m+10m',
       relearningPreset: '10m'
     });
-    await feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+    await saveStudySchedule(client, learner, {
       desiredRetention: 96,
       newCardPreset: '30m',
       relearningPreset: '1h'
     });
-    expect(
-      await feature(flashcardNamespace, 'getStudySchedule')(client, other)
-    ).toEqual({
+    expect(await getStudySchedule(client, other)).toEqual({
       desiredRetention: 90,
       newCardPreset: '1m+10m',
       relearningPreset: '10m'
@@ -936,21 +910,21 @@ describe('decks, review and Anki export', () => {
       await listReviewEvents(client, learner, 'card:note-fsrs-settings')
     ).toEqual(beforeEvents);
     await expect(
-      feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+      saveStudySchedule(client, learner, {
         desiredRetention: 98,
         newCardPreset: '30m',
         relearningPreset: '1h'
       })
     ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
     await expect(
-      feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+      saveStudySchedule(client, learner, {
         desiredRetention: 90.5,
         newCardPreset: '30m',
         relearningPreset: '1h'
       })
     ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
     await expect(
-      feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+      saveStudySchedule(client, learner, {
         desiredRetention: 90,
         newCardPreset: 'custom',
         relearningPreset: '1h'
@@ -958,7 +932,7 @@ describe('decks, review and Anki export', () => {
     ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
     for (const desiredRetention of [70, 97])
       await expect(
-        feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+        saveStudySchedule(client, learner, {
           desiredRetention,
           newCardPreset: '10m',
           relearningPreset: '30m'
@@ -985,7 +959,7 @@ describe('decks, review and Anki export', () => {
       learner,
       'note-fsrs-existing1'
     );
-    await feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+    await saveStudySchedule(client, learner, {
       desiredRetention: 95,
       newCardPreset: '30m',
       relearningPreset: '30m'
@@ -1056,24 +1030,16 @@ describe('decks, review and Anki export', () => {
       sql: "UPDATE native_flashcards SET due_at = ?, state_json = json_set(state_json, '$.due', ?) WHERE owner_id = ?",
       args: [now.getTime(), now.toISOString(), learner.userId]
     });
-    const preview = feature(flashcardNamespace, 'previewStudySchedule');
-    const utcPreview = (await preview(client, learner, selected, now)) as {
-      days: { date: string }[];
-    };
+    const utcPreview = await previewStudySchedule(
+      client,
+      learner,
+      selected,
+      now
+    );
     expect(utcPreview.days[0].date).toBe('2026-10-20');
     await setTimezone(client, learner, 'America/Los_Angeles');
-    const first = (await preview(client, learner, selected, now)) as {
-      saved: typeof selected;
-      selected: typeof selected;
-      days: { date: string; saved: number; selected: number }[];
-      averagePerDay: { saved: number; selected: number };
-      busiestDay: {
-        saved: { date: string; count: number };
-        selected: { date: string; count: number };
-      };
-      scenario: string;
-    };
-    const second = await preview(client, learner, selected, now);
+    const first = await previewStudySchedule(client, learner, selected, now);
+    const second = await previewStudySchedule(client, learner, selected, now);
     expect(first.days.map(({ saved, selected }) => [saved, selected])).toEqual([
       [2, 1],
       [0, 0],
@@ -1102,9 +1068,12 @@ describe('decks, review and Anki export', () => {
       sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
       args: ['card:note-fsrs-preview-0']
     });
-    const noneAvailable = (await preview(client, learner, selected, now)) as {
-      days: { saved: number; selected: number }[];
-    };
+    const noneAvailable = await previewStudySchedule(
+      client,
+      learner,
+      selected,
+      now
+    );
     expect(
       noneAvailable.days.every((day) => day.saved === 0 && day.selected === 0)
     ).toBe(true);
@@ -1136,19 +1105,7 @@ describe('decks, review and Anki export', () => {
           args: [id]
         });
     }
-    const search = (await feature(flashcardViewNamespace, 'searchNotes')(
-      client,
-      learner,
-      'shared'
-    )) as {
-      results: Array<{
-        id: string;
-        deck: { id: string; name: string };
-        status: string;
-        tags: string[];
-      }>;
-      nextCursor: number | null;
-    };
+    const search = await searchNotes(client, learner, 'shared');
     const results = search.results;
     expect(results.map((item) => item.id).sort()).toEqual([
       'note-search-approved',
@@ -1162,13 +1119,9 @@ describe('decks, review and Anki export', () => {
       status: 'approved',
       tags: ['shared', 'grammar']
     });
-    expect(
-      await feature(flashcardViewNamespace, 'searchNotes')(
-        client,
-        other,
-        'shared'
-      )
-    ).toMatchObject({ results: [] });
+    expect(await searchNotes(client, other, 'shared')).toMatchObject({
+      results: []
+    });
     const searchPage = await decksLoad(event({ query: '?q=shared' }));
     if (!searchPage) throw new Error('Deck search returned no page data');
     expect(searchPage.query).toBe('shared');
@@ -1233,15 +1186,10 @@ describe('decks, review and Anki export', () => {
       learner,
       'card:note-tags-move'
     );
-    await feature(flashcardNamespace, 'updateNote')(
-      client,
-      learner,
-      'note-tags-move',
-      {
-        deckId: secondDeck,
-        tags: ['nouns', ' verbs ', 'nouns']
-      }
-    );
+    await updateNote(client, learner, 'note-tags-move', {
+      deckId: secondDeck,
+      tags: ['nouns', ' verbs ', 'nouns']
+    });
     expect(await getNote(client, learner, 'note-tags-move')).toMatchObject({
       deckId: secondDeck,
       tags: ['nouns', 'verbs'],
@@ -1251,12 +1199,7 @@ describe('decks, review and Anki export', () => {
       await listReviewEvents(client, learner, 'card:note-tags-move')
     ).toEqual(history);
     await expect(
-      feature(flashcardNamespace, 'updateNote')(
-        client,
-        learner,
-        'note-tags-move',
-        { deckId: 'deck-foreign' }
-      )
+      updateNote(client, learner, 'note-tags-move', { deckId: 'deck-foreign' })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
@@ -1272,28 +1215,13 @@ describe('decks, review and Anki export', () => {
     });
     await approveNote(client, learner, 'note-suspension');
     expect(await countDueCards(client, learner)).toBe(1);
-    await feature(flashcardNamespace, 'setCardSuspended')(
-      client,
-      learner,
-      'card:note-suspension',
-      true
-    );
+    await setCardSuspended(client, learner, 'card:note-suspension', true);
     expect(await countDueCards(client, learner)).toBe(0);
     expect(await listDueCards(client, learner)).toEqual([]);
     await expect(
-      feature(flashcardNamespace, 'setCardSuspended')(
-        client,
-        other,
-        'card:note-suspension',
-        false
-      )
+      setCardSuspended(client, other, 'card:note-suspension', false)
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
-    await feature(flashcardNamespace, 'setCardSuspended')(
-      client,
-      learner,
-      'card:note-suspension',
-      false
-    );
+    await setCardSuspended(client, learner, 'card:note-suspension', false);
     expect(await countDueCards(client, learner)).toBe(1);
   });
 });

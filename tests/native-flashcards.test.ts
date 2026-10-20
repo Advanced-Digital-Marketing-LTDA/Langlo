@@ -24,6 +24,35 @@ import { studyDayStart } from '../src/lib/server/study-days';
 afterEach(disposeFlashcardFixtures);
 
 describe('native flashcard persistence feasibility', () => {
+  it('indexes the owner cursor used for bounded cross-deck search pages', async () => {
+    const target = await fixture();
+    const db = await openFixtureDatabase(target);
+    try {
+      const indexes = await db.client.execute(
+        "PRAGMA index_list('native_flashcard_notes')"
+      );
+      expect(indexes.rows.map((row) => row.name)).toContain(
+        'native_flashcard_notes_owner_cursor'
+      );
+      const execute = vi.spyOn(db.client, 'execute');
+      await searchNotes(db.client, testSession('learner-a'), 'school');
+      const statement = execute.mock.calls[0][0] as unknown as {
+        sql: string;
+        args: (string | number)[];
+      };
+      execute.mockRestore();
+      const plan = await db.client.execute({
+        sql: `EXPLAIN QUERY PLAN ${statement.sql}`,
+        args: statement.args
+      });
+      expect(plan.rows.map((row) => String(row.detail)).join(' ')).toContain(
+        'native_flashcard_notes_owner_cursor'
+      );
+    } finally {
+      db.close();
+    }
+  });
+
   it('finds uppercase accented note text from a lowercase search', async () => {
     const db = createClient({ url: 'file::memory:' });
     try {
@@ -104,8 +133,44 @@ describe('native flashcard persistence feasibility', () => {
       const execute = vi.spyOn(db.client, 'execute');
       const due = await listDueCards(db.client, learner, Date.now() + 1000);
       expect(due).toHaveLength(1);
-      expect(due[0].intervals.good).toBe('10m');
+      expect(due[0].intervals?.good).toBe('10m');
       expect(execute).toHaveBeenCalledTimes(2);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('keeps readable cards available when another due card has an unsupported scheduler', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      const bad = await seedBasicNote(db.client, learner);
+      const good = await createNote(db.client, learner, {
+        id: 'note-10000000-0000-4000-8000-000000000003',
+        sourceId: testSourceId('10000000-0000-4000-8000-000000000003'),
+        deckId: 'deck-10000000-0000-4000-8000-000000000002',
+        kind: 'basic',
+        content: { front: 'Bonjour', back: 'Hello' }
+      });
+      await approveNote(db.client, learner, bad.id);
+      await approveNote(db.client, learner, good.id);
+      await db.client.execute({
+        sql: 'UPDATE native_flashcards SET scheduler_version = ? WHERE id = ? AND owner_id = ?',
+        args: ['ts-fsrs@unsupported', bad.cardId, learner.userId]
+      });
+      const due = await listDueCards(db.client, learner, Date.now() + 1000);
+      expect(due).toMatchObject([
+        { id: bad.cardId, intervals: null, unavailable: true },
+        { id: good.cardId, intervals: { good: expect.any(String) } }
+      ]);
+      const preview = await previewStudySchedule(db.client, learner, {
+        desiredRetention: 90,
+        newCardPreset: '1m+10m',
+        relearningPreset: '10m'
+      });
+      expect(preview.scenario).toContain('1 unreadable card');
+      expect(preview.days.some((day) => day.saved > 0)).toBe(true);
     } finally {
       db.close();
     }
