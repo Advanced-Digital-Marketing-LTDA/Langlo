@@ -130,10 +130,10 @@ Final required validation (Node 24.19.0 and npm 11.9.0):
 | `npm run check`           | Passed; zero errors and warnings                              |
 | `npm run lint`            | Passed                                                        |
 | `npm run format:check`    | Passed                                                        |
-| `npm test`                | Passed; 91 files, 1432 tests                                  |
+| `npm test`                | Passed; 95 files, 1479 tests                                  |
 | `npm run test:property`   | Passed; 6 files, 9 tests                                      |
 | `npm run build`           | Passed                                                        |
-| `npm run test:e2e`        | Passed; 122 desktop/mobile tests, zero skips and retries      |
+| `npm run test:e2e`        | Passed; 124 desktop/mobile tests, zero skips and retries      |
 | `git diff --check`        | Passed                                                        |
 
 The first full browser run passed 120 of 122 tests; the additional map cases
@@ -144,3 +144,37 @@ rate limits were untouched.
 
 Codacy accepted the owner-approved FalsePositive classification for issue 131553236667. Updated hosted analyzer results remain separate from these local
 checks. No merge, deployment, live provider, or real learner acceptance is claimed.
+
+Additional review received during validation:
+
+- The PR branch advanced to `3ee6f1e`, merging Portuguese support from main.
+  The approved fix commit was replayed onto it without conflicts; those source
+  and migration files remain untouched. Type checking, lint, ordinary tests
+  (95 files, 1479 tests), properties, and the build passed on the combined head.
+- Native form red: with script execution disabled, submitting the first answer
+  changed the Back to skill map href from the saved context to `/app/map`.
+  The lesson page now passes encoded, server-sanitized map context through the
+  existing actionUrl props for answers, assisted retries, and both report forms.
+  Grading, reporting, and authentication implementations were unchanged.
+
+The native-post test initially reused the exercise suite's learner. Its answer
+history correctly caused later exercise cases to classify responses as assisted.
+That run passed 120 of 124 browser cases; the refresh failures had a separate
+cause described below. The native-post test now creates a
+separate synthetic learner through the rendered signup form, and fixture
+enrollment IDs include the owner ID. No production evidence rules were changed.
+The focused native-post green run passed on desktop and mobile with script
+execution disabled, covering answer, assisted retry, feedback report, and
+lesson report actions.
+
+The next full run exposed an enhanced-form regression in the first URL fix:
+adding a default returnTo when the original lesson URL had none made SvelteKit
+navigate after a rejected answer, replacing the error and input with a session
+notice. The existing refresh test reproduced this (missing alert). The URL
+helper now includes map context only when the lesson URL actually contains it,
+preserving in-place failure handling for lessons without map context.
+
+Final combined browser run: all 124 tests passed with zero skips or retries.
+The corrected lesson actions, separate native-form learner, full exercise
+journey, and refresh failure/success paths pass together on desktop and mobile.
+Type checking, lint, formatting, and build passed after the lesson action fix.

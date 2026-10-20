@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import type { ActionData, PageData } from './$types';
   import Exercise from '../../../../../../lib/components/exercises/Exercise.svelte';
   import ContentReportForm from '../../../../../../lib/components/ContentReportForm.svelte';
@@ -7,6 +8,16 @@
     form && 'message' in form ? form.message : undefined
   );
   const recorded = $derived(form !== null && 'recorded' in form);
+
+  function lessonActionUrl(action: 'answer' | 'report') {
+    const session = data.exercise
+      ? `&session=${encodeURIComponent(data.exercise.studySessionId)}`
+      : '';
+    const returnTo = page.url.searchParams.has('returnTo')
+      ? `&returnTo=${encodeURIComponent(data.returnTo)}`
+      : '';
+    return `?/${action}${session}${returnTo}`;
+  }
 </script>
 
 <svelte:head>
@@ -109,7 +120,7 @@
           contentVersionId={data.feedback.contentVersionId}
           questionId={data.feedback.questionId}
           submissionKey={data.feedback.reportSubmissionKey}
-          actionUrl={`?/report&session=${encodeURIComponent(data.exercise.studySessionId)}`}
+          actionUrl={lessonActionUrl('report')}
         />
         {#if data.feedback.retryQuestion}
           <details>
@@ -120,6 +131,7 @@
               studySessionId={data.exercise.studySessionId}
               submissionKey={data.feedback.submissionKey}
               retryAttemptId={data.feedback.attemptId}
+              actionUrl={lessonActionUrl('answer')}
               submitLabel="Submit assisted retry"
               {failure}
             />
@@ -142,6 +154,7 @@
           language={data.language}
           studySessionId={data.exercise.studySessionId}
           submissionKey={data.exercise.submissionKey}
+          actionUrl={lessonActionUrl('answer')}
           {failure}
         />
       {/key}
@@ -156,9 +169,7 @@
       contentVersionId={data.lesson.contentVersionId}
       questionId={data.exercise?.question?.id ?? null}
       submissionKey={data.reportSubmissionKey}
-      actionUrl={data.exercise
-        ? `?/report&session=${encodeURIComponent(data.exercise.studySessionId)}`
-        : '?/report'}
+      actionUrl={lessonActionUrl('report')}
     />
   {/if}
 {/if}

@@ -184,8 +184,8 @@ async function signIn(page: Page, context: BrowserContext) {
 async function seedSession(userId: string, sessionId = 'exercise-session') {
   await withDatabase(async (client) => {
     await client.execute({
-      sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('exercise-enrollment', ?, 'fr', 'A1', 'en') ON CONFLICT(owner_id, language) DO NOTHING",
-      args: [userId]
+      sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES (?, ?, 'fr', 'A1', 'en') ON CONFLICT(owner_id, language) DO NOTHING",
+      args: [`exercise-enrollment-${userId}`, userId]
     });
     const enrollment = await client.execute({
       sql: 'SELECT id FROM enrollments WHERE owner_id = ? AND language = ?',
@@ -604,6 +604,59 @@ test('restores the map position after returning from a lesson', async ({
   await expect
     .poll(() => viewport.evaluate((element) => element.scrollLeft))
     .toBe(0);
+});
+
+test('preserves map context through native answer, retry, and report posts', async ({
+  browser
+}) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const scripts = await context.newCDPSession(page);
+  await scripts.send('Emulation.setScriptExecutionDisabled', { value: true });
+  const returnTo = '/app/map?language=fr&skill=fr-a1-001&status=weak&x=80&y=0';
+  try {
+    await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
+    await page.goto(`${base}/signup`);
+    await page.getByLabel('Name').fill('Native Map Learner');
+    await page.getByLabel('Email').fill('native-map@example.test');
+    await page.getByLabel('Password').fill('native-map-password-0000');
+    await page.getByRole('button', { name: 'Create account' }).click();
+    await expect(page).toHaveURL(`${base}/app`);
+    const { user } = await (
+      await page.request.get(`${base}/api/auth/get-session`)
+    ).json();
+    await seedSession(user.id as string, 'native-map-session');
+    await page.goto(
+      `${base}/app/learn/fr/lesson/fr-a1-001?session=native-map-session&returnTo=${encodeURIComponent(returnTo)}`
+    );
+    const back = page.getByRole('link', { name: 'Back to skill map' });
+    await expect(back).toHaveAttribute('href', returnTo);
+    await page.getByRole('radio', { name: 'es', exact: true }).check();
+    await page
+      .getByRole('button', { name: 'Submit answer', exact: true })
+      .click();
+    await expect(back).toHaveAttribute('href', returnTo);
+    const feedback = page.getByRole('region', { name: 'Practice feedback' });
+    await feedback.getByText('Try this question again (assisted)').click();
+    await feedback.getByRole('radio', { name: 'suis', exact: true }).check();
+    await feedback
+      .getByRole('button', { name: 'Submit assisted retry' })
+      .click();
+    await expect(back).toHaveAttribute('href', returnTo);
+    await feedback.getByText('Report a content issue', { exact: true }).click();
+    await feedback.getByRole('button', { name: 'Send report' }).click();
+    await expect(page.getByRole('status')).toContainText('Report saved');
+    await expect(back).toHaveAttribute('href', returnTo);
+    await page.goto(
+      `${base}/app/learn/fr/lesson/fr-a1-001?returnTo=${encodeURIComponent(returnTo)}`
+    );
+    await page.getByText('Report a content issue', { exact: true }).click();
+    await page.getByRole('button', { name: 'Send report' }).click();
+    await expect(page.getByRole('status')).toContainText('Report saved');
+    await expect(back).toHaveAttribute('href', returnTo);
+  } finally {
+    await context.close();
+  }
 });
 
 test('opens a dashboard topic in its language when another language sorts first', async ({
