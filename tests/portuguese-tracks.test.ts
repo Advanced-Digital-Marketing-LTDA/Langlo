@@ -80,6 +80,14 @@ describe('track and level rules', () => {
     expect(foundationLevel('pt')).toBe('B1');
     expect(foundationLevel('fr')).toBe('A1');
   });
+
+  it('throws for a language it has no levels for instead of guessing A1 and A2', () => {
+    for (const language of ['xx', '', 'constructor'])
+      expect(() => assessmentLevels(language)).toThrow(
+        /No assessment levels defined/
+      );
+    expect(() => foundationLevel('xx')).toThrow(/No assessment levels/);
+  });
 });
 
 describe('Portuguese enrollment', () => {
@@ -247,5 +255,30 @@ describe('Portuguese placement assessment', () => {
         submissionKey: randomUUID()
       })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it("keeps another learner's Portuguese enrollment out of reach", async () => {
+    await client.execute("INSERT INTO users (id) VALUES ('other-learner')");
+    const other = testSession('other-learner');
+    await enroll(client, other, fields);
+    await enroll(client, learner, {
+      language: 'fr',
+      startingLevel: 'A1',
+      explanationLanguage: 'en'
+    });
+    await expect(
+      startAssessment(client, learner, {
+        language: 'pt',
+        submissionKey: randomUUID()
+      })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(
+      setExplanationLanguage(client, learner, {
+        language: 'pt',
+        explanationLanguage: 'en'
+      })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(await listEnrollments(client, learner)).toHaveLength(1);
+    expect(await listEnrollments(client, other)).toHaveLength(1);
   });
 });

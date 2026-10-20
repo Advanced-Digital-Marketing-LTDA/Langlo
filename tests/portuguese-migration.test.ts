@@ -16,6 +16,11 @@ import {
 } from '../src/lib/server/db/connection';
 import { migrateFixtureDatabase } from '../src/lib/server/db/migrate';
 import {
+  applyRemoteTestPlan,
+  loadMigrations,
+  readMigrationState
+} from '../src/lib/server/db/remote-migrate';
+import {
   createDisposableFixture,
   disposeDisposableFixture
 } from './fixtures/database';
@@ -309,6 +314,50 @@ describe('migration 0026 Portuguese tracks', () => {
         expect(
           (await client.execute(`SELECT count(*) AS n FROM ${table}`)).rows[0].n
         ).toBe(count);
+    } finally {
+      close();
+    }
+  });
+
+  it('upgrades a populated database through the remote apply path without losing study history', async () => {
+    const target = await createDisposableFixture();
+    fixtures.push(target);
+    await migrateFixtureDatabase(target, await migrationsBefore0026());
+    await seedStudy(target);
+    const { client, close } = await openFixtureDatabase(target);
+    try {
+      const counts = async () =>
+        Promise.all(
+          [
+            'skills',
+            'enrollments',
+            'study_sessions',
+            'attempts',
+            'evaluations'
+          ].map(
+            async (table) =>
+              (await client.execute(`SELECT count(*) AS n FROM ${table}`))
+                .rows[0].n
+          )
+        );
+      const before = await counts();
+      const migrations = loadMigrations();
+      const host = 'remote.example.test';
+      const state = await readMigrationState(client, migrations, host);
+      expect(state.pending.map((m) => m.tag)).toEqual([
+        '0026_portuguese_tracks'
+      ]);
+      const result = await applyRemoteTestPlan(client, migrations, {
+        host,
+        confirmHost: host,
+        planId: state.planId
+      });
+      expect(result.applied).toEqual(['0026_portuguese_tracks']);
+      expect(await counts()).toEqual(before);
+      expect(before.every((n) => Number(n) > 0)).toBe(true);
+      await client.execute(
+        "INSERT INTO skills (id, language, level) VALUES ('pt-b1-001', 'pt', 'B1')"
+      );
     } finally {
       close();
     }

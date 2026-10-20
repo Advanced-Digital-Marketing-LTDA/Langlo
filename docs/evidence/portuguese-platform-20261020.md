@@ -17,17 +17,17 @@ Two existing tests changed: `tests/db-migrations.test.ts` excludes the four enro
 
 ## Tests
 
-New files (43 tests): `curriculum-contract-portuguese`, `portuguese-migration`, `content-bundle-portuguese`, `portuguese-tracks`.
+New files (46 tests): `curriculum-contract-portuguese`, `portuguese-migration`, `content-bundle-portuguese`, `portuguese-tracks`.
 
 Observed red before the code: `curriculum-contract-portuguese` 7 of 7 failed (missing export and unsupported track); `content-bundle-portuguese` 5 of 12 failed (language not accepted, B1/B2 not accepted by the importer); `portuguese-tracks` could not load (`../src/lib/levels` missing). The migration tests were written after the migration and passed at first run; to show they discriminate, five mutations of `0026` were applied and reverted: `pt` removed from the skills CHECK (1 failed), explanation triggers removed (1 failed), skill identity triggers removed (1 failed), pt pair removed from the track trigger (2 failed), skill rows not copied (6 failed). Four mutations of the app code were applied and reverted: assessed levels ignoring `pt` (2 failed), no explanation check on enroll (1 failed), none on lesson-language change (1 failed), gaps filtered at A1 (1 failed). Each time the restored code passed.
 
-After the change: the four new files 43 passed; the existing files touching the changed code passed (`db-migrations`, `db-review-invariants`, `db-constraints`, `db-guards`, `db-remote-migrate`, `db-cli`, `learner-journeys`, `assessment`, `assessment-routes`, `progress-routes`, `map-render`, `content-bundle`, `content-import`, `curriculum-contract`, `content-import-script`, `content-update`, `lesson-translations`). The full suite and the browser tests were not run here (too slow in this environment); CI runs them.
+After the change: the four new files 46 passed; the existing files touching the changed code passed (`db-migrations`, `db-review-invariants`, `db-constraints`, `db-guards`, `db-remote-migrate`, `db-cli`, `learner-journeys`, `assessment`, `assessment-routes`, `progress-routes`, `map-render`, `content-bundle`, `content-import`, `curriculum-contract`, `content-import-script`, `content-update`, `lesson-translations`). The full suite and the browser tests were not run here (too slow in this environment); CI runs them.
 
 Also run and passing: `npm run check` (0 errors), `npm run lint`, `npm run format:check`, `npm run build`, `npm run validate:curriculum` (125 records, 164 edges, bundle 1.1.0), `npm run content:import` dry run (1.1.0, 124 skills, 124 lessons, 1,860 questions, nothing written), `git diff --check`.
 
 Environment note: the container has Node 22.22 and npm 10; dependencies were installed with npm 11.9.0 through `npx` and `--ignore-scripts`. The repository pins Node 24.19, so CI is the authority for the pinned toolchain.
 
-Review follow-up: 0026 now fails loudly when foreign keys are enforced (a plain batch would cascade study history away), and the upgrade test also seeds `prerequisites` and `card_drafts`.
+Review follow-up: 0026 now fails loudly when foreign keys are enforced (a plain batch would cascade study history away), and the upgrade test also seeds `prerequisites` and `card_drafts`. A test applies 0026 through `applyRemoteTestPlan` on a populated database. `assessmentLevels` throws for an unknown language, and a second learner proves owner scoping of the Portuguese paths.
 
 ## Pending
 
