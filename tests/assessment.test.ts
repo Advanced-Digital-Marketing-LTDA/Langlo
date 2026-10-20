@@ -3,9 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
-import { getAttempt, recordAttempt } from '../src/lib/server/study';
+import {
+  getAttempt,
+  recordAttempt,
+  pauseStudySession,
+  resumeStudySession
+} from '../src/lib/server/study';
 import {
   assessmentResults,
+  completeAssessment,
   getAssessment,
   startAssessment
 } from '../src/lib/server/assessment';
@@ -86,6 +92,25 @@ const answer = (
     answer: value,
     notSure
   });
+
+async function expandedAssessment(format = 'typed-blank') {
+  await addHoldoutSkills(
+    Array.from({ length: 6 }, (_, index) => ({
+      id: `fr-a1-00${index + 4}`,
+      language: 'fr',
+      level: 'A1'
+    }))
+  );
+  await client.execute({
+    sql: 'UPDATE questions SET format = ?, answer = ?, alternatives = ?',
+    args: [
+      format,
+      'es',
+      JSON.stringify(format === 'multiple-choice' ? ['es', 'wrong'] : [])
+    ]
+  });
+  return start();
+}
 
 describe('saved placement plan', () => {
   it('refuses start-token reuse by another owner or in a different mode without altering history', async () => {
@@ -363,6 +388,219 @@ describe('saved placement plan', () => {
       ).rows
     ).toEqual([{ attempt_id: certain.id, contribution: 1 }]);
   });
+
+  it.each(['prepared', 'fallback'] as const)(
+    'saves partial results on the fifth confirmed wrong answer from %s',
+    async (evaluation) => {
+      const { id } = await expandedAssessment(
+        evaluation === 'prepared' ? 'multiple-choice' : 'typed-blank'
+      );
+      const submit = async (value: string, notSure = false) => {
+        const question = (await getAssessment(client, learner, id)).question!;
+        const input = {
+          studySessionId: id,
+          questionId: question.id,
+          submissionKey: randomUUID(),
+          evidenceKind: 'independent' as const,
+          answer: value,
+          notSure
+        };
+        const options = {
+          fallback: async () => ({
+            outcome: 'incorrect' as const,
+            reason: 'answered' as const,
+            evaluated: true as const
+          })
+        };
+        const result = await recordAttempt(client, learner, input, options);
+        expect(await recordAttempt(client, learner, input, options)).toEqual({
+          id: result.id,
+          duplicate: true
+        });
+      };
+      for (let i = 0; i < 4; i++) await submit('wrong');
+      await submit('', true);
+      await submit('es');
+      expect(await getAssessment(client, learner, id)).toMatchObject({
+        state: 'active',
+        answered: 6
+      });
+      await expect(
+        assessmentResults(client, learner, id)
+      ).rejects.toMatchObject({ code: 'RESULTS_NOT_READY' });
+      await submit('wrong');
+      expect(await getAssessment(client, learner, id)).toMatchObject({
+        state: 'completed',
+        answered: 7,
+        question: null
+      });
+      expect(await assessmentResults(client, learner, id)).toMatchObject({
+        total: 9,
+        notReached: 2,
+        counts: { correct: 1, incorrect: 5, uncertain: 1 }
+      });
+      const evidence = await client.execute({
+        sql: `SELECT COUNT(*) AS total, SUM(se.contribution) AS correct
+          FROM skill_evidence se JOIN attempts a ON a.id = se.attempt_id AND a.owner_id = se.owner_id
+          WHERE a.study_session_id = ? AND se.owner_id = ?`,
+        args: [id, learner.userId]
+      });
+      expect(evidence.rows).toEqual([{ total: 6, correct: 1 }]);
+      await expect(answer(id, 'fr-a1-008@1:q1')).rejects.toMatchObject({
+        code: 'SESSION_NOT_ACTIVE'
+      });
+    }
+  );
+
+  it('completes a paused assessment when its fifth wrong fallback verdict arrives', async () => {
+    const { id } = await expandedAssessment('multiple-choice');
+    for (let index = 0; index < 4; index++) {
+      const question = (await getAssessment(client, learner, id)).question!;
+      await answer(id, question.id, 'wrong');
+    }
+    const question = (await getAssessment(client, learner, id)).question!;
+    await client.execute({
+      sql: "UPDATE questions SET format = 'typed-blank', alternatives = '[]' WHERE id = ?",
+      args: [question.id]
+    });
+    await recordAttempt(
+      client,
+      learner,
+      {
+        studySessionId: id,
+        questionId: question.id,
+        submissionKey: randomUUID(),
+        evidenceKind: 'independent',
+        answer: 'wrong'
+      },
+      {
+        fallback: async () => {
+          await pauseStudySession(client, learner, id, 123);
+          return { outcome: 'incorrect', reason: 'answered', evaluated: true };
+        }
+      }
+    );
+    expect(await getAssessment(client, learner, id)).toMatchObject({
+      state: 'completed',
+      answered: 5,
+      question: null
+    });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT paused_at FROM study_sessions WHERE id = ?',
+          args: [id]
+        })
+      ).rows
+    ).toEqual([{ paused_at: null }]);
+    expect(await assessmentResults(client, learner, id)).toMatchObject({
+      notReached: 4,
+      counts: { correct: 0, incorrect: 5, uncertain: 0 }
+    });
+    const evidence = await client.execute({
+      sql: `SELECT COUNT(*) AS total FROM skill_evidence se JOIN attempts a ON a.id = se.attempt_id AND a.owner_id = se.owner_id
+        WHERE a.study_session_id = ? AND se.owner_id = ?`,
+      args: [id, learner.userId]
+    });
+    expect(evidence.rows).toEqual([{ total: 5 }]);
+    await expect(resumeStudySession(client, learner, id)).rejects.toMatchObject(
+      { code: 'SESSION_NOT_ACTIVE' }
+    );
+    await expect(answer(id, 'fr-a1-006@1:q1')).rejects.toMatchObject({
+      code: 'SESSION_NOT_ACTIVE'
+    });
+  });
+
+  it('keeps four wrong answers plus an unresolved verdict active until a fifth wrong answer', async () => {
+    const { id } = await expandedAssessment('multiple-choice');
+    for (let index = 0; index < 4; index++) {
+      const question = (await getAssessment(client, learner, id)).question!;
+      await answer(id, question.id, 'wrong');
+    }
+    const question = (await getAssessment(client, learner, id)).question!;
+    await client.execute({
+      sql: "UPDATE questions SET format = 'typed-blank', alternatives = '[]' WHERE id = ?",
+      args: [question.id]
+    });
+    await recordAttempt(
+      client,
+      learner,
+      {
+        studySessionId: id,
+        questionId: question.id,
+        submissionKey: randomUUID(),
+        evidenceKind: 'independent',
+        answer: 'unresolved'
+      },
+      {
+        fallback: async () => ({
+          outcome: 'uncertain',
+          reason: 'timeout',
+          evaluated: false
+        })
+      }
+    );
+    expect(await getAssessment(client, learner, id)).toMatchObject({
+      state: 'active',
+      answered: 5
+    });
+    await expect(assessmentResults(client, learner, id)).rejects.toMatchObject({
+      code: 'RESULTS_NOT_READY'
+    });
+    await answer(
+      id,
+      (await getAssessment(client, learner, id)).question!.id,
+      'wrong'
+    );
+    expect(await assessmentResults(client, learner, id)).toMatchObject({
+      notReached: 3,
+      counts: { correct: 0, incorrect: 5, uncertain: 1 }
+    });
+  });
+
+  it.each([
+    { owner: 'learner-b', mode: 'assessment' },
+    { owner: 'learner-a', mode: 'practice' }
+  ])(
+    'ignores five wrong answers in $owner / $mode when checking completion',
+    async ({ owner, mode }) => {
+      const own = await expandedAssessment('multiple-choice');
+      const other = await startAssessment(client, testSession(owner), {
+        language: 'fr',
+        submissionKey: randomUUID()
+      });
+      await client.execute({
+        sql: 'UPDATE study_sessions SET mode = ? WHERE id = ?',
+        args: [mode, other.id]
+      });
+      await client.execute({
+        sql: `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer)
+        SELECT ? || ':' || q.id, ?, ?, q.id, q.content_version_id, q.skill_id, q.language, ? || ':' || q.id, 'independent', 'wrong'
+        FROM study_sessions s JOIN json_each(s.assessment_plan, '$.questions') p JOIN questions q ON q.id = p.value
+        WHERE s.id = ? ORDER BY CAST(p.key AS INTEGER) LIMIT 5`,
+        args: [other.id, owner, other.id, other.id, other.id]
+      });
+      await client.execute({
+        sql: `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome)
+        SELECT 'evaluation:' || id, owner_id, id, 'prepared-1', content_version_id, 'incorrect' FROM attempts WHERE study_session_id = ?`,
+        args: [other.id]
+      });
+      expect(await completeAssessment(client, learner, other.id)).toBe(false);
+      expect(await completeAssessment(client, learner, own.id)).toBe(false);
+      expect(
+        (
+          await client.execute({
+            sql: 'SELECT state FROM study_sessions WHERE id IN (?, ?) ORDER BY id',
+            args: [own.id, other.id]
+          })
+        ).rows
+      ).toEqual([{ state: 'active' }, { state: 'active' }]);
+      if (mode === 'assessment')
+        expect(
+          await completeAssessment(client, testSession(owner), other.id)
+        ).toBe(true);
+    }
+  );
 
   it('holds results while a fresh final answer awaits its fallback verdict, then publishes', async () => {
     const { id } = await start();

@@ -415,6 +415,7 @@ function logFallback(reason: FallbackReason | 'not-configured' | 'failed') {
 
 type FallbackAttempt = {
   id: string;
+  studySessionId: string;
   questionId: string;
   answer: string;
   contentVersionId: string;
@@ -459,10 +460,17 @@ async function recordFallbackVerdict(
         outcome
       ]
     });
+    const completed = await completeAssessment(
+      tx,
+      session,
+      attempt.studySessionId
+    );
     await syncEvidenceLedger(tx, {
       ownerId: session.userId,
       language: attempt.language,
-      attemptIds: [attempt.id]
+      ...(completed
+        ? { studySessionId: attempt.studySessionId }
+        : { attemptIds: [attempt.id] })
     });
     await tx.commit();
   } catch (error) {
@@ -635,6 +643,7 @@ async function recordAttemptWrite(
     });
     const attempt = {
       id,
+      studySessionId: input.studySessionId,
       questionId: input.questionId,
       answer: input.answer,
       contentVersionId: source.contentVersionId,
