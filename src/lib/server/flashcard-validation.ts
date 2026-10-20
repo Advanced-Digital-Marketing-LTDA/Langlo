@@ -5,13 +5,9 @@ const maxExplanationLength = 1000;
 const maxSourceFieldLength = 512;
 const sourceIdPattern = /^langlo:v1:[0-9a-f]{64}$/u;
 export function normalizeTags(value: unknown): string[] {
-  if (value === undefined || value === null || value === '') return [];
-  const list = typeof value === 'string' ? value.split(',') : value;
-  if (!Array.isArray(list) || list.length > 20)
-    throw new FlashcardError('INVALID_TAGS');
   const tags: string[] = [];
   const seen = new Set<string>();
-  for (const value_ of list) {
+  for (const value_ of tagValues(value)) {
     const tag = normalizeTag(value_);
     if (!tag) continue;
     const key = tag.toLocaleLowerCase('en');
@@ -19,6 +15,15 @@ export function normalizeTags(value: unknown): string[] {
     seen.add(key);
   }
   return tags;
+}
+
+function tagValues(value: unknown): unknown[] {
+  if (value == null) return [];
+  if (value === '') return [];
+  const list = typeof value === 'string' ? value.split(',') : value;
+  if (!Array.isArray(list)) throw new FlashcardError('INVALID_TAGS');
+  if (list.length > 20) throw new FlashcardError('INVALID_TAGS');
+  return list;
 }
 
 function normalizeTag(value: unknown): string | null {
@@ -31,12 +36,7 @@ function normalizeTag(value: unknown): string | null {
 }
 
 export function exceedsCodePointLimit(value: string, limit: number): boolean {
-  const codePoints = value[Symbol.iterator]();
-  let count = 0;
-  while (!codePoints.next().done) {
-    if (++count > limit) return true;
-  }
-  return false;
+  return Array.from(value).length > limit;
 }
 
 export class FlashcardError extends Error {
@@ -60,26 +60,29 @@ function isCardText(value: unknown): value is string {
 
 export function validateContent(kind: unknown, content: unknown): void {
   if (!isRecord(content)) throw new FlashcardError('INVALID_CONTENT');
+  if (kind === 'basic') return validateBasicContent(content);
+  if (kind === 'cloze') return validateClozeContent(content);
+  throw new FlashcardError('INVALID_CONTENT');
+}
 
-  if (kind === 'basic') {
-    if (
-      Object.keys(content).length !== 2 ||
-      !isCardText(content.front) ||
-      !isCardText(content.back)
-    )
-      throw new FlashcardError('INVALID_CONTENT');
-  } else if (kind === 'cloze') {
-    if (Object.keys(content).length !== 1 || !isCardText(content.text))
-      throw new FlashcardError('INVALID_CONTENT');
-    const matches = content.text.match(/\{\{c1::[^{}]+\}\}/gu) ?? [];
-    if (
-      !matches.length ||
-      /\{\{c\d+::/u.test(content.text.replace(/\{\{c1::[^{}]+\}\}/gu, ''))
-    ) {
-      throw new FlashcardError('INVALID_CLOZE');
-    }
-  } else {
+function validateBasicContent(content: Record<string, unknown>): void {
+  if (
+    Object.keys(content).length !== 2 ||
+    !isCardText(content.front) ||
+    !isCardText(content.back)
+  )
     throw new FlashcardError('INVALID_CONTENT');
+}
+
+function validateClozeContent(content: Record<string, unknown>): void {
+  if (Object.keys(content).length !== 1 || !isCardText(content.text))
+    throw new FlashcardError('INVALID_CONTENT');
+  const matches = content.text.match(/\{\{c1::[^{}]+\}\}/gu) ?? [];
+  if (
+    !matches.length ||
+    /\{\{c\d+::/u.test(content.text.replace(/\{\{c1::[^{}]+\}\}/gu, ''))
+  ) {
+    throw new FlashcardError('INVALID_CLOZE');
   }
 }
 
