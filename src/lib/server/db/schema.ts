@@ -166,8 +166,10 @@ export const enrollments = sqliteTable(
     ownerId: text('owner_id')
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
-    language: text('language', { enum: ['fr', 'de', 'en'] }).notNull(),
-    startingLevel: text('starting_level', { enum: ['A1', 'A2'] }).notNull(),
+    language: text('language', { enum: ['fr', 'de', 'en', 'pt'] }).notNull(),
+    startingLevel: text('starting_level', {
+      enum: ['A1', 'A2', 'B1', 'B2']
+    }).notNull(),
     explanationLanguage: text('explanation_language', {
       enum: ['en', 'pt']
     }).notNull(),
@@ -183,9 +185,16 @@ export const enrollments = sqliteTable(
       table.ownerId,
       table.language
     ),
-    check('enrollments_language', sql`${table.language} IN ('fr', 'de', 'en')`),
-    // Migration 0003 guards the supported pairs: fr A1, de/en A1/A2.
-    check('enrollments_level', sql`${table.startingLevel} IN ('A1', 'A2')`),
+    check(
+      'enrollments_language',
+      sql`${table.language} IN ('fr', 'de', 'en', 'pt')`
+    ),
+    // The supported pairs are guarded by triggers (0003, replaced by the
+    // Portuguese migration): fr A1, de/en A1/A2, pt B1/B2.
+    check(
+      'enrollments_level',
+      sql`${table.startingLevel} IN ('A1', 'A2', 'B1', 'B2')`
+    ),
     check(
       'enrollments_explanation',
       sql`${table.explanationLanguage} IN ('en', 'pt')`
@@ -197,8 +206,8 @@ export const skills = sqliteTable(
   'skills',
   {
     id: text('id').primaryKey(),
-    language: text('language', { enum: ['fr', 'de', 'en'] }).notNull(),
-    level: text('level', { enum: ['A1', 'A2'] }).notNull(),
+    language: text('language', { enum: ['fr', 'de', 'en', 'pt'] }).notNull(),
+    level: text('level', { enum: ['A1', 'A2', 'B1', 'B2'] }).notNull(),
     // Set when a content update retires the skill; it leaves the catalog and
     // recommendations, and its history stays readable. Null while active.
     retiredAt: integer('retired_at'),
@@ -211,8 +220,11 @@ export const skills = sqliteTable(
   },
   (table) => [
     uniqueIndex('skills_identity_language').on(table.id, table.language),
-    check('skills_language', sql`${table.language} IN ('fr', 'de', 'en')`),
-    check('skills_level', sql`${table.level} IN ('A1', 'A2')`)
+    check(
+      'skills_language',
+      sql`${table.language} IN ('fr', 'de', 'en', 'pt')`
+    ),
+    check('skills_level', sql`${table.level} IN ('A1', 'A2', 'B1', 'B2')`)
   ]
 );
 
