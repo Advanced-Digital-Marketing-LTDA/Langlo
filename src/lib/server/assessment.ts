@@ -46,21 +46,22 @@ const answersForSkillOf = (attempt: string, question: string) =>
 function assertPreviousSession(
   row: Row | undefined,
   learner: LearnerSession,
-  language: string
+  input: { language: string }
 ) {
-  if (row && row.owner_id !== learner.userId) throw new StudyError('NOT_FOUND');
-  if (row && row.language !== language) throw new StudyError('NOT_FOUND');
-  if (row && row.mode !== 'assessment') throw new StudyError('NOT_FOUND');
+  if (!row) return;
+  if (row.owner_id !== learner.userId) throw new StudyError('NOT_FOUND');
+  if (row.language !== input.language) throw new StudyError('NOT_FOUND');
+  if (row.mode !== 'assessment') throw new StudyError('NOT_FOUND');
 }
 
 async function assessmentQuestions(
   client: QueryClient,
-  language: string,
-  ownerId: string
+  learner: LearnerSession,
+  input: { language: string }
 ) {
   const activeSkills = await client.execute({
     sql: 'SELECT id FROM skills WHERE language = ? AND retired_at IS NULL ORDER BY level, id',
-    args: [language]
+    args: [input.language]
   });
   const available = await client.execute({
     sql: `SELECT q.id, q.skill_id, sk.level FROM questions q
@@ -73,7 +74,7 @@ async function assessmentQuestions(
           AND NOT EXISTS (SELECT 1 FROM attempts a JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND ${answersForSkillOf('a', 'q')}
             AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')})
         ORDER BY sk.level, q.skill_id, q.id`,
-    args: [language, ownerId]
+    args: [input.language, learner.userId]
   });
   const questionBySkill = new Map(
     [...available.rows]
@@ -110,7 +111,7 @@ export async function startAssessment(
       args: [id]
     });
     const previousRow = previous.rows[0];
-    assertPreviousSession(previousRow, learner, input.language);
+    assertPreviousSession(previousRow, learner, input);
     if (previousRow) {
       await tx.commit();
       return { id };
@@ -121,11 +122,7 @@ export async function startAssessment(
     });
     const enrollment = enrolled.rows[0];
     if (!enrollment) throw new StudyError('NOT_FOUND');
-    const questions = await assessmentQuestions(
-      tx,
-      input.language,
-      learner.userId
-    );
+    const questions = await assessmentQuestions(tx, learner, input);
     await tx.execute({
       sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, assessment_plan) VALUES (?, ?, ?, ?, 'assessment', ?)",
       args: [
@@ -161,17 +158,23 @@ const plannedRows = `SELECT s.id AS session_id, s.language, s.state, s.assessmen
   WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'assessment'
   ORDER BY CAST(p.key AS INTEGER)`;
 
-function assertPlan(
+function assertPlanVersion(
+  plan: { version: string; questions: unknown },
+  rows: Row[]
+) {
+  if (!['assessment-1', ASSESSMENT_POLICY_VERSION].includes(plan.version))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (plan.version === 'assessment-1' && rows.length > 12)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+}
+
+function assertPlanQuestions(
   plan: { version: string; questions: unknown },
   rows: Row[]
 ) {
   if (!Array.isArray(plan.questions))
     throw new StudyError('CONTENT_UNAVAILABLE');
-  if (!['assessment-1', ASSESSMENT_POLICY_VERSION].includes(plan.version))
-    throw new StudyError('CONTENT_UNAVAILABLE');
   if (plan.questions.length !== rows.length)
-    throw new StudyError('CONTENT_UNAVAILABLE');
-  if (plan.version === 'assessment-1' && rows.length > 12)
     throw new StudyError('CONTENT_UNAVAILABLE');
   const skills = rows.map((row) => String(row.skill_id));
   if (new Set(skills).size !== skills.length)
@@ -190,7 +193,8 @@ async function readPlan(
   });
   if (!result.rows.length) throw new StudyError('NOT_FOUND');
   const plan = JSON.parse(String(result.rows[0].assessment_plan));
-  assertPlan(plan, result.rows);
+  assertPlanVersion(plan, result.rows);
+  assertPlanQuestions(plan, result.rows);
   return result.rows;
 }
 
