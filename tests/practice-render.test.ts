@@ -53,6 +53,7 @@ const renderPractice = (overrides = {}) =>
           reason: 'Continue practising this topic'
         }
       ],
+      dueReviews: [],
       error: null,
       ...overrides
     }

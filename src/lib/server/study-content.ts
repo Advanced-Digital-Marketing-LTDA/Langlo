@@ -32,6 +32,7 @@ export type SessionRow = {
   mode: string;
   state: string;
   assessmentPlan: string | null;
+  grammarRetentionPolicyVersion: string | null;
 };
 
 export async function ownSession(
@@ -41,7 +42,7 @@ export async function ownSession(
 ): Promise<SessionRow> {
   if (typeof studySessionId !== 'string') throw new StudyError('NOT_FOUND');
   const found = await client.execute({
-    sql: 'SELECT language, mode, state, assessment_plan FROM study_sessions WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT language, mode, state, assessment_plan, grammar_retention_policy_version FROM study_sessions WHERE id = ? AND owner_id = ?',
     args: [studySessionId, session.userId]
   });
   const row = found.rows[0];
@@ -51,7 +52,11 @@ export async function ownSession(
     mode: String(row.mode),
     state: String(row.state),
     assessmentPlan:
-      row.assessment_plan === null ? null : String(row.assessment_plan)
+      row.assessment_plan === null ? null : String(row.assessment_plan),
+    grammarRetentionPolicyVersion:
+      row.grammar_retention_policy_version === null
+        ? null
+        : String(row.grammar_retention_policy_version)
   };
 }
 
@@ -83,6 +88,10 @@ async function questionRows(client: Client, read: QuestionRead) {
           FROM study_sessions s
           CROSS JOIN ${sessionVersion} v
           LEFT JOIN questions q ON q.content_version_id = v.id AND q.prompt IS NOT NULL AND (q.holdout = 0 OR ? = 'assessment')
+            AND (s.grammar_retention_plan IS NULL OR EXISTS (
+              SELECT 1 FROM json_each(s.grammar_retention_plan, '$.questions') p
+              WHERE json_extract(p.value, '$.skillId') = q.skill_id
+                AND json_extract(p.value, '$.questionId') = q.id))
           WHERE s.id = ? AND s.owner_id = ?
           ORDER BY q.id`,
     args: [

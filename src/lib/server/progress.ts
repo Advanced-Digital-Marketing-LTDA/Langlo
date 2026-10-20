@@ -4,11 +4,20 @@ import { listEnrollments } from './enrollment';
 import { loadEnrolledCatalog, loadEnrolledMastery } from './mastery';
 import { recommendTopics } from './recommendations';
 import { StudyError } from './study-error';
+import {
+  grammarRetentionFor,
+  type GrammarRetention
+} from './grammar-retention';
+
+type MasterySkill = Awaited<
+  ReturnType<typeof loadEnrolledMastery>
+>[number]['skills'][number];
+type ProgressSkill = MasterySkill & { retention: GrammarRetention };
 
 export type TrackProgress = {
   language: string;
   level: string;
-  skills: Awaited<ReturnType<typeof loadEnrolledMastery>>[number]['skills'];
+  skills: ProgressSkill[];
   recommendation: ReturnType<typeof recommendTopics>;
 };
 
@@ -42,8 +51,22 @@ function streamTrack(
   const progress = catalog
     .then(async () => {
       const [track] = await loadEnrolledMastery(client, learner, language);
+      const retention = await grammarRetentionFor(client, learner, language);
+      const retained = new Map(
+        retention.map((skill) => [skill.skillId, skill.retention])
+      );
       return {
         ...track,
+        skills: track.skills.map((skill) => ({
+          ...skill,
+          retention: retained.get(skill.skillId) ?? {
+            state: 'not-assessed',
+            dueAt: null,
+            lastReviewedAt: null,
+            retrievability: null,
+            target: 0.9
+          }
+        })),
         recommendation: recommendTopics(track.skills)
       };
     })
@@ -96,12 +119,28 @@ export async function loadProgress(
   language: string | null = null
 ) {
   const enrolled = await loadEnrolledMastery(client, learner, language);
-  const tracks: TrackProgress[] = enrolled.map(
-    ({ language, level, skills }) => ({
-      language,
-      level,
-      skills,
-      recommendation: recommendTopics(skills)
+  const tracks: TrackProgress[] = await Promise.all(
+    enrolled.map(async ({ language, level, skills }) => {
+      const retention = await grammarRetentionFor(client, learner, language);
+      const retained = new Map(
+        retention.map((skill) => [skill.skillId, skill.retention])
+      );
+      const progressSkills = skills.map((skill) => ({
+        ...skill,
+        retention: retained.get(skill.skillId) ?? {
+          state: 'not-assessed' as const,
+          dueAt: null,
+          lastReviewedAt: null,
+          retrievability: null,
+          target: 0.9
+        }
+      }));
+      return {
+        language,
+        level,
+        skills: progressSkills,
+        recommendation: recommendTopics(progressSkills)
+      };
     })
   );
   return { tracks };

@@ -13,6 +13,12 @@
 <h1>Practice session</h1>
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
 <p>{data.summary.answered} answers so far.</p>
+{#if data.summary.mode === 'mixed-review'}
+  <p>
+    This grammar retention review has at most five topics and one question per
+    topic.
+  </p>
+{/if}
 {#if data.summary.state === 'paused'}
   <p>This session is paused.</p>
   <form method="POST" action="?/resume">
@@ -28,6 +34,7 @@
             ? ' (recommended)'
             : ''}</a
         >
+        {'answered' in skill && skill.answered ? ' · answered' : ''}
       </li>
     {/each}
   </ul>

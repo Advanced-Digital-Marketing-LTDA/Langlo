@@ -5,7 +5,7 @@ import type { RuntimeConfig } from '../src/lib/server/config';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import { getAssessment, startAssessment } from '../src/lib/server/assessment';
-import { recordAttempt } from '../src/lib/server/study';
+import { rateGrammarAttempt, recordAttempt } from '../src/lib/server/study';
 import { listContentReports } from '../src/lib/server/content-reports';
 import {
   disposeFlashcardFixtures,
@@ -113,27 +113,36 @@ const answerFields = (questionId: string, answer = 'suis') => ({
 });
 
 async function finish(id: string) {
-  await recordAttempt(client, learner, {
-    studySessionId: id,
-    questionId: 'fr-a1-001@1:q1',
-    answer: 'suis',
-    submissionKey: randomUUID(),
-    evidenceKind: 'independent'
-  });
-  await recordAttempt(client, learner, {
-    studySessionId: id,
-    questionId: 'fr-a1-002@1:q1',
-    answer: 'Nous sommes ici.',
-    submissionKey: randomUUID(),
-    evidenceKind: 'independent'
-  });
-  await recordAttempt(client, learner, {
-    studySessionId: id,
-    questionId: 'fr-a1-003@1:q1',
-    answer: 'es',
-    submissionKey: randomUUID(),
-    evidenceKind: 'independent'
-  });
+  const attempts = [];
+  attempts.push(
+    await recordAttempt(client, learner, {
+      studySessionId: id,
+      questionId: 'fr-a1-001@1:q1',
+      answer: 'suis',
+      submissionKey: randomUUID(),
+      evidenceKind: 'independent'
+    })
+  );
+  attempts.push(
+    await recordAttempt(client, learner, {
+      studySessionId: id,
+      questionId: 'fr-a1-002@1:q1',
+      answer: 'Nous sommes ici.',
+      submissionKey: randomUUID(),
+      evidenceKind: 'independent'
+    })
+  );
+  attempts.push(
+    await recordAttempt(client, learner, {
+      studySessionId: id,
+      questionId: 'fr-a1-003@1:q1',
+      answer: 'es',
+      submissionKey: randomUUID(),
+      evidenceKind: 'independent'
+    })
+  );
+  for (const attempt of attempts)
+    await rateGrammarAttempt(client, learner, attempt.id, 'good', id);
 }
 
 async function startEarlyStopAssessment(response: string) {

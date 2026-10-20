@@ -11,7 +11,10 @@ import { resumeStudySession } from '../../../../../lib/server/study';
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => {
     const assessment = await getAssessment(client, learner, event.params.id);
-    if (assessment.state === 'completed')
+    if (
+      assessment.state === 'completed' ||
+      (assessment.state === 'active' && assessment.question === null)
+    )
       redirect(
         303,
         `/app/assessment/session/${encodeURIComponent(assessment.id)}/results`

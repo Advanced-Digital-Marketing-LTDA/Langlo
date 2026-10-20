@@ -673,6 +673,67 @@ function newCard(now = new Date()): Card {
   return createEmptyCard(now);
 }
 
+/** Apply one persisted review with the same scheduler and settings as flashcards. */
+export function scheduleStudyReview(input: {
+  id: string;
+  rating: RatingName;
+  schedule: StudySchedule;
+  stateJson: string | null;
+  schedulerVersion: string | null;
+  parametersJson: string | null;
+  resetRequired: boolean;
+  expectedRevision: number;
+  now: Date;
+  timezone: string;
+}) {
+  const baseParameters = input.parametersJson
+    ? readCardScheduler(input.schedulerVersion, input.parametersJson).parameters
+    : parameters;
+  const effectiveParameters = parametersForSchedule(
+    input.schedule,
+    baseParameters
+  );
+  const card =
+    input.stateJson && !input.resetRequired
+      ? decodeCard(input.stateJson)
+      : newCard(input.now);
+  const updated = scheduledCard(
+    deterministicScheduler(effectiveParameters).next(
+      cardWithId(card, input.id),
+      input.now,
+      ratings[input.rating]
+    ).card,
+    input.now,
+    input.timezone
+  );
+  const result = {
+    revision: input.expectedRevision + 1,
+    dueAt: updated.due.getTime()
+  };
+  return {
+    schedulerVersion,
+    parametersJson: JSON.stringify(effectiveParameters),
+    stateJson: encodeCard(updated),
+    resultJson: JSON.stringify(result),
+    revision: result.revision,
+    dueAt: result.dueAt
+  };
+}
+
+export function studyRetrievability(
+  input: {
+    stateJson: string;
+    schedulerVersion: string;
+    parametersJson: string;
+  },
+  now: Date
+) {
+  return readCardScheduler(
+    input.schedulerVersion,
+    input.parametersJson
+  ).scheduler.get_retrievability(decodeCard(input.stateJson), now, false);
+}
+
 export async function createDeck(
   client: Client,
   session: LearnerSession,

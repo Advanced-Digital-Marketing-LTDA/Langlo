@@ -5,6 +5,7 @@ import { feedbackEvaluation } from './assessment';
 import { StudyError } from './study-error';
 import { effectiveLineageKey } from './lineage';
 import { span } from './tracing';
+import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 
 export const GRAMMAR_POLICY_VERSION = 'grammar-1';
 export type GrammarStatus = 'unknown' | 'weak' | 'practising' | 'secure';
@@ -125,17 +126,28 @@ export function qualifyingGrammarEvidence(
       ? carriedTo(String(row.skill_id), current.carry)
       : String(row.skill_id);
     if (current && !current.keys.get(countsFor)?.has(itemKey)) continue;
-    const key = JSON.stringify([countsFor, itemKey]);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    if (!isIndependentEvidence(row)) continue;
     const evaluation = feedbackEvaluation(
       evaluations,
       String(row.content_version_id)
     );
     if (
+      row.grammar_retention_policy_version ===
+        GRAMMAR_RETENTION_POLICY_VERSION &&
+      evaluation?.outcome === 'correct' &&
+      row.grammar_rating == null
+    )
+      continue;
+    const key = JSON.stringify([countsFor, itemKey]);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (!isIndependentEvidence(row)) continue;
+    if (
       !evaluation ||
-      !['correct', 'incorrect'].includes(String(evaluation.outcome))
+      !['correct', 'incorrect'].includes(String(evaluation.outcome)) ||
+      (row.grammar_retention_policy_version ===
+        GRAMMAR_RETENTION_POLICY_VERSION &&
+        evaluation.outcome === 'correct' &&
+        row.grammar_rating == null)
     )
       continue;
     qualified.push({
@@ -245,8 +257,8 @@ export async function loadEvidenceRows(
     return [];
   const { where, args } = evidenceWhere(filter);
   const result = await tx.execute({
-    sql: `SELECT a.id AS attempt_id, a.owner_id, a.rowid AS sequence, a.created_at, a.question_id, a.content_version_id, a.skill_id, a.study_session_id, a.evidence_kind, a.not_sure,
-        s.mode, s.state, v.status, aq.lineage_key, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
+    sql: `SELECT a.id AS attempt_id, a.owner_id, a.rowid AS sequence, a.created_at, a.question_id, a.content_version_id, a.skill_id, a.study_session_id, a.evidence_kind, a.not_sure, a.grammar_rating,
+        s.mode, s.state, s.grammar_retention_policy_version, v.status, aq.lineage_key, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
         FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
         JOIN content_versions v ON v.id = a.content_version_id
         LEFT JOIN questions aq ON aq.id = a.question_id

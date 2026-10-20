@@ -51,6 +51,17 @@
             <p>
               {skill.independentItems} qualifying items · {skill.sessions} sessions
             </p>
+            <p aria-label="Estimated grammar retention">
+              Retention: {skill.retention.state === 'not-assessed'
+                ? 'Not assessed'
+                : skill.retention.state === 'due'
+                  ? 'Due for retrieval practice'
+                  : skill.retention.state === 'overdue'
+                    ? 'Overdue for retrieval practice'
+                    : skill.retention.state === 'below-target'
+                      ? 'Estimated recall below your target'
+                      : 'Scheduled for retrieval practice'}
+            </p>
             {#if practiceCounts}<p>
                 {skill.answers > 0
                   ? `Practised ${skill.practisedSessions} ${skill.practisedSessions === 1 ? 'time' : 'times'} · ${skill.answers} ${skill.answers === 1 ? 'answer' : 'answers'}`

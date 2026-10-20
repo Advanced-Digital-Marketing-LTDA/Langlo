@@ -16,11 +16,13 @@ import {
   getSessionLesson,
   getStudySession,
   nextQuestion,
+  rateGrammarAttempt,
   recordAttempt,
   StudyError
 } from './study';
 import { ownSession } from './study-content';
 import { feedbackOutcome } from './assessment';
+import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 import { reportContentForm } from './content-reports';
 import type { ExerciseQuestion } from '../components/exercises/answer';
 
@@ -55,6 +57,23 @@ export async function exerciseFor(
 ) {
   if (!studySessionId) return null;
   try {
+    const feedback = await practiceFeedback(
+      client,
+      learner,
+      studySessionId,
+      skillId
+    );
+    if (
+      feedback?.requiresRating &&
+      feedback?.outcome === 'correct' &&
+      feedback.rating === null &&
+      !feedback.receivedHelp
+    )
+      return {
+        studySessionId,
+        notice: 'Rate this answer before continuing with this topic.',
+        question: null
+      };
     const next = await nextQuestion(client, learner, studySessionId, skillId);
     // One key per page load: a repeated tap of Submit replays, not duplicates.
     return {
@@ -69,6 +88,36 @@ export async function exerciseFor(
     if (!described) throw thrown;
     return { studySessionId, notice: described.message, question: null };
   }
+}
+
+/** Save a correct practice response's difficulty rating. */
+export async function ratePracticeAnswer(
+  client: Client,
+  learner: LearnerSession,
+  form: FormData,
+  skillId: string
+) {
+  const attemptId = field(form, 'attemptId');
+  const studySessionId = field(form, 'studySessionId');
+  const rating = field(form, 'rating');
+  if (!['hard', 'good', 'easy'].includes(rating))
+    return fail(400, { message: 'Choose Hard, Good, or Easy.' });
+  const attempt = await getAttempt(client, learner, attemptId);
+  const session = await getStudySession(client, learner, studySessionId);
+  if (
+    attempt.skillId !== skillId ||
+    attempt.studySessionId !== studySessionId ||
+    session.mode === 'assessment'
+  )
+    throw new StudyError('NOT_FOUND');
+  await rateGrammarAttempt(
+    client,
+    learner,
+    attemptId,
+    rating as 'hard' | 'good' | 'easy',
+    studySessionId
+  );
+  return { rated: true as const };
 }
 
 /**
@@ -228,6 +277,13 @@ export async function practiceFeedback(
       ? ('uncertain' as const)
       : feedbackOutcome(evaluations.rows, String(row.content_version_id)),
     evidenceKind: String(row.evidence_kind),
+    receivedHelp: Boolean(row.received_help),
+    requiresRating:
+      study.grammarRetentionPolicyVersion === GRAMMAR_RETENTION_POLICY_VERSION,
+    rating:
+      row.grammar_rating === null
+        ? null
+        : (String(row.grammar_rating) as 'again' | 'hard' | 'good' | 'easy'),
     notSure: Boolean(row.not_sure),
     retryQuestion:
       study.state === 'active'

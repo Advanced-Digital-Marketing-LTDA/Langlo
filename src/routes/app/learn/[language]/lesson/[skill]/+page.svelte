@@ -94,10 +94,47 @@
             evidence.
           </p>{/if}
         <p>
-          {data.feedback.evidenceKind === 'assisted'
+          {data.feedback.receivedHelp
             ? 'Assisted retry — this does not add independent grammar evidence.'
-            : 'First response in this session.'}
+            : data.feedback.evidenceKind === 'assisted'
+              ? 'Repeated item — it does not add new grammar evidence, but an unassisted rated answer may update retention.'
+              : 'First response in this session.'}
         </p>
+        {#if data.feedback.requiresRating && !data.feedback.receivedHelp && data.feedback.outcome === 'correct'}
+          {#if data.feedback.rating}
+            <p role="status">
+              You rated this {data.feedback.rating}. The skill schedule updates
+              when you finish the session.
+            </p>
+          {:else}
+            <form
+              method="POST"
+              action={`?/rate&session=${encodeURIComponent(data.exercise.studySessionId)}`}
+            >
+              <input
+                type="hidden"
+                name="studySessionId"
+                value={data.exercise.studySessionId}
+              />
+              <input
+                type="hidden"
+                name="attemptId"
+                value={data.feedback.attemptId}
+              />
+              <fieldset>
+                <legend>How difficult was it to recall the answer?</legend>
+                <button type="submit" name="rating" value="hard">Hard</button>
+                <button type="submit" name="rating" value="good">Good</button>
+                <button type="submit" name="rating" value="easy">Easy</button>
+              </fieldset>
+            </form>
+          {/if}
+        {:else if !data.feedback.receivedHelp && data.feedback.outcome === 'incorrect'}
+          <p role="status">
+            This counts as Again for the skill schedule when you finish the
+            session.
+          </p>
+        {/if}
         <ContentReportForm
           contentVersionId={data.feedback.contentVersionId}
           questionId={data.feedback.questionId}

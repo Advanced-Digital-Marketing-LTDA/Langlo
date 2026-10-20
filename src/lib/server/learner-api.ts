@@ -38,6 +38,8 @@ const statusFor: Record<string, number> = {
   RESULTS_NOT_READY: 409,
   RESULTS_PENDING: 409,
   ASSESSMENT_MODE: 409,
+  STALE_GRAMMAR_RATING: 409,
+  STALE_GRAMMAR_REVIEW: 409,
   REPORT_LIMIT: 429
 };
 
@@ -51,12 +53,17 @@ const messageForCode: Record<string, string> = {
   INVALID_CLOZE:
     'A cloze note needs one hidden part like {{c1::answer}} and no other cloze numbers.',
   INVALID_RATING: 'Choose again, hard, good or easy.',
+  INVALID_GRAMMAR_RATING: 'Choose Hard, Good, or Easy for a correct answer.',
   INVALID_FORMAT: 'Choose a basic front/back card or a cloze card.',
   INVALID_EXPLANATION: 'Keep the explanation within 1000 characters.',
   INVALID_SOURCE:
     'A generated card must carry its practice attempt, skill and content version.',
   STALE_REVIEW:
     'This card changed in another tab. Reload to see the current version before rating it again.',
+  STALE_GRAMMAR_RATING:
+    'This answer was already rated or is no longer available. Reload to continue.',
+  STALE_GRAMMAR_REVIEW:
+    'The due topics changed. Reload to choose from the current review queue.',
   NOT_ELIGIBLE:
     'Only a confirmed incorrect practice answer can become a flashcard.',
   NOT_CONFIRMED: 'This answer is still being checked. Try again shortly.',

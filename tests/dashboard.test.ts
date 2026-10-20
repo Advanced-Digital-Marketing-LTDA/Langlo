@@ -28,7 +28,14 @@ function skill(
     sessions: 0,
     independentItems: 0,
     reason: `Reason ${skillId}`,
-    policyVersion: 'grammar-1'
+    policyVersion: 'grammar-1',
+    retention: {
+      state: 'not-assessed',
+      dueAt: null,
+      lastReviewedAt: null,
+      retrievability: null,
+      target: 0.9
+    }
   } satisfies TrackProgress['skills'][number];
 }
 function track(

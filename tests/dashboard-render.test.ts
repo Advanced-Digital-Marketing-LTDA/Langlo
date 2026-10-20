@@ -19,7 +19,14 @@ const skill = (skillId: string, status: string, level = 'A1') => ({
   correct: 0,
   incorrect: 0,
   reason: `Reason ${skillId}`,
-  policyVersion: 'grammar-1'
+  policyVersion: 'grammar-1',
+  retention: {
+    state: 'not-assessed',
+    dueAt: null,
+    lastReviewedAt: null,
+    retrievability: null,
+    target: 0.9
+  }
 });
 const track = (recommendedId: string | null) => ({
   language: 'fr',
@@ -164,6 +171,45 @@ it('renders GrammarProgress status with the shared labels and symbols', async ()
     );
     expect(html).toMatch(chip);
   }
+});
+
+it('uses neutral scheduled wording and distinguishes due from overdue', async () => {
+  const html = await renderSvelte(progress, {
+    tracks: [
+      {
+        ...track(null),
+        skills: [
+          {
+            ...skill('scheduled', 'unknown'),
+            retention: {
+              ...skill('x', 'unknown').retention,
+              state: 'scheduled'
+            }
+          },
+          {
+            ...skill('due', 'unknown'),
+            retention: { ...skill('x', 'unknown').retention, state: 'due' }
+          },
+          {
+            ...skill('overdue', 'unknown'),
+            retention: { ...skill('x', 'unknown').retention, state: 'overdue' }
+          },
+          {
+            ...skill('below-target', 'unknown'),
+            retention: {
+              ...skill('x', 'unknown').retention,
+              state: 'below-target'
+            }
+          }
+        ]
+      }
+    ]
+  });
+  expect(html).toContain('Scheduled for retrieval practice');
+  expect(html).toContain('Due for retrieval practice');
+  expect(html).toContain('Overdue for retrieval practice');
+  expect(html).toContain('Estimated recall below your target');
+  expect(html).not.toContain('Estimated recall above your target');
 });
 
 it('no longer renders its own navigation', async () => {
