@@ -48,6 +48,8 @@ required npm 11.9.0 runtime. Dependencies were installed using `npm ci
   and the map regression now uses keyboard interaction.
 - Focused map E2E after that test correction — 4 passed across desktop and
   mobile using the built Node server and disposable synthetic fixture databases.
+- [Synthetic desktop screenshot](interactive-skill-map.png) shows the segmented
+  overall and language progress bars, map controls, topic states, and details.
 - `git diff --check` — passed.
 
 ## PR review regression evidence
