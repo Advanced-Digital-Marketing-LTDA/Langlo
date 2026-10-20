@@ -54,6 +54,17 @@ it('omits the Continue card when nothing is recommended', async () => {
   expect(html).toContain('Grammar mastery');
 });
 
+it('links dashboard topics to their language and selected map topic', async () => {
+  const html = await renderSvelte(page, {
+    data: data([
+      { ...track(null), language: 'en', skills: [skill('en-a1-001', 'weak')] },
+      track(null)
+    ])
+  });
+  expect(html).toContain('href="/app/map?language=en&amp;skill=en-a1-001"');
+  expect(html).toContain('href="/app/map?language=fr&amp;skill=fr-a1-002"');
+});
+
 it('hides unavailable skills from the list, counts and links', async () => {
   const html = await renderSvelte(page, {
     data: data([

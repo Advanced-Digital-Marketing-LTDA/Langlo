@@ -29,6 +29,7 @@ export function normalizeMapReturnTo(value: unknown) {
       'x',
       'y'
     ]);
+    // Snapshot keys: deleting from the live iterator skips adjacent keys.
     for (const key of [...url.searchParams.keys()])
       if (!allowed.has(key)) url.searchParams.delete(key);
     return `${url.pathname}${url.search}`;
@@ -37,44 +38,51 @@ export function normalizeMapReturnTo(value: unknown) {
   }
 }
 
+type SkillMapFilters = {
+  query?: string;
+  status?: GrammarStatus | '';
+  level?: string;
+  selectedSkillId?: string;
+};
+
+function matchingSkills(skills: SkillMapSkill[], filters: SkillMapFilters) {
+  const query = filters.query?.trim().toLocaleLowerCase() ?? '';
+  let matching = skills.filter((skill) =>
+    skill.title.toLocaleLowerCase().includes(query)
+  );
+  if (filters.status)
+    matching = matching.filter((skill) => skill.status === filters.status);
+  if (filters.level)
+    matching = matching.filter((skill) => skill.level === filters.level);
+  return matching;
+}
+
+function withFoundations(skills: SkillMapSkill[], roots: string[]) {
+  const visibleIds = new Set<string>();
+  const byId = new Map(skills.map((skill) => [skill.skillId, skill]));
+  const pending = [...roots];
+  while (pending.length) {
+    const id = pending.pop()!;
+    const skill = byId.get(id);
+    if (!skill || visibleIds.has(id)) continue;
+    visibleIds.add(id);
+    pending.push(...skill.prerequisites);
+  }
+  return visibleIds;
+}
+
 export function filterSkillMap(
   skills: SkillMapSkill[],
-  filters: {
-    query?: string;
-    status?: GrammarStatus | '';
-    level?: string;
-    selectedSkillId?: string;
-  }
+  filters: SkillMapFilters
 ) {
-  const query = filters.query?.trim().toLocaleLowerCase() ?? '';
-  const matching = skills.filter(
-    (skill) =>
-      (!query || skill.title.toLocaleLowerCase().includes(query)) &&
-      (!filters.status || skill.status === filters.status) &&
-      (!filters.level || skill.level === filters.level)
+  const matchingIds = new Set(
+    matchingSkills(skills, filters).map(({ skillId }) => skillId)
   );
-  const visibleIds = new Set(matching.map(({ skillId }) => skillId));
-  const byId = new Map(skills.map((skill) => [skill.skillId, skill]));
-  const addFoundations = (skillId: string, seen = new Set<string>()) => {
-    if (seen.has(skillId)) return;
-    seen.add(skillId);
-    for (const id of byId.get(skillId)?.prerequisites ?? []) {
-      if (byId.has(id)) {
-        visibleIds.add(id);
-        addFoundations(id, seen);
-      }
-    }
-  };
-  if (query || filters.status || filters.level)
-    for (const { skillId } of matching) addFoundations(skillId);
-  else for (const { skillId } of skills) visibleIds.add(skillId);
-  if (filters.selectedSkillId && byId.has(filters.selectedSkillId)) {
-    visibleIds.add(filters.selectedSkillId);
-    addFoundations(filters.selectedSkillId);
-  }
+  const roots = [...matchingIds];
+  if (filters.selectedSkillId) roots.push(filters.selectedSkillId);
   return {
-    visibleIds,
-    matchingIds: new Set(matching.map(({ skillId }) => skillId))
+    visibleIds: withFoundations(skills, roots),
+    matchingIds
   };
 }
 
@@ -136,7 +144,9 @@ export function layoutSkillMap(skills: SkillMapSkill[]) {
       pending.splice(pending.indexOf(skill), 1);
     }
   }
-  const levelNames = [...new Set(skills.map((skill) => skill.level))].sort();
+  const levelNames = [...new Set(skills.map((skill) => skill.level))].sort(
+    (a, b) => a.localeCompare(b)
+  );
   let top = 40;
   const levels = levelNames.map((level) => {
     const rows = Math.max(

@@ -183,6 +183,43 @@ it('rejects practice for unavailable topics and does not start a session', async
   expect(row.rows).toHaveLength(0);
 });
 
+it.each([
+  ['https://evil.test/app/map', '/app/map'],
+  ['//evil.test/app/map', '/app/map'],
+  ['/%2f%2fevil.test', '/app/map'],
+  ['%2F%2Fevil.test%2Fapp%2Fmap', '/app/map'],
+  ['/app/map/../decks', '/app/map'],
+  ['/app/map?next=evil&redirect=evil&language=fr', '/app/map?language=fr'],
+  [
+    '/app/map?language=fr&skill=fr-a1-001&view=list',
+    '/app/map?language=fr&skill=fr-a1-001&view=list'
+  ]
+])(
+  'keeps the practice redirect internal for return context %s',
+  async (returnTo, expected) => {
+    const url = 'http://127.0.0.1/app/map?language=fr';
+    const submissionKey = '00000000-0000-4000-8000-000000000003';
+    const request = new Request(url, {
+      method: 'POST',
+      body: new URLSearchParams({
+        language: 'fr',
+        skillId: 'fr-a1-001',
+        submissionKey,
+        returnTo
+      })
+    });
+    await expect(
+      mapActions.practise({
+        ...(event('learner-a') as object),
+        request
+      } as never)
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/learn/fr/lesson/fr-a1-001?session=practice%3A${submissionKey}&returnTo=${encodeURIComponent(expected)}`
+    });
+  }
+);
+
 it('returns a catalog before the same track progress finishes', async () => {
   const data = (await mapPage(event('learner-a'))) as {
     tracks: {

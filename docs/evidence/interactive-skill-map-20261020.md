@@ -72,3 +72,75 @@ interaction and any hosted CI, provider, release, or deployment acceptance are
 still pending. No remote services, real learner data, or provider calls were
 used. `npm ci` reported two moderate audit advisories; dependencies were not
 changed because dependency maintenance is outside this feature's scope.
+
+## PR #133 comment triage follow-up
+
+The follow-up starts from `432cfe5`, which merged the assessment changes from
+main into the PR. No assessment source, migration, or dependency files were
+changed by this follow-up.
+
+Observed behavior-first checks:
+
+- Dashboard render red: 1 failed and 41 passed tests across three files. The
+  failed assertion found the old `/app/map#skill` URL instead of a URL containing
+  both language and skill. Green: all 44 focused dashboard, route, utility, and
+  property tests passed after updating the links and simplifying filtering.
+- Browser red: a query-selected offscreen topic kept `scrollLeft` at zero;
+  a dashboard French topic opened the old hash URL despite English sorting
+  first; and late French progress wrote `skill=fr-a1-001` while English remained
+  selected. These paths now focus fresh topic links and ignore progress for a
+  language that is no longer selected.
+- The rapid-exit browser check confirmed that navigation stayed in the same
+  document and the 180 ms scroll timer remained pending after the map was
+  destroyed. Teardown now cancels it. The test also advances the clock and
+  verifies that the lesson URL remains correct.
+- The restored-zero-position check first received no `x` parameter instead of
+  `x=0`. Generated map context now includes zero coordinates, distinguishing
+  saved viewport context from a fresh topic link.
+- The first focused browser green run passed 16 desktop/mobile cases, including
+  late initial and switched-language progress, failure of one language while
+  another map stays usable, and native touch panning with the resulting scroll
+  position retained in the URL.
+
+Review dispositions:
+
+- The Codacy open-redirect finding is a false positive: the outer destination is
+  a fixed internal lesson path, identifiers are encoded, and the return-map
+  value is allowlisted and encoded as one query parameter. Seven action-level
+  regressions assert the complete Location for external, protocol-relative,
+  encoded, traversal, adjacent-disallowed-parameter, and valid context inputs.
+- Explicit map language selection already takes precedence over the first
+  enrollment. There is no separate saved current-language preference; dashboard
+  links now supply the relevant language explicitly.
+- Filtering separates title/state/level matching from iterative foundation
+  traversal. The cycle/context tests and existing properties retain the
+  behavior. The added map journey was extracted from the oversized exercise
+  test without changing its assertions.
+- The A1/A2 sort uses an explicit comparator. The URL query-key snapshot stays:
+  deleting from the live iterator demonstrably skips adjacent unwanted keys.
+- Local Codacy analysis was blocked by automatic approval review because the
+  analyzer could transfer repository data. Existing hosted Codacy results and
+  source/behavior checks were used; no analyzer upload was attempted.
+
+Final required validation (Node 24.19.0 and npm 11.9.0):
+
+| Check                     | Result                                                        |
+| ------------------------- | ------------------------------------------------------------- |
+| `npm ci --ignore-scripts` | Passed; four moderate audit advisories, no dependency changes |
+| `npm run check`           | Passed; zero errors and warnings                              |
+| `npm run lint`            | Passed                                                        |
+| `npm run format:check`    | Passed                                                        |
+| `npm test`                | Passed; 91 files, 1432 tests                                  |
+| `npm run test:property`   | Passed; 6 files, 9 tests                                      |
+| `npm run build`           | Passed                                                        |
+| `npm run test:e2e`        | Passed; 122 desktop/mobile tests, zero skips and retries      |
+| `git diff --check`        | Passed                                                        |
+
+The first full browser run passed 120 of 122 tests; the additional map cases
+exhausted the shared synthetic learner's login rate limit before two refresh
+tests. The fixture now signs in through the form once and reuses that synthetic
+session. The complete rerun passed all 122 tests. Production authentication and
+rate limits were untouched.
+
+Codacy accepted the owner-approved FalsePositive classification for issue 131553236667. Updated hosted analyzer results remain separate from these local
+checks. No merge, deployment, live provider, or real learner acceptance is claimed.

@@ -80,6 +80,26 @@ it('preserves valid map context and rejects external return destinations', () =>
   expect(normalizeMapReturnTo('/app/map/../decks')).toBe('/app/map');
 });
 
+it('removes every adjacent unrecognized return-map parameter', () => {
+  expect(
+    normalizeMapReturnTo('/app/map?next=evil&redirect=evil&language=fr')
+  ).toBe('/app/map?language=fr');
+});
+
+it('keeps cyclic foundations and a selected nonmatching topic visible', () => {
+  const filtered = filterSkillMap(
+    [
+      skill('a', ['b']),
+      skill('b', ['a']),
+      skill('selected', ['b']),
+      skill('other')
+    ],
+    { query: 'nothing', selectedSkillId: 'selected' }
+  );
+  expect(filtered.matchingIds).toEqual(new Set());
+  expect(filtered.visibleIds).toEqual(new Set(['selected', 'a', 'b']));
+});
+
 it('keeps matching topics and their foundations visible under filters', () => {
   const filtered = filterSkillMap(
     [

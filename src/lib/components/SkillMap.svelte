@@ -57,6 +57,7 @@
   let viewport = $state<HTMLDivElement>();
   let positionedViewport = $state<HTMLDivElement>();
   let scrollTimer: ReturnType<typeof setTimeout>;
+  let mounted = false;
   const selectedTrack = $derived(
     tracks.find((track) => track.language === language)
   );
@@ -90,8 +91,9 @@
     else params.delete('view');
     if (zoom !== 1) params.set('zoom', String(zoom));
     else params.delete('zoom');
-    if (scrollX) params.set('x', String(Math.round(scrollX)));
-    if (scrollY) params.set('y', String(Math.round(scrollY)));
+    // Zero coordinates distinguish a restored viewport from a fresh topic link.
+    params.set('x', String(Math.round(scrollX)));
+    params.set('y', String(Math.round(scrollY)));
     return `/app/map?${params}`;
   }
 
@@ -115,6 +117,7 @@
     const track = tracks.find((item) => item.language === next);
     void track?.progress.then(
       (progress) => {
+        if (!mounted || language !== next) return;
         if (progress.recommendation)
           focusTopic(progress.recommendation.skillId);
         else {
@@ -201,11 +204,18 @@
   }
 
   function initializeMap(track: StreamingTrackProgress) {
-    if (initialParam('skill') || initialParam('focus') === 'none') return;
+    if (
+      initialParam('focus') === 'none' ||
+      initialParam('x') ||
+      initialParam('y')
+    )
+      return;
     void track.progress.then(
       (progress) => {
-        if (progress.recommendation)
-          focusTopic(progress.recommendation.skillId);
+        if (!mounted || language !== track.language) return;
+        const skillId =
+          initialParam('skill') || progress.recommendation?.skillId;
+        if (skillId) focusTopic(skillId);
         else {
           const layout = layoutSkillMap(progress.skills);
           fitMap(layout.width, layout.height);
@@ -265,7 +275,12 @@
   });
 
   onMount(() => {
+    mounted = true;
     if (selectedTrack) initializeMap(selectedTrack);
+    return () => {
+      mounted = false;
+      clearTimeout(scrollTimer);
+    };
   });
 </script>
 
