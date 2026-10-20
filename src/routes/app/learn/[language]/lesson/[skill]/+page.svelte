@@ -14,6 +14,7 @@
   <meta name="robots" content="noindex,nofollow" />
 </svelte:head>
 
+<p><a href={data.returnTo}>Back to skill map</a></p>
 {#if data.unavailable}
   <h1>Lesson temporarily unavailable</h1>
   <p class="callout" role="status">

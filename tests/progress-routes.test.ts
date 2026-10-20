@@ -5,7 +5,10 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 import { approvedPackage } from './fixtures/content-package';
-import { load as mapPage } from '../src/routes/app/map/+page.server';
+import {
+  actions as mapActions,
+  load as mapPage
+} from '../src/routes/app/map/+page.server';
 import { load as progressPage } from '../src/routes/app/progress/+page.server';
 import { load as practicePage } from '../src/routes/app/practice/[language]/+page.server';
 import { recordAttempt } from '../src/lib/server/study';
@@ -43,6 +46,7 @@ const learnerEvent = (
       session: userId ? { userId } : null
     },
     url: new URL(url),
+    request: new Request(url),
     ...(params && { params })
   }) as never;
 const event = (userId: string | null, query = '') =>
@@ -110,8 +114,73 @@ it('filters an enrolled track without leaking other tracks into the response', a
   });
   const onlyFrench = (await mapPage(event('learner-a', '?language=fr'))) as {
     tracks: { language: string }[];
+    initialLanguage: string;
   };
-  expect(onlyFrench.tracks.map((track) => track.language)).toEqual(['fr']);
+  expect(onlyFrench.tracks.map((track) => track.language)).toEqual([
+    'en',
+    'fr'
+  ]);
+  expect(onlyFrench.initialLanguage).toBe('fr');
+});
+
+it('starts practice directly in the selected topic and keeps only safe map context', async () => {
+  const url = 'http://127.0.0.1/app/map?language=fr';
+  const form = new URLSearchParams({
+    language: 'fr',
+    skillId: 'fr-a1-001',
+    submissionKey: '00000000-0000-4000-8000-000000000001',
+    returnTo:
+      '/app/map?language=fr&skill=fr-a1-001&view=list&next=https%3A%2F%2Fevil.test'
+  });
+  const actionEvent = {
+    ...(event('learner-a') as object),
+    request: new Request(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: form.toString()
+    })
+  } as never;
+  await expect(mapActions.practise(actionEvent)).rejects.toMatchObject({
+    status: 303,
+    location: expect.stringContaining('/app/learn/fr/lesson/fr-a1-001?session=')
+  });
+  const row = await client.execute({
+    sql: 'SELECT owner_id, language, mode FROM study_sessions WHERE id = ?',
+    args: ['practice:00000000-0000-4000-8000-000000000001']
+  });
+  expect(row.rows[0]).toMatchObject({
+    owner_id: 'learner-a',
+    language: 'fr',
+    mode: 'practice'
+  });
+});
+
+it('rejects practice for unavailable topics and does not start a session', async () => {
+  await client.execute(
+    "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+  );
+  const url = 'http://127.0.0.1/app/map?language=fr';
+  const form = new URLSearchParams({
+    language: 'fr',
+    skillId: 'fr-a1-001',
+    submissionKey: '00000000-0000-4000-8000-000000000002',
+    returnTo: '/app/map?language=fr'
+  });
+  const actionEvent = {
+    ...(event('learner-a') as object),
+    request: new Request(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: form.toString()
+    })
+  } as never;
+  await expect(mapActions.practise(actionEvent)).rejects.toMatchObject({
+    status: 404
+  });
+  const row = await client.execute(
+    "SELECT id FROM study_sessions WHERE id = 'practice:00000000-0000-4000-8000-000000000002'"
+  );
+  expect(row.rows).toHaveLength(0);
 });
 
 it('returns a catalog before the same track progress finishes', async () => {

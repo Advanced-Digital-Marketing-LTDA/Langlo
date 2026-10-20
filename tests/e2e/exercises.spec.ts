@@ -656,19 +656,39 @@ test('all four exercise formats render and submit without overflow', async ({
     page.getByRole('heading', { name: 'Grammar skill map', exact: true })
   ).toBeVisible();
   await expect(page.getByText(/^\s*◐\s*Practising\s*$/).first()).toBeVisible();
-  const manual = page.getByRole('link', {
-    name: 'Open Synthetic exercise lesson',
-    exact: true
-  });
+  const manual = page
+    .getByRole('button', { name: /Synthetic exercise lesson/ })
+    .first();
   await manual.focus();
   await expect(manual).toBeFocused();
   await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('complementary', {
+      name: 'Synthetic exercise lesson details'
+    })
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'List view' })).toBeVisible();
+  await page.getByRole('button', { name: 'List view' }).click();
+  await expect(
+    page.getByRole('list').getByText('Synthetic exercise lesson')
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await manual.click();
+  await page.getByRole('link', { name: 'Open lesson' }).click();
   await expect(
     page.getByRole('heading', {
       name: 'Synthetic exercise lesson',
       exact: true
     })
   ).toBeVisible();
+  await page.getByRole('link', { name: 'Back to skill map' }).click();
+  await expect(page).toHaveURL(/\/app\/map\?.*skill=fr-a1-001/);
+  await page.getByRole('button', { name: 'Practise this topic' }).click();
+  await expect(page).toHaveURL(/\/app\/learn\/fr\/lesson\/fr-a1-001\?session=/);
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic exercise lesson' })
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Back to skill map' }).click();
   await page.goto(`${base}/app/progress`);
   await expect(
     page.getByRole('heading', { name: 'Grammar progress', exact: true })
@@ -697,7 +717,7 @@ test('all four exercise formats render and submit without overflow', async ({
   ).toBeVisible();
   await expect(page.getByText(/^\s*◐\s*Practising\s*$/).first()).toBeVisible();
   await page.getByRole('link', { name: 'Full skill map', exact: true }).click();
-  await expect(page).toHaveURL(`${base}/app/map`);
+  await expect(page).toHaveURL(/\/app\/map(?:\?.*)?$/);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth

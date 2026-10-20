@@ -17,6 +17,7 @@ import {
   reportLessonIssue
 } from '../../../../../../lib/server/lesson-practice';
 import { StudyError } from '../../../../../../lib/server/study';
+import { normalizeMapReturnTo } from '../../../../../../lib/skill-map';
 
 /** Withdrawn content gets an honest notice instead of an error page. */
 function lessonFailure(thrown: unknown, language: string) {
@@ -53,6 +54,7 @@ export const load: PageServerLoad = async (event) => {
   try {
     return await withDatabase(event.locals.config, async (client) => ({
       language,
+      returnTo: normalizeMapReturnTo(event.url.searchParams.get('returnTo')),
       unavailable: false as const,
       reportSubmissionKey: randomUUID(),
       lesson: await lessonFor(client, learner, {
