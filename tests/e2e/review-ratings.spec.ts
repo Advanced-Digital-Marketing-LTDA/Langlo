@@ -100,25 +100,39 @@ test('reveals each answer and stores every rating', async ({
         sourceId: `langlo:v1:${String(index).repeat(64)}`,
         deckId: 'deck-rita',
         kind: 'basic',
-        content: { front: `Front ${rating}`, back: `Back ${rating}` }
+        content: { front: `Front ${rating}`, back: `Back ${rating}` },
+        explanation: `Explanation ${rating}`
       });
       await approveNote(client, learner, `note-${rating}`);
+      await client.execute({
+        sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ? AND owner_id = ?',
+        args: [index, `note-${rating}`, learner.userId]
+      });
     }
 
     await page.goto(`${base}/app/review`);
-    const shown = page.locator('strong');
+    const shown = page.locator('p > strong').first();
     let previous = '';
     for (const rating of ratings) {
       // The next card replaces the rated one once the form update lands.
       await expect(shown).not.toHaveText(previous);
       const front = (await shown.innerText()).trim();
+      expect(front).toBe(`Front ${rating}`);
       const back = front.replace('Front', 'Back');
+      await expect(page.getByTestId('remaining-due')).toContainText(
+        `${ratings.length - ratings.indexOf(rating)} due`
+      );
       await expect(page.getByText(back)).toHaveCount(0);
       await page.getByRole('button', { name: 'Show answer' }).click();
       await expect(page.getByText(back)).toBeVisible();
+      await expect(page.getByText(`Explanation ${rating}`)).toBeVisible();
       for (const name of ratings)
-        await expect(page.getByRole('button', { name })).toBeVisible();
-      await page.getByRole('button', { name: rating, exact: true }).click();
+        await expect(
+          page.getByRole('button', { name: new RegExp(`^${name} · .+$`) })
+        ).toBeVisible();
+      await page
+        .getByRole('button', { name: new RegExp(`^${rating} · .+$`) })
+        .click();
       previous = front;
     }
     await expect(page.getByText('Nothing is due right now.')).toBeVisible();

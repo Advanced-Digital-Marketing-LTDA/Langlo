@@ -11,7 +11,7 @@ type ReviewRating = Parameters<typeof submitReview>[2]['rating'];
 
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => ({
-    cards: await listDueCards(client, learner),
+    ...(await listDueCards(client, learner)),
     total: await countDueCards(client, learner),
     submissionKey: randomUUID()
   }));
@@ -26,6 +26,7 @@ export const actions: Actions = {
           cardId: String(form.get('cardId') ?? ''),
           submissionId: String(form.get('submissionKey') ?? ''),
           expectedRevision: Number(form.get('revision')),
+          expectedScheduleKey: String(form.get('scheduleKey') ?? ''),
           rating: String(form.get('rating') ?? '') as ReviewRating
         }),
       { reviewed: true }

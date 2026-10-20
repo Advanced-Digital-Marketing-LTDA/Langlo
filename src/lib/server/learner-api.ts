@@ -63,6 +63,10 @@ const messageForCode: Record<string, string> = {
   NOT_A_MISTAKE: 'Correct answers do not create mistake cards.',
   NOT_EDITABLE: 'A rejected card cannot be edited.',
   INVALID_TIMEZONE: 'Choose a valid timezone, for example Europe/Lisbon.',
+  INVALID_STUDY_SCHEDULE:
+    'Choose retention from 70% to 97% and one of the available study presets.',
+  INVALID_TAGS: 'Use up to 20 tags, with no tag longer than 64 characters.',
+  INVALID_SEARCH: 'Keep the search within 100 characters.',
   INVALID_ENROLLMENT: 'Choose a track, a starting level and a lesson language.',
   INVALID_REPORT:
     'Choose a report category and keep the comment within 1000 characters.',
@@ -209,4 +213,20 @@ export function studyForm<T>(
 ) {
   requireLearnerApi(event);
   return formResult(() => studyPage(event, run), success);
+}
+
+/** A page form action that returns the result of its work to the caller. */
+export async function studyFormValue<R, T>(
+  event: Pick<RequestEvent, 'locals'>,
+  run: (client: Client, learner: LearnerSession) => Promise<R>,
+  success: (value: R) => T
+): Promise<T | ReturnType<typeof fail>> {
+  requireLearnerApi(event);
+  try {
+    return success(await studyPage(event, run));
+  } catch (error_) {
+    if (isHttpError(error_) && error_.status < 500)
+      return fail(error_.status, { message: error_.body.message });
+    throw error_;
+  }
 }

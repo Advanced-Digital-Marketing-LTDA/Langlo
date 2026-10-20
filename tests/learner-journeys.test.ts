@@ -21,12 +21,22 @@ import {
   countDueCards,
   exportDeckForAnki,
   listDueCards,
-  listNotes
+  listNotes,
+  searchNotes
 } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
   createDeck,
-  submitReview
+  createNote,
+  getStudySchedule,
+  getNote,
+  listReviewEvents,
+  previewStudySchedule,
+  rejectNote,
+  saveStudySchedule,
+  setCardSuspended,
+  submitReview,
+  updateNote
 } from '../src/lib/server/flashcards';
 import {
   disposeFlashcardFixtures,
@@ -48,7 +58,10 @@ import {
 import { load as sessionLoad } from '../src/routes/app/session/[id]/+page.server';
 import { actions as sessionActions } from '../src/routes/app/session/[id]/+page.server';
 import { load as resultsLoad } from '../src/routes/app/session/[id]/results/+page.server';
-import { actions as decksActions } from '../src/routes/app/decks/+page.server';
+import {
+  actions as decksActions,
+  load as decksLoad
+} from '../src/routes/app/decks/+page.server';
 import {
   actions as deckActions,
   load as deckLoad
@@ -82,6 +95,7 @@ function event(
     userId?: string | null;
     params?: Record<string, string>;
     fields?: Record<string, string>;
+    query?: string;
     config?: RuntimeConfig | undefined;
   } = {}
 ) {
@@ -89,8 +103,10 @@ function event(
   const form = new FormData();
   for (const [key, value] of Object.entries(options.fields ?? {}))
     form.set(key, value);
+  const url = `http://127.0.0.1/app${options.query ?? ''}`;
   return {
     params: options.params ?? {},
+    url: new URL(url),
     locals: {
       user: userId ? { id: userId } : null,
       session: userId ? { userId } : null,
@@ -99,7 +115,7 @@ function event(
         : ({ dataEnabled: true, databaseUrl } as RuntimeConfig)
     },
     request: new Request(
-      'http://127.0.0.1/app',
+      url,
       options.fields ? { method: 'POST', body: form } : undefined
     )
   } as never;
@@ -217,7 +233,12 @@ describe('settings', () => {
   it('serves and saves settings through the page', async () => {
     expect(await settingsLoad(event())).toMatchObject({
       enrollments: [{ language: 'fr' }],
-      timezone: null
+      timezone: null,
+      studySchedule: {
+        desiredRetention: 90,
+        newCardPreset: '1m+10m',
+        relearningPreset: '10m'
+      }
     });
     expect(
       await settingsActions.timezone(
@@ -239,6 +260,47 @@ describe('settings', () => {
         event({ fields: { language: 'de', explanationLanguage: 'pt' } })
       )
     ).toMatchObject({ status: 404 });
+  });
+
+  it('previews selected values without saving and saves them through the schedule form', async () => {
+    const fields = {
+      desiredRetention: '94',
+      newCardPreset: '30m',
+      relearningPreset: '1h'
+    };
+    const preview = await settingsActions.previewStudySchedule(
+      event({ fields })
+    );
+    expect(preview).toMatchObject({
+      preview: {
+        selected: {
+          desiredRetention: 94,
+          newCardPreset: '30m',
+          relearningPreset: '1h'
+        },
+        days: expect.any(Array)
+      }
+    });
+    expect(await getStudySchedule(client, learner)).toEqual({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    expect(await settingsActions.saveStudySchedule(event({ fields }))).toEqual({
+      saved: 'Study schedule saved.'
+    });
+    expect(
+      await settingsActions.saveStudySchedule(
+        event({
+          fields: { ...fields, desiredRetention: '98' }
+        })
+      )
+    ).toMatchObject({ status: 400 });
+    expect(
+      await settingsActions.previewStudySchedule(
+        event({ fields: { ...fields, desiredRetention: '98' } })
+      )
+    ).toMatchObject({ status: 400 });
   });
 });
 
@@ -480,17 +542,18 @@ describe('decks, review and Anki export', () => {
       deckId,
       noteForm({ kind: 'basic', front: 'Merci', back: 'Thank you' })
     );
-    expect(await listDueCards(client, learner)).toEqual([]);
+    expect((await listDueCards(client, learner)).cards).toEqual([]);
     await approveNote(client, learner, draft.id);
-    const due = await listDueCards(client, learner);
+    const due = (await listDueCards(client, learner)).cards;
     expect(due).toMatchObject([
       { id: draft.cardId, kind: 'basic', deck: 'French basics', revision: 0 }
     ]);
-    expect(await listDueCards(client, other)).toEqual([]);
-    expect(await listDueCards(client, learner, 0)).toEqual([]);
+    expect((await listDueCards(client, other)).cards).toEqual([]);
+    expect((await listDueCards(client, learner, 0)).cards).toEqual([]);
 
-    const { submissionKey } = (await reviewLoad(event())) as {
+    const { submissionKey, cards } = (await reviewLoad(event())) as {
       submissionKey: string;
+      cards: { scheduleKey: string }[];
     };
     const rate = (revision: string, rating = 'good', key = submissionKey) =>
       reviewActions.rate(
@@ -499,13 +562,14 @@ describe('decks, review and Anki export', () => {
             cardId: draft.cardId,
             revision,
             rating,
-            submissionKey: key
+            submissionKey: key,
+            scheduleKey: cards[0].scheduleKey
           }
         })
       );
     expect(await rate('0')).toEqual({ reviewed: true });
     // The card is rescheduled out of today's queue and a stale revision conflicts.
-    expect(await listDueCards(client, learner)).toEqual([]);
+    expect((await listDueCards(client, learner)).cards).toEqual([]);
     // Same key, different rating: an idempotency conflict, not a stale revision.
     expect(await rate('0', 'easy')).toMatchObject({ status: 409 });
     // A fresh key against the old revision reaches the stale-revision check,
@@ -529,6 +593,58 @@ describe('decks, review and Anki export', () => {
       'SELECT count(*) AS total FROM native_flashcard_review_events'
     );
     expect(events.rows[0].total).toBe(1);
+  });
+
+  it('rejects a review when its displayed schedule changed in another tab', async () => {
+    const draft = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Schedule', back: 'Changed' })
+    );
+    await approveNote(client, learner, draft.id);
+    const page = (await reviewLoad(event())) as {
+      cards: { scheduleKey: string }[];
+      submissionKey: string;
+    };
+    const before = await getNote(client, learner, draft.id);
+    await saveStudySchedule(client, learner, {
+      desiredRetention: 95,
+      newCardPreset: '30m',
+      relearningPreset: '30m'
+    });
+    const stale = await reviewActions.rate(
+      event({
+        fields: {
+          cardId: draft.cardId,
+          revision: '0',
+          rating: 'good',
+          submissionKey: page.submissionKey,
+          scheduleKey: page.cards[0].scheduleKey
+        }
+      })
+    );
+    expect(stale).toMatchObject({ status: 409 });
+    expect(await getNote(client, learner, draft.id)).toEqual(before);
+    expect(await listReviewEvents(client, learner, draft.cardId)).toEqual([]);
+    const refreshed = (await reviewLoad(event())) as {
+      cards: { scheduleKey: string }[];
+      submissionKey: string;
+    };
+    expect(refreshed.cards[0].scheduleKey).not.toBe(page.cards[0].scheduleKey);
+    expect(
+      await reviewActions.rate(
+        event({
+          fields: {
+            cardId: draft.cardId,
+            revision: '0',
+            rating: 'good',
+            submissionKey: refreshed.submissionKey,
+            scheduleKey: refreshed.cards[0].scheduleKey
+          }
+        })
+      )
+    ).toEqual({ reviewed: true });
   });
 
   it('refuses a foreign review without writing history', async () => {
@@ -570,7 +686,9 @@ describe('decks, review and Anki export', () => {
       );
       await approveNote(client, learner, note.id);
     }
-    expect(await listDueCards(client, learner, Date.now(), 2)).toHaveLength(2);
+    expect(
+      (await listDueCards(client, learner, Date.now(), 2)).cards
+    ).toHaveLength(2);
     expect(await countDueCards(client, learner)).toBe(3);
     expect(await countDueCards(client, other)).toBe(0);
     expect(await reviewLoad(event())).toMatchObject({ total: 3 });
@@ -586,6 +704,10 @@ describe('decks, review and Anki export', () => {
         noteForm({ kind: 'basic', front: `Q ${rating}`, back: 'A' })
       );
       await approveNote(client, learner, note.id);
+      const scheduleKey = (await listDueCards(client, learner)).cards.find(
+        (card) => card.id === note.cardId
+      )?.scheduleKey;
+      if (!scheduleKey) throw new Error('Missing due card schedule');
       expect(
         await reviewActions.rate(
           event({
@@ -593,6 +715,7 @@ describe('decks, review and Anki export', () => {
               cardId: note.cardId,
               revision: '0',
               rating,
+              scheduleKey,
               submissionKey: `10000000-0000-4000-8000-00000000002${ratings.indexOf(rating)}`
             }
           })
@@ -747,5 +870,415 @@ describe('decks, review and Anki export', () => {
     expect(
       await decksActions.createDeck(event({ fields: { name: '   ' } }))
     ).toMatchObject({ status: 400 });
+  });
+
+  it('persists validated account-wide study schedule without rescheduling existing cards', async () => {
+    const deckId = 'deck-fsrs-settings';
+    await createDeck(client, learner, { id: deckId, name: 'Schedule' });
+    await createNote(client, learner, {
+      id: 'note-fsrs-settings',
+      sourceId: `langlo:v1:${'a'.repeat(64)}`,
+      deckId,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    await approveNote(client, learner, 'note-fsrs-settings');
+    await submitReview(client, learner, {
+      cardId: 'card:note-fsrs-settings',
+      submissionId: 'f2000000-0000-4000-8000-000000000001',
+      expectedRevision: 0,
+      rating: 'good'
+    });
+    const before = await getNote(client, learner, 'note-fsrs-settings');
+    const beforeEvents = await listReviewEvents(
+      client,
+      learner,
+      'card:note-fsrs-settings'
+    );
+    expect(await getStudySchedule(client, learner)).toEqual({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    await saveStudySchedule(client, learner, {
+      desiredRetention: 96,
+      newCardPreset: '30m',
+      relearningPreset: '1h'
+    });
+    expect(await getStudySchedule(client, other)).toEqual({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    expect(await getNote(client, learner, 'note-fsrs-settings')).toEqual(
+      before
+    );
+    expect(
+      await listReviewEvents(client, learner, 'card:note-fsrs-settings')
+    ).toEqual(beforeEvents);
+    await expect(
+      saveStudySchedule(client, learner, {
+        desiredRetention: 98,
+        newCardPreset: '30m',
+        relearningPreset: '1h'
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
+    await expect(
+      saveStudySchedule(client, learner, {
+        desiredRetention: 90.5,
+        newCardPreset: '30m',
+        relearningPreset: '1h'
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
+    await expect(
+      saveStudySchedule(client, learner, {
+        desiredRetention: 90,
+        newCardPreset: 'custom',
+        relearningPreset: '1h'
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
+    for (const desiredRetention of [70, 97])
+      await expect(
+        saveStudySchedule(client, learner, {
+          desiredRetention,
+          newCardPreset: '10m',
+          relearningPreset: '30m'
+        })
+      ).resolves.toMatchObject({ desiredRetention });
+  });
+
+  it('uses newly saved parameters for new cards and the next rating only', async () => {
+    const deckId = 'deck-fsrs-deferred';
+    await createDeck(client, learner, { id: deckId, name: 'Deferred' });
+    const makeNote = async (id: string) => {
+      await createNote(client, learner, {
+        id,
+        sourceId: `langlo:v1:${id.endsWith('1') ? '1' : '2'}${'b'.repeat(63)}`,
+        deckId,
+        kind: 'basic',
+        content: { front: 'Front', back: 'Back' }
+      });
+      await approveNote(client, learner, id);
+    };
+    await makeNote('note-fsrs-existing1');
+    const existingBefore = await getNote(
+      client,
+      learner,
+      'note-fsrs-existing1'
+    );
+    await saveStudySchedule(client, learner, {
+      desiredRetention: 95,
+      newCardPreset: '30m',
+      relearningPreset: '30m'
+    });
+    await makeNote('note-fsrs-new2');
+    const created = await getNote(client, learner, 'note-fsrs-new2');
+    expect(created.card?.parameters).toMatchObject({
+      request_retention: 0.95,
+      learning_steps: ['30m'],
+      enable_fuzz: true
+    });
+    expect(
+      (await getNote(client, learner, 'note-fsrs-existing1')).card
+    ).toEqual(existingBefore.card);
+    await submitReview(client, learner, {
+      cardId: 'card:note-fsrs-existing1',
+      submissionId: 'f0000000-0000-4000-8000-000000000001',
+      expectedRevision: 0,
+      rating: 'good'
+    });
+    expect(
+      (await getNote(client, learner, 'note-fsrs-existing1')).card?.parameters
+    ).toMatchObject({
+      request_retention: 0.95,
+      learning_steps: ['30m'],
+      enable_fuzz: true
+    });
+    expect(
+      await listReviewEvents(client, learner, 'card:note-fsrs-existing1')
+    ).toMatchObject([
+      { parameters: { request_retention: 0.95, learning_steps: ['30m'] } }
+    ]);
+  });
+
+  it('previews the saved and selected schedules for seven stable study days', async () => {
+    const deckId = 'deck-fsrs-preview';
+    await createDeck(client, learner, { id: deckId, name: 'Preview' });
+    for (const [index, status] of [
+      'approved',
+      'approved',
+      'rejected'
+    ].entries()) {
+      const id = `note-fsrs-preview-${index}`;
+      await createNote(client, learner, {
+        id,
+        sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
+        deckId,
+        kind: 'basic',
+        content: { front: 'Front', back: 'Back' }
+      });
+      if (status === 'approved') await approveNote(client, learner, id);
+      if (status === 'rejected') {
+        await approveNote(client, learner, id);
+        await rejectNote(client, learner, id);
+      }
+    }
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
+      args: ['card:note-fsrs-preview-1']
+    });
+    const selected = {
+      desiredRetention: 92,
+      newCardPreset: '10m' as const,
+      relearningPreset: '30m' as const
+    };
+    const now = new Date('2026-10-20T09:00:00.000Z');
+    await client.execute({
+      sql: "UPDATE native_flashcards SET due_at = ?, state_json = json_set(state_json, '$.due', ?) WHERE owner_id = ?",
+      args: [now.getTime(), now.toISOString(), learner.userId]
+    });
+    const utcPreview = await previewStudySchedule(
+      client,
+      learner,
+      selected,
+      now
+    );
+    expect(utcPreview.days[0].date).toBe('2026-10-20');
+    await setTimezone(client, learner, 'America/Los_Angeles');
+    const first = await previewStudySchedule(client, learner, selected, now);
+    const second = await previewStudySchedule(client, learner, selected, now);
+    expect(first.days.map(({ saved, selected }) => [saved, selected])).toEqual([
+      [2, 1],
+      [0, 0],
+      [1, 1],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ]);
+    expect(first).toEqual(second);
+    expect(first.saved).toMatchObject({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    expect(first.selected).toEqual(selected);
+    expect(first.days).toHaveLength(7);
+    expect(first.days[0].date).toBe('2026-10-19');
+    expect(first.averagePerDay).toEqual({ saved: 0.4, selected: 0.3 });
+    expect(first.busiestDay).toEqual({
+      saved: { date: '2026-10-19', count: 2 },
+      selected: { date: '2026-10-19', count: 1 }
+    });
+    expect(first.scenario).toContain('Good');
+    await expect(
+      previewStudySchedule(client, learner, selected, new Date(Number.NaN))
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
+      args: ['card:note-fsrs-preview-0']
+    });
+    const noneAvailable = await previewStudySchedule(
+      client,
+      learner,
+      selected,
+      now
+    );
+    expect(
+      noneAvailable.days.every((day) => day.saved === 0 && day.selected === 0)
+    ).toBe(true);
+  });
+
+  it('searches every status across owned decks and returns tags and deck labels', async () => {
+    const firstDeck = 'deck-search-first';
+    const secondDeck = 'deck-search-second';
+    await createDeck(client, learner, { id: firstDeck, name: 'First' });
+    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
+    await createDeck(client, other, { id: 'deck-search-other', name: 'Other' });
+    for (const [id, deckId, status, tags] of [
+      ['note-search-approved', secondDeck, 'approved', 'shared, grammar'],
+      ['note-search-draft', firstDeck, 'draft', 'shared'],
+      ['note-search-rejected', firstDeck, 'rejected', 'shared']
+    ] as const) {
+      await createNote(client, learner, {
+        id,
+        sourceId: `langlo:v1:${id.endsWith('approved') ? '1' : id.endsWith('draft') ? '2' : '3'}${'c'.repeat(63)}`,
+        deckId,
+        kind: 'basic',
+        content: { front: `shared ${id}`, back: 'Definition' },
+        tags: tags.split(',')
+      });
+      if (status === 'approved') await approveNote(client, learner, id);
+      if (status === 'rejected')
+        await client.execute({
+          sql: "UPDATE native_flashcard_notes SET status = 'rejected' WHERE id = ?",
+          args: [id]
+        });
+    }
+    const search = await searchNotes(client, learner, 'shared');
+    const results = search.results;
+    expect(results.map((item) => item.id).sort()).toEqual([
+      'note-search-approved',
+      'note-search-draft',
+      'note-search-rejected'
+    ]);
+    expect(
+      results.find((item) => item.id === 'note-search-approved')
+    ).toMatchObject({
+      deck: { id: secondDeck, name: 'Second' },
+      status: 'approved',
+      tags: ['shared', 'grammar']
+    });
+    expect(await searchNotes(client, other, 'shared')).toMatchObject({
+      results: []
+    });
+    const searchPage = await decksLoad(event({ query: '?q=shared' }));
+    if (!searchPage) throw new Error('Deck search returned no page data');
+    expect(searchPage.query).toBe('shared');
+    expect(
+      (searchPage.results as { status: string }[])
+        .map((item) => item.status)
+        .sort()
+    ).toEqual(['approved', 'draft', 'rejected']);
+    const approvedCursor = await client.execute({
+      sql: 'SELECT rowid AS cursor FROM native_flashcard_notes WHERE id = ?',
+      args: ['note-search-approved']
+    });
+    const laterSearchPage = await decksLoad(
+      event({ query: `?q=shared&after=${approvedCursor.rows[0].cursor}` })
+    );
+    expect(
+      (laterSearchPage?.results as { id: string }[])
+        .map((item) => item.id)
+        .sort()
+    ).toEqual(['note-search-draft', 'note-search-rejected']);
+    expect(
+      await deckLoad(
+        event({
+          params: { id: secondDeck },
+          query: '?note=note-search-approved#note-note-search-approved'
+        })
+      )
+    ).toMatchObject({ focusNoteId: 'note-search-approved' });
+    expect(
+      await deckLoad(
+        event({
+          params: { id: firstDeck },
+          query: '?note=note-search-approved'
+        })
+      )
+    ).toMatchObject({ focusNoteId: null });
+  });
+
+  it('normalizes tags and moves notes without replacing card identity, schedule, or review events', async () => {
+    const firstDeck = 'deck-tags-first';
+    const secondDeck = 'deck-tags-second';
+    await createDeck(client, learner, { id: firstDeck, name: 'First' });
+    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
+    await createNote(client, learner, {
+      id: 'note-tags-move',
+      sourceId: `langlo:v1:${'d'.repeat(64)}`,
+      deckId: firstDeck,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' },
+      tags: [' grammar ', 'verbs', 'grammar', '']
+    } as Parameters<typeof createNote>[2]);
+    await approveNote(client, learner, 'note-tags-move');
+    await submitReview(client, learner, {
+      cardId: 'card:note-tags-move',
+      submissionId: 'f1000000-0000-4000-8000-000000000001',
+      expectedRevision: 0,
+      rating: 'good'
+    });
+    const before = await getNote(client, learner, 'note-tags-move');
+    const history = await listReviewEvents(
+      client,
+      learner,
+      'card:note-tags-move'
+    );
+    await updateNote(client, learner, 'note-tags-move', {
+      deckId: secondDeck,
+      tags: ['nouns', ' verbs ', 'nouns']
+    });
+    expect(await getNote(client, learner, 'note-tags-move')).toMatchObject({
+      deckId: secondDeck,
+      tags: ['nouns', 'verbs'],
+      card: before.card
+    });
+    expect(
+      await listReviewEvents(client, learner, 'card:note-tags-move')
+    ).toEqual(history);
+    await expect(
+      updateNote(client, learner, 'note-tags-move', { deckId: 'deck-foreign' })
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(
+      updateNote(client, learner, 'note-tags-move', { deckId: '' })
+    ).rejects.toMatchObject({ code: 'INVALID_NOTE' });
+  });
+
+  it('suspends and resumes only the learner’s approved cards and removes them from due counts', async () => {
+    const deckId = 'deck-suspension';
+    await createDeck(client, learner, { id: deckId, name: 'Suspension' });
+    await createNote(client, learner, {
+      id: 'note-suspension',
+      sourceId: `langlo:v1:${'e'.repeat(64)}`,
+      deckId,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    await approveNote(client, learner, 'note-suspension');
+    await expect(
+      setCardSuspended(
+        client,
+        learner,
+        'card:note-suspension',
+        'yes' as unknown as boolean
+      )
+    ).rejects.toMatchObject({ code: 'INVALID_CARD_STATE' });
+    expect(await countDueCards(client, learner)).toBe(1);
+    await setCardSuspended(client, learner, 'card:note-suspension', true);
+    expect(await countDueCards(client, learner)).toBe(0);
+    expect((await listDueCards(client, learner)).cards).toEqual([]);
+    await expect(
+      setCardSuspended(client, other, 'card:note-suspension', false)
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await setCardSuspended(client, learner, 'card:note-suspension', false);
+    expect(await countDueCards(client, learner)).toBe(1);
+  });
+
+  it('validates suspension forms and rejects cards that are not approved', async () => {
+    await createDeck(client, learner, { id: 'deck-pending', name: 'Pending' });
+    await createNote(client, learner, {
+      id: 'note-pending',
+      sourceId: `langlo:v1:${'f'.repeat(64)}`,
+      deckId: 'deck-pending',
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    expect(
+      await deckActions.suspension(
+        event({
+          params: { id: 'deck-pending' },
+          fields: { cardId: 'card:note-pending', suspended: 'maybe' }
+        })
+      )
+    ).toMatchObject({ status: 400 });
+    await expect(
+      setCardSuspended(client, learner, 'card:note-pending', true)
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await approveNote(client, learner, 'note-pending');
+    expect(
+      await deckActions.suspension(
+        event({
+          params: { id: 'deck-pending' },
+          fields: { cardId: 'card:note-pending', suspended: 'true' }
+        })
+      )
+    ).toEqual({ saved: true });
+    expect((await getNote(client, learner, 'note-pending')).card).toMatchObject(
+      {
+        suspended: true
+      }
+    );
   });
 });

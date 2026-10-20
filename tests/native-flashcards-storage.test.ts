@@ -178,3 +178,44 @@ it('allows legacy event snapshots to be null and rejects malformed new snapshots
     db.close();
   }
 });
+
+it('stores note tags as JSON arrays and constrains FSRS preference values', async () => {
+  const db = await openFixtureDatabase(await fixture());
+  const learner = testSession('learner-a');
+  try {
+    const note = await seedBasicNote(db.client, learner);
+    const tags = await db.client.execute({
+      sql: 'SELECT tags_json FROM native_flashcard_notes WHERE id = ?',
+      args: [note.id]
+    });
+    expect(tags.rows[0].tags_json).toBe('[]');
+    await expect(
+      db.client.execute({
+        sql: 'UPDATE native_flashcard_notes SET tags_json = ? WHERE id = ?',
+        args: ['{}', note.id]
+      })
+    ).rejects.toThrow(/CHECK|CONSTRAINT/iu);
+    await expect(
+      db.client.execute({
+        sql: "INSERT INTO native_flashcard_preferences (owner_id, desired_retention, new_card_preset, relearning_preset) VALUES ('learner-a', 69, '1m+10m', '10m')"
+      })
+    ).rejects.toThrow(/CHECK|CONSTRAINT/iu);
+    await db.client.execute({
+      sql: "INSERT INTO native_flashcard_preferences (owner_id, desired_retention, new_card_preset, relearning_preset) VALUES ('learner-a', 97, '30m', '1h')"
+    });
+    expect(
+      (
+        await db.client.execute(
+          'SELECT desired_retention, new_card_preset, relearning_preset FROM native_flashcard_preferences WHERE owner_id = ?',
+          [learner.userId]
+        )
+      ).rows[0]
+    ).toMatchObject({
+      desired_retention: 97,
+      new_card_preset: '30m',
+      relearning_preset: '1h'
+    });
+  } finally {
+    db.close();
+  }
+});

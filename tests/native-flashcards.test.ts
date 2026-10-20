@@ -1,12 +1,15 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs';
+import { createClient } from '@libsql/client/sqlite3';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
+import { listDueCards, searchNotes } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
   createDeck,
   createNote,
   getNote,
   listReviewEvents,
+  previewStudySchedule,
   submitReview
 } from '../src/lib/server/flashcards';
 import {
@@ -16,10 +19,317 @@ import {
   testSession,
   testSourceId
 } from './fixtures/flashcards';
+import { studyDayStart } from '../src/lib/server/study-days';
 
 afterEach(disposeFlashcardFixtures);
 
 describe('native flashcard persistence feasibility', () => {
+  it('indexes the owner cursor used for bounded cross-deck search pages', async () => {
+    const target = await fixture();
+    const db = await openFixtureDatabase(target);
+    try {
+      const indexes = await db.client.execute(
+        "PRAGMA index_list('native_flashcard_notes')"
+      );
+      expect(indexes.rows.map((row) => row.name)).toContain(
+        'native_flashcard_notes_owner_cursor'
+      );
+      const execute = vi.spyOn(db.client, 'execute');
+      await searchNotes(db.client, testSession('learner-a'), 'school');
+      const statement = execute.mock.calls[0][0] as unknown as {
+        sql: string;
+        args: (string | number)[];
+      };
+      execute.mockRestore();
+      const plan = await db.client.execute({
+        sql: `EXPLAIN QUERY PLAN ${statement.sql}`,
+        args: statement.args
+      });
+      expect(plan.rows.map((row) => String(row.detail)).join(' ')).toContain(
+        'native_flashcard_notes_owner_cursor'
+      );
+    } finally {
+      db.close();
+    }
+  });
+
+  it('finds uppercase accented note text from a lowercase search', async () => {
+    const db = createClient({ url: 'file::memory:' });
+    try {
+      await db.batch(
+        [
+          'CREATE TABLE native_flashcard_decks (id TEXT, owner_id TEXT, name TEXT)',
+          'CREATE TABLE native_flashcard_notes (id TEXT, owner_id TEXT, deck_id TEXT, kind TEXT, status TEXT, content_json TEXT, tags_json TEXT, explanation TEXT, created_at INTEGER)',
+          "INSERT INTO native_flashcard_decks VALUES ('deck-one', 'learner-a', 'French')",
+          "INSERT INTO native_flashcard_notes VALUES ('note-one', 'learner-a', 'deck-one', 'basic', 'approved', '{\"front\":\"ÉCOLE\",\"back\":\"school\"}', '[]', '', 1)"
+        ],
+        'write'
+      );
+      expect(
+        (await searchNotes(db, { userId: 'learner-a' }, 'école')).results
+      ).toMatchObject([{ id: 'note-one' }]);
+      expect(
+        (await searchNotes(db, { userId: 'learner-a' }, 'front')).results
+      ).toEqual([]);
+      expect(
+        (await searchNotes(db, { userId: 'learner-a' }, '[]')).results
+      ).toEqual([]);
+      expect(await searchNotes(db, { userId: 'learner-a' }, '  ')).toEqual({
+        results: [],
+        nextCursor: null
+      });
+      for (const [query, after] of [
+        ['x'.repeat(101), 0],
+        ['school', -1],
+        ['school', 0.5]
+      ] as const)
+        await expect(
+          searchNotes(db, { userId: 'learner-a' }, query, after)
+        ).rejects.toMatchObject({ code: 'INVALID_SEARCH' });
+      await db.batch(
+        Array.from(
+          { length: 55 },
+          (_, index) =>
+            `INSERT INTO native_flashcard_notes VALUES ('note-extra-${index}', 'learner-a', 'deck-one', 'basic', 'approved', '{"front":"ÉCOLE ${index}","back":"school"}', '[]', '', ${index + 2})`
+        ),
+        'write'
+      );
+      const firstPage = await searchNotes(db, { userId: 'learner-a' }, 'école');
+      expect(firstPage.results).toHaveLength(50);
+      expect(firstPage.nextCursor).not.toBeNull();
+      const secondPage = await searchNotes(
+        db,
+        { userId: 'learner-a' },
+        'école',
+        firstPage.nextCursor!
+      );
+      expect(secondPage.results).toHaveLength(6);
+      expect(secondPage.nextCursor).toBeNull();
+      await db.execute(`WITH RECURSIVE seq(x) AS (SELECT 0 UNION ALL SELECT x + 1 FROM seq WHERE x < 1000)
+        INSERT INTO native_flashcard_notes SELECT 'note-fill-' || x, 'learner-a', 'deck-one', 'basic', 'draft', '{"front":"filler","back":"school"}', '[]', '', x + 100 FROM seq`);
+      await db.execute(
+        `INSERT INTO native_flashcard_notes VALUES ('note-needle', 'learner-a', 'deck-one', 'basic', 'rejected', '{"front":"needle","back":"school"}', '[]', '', 2000)`
+      );
+      const emptyPage = await searchNotes(
+        db,
+        { userId: 'learner-a' },
+        'needle'
+      );
+      expect(emptyPage.results).toEqual([]);
+      expect(emptyPage.nextCursor).not.toBeNull();
+      const laterPage = await searchNotes(
+        db,
+        { userId: 'learner-a' },
+        'needle',
+        emptyPage.nextCursor!
+      );
+      expect(laterPage.results).toMatchObject([
+        { id: 'note-needle', status: 'rejected' }
+      ]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('loads due-card intervals without one note query per card', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      await seedBasicNote(db.client, learner);
+      await approveNote(
+        db.client,
+        learner,
+        'note-10000000-0000-4000-8000-000000000002'
+      );
+      const execute = vi.spyOn(db.client, 'execute');
+      const due = (await listDueCards(db.client, learner, Date.now() + 1000))
+        .cards;
+      expect(due).toHaveLength(1);
+      expect(due[0].intervals?.good).toBe('10m');
+      expect(execute).toHaveBeenCalledTimes(2);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('keeps readable cards available when another due card has an unsupported scheduler', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      const bad = await seedBasicNote(db.client, learner);
+      const good = await createNote(db.client, learner, {
+        id: 'note-10000000-0000-4000-8000-000000000003',
+        sourceId: testSourceId('10000000-0000-4000-8000-000000000003'),
+        deckId: 'deck-10000000-0000-4000-8000-000000000002',
+        kind: 'basic',
+        content: { front: 'Bonjour', back: 'Hello' }
+      });
+      await approveNote(db.client, learner, bad.id);
+      await approveNote(db.client, learner, good.id);
+      await db.client.execute({
+        sql: 'UPDATE native_flashcards SET scheduler_version = ? WHERE id = ? AND owner_id = ?',
+        args: ['ts-fsrs@unsupported', bad.cardId, learner.userId]
+      });
+      const due = await listDueCards(db.client, learner, Date.now() + 1000);
+      expect(due).toMatchObject({
+        unavailableCount: 1,
+        cards: [{ id: good.cardId, intervals: { good: expect.any(String) } }]
+      });
+      const preview = await previewStudySchedule(db.client, learner, {
+        desiredRetention: 90,
+        newCardPreset: '1m+10m',
+        relearningPreset: '10m'
+      });
+      expect(preview.scenario).toContain('1 unreadable card');
+      expect(preview.days.some((day) => day.saved > 0)).toBe(true);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('finds a healthy due card after twenty unreadable cards', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      await createDeck(db.client, learner, {
+        id: 'deck-many-bad',
+        name: 'Due'
+      });
+      for (let index = 0; index < 21; index += 1) {
+        const id = `note-many-bad-${index}`;
+        await createNote(db.client, learner, {
+          id,
+          sourceId: `langlo:v1:${String(index).padStart(64, '0')}`,
+          deckId: 'deck-many-bad',
+          kind: 'basic',
+          content: { front: id, back: 'Answer' }
+        });
+        await approveNote(db.client, learner, id);
+        await db.client.execute({
+          sql: 'UPDATE native_flashcards SET due_at = ?, scheduler_version = ? WHERE note_id = ? AND owner_id = ?',
+          args: [
+            index,
+            index < 20 ? 'ts-fsrs@unsupported' : 'ts-fsrs@5.4.2',
+            id,
+            learner.userId
+          ]
+        });
+      }
+      const due = await listDueCards(db.client, learner);
+      expect(
+        due.cards.some((card) => card.id === 'card:note-many-bad-20')
+      ).toBe(true);
+      expect(due.unavailableCount).toBe(20);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('discloses when the seven-day preview caps its eligible cards', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      await seedBasicNote(db.client, learner);
+      await approveNote(
+        db.client,
+        learner,
+        'note-10000000-0000-4000-8000-000000000002'
+      );
+      const original = db.client.execute.bind(db.client);
+      const card = await original({
+        sql: 'SELECT id, state_json, due_at, scheduler_version, parameters_json FROM native_flashcards WHERE owner_id = ?',
+        args: [learner.userId]
+      });
+      const execute = vi
+        .spyOn(db.client, 'execute')
+        .mockImplementation((statement) => {
+          if (
+            String(
+              (statement as unknown as { sql?: string }).sql ?? statement
+            ).includes('FROM native_flashcards c')
+          )
+            return Promise.resolve({
+              ...card,
+              rows: Array.from({ length: 501 }, () => card.rows[0])
+            });
+          return original(statement);
+        });
+      const preview = await previewStudySchedule(db.client, learner, {
+        desiredRetention: 90,
+        newCardPreset: '1m+10m',
+        relearningPreset: '10m'
+      });
+      expect(preview.scenario).toContain('500');
+      expect(
+        execute.mock.calls.find(([statement]) =>
+          String(
+            (statement as unknown as { sql?: string }).sql ?? statement
+          ).includes('FROM native_flashcards c')
+        )?.[0]
+      ).toMatchObject({ sql: expect.stringContaining('c.due_at < ?') });
+    } finally {
+      db.close();
+    }
+  });
+
+  it('keeps sub-day steps exact and aligns day intervals to the UTC study day', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      await seedBasicNote(db.client, learner);
+      await approveNote(
+        db.client,
+        learner,
+        'note-10000000-0000-4000-8000-000000000002'
+      );
+      await submitReview(db.client, learner, {
+        cardId: 'card:note-10000000-0000-4000-8000-000000000002',
+        submissionId: '20000000-0000-4000-8000-000000000001',
+        expectedRevision: 0,
+        rating: 'good'
+      });
+      const firstEvent = (
+        await listReviewEvents(
+          db.client,
+          learner,
+          'card:note-10000000-0000-4000-8000-000000000002'
+        )
+      )[0];
+      expect(firstEvent.state?.scheduled_days).toBe(0);
+      expect(firstEvent.state!.due.getTime() - firstEvent.reviewedAt).toBe(
+        10 * 60_000
+      );
+      await submitReview(db.client, learner, {
+        cardId: 'card:note-10000000-0000-4000-8000-000000000002',
+        submissionId: '20000000-0000-4000-8000-000000000002',
+        expectedRevision: 1,
+        rating: 'good'
+      });
+      const secondEvent = (
+        await listReviewEvents(
+          db.client,
+          learner,
+          'card:note-10000000-0000-4000-8000-000000000002'
+        )
+      )[1];
+      expect(secondEvent.state?.scheduled_days).toBeGreaterThanOrEqual(1);
+      expect(secondEvent.state?.due.getTime()).toBe(
+        studyDayStart(
+          new Date(secondEvent.reviewedAt),
+          'UTC',
+          Math.round(secondEvent.state!.scheduled_days)
+        ).getTime()
+      );
+    } finally {
+      db.close();
+    }
+  });
+
   it('keeps draft notes out of scheduler state until approval', async () => {
     const target = await fixture();
     const learner = testSession('learner-a');
@@ -643,7 +953,7 @@ describe('native flashcard persistence feasibility', () => {
     }
   });
 
-  it('uses each card’s persisted FSRS parameters when scheduling and recording reviews', async () => {
+  it('preserves non-user FSRS parameters and applies the learner schedule to reviews', async () => {
     const target = await fixture();
     const learner = testSession('learner-a');
     const db = await openFixtureDatabase(target);
@@ -663,6 +973,12 @@ describe('native flashcard persistence feasibility', () => {
         learning_steps: ['1d'],
         relearning_steps: ['1d']
       });
+      const effectiveParameters = generatorParameters({
+        ...cardParameters,
+        enable_fuzz: true,
+        learning_steps: ['1m', '10m'],
+        relearning_steps: ['10m']
+      });
       await approveNote(db.client, learner, note.id);
       await db.client.execute(
         'UPDATE native_flashcards SET parameters_json = ? WHERE id = ? AND owner_id = ?',
@@ -681,16 +997,14 @@ describe('native flashcard persistence feasibility', () => {
           [learner.userId, submissionId]
         )
       ).rows[0];
-      expect(JSON.parse(String(event.parameters_json))).toEqual(cardParameters);
+      expect(JSON.parse(String(event.parameters_json))).toEqual(
+        effectiveParameters
+      );
       const reviewedAt = new Date(Number(event.reviewed_at));
-      const expectedDue = fsrs(cardParameters)
-        .next(createEmptyCard(reviewedAt), reviewedAt, Rating.Good)
-        .card.due.getTime();
-      const defaultDue = fsrs()
+      const expectedDue = fsrs(effectiveParameters)
         .next(createEmptyCard(reviewedAt), reviewedAt, Rating.Good)
         .card.due.getTime();
       expect(result.dueAt).toBe(expectedDue);
-      expect(result.dueAt).not.toBe(defaultDue);
     } finally {
       db.close();
     }

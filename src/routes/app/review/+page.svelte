@@ -19,8 +19,15 @@
 
 <h1>Review</h1>
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
+{#if data.unavailableCount}
+  <p role="alert">
+    {data.unavailableCount} due {data.unavailableCount === 1
+      ? 'card needs'
+      : 'cards need'} repair before review.
+  </p>
+{/if}
 {#if card}
-  <p>
+  <p data-testid="remaining-due">
     {data.total} due{data.total > data.cards.length
       ? `, showing the first ${data.cards.length}`
       : ''}. Deck: {card.deck}
@@ -30,6 +37,9 @@
     <button type="button" onclick={() => (revealed = true)}>Show answer</button>
   {:else}
     <p>{card.kind === 'basic' ? card.content.back : card.content.text}</p>
+    {#if card.explanation}
+      <p><strong>Explanation:</strong> {card.explanation}</p>
+    {/if}
     <form
       method="POST"
       action="?/rate"
@@ -41,13 +51,20 @@
     >
       <input type="hidden" name="cardId" value={card.id} />
       <input type="hidden" name="revision" value={card.revision} />
+      <input type="hidden" name="scheduleKey" value={card.scheduleKey} />
       <input type="hidden" name="submissionKey" value={data.submissionKey} />
       {#each ratings as rating (rating)}
-        <button type="submit" name="rating" value={rating}>{rating}</button>
+        <button type="submit" name="rating" value={rating}
+          >{rating} · {card.intervals[rating]}</button
+        >
       {/each}
     </form>
   {/if}
 {:else}
-  <p>Nothing is due right now.</p>
+  <p>
+    {data.total
+      ? 'No reviewable cards right now.'
+      : 'Nothing is due right now.'}
+  </p>
 {/if}
 <p><a href="/app/decks">Decks</a> · <a href="/app">Back to home</a></p>

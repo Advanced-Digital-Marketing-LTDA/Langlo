@@ -3,6 +3,46 @@
   import { enhance } from '$app/forms';
   import type { ActionData, PageData } from './$types';
   let { data, form }: { data: PageData; form: ActionData } = $props();
+  type Schedule = {
+    desiredRetention: number;
+    newCardPreset: '10m' | '1m+10m' | '30m';
+    relearningPreset: '10m' | '30m' | '1h';
+  };
+  type Preview = {
+    saved: Schedule;
+    selected: Schedule;
+    days: { date: string; saved: number; selected: number }[];
+    averagePerDay: { saved: number; selected: number };
+    busiestDay: {
+      saved: { date: string; count: number };
+      selected: { date: string; count: number };
+    };
+    scenario: string;
+  };
+  type ScheduleActionData = {
+    preview?: Preview;
+    message?: string;
+    saved?: string;
+  };
+  const scheduleForm = $derived(form as ScheduleActionData | null);
+  let retention = $state(90);
+  let newCardPreset = $state<Schedule['newCardPreset']>('1m+10m');
+  let relearningPreset = $state<Schedule['relearningPreset']>('10m');
+  let initialized = false;
+  $effect(() => {
+    const previewSchedule = scheduleForm?.preview?.selected;
+    if (!initialized || previewSchedule) {
+      const schedule = previewSchedule ?? data.studySchedule;
+      retention = schedule.desiredRetention;
+      newCardPreset = schedule.newCardPreset;
+      relearningPreset = schedule.relearningPreset;
+    } else if (scheduleForm?.saved === 'Study schedule saved.') {
+      retention = data.studySchedule.desiredRetention;
+      newCardPreset = data.studySchedule.newCardPreset;
+      relearningPreset = data.studySchedule.relearningPreset;
+    }
+    initialized = true;
+  });
 </script>
 
 <svelte:head>
@@ -11,8 +51,10 @@
 </svelte:head>
 
 <h1>Settings</h1>
-{#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
-{#if form?.saved}<p role="status">{form.saved}</p>{/if}
+{#if scheduleForm?.message}<p class="error-box" role="alert">
+    {scheduleForm.message}
+  </p>{/if}
+{#if scheduleForm?.saved}<p role="status">{scheduleForm.saved}</p>{/if}
 
 <h2>Lesson language</h2>
 {#each data.enrollments as enrollment (enrollment.language)}
@@ -39,8 +81,75 @@
   </p>
 {/each}
 
+<h2>Study schedule</h2>
+<p>
+  Higher desired retention means shorter intervals and more frequent reviews.
+  These settings apply to new cards and the next rating of existing cards.
+</p>
+<form method="POST" action="?/saveStudySchedule" use:enhance>
+  <label
+    >Desired retention: {retention}%
+    <input
+      type="range"
+      name="desiredRetention"
+      min="70"
+      max="97"
+      step="1"
+      bind:value={retention}
+    />
+  </label>
+  <label
+    >New cards
+    <select name="newCardPreset" bind:value={newCardPreset}>
+      <option value="10m">10m</option>
+      <option value="1m+10m">1m + 10m</option>
+      <option value="30m">30m</option>
+    </select>
+  </label>
+  <label
+    >After forgetting
+    <select name="relearningPreset" bind:value={relearningPreset}>
+      <option value="10m">10m</option>
+      <option value="30m">30m</option>
+      <option value="1h">1h</option>
+    </select>
+  </label>
+  <button type="submit">Save study schedule</button>
+  <button type="submit" formaction="?/previewStudySchedule">Preview</button>
+</form>
+{#if scheduleForm?.preview}
+  <section aria-labelledby="schedule-preview-title">
+    <h3 id="schedule-preview-title">Seven-day preview</h3>
+    <p>{scheduleForm.preview.scenario}</p>
+    <p>
+      Average per day — saved: {scheduleForm.preview.averagePerDay.saved};
+      selected: {scheduleForm.preview.averagePerDay.selected}.
+    </p>
+    <p>
+      Busiest day — saved: {scheduleForm.preview.busiestDay.saved.date}
+      ({scheduleForm.preview.busiestDay.saved.count}); selected:
+      {scheduleForm.preview.busiestDay.selected.date}
+      ({scheduleForm.preview.busiestDay.selected.count}).
+    </p>
+    <table>
+      <thead>
+        <tr><th>Study day</th><th>Saved</th><th>Selected</th></tr>
+      </thead>
+      <tbody>
+        {#each scheduleForm.preview.days as day (day.date)}
+          <tr><td>{day.date}</td><td>{day.saved}</td><td>{day.selected}</td></tr
+          >
+        {/each}
+      </tbody>
+    </table>
+  </section>
+{/if}
+
 <h2>Timezone</h2>
-<p>Saved to your account. Review due times still use UTC for now.</p>
+<p>
+  Your study day starts at 04:00 in your saved timezone. UTC applies until you
+  save one.
+</p>
 <form method="POST" action="?/timezone" use:enhance>
   <label
     >Timezone (for example Europe/Lisbon)
