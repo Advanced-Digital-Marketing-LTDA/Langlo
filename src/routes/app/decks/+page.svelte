@@ -22,9 +22,7 @@
 </form>
 {#if data.query.trim()}
   <h2>Search results</h2>
-  <p>
-    Showing up to 50 matching notes. Refine your search to narrow the results.
-  </p>
+  <p>Showing up to 50 matching notes from this search page.</p>
   {#if data.results.length}
     <ul>
       {#each data.results as note (note.id)}
@@ -41,7 +39,19 @@
       {/each}
     </ul>
   {:else}
-    <p>No matching notes.</p>
+    <p>
+      {data.nextCursor === null
+        ? 'No matching notes.'
+        : 'No matches in this page.'}
+    </p>
+  {/if}
+  {#if data.nextCursor !== null}
+    <p>
+      <a
+        href={`/app/decks?q=${encodeURIComponent(data.query)}&after=${data.nextCursor}`}
+        >Search more notes</a
+      >
+    </p>
   {/if}
 {/if}
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}

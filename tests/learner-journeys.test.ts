@@ -1077,16 +1077,20 @@ describe('decks, review and Anki export', () => {
           args: [id]
         });
     }
-    const results = (await feature(flashcardViewNamespace, 'searchNotes')(
+    const search = (await feature(flashcardViewNamespace, 'searchNotes')(
       client,
       learner,
       'shared'
-    )) as Array<{
-      id: string;
-      deck: { id: string; name: string };
-      status: string;
-      tags: string[];
-    }>;
+    )) as {
+      results: Array<{
+        id: string;
+        deck: { id: string; name: string };
+        status: string;
+        tags: string[];
+      }>;
+      nextCursor: number | null;
+    };
+    const results = search.results;
     expect(results.map((item) => item.id).sort()).toEqual([
       'note-search-approved',
       'note-search-draft',
@@ -1105,7 +1109,7 @@ describe('decks, review and Anki export', () => {
         other,
         'shared'
       )
-    ).toEqual([]);
+    ).toMatchObject({ results: [] });
     const searchPage = await decksLoad(event({ query: '?q=shared' }));
     if (!searchPage) throw new Error('Deck search returned no page data');
     expect(searchPage.query).toBe('shared');
@@ -1114,6 +1118,18 @@ describe('decks, review and Anki export', () => {
         .map((item) => item.status)
         .sort()
     ).toEqual(['approved', 'draft', 'rejected']);
+    const approvedCursor = await client.execute({
+      sql: 'SELECT rowid AS cursor FROM native_flashcard_notes WHERE id = ?',
+      args: ['note-search-approved']
+    });
+    const laterSearchPage = await decksLoad(
+      event({ query: `?q=shared&after=${approvedCursor.rows[0].cursor}` })
+    );
+    expect(
+      (laterSearchPage?.results as { id: string }[])
+        .map((item) => item.id)
+        .sort()
+    ).toEqual(['note-search-draft', 'note-search-rejected']);
     expect(
       await deckLoad(
         event({

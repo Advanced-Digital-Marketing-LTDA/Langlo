@@ -9,10 +9,18 @@ import { searchNotes } from '../../../lib/server/flashcard-views';
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => {
     const query = event.url.searchParams.get('q') ?? '';
+    const search = query.trim()
+      ? await searchNotes(
+          client,
+          learner,
+          query,
+          Number(event.url.searchParams.get('after') ?? 0)
+        )
+      : { results: [], nextCursor: null };
     return {
       decks: await listDecks(client, learner),
       query,
-      results: query.trim() ? await searchNotes(client, learner, query) : []
+      ...search
     };
   });
 

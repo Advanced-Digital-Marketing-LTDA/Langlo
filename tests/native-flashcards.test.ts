@@ -37,12 +37,14 @@ describe('native flashcard persistence feasibility', () => {
         'write'
       );
       expect(
-        await searchNotes(db, { userId: 'learner-a' }, 'école')
+        (await searchNotes(db, { userId: 'learner-a' }, 'école')).results
       ).toMatchObject([{ id: 'note-one' }]);
-      expect(await searchNotes(db, { userId: 'learner-a' }, 'front')).toEqual(
-        []
-      );
-      expect(await searchNotes(db, { userId: 'learner-a' }, '[]')).toEqual([]);
+      expect(
+        (await searchNotes(db, { userId: 'learner-a' }, 'front')).results
+      ).toEqual([]);
+      expect(
+        (await searchNotes(db, { userId: 'learner-a' }, '[]')).results
+      ).toEqual([]);
       await db.batch(
         Array.from(
           { length: 55 },
@@ -51,9 +53,38 @@ describe('native flashcard persistence feasibility', () => {
         ),
         'write'
       );
-      expect(
-        await searchNotes(db, { userId: 'learner-a' }, 'école')
-      ).toHaveLength(50);
+      const firstPage = await searchNotes(db, { userId: 'learner-a' }, 'école');
+      expect(firstPage.results).toHaveLength(50);
+      expect(firstPage.nextCursor).not.toBeNull();
+      const secondPage = await searchNotes(
+        db,
+        { userId: 'learner-a' },
+        'école',
+        firstPage.nextCursor!
+      );
+      expect(secondPage.results).toHaveLength(6);
+      expect(secondPage.nextCursor).toBeNull();
+      await db.execute(`WITH RECURSIVE seq(x) AS (SELECT 0 UNION ALL SELECT x + 1 FROM seq WHERE x < 1000)
+        INSERT INTO native_flashcard_notes SELECT 'note-fill-' || x, 'learner-a', 'deck-one', 'basic', 'draft', '{"front":"filler","back":"school"}', '[]', '', x + 100 FROM seq`);
+      await db.execute(
+        `INSERT INTO native_flashcard_notes VALUES ('note-needle', 'learner-a', 'deck-one', 'basic', 'rejected', '{"front":"needle","back":"school"}', '[]', '', 2000)`
+      );
+      const emptyPage = await searchNotes(
+        db,
+        { userId: 'learner-a' },
+        'needle'
+      );
+      expect(emptyPage.results).toEqual([]);
+      expect(emptyPage.nextCursor).not.toBeNull();
+      const laterPage = await searchNotes(
+        db,
+        { userId: 'learner-a' },
+        'needle',
+        emptyPage.nextCursor!
+      );
+      expect(laterPage.results).toMatchObject([
+        { id: 'note-needle', status: 'rejected' }
+      ]);
     } finally {
       db.close();
     }

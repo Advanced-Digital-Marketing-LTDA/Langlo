@@ -12,7 +12,7 @@ import {
 
 type Query = Pick<Client, 'execute'>;
 const searchResultLimit = 50;
-const searchBatchSize = 200;
+const searchScanLimit = 1000;
 export type NoteKind = 'basic' | 'cloze';
 export type NoteSummary = {
   id: string;
@@ -103,11 +103,14 @@ export async function addNoteFromForm(
 export async function searchNotes(
   client: Query,
   learner: LearnerSession,
-  search: string
+  search: string,
+  after = 0
 ) {
   const query = search.trim();
-  if (!query) return [];
+  if (!query) return { results: [], nextCursor: null };
   if (query.length > 100) throw new FlashcardError('INVALID_SEARCH');
+  if (!Number.isSafeInteger(after) || after < 0)
+    throw new FlashcardError('INVALID_SEARCH');
   const searchTerm = query.toLocaleLowerCase('en');
   const matches: {
     id: string;
@@ -117,48 +120,49 @@ export async function searchNotes(
     tags: string[];
     deck: { id: string; name: string };
   }[] = [];
-  // SQLite's lower() only folds ASCII; scan bounded batches for Unicode matches.
-  for (
-    let offset = 0;
-    matches.length < searchResultLimit;
-    offset += searchBatchSize
-  ) {
-    const result = await client.execute({
-      sql: `SELECT n.id, n.kind, n.status, n.content_json, n.tags_json,
+  // SQLite's lower() only folds ASCII; inspect one bounded page for Unicode matches.
+  const result = await client.execute({
+    sql: `SELECT n.rowid AS cursor, n.id, n.kind, n.status, n.content_json, n.tags_json,
         n.explanation,
         d.id AS deck_id, d.name AS deck_name
       FROM native_flashcard_notes n
       JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
-      WHERE n.owner_id = ? ORDER BY n.created_at, n.rowid LIMIT ? OFFSET ?`,
-      args: [learner.userId, searchBatchSize, offset]
+      WHERE n.owner_id = ? AND n.rowid > ? ORDER BY n.rowid LIMIT ?`,
+    args: [learner.userId, after, searchScanLimit + 1]
+  });
+  let cursor = after;
+  let scanned = 0;
+  for (const row of result.rows) {
+    if (scanned === searchScanLimit) break;
+    cursor = Number(row.cursor);
+    scanned += 1;
+    const content = JSON.parse(
+      String(row.content_json)
+    ) as NoteSummary['content'];
+    const tags = JSON.parse(String(row.tags_json)) as string[];
+    if (
+      ![
+        ...Object.values(content),
+        String(row.explanation),
+        ...tags,
+        String(row.deck_name)
+      ].some((value) => value?.toLocaleLowerCase('en').includes(searchTerm))
+    )
+      continue;
+    matches.push({
+      id: String(row.id),
+      kind: String(row.kind) as NoteKind,
+      status: String(row.status),
+      content,
+      tags,
+      deck: { id: String(row.deck_id), name: String(row.deck_name) }
     });
-    for (const row of result.rows) {
-      const content = JSON.parse(
-        String(row.content_json)
-      ) as NoteSummary['content'];
-      const tags = JSON.parse(String(row.tags_json)) as string[];
-      if (
-        ![
-          ...Object.values(content),
-          String(row.explanation),
-          ...tags,
-          String(row.deck_name)
-        ].some((value) => value?.toLocaleLowerCase('en').includes(searchTerm))
-      )
-        continue;
-      matches.push({
-        id: String(row.id),
-        kind: String(row.kind) as NoteKind,
-        status: String(row.status),
-        content,
-        tags,
-        deck: { id: String(row.deck_id), name: String(row.deck_name) }
-      });
-      if (matches.length === searchResultLimit) break;
-    }
-    if (result.rows.length < searchBatchSize) break;
+    if (matches.length === searchResultLimit) break;
   }
-  return matches;
+  return {
+    results: matches,
+    nextCursor: scanned < result.rows.length ? cursor : null
+  };
 }
 
 /** How many approved, unsuspended cards are due now, however many are listed. */
