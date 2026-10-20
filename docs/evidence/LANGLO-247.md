@@ -71,3 +71,35 @@ The approved follow-up fixes the two confirmed content-version defects and adds 
 The first browser launch stopped before running tests because port 4173 was occupied. A subsequent browser run overlapped a unit test that invokes its own build in test mode, replacing the production version checker and invalidating refresh checks. Final browser validation runs after the unit suite and an explicit production-mode build, using a temporary port-4189 config that is removed afterward. No refresh implementation or tests are weakened.
 
 Hosted quality gates, publication of these follow-up changes, delayed-recall calibration, real providers, production migrations and deployment remain separate and unverified by this local evidence.
+
+## Merge with Portuguese platform support — 2026-10-20
+
+The owner confirmed that production is on `main` with `0026_portuguese_tracks` applied, and explicitly approved a one-time exception to resequence the PR's unapplied grammar migrations and reconcile their metadata. Production was not accessed. The merge preserves both commit histories and combines `main`'s B1/B2 and foundation-level reporting with grammar retention's rating stage, provisional-answer rules and five-confirmed-wrong early stop.
+
+| Previous PR migration          | Merged migration               | SQL contents            |
+| ------------------------------ | ------------------------------ | ----------------------- |
+| `0026_peaceful_albert_cleary`  | `0027_peaceful_albert_cleary`  | Byte-for-byte preserved |
+| `0027_sturdy_talkback`         | `0028_sturdy_talkback`         | Byte-for-byte preserved |
+| `0028_current_grammar_content` | `0029_current_grammar_content` | Byte-for-byte preserved |
+
+Every migration SQL file and journal entry from `main` through 0026, and its 0026 snapshot, are unchanged. The unapplied PR snapshot chain is reconciled with the Portuguese schema; its journal entries follow 0026 with strictly increasing timestamps. A fixture reproducing the canonical `main` ledger through 0026 is accepted without `LEDGER_DRIFT`, exposes only 0027–0030 as pending, upgrades successfully and retains every existing ledger row.
+
+New forward migration `0030_portuguese_grammar_retention` widens the grammar schedule language constraint to Portuguese. Its table rebuild requires the runner to disable foreign keys before opening the transaction, preserves schedules and events, recreates the guards that reference the rebuilt table, and checks row counts and foreign-key integrity before commit. Tests verify a populated upgrade, repeated migration, preserved append-only guards and owner-deletion behavior, refusal with foreign keys enabled, and rollback after a forced late failure. Only disposable local fixtures were migrated.
+
+### Merge red/green evidence
+
+- The new Portuguese B1/B2 answer/rating regression initially failed with `CHECK constraint failed: grammar_retention_schedules_language`. It now completes the assessment and stores three owner-scoped Portuguese review events.
+- The generated SQLite rebuild initially failed because `grammar_retention_events_no_delete` referenced the schedule table during its replacement. The final forward migration removes and restores the three affected guards inside the same transaction; populated-history and rollback regressions pass.
+- The existing Portuguese migration preservation test is isolated to its intended 0026 boundary. The local-client remote-apply-path test now expects the complete merged pending suffix and preserves all study-history row counts.
+- Focused post-resolution tests: 49 passed across migration, Portuguese-track and ledger-compatibility suites; grammar integration regressions also passed in the first compatibility run.
+
+### Merge validation
+
+- `npm ci --ignore-scripts`: passed on Node 24.19.0 / npm 11.9.0.
+- `npm run check`, `npm run lint` and `npm run format:check`: passed; formatting and diff checks were repeated after the evidence update.
+- `npm test`: passed, 95 files and 1,517 tests.
+- `npm run test:property`: passed, five files and seven tests.
+- `NODE_ENV=production npm run build -- --mode production`: passed after the final unit suite.
+- `npm run test:e2e -- --config=playwright.validation.config.ts`: passed, 104 desktop/mobile tests against the production build with synthetic fixtures. The temporary config used local port 4189 and was removed afterward.
+
+No production ledger was edited, no production migration was run, and no existing commit was rewritten. Hosted CI and deployment remain separate acceptance gates.

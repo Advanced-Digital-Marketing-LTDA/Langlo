@@ -69,7 +69,8 @@ export function checkAnswer(
 
 const accents: Record<string, readonly string[]> = {
   fr: ['à', 'â', 'ç', 'é', 'è', 'ê', 'ë', 'î', 'ï', 'ô', 'ù', 'û', 'œ'],
-  de: ['ä', 'ö', 'ü', 'ß']
+  de: ['ä', 'ö', 'ü', 'ß'],
+  pt: ['á', 'à', 'â', 'ã', 'ç', 'é', 'ê', 'í', 'ó', 'ô', 'õ', 'ú']
 };
 
 /** The accented letters a keyboard may lack, for a track's language. */

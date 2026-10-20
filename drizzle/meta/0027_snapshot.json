@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b65e8ff5-825f-43a5-853e-2751b8688b31",
-  "prevId": "b4bc9404-42eb-485b-8655-819289ecfe52",
+  "id": "b4bc9404-42eb-485b-8655-819289ecfe52",
+  "prevId": "aeaacfef-5d04-43b4-a924-ed6ab95f5e4e",
   "tables": {
     "accounts": {
       "name": "accounts",
@@ -254,14 +254,6 @@
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
-        },
-        "received_help": {
-          "name": "received_help",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
         },
         "evidence_kind": {
           "name": "evidence_kind",
@@ -1114,11 +1106,11 @@
       "checkConstraints": {
         "enrollments_language": {
           "name": "enrollments_language",
-          "value": "\"enrollments\".\"language\" IN ('fr', 'de', 'en')"
+          "value": "\"enrollments\".\"language\" IN ('fr', 'de', 'en', 'pt')"
         },
         "enrollments_level": {
           "name": "enrollments_level",
-          "value": "\"enrollments\".\"starting_level\" IN ('A1', 'A2')"
+          "value": "\"enrollments\".\"starting_level\" IN ('A1', 'A2', 'B1', 'B2')"
         },
         "enrollments_explanation": {
           "name": "enrollments_explanation",
@@ -2855,11 +2847,11 @@
       "checkConstraints": {
         "skills_language": {
           "name": "skills_language",
-          "value": "\"skills\".\"language\" IN ('fr', 'de', 'en')"
+          "value": "\"skills\".\"language\" IN ('fr', 'de', 'en', 'pt')"
         },
         "skills_level": {
           "name": "skills_level",
-          "value": "\"skills\".\"level\" IN ('A1', 'A2')"
+          "value": "\"skills\".\"level\" IN ('A1', 'A2', 'B1', 'B2')"
         }
       }
     },
@@ -2918,13 +2910,6 @@
         },
         "assessment_plan": {
           "name": "assessment_plan",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "grammar_retention_plan": {
-          "name": "grammar_retention_plan",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

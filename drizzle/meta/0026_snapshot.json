@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "b4bc9404-42eb-485b-8655-819289ecfe52",
+  "id": "aeaacfef-5d04-43b4-a924-ed6ab95f5e4e",
   "prevId": "9d8335bf-88f9-4547-b571-7ce654b3096a",
   "tables": {
     "accounts": {
@@ -248,13 +248,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "grammar_rating": {
-          "name": "grammar_rating",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
         "evidence_kind": {
           "name": "evidence_kind",
           "type": "text",
@@ -353,10 +346,6 @@
         "attempts_evidence_kind": {
           "name": "attempts_evidence_kind",
           "value": "\"attempts\".\"evidence_kind\" IN ('independent', 'assisted')"
-        },
-        "attempts_grammar_rating": {
-          "name": "attempts_grammar_rating",
-          "value": "\"attempts\".\"grammar_rating\" IS NULL OR \"attempts\".\"grammar_rating\" IN ('again', 'hard', 'good', 'easy')"
         }
       }
     },
@@ -1106,11 +1095,11 @@
       "checkConstraints": {
         "enrollments_language": {
           "name": "enrollments_language",
-          "value": "\"enrollments\".\"language\" IN ('fr', 'de', 'en')"
+          "value": "\"enrollments\".\"language\" IN ('fr', 'de', 'en', 'pt')"
         },
         "enrollments_level": {
           "name": "enrollments_level",
-          "value": "\"enrollments\".\"starting_level\" IN ('A1', 'A2')"
+          "value": "\"enrollments\".\"starting_level\" IN ('A1', 'A2', 'B1', 'B2')"
         },
         "enrollments_explanation": {
           "name": "enrollments_explanation",
@@ -1218,361 +1207,6 @@
         "evaluations_outcome": {
           "name": "evaluations_outcome",
           "value": "\"evaluations\".\"outcome\" IN ('correct', 'incorrect', 'uncertain')"
-        }
-      }
-    },
-    "grammar_retention_events": {
-      "name": "grammar_retention_events",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "owner_id": {
-          "name": "owner_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "study_session_id": {
-          "name": "study_session_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "language": {
-          "name": "language",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "skill_id": {
-          "name": "skill_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "attempt_id": {
-          "name": "attempt_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "evaluation_id": {
-          "name": "evaluation_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "content_version_id": {
-          "name": "content_version_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "lineage_key": {
-          "name": "lineage_key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "expected_revision": {
-          "name": "expected_revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "rating": {
-          "name": "rating",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "reviewed_at": {
-          "name": "reviewed_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "scheduler_version": {
-          "name": "scheduler_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "parameters_json": {
-          "name": "parameters_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "result_json": {
-          "name": "result_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "state_json": {
-          "name": "state_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "grammar_retention_events_session_skill": {
-          "name": "grammar_retention_events_session_skill",
-          "columns": ["owner_id", "study_session_id", "skill_id"],
-          "isUnique": true
-        },
-        "grammar_retention_events_skill_time": {
-          "name": "grammar_retention_events_skill_time",
-          "columns": ["owner_id", "language", "skill_id", "reviewed_at"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "grammar_retention_events_owner_id_language_skill_id_grammar_retention_schedules_owner_id_language_skill_id_fk": {
-          "name": "grammar_retention_events_owner_id_language_skill_id_grammar_retention_schedules_owner_id_language_skill_id_fk",
-          "tableFrom": "grammar_retention_events",
-          "tableTo": "grammar_retention_schedules",
-          "columnsFrom": ["owner_id", "language", "skill_id"],
-          "columnsTo": ["owner_id", "language", "skill_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "grammar_retention_events_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk": {
-          "name": "grammar_retention_events_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk",
-          "tableFrom": "grammar_retention_events",
-          "tableTo": "study_sessions",
-          "columnsFrom": ["study_session_id", "owner_id", "language"],
-          "columnsTo": ["id", "owner_id", "language"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "grammar_retention_events_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk": {
-          "name": "grammar_retention_events_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk",
-          "tableFrom": "grammar_retention_events",
-          "tableTo": "attempts",
-          "columnsFrom": ["attempt_id", "owner_id", "skill_id", "language"],
-          "columnsTo": ["id", "owner_id", "skill_id", "language"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "grammar_retention_events_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk": {
-          "name": "grammar_retention_events_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk",
-          "tableFrom": "grammar_retention_events",
-          "tableTo": "evaluations",
-          "columnsFrom": ["evaluation_id", "owner_id", "attempt_id"],
-          "columnsTo": ["id", "owner_id", "attempt_id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "grammar_retention_events_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk": {
-          "name": "grammar_retention_events_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
-          "tableFrom": "grammar_retention_events",
-          "tableTo": "content_versions",
-          "columnsFrom": ["content_version_id", "skill_id", "language"],
-          "columnsTo": ["id", "skill_id", "language"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "grammar_retention_events_owner_id_id_pk": {
-          "columns": ["owner_id", "id"],
-          "name": "grammar_retention_events_owner_id_id_pk"
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "grammar_retention_events_rating": {
-          "name": "grammar_retention_events_rating",
-          "value": "\"grammar_retention_events\".\"rating\" IN ('again', 'hard', 'good', 'easy')"
-        },
-        "grammar_retention_events_revision": {
-          "name": "grammar_retention_events_revision",
-          "value": "typeof(\"grammar_retention_events\".\"expected_revision\") = 'integer' AND \"grammar_retention_events\".\"expected_revision\" >= 0"
-        },
-        "grammar_retention_events_reviewed_at": {
-          "name": "grammar_retention_events_reviewed_at",
-          "value": "typeof(\"grammar_retention_events\".\"reviewed_at\") = 'integer' AND \"grammar_retention_events\".\"reviewed_at\" >= 0"
-        },
-        "grammar_retention_events_json": {
-          "name": "grammar_retention_events_json",
-          "value": "json_valid(\"grammar_retention_events\".\"parameters_json\") AND json_valid(\"grammar_retention_events\".\"result_json\") AND json_valid(\"grammar_retention_events\".\"state_json\")"
-        }
-      }
-    },
-    "grammar_retention_schedules": {
-      "name": "grammar_retention_schedules",
-      "columns": {
-        "owner_id": {
-          "name": "owner_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "language": {
-          "name": "language",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "skill_id": {
-          "name": "skill_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "content_version_id": {
-          "name": "content_version_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "state_json": {
-          "name": "state_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "due_at": {
-          "name": "due_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "revision": {
-          "name": "revision",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "reset_required": {
-          "name": "reset_required",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": false
-        },
-        "scheduler_version": {
-          "name": "scheduler_version",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "parameters_json": {
-          "name": "parameters_json",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(unixepoch() * 1000)"
-        }
-      },
-      "indexes": {
-        "grammar_retention_schedules_owner_due": {
-          "name": "grammar_retention_schedules_owner_due",
-          "columns": ["owner_id", "language", "due_at"],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {
-        "grammar_retention_schedules_owner_id_users_id_fk": {
-          "name": "grammar_retention_schedules_owner_id_users_id_fk",
-          "tableFrom": "grammar_retention_schedules",
-          "tableTo": "users",
-          "columnsFrom": ["owner_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "grammar_retention_schedules_skill_id_language_skills_id_language_fk": {
-          "name": "grammar_retention_schedules_skill_id_language_skills_id_language_fk",
-          "tableFrom": "grammar_retention_schedules",
-          "tableTo": "skills",
-          "columnsFrom": ["skill_id", "language"],
-          "columnsTo": ["id", "language"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        },
-        "grammar_retention_schedules_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk": {
-          "name": "grammar_retention_schedules_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
-          "tableFrom": "grammar_retention_schedules",
-          "tableTo": "content_versions",
-          "columnsFrom": ["content_version_id", "skill_id", "language"],
-          "columnsTo": ["id", "skill_id", "language"],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "grammar_retention_schedules_owner_id_language_skill_id_pk": {
-          "columns": ["owner_id", "language", "skill_id"],
-          "name": "grammar_retention_schedules_owner_id_language_skill_id_pk"
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraints": {
-        "grammar_retention_schedules_language": {
-          "name": "grammar_retention_schedules_language",
-          "value": "\"grammar_retention_schedules\".\"language\" IN ('fr', 'de', 'en')"
-        },
-        "grammar_retention_schedules_due": {
-          "name": "grammar_retention_schedules_due",
-          "value": "typeof(\"grammar_retention_schedules\".\"due_at\") = 'integer' AND \"grammar_retention_schedules\".\"due_at\" >= 0"
-        },
-        "grammar_retention_schedules_revision": {
-          "name": "grammar_retention_schedules_revision",
-          "value": "typeof(\"grammar_retention_schedules\".\"revision\") = 'integer' AND \"grammar_retention_schedules\".\"revision\" >= 0"
-        },
-        "grammar_retention_schedules_reset": {
-          "name": "grammar_retention_schedules_reset",
-          "value": "typeof(\"grammar_retention_schedules\".\"reset_required\") = 'integer' AND \"grammar_retention_schedules\".\"reset_required\" IN (0, 1)"
-        },
-        "grammar_retention_schedules_state": {
-          "name": "grammar_retention_schedules_state",
-          "value": "json_valid(\"grammar_retention_schedules\".\"state_json\")"
-        },
-        "grammar_retention_schedules_parameters": {
-          "name": "grammar_retention_schedules_parameters",
-          "value": "json_valid(\"grammar_retention_schedules\".\"parameters_json\")"
         }
       }
     },
@@ -2847,11 +2481,11 @@
       "checkConstraints": {
         "skills_language": {
           "name": "skills_language",
-          "value": "\"skills\".\"language\" IN ('fr', 'de', 'en')"
+          "value": "\"skills\".\"language\" IN ('fr', 'de', 'en', 'pt')"
         },
         "skills_level": {
           "name": "skills_level",
-          "value": "\"skills\".\"level\" IN ('A1', 'A2')"
+          "value": "\"skills\".\"level\" IN ('A1', 'A2', 'B1', 'B2')"
         }
       }
     },
@@ -2910,13 +2544,6 @@
         },
         "assessment_plan": {
           "name": "assessment_plan",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "grammar_retention_policy_version": {
-          "name": "grammar_retention_policy_version",
           "type": "text",
           "primaryKey": false,
           "notNull": false,

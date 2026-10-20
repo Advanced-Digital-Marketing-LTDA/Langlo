@@ -7,8 +7,11 @@
 <svelte:head><title>Grammar assessment · Langlo</title></svelte:head>
 <h1>Grammar assessment</h1>
 <p>
-  Results and feedback appear after completion. This sample includes {data
-    .assessment.coverage.A1} A1 and {data.assessment.coverage.A2} A2 topics.
+  Results and feedback appear after completion. This sample includes {Object.entries(
+    data.assessment.coverage
+  )
+    .map(([level, count]) => `${count} ${level}`)
+    .join(' and ')} topics.
 </p>
 {#if data.assessment.state === 'paused'}
   <p>This assessment is paused. Your answers are saved.</p>

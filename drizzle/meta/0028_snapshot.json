@@ -1,8 +1,8 @@
 {
-  "id": "675a0e1c-8336-4f5e-97c3-b9f9be3cb5ef",
-  "prevId": "b65e8ff5-825f-43a5-853e-2751b8688b31",
   "version": "6",
   "dialect": "sqlite",
+  "id": "b65e8ff5-825f-43a5-853e-2751b8688b31",
+  "prevId": "b4bc9404-42eb-485b-8655-819289ecfe52",
   "tables": {
     "accounts": {
       "name": "accounts",
@@ -112,11 +112,11 @@
         "accounts_user_id_users_id_fk": {
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
-          "columnsFrom": ["user_id"],
           "tableTo": "users",
+          "columnsFrom": ["user_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -303,8 +303,8 @@
         "attempts_session_question_independent": {
           "name": "attempts_session_question_independent",
           "columns": ["owner_id", "study_session_id", "question_id"],
-          "where": "\"attempts\".\"evidence_kind\" = 'independent'",
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"attempts\".\"evidence_kind\" = 'independent'"
         },
         "attempts_identity_owner": {
           "name": "attempts_identity_owner",
@@ -321,34 +321,34 @@
         "attempts_owner_id_users_id_fk": {
           "name": "attempts_owner_id_users_id_fk",
           "tableFrom": "attempts",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "attempts_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk": {
           "name": "attempts_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk",
           "tableFrom": "attempts",
-          "columnsFrom": ["study_session_id", "owner_id", "language"],
           "tableTo": "study_sessions",
+          "columnsFrom": ["study_session_id", "owner_id", "language"],
           "columnsTo": ["id", "owner_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "attempts_question_id_content_version_id_skill_id_language_questions_id_content_version_id_skill_id_language_fk": {
           "name": "attempts_question_id_content_version_id_skill_id_language_questions_id_content_version_id_skill_id_language_fk",
           "tableFrom": "attempts",
+          "tableTo": "questions",
           "columnsFrom": [
             "question_id",
             "content_version_id",
             "skill_id",
             "language"
           ],
-          "tableTo": "questions",
           "columnsTo": ["id", "content_version_id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -465,20 +465,20 @@
         "card_drafts_owner_id_users_id_fk": {
           "name": "card_drafts_owner_id_users_id_fk",
           "tableFrom": "card_drafts",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "card_drafts_skill_id_language_skills_id_language_fk": {
           "name": "card_drafts_skill_id_language_skills_id_language_fk",
           "tableFrom": "card_drafts",
-          "columnsFrom": ["skill_id", "language"],
           "tableTo": "skills",
+          "columnsFrom": ["skill_id", "language"],
           "columnsTo": ["id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -578,11 +578,11 @@
         "content_changes_curriculum_version_curriculum_imports_curriculum_version_fk": {
           "name": "content_changes_curriculum_version_curriculum_imports_curriculum_version_fk",
           "tableFrom": "content_changes",
-          "columnsFrom": ["curriculum_version"],
           "tableTo": "curriculum_imports",
+          "columnsFrom": ["curriculum_version"],
           "columnsTo": ["curriculum_version"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -686,34 +686,34 @@
         "content_reports_owner_id_users_id_fk": {
           "name": "content_reports_owner_id_users_id_fk",
           "tableFrom": "content_reports",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "content_reports_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk": {
           "name": "content_reports_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "content_reports",
-          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "tableTo": "content_versions",
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "columnsTo": ["id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "content_reports_question_id_content_version_id_skill_id_language_questions_id_content_version_id_skill_id_language_fk": {
           "name": "content_reports_question_id_content_version_id_skill_id_language_questions_id_content_version_id_skill_id_language_fk",
           "tableFrom": "content_reports",
+          "tableTo": "questions",
           "columnsFrom": [
             "question_id",
             "content_version_id",
             "skill_id",
             "language"
           ],
-          "tableTo": "questions",
           "columnsTo": ["id", "content_version_id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -804,11 +804,11 @@
         "content_versions_skill_id_language_skills_id_language_fk": {
           "name": "content_versions_skill_id_language_skills_id_language_fk",
           "tableFrom": "content_versions",
-          "columnsFrom": ["skill_id", "language"],
           "tableTo": "skills",
+          "columnsFrom": ["skill_id", "language"],
           "columnsTo": ["id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -994,20 +994,20 @@
         "deliveries_owner_id_users_id_fk": {
           "name": "deliveries_owner_id_users_id_fk",
           "tableFrom": "deliveries",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "deliveries_card_draft_id_owner_id_source_id_language_card_drafts_id_owner_id_source_id_language_fk": {
           "name": "deliveries_card_draft_id_owner_id_source_id_language_card_drafts_id_owner_id_source_id_language_fk",
           "tableFrom": "deliveries",
-          "columnsFrom": ["card_draft_id", "owner_id", "source_id", "language"],
           "tableTo": "card_drafts",
+          "columnsFrom": ["card_draft_id", "owner_id", "source_id", "language"],
           "columnsTo": ["id", "owner_id", "source_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1102,11 +1102,11 @@
         "enrollments_owner_id_users_id_fk": {
           "name": "enrollments_owner_id_users_id_fk",
           "tableFrom": "enrollments",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1114,11 +1114,11 @@
       "checkConstraints": {
         "enrollments_language": {
           "name": "enrollments_language",
-          "value": "\"enrollments\".\"language\" IN ('fr', 'de', 'en')"
+          "value": "\"enrollments\".\"language\" IN ('fr', 'de', 'en', 'pt')"
         },
         "enrollments_level": {
           "name": "enrollments_level",
-          "value": "\"enrollments\".\"starting_level\" IN ('A1', 'A2')"
+          "value": "\"enrollments\".\"starting_level\" IN ('A1', 'A2', 'B1', 'B2')"
         },
         "enrollments_explanation": {
           "name": "enrollments_explanation",
@@ -1196,20 +1196,20 @@
         "evaluations_owner_id_users_id_fk": {
           "name": "evaluations_owner_id_users_id_fk",
           "tableFrom": "evaluations",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "evaluations_attempt_id_owner_id_attempts_id_owner_id_fk": {
           "name": "evaluations_attempt_id_owner_id_attempts_id_owner_id_fk",
           "tableFrom": "evaluations",
-          "columnsFrom": ["attempt_id", "owner_id"],
           "tableTo": "attempts",
+          "columnsFrom": ["attempt_id", "owner_id"],
           "columnsTo": ["id", "owner_id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1361,47 +1361,47 @@
         "grammar_retention_events_owner_id_language_skill_id_grammar_retention_schedules_owner_id_language_skill_id_fk": {
           "name": "grammar_retention_events_owner_id_language_skill_id_grammar_retention_schedules_owner_id_language_skill_id_fk",
           "tableFrom": "grammar_retention_events",
-          "columnsFrom": ["owner_id", "language", "skill_id"],
           "tableTo": "grammar_retention_schedules",
+          "columnsFrom": ["owner_id", "language", "skill_id"],
           "columnsTo": ["owner_id", "language", "skill_id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "grammar_retention_events_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk": {
           "name": "grammar_retention_events_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk",
           "tableFrom": "grammar_retention_events",
-          "columnsFrom": ["study_session_id", "owner_id", "language"],
           "tableTo": "study_sessions",
+          "columnsFrom": ["study_session_id", "owner_id", "language"],
           "columnsTo": ["id", "owner_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "grammar_retention_events_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk": {
           "name": "grammar_retention_events_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk",
           "tableFrom": "grammar_retention_events",
-          "columnsFrom": ["attempt_id", "owner_id", "skill_id", "language"],
           "tableTo": "attempts",
+          "columnsFrom": ["attempt_id", "owner_id", "skill_id", "language"],
           "columnsTo": ["id", "owner_id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "grammar_retention_events_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk": {
           "name": "grammar_retention_events_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk",
           "tableFrom": "grammar_retention_events",
-          "columnsFrom": ["evaluation_id", "owner_id", "attempt_id"],
           "tableTo": "evaluations",
+          "columnsFrom": ["evaluation_id", "owner_id", "attempt_id"],
           "columnsTo": ["id", "owner_id", "attempt_id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "grammar_retention_events_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk": {
           "name": "grammar_retention_events_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "grammar_retention_events",
-          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "tableTo": "content_versions",
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "columnsTo": ["id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1525,29 +1525,29 @@
         "grammar_retention_schedules_owner_id_users_id_fk": {
           "name": "grammar_retention_schedules_owner_id_users_id_fk",
           "tableFrom": "grammar_retention_schedules",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "grammar_retention_schedules_skill_id_language_skills_id_language_fk": {
           "name": "grammar_retention_schedules_skill_id_language_skills_id_language_fk",
           "tableFrom": "grammar_retention_schedules",
-          "columnsFrom": ["skill_id", "language"],
           "tableTo": "skills",
+          "columnsFrom": ["skill_id", "language"],
           "columnsTo": ["id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "grammar_retention_schedules_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk": {
           "name": "grammar_retention_schedules_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "grammar_retention_schedules",
-          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "tableTo": "content_versions",
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "columnsTo": ["id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1615,11 +1615,11 @@
         "learner_preferences_owner_id_users_id_fk": {
           "name": "learner_preferences_owner_id_users_id_fk",
           "tableFrom": "learner_preferences",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1689,11 +1689,11 @@
         "lesson_translations_content_version_id_lessons_content_version_id_fk": {
           "name": "lesson_translations_content_version_id_lessons_content_version_id_fk",
           "tableFrom": "lesson_translations",
-          "columnsFrom": ["content_version_id"],
           "tableTo": "lessons",
+          "columnsFrom": ["content_version_id"],
           "columnsTo": ["content_version_id"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -1783,11 +1783,11 @@
         "lessons_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk": {
           "name": "lessons_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "lessons",
-          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "tableTo": "content_versions",
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "columnsTo": ["id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1852,11 +1852,11 @@
         "native_flashcard_decks_owner_id_users_id_fk": {
           "name": "native_flashcard_decks_owner_id_users_id_fk",
           "tableFrom": "native_flashcard_decks",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -1981,8 +1981,8 @@
         "native_flashcard_notes_owner_source_attempt_unique": {
           "name": "native_flashcard_notes_owner_source_attempt_unique",
           "columns": ["owner_id", "source_attempt_id"],
-          "where": "\"native_flashcard_notes\".\"source_attempt_id\" IS NOT NULL",
-          "isUnique": true
+          "isUnique": true,
+          "where": "\"native_flashcard_notes\".\"source_attempt_id\" IS NOT NULL"
         },
         "native_flashcard_notes_owner_deck": {
           "name": "native_flashcard_notes_owner_deck",
@@ -1999,20 +1999,20 @@
         "native_flashcard_notes_owner_id_users_id_fk": {
           "name": "native_flashcard_notes_owner_id_users_id_fk",
           "tableFrom": "native_flashcard_notes",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "native_flashcard_notes_deck_id_owner_id_native_flashcard_decks_id_owner_id_fk": {
           "name": "native_flashcard_notes_deck_id_owner_id_native_flashcard_decks_id_owner_id_fk",
           "tableFrom": "native_flashcard_notes",
-          "columnsFrom": ["deck_id", "owner_id"],
           "tableTo": "native_flashcard_decks",
+          "columnsFrom": ["deck_id", "owner_id"],
           "columnsTo": ["id", "owner_id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2092,11 +2092,11 @@
         "native_flashcard_preferences_owner_id_users_id_fk": {
           "name": "native_flashcard_preferences_owner_id_users_id_fk",
           "tableFrom": "native_flashcard_preferences",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2201,11 +2201,11 @@
         "native_flashcard_review_events_card_id_owner_id_native_flashcards_id_owner_id_fk": {
           "name": "native_flashcard_review_events_card_id_owner_id_native_flashcards_id_owner_id_fk",
           "tableFrom": "native_flashcard_review_events",
-          "columnsFrom": ["card_id", "owner_id"],
           "tableTo": "native_flashcards",
+          "columnsFrom": ["card_id", "owner_id"],
           "columnsTo": ["id", "owner_id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -2344,11 +2344,11 @@
         "native_flashcards_note_id_owner_id_native_flashcard_notes_id_owner_id_fk": {
           "name": "native_flashcards_note_id_owner_id_native_flashcard_notes_id_owner_id_fk",
           "tableFrom": "native_flashcards",
-          "columnsFrom": ["note_id", "owner_id"],
           "tableTo": "native_flashcard_notes",
+          "columnsFrom": ["note_id", "owner_id"],
           "columnsTo": ["id", "owner_id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2410,20 +2410,20 @@
         "prerequisites_skill_id_language_skills_id_language_fk": {
           "name": "prerequisites_skill_id_language_skills_id_language_fk",
           "tableFrom": "prerequisites",
-          "columnsFrom": ["skill_id", "language"],
           "tableTo": "skills",
+          "columnsFrom": ["skill_id", "language"],
           "columnsTo": ["id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "prerequisites_prerequisite_id_language_skills_id_language_fk": {
           "name": "prerequisites_prerequisite_id_language_skills_id_language_fk",
           "tableFrom": "prerequisites",
-          "columnsFrom": ["prerequisite_id", "language"],
           "tableTo": "skills",
+          "columnsFrom": ["prerequisite_id", "language"],
           "columnsTo": ["id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -2526,11 +2526,11 @@
         "questions_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk": {
           "name": "questions_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "questions",
-          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "tableTo": "content_versions",
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
           "columnsTo": ["id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2668,11 +2668,11 @@
         "sessions_user_id_users_id_fk": {
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
-          "columnsFrom": ["user_id"],
           "tableTo": "users",
+          "columnsFrom": ["user_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2758,29 +2758,29 @@
         "skill_evidence_owner_id_users_id_fk": {
           "name": "skill_evidence_owner_id_users_id_fk",
           "tableFrom": "skill_evidence",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "skill_evidence_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk": {
           "name": "skill_evidence_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk",
           "tableFrom": "skill_evidence",
-          "columnsFrom": ["attempt_id", "owner_id", "skill_id", "language"],
           "tableTo": "attempts",
+          "columnsFrom": ["attempt_id", "owner_id", "skill_id", "language"],
           "columnsTo": ["id", "owner_id", "skill_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "skill_evidence_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk": {
           "name": "skill_evidence_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk",
           "tableFrom": "skill_evidence",
-          "columnsFrom": ["evaluation_id", "owner_id", "attempt_id"],
           "tableTo": "evaluations",
+          "columnsFrom": ["evaluation_id", "owner_id", "attempt_id"],
           "columnsTo": ["id", "owner_id", "attempt_id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -2855,11 +2855,11 @@
       "checkConstraints": {
         "skills_language": {
           "name": "skills_language",
-          "value": "\"skills\".\"language\" IN ('fr', 'de', 'en')"
+          "value": "\"skills\".\"language\" IN ('fr', 'de', 'en', 'pt')"
         },
         "skills_level": {
           "name": "skills_level",
-          "value": "\"skills\".\"level\" IN ('A1', 'A2')"
+          "value": "\"skills\".\"level\" IN ('A1', 'A2', 'B1', 'B2')"
         }
       }
     },
@@ -2962,20 +2962,20 @@
         "study_sessions_owner_id_users_id_fk": {
           "name": "study_sessions_owner_id_users_id_fk",
           "tableFrom": "study_sessions",
-          "columnsFrom": ["owner_id"],
           "tableTo": "users",
+          "columnsFrom": ["owner_id"],
           "columnsTo": ["id"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         },
         "study_sessions_enrollment_id_owner_id_language_enrollments_id_owner_id_language_fk": {
           "name": "study_sessions_enrollment_id_owner_id_language_enrollments_id_owner_id_language_fk",
           "tableFrom": "study_sessions",
-          "columnsFrom": ["enrollment_id", "owner_id", "language"],
           "tableTo": "enrollments",
+          "columnsFrom": ["enrollment_id", "owner_id", "language"],
           "columnsTo": ["id", "owner_id", "language"],
-          "onUpdate": "no action",
-          "onDelete": "cascade"
+          "onDelete": "cascade",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
@@ -3129,9 +3129,9 @@
   "views": {},
   "enums": {},
   "_meta": {
-    "columns": {},
     "schemas": {},
-    "tables": {}
+    "tables": {},
+    "columns": {}
   },
   "internal": {
     "indexes": {}

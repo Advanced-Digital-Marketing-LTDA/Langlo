@@ -269,7 +269,9 @@ async function readLesson(client: Client, read: LessonRead) {
     >[],
     references: JSON.parse(pick('t_refs', 'refs')) as string[],
     explanationLanguage: translated ? chosen : 'en',
-    englishFallback: chosen !== 'en' && !translated
+    englishFallback: chosen !== 'en' && !translated,
+    // Portuguese (Brazil) lessons are written in English by design, not by fallback.
+    englishOnlyTrack: read.language === 'pt'
   };
 }
 

@@ -345,7 +345,7 @@ describe('assessment answer and completion routes', () => {
     expect(await resultsPage(event({ id }))).toMatchObject({
       results: {
         counts: { correct: 2, incorrect: 0, uncertain: 1 },
-        a1Gaps: ['fr-a1-001']
+        foundationGaps: ['fr-a1-001']
       },
       reportKeys: {
         'fr-a1-001@1:q1': expect.any(String),

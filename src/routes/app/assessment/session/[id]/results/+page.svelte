@@ -25,15 +25,16 @@
   independent grammar evidence. This sample does not certify your language
   level.
 </p>
-<h2>A1 topics to revisit</h2>
-{#if data.results.a1Gaps.length}<ul>
-    {#each data.results.a1Gaps as skill (skill)}<li>
+<h2>{data.results.foundationLevel} topics to revisit</h2>
+{#if data.results.foundationGaps.length}<ul>
+    {#each data.results.foundationGaps as skill (skill)}<li>
         <a href={`/app/learn/${data.results.language}/lesson/${skill}`}
           >{skill}</a
         > — practise this foundation
       </li>{/each}
   </ul>{:else}<p>
-    No A1 gaps were observed in this sample. Unsampled topics remain unknown.
+    No {data.results.foundationLevel} gaps were observed in this sample. Unsampled
+    topics remain unknown.
   </p>{/if}
 <h2>Your responses</h2>
 <ol>
