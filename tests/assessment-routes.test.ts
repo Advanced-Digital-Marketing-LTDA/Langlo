@@ -136,6 +136,34 @@ async function finish(id: string) {
   });
 }
 
+async function startEarlyStopAssessment(response: string) {
+  await client.batch(
+    Array.from({ length: 5 }, (_, index) => {
+      const id = `fr-a1-00${index + 4}`;
+      return [
+        {
+          sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
+          args: [id, 'fr', 'A1']
+        },
+        {
+          sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, 'fr', 1, 'pilot-ready')",
+          args: [`${id}@1`, id]
+        },
+        {
+          sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer) VALUES (?, ?, ?, 'fr', 'typed-blank', 1, ?, 'es')",
+          args: [`${id}@1:q1`, `${id}@1`, id, `Synthetic prompt for ${id}`]
+        }
+      ];
+    }).flat(),
+    'write'
+  );
+  if (response === 'wrong')
+    await client.execute(
+      "UPDATE questions SET format = 'multiple-choice', answer = 'es', alternatives = '[\"es\",\"wrong\"]'"
+    );
+  return start();
+}
+
 describe('assessment page boundaries', () => {
   it('lists only the owner’s unfinished assessments and enrolled tracks', async () => {
     const own = await start();
@@ -324,66 +352,69 @@ describe('assessment answer and completion routes', () => {
     ).toBe(3);
   });
 
-  it('finalizes through the answer route after five explicit Not sure choices and exposes only reached items', async () => {
-    await client.batch(
-      Array.from({ length: 5 }, (_, index) => {
-        const id = `fr-a1-00${index + 4}`;
-        return [
-          {
-            sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
-            args: [id, 'fr', 'A1']
-          },
-          {
-            sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, 'fr', 1, 'pilot-ready')",
-            args: [`${id}@1`, id]
-          },
-          {
-            sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer) VALUES (?, ?, ?, 'fr', 'typed-blank', 1, ?, 'es')",
-            args: [`${id}@1:q1`, `${id}@1`, id, `Synthetic prompt for ${id}`]
-          }
-        ];
-      }).flat(),
-      'write'
-    );
-    const { id } = await start();
-    const questions = [
-      'fr-a1-001@1:q1',
-      'fr-a1-002@1:q1',
-      'fr-a1-003@1:q1',
-      'fr-a1-004@1:q1',
-      'fr-a1-005@1:q1'
-    ];
-    for (const questionId of questions) {
-      const fields = {
-        questionId,
-        intent: 'unsure',
-        submissionKey: randomUUID()
-      };
-      await expect(
-        sessionActions.answer(event({ id, fields }))
-      ).rejects.toMatchObject({ status: 303 });
-      if (questionId === questions[0])
+  it.each([
+    {
+      response: 'unsure',
+      intent: 'unsure',
+      answer: '',
+      incorrect: 0,
+      uncertain: 5
+    },
+    {
+      response: 'wrong',
+      intent: 'answer',
+      answer: 'wrong',
+      incorrect: 5,
+      uncertain: 0
+    }
+  ])(
+    'finalizes through the answer route after five $response responses and exposes only reached items',
+    async ({ response, intent, answer, incorrect, uncertain }) => {
+      const { id } = await startEarlyStopAssessment(response);
+      const questions = [
+        'fr-a1-001@1:q1',
+        'fr-a1-002@1:q1',
+        'fr-a1-003@1:q1',
+        'fr-a1-004@1:q1',
+        'fr-a1-005@1:q1'
+      ];
+      for (const questionId of questions) {
+        const fields = {
+          questionId,
+          intent,
+          answer,
+          submissionKey: randomUUID()
+        };
         await expect(
           sessionActions.answer(event({ id, fields }))
         ).rejects.toMatchObject({ status: 303 });
+        if (questionId === questions[0])
+          await expect(
+            sessionActions.answer(event({ id, fields }))
+          ).rejects.toMatchObject({ status: 303 });
+      }
+      await expect(sessionPage(event({ id }))).rejects.toMatchObject({
+        status: 303,
+        location: `${sessionUrl(id)}/results`
+      });
+      const result = await resultsPage(event({ id }));
+      if (!result) throw new Error('Results load did not return data');
+      expect(result.results).toMatchObject({
+        total: 8,
+        notReached: 3,
+        counts: {
+          correct: 0,
+          incorrect,
+          uncertain
+        }
+      });
+      expect(
+        result.results.items.map(
+          (item: { questionId: string }) => item.questionId
+        )
+      ).toEqual(questions);
     }
-    await expect(sessionPage(event({ id }))).rejects.toMatchObject({
-      status: 303,
-      location: `${sessionUrl(id)}/results`
-    });
-    const result = await resultsPage(event({ id }));
-    if (!result) throw new Error('Results load did not return data');
-    expect(result.results).toMatchObject({
-      total: 8,
-      notReached: 3,
-      counts: { correct: 0, incorrect: 0, uncertain: 5 }
-    });
-    expect(
-      result.results.items.map(
-        (item: { questionId: string }) => item.questionId
-      )
-    ).toEqual(questions);
-  });
+  );
 
   it('resumes only the owner’s paused saved assessment without revealing feedback', async () => {
     const { id } = await start();
