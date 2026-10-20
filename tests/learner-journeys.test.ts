@@ -296,6 +296,11 @@ describe('settings', () => {
         })
       )
     ).toMatchObject({ status: 400 });
+    expect(
+      await settingsActions.previewStudySchedule(
+        event({ fields: { ...fields, desiredRetention: '98' } })
+      )
+    ).toMatchObject({ status: 400 });
   });
 });
 
@@ -1066,6 +1071,9 @@ describe('decks, review and Anki export', () => {
       selected: { date: '2026-10-19', count: 1 }
     });
     expect(first.scenario).toContain('Good');
+    await expect(
+      previewStudySchedule(client, learner, selected, new Date(Number.NaN))
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
     await client.execute({
       sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
       args: ['card:note-fsrs-preview-0']
@@ -1203,6 +1211,9 @@ describe('decks, review and Anki export', () => {
     await expect(
       updateNote(client, learner, 'note-tags-move', { deckId: 'deck-foreign' })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await expect(
+      updateNote(client, learner, 'note-tags-move', { deckId: '' })
+    ).rejects.toMatchObject({ code: 'INVALID_NOTE' });
   });
 
   it('suspends and resumes only the learner’s approved cards and removes them from due counts', async () => {
@@ -1216,6 +1227,14 @@ describe('decks, review and Anki export', () => {
       content: { front: 'Front', back: 'Back' }
     });
     await approveNote(client, learner, 'note-suspension');
+    await expect(
+      setCardSuspended(
+        client,
+        learner,
+        'card:note-suspension',
+        'yes' as unknown as boolean
+      )
+    ).rejects.toMatchObject({ code: 'INVALID_CARD_STATE' });
     expect(await countDueCards(client, learner)).toBe(1);
     await setCardSuspended(client, learner, 'card:note-suspension', true);
     expect(await countDueCards(client, learner)).toBe(0);
@@ -1225,5 +1244,41 @@ describe('decks, review and Anki export', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     await setCardSuspended(client, learner, 'card:note-suspension', false);
     expect(await countDueCards(client, learner)).toBe(1);
+  });
+
+  it('validates suspension forms and rejects cards that are not approved', async () => {
+    await createDeck(client, learner, { id: 'deck-pending', name: 'Pending' });
+    await createNote(client, learner, {
+      id: 'note-pending',
+      sourceId: `langlo:v1:${'f'.repeat(64)}`,
+      deckId: 'deck-pending',
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    expect(
+      await deckActions.suspension(
+        event({
+          params: { id: 'deck-pending' },
+          fields: { cardId: 'card:note-pending', suspended: 'maybe' }
+        })
+      )
+    ).toMatchObject({ status: 400 });
+    await expect(
+      setCardSuspended(client, learner, 'card:note-pending', true)
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await approveNote(client, learner, 'note-pending');
+    expect(
+      await deckActions.suspension(
+        event({
+          params: { id: 'deck-pending' },
+          fields: { cardId: 'card:note-pending', suspended: 'true' }
+        })
+      )
+    ).toEqual({ saved: true });
+    expect((await getNote(client, learner, 'note-pending')).card).toMatchObject(
+      {
+        suspended: true
+      }
+    );
   });
 });

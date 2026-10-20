@@ -10,6 +10,11 @@ it('starts the UTC study day at 04:00 and advances at that boundary', () => {
   ).toBe('2026-10-20T04:00:00.000Z');
 });
 
+it('rejects invalid study-day inputs before timezone conversion', () => {
+  expect(() => studyDayStart(Number.NaN, 'UTC')).toThrow(RangeError);
+  expect(() => studyDayStart(Date.now(), 'UTC', 0.5)).toThrow(RangeError);
+});
+
 it('uses calendar study days across daylight-saving gaps and folds', () => {
   const beforeSpring = studyDayStart(
     new Date('2026-03-07T16:00:00Z'),

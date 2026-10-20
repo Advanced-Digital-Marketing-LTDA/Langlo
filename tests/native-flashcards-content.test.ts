@@ -13,10 +13,45 @@ import {
   testSession,
   testSourceId
 } from './fixtures/flashcards';
+import {
+  isNonEmptyBoundedText,
+  normalizeTags,
+  validateContent,
+  validateExplanation
+} from '../src/lib/server/flashcard-validation';
 
 afterEach(disposeFlashcardFixtures);
 
 describe('native flashcard content feasibility', () => {
+  it('rejects malformed note metadata at the validation boundary', () => {
+    for (const value of [
+      42,
+      {},
+      Array(21).fill('x'),
+      ['x'.repeat(65)],
+      ['x\0y'],
+      [1]
+    ]) {
+      expect(() => normalizeTags(value)).toThrowError('INVALID_TAGS');
+    }
+    expect(normalizeTags(' Grammar,grammar, ,verbs')).toEqual([
+      'Grammar',
+      'verbs'
+    ]);
+    expect(() =>
+      validateContent('unsupported', { front: 'a', back: 'b' })
+    ).toThrowError('INVALID_CONTENT');
+    expect(() => validateContent('basic', null)).toThrowError(
+      'INVALID_CONTENT'
+    );
+    expect(() => validateExplanation(42)).toThrowError('INVALID_EXPLANATION');
+    expect(() => validateExplanation('x\0y')).toThrowError(
+      'INVALID_EXPLANATION'
+    );
+    expect(isNonEmptyBoundedText(42, 64)).toBe(false);
+    expect(isNonEmptyBoundedText(' ', 64)).toBe(false);
+  });
+
   it('counts supplementary-plane card text and deck names as Unicode code points at storage limits', async () => {
     const target = await fixture();
     const learner = testSession('learner-a');

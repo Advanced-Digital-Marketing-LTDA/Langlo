@@ -74,6 +74,18 @@ describe('native flashcard persistence feasibility', () => {
       expect(
         (await searchNotes(db, { userId: 'learner-a' }, '[]')).results
       ).toEqual([]);
+      expect(await searchNotes(db, { userId: 'learner-a' }, '  ')).toEqual({
+        results: [],
+        nextCursor: null
+      });
+      for (const [query, after] of [
+        ['x'.repeat(101), 0],
+        ['school', -1],
+        ['school', 0.5]
+      ] as const)
+        await expect(
+          searchNotes(db, { userId: 'learner-a' }, query, after)
+        ).rejects.toMatchObject({ code: 'INVALID_SEARCH' });
       await db.batch(
         Array.from(
           { length: 55 },
@@ -161,10 +173,10 @@ describe('native flashcard persistence feasibility', () => {
         args: ['ts-fsrs@unsupported', bad.cardId, learner.userId]
       });
       const due = await listDueCards(db.client, learner, Date.now() + 1000);
-      expect(due.unavailableCount).toBe(1);
-      expect(due.cards).toMatchObject([
-        { id: good.cardId, intervals: { good: expect.any(String) } }
-      ]);
+      expect(due).toMatchObject({
+        unavailableCount: 1,
+        cards: [{ id: good.cardId, intervals: { good: expect.any(String) } }]
+      });
       const preview = await previewStudySchedule(db.client, learner, {
         desiredRetention: 90,
         newCardPreset: '1m+10m',
