@@ -15,7 +15,7 @@ import {
   getAssessment,
   startAssessment
 } from '../src/lib/server/assessment';
-import { recordAttempt } from '../src/lib/server/study';
+import { getLesson, recordAttempt } from '../src/lib/server/study';
 import { assessmentLevels, foundationLevel } from '../src/lib/levels';
 import { load as enrollLoad } from '../src/routes/app/enroll/+page.server';
 import { load as settingsLoad } from '../src/routes/app/settings/+page.server';
@@ -280,5 +280,40 @@ describe('Portuguese placement assessment', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     expect(await listEnrollments(client, learner)).toHaveLength(1);
     expect(await listEnrollments(client, other)).toHaveLength(1);
+  });
+
+  it('tells Portuguese learners their lessons are English by design, not as a fallback', async () => {
+    await enroll(client, learner, fields);
+    await enroll(client, learner, {
+      language: 'fr',
+      startingLevel: 'A1',
+      explanationLanguage: 'en'
+    });
+    await client.batch(
+      ['pt', 'fr'].flatMap((language) => {
+        const id = `${language}-lesson-001`;
+        return [
+          {
+            sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
+            args: [id, language, language === 'pt' ? 'B1' : 'A1']
+          },
+          {
+            sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, ?, 1, 'pilot-ready')",
+            args: [`${id}@1`, id, language]
+          },
+          {
+            sql: "INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) VALUES (?, ?, ?, 'Titulo', 'Explanation', '[]', '[]', ?)",
+            args: [`${id}@1`, id, language, 'a'.repeat(64)]
+          }
+        ];
+      }),
+      'write'
+    );
+    expect(
+      await getLesson(client, learner, 'pt', 'pt-lesson-001')
+    ).toMatchObject({ englishOnlyTrack: true, englishFallback: false });
+    expect(
+      await getLesson(client, learner, 'fr', 'fr-lesson-001')
+    ).toMatchObject({ englishOnlyTrack: false, englishFallback: false });
   });
 });
