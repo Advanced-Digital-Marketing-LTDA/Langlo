@@ -364,6 +364,78 @@ describe('saved placement plan', () => {
     ).toEqual([{ attempt_id: certain.id, contribution: 1 }]);
   });
 
+  it.each(['prepared', 'fallback'] as const)(
+    'saves partial results on the fifth confirmed wrong answer from %s',
+    async (evaluation) => {
+      await addHoldoutSkills(
+        [
+          'fr-a1-004',
+          'fr-a1-005',
+          'fr-a1-006',
+          'fr-a1-007',
+          'fr-a1-008',
+          'fr-a1-009'
+        ].map((id) => ({ id, language: 'fr', level: 'A1' }))
+      );
+      await client.execute({
+        sql: 'UPDATE questions SET format = ?, answer = ?, alternatives = ?',
+        args: [
+          evaluation === 'prepared' ? 'multiple-choice' : 'typed-blank',
+          'es',
+          JSON.stringify(evaluation === 'prepared' ? ['es', 'wrong'] : [])
+        ]
+      });
+      const { id } = await start();
+      const submit = async (value: string, notSure = false) => {
+        const question = (await getAssessment(client, learner, id)).question!;
+        const input = {
+          studySessionId: id,
+          questionId: question.id,
+          submissionKey: randomUUID(),
+          evidenceKind: 'independent' as const,
+          answer: value,
+          notSure
+        };
+        const options = {
+          fallback: async () => ({
+            outcome: 'incorrect' as const,
+            reason: 'answered' as const,
+            evaluated: true as const
+          })
+        };
+        const result = await recordAttempt(client, learner, input, options);
+        expect(await recordAttempt(client, learner, input, options)).toEqual({
+          id: result.id,
+          duplicate: true
+        });
+      };
+      for (let i = 0; i < 4; i++) await submit('wrong');
+      await submit('', true);
+      await submit('es');
+      expect(await getAssessment(client, learner, id)).toMatchObject({
+        state: 'active',
+        answered: 6
+      });
+      await expect(
+        assessmentResults(client, learner, id)
+      ).rejects.toMatchObject({ code: 'RESULTS_NOT_READY' });
+      await submit('wrong');
+      expect(await getAssessment(client, learner, id)).toMatchObject({
+        state: 'completed',
+        answered: 7,
+        question: null
+      });
+      expect(await assessmentResults(client, learner, id)).toMatchObject({
+        total: 9,
+        notReached: 2,
+        counts: { correct: 1, incorrect: 5, uncertain: 1 }
+      });
+      await expect(answer(id, 'fr-a1-008@1:q1')).rejects.toMatchObject({
+        code: 'SESSION_NOT_ACTIVE'
+      });
+    }
+  );
+
   it('holds results while a fresh final answer awaits its fallback verdict, then publishes', async () => {
     const { id } = await start();
     await answer(id, 'fr-a1-001@1:q2');

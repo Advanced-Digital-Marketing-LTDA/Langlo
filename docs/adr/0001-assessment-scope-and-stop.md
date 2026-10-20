@@ -17,10 +17,12 @@ were unsure on many questions no way to finish early.
   before saving a session if any active skill lacks an eligible holdout.
 - New plans use `assessment-2`. Saved `assessment-1` plans remain readable and
   keep their original contents.
-- The fifth explicit `Not sure` choice in one assessment completes it as soon
-  as that answer is recorded. The choices need not be consecutive. Evaluator
-  uncertainty does not count, and a replayed submission does not add another
-  choice.
+- Either the fifth confirmed incorrect answer or the fifth explicit `Not sure`
+  choice in one assessment completes it when that answer or verdict is saved.
+  Each threshold is counted separately; responses need not be consecutive.
+  Incorrect answers use the same recognized prepared/fallback verdicts as the
+  results page, with fallback taking precedence. Evaluator uncertainty does not
+  count, and replayed submissions do not increase either count.
 - Results for an early-completed assessment include submitted responses only
   and a separate count of unreached questions. Unreached questions remain
   unscored and their answers are not disclosed.
