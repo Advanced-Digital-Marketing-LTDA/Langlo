@@ -230,6 +230,7 @@ export async function listDueCards(
     deck: String(row.deck_name),
     content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
     explanation: String(row.explanation),
+    scheduleKey: JSON.stringify(schedule),
     intervals: ratingIntervalsForStoredCard(row, schedule, reviewedAt)
   }));
 }

@@ -26,6 +26,7 @@ export const actions: Actions = {
           cardId: String(form.get('cardId') ?? ''),
           submissionId: String(form.get('submissionKey') ?? ''),
           expectedRevision: Number(form.get('revision')),
+          expectedScheduleKey: String(form.get('scheduleKey') ?? ''),
           rating: String(form.get('rating') ?? '') as ReviewRating
         }),
       { reviewed: true }

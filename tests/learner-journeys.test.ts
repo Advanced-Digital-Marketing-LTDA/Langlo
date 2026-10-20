@@ -568,8 +568,9 @@ describe('decks, review and Anki export', () => {
     expect(await listDueCards(client, other)).toEqual([]);
     expect(await listDueCards(client, learner, 0)).toEqual([]);
 
-    const { submissionKey } = (await reviewLoad(event())) as {
+    const { submissionKey, cards } = (await reviewLoad(event())) as {
       submissionKey: string;
+      cards: { scheduleKey: string }[];
     };
     const rate = (revision: string, rating = 'good', key = submissionKey) =>
       reviewActions.rate(
@@ -578,7 +579,8 @@ describe('decks, review and Anki export', () => {
             cardId: draft.cardId,
             revision,
             rating,
-            submissionKey: key
+            submissionKey: key,
+            scheduleKey: cards[0].scheduleKey
           }
         })
       );
@@ -608,6 +610,58 @@ describe('decks, review and Anki export', () => {
       'SELECT count(*) AS total FROM native_flashcard_review_events'
     );
     expect(events.rows[0].total).toBe(1);
+  });
+
+  it('rejects a review when its displayed schedule changed in another tab', async () => {
+    const draft = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Schedule', back: 'Changed' })
+    );
+    await approveNote(client, learner, draft.id);
+    const page = (await reviewLoad(event())) as {
+      cards: { scheduleKey: string }[];
+      submissionKey: string;
+    };
+    const before = await getNote(client, learner, draft.id);
+    await feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+      desiredRetention: 95,
+      newCardPreset: '30m',
+      relearningPreset: '30m'
+    });
+    const stale = await reviewActions.rate(
+      event({
+        fields: {
+          cardId: draft.cardId,
+          revision: '0',
+          rating: 'good',
+          submissionKey: page.submissionKey,
+          scheduleKey: page.cards[0].scheduleKey
+        }
+      })
+    );
+    expect(stale).toMatchObject({ status: 409 });
+    expect(await getNote(client, learner, draft.id)).toEqual(before);
+    expect(await listReviewEvents(client, learner, draft.cardId)).toEqual([]);
+    const refreshed = (await reviewLoad(event())) as {
+      cards: { scheduleKey: string }[];
+      submissionKey: string;
+    };
+    expect(refreshed.cards[0].scheduleKey).not.toBe(page.cards[0].scheduleKey);
+    expect(
+      await reviewActions.rate(
+        event({
+          fields: {
+            cardId: draft.cardId,
+            revision: '0',
+            rating: 'good',
+            submissionKey: refreshed.submissionKey,
+            scheduleKey: refreshed.cards[0].scheduleKey
+          }
+        })
+      )
+    ).toEqual({ reviewed: true });
   });
 
   it('refuses a foreign review without writing history', async () => {
@@ -665,6 +719,10 @@ describe('decks, review and Anki export', () => {
         noteForm({ kind: 'basic', front: `Q ${rating}`, back: 'A' })
       );
       await approveNote(client, learner, note.id);
+      const scheduleKey = (await listDueCards(client, learner)).find(
+        (card) => card.id === note.cardId
+      )?.scheduleKey;
+      if (!scheduleKey) throw new Error('Missing due card schedule');
       expect(
         await reviewActions.rate(
           event({
@@ -672,6 +730,7 @@ describe('decks, review and Anki export', () => {
               cardId: note.cardId,
               revision: '0',
               rating,
+              scheduleKey,
               submissionKey: `10000000-0000-4000-8000-00000000002${ratings.indexOf(rating)}`
             }
           })

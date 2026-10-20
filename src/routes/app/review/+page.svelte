@@ -44,6 +44,7 @@
     >
       <input type="hidden" name="cardId" value={card.id} />
       <input type="hidden" name="revision" value={card.revision} />
+      <input type="hidden" name="scheduleKey" value={card.scheduleKey} />
       <input type="hidden" name="submissionKey" value={data.submissionKey} />
       {#each ratings as rating (rating)}
         <button type="submit" name="rating" value={rating}

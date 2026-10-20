@@ -84,6 +84,7 @@ type ReviewInput = {
   submissionId: string;
   expectedRevision: number;
   rating: RatingName;
+  expectedScheduleKey?: string;
 };
 type ReviewResult = { revision: number; dueAt: number; duplicate: boolean };
 
@@ -1167,6 +1168,11 @@ async function applyReview(
     String(cardRow.parameters_json)
   );
   const schedule = await readStudySchedule(tx, session.userId);
+  if (
+    input.expectedScheduleKey !== undefined &&
+    input.expectedScheduleKey !== JSON.stringify(schedule)
+  )
+    throw new FlashcardError('STALE_REVIEW');
   const effectiveParameters = parametersForSchedule(
     schedule,
     cardScheduler.parameters
