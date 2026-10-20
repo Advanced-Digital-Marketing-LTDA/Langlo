@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createEmptyCard, fsrs, generatorParameters, Rating } from 'ts-fsrs';
+import { createClient } from '@libsql/client/sqlite3';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
+import { searchNotes } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
   createDeck,
@@ -16,10 +18,85 @@ import {
   testSession,
   testSourceId
 } from './fixtures/flashcards';
+import { studyDayStart } from '../src/lib/server/study-days';
 
 afterEach(disposeFlashcardFixtures);
 
 describe('native flashcard persistence feasibility', () => {
+  it('finds uppercase accented note text from a lowercase search', async () => {
+    const db = createClient({ url: 'file::memory:' });
+    try {
+      await db.batch(
+        [
+          'CREATE TABLE native_flashcard_decks (id TEXT, owner_id TEXT, name TEXT)',
+          'CREATE TABLE native_flashcard_notes (id TEXT, owner_id TEXT, deck_id TEXT, kind TEXT, status TEXT, content_json TEXT, tags_json TEXT, explanation TEXT, created_at INTEGER)',
+          "INSERT INTO native_flashcard_decks VALUES ('deck-one', 'learner-a', 'French')",
+          "INSERT INTO native_flashcard_notes VALUES ('note-one', 'learner-a', 'deck-one', 'basic', 'approved', '{\"front\":\"ÉCOLE\",\"back\":\"school\"}', '[]', '', 1)"
+        ],
+        'write'
+      );
+      expect(
+        await searchNotes(db, { userId: 'learner-a' }, 'école')
+      ).toMatchObject([{ id: 'note-one' }]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('keeps sub-day steps exact and aligns day intervals to the UTC study day', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      await seedBasicNote(db.client, learner);
+      await approveNote(
+        db.client,
+        learner,
+        'note-10000000-0000-4000-8000-000000000002'
+      );
+      await submitReview(db.client, learner, {
+        cardId: 'card:note-10000000-0000-4000-8000-000000000002',
+        submissionId: '20000000-0000-4000-8000-000000000001',
+        expectedRevision: 0,
+        rating: 'good'
+      });
+      const firstEvent = (
+        await listReviewEvents(
+          db.client,
+          learner,
+          'card:note-10000000-0000-4000-8000-000000000002'
+        )
+      )[0];
+      expect(firstEvent.state?.scheduled_days).toBe(0);
+      expect(firstEvent.state!.due.getTime() - firstEvent.reviewedAt).toBe(
+        10 * 60_000
+      );
+      await submitReview(db.client, learner, {
+        cardId: 'card:note-10000000-0000-4000-8000-000000000002',
+        submissionId: '20000000-0000-4000-8000-000000000002',
+        expectedRevision: 1,
+        rating: 'good'
+      });
+      const secondEvent = (
+        await listReviewEvents(
+          db.client,
+          learner,
+          'card:note-10000000-0000-4000-8000-000000000002'
+        )
+      )[1];
+      expect(secondEvent.state?.scheduled_days).toBeGreaterThanOrEqual(1);
+      expect(secondEvent.state?.due.getTime()).toBe(
+        studyDayStart(
+          new Date(secondEvent.reviewedAt),
+          'UTC',
+          Math.round(secondEvent.state!.scheduled_days)
+        ).getTime()
+      );
+    } finally {
+      db.close();
+    }
+  });
+
   it('keeps draft notes out of scheduler state until approval', async () => {
     const target = await fixture();
     const learner = testSession('learner-a');
@@ -643,7 +720,7 @@ describe('native flashcard persistence feasibility', () => {
     }
   });
 
-  it('uses each card’s persisted FSRS parameters when scheduling and recording reviews', async () => {
+  it('preserves non-user FSRS parameters and applies the learner schedule to reviews', async () => {
     const target = await fixture();
     const learner = testSession('learner-a');
     const db = await openFixtureDatabase(target);
@@ -663,6 +740,12 @@ describe('native flashcard persistence feasibility', () => {
         learning_steps: ['1d'],
         relearning_steps: ['1d']
       });
+      const effectiveParameters = generatorParameters({
+        ...cardParameters,
+        enable_fuzz: true,
+        learning_steps: ['1m', '10m'],
+        relearning_steps: ['10m']
+      });
       await approveNote(db.client, learner, note.id);
       await db.client.execute(
         'UPDATE native_flashcards SET parameters_json = ? WHERE id = ? AND owner_id = ?',
@@ -681,16 +764,14 @@ describe('native flashcard persistence feasibility', () => {
           [learner.userId, submissionId]
         )
       ).rows[0];
-      expect(JSON.parse(String(event.parameters_json))).toEqual(cardParameters);
+      expect(JSON.parse(String(event.parameters_json))).toEqual(
+        effectiveParameters
+      );
       const reviewedAt = new Date(Number(event.reviewed_at));
-      const expectedDue = fsrs(cardParameters)
-        .next(createEmptyCard(reviewedAt), reviewedAt, Rating.Good)
-        .card.due.getTime();
-      const defaultDue = fsrs()
+      const expectedDue = fsrs(effectiveParameters)
         .next(createEmptyCard(reviewedAt), reviewedAt, Rating.Good)
         .card.due.getTime();
       expect(result.dueAt).toBe(expectedDue);
-      expect(result.dueAt).not.toBe(defaultDue);
     } finally {
       db.close();
     }

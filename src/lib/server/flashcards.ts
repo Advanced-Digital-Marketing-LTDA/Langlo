@@ -3,7 +3,9 @@ import {
   fsrs,
   checkParameters,
   generatorParameters,
+  GenSeedStrategyWithCardId,
   Rating,
+  StrategyMode,
   type Card,
   type Grade,
   type FSRSParameters
@@ -17,6 +19,7 @@ import type {
 } from '@libsql/client';
 import { LibsqlError } from '@libsql/client';
 import { setTimeout as delay } from 'node:timers/promises';
+import { studyDayStart } from './study-days';
 
 export interface LearnerSession {
   userId: string;
@@ -40,11 +43,20 @@ export function noteSourceFrom(row: Row): NoteSource | null {
     contentVersionId: String(row.source_content_version_id)
   };
 }
+export type NewCardPreset = '10m' | '1m+10m' | '30m';
+export type RelearningPreset = '10m' | '30m' | '1h';
+export type StudySchedule = {
+  desiredRetention: number;
+  newCardPreset: NewCardPreset;
+  relearningPreset: RelearningPreset;
+};
+
 type CreateNoteInput = {
   id: string;
   sourceId: string;
   deckId: string;
   explanation?: string;
+  tags?: unknown;
   source?: NoteSource;
 } & (
   | { kind: 'basic'; content: BasicContent }
@@ -60,7 +72,22 @@ type ReviewInput = {
 type ReviewResult = { revision: number; dueAt: number; duplicate: boolean };
 
 const schedulerVersion = 'ts-fsrs@5.4.2';
-const parameters = generatorParameters();
+const parameters = generatorParameters({ enable_fuzz: true });
+const defaultStudySchedule: StudySchedule = {
+  desiredRetention: 90,
+  newCardPreset: '1m+10m',
+  relearningPreset: '10m'
+};
+const newCardSteps = {
+  '10m': ['10m'],
+  '1m+10m': ['1m', '10m'],
+  '30m': ['30m']
+} as const;
+const relearningSteps = {
+  '10m': ['10m'],
+  '30m': ['30m'],
+  '1h': ['1h']
+} as const;
 const maxCardTextLength = 4096;
 const maxExplanationLength = 1000;
 const maxSourceFieldLength = 512;
@@ -75,6 +102,231 @@ const ratings: Record<RatingName, Grade> = {
   good: Rating.Good,
   easy: Rating.Easy
 };
+
+function isStudySchedule(value: unknown): value is StudySchedule {
+  if (!isRecord(value)) return false;
+  return (
+    Number.isInteger(value.desiredRetention) &&
+    Number(value.desiredRetention) >= 70 &&
+    Number(value.desiredRetention) <= 97 &&
+    ['10m', '1m+10m', '30m'].includes(String(value.newCardPreset)) &&
+    ['10m', '30m', '1h'].includes(String(value.relearningPreset))
+  );
+}
+
+function validateStudySchedule(value: unknown): StudySchedule {
+  if (!isStudySchedule(value))
+    throw new FlashcardError('INVALID_STUDY_SCHEDULE');
+  return value;
+}
+
+function parametersForSchedule(
+  schedule: StudySchedule,
+  base: FSRSParameters = parameters
+): FSRSParameters {
+  return generatorParameters({
+    ...base,
+    request_retention: schedule.desiredRetention / 100,
+    learning_steps: newCardSteps[
+      schedule.newCardPreset
+    ] as FSRSParameters['learning_steps'],
+    relearning_steps: relearningSteps[
+      schedule.relearningPreset
+    ] as FSRSParameters['relearning_steps'],
+    enable_fuzz: true
+  });
+}
+
+async function readStudySchedule(
+  client: Pick<Client, 'execute'>,
+  ownerId: string
+): Promise<StudySchedule> {
+  const result = await client.execute({
+    sql: 'SELECT desired_retention, new_card_preset, relearning_preset FROM native_flashcard_preferences WHERE owner_id = ?',
+    args: [ownerId]
+  });
+  const row = result.rows[0];
+  return row
+    ? {
+        desiredRetention: Number(row.desired_retention),
+        newCardPreset: String(row.new_card_preset) as NewCardPreset,
+        relearningPreset: String(row.relearning_preset) as RelearningPreset
+      }
+    : defaultStudySchedule;
+}
+
+export async function getStudySchedule(
+  client: Pick<Client, 'execute'>,
+  session: LearnerSession
+): Promise<StudySchedule> {
+  return readStudySchedule(client, session.userId);
+}
+
+export async function saveStudySchedule(
+  client: Client,
+  session: LearnerSession,
+  input: unknown
+): Promise<StudySchedule> {
+  const schedule = validateStudySchedule(input);
+  await executeWrite(client, {
+    sql: `INSERT INTO native_flashcard_preferences (owner_id, desired_retention, new_card_preset, relearning_preset)
+      VALUES (?, ?, ?, ?) ON CONFLICT (owner_id) DO UPDATE SET
+      desired_retention = excluded.desired_retention,
+      new_card_preset = excluded.new_card_preset,
+      relearning_preset = excluded.relearning_preset,
+      updated_at = unixepoch() * 1000`,
+    args: [
+      session.userId,
+      schedule.desiredRetention,
+      schedule.newCardPreset,
+      schedule.relearningPreset
+    ]
+  });
+  return schedule;
+}
+
+function localDate(date: Date, timezone: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(date);
+  const values = Object.fromEntries(
+    parts.map(({ type, value }) => [type, value])
+  );
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function simulateGoodReviews(
+  rows: Row[],
+  schedule: StudySchedule,
+  now: Date,
+  boundaries: Date[],
+  timezone: string
+): number[] {
+  const counts = Array.from({ length: 7 }, () => 0);
+  const end = boundaries[7].getTime();
+  for (const row of rows) {
+    const cardId = String(row.id);
+    const base = readCardScheduler(
+      row.scheduler_version,
+      String(row.parameters_json)
+    ).parameters;
+    const scheduler = deterministicScheduler(
+      parametersForSchedule(schedule, base)
+    );
+    let state = decodeCard(String(row.state_json));
+    let dueAt = Number(row.due_at);
+    // shortcut: cap at 16 simulated reviews per card, raise it if future presets exceed that.
+    for (let review = 0; review < 16 && dueAt < end; review += 1) {
+      const reviewedAt = Math.max(now.getTime(), dueAt);
+      let day = 6;
+      for (let index = 0; index < 7; index += 1) {
+        if (reviewedAt < boundaries[index + 1].getTime()) {
+          day = index;
+          break;
+        }
+      }
+      counts[day] += 1;
+      const reviewTime = new Date(reviewedAt);
+      const updated = scheduler.next(
+        cardWithId(state, cardId),
+        reviewTime,
+        Rating.Good
+      ).card;
+      state = scheduledCard(updated, reviewTime, timezone);
+      dueAt = state.due.getTime();
+      if (dueAt <= reviewedAt) dueAt = reviewedAt + 60_000;
+    }
+  }
+  return counts;
+}
+
+export async function previewStudySchedule(
+  client: Client,
+  session: LearnerSession,
+  selectedInput: unknown,
+  nowInput: Date | number = Date.now()
+) {
+  const selected = validateStudySchedule(selectedInput);
+  const saved = await readStudySchedule(client, session.userId);
+  const zone = await client.execute({
+    sql: 'SELECT timezone FROM learner_preferences WHERE owner_id = ?',
+    args: [session.userId]
+  });
+  const timezone = zone.rows[0] ? String(zone.rows[0].timezone) : 'UTC';
+  const now = nowInput instanceof Date ? nowInput : new Date(nowInput);
+  if (Number.isNaN(now.getTime()))
+    throw new FlashcardError('INVALID_STUDY_SCHEDULE');
+  const boundaries = Array.from({ length: 8 }, (_, index) =>
+    studyDayStart(now, timezone, index)
+  );
+  const cards = await client.execute({
+    sql: `SELECT c.id, c.state_json, c.due_at, c.scheduler_version, c.parameters_json
+      FROM native_flashcards c
+      JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
+      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved'
+      ORDER BY c.id`,
+    args: [session.userId]
+  });
+  const rows = cards.rows;
+  const savedCounts = simulateGoodReviews(
+    rows,
+    saved,
+    now,
+    boundaries,
+    timezone
+  );
+  const selectedCounts = simulateGoodReviews(
+    rows,
+    selected,
+    now,
+    boundaries,
+    timezone
+  );
+  const days = savedCounts.map((count, index) => ({
+    date: localDate(boundaries[index], timezone),
+    saved: count,
+    selected: selectedCounts[index]
+  }));
+  const busiest = (key: 'saved' | 'selected') => {
+    const day = days.reduce((largest, current) =>
+      current[key] > largest[key] ? current : largest
+    );
+    return { date: day.date, count: day[key] };
+  };
+  const average = (key: 'saved' | 'selected') =>
+    Math.round((days.reduce((sum, day) => sum + day[key], 0) / 7) * 10) / 10;
+  return {
+    saved,
+    selected,
+    days,
+    averagePerDay: { saved: average('saved'), selected: average('selected') },
+    busiestDay: { saved: busiest('saved'), selected: busiest('selected') },
+    scenario: 'Illustrative scenario: assumes Good on every simulated review.'
+  };
+}
+
+function normalizeTags(value: unknown): string[] {
+  if (value === undefined || value === null || value === '') return [];
+  const list = typeof value === 'string' ? value.split(',') : value;
+  if (!Array.isArray(list) || list.length > 20)
+    throw new FlashcardError('INVALID_TAGS');
+  const tags: string[] = [];
+  const seen = new Set<string>();
+  for (const value_ of list) {
+    if (typeof value_ !== 'string') throw new FlashcardError('INVALID_TAGS');
+    const tag = value_.trim();
+    if (!tag) continue;
+    if (exceedsCodePointLimit(tag, 64) || tag.includes('\0'))
+      throw new FlashcardError('INVALID_TAGS');
+    const key = tag.toLocaleLowerCase('en');
+    if (!seen.has(key)) tags.push(tag);
+    seen.add(key);
+  }
+  return tags;
+}
 
 function exceedsCodePointLimit(value: string, limit: number): boolean {
   const codePoints = value[Symbol.iterator]();
@@ -348,6 +600,70 @@ function readCardScheduler(
   }
 }
 
+function deterministicScheduler(parameters_: FSRSParameters) {
+  return fsrs(parameters_).useStrategy(
+    StrategyMode.SEED,
+    GenSeedStrategyWithCardId('card_id')
+  );
+}
+
+function cardWithId(card: Card, cardId: string) {
+  return { ...card, card_id: cardId };
+}
+
+function withoutCardId(card: Card & { card_id?: string }): Card {
+  const state = { ...card };
+  delete state.card_id;
+  return state;
+}
+
+function scheduledCard(
+  card: Card & { card_id?: string },
+  now: Date,
+  timezone: string
+): Card {
+  const updated = withoutCardId(card);
+  if (updated.scheduled_days >= 1) {
+    updated.due = studyDayStart(
+      now,
+      timezone,
+      Math.max(1, Math.round(updated.scheduled_days))
+    );
+  }
+  return updated;
+}
+
+function intervalLabel(card: Card, now: Date): string {
+  if (card.scheduled_days >= 1) return `${Math.round(card.scheduled_days)}d`;
+  const minutes = Math.max(
+    1,
+    Math.round((card.due.getTime() - now.getTime()) / 60_000)
+  );
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round((minutes / 60) * 10) / 10;
+  return `${Number.isInteger(hours) ? hours : hours.toFixed(1)}h`;
+}
+
+export function ratingIntervals(
+  card: Card,
+  cardId: string,
+  baseParameters: FSRSParameters,
+  schedule: StudySchedule,
+  now = new Date()
+) {
+  const params = parametersForSchedule(schedule, baseParameters);
+  const preview = deterministicScheduler(params).repeat(
+    cardWithId(card, cardId),
+    now
+  );
+  return {
+    again: intervalLabel(preview[Rating.Again].card, now),
+    hard: intervalLabel(preview[Rating.Hard].card, now),
+    good: intervalLabel(preview[Rating.Good].card, now),
+    easy: intervalLabel(preview[Rating.Easy].card, now)
+  };
+}
+
 function hasValidCardNumbers(card: Card): boolean {
   return (
     [
@@ -451,6 +767,7 @@ function validateNoteIdentity(input: CreateNoteInput) {
 type NewNote = {
   input: CreateNoteInput;
   explanation: string;
+  tags: string[];
   source: NoteSource | null;
 };
 
@@ -459,14 +776,14 @@ async function insertNote(
   session: LearnerSession,
   note: NewNote
 ) {
-  const { input, explanation, source } = note;
+  const { input, explanation, tags, source } = note;
   const deck = await tx.execute({
     sql: 'SELECT 1 FROM native_flashcard_decks WHERE id = ? AND owner_id = ?',
     args: [input.deckId, session.userId]
   });
   if (!deck.rows[0]) throw new FlashcardError('NOT_FOUND');
   await tx.execute({
-    sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, status, explanation, source_skill_id, source_content_version_id, source_attempt_id) VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?)",
+    sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, status, explanation, tags_json, source_skill_id, source_content_version_id, source_attempt_id) VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?, ?, ?)",
     args: [
       input.id,
       input.sourceId,
@@ -475,6 +792,7 @@ async function insertNote(
       input.kind,
       JSON.stringify(input.content),
       explanation,
+      JSON.stringify(tags),
       source?.skillId ?? null,
       source?.contentVersionId ?? null,
       source?.attemptId ?? null
@@ -490,11 +808,12 @@ export async function createNote(
   validateNoteIdentity(input);
   validateContent(input.kind, input.content);
   const explanation = validateExplanation(input.explanation);
+  const tags = normalizeTags(input.tags);
   const source = validateNoteSource(input.source);
   const cardId = `card:${input.id}`;
   const tx = await beginWrite(client);
   try {
-    await insertNote(tx, session, { input, explanation, source });
+    await insertNote(tx, session, { input, explanation, tags, source });
     await tx.commit();
     return { id: input.id, cardId, status: 'draft' as const };
   } catch (error) {
@@ -530,7 +849,7 @@ export async function listReviewEvents(
         args: [cardId, session.userId]
       },
       {
-        sql: 'SELECT id, expected_revision, rating, reviewed_at, scheduler_version, result_json, state_json FROM native_flashcard_review_events WHERE owner_id = ? AND card_id = ? ORDER BY reviewed_at, id',
+        sql: 'SELECT id, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json, state_json FROM native_flashcard_review_events WHERE owner_id = ? AND card_id = ? ORDER BY reviewed_at, id',
         args: [session.userId, cardId]
       }
     ],
@@ -543,6 +862,7 @@ export async function listReviewEvents(
     rating: String(row.rating),
     reviewedAt: Number(row.reviewed_at),
     schedulerVersion: String(row.scheduler_version),
+    parameters: JSON.parse(String(row.parameters_json)) as FSRSParameters,
     state: row.state_json === null ? null : decodeCard(String(row.state_json)),
     result: JSON.parse(String(row.result_json)) as {
       revision: number;
@@ -563,6 +883,9 @@ export async function approveNote(
       args: [noteId, session.userId]
     });
     if (!found.rows[0]) throw new FlashcardError('NOT_FOUND');
+    const cardParameters = parametersForSchedule(
+      await readStudySchedule(tx, session.userId)
+    );
     const card = newCard();
     await tx.execute({
       sql: 'INSERT INTO native_flashcards (id, owner_id, note_id, state_json, due_at, scheduler_version, parameters_json) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -573,7 +896,7 @@ export async function approveNote(
         encodeCard(card),
         card.due.getTime(),
         schedulerVersion,
-        JSON.stringify(parameters)
+        JSON.stringify(cardParameters)
       ]
     });
     const changed = await tx.execute({
@@ -599,11 +922,16 @@ type EditInput = {
   kind?: unknown;
   content?: unknown;
   explanation?: unknown;
+  tags?: unknown;
+  deckId?: unknown;
 };
 type NoteEdit = {
   kind: 'basic' | 'cloze';
   content: Content;
   explanation: string;
+  tags: string[];
+  deckId: string;
+  contentChanged: boolean;
   status: string;
 };
 
@@ -613,7 +941,7 @@ async function readEditableNote(
   noteId: string
 ): Promise<Row> {
   const found = await tx.execute({
-    sql: 'SELECT kind, content_json, explanation, status FROM native_flashcard_notes WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT kind, content_json, explanation, tags_json, deck_id, status FROM native_flashcard_notes WHERE id = ? AND owner_id = ?',
     args: [noteId, session.userId]
   });
   const row = found.rows[0];
@@ -654,17 +982,27 @@ async function applyNoteEdit(
   edit: NoteEdit
 ): Promise<number | null> {
   const changed = await tx.execute({
-    sql: "UPDATE native_flashcard_notes SET kind = ?, content_json = ?, explanation = ? WHERE id = ? AND owner_id = ? AND status <> 'rejected'",
+    sql: "UPDATE native_flashcard_notes SET kind = ?, content_json = ?, explanation = ?, tags_json = ?, deck_id = ? WHERE id = ? AND owner_id = ? AND status <> 'rejected'",
     args: [
       edit.kind,
       JSON.stringify(edit.content),
       edit.explanation,
+      JSON.stringify(edit.tags),
+      edit.deckId,
       noteId,
       session.userId
     ]
   });
   if (changed.rowsAffected !== 1) throw new FlashcardError('NOT_EDITABLE');
   if (edit.status !== 'approved') return null;
+  if (!edit.contentChanged) {
+    const current = await tx.execute({
+      sql: 'SELECT revision FROM native_flashcards WHERE note_id = ? AND owner_id = ?',
+      args: [noteId, session.userId]
+    });
+    if (!current.rows[0]) throw new FlashcardError('NOT_FOUND');
+    return Number(current.rows[0].revision);
+  }
 
   // An open review form carries the revision it loaded. Bumping the card
   // revision in the same transaction invalidates that stale form instead of
@@ -696,10 +1034,30 @@ export async function updateNote(
   try {
     const row = await readEditableNote(tx, session, noteId);
     const kind = editKind(row, input);
+    const deckId =
+      input.deckId === undefined ? String(row.deck_id) : input.deckId;
+    if (typeof deckId !== 'string' || !deckId.trim())
+      throw new FlashcardError('INVALID_NOTE');
+    const deck = await tx.execute({
+      sql: 'SELECT 1 FROM native_flashcard_decks WHERE id = ? AND owner_id = ?',
+      args: [deckId, session.userId]
+    });
+    if (!deck.rows[0]) throw new FlashcardError('NOT_FOUND');
+    const content = editContent(row, input, kind);
+    const explanation = editExplanation(row, input);
     const edit: NoteEdit = {
       kind,
-      content: editContent(row, input, kind),
-      explanation: editExplanation(row, input),
+      content,
+      explanation,
+      tags:
+        input.tags === undefined
+          ? (JSON.parse(String(row.tags_json)) as string[])
+          : normalizeTags(input.tags),
+      deckId,
+      contentChanged:
+        kind !== String(row.kind) ||
+        JSON.stringify(content) !== String(row.content_json) ||
+        explanation !== String(row.explanation),
       status: String(row.status)
     };
     const revision = await applyNoteEdit(tx, session, noteId, edit);
@@ -780,6 +1138,7 @@ function noteContentFromRow(row: Row) {
     kind: String(row.kind),
     content: JSON.parse(String(row.content_json)) as Content,
     explanation: String(row.explanation),
+    tags: JSON.parse(String(row.tags_json)) as string[],
     source: noteSourceFrom(row)
   };
 }
@@ -790,12 +1149,34 @@ export async function getNote(
   noteId: string
 ) {
   const result = await client.execute({
-    sql: 'SELECT n.id, n.source_id, n.owner_id, n.deck_id, n.kind, n.content_json, n.status, n.explanation, n.source_skill_id, n.source_content_version_id, n.source_attempt_id, c.id AS card_id, c.state_json, c.due_at, c.revision, c.suspended, c.scheduler_version, c.parameters_json FROM native_flashcard_notes n LEFT JOIN native_flashcards c ON c.note_id = n.id AND c.owner_id = n.owner_id WHERE n.id = ? AND n.owner_id = ?',
+    sql: 'SELECT n.id, n.source_id, n.owner_id, n.deck_id, n.kind, n.content_json, n.status, n.explanation, n.tags_json, n.source_skill_id, n.source_content_version_id, n.source_attempt_id, c.id AS card_id, c.state_json, c.due_at, c.revision, c.suspended, c.scheduler_version, c.parameters_json FROM native_flashcard_notes n LEFT JOIN native_flashcards c ON c.note_id = n.id AND c.owner_id = n.owner_id WHERE n.id = ? AND n.owner_id = ?',
     args: [noteId, session.userId]
   });
   const row = result.rows[0];
   if (!row) throw new FlashcardError('NOT_FOUND');
   return noteFromRow(row);
+}
+
+export async function setCardSuspended(
+  client: Client,
+  session: LearnerSession,
+  cardId: string,
+  suspended: boolean
+): Promise<void> {
+  if (typeof suspended !== 'boolean')
+    throw new FlashcardError('INVALID_CARD_STATE');
+  const card = await client.execute({
+    sql: 'SELECT n.status FROM native_flashcards c JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id WHERE c.id = ? AND c.owner_id = ?',
+    args: [cardId, session.userId]
+  });
+  if (!card.rows[0]) throw new FlashcardError('NOT_FOUND');
+  if (card.rows[0].status !== 'approved')
+    throw new FlashcardError('NOT_APPROVED');
+  const changed = await executeWrite(client, {
+    sql: 'UPDATE native_flashcards SET suspended = ? WHERE id = ? AND owner_id = ?',
+    args: [suspended ? 1 : 0, cardId, session.userId]
+  });
+  if (changed.rowsAffected !== 1) throw new FlashcardError('NOT_FOUND');
 }
 
 async function replayReview(
@@ -869,22 +1250,39 @@ async function applyReview(
     cardRow.scheduler_version,
     String(cardRow.parameters_json)
   );
+  const schedule = await readStudySchedule(tx, session.userId);
+  const effectiveParameters = parametersForSchedule(
+    schedule,
+    cardScheduler.parameters
+  );
+  const timezoneRow = await tx.execute({
+    sql: 'SELECT timezone FROM learner_preferences WHERE owner_id = ?',
+    args: [session.userId]
+  });
+  const timezone = timezoneRow.rows[0]
+    ? String(timezoneRow.rows[0].timezone)
+    : 'UTC';
   const reviewedAt = new Date();
-  const updated = cardScheduler.scheduler.next(
-    decodeCard(String(cardRow.state_json)),
+  const updated = scheduledCard(
+    deterministicScheduler(effectiveParameters).next(
+      cardWithId(decodeCard(String(cardRow.state_json)), input.cardId),
+      reviewedAt,
+      ratings[input.rating]
+    ).card,
     reviewedAt,
-    ratings[input.rating]
-  ).card;
+    timezone
+  );
   const result = {
     revision: input.expectedRevision + 1,
     dueAt: updated.due.getTime()
   };
   const changed = await tx.execute({
-    sql: 'UPDATE native_flashcards SET state_json = ?, due_at = ?, revision = ? WHERE id = ? AND owner_id = ? AND revision = ?',
+    sql: 'UPDATE native_flashcards SET state_json = ?, due_at = ?, revision = ?, parameters_json = ? WHERE id = ? AND owner_id = ? AND revision = ?',
     args: [
       encodeCard(updated),
       result.dueAt,
       result.revision,
+      JSON.stringify(effectiveParameters),
       input.cardId,
       session.userId,
       input.expectedRevision
@@ -901,7 +1299,7 @@ async function applyReview(
       input.rating,
       reviewedAt.getTime(),
       String(cardRow.scheduler_version),
-      JSON.stringify(cardScheduler.parameters),
+      JSON.stringify(effectiveParameters),
       JSON.stringify(result),
       encodeCard(updated)
     ]

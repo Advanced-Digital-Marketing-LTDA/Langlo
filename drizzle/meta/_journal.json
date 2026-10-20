@@ -169,6 +169,13 @@
       "when": 1792450297893,
       "tag": "0023_solid_dazzler",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1792498188188,
+      "tag": "0024_langlo_11_fsrs_preferences_and_note_tags",
+      "breakpoints": true
     }
   ]
 }

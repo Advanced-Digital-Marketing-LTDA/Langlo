@@ -4,6 +4,9 @@ import {
   approveNote,
   createNote,
   FlashcardError,
+  getNote,
+  getStudySchedule,
+  ratingIntervals,
   type LearnerSession,
   noteSourceFrom
 } from './flashcards';
@@ -17,6 +20,8 @@ export type NoteSummary = {
   status: string;
   content: { front?: string; back?: string; text?: string };
   explanation: string;
+  tags: string[];
+  suspended: boolean | null;
   source: {
     attemptId: string;
     skillId: string;
@@ -41,7 +46,7 @@ export async function listNotes(
   });
   if (!deck.rows[0]) throw new FlashcardError('NOT_FOUND');
   const notes = await client.execute({
-    sql: 'SELECT id, source_id, kind, status, content_json, explanation, source_skill_id, source_content_version_id, source_attempt_id FROM native_flashcard_notes WHERE deck_id = ? AND owner_id = ? ORDER BY created_at, rowid',
+    sql: 'SELECT n.id, n.source_id, n.kind, n.status, n.content_json, n.explanation, n.tags_json, n.source_skill_id, n.source_content_version_id, n.source_attempt_id, c.suspended FROM native_flashcard_notes n LEFT JOIN native_flashcards c ON c.note_id = n.id AND c.owner_id = n.owner_id WHERE n.deck_id = ? AND n.owner_id = ? ORDER BY n.created_at, n.rowid',
     args: [deckId, learner.userId]
   });
   return {
@@ -53,6 +58,8 @@ export async function listNotes(
       status: String(row.status),
       content: JSON.parse(String(row.content_json)),
       explanation: String(row.explanation),
+      tags: JSON.parse(String(row.tags_json)) as string[],
+      suspended: row.suspended === null ? null : Boolean(row.suspended),
       source: noteSourceFrom(row)
     }))
   };
@@ -76,7 +83,8 @@ export async function addNoteFromForm(
       deckId,
       kind,
       content: { text: text('text') },
-      explanation: text('explanation')
+      explanation: text('explanation'),
+      tags: text('tags')
     });
   if (kind === 'basic')
     return createNote(client, learner, {
@@ -85,9 +93,48 @@ export async function addNoteFromForm(
       deckId,
       kind,
       content: { front: text('front'), back: text('back') },
-      explanation: text('explanation')
+      explanation: text('explanation'),
+      tags: text('tags')
     });
   throw new FlashcardError('INVALID_CONTENT');
+}
+
+export async function searchNotes(
+  client: Query,
+  learner: LearnerSession,
+  search: string
+) {
+  const query = search.trim();
+  if (!query) return [];
+  if (query.length > 100) throw new FlashcardError('INVALID_SEARCH');
+  const result = await client.execute({
+    sql: `SELECT n.id, n.kind, n.status, n.content_json, n.tags_json,
+        n.explanation,
+        d.id AS deck_id, d.name AS deck_name
+      FROM native_flashcard_notes n
+      JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
+      WHERE n.owner_id = ? ORDER BY n.created_at, n.rowid`,
+    args: [learner.userId]
+  });
+  const searchTerm = query.toLocaleLowerCase('en');
+  // SQLite's lower() only folds ASCII, so match Unicode learner content here.
+  return result.rows
+    .filter((row) =>
+      [
+        String(row.content_json),
+        String(row.explanation),
+        String(row.tags_json),
+        String(row.deck_name)
+      ].some((value) => value.toLocaleLowerCase('en').includes(searchTerm))
+    )
+    .map((row) => ({
+      id: String(row.id),
+      kind: String(row.kind) as NoteKind,
+      status: String(row.status),
+      content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
+      tags: JSON.parse(String(row.tags_json)) as string[],
+      deck: { id: String(row.deck_id), name: String(row.deck_name) }
+    }));
 }
 
 /** How many approved, unsuspended cards are due now, however many are listed. */
@@ -131,13 +178,13 @@ export async function approveOwnNote(
 
 /** Approved, unsuspended cards that are due now, oldest first. */
 export async function listDueCards(
-  client: Query,
+  client: Client,
   learner: LearnerSession,
   now: number = Date.now(),
   limit = 20
 ) {
   const result = await client.execute({
-    sql: `SELECT c.id, c.revision, n.kind, n.content_json, d.name AS deck_name
+    sql: `SELECT c.id, c.revision, n.id AS note_id, n.kind, n.content_json, d.name AS deck_name
       FROM native_flashcards c
       JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
       JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
@@ -145,13 +192,29 @@ export async function listDueCards(
       ORDER BY c.due_at, c.id LIMIT ?`,
     args: [learner.userId, now, limit]
   });
-  return result.rows.map((row) => ({
-    id: String(row.id),
-    revision: Number(row.revision),
-    kind: String(row.kind) as NoteKind,
-    deck: String(row.deck_name),
-    content: JSON.parse(String(row.content_json)) as NoteSummary['content']
-  }));
+  const schedule = await getStudySchedule(client, learner);
+  const reviewedAt = new Date(now);
+  return Promise.all(
+    result.rows.map(async (row) => {
+      const note = await getNote(client, learner, String(row.note_id));
+      if (!note.card) throw new FlashcardError('INVALID_CARD_STATE');
+      return {
+        id: String(row.id),
+        revision: Number(row.revision),
+        kind: String(row.kind) as NoteKind,
+        deck: String(row.deck_name),
+        content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
+        explanation: note.explanation,
+        intervals: ratingIntervals(
+          note.card.state,
+          note.card.id,
+          note.card.parameters,
+          schedule,
+          reviewedAt
+        )
+      };
+    })
+  );
 }
 
 /** Quote an Anki text-import field when it holds a tab, newline or quote. */

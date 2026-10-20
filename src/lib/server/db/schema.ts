@@ -849,6 +849,7 @@ export const nativeFlashcardNotes = sqliteTable(
     // Generated mistake cards carry the lesson explanation and the practice
     // evidence they came from. Manual notes leave the source columns null.
     explanation: text('explanation').notNull().default(''),
+    tagsJson: text('tags_json').notNull().default('[]'),
     sourceSkillId: text('source_skill_id'),
     sourceContentVersionId: text('source_content_version_id'),
     sourceAttemptId: text('source_attempt_id'),
@@ -883,6 +884,10 @@ export const nativeFlashcardNotes = sqliteTable(
     check(
       'native_flashcard_notes_content_json',
       sql`json_valid(${table.contentJson})`
+    ),
+    check(
+      'native_flashcard_notes_tags_json',
+      sql`json_valid(${table.tagsJson}) AND json_type(${table.tagsJson}) = 'array'`
     ),
     check(
       'native_flashcard_notes_source_id',
@@ -1012,6 +1017,35 @@ export const nativeFlashcardReviewEvents = sqliteTable(
     check(
       'native_flashcard_review_events_state_json',
       sql`${table.stateJson} IS NULL OR json_valid(${table.stateJson})`
+    )
+  ]
+);
+
+export const nativeFlashcardPreferences = sqliteTable(
+  'native_flashcard_preferences',
+  {
+    ownerId: text('owner_id')
+      .primaryKey()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    desiredRetention: integer('desired_retention').notNull().default(90),
+    newCardPreset: text('new_card_preset').notNull().default('1m+10m'),
+    relearningPreset: text('relearning_preset').notNull().default('10m'),
+    updatedAt: integer('updated_at')
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`)
+  },
+  (table) => [
+    check(
+      'native_flashcard_preferences_retention',
+      sql`typeof(${table.desiredRetention}) = 'integer' AND ${table.desiredRetention} BETWEEN 70 AND 97`
+    ),
+    check(
+      'native_flashcard_preferences_new_preset',
+      sql`${table.newCardPreset} IN ('10m', '1m+10m', '30m')`
+    ),
+    check(
+      'native_flashcard_preferences_relearning_preset',
+      sql`${table.relearningPreset} IN ('10m', '30m', '1h')`
     )
   ]
 );

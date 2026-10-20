@@ -20,7 +20,7 @@
 <h1>Review</h1>
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
 {#if card}
-  <p>
+  <p data-testid="remaining-due">
     {data.total} due{data.total > data.cards.length
       ? `, showing the first ${data.cards.length}`
       : ''}. Deck: {card.deck}
@@ -30,6 +30,9 @@
     <button type="button" onclick={() => (revealed = true)}>Show answer</button>
   {:else}
     <p>{card.kind === 'basic' ? card.content.back : card.content.text}</p>
+    {#if card.explanation}
+      <p><strong>Explanation:</strong> {card.explanation}</p>
+    {/if}
     <form
       method="POST"
       action="?/rate"
@@ -43,7 +46,9 @@
       <input type="hidden" name="revision" value={card.revision} />
       <input type="hidden" name="submissionKey" value={data.submissionKey} />
       {#each ratings as rating (rating)}
-        <button type="submit" name="rating" value={rating}>{rating}</button>
+        <button type="submit" name="rating" value={rating}
+          >{rating} · {card.intervals[rating]}</button
+        >
       {/each}
     </form>
   {/if}

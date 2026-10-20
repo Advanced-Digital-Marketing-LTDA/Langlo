@@ -26,8 +26,14 @@ import {
 import {
   approveNote,
   createDeck,
+  createNote,
+  getNote,
+  listReviewEvents,
+  rejectNote,
   submitReview
 } from '../src/lib/server/flashcards';
+import * as flashcardModule from '../src/lib/server/flashcards';
+import * as flashcardViewModule from '../src/lib/server/flashcard-views';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -48,7 +54,10 @@ import {
 import { load as sessionLoad } from '../src/routes/app/session/[id]/+page.server';
 import { actions as sessionActions } from '../src/routes/app/session/[id]/+page.server';
 import { load as resultsLoad } from '../src/routes/app/session/[id]/results/+page.server';
-import { actions as decksActions } from '../src/routes/app/decks/+page.server';
+import {
+  actions as decksActions,
+  load as decksLoad
+} from '../src/routes/app/decks/+page.server';
 import {
   actions as deckActions,
   load as deckLoad
@@ -61,9 +70,24 @@ import {
 
 const learner = testSession('learner-a');
 const other = testSession('learner-b');
+const flashcardNamespace = flashcardModule as unknown as Record<
+  string,
+  unknown
+>;
+const flashcardViewNamespace = flashcardViewModule as unknown as Record<
+  string,
+  unknown
+>;
 let client: Client;
 let close: () => void;
 let databaseUrl: string;
+
+function feature(module: Record<string, unknown>, name: string) {
+  const candidate = module[name];
+  expect(candidate, `${name} should be implemented`).toBeTypeOf('function');
+  if (typeof candidate !== 'function') throw new Error(`${name} is missing`);
+  return candidate as (...args: unknown[]) => Promise<unknown>;
+}
 
 beforeEach(async () => {
   const target = await fixture();
@@ -82,6 +106,7 @@ function event(
     userId?: string | null;
     params?: Record<string, string>;
     fields?: Record<string, string>;
+    query?: string;
     config?: RuntimeConfig | undefined;
   } = {}
 ) {
@@ -89,8 +114,10 @@ function event(
   const form = new FormData();
   for (const [key, value] of Object.entries(options.fields ?? {}))
     form.set(key, value);
+  const url = `http://127.0.0.1/app${options.query ?? ''}`;
   return {
     params: options.params ?? {},
+    url: new URL(url),
     locals: {
       user: userId ? { id: userId } : null,
       session: userId ? { userId } : null,
@@ -99,7 +126,7 @@ function event(
         : ({ dataEnabled: true, databaseUrl } as RuntimeConfig)
     },
     request: new Request(
-      'http://127.0.0.1/app',
+      url,
       options.fields ? { method: 'POST', body: form } : undefined
     )
   } as never;
@@ -217,7 +244,12 @@ describe('settings', () => {
   it('serves and saves settings through the page', async () => {
     expect(await settingsLoad(event())).toMatchObject({
       enrollments: [{ language: 'fr' }],
-      timezone: null
+      timezone: null,
+      studySchedule: {
+        desiredRetention: 90,
+        newCardPreset: '1m+10m',
+        relearningPreset: '10m'
+      }
     });
     expect(
       await settingsActions.timezone(
@@ -239,6 +271,53 @@ describe('settings', () => {
         event({ fields: { language: 'de', explanationLanguage: 'pt' } })
       )
     ).toMatchObject({ status: 404 });
+  });
+
+  it('previews selected values without saving and saves them through the schedule form', async () => {
+    const fields = {
+      desiredRetention: '94',
+      newCardPreset: '30m',
+      relearningPreset: '1h'
+    };
+    const preview = await feature(
+      settingsActions as unknown as Record<string, unknown>,
+      'previewStudySchedule'
+    )(event({ fields }));
+    expect(preview).toMatchObject({
+      preview: {
+        selected: {
+          desiredRetention: 94,
+          newCardPreset: '30m',
+          relearningPreset: '1h'
+        },
+        days: expect.any(Array)
+      }
+    });
+    expect(
+      await feature(flashcardNamespace, 'getStudySchedule')(client, learner)
+    ).toEqual({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    expect(
+      await feature(
+        settingsActions as unknown as Record<string, unknown>,
+        'saveStudySchedule'
+      )(event({ fields }))
+    ).toEqual({
+      saved: 'Study schedule saved.'
+    });
+    expect(
+      await feature(
+        settingsActions as unknown as Record<string, unknown>,
+        'saveStudySchedule'
+      )(
+        event({
+          fields: { ...fields, desiredRetention: '98' }
+        })
+      )
+    ).toMatchObject({ status: 400 });
   });
 });
 
@@ -747,5 +826,391 @@ describe('decks, review and Anki export', () => {
     expect(
       await decksActions.createDeck(event({ fields: { name: '   ' } }))
     ).toMatchObject({ status: 400 });
+  });
+
+  it('persists validated account-wide study schedule without rescheduling existing cards', async () => {
+    const deckId = 'deck-fsrs-settings';
+    await createDeck(client, learner, { id: deckId, name: 'Schedule' });
+    await createNote(client, learner, {
+      id: 'note-fsrs-settings',
+      sourceId: `langlo:v1:${'a'.repeat(64)}`,
+      deckId,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    await approveNote(client, learner, 'note-fsrs-settings');
+    await submitReview(client, learner, {
+      cardId: 'card:note-fsrs-settings',
+      submissionId: 'f2000000-0000-4000-8000-000000000001',
+      expectedRevision: 0,
+      rating: 'good'
+    });
+    const before = await getNote(client, learner, 'note-fsrs-settings');
+    const beforeEvents = await listReviewEvents(
+      client,
+      learner,
+      'card:note-fsrs-settings'
+    );
+    expect(
+      await feature(flashcardNamespace, 'getStudySchedule')(client, learner)
+    ).toEqual({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    await feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+      desiredRetention: 96,
+      newCardPreset: '30m',
+      relearningPreset: '1h'
+    });
+    expect(
+      await feature(flashcardNamespace, 'getStudySchedule')(client, other)
+    ).toEqual({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    expect(await getNote(client, learner, 'note-fsrs-settings')).toEqual(
+      before
+    );
+    expect(
+      await listReviewEvents(client, learner, 'card:note-fsrs-settings')
+    ).toEqual(beforeEvents);
+    await expect(
+      feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+        desiredRetention: 98,
+        newCardPreset: '30m',
+        relearningPreset: '1h'
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
+    await expect(
+      feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+        desiredRetention: 90.5,
+        newCardPreset: '30m',
+        relearningPreset: '1h'
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
+    await expect(
+      feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+        desiredRetention: 90,
+        newCardPreset: 'custom',
+        relearningPreset: '1h'
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
+    for (const desiredRetention of [70, 97])
+      await expect(
+        feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+          desiredRetention,
+          newCardPreset: '10m',
+          relearningPreset: '30m'
+        })
+      ).resolves.toMatchObject({ desiredRetention });
+  });
+
+  it('uses newly saved parameters for new cards and the next rating only', async () => {
+    const deckId = 'deck-fsrs-deferred';
+    await createDeck(client, learner, { id: deckId, name: 'Deferred' });
+    const makeNote = async (id: string) => {
+      await createNote(client, learner, {
+        id,
+        sourceId: `langlo:v1:${id.endsWith('1') ? '1' : '2'}${'b'.repeat(63)}`,
+        deckId,
+        kind: 'basic',
+        content: { front: 'Front', back: 'Back' }
+      });
+      await approveNote(client, learner, id);
+    };
+    await makeNote('note-fsrs-existing1');
+    const existingBefore = await getNote(
+      client,
+      learner,
+      'note-fsrs-existing1'
+    );
+    await feature(flashcardNamespace, 'saveStudySchedule')(client, learner, {
+      desiredRetention: 95,
+      newCardPreset: '30m',
+      relearningPreset: '30m'
+    });
+    await makeNote('note-fsrs-new2');
+    const created = await getNote(client, learner, 'note-fsrs-new2');
+    expect(created.card?.parameters).toMatchObject({
+      request_retention: 0.95,
+      learning_steps: ['30m'],
+      enable_fuzz: true
+    });
+    expect(
+      (await getNote(client, learner, 'note-fsrs-existing1')).card
+    ).toEqual(existingBefore.card);
+    await submitReview(client, learner, {
+      cardId: 'card:note-fsrs-existing1',
+      submissionId: 'f0000000-0000-4000-8000-000000000001',
+      expectedRevision: 0,
+      rating: 'good'
+    });
+    expect(
+      (await getNote(client, learner, 'note-fsrs-existing1')).card?.parameters
+    ).toMatchObject({
+      request_retention: 0.95,
+      learning_steps: ['30m'],
+      enable_fuzz: true
+    });
+    expect(
+      await listReviewEvents(client, learner, 'card:note-fsrs-existing1')
+    ).toMatchObject([
+      { parameters: { request_retention: 0.95, learning_steps: ['30m'] } }
+    ]);
+  });
+
+  it('previews the saved and selected schedules for seven stable study days', async () => {
+    const deckId = 'deck-fsrs-preview';
+    await createDeck(client, learner, { id: deckId, name: 'Preview' });
+    for (const [index, status] of [
+      'approved',
+      'approved',
+      'rejected'
+    ].entries()) {
+      const id = `note-fsrs-preview-${index}`;
+      await createNote(client, learner, {
+        id,
+        sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
+        deckId,
+        kind: 'basic',
+        content: { front: 'Front', back: 'Back' }
+      });
+      if (status === 'approved') await approveNote(client, learner, id);
+      if (status === 'rejected') {
+        await approveNote(client, learner, id);
+        await rejectNote(client, learner, id);
+      }
+    }
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
+      args: ['card:note-fsrs-preview-1']
+    });
+    const selected = {
+      desiredRetention: 92,
+      newCardPreset: '10m' as const,
+      relearningPreset: '30m' as const
+    };
+    const now = new Date('2026-10-20T09:00:00.000Z');
+    await client.execute({
+      sql: "UPDATE native_flashcards SET due_at = ?, state_json = json_set(state_json, '$.due', ?) WHERE owner_id = ?",
+      args: [now.getTime(), now.toISOString(), learner.userId]
+    });
+    const preview = feature(flashcardNamespace, 'previewStudySchedule');
+    const utcPreview = (await preview(client, learner, selected, now)) as {
+      days: { date: string }[];
+    };
+    expect(utcPreview.days[0].date).toBe('2026-10-20');
+    await setTimezone(client, learner, 'America/Los_Angeles');
+    const first = (await preview(client, learner, selected, now)) as {
+      saved: typeof selected;
+      selected: typeof selected;
+      days: { date: string; saved: number; selected: number }[];
+      averagePerDay: { saved: number; selected: number };
+      busiestDay: {
+        saved: { date: string; count: number };
+        selected: { date: string; count: number };
+      };
+      scenario: string;
+    };
+    const second = await preview(client, learner, selected, now);
+    expect(first).toEqual(second);
+    expect(first.saved).toMatchObject({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
+    expect(first.selected).toEqual(selected);
+    expect(first.days).toHaveLength(7);
+    expect(first.days[0].date).toBe('2026-10-19');
+    expect(first.days[0].selected).toBeGreaterThan(0);
+    expect(first.days.every((day) => day.saved >= 0 && day.selected >= 0)).toBe(
+      true
+    );
+    expect(first.averagePerDay.selected).toBeGreaterThan(0);
+    expect(first.busiestDay.selected.count).toBeGreaterThan(0);
+    expect(first.scenario).toContain('Good');
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
+      args: ['card:note-fsrs-preview-0']
+    });
+    const noneAvailable = (await preview(client, learner, selected, now)) as {
+      days: { saved: number; selected: number }[];
+    };
+    expect(
+      noneAvailable.days.every((day) => day.saved === 0 && day.selected === 0)
+    ).toBe(true);
+  });
+
+  it('searches every status across owned decks and returns tags and deck labels', async () => {
+    const firstDeck = 'deck-search-first';
+    const secondDeck = 'deck-search-second';
+    await createDeck(client, learner, { id: firstDeck, name: 'First' });
+    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
+    await createDeck(client, other, { id: 'deck-search-other', name: 'Other' });
+    for (const [id, deckId, status, tags] of [
+      ['note-search-approved', secondDeck, 'approved', 'shared, grammar'],
+      ['note-search-draft', firstDeck, 'draft', 'shared'],
+      ['note-search-rejected', firstDeck, 'rejected', 'shared']
+    ] as const) {
+      await createNote(client, learner, {
+        id,
+        sourceId: `langlo:v1:${id.endsWith('approved') ? '1' : id.endsWith('draft') ? '2' : '3'}${'c'.repeat(63)}`,
+        deckId,
+        kind: 'basic',
+        content: { front: `shared ${id}`, back: 'Definition' },
+        tags: tags.split(',')
+      });
+      if (status === 'approved') await approveNote(client, learner, id);
+      if (status === 'rejected')
+        await client.execute({
+          sql: "UPDATE native_flashcard_notes SET status = 'rejected' WHERE id = ?",
+          args: [id]
+        });
+    }
+    const results = (await feature(flashcardViewNamespace, 'searchNotes')(
+      client,
+      learner,
+      'shared'
+    )) as Array<{
+      id: string;
+      deck: { id: string; name: string };
+      status: string;
+      tags: string[];
+    }>;
+    expect(results.map((item) => item.id).sort()).toEqual([
+      'note-search-approved',
+      'note-search-draft',
+      'note-search-rejected'
+    ]);
+    expect(
+      results.find((item) => item.id === 'note-search-approved')
+    ).toMatchObject({
+      deck: { id: secondDeck, name: 'Second' },
+      status: 'approved',
+      tags: ['shared', 'grammar']
+    });
+    expect(
+      await feature(flashcardViewNamespace, 'searchNotes')(
+        client,
+        other,
+        'shared'
+      )
+    ).toEqual([]);
+    const searchPage = await decksLoad(event({ query: '?q=shared' }));
+    if (!searchPage) throw new Error('Deck search returned no page data');
+    expect(searchPage.query).toBe('shared');
+    expect(
+      (searchPage.results as { status: string }[])
+        .map((item) => item.status)
+        .sort()
+    ).toEqual(['approved', 'draft', 'rejected']);
+    expect(
+      await deckLoad(
+        event({
+          params: { id: secondDeck },
+          query: '?note=note-search-approved#note-note-search-approved'
+        })
+      )
+    ).toMatchObject({ focusNoteId: 'note-search-approved' });
+    expect(
+      await deckLoad(
+        event({
+          params: { id: firstDeck },
+          query: '?note=note-search-approved'
+        })
+      )
+    ).toMatchObject({ focusNoteId: null });
+  });
+
+  it('normalizes tags and moves notes without replacing card identity, schedule, or review events', async () => {
+    const firstDeck = 'deck-tags-first';
+    const secondDeck = 'deck-tags-second';
+    await createDeck(client, learner, { id: firstDeck, name: 'First' });
+    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
+    await createNote(client, learner, {
+      id: 'note-tags-move',
+      sourceId: `langlo:v1:${'d'.repeat(64)}`,
+      deckId: firstDeck,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' },
+      tags: [' grammar ', 'verbs', 'grammar', '']
+    } as Parameters<typeof createNote>[2]);
+    await approveNote(client, learner, 'note-tags-move');
+    await submitReview(client, learner, {
+      cardId: 'card:note-tags-move',
+      submissionId: 'f1000000-0000-4000-8000-000000000001',
+      expectedRevision: 0,
+      rating: 'good'
+    });
+    const before = await getNote(client, learner, 'note-tags-move');
+    const history = await listReviewEvents(
+      client,
+      learner,
+      'card:note-tags-move'
+    );
+    await feature(flashcardNamespace, 'updateNote')(
+      client,
+      learner,
+      'note-tags-move',
+      {
+        deckId: secondDeck,
+        tags: ['nouns', ' verbs ', 'nouns']
+      }
+    );
+    expect(await getNote(client, learner, 'note-tags-move')).toMatchObject({
+      deckId: secondDeck,
+      tags: ['nouns', 'verbs'],
+      card: before.card
+    });
+    expect(
+      await listReviewEvents(client, learner, 'card:note-tags-move')
+    ).toEqual(history);
+    await expect(
+      feature(flashcardNamespace, 'updateNote')(
+        client,
+        learner,
+        'note-tags-move',
+        { deckId: 'deck-foreign' }
+      )
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+  });
+
+  it('suspends and resumes only the learner’s approved cards and removes them from due counts', async () => {
+    const deckId = 'deck-suspension';
+    await createDeck(client, learner, { id: deckId, name: 'Suspension' });
+    await createNote(client, learner, {
+      id: 'note-suspension',
+      sourceId: `langlo:v1:${'e'.repeat(64)}`,
+      deckId,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    await approveNote(client, learner, 'note-suspension');
+    expect(await countDueCards(client, learner)).toBe(1);
+    await feature(flashcardNamespace, 'setCardSuspended')(
+      client,
+      learner,
+      'card:note-suspension',
+      true
+    );
+    expect(await countDueCards(client, learner)).toBe(0);
+    expect(await listDueCards(client, learner)).toEqual([]);
+    await expect(
+      feature(flashcardNamespace, 'setCardSuspended')(
+        client,
+        other,
+        'card:note-suspension',
+        false
+      )
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await feature(flashcardNamespace, 'setCardSuspended')(
+      client,
+      learner,
+      'card:note-suspension',
+      false
+    );
+    expect(await countDueCards(client, learner)).toBe(1);
   });
 });

@@ -23,7 +23,7 @@ import { seedStudy } from './fixtures/study';
 import { seedLegacyPackage } from './fixtures/content-package';
 import { importContent } from '../src/lib/server/content-import';
 import * as schema from '../src/lib/server/db/schema';
-import { createDeck, createNote } from '../src/lib/server/flashcards';
+import { createDeck } from '../src/lib/server/flashcards';
 
 const fixtures: FixtureTarget[] = [];
 afterEach(async () => {
@@ -62,6 +62,31 @@ async function migrationPrefixBeforeLanglo10() {
   return directory;
 }
 
+async function createLegacyNote(
+  client: Parameters<typeof createDeck>[0],
+  owner: Parameters<typeof createDeck>[1],
+  input: {
+    id: string;
+    sourceId: string;
+    deckId: string;
+    kind: 'basic';
+    content: { front: string; back: string };
+  }
+) {
+  await client.execute({
+    sql: "INSERT INTO native_flashcard_notes (id, source_id, owner_id, deck_id, kind, content_json, status) VALUES (?, ?, ?, ?, ?, ?, 'draft')",
+    args: [
+      input.id,
+      input.sourceId,
+      owner.userId,
+      input.deckId,
+      input.kind,
+      JSON.stringify(input.content)
+    ]
+  });
+  return { id: input.id, cardId: `card:${input.id}`, status: 'draft' as const };
+}
+
 async function seedLegacyReviewHistory(
   target: FixtureTarget,
   previous: string
@@ -78,7 +103,7 @@ async function seedLegacyReviewHistory(
     const notes = await Promise.all(
       ['draft', 'rejected', 'rejected-reviewed', 'approved-reviewed'].map(
         (id, index) =>
-          createNote(client, owner, {
+          createLegacyNote(client, owner, {
             id: `note-langlo10-${id}`,
             sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
             deckId: 'deck-langlo10',
@@ -177,7 +202,7 @@ async function seedDraftWithReviewHistory(
       id: 'deck-langlo10-gate',
       name: 'French'
     });
-    const note = await createNote(client, owner, {
+    const note = await createLegacyNote(client, owner, {
       id: 'note-langlo10-draft-history',
       sourceId: `langlo:v1:${'a'.repeat(64)}`,
       deckId: 'deck-langlo10-gate',
@@ -263,7 +288,7 @@ describe('disposable libSQL migrations', () => {
         const contentSql =
           'SELECT id, skill_id, language, version, status, created_at FROM content_versions ORDER BY id';
         const objectsSql =
-          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT IN ('sqlite_autoindex_lessons_1', 'attempts_session_question_independent', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update') ORDER BY name";
+          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT IN ('sqlite_autoindex_lessons_1', 'attempts_session_question_independent', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'sqlite_autoindex_native_flashcard_preferences_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update') ORDER BY name";
         const content = (await client.execute(contentSql)).rows;
         const attempts = (
           await client.execute(

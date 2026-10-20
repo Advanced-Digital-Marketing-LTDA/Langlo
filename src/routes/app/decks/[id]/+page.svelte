@@ -16,7 +16,10 @@
 {#if data.notes.length}
   <ul>
     {#each data.notes as note (note.id)}
-      <li>
+      <li
+        id={`note-${note.id}`}
+        aria-current={data.focusNoteId === note.id ? 'location' : undefined}
+      >
         <p>
           {note.kind === 'basic'
             ? `${note.content.front} → ${note.content.back}`
@@ -25,6 +28,9 @@
         </p>
         {#if note.explanation}
           <p>{note.explanation}</p>
+        {/if}
+        {#if note.tags.length}
+          <p>Tags: {note.tags.join(', ')}</p>
         {/if}
         {#if note.status === 'draft'}
           <form method="POST" action="?/approve" use:enhance>
@@ -76,9 +82,40 @@
                   value={note.explanation}
                 />
               </label>
+              <label
+                >Tags (comma-separated)
+                <input
+                  name="tags"
+                  maxlength="1320"
+                  value={note.tags.join(', ')}
+                />
+              </label>
+              <label
+                >Deck
+                <select name="deckId">
+                  {#each data.decks as deck (deck.id)}
+                    <option value={deck.id} selected={deck.id === data.deck.id}>
+                      {deck.name}
+                    </option>
+                  {/each}
+                </select>
+              </label>
               <button type="submit">Save changes</button>
             </form>
           </details>
+          {#if note.status === 'approved'}
+            <form method="POST" action="?/suspension" use:enhance>
+              <input type="hidden" name="cardId" value={`card:${note.id}`} />
+              <input
+                type="hidden"
+                name="suspended"
+                value={note.suspended ? 'false' : 'true'}
+              />
+              <button type="submit"
+                >{note.suspended ? 'Resume' : 'Suspend'}</button
+              >
+            </form>
+          {/if}
           <form method="POST" action="?/reject" use:enhance>
             <input type="hidden" name="noteId" value={note.id} />
             <button type="submit">Reject note</button>
@@ -113,6 +150,7 @@
     >Explanation (optional)
     <input name="explanation" maxlength="1000" />
   </label>
+  <label>Tags (comma-separated) <input name="tags" maxlength="1320" /></label>
   <button type="submit">Add note</button>
 </form>
 <p>

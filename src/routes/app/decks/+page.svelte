@@ -10,6 +10,37 @@
 </svelte:head>
 
 <h1>Flashcard decks</h1>
+<form method="GET" action="/app/decks">
+  <label
+    >Search all notes <input
+      name="q"
+      maxlength="100"
+      value={data.query}
+    /></label
+  >
+  <button type="submit">Search</button>
+</form>
+{#if data.query.trim()}
+  <h2>Search results</h2>
+  {#if data.results.length}
+    <ul>
+      {#each data.results as note (note.id)}
+        <li>
+          <a
+            href={`/app/decks/${encodeURIComponent(note.deck.id)}?note=${encodeURIComponent(note.id)}#note-${encodeURIComponent(note.id)}`}
+          >
+            {note.kind === 'basic'
+              ? `${note.content.front} → ${note.content.back}`
+              : note.content.text}
+          </a>
+          <span> — {note.deck.name} · {note.status}</span>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p>No matching notes.</p>
+  {/if}
+{/if}
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
 {#if data.decks.length}
   <ul>

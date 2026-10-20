@@ -1,8 +1,11 @@
 import type { Actions, PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
 import { studyForm, studyPage } from '../../../../lib/server/learner-api';
 import {
   FlashcardError,
+  listDecks,
   rejectNote,
+  setCardSuspended,
   updateNote
 } from '../../../../lib/server/flashcards';
 import {
@@ -12,9 +15,20 @@ import {
 } from '../../../../lib/server/flashcard-views';
 
 export const load: PageServerLoad = (event) =>
-  studyPage(event, (client, learner) =>
-    listNotes(client, learner, event.params.id)
-  );
+  studyPage(event, async (client, learner) => {
+    const [result, decks] = await Promise.all([
+      listNotes(client, learner, event.params.id),
+      listDecks(client, learner)
+    ]);
+    const requested = event.url.searchParams.get('note');
+    return {
+      ...result,
+      decks,
+      focusNoteId: result.notes.some((note) => note.id === requested)
+        ? requested
+        : null
+    };
+  });
 
 export const actions: Actions = {
   addNote: async (event) => {
@@ -53,7 +67,9 @@ export const actions: Actions = {
         return updateNote(client, learner, String(form.get('noteId') ?? ''), {
           kind,
           content,
-          explanation: String(form.get('explanation') ?? '')
+          explanation: String(form.get('explanation') ?? ''),
+          tags: form.has('tags') ? form.get('tags') : undefined,
+          deckId: form.has('deckId') ? form.get('deckId') : undefined
         });
       },
       { saved: true }
@@ -65,6 +81,23 @@ export const actions: Actions = {
       event,
       (client, learner) =>
         rejectNote(client, learner, String(form.get('noteId') ?? '')),
+      { saved: true }
+    );
+  },
+  suspension: async (event) => {
+    const form = await event.request.formData();
+    const value = String(form.get('suspended') ?? '');
+    if (value !== 'true' && value !== 'false')
+      return fail(400, { message: 'Choose Suspend or Resume.' });
+    return studyForm(
+      event,
+      (client, learner) =>
+        setCardSuspended(
+          client,
+          learner,
+          String(form.get('cardId') ?? ''),
+          value === 'true'
+        ),
       { saved: true }
     );
   }
