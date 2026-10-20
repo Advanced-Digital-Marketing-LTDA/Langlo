@@ -118,23 +118,30 @@ export async function searchNotes(
   });
   const searchTerm = query.toLocaleLowerCase('en');
   // SQLite's lower() only folds ASCII, so match Unicode learner content here.
-  return result.rows
-    .filter((row) =>
-      [
-        String(row.content_json),
-        String(row.explanation),
-        String(row.tags_json),
-        String(row.deck_name)
-      ].some((value) => value.toLocaleLowerCase('en').includes(searchTerm))
-    )
-    .map((row) => ({
-      id: String(row.id),
-      kind: String(row.kind) as NoteKind,
-      status: String(row.status),
-      content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
-      tags: JSON.parse(String(row.tags_json)) as string[],
-      deck: { id: String(row.deck_id), name: String(row.deck_name) }
-    }));
+  return result.rows.flatMap((row) => {
+    const content = JSON.parse(
+      String(row.content_json)
+    ) as NoteSummary['content'];
+    const tags = JSON.parse(String(row.tags_json)) as string[];
+    const matches = [
+      ...Object.values(content),
+      String(row.explanation),
+      ...tags,
+      String(row.deck_name)
+    ].some((value) => value?.toLocaleLowerCase('en').includes(searchTerm));
+    return matches
+      ? [
+          {
+            id: String(row.id),
+            kind: String(row.kind) as NoteKind,
+            status: String(row.status),
+            content,
+            tags,
+            deck: { id: String(row.deck_id), name: String(row.deck_name) }
+          }
+        ]
+      : [];
+  });
 }
 
 /** How many approved, unsuspended cards are due now, however many are listed. */

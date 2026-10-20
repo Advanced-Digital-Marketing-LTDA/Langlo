@@ -38,6 +38,10 @@ describe('native flashcard persistence feasibility', () => {
       expect(
         await searchNotes(db, { userId: 'learner-a' }, 'école')
       ).toMatchObject([{ id: 'note-one' }]);
+      expect(await searchNotes(db, { userId: 'learner-a' }, 'front')).toEqual(
+        []
+      );
+      expect(await searchNotes(db, { userId: 'learner-a' }, '[]')).toEqual([]);
     } finally {
       db.close();
     }

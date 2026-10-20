@@ -32,3 +32,11 @@ Captured during the built-server browser flow using its disposable test account:
 - [Study schedule preview](LANGLO-11-settings-preview.png)
 - [Cross-deck search](LANGLO-11-decks-search.png)
 - [Revealed review card and intervals](LANGLO-11-review.png)
+
+## PR #127 review follow-up
+
+- Reviewed the bot findings at head `029a1df`. Search matched serialized JSON keys and punctuation: a new `front`/`[]` regression assertion failed (`1 failed, 20 skipped`) before the fix, then passed (`1 passed, 20 skipped`) after search began matching parsed note text, explanation, tags, and deck name.
+- Removed the silent 16-review-per-card preview cutoff. The simulation continues until the seven-day boundary, with its existing one-minute forward-progress fallback. The existing seven-day stability and exclusion tests passed after the change.
+- Addressed SonarCloud's new-code `reduce()` finding with an explicit initial day, and its catch-binding naming finding. Moved note/tag validation into a server-only module while preserving the public `FlashcardError` export and callers; separated preview day selection from the review loop.
+- Pinned npm `11.9.0` ran `npm ci --ignore-scripts` and every repository check: `check` (0 errors, 0 warnings), `lint`, `format:check`, `npm test` (88 files / 1,386 tests), `test:property` (5 files / 7 tests), `build`, `test:e2e` (104/104 desktop and mobile), and `git diff --check`. All passed using disposable local fixture databases.
+- Remaining hosted gate status must be checked against the pushed follow-up head; local checks do not clear CodeScene, Codacy, or SonarCloud results for the previous commit.

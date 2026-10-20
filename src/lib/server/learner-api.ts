@@ -224,9 +224,9 @@ export async function studyFormValue<R, T>(
   requireLearnerApi(event);
   try {
     return success(await studyPage(event, run));
-  } catch (thrown) {
-    if (isHttpError(thrown) && thrown.status < 500)
-      return fail(thrown.status, { message: thrown.body.message });
-    throw thrown;
+  } catch (error_) {
+    if (isHttpError(error_) && error_.status < 500)
+      return fail(error_.status, { message: error_.body.message });
+    throw error_;
   }
 }

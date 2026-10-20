@@ -20,6 +20,19 @@ import type {
 import { LibsqlError } from '@libsql/client';
 import { setTimeout as delay } from 'node:timers/promises';
 import { studyDayStart } from './study-days';
+import {
+  FlashcardError,
+  exceedsCodePointLimit,
+  isNonEmptyBoundedText,
+  isRecord,
+  isSourceId,
+  maxCardTextLength,
+  normalizeTags,
+  validateContent,
+  validateExplanation,
+  validateNoteSource
+} from './flashcard-validation';
+export { FlashcardError } from './flashcard-validation';
 
 export interface LearnerSession {
   userId: string;
@@ -88,10 +101,6 @@ const relearningSteps = {
   '30m': ['30m'],
   '1h': ['1h']
 } as const;
-const maxCardTextLength = 4096;
-const maxExplanationLength = 1000;
-const maxSourceFieldLength = 512;
-const sourceIdPattern = /^langlo:v1:[0-9a-f]{64}$/u;
 const reviewIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 // shortcut: remote transactions serialize too; split if throughput proves limiting.
@@ -218,17 +227,9 @@ function simulateGoodReviews(
     );
     let state = decodeCard(String(row.state_json));
     let dueAt = Number(row.due_at);
-    // shortcut: cap at 16 simulated reviews per card, raise it if future presets exceed that.
-    for (let review = 0; review < 16 && dueAt < end; review += 1) {
+    while (dueAt < end) {
       const reviewedAt = Math.max(now.getTime(), dueAt);
-      let day = 6;
-      for (let index = 0; index < 7; index += 1) {
-        if (reviewedAt < boundaries[index + 1].getTime()) {
-          day = index;
-          break;
-        }
-      }
-      counts[day] += 1;
+      counts[previewDay(boundaries, reviewedAt)] += 1;
       const reviewTime = new Date(reviewedAt);
       const updated = scheduler.next(
         cardWithId(state, cardId),
@@ -241,6 +242,13 @@ function simulateGoodReviews(
     }
   }
   return counts;
+}
+
+function previewDay(boundaries: Date[], reviewedAt: number): number {
+  for (let index = 0; index < 7; index += 1) {
+    if (reviewedAt < boundaries[index + 1].getTime()) return index;
+  }
+  return 6;
 }
 
 export async function previewStudySchedule(
@@ -291,8 +299,9 @@ export async function previewStudySchedule(
     selected: selectedCounts[index]
   }));
   const busiest = (key: 'saved' | 'selected') => {
-    const day = days.reduce((largest, current) =>
-      current[key] > largest[key] ? current : largest
+    const day = days.reduce(
+      (largest, current) => (current[key] > largest[key] ? current : largest),
+      days[0]
     );
     return { date: day.date, count: day[key] };
   };
@@ -306,35 +315,6 @@ export async function previewStudySchedule(
     busiestDay: { saved: busiest('saved'), selected: busiest('selected') },
     scenario: 'Illustrative scenario: assumes Good on every simulated review.'
   };
-}
-
-function normalizeTags(value: unknown): string[] {
-  if (value === undefined || value === null || value === '') return [];
-  const list = typeof value === 'string' ? value.split(',') : value;
-  if (!Array.isArray(list) || list.length > 20)
-    throw new FlashcardError('INVALID_TAGS');
-  const tags: string[] = [];
-  const seen = new Set<string>();
-  for (const value_ of list) {
-    if (typeof value_ !== 'string') throw new FlashcardError('INVALID_TAGS');
-    const tag = value_.trim();
-    if (!tag) continue;
-    if (exceedsCodePointLimit(tag, 64) || tag.includes('\0'))
-      throw new FlashcardError('INVALID_TAGS');
-    const key = tag.toLocaleLowerCase('en');
-    if (!seen.has(key)) tags.push(tag);
-    seen.add(key);
-  }
-  return tags;
-}
-
-function exceedsCodePointLimit(value: string, limit: number): boolean {
-  const codePoints = value[Symbol.iterator]();
-  let count = 0;
-  while (!codePoints.next().done) {
-    if (++count > limit) return true;
-  }
-  return false;
 }
 
 function releaseConnection(client: object, queue: Set<() => void>) {
@@ -449,94 +429,6 @@ async function beginTransaction(client: Client, mode: TransactionMode) {
 
 export const beginWrite = (client: Client) => beginTransaction(client, 'write');
 export const beginRead = (client: Client) => beginTransaction(client, 'read');
-
-export class FlashcardError extends Error {
-  constructor(readonly code: string) {
-    super(code);
-  }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function isCardText(value: unknown): value is string {
-  return (
-    typeof value === 'string' &&
-    !!value.trim() &&
-    !value.includes('\0') &&
-    !exceedsCodePointLimit(value, maxCardTextLength)
-  );
-}
-
-function validateContent(kind: unknown, content: unknown): void {
-  if (!isRecord(content)) throw new FlashcardError('INVALID_CONTENT');
-
-  if (kind === 'basic') {
-    if (
-      Object.keys(content).length !== 2 ||
-      !isCardText(content.front) ||
-      !isCardText(content.back)
-    )
-      throw new FlashcardError('INVALID_CONTENT');
-  } else if (kind === 'cloze') {
-    if (Object.keys(content).length !== 1 || !isCardText(content.text))
-      throw new FlashcardError('INVALID_CONTENT');
-    const matches = content.text.match(/\{\{c1::[^{}]+\}\}/gu) ?? [];
-    if (
-      !matches.length ||
-      /\{\{c\d+::/u.test(content.text.replace(/\{\{c1::[^{}]+\}\}/gu, ''))
-    ) {
-      throw new FlashcardError('INVALID_CLOZE');
-    }
-  } else {
-    throw new FlashcardError('INVALID_CONTENT');
-  }
-}
-
-function isBoundedText(value: string, limit: number): boolean {
-  if (value.includes('\0')) return false;
-  return !exceedsCodePointLimit(value, limit);
-}
-
-function isNonEmptyBoundedText(value: unknown, limit: number): value is string {
-  if (typeof value !== 'string') return false;
-  if (value.trim() === '') return false;
-  return isBoundedText(value, limit);
-}
-
-function isSourceId(value: unknown): value is string {
-  return typeof value === 'string' && sourceIdPattern.test(value);
-}
-
-/** The optional short explanation shown beside a generated mistake card. */
-function validateExplanation(value: unknown): string {
-  if (value === undefined) return '';
-  if (typeof value !== 'string')
-    throw new FlashcardError('INVALID_EXPLANATION');
-  if (!isBoundedText(value, maxExplanationLength))
-    throw new FlashcardError('INVALID_EXPLANATION');
-  return value;
-}
-
-function isSourceField(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
-  if (value.trim() === '') return false;
-  return isBoundedText(value, maxSourceFieldLength);
-}
-
-/** The practice evidence a generated draft came from, all or nothing. */
-function validateNoteSource(value: unknown): NoteSource | null {
-  if (value === undefined) return null;
-  if (!isRecord(value)) throw new FlashcardError('INVALID_SOURCE');
-  const fields = [value.attemptId, value.skillId, value.contentVersionId];
-  if (!fields.every(isSourceField)) throw new FlashcardError('INVALID_SOURCE');
-  return {
-    attemptId: value.attemptId as string,
-    skillId: value.skillId as string,
-    contentVersionId: value.contentVersionId as string
-  };
-}
 
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
