@@ -195,6 +195,21 @@ test('keeps lessons without an openable version selectable but out of progress t
   await page.getByRole('searchbox', { name: 'Search topics' }).fill(title);
   await expect(page.locator('button.node.matching')).toHaveCount(1);
   await expect(page.locator('button.node.dimmed')).toBeVisible();
+  await page.getByRole('button', { name: 'List view' }).click();
+  await expect(page.locator('.list button.matching')).toHaveCount(1);
+  const contextTopic = page.locator('.list button.dimmed').first();
+  await expect(contextTopic).toBeVisible();
+  await contextTopic.focus();
+  await contextTopic.press('Enter');
+  await page.getByRole('button', { name: 'Close topic details' }).click();
+  await expect(
+    page.getByRole('searchbox', { name: 'Search topics' })
+  ).toBeFocused();
+  const matchingTopic = page.locator('.list button.matching');
+  await matchingTopic.focus();
+  await matchingTopic.press('Enter');
+  await page.getByRole('button', { name: 'Close topic details' }).click();
+  await expect(matchingTopic).toBeFocused();
 });
 
 test('switches enrolled languages while keeping the overall progress view', async ({

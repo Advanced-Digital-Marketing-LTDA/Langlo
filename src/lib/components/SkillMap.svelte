@@ -52,7 +52,10 @@
   let level = $state(initialValue('level'));
   let view = $state(initialValue('view') === 'list' ? 'list' : 'map');
   let zoom = $state(readZoom(initialParam('zoom')));
+  let scrollX = $state(readScroll('x'));
+  let scrollY = $state(readScroll('y'));
   let viewport = $state<HTMLDivElement>();
+  let positionedViewport = $state<HTMLDivElement>();
   let scrollTimer: ReturnType<typeof setTimeout>;
   const selectedTrack = $derived(
     tracks.find((track) => track.language === language)
@@ -63,6 +66,11 @@
     return Number.isFinite(parsed) && parsed >= 0.45 && parsed <= 1.8
       ? parsed
       : 1;
+  }
+
+  function readScroll(name: 'x' | 'y') {
+    const parsed = Number(initialParam(name));
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
   }
 
   function mapUrl(skillId = selectedSkill) {
@@ -82,10 +90,8 @@
     else params.delete('view');
     if (zoom !== 1) params.set('zoom', String(zoom));
     else params.delete('zoom');
-    if (viewport?.scrollLeft)
-      params.set('x', String(Math.round(viewport.scrollLeft)));
-    if (viewport?.scrollTop)
-      params.set('y', String(Math.round(viewport.scrollTop)));
+    if (scrollX) params.set('x', String(Math.round(scrollX)));
+    if (scrollY) params.set('y', String(Math.round(scrollY)));
     return `/app/map?${params}`;
   }
 
@@ -131,9 +137,14 @@
     selectionCleared = true;
     saveMapUrl('');
     requestAnimationFrame(() => {
-      document
-        .getElementById(`map-skill-${encodeURIComponent(skillId)}`)
-        ?.focus();
+      const topic = document.getElementById(
+        `map-skill-${encodeURIComponent(skillId)}`
+      );
+      if (topic) topic.focus();
+      else
+        document
+          .querySelector<HTMLInputElement>('.filters input[type="search"]')
+          ?.focus();
     });
   }
 
@@ -209,6 +220,9 @@
   }
 
   function rememberPosition() {
+    if (!viewport) return;
+    scrollX = viewport.scrollLeft;
+    scrollY = viewport.scrollTop;
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => saveMapUrl(), 180);
   }
@@ -243,11 +257,14 @@
     }
   }
 
+  $effect(() => {
+    if (!viewport || positionedViewport === viewport) return;
+    positionedViewport = viewport;
+    viewport.scrollLeft = scrollX;
+    viewport.scrollTop = scrollY;
+  });
+
   onMount(() => {
-    if (viewport) {
-      viewport.scrollLeft = Math.max(0, Number(initialParam('x')) || 0);
-      viewport.scrollTop = Math.max(0, Number(initialParam('y')) || 0);
-    }
     if (selectedTrack) initializeMap(selectedTrack);
   });
 </script>
@@ -533,7 +550,12 @@
                   {#each shown as node (node.skillId)}
                     <li>
                       <button
+                        id={`map-skill-${encodeURIComponent(node.skillId)}`}
                         type="button"
+                        class:matching={filters.matchingIds.has(node.skillId) &&
+                          (query || status || level)}
+                        class:dimmed={(query || status || level) &&
+                          !filters.matchingIds.has(node.skillId)}
                         aria-pressed={activeSkillId === node.skillId}
                         onclick={() => selectSkill(node.skillId)}
                       >
@@ -768,11 +790,13 @@
     border-color: #172d46;
     box-shadow: 0 0 0 2px #dce7f2;
   }
-  .node.matching {
+  .node.matching,
+  .list button.matching {
     outline: 3px solid #d38e17;
     outline-offset: 2px;
   }
-  .node.dimmed {
+  .node.dimmed,
+  .list button.dimmed {
     opacity: 0.55;
   }
   .node.foundation {

@@ -38,12 +38,30 @@ required npm 11.9.0 runtime. Dependencies were installed using `npm ci
 - `npm run check` — passed; 0 errors and 0 warnings.
 - `npm run lint` — passed.
 - `npm run format:check` — passed.
-- `npm test` — passed; 91 files and 1,414 tests.
+- `npm test` — passed; 91 files and 1,415 tests.
 - `npm run test:property` — passed; 6 files and 9 property tests.
 - `npm run build` — passed with the Node adapter.
-- `npm run test:e2e` — passed; 108 tests across desktop and mobile using the
-  built Node server and disposable synthetic fixture databases.
+- `npm run test:e2e` — after rebuilding the current worktree, all 110 desktop
+  and mobile tests passed. The first run used stale generated build output and
+  had eight version-refresh timeouts plus a mobile map pointer interception;
+  the refresh test passed three consecutive isolated runs after rebuilding,
+  and the map regression now uses keyboard interaction.
+- Focused map E2E after that test correction — 4 passed across desktop and
+  mobile using the built Node server and disposable synthetic fixture databases.
 - `git diff --check` — passed.
+
+## PR review regression evidence
+
+- Red: the lesson return-path test received `unavailable: true` and
+  `lesson: null` without `returnTo`. Green: all 52 focused route, map and render
+  tests passed after preserving the sanitized map URL for withdrawn lessons.
+- Red: list-view matching rows had no `.matching` class, and a return from a
+  lesson lost its `x` coordinate in the map URL. Green: the focused map E2E
+  passed all 4 desktop/mobile tests after adding list match/context styling,
+  tracking scroll coordinates reactively, and restoring them when each map
+  viewport mounts.
+- Closing details now returns focus to the selected list row when it remains
+  visible, or to topic search when filters remove that row.
 
 ## Acceptance still pending
 

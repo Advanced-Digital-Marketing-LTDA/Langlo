@@ -559,6 +559,33 @@ async function assessAllActiveSkills(page: Page, userId: string) {
   await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
 }
 
+test('restores the map position after returning from a lesson', async ({
+  page,
+  context
+}) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  const userId = await signIn(page, context);
+  await seedSession(userId, 'map-scroll-session');
+  await page.goto(`${base}/app/map`);
+  const viewport = page.getByRole('region', { name: /FR topic map/u });
+  await page.locator('#map-skill-fr-a1-001').click();
+  await viewport.evaluate((element) => {
+    element.scrollLeft = Math.min(
+      200,
+      element.scrollWidth - element.clientWidth
+    );
+  });
+  await expect
+    .poll(async () => Number(new URL(page.url()).searchParams.get('x')))
+    .toBeGreaterThan(0);
+  await page.getByRole('link', { name: 'Open lesson' }).click();
+  await page.getByRole('link', { name: 'Back to skill map' }).click();
+  await expect(page).toHaveURL(/\/app\/map\?.*x=\d+/u);
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(0);
+});
+
 test('all four exercise formats render and submit without overflow', async ({
   page,
   context

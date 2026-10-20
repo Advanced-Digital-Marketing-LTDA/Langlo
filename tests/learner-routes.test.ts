@@ -568,6 +568,23 @@ describe('lesson page load', () => {
     });
   });
 
+  it('preserves the safe map context when lesson content becomes unavailable', async () => {
+    await client.execute(
+      "UPDATE content_versions SET status = 'quarantined' WHERE id = 'fr-a1-001@1'"
+    );
+    const e = Object.assign(event('learner-a'), {
+      params: { language: 'fr', skill: 'fr-a1-001' },
+      url: new URL(
+        'http://127.0.0.1/app/learn/fr/lesson/fr-a1-001?returnTo=%2Fapp%2Fmap%3Flanguage%3Dfr%26skill%3Dfr-a1-001%26view%3Dlist'
+      )
+    });
+    expect(await lessonPage(e as never)).toMatchObject({
+      unavailable: true,
+      lesson: null,
+      returnTo: '/app/map?language=fr&skill=fr-a1-001&view=list'
+    });
+  });
+
   it('answers 404 for a track the learner is not enrolled in', async () => {
     await expect(load('learner-a', 'de')).rejects.toMatchObject({
       status: 404,

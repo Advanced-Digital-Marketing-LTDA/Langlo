@@ -20,10 +20,10 @@ import { StudyError } from '../../../../../../lib/server/study';
 import { normalizeMapReturnTo } from '../../../../../../lib/skill-map';
 
 /** Withdrawn content gets an honest notice instead of an error page. */
-function lessonFailure(thrown: unknown, language: string) {
+function lessonFailure(thrown: unknown, language: string, returnTo: string) {
   if (thrown instanceof StudyError) {
     if (thrown.code === 'CONTENT_UNAVAILABLE')
-      return { language, unavailable: true as const, lesson: null };
+      return { language, returnTo, unavailable: true as const, lesson: null };
     if (thrown.code === 'NOT_FOUND') error(404, 'Lesson not found.');
     const described = describeLearnerError(thrown.code);
     if (described) error(described.status, described.message);
@@ -51,10 +51,11 @@ export const load: PageServerLoad = async (event) => {
   const learner = requireLearnerPage(event);
   const { language, skill } = event.params;
   const studySessionId = event.url.searchParams.get('session');
+  const returnTo = normalizeMapReturnTo(event.url.searchParams.get('returnTo'));
   try {
     return await withDatabase(event.locals.config, async (client) => ({
       language,
-      returnTo: normalizeMapReturnTo(event.url.searchParams.get('returnTo')),
+      returnTo,
       unavailable: false as const,
       reportSubmissionKey: randomUUID(),
       lesson: await lessonFor(client, learner, {
@@ -66,7 +67,7 @@ export const load: PageServerLoad = async (event) => {
       feedback: await practiceFeedback(client, learner, studySessionId, skill)
     }));
   } catch (thrown) {
-    return lessonFailure(thrown, language);
+    return lessonFailure(thrown, language, returnTo);
   }
 };
 
