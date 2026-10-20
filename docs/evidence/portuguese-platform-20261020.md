@@ -27,7 +27,7 @@ Also run and passing: `npm run check` (0 errors), `npm run lint`, `npm run forma
 
 Environment note: the container has Node 22.22 and npm 10; dependencies were installed with npm 11.9.0 through `npx` and `--ignore-scripts`. The repository pins Node 24.19, so CI is the authority for the pinned toolchain.
 
-Review follow-up: 0026 now fails loudly when foreign keys are enforced (a plain batch would cascade study history away), and the upgrade test also seeds `prerequisites` and `card_drafts`. A test applies 0026 through `applyRemoteTestPlan` on a populated database. `assessmentLevels` throws for an unknown language, and a second learner proves owner scoping of the Portuguese paths.
+Review follow-up: 0026 now fails loudly when foreign keys are enforced (a plain batch would cascade study history away), and the upgrade test also seeds `prerequisites` and `card_drafts`. A test applies 0026 through `applyRemoteTestPlan` on a populated database. `assessmentLevels` throws for an unknown language, the typed-answer accent keypad now has a Portuguese palette, and a second learner proves owner scoping of the Portuguese paths.
 
 ## Pending
 
