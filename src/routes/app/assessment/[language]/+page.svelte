@@ -4,7 +4,7 @@
 </script>
 
 <svelte:head><title>Start assessment · Langlo</title></svelte:head>
-<h1>Assess {data.language.toUpperCase()} {data.level} grammar</h1>
+<h1>Assess {data.language.toUpperCase()} grammar</h1>
 <p>
   You will answer one unseen question for each active skill across all levels in
   this language.

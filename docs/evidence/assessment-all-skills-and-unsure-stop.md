@@ -67,3 +67,8 @@ question selection into focused functions and shortened the browser helper.
 The behavior and query remain the same. Local `check`, lint, format, 1,399 unit
 tests, 7 properties, build, and 104 browser tests passed after the refactor.
 Hosted CodeScene and other PR checks remain separate acceptance gates.
+
+The PR review also caught a level-specific heading on the language-wide start
+page. A desktop browser assertion for “Assess FR grammar” failed against the
+old heading, then passed after the copy changed. The check used the built Node
+server and synthetic fixtures.

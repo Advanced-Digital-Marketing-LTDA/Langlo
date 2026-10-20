@@ -491,6 +491,7 @@ async function answerExercise(
 
 async function assessAllActiveSkills(page: Page, userId: string) {
   await page.goto(`${base}/app/assessment/fr`);
+  await expect(page.locator('h1')).toHaveText('Assess FR grammar');
   await expect(
     page.getByText(
       'You will answer one unseen question for each active skill across all levels in this language.',
