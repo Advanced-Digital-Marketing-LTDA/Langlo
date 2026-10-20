@@ -19,12 +19,51 @@ import { approvedPackage } from './fixtures/content-package';
 const learner = testSession('learner-a');
 let client: Client;
 let close: () => void;
+
+async function addHoldoutSkills(
+  skills: { id: string; language: string; level: string }[],
+  existing = false
+) {
+  await client.batch(
+    [
+      ...(existing
+        ? []
+        : skills.map((skill) => ({
+            sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
+            args: [skill.id, skill.language, skill.level]
+          }))),
+      ...skills.map((skill) => ({
+        sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, ?, 1, 'pilot-ready')",
+        args: [`${skill.id}@1`, skill.id, skill.language]
+      })),
+      ...skills.map((skill) => ({
+        sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer) VALUES (?, ?, ?, ?, 'typed-blank', 1, ?, 'es')",
+        args: [
+          `${skill.id}@1:q1`,
+          `${skill.id}@1`,
+          skill.id,
+          skill.language,
+          `Synthetic prompt for ${skill.id}`
+        ]
+      }))
+    ],
+    'write'
+  );
+}
+
 beforeEach(async () => {
   ({ client, close } = await openFixtureDatabase(await fixture()));
   const pkg = approvedPackage();
   pkg.versions[0].questions[1].holdout = true;
   pkg.versions[1].questions[0].holdout = true;
   await importContent(client, pkg);
+  await client.execute(
+    "UPDATE skills SET retired_at = 1 WHERE id = 'fr-articles'"
+  );
+  await addHoldoutSkills(
+    [{ id: 'fr-a1-003', language: 'fr', level: 'A1' }],
+    true
+  );
 });
 afterEach(async () => {
   close?.();
@@ -104,16 +143,58 @@ describe('saved placement plan', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
+  it('starts only when every active skill has an unseen assessment holdout', async () => {
+    await client.execute({
+      sql: "DELETE FROM questions WHERE id = 'fr-a1-003@1:q1'"
+    });
+    await expect(start()).rejects.toMatchObject({
+      code: 'CONTENT_UNAVAILABLE'
+    });
+    expect(
+      (
+        await client.execute(
+          "SELECT COUNT(*) AS count FROM study_sessions WHERE mode = 'assessment' AND assessment_plan IS NOT NULL"
+        )
+      ).rows[0].count
+    ).toBe(0);
+  });
+
+  it('writes new full-coverage plans and still reads saved assessment-1 plans', async () => {
+    const { id } = await start();
+    const stored = await client.execute({
+      sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+      args: [id]
+    });
+    const plan = JSON.parse(String(stored.rows[0].assessment_plan));
+    expect(plan.version).toBe('assessment-2');
+    expect(plan.questions).toHaveLength(3);
+    await client.execute({
+      sql: 'UPDATE study_sessions SET assessment_plan = ? WHERE id = ?',
+      args: [
+        JSON.stringify({
+          version: 'assessment-1',
+          questions: plan.questions.slice(0, 2)
+        }),
+        id
+      ]
+    });
+    expect(await getAssessment(client, learner, id)).toMatchObject({
+      total: 2,
+      policyVersion: 'assessment-1'
+    });
+  });
+
   it('keeps missing evaluation evidence uncertain after completion instead of manufacturing a correct result', async () => {
     const { id } = await start();
     const first = await answer(id, 'fr-a1-001@1:q2');
     await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
+    await answer(id, 'fr-a1-003@1:q1', 'es');
     await client.execute({
       sql: 'DELETE FROM evaluations WHERE attempt_id = ?',
       args: [first.id]
     });
     expect(await assessmentResults(client, learner, id)).toMatchObject({
-      counts: { correct: 1, incorrect: 0, uncertain: 1 },
+      counts: { correct: 2, incorrect: 0, uncertain: 1 },
       a1Gaps: ['fr-a1-001']
     });
   });
@@ -122,10 +203,10 @@ describe('saved placement plan', () => {
     const { id } = await start();
     const first = await getAssessment(client, learner, id);
     expect(first).toMatchObject({
-      total: 2,
+      total: 3,
       answered: 0,
       state: 'active',
-      coverage: { A1: 2, A2: 0 },
+      coverage: { A1: 3, A2: 0 },
       question: { id: 'fr-a1-001@1:q2' }
     });
     expect(JSON.stringify(first)).not.toContain('Nous sommes ici.');
@@ -134,7 +215,7 @@ describe('saved placement plan', () => {
     await client.execute(
       "UPDATE questions SET holdout = 0 WHERE id = 'fr-a1-002@1:q1'"
     );
-    expect((await getAssessment(client, learner, id)).total).toBe(2);
+    expect((await getAssessment(client, learner, id)).total).toBe(3);
   });
 
   it('replays start safely and refuses another owner and an unenrolled track', async () => {
@@ -185,9 +266,10 @@ describe('saved placement plan', () => {
       id: final.id,
       duplicate: true
     });
+    await answer(id, 'fr-a1-003@1:q1', 'es');
     expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(await assessmentResults(client, learner, id)).toMatchObject({
-      counts: { correct: 2, incorrect: 0, uncertain: 0 },
+      counts: { correct: 3, incorrect: 0, uncertain: 0 },
       a1Gaps: []
     });
     expect(
@@ -222,9 +304,70 @@ describe('saved placement plan', () => {
     expect(row.rows[0]).toMatchObject({ not_sure: 1, outcome: 'uncertain' });
   });
 
+  it('saves a partial result after the fifth explicit Not sure and counts only certain answers as evidence', async () => {
+    await addHoldoutSkills(
+      ['fr-a1-004', 'fr-a1-005', 'fr-a1-006', 'fr-a1-007', 'fr-a1-008'].map(
+        (id) => ({ id, language: 'fr', level: 'A1' })
+      )
+    );
+    const { id } = await start();
+    const questions = [
+      'fr-a1-001@1:q2',
+      'fr-a1-002@1:q1',
+      'fr-a1-003@1:q1',
+      'fr-a1-004@1:q1',
+      'fr-a1-005@1:q1',
+      'fr-a1-006@1:q1',
+      'fr-a1-007@1:q1',
+      'fr-a1-008@1:q1'
+    ];
+    const certain = await answer(id, questions[0], 'es');
+    await answer(id, questions[1], '', true);
+    await answer(id, questions[2], '?');
+    await answer(id, questions[3], '', true);
+    await answer(id, questions[4], '', true);
+    await answer(id, questions[5], '', true);
+    expect(await getAssessment(client, learner, id)).toMatchObject({
+      total: 8,
+      answered: 6,
+      state: 'active'
+    });
+    await expect(assessmentResults(client, learner, id)).rejects.toMatchObject({
+      code: 'RESULTS_NOT_READY'
+    });
+
+    await answer(id, questions[6], '', true);
+    expect(await getAssessment(client, learner, id)).toMatchObject({
+      total: 8,
+      answered: 7,
+      state: 'completed',
+      question: null
+    });
+    const results = await assessmentResults(client, learner, id);
+    expect(results).toMatchObject({
+      total: 8,
+      notReached: 1,
+      counts: { correct: 1, incorrect: 0, uncertain: 6 }
+    });
+    expect(results.items.map((item) => item.questionId)).toEqual(
+      questions.slice(0, 7)
+    );
+    expect(results.items.some((item) => item.questionId === questions[7])).toBe(
+      false
+    );
+    expect(
+      (
+        await client.execute(
+          'SELECT attempt_id, contribution FROM skill_evidence'
+        )
+      ).rows
+    ).toEqual([{ attempt_id: certain.id, contribution: 1 }]);
+  });
+
   it('holds results while a fresh final answer awaits its fallback verdict, then publishes', async () => {
     const { id } = await start();
     await answer(id, 'fr-a1-001@1:q2');
+    await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
     const during: unknown[] = [];
     const fallback = vi.fn(async () => {
       const code = (error: unknown) => (error as { code?: string }).code;
@@ -249,7 +392,7 @@ describe('saved placement plan', () => {
       learner,
       {
         studySessionId: id,
-        questionId: 'fr-a1-002@1:q1',
+        questionId: 'fr-a1-003@1:q1',
         submissionKey: randomUUID(),
         evidenceKind: 'independent',
         answer: 'Nous voici.'
@@ -259,7 +402,7 @@ describe('saved placement plan', () => {
     expect(during).toEqual(['RESULTS_PENDING', 'published', 'published']);
     expect(
       await assessmentResults(client, learner, id, { awaitFallback: true })
-    ).toMatchObject({ counts: { correct: 2, incorrect: 0, uncertain: 0 } });
+    ).toMatchObject({ counts: { correct: 3, incorrect: 0, uncertain: 0 } });
   });
 
   it.each(['timeout', 'provider-error', 'cap-reached'] as const)(
@@ -267,12 +410,13 @@ describe('saved placement plan', () => {
     async (reason) => {
       const { id } = await start();
       await answer(id, 'fr-a1-001@1:q2');
+      await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
       await recordAttempt(
         client,
         learner,
         {
           studySessionId: id,
-          questionId: 'fr-a1-002@1:q1',
+          questionId: 'fr-a1-003@1:q1',
           submissionKey: randomUUID(),
           evidenceKind: 'independent',
           answer: 'Nous voici.'
@@ -287,14 +431,13 @@ describe('saved placement plan', () => {
       );
       expect(
         await assessmentResults(client, learner, id, { awaitFallback: true })
-      ).toMatchObject({ counts: { correct: 1, incorrect: 0, uncertain: 1 } });
+      ).toMatchObject({ counts: { correct: 2, incorrect: 0, uncertain: 1 } });
     }
   );
 
   it('does not offer a holdout again when a later content version republishes the same item', async () => {
     const first = await start();
     await answer(first.id, 'fr-a1-001@1:q2');
-    await answer(first.id, 'fr-a1-002@1:q1', 'On est ici.');
     const pkg = approvedPackage();
     const republished = structuredClone(pkg.versions[0]);
     republished.id = 'fr-a1-001@2';
@@ -317,7 +460,6 @@ describe('saved placement plan', () => {
   it('offers a holdout again when a later content version changes its meaning', async () => {
     const first = await start();
     await answer(first.id, 'fr-a1-001@1:q2');
-    await answer(first.id, 'fr-a1-002@1:q1', 'On est ici.');
     const pkg = approvedPackage();
     const revised = structuredClone(pkg.versions[0]);
     revised.id = 'fr-a1-001@2';
@@ -412,9 +554,10 @@ describe('saved placement plan', () => {
       (await client.execute('SELECT * FROM skill_evidence')).rows
     ).toHaveLength(0);
     const correct = await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
+    const alsoCorrect = await answer(id, 'fr-a1-003@1:q1', 'es');
     const results = await assessmentResults(client, learner, id);
     expect(results).toMatchObject({
-      counts: { correct: 1, incorrect: 0, uncertain: 1 },
+      counts: { correct: 2, incorrect: 0, uncertain: 1 },
       a1Gaps: ['fr-a1-001']
     });
     expect(
@@ -423,7 +566,10 @@ describe('saved placement plan', () => {
           sql: 'SELECT attempt_id, contribution FROM skill_evidence'
         })
       ).rows
-    ).toEqual([{ attempt_id: correct.id, contribution: 1 }]);
+    ).toEqual([
+      { attempt_id: correct.id, contribution: 1 },
+      { attempt_id: alsoCorrect.id, contribution: 1 }
+    ]);
     expect(
       (await client.execute('SELECT * FROM card_drafts')).rows
     ).toHaveLength(0);
@@ -447,14 +593,15 @@ describe('saved placement plan', () => {
     const { id } = await start();
     await answer(id, 'fr-a1-001@1:q2');
     await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
+    await answer(id, 'fr-a1-003@1:q1', 'es');
     await expect(start()).rejects.toMatchObject({
       code: 'CONTENT_UNAVAILABLE'
     });
   });
 
-  it('samples A1 gaps for an A2 enrollment and caps the plan deterministically', async () => {
+  it('includes every skill across levels for an A1 enrollment without a sample cap', async () => {
     await client.execute(
-      "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('en-a', 'learner-a', 'en', 'A2', 'en')"
+      "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('en-a', 'learner-a', 'en', 'A1', 'en')"
     );
     for (const level of ['A1', 'A2']) {
       for (let i = 0; i < 8; i++) {
@@ -480,8 +627,8 @@ describe('saved placement plan', () => {
     }
     const { id } = await start('en');
     expect(await getAssessment(client, learner, id)).toMatchObject({
-      total: 12,
-      coverage: { A1: 6, A2: 6 },
+      total: 16,
+      coverage: { A1: 8, A2: 8 },
       question: { id: 'en-A1-0:q' }
     });
   });

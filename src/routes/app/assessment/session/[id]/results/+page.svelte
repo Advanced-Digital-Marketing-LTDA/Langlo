@@ -13,6 +13,7 @@
 <p>Correct: {data.results.counts.correct}</p>
 <p>Incorrect: {data.results.counts.incorrect}</p>
 <p>Uncertain: {data.results.counts.uncertain}</p>
+<p>Questions not reached: {data.results.notReached}</p>
 <p>
   Uncertain includes unresolved evaluation and Not sure. It cannot increase
   independent grammar evidence. This sample does not certify your language

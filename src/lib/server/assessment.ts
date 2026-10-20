@@ -12,7 +12,7 @@ import {
   type PreparedOutcome
 } from './evaluation/prepared';
 
-export const ASSESSMENT_POLICY_VERSION = 'assessment-1';
+export const ASSESSMENT_POLICY_VERSION = 'assessment-2';
 type QueryClient = Pick<Client, 'execute'>;
 
 /**
@@ -75,11 +75,15 @@ export async function startAssessment(
       return { id };
     }
     const enrolled = await tx.execute({
-      sql: 'SELECT id, starting_level FROM enrollments WHERE owner_id = ? AND language = ?',
+      sql: 'SELECT id FROM enrollments WHERE owner_id = ? AND language = ?',
       args: [learner.userId, input.language]
     });
     const enrollment = enrolled.rows[0];
     if (!enrollment) throw new StudyError('NOT_FOUND');
+    const activeSkills = await tx.execute({
+      sql: 'SELECT id FROM skills WHERE language = ? AND retired_at IS NULL ORDER BY level, id',
+      args: [input.language]
+    });
     const available = await tx.execute({
       sql: `SELECT q.id, q.skill_id, sk.level FROM questions q
         JOIN skills sk ON sk.id = q.skill_id
@@ -93,22 +97,16 @@ export async function startAssessment(
         ORDER BY sk.level, q.skill_id, q.id`,
       args: [input.language, learner.userId]
     });
-    const seen = new Set<string>();
-    const candidates = available.rows.filter((row) => {
-      const skill = String(row.skill_id);
-      if (seen.has(skill)) return false;
-      seen.add(skill);
-      return enrollment.starting_level === 'A2' || row.level === 'A1';
-    });
-    const a1 = candidates.filter((row) => row.level === 'A1');
-    const a2 = candidates.filter((row) => row.level === 'A2');
-    const questions =
-      enrollment.starting_level === 'A2'
-        ? [
-            ...a1.slice(0, Math.max(6, 12 - a2.length)),
-            ...a2.slice(0, Math.max(6, 12 - a1.length))
-          ].slice(0, 12)
-        : a1.slice(0, 12);
+    const questionBySkill = new Map<string, Row>();
+    for (const row of available.rows)
+      if (!questionBySkill.has(String(row.skill_id)))
+        questionBySkill.set(String(row.skill_id), row);
+    const questions: Row[] = [];
+    for (const skill of activeSkills.rows) {
+      const question = questionBySkill.get(String(skill.id));
+      if (!question) throw new StudyError('CONTENT_UNAVAILABLE');
+      questions.push(question);
+    }
     if (!questions.length) throw new StudyError('CONTENT_UNAVAILABLE');
     await tx.execute({
       sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, assessment_plan) VALUES (?, ?, ?, ?, 'assessment', ?)",
@@ -158,10 +156,20 @@ async function readPlan(
   if (!result.rows.length) throw new StudyError('NOT_FOUND');
   const plan = JSON.parse(String(result.rows[0].assessment_plan));
   if (
-    plan.version !== ASSESSMENT_POLICY_VERSION ||
+    !['assessment-1', ASSESSMENT_POLICY_VERSION].includes(plan.version) ||
     !Array.isArray(plan.questions) ||
     plan.questions.length !== result.rows.length ||
-    result.rows.length > 12
+    (plan.version === 'assessment-1' && result.rows.length > 12)
+  )
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  const skills = new Set<string>();
+  if (
+    result.rows.some((row) => {
+      const skill = String(row.skill_id);
+      if (skills.has(skill)) return true;
+      skills.add(skill);
+      return false;
+    })
   )
     throw new StudyError('CONTENT_UNAVAILABLE');
   return result.rows;
@@ -195,7 +203,7 @@ export async function getAssessment(
     id,
     language: String(rows[0].language),
     state: String(rows[0].state),
-    policyVersion: ASSESSMENT_POLICY_VERSION,
+    policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
     answered: rows.filter((row) => row.answered).length,
     total: rows.length,
     coverage: {
@@ -203,7 +211,7 @@ export async function getAssessment(
       A2: rows.filter((row) => row.level === 'A2').length
     },
     question: rows[0].state === 'active' && next ? questionFor(next) : null,
-    skillId: next ? String(next.skill_id) : null
+    skillId: rows[0].state === 'active' && next ? String(next.skill_id) : null
   };
 }
 
@@ -238,9 +246,10 @@ export async function completeAssessment(
   id: string
 ) {
   const completed = await client.execute({
-    sql: `UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND assessment_plan IS NOT NULL
-      AND NOT EXISTS (SELECT 1 FROM json_each(study_sessions.assessment_plan, '$.questions') p
-        WHERE NOT EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.question_id = p.value))`,
+    sql: `UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND state = 'active' AND assessment_plan IS NOT NULL
+      AND (NOT EXISTS (SELECT 1 FROM json_each(study_sessions.assessment_plan, '$.questions') p
+        WHERE NOT EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.question_id = p.value))
+        OR (SELECT COUNT(DISTINCT a.question_id) FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.not_sure = 1) >= 5)`,
     args: [id, learner.userId]
   });
   return completed.rowsAffected > 0;
@@ -327,35 +336,38 @@ export async function assessmentResults(
   )
     throw new StudyError('RESULTS_PENDING');
   const evaluations = await client.execute({
-    sql: `SELECT e.*, a.question_id, a.content_version_id, a.answer, a.not_sure, a.evidence_kind
-      FROM evaluations e JOIN attempts a ON a.id = e.attempt_id AND a.owner_id = e.owner_id
+    sql: `SELECT e.*, a.id AS recorded_attempt_id, a.question_id, a.content_version_id, a.answer, a.not_sure, a.evidence_kind
+      FROM attempts a LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
       WHERE a.study_session_id = ? AND a.owner_id = ? ORDER BY a.created_at, a.id, e.created_at, e.id`,
     args: [id, learner.userId]
   });
-  const items = rows.map((row) => {
+  const items = rows.flatMap((row) => {
     const evidence = evaluations.rows.filter(
       (entry) => entry.question_id === row.id
     );
     const first = evidence[0];
+    if (!first?.recorded_attempt_id) return [];
     return {
       questionId: String(row.id),
       skillId: String(row.skill_id),
       level: String(row.level),
       contentVersionId: String(row.content_version_id),
       prompt: String(row.prompt),
-      answer: first ? String(first.answer) : '',
+      answer: String(first.answer),
       expectedAnswer: String(row.answer),
       outcome: first?.not_sure
         ? ('uncertain' as const)
         : feedbackOutcome(evidence, String(row.content_version_id)),
-      evidenceKind: first ? String(first.evidence_kind) : 'assisted'
+      evidenceKind: String(first.evidence_kind)
     };
   });
   return {
     id,
     language: String(rows[0].language),
-    policyVersion: ASSESSMENT_POLICY_VERSION,
+    policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
     items,
+    total: rows.length,
+    notReached: rows.length - items.length,
     counts: {
       correct: items.filter((item) => item.outcome === 'correct').length,
       incorrect: items.filter((item) => item.outcome === 'incorrect').length,

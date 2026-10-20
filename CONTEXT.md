@@ -7,3 +7,6 @@
 - **Note and card**: a note owns one stable card identity. Moving the note between the learner's decks or changing its tags does not change card state or review history.
 - **Illustrative workload preview**: a seven-study-day comparison of saved and selected settings that assumes a Good rating at each simulated review. It is a scenario, not a forecast.
 - **Suspended card**: an approved card excluded from due counts and scheduling queues until resumed. Its state and review history remain stored.
+- **Active assessment skill**: a non-retired skill in the selected language. A new assessment needs one current, unseen holdout question for every active skill.
+- **Explicit Not sure**: the learner's submitted choice that they do not know an answer. It is separate from an evaluator's uncertain verdict; five explicit choices finalize the assessment.
+- **Unreached assessment question**: a planned question with no submitted response. Partial results report its count without scoring or revealing its answer.
