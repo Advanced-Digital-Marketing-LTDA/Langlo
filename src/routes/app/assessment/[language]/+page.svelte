@@ -11,8 +11,9 @@
 </p>
 <p>
   Results and expected answers stay hidden until you finish. Choose Not sure
-  whenever you need to. This assessment guides practice; it is not a CEFR
-  qualification.
+  whenever you need to. Choosing Not sure five times ends the assessment early.
+  Your results will show the questions you answered and how many were not
+  reached. This assessment guides practice; it is not a CEFR qualification.
 </p>
 <form method="POST" action="?/start">
   <input type="hidden" name="submissionKey" value={data.submissionKey} /><button

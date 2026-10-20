@@ -63,14 +63,14 @@ export async function startAssessment(
       sql: 'SELECT owner_id, language, mode FROM study_sessions WHERE id = ?',
       args: [id]
     });
-    if (previous.rows[0]) {
-      const row = previous.rows[0];
-      if (
-        row.owner_id !== learner.userId ||
-        row.language !== input.language ||
-        row.mode !== 'assessment'
-      )
-        throw new StudyError('NOT_FOUND');
+    const previousRow = previous.rows[0];
+    if (previousRow && previousRow.owner_id !== learner.userId)
+      throw new StudyError('NOT_FOUND');
+    if (previousRow && previousRow.language !== input.language)
+      throw new StudyError('NOT_FOUND');
+    if (previousRow && previousRow.mode !== 'assessment')
+      throw new StudyError('NOT_FOUND');
+    if (previousRow) {
       await tx.commit();
       return { id };
     }
@@ -97,17 +97,18 @@ export async function startAssessment(
         ORDER BY sk.level, q.skill_id, q.id`,
       args: [input.language, learner.userId]
     });
-    const questionBySkill = new Map<string, Row>();
-    for (const row of available.rows)
-      if (!questionBySkill.has(String(row.skill_id)))
-        questionBySkill.set(String(row.skill_id), row);
-    const questions: Row[] = [];
-    for (const skill of activeSkills.rows) {
+    const questionBySkill = new Map(
+      [...available.rows]
+        .reverse()
+        .map((row) => [String(row.skill_id), row] as const)
+    );
+    const questions = activeSkills.rows.flatMap((skill) => {
       const question = questionBySkill.get(String(skill.id));
-      if (!question) throw new StudyError('CONTENT_UNAVAILABLE');
-      questions.push(question);
-    }
+      return question ? [question] : [];
+    });
     if (!questions.length) throw new StudyError('CONTENT_UNAVAILABLE');
+    if (questions.length !== activeSkills.rows.length)
+      throw new StudyError('CONTENT_UNAVAILABLE');
     await tx.execute({
       sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, assessment_plan) VALUES (?, ?, ?, ?, 'assessment', ?)",
       args: [
@@ -155,22 +156,16 @@ async function readPlan(
   });
   if (!result.rows.length) throw new StudyError('NOT_FOUND');
   const plan = JSON.parse(String(result.rows[0].assessment_plan));
-  if (
-    !['assessment-1', ASSESSMENT_POLICY_VERSION].includes(plan.version) ||
-    !Array.isArray(plan.questions) ||
-    plan.questions.length !== result.rows.length ||
-    (plan.version === 'assessment-1' && result.rows.length > 12)
-  )
+  if (!Array.isArray(plan.questions))
     throw new StudyError('CONTENT_UNAVAILABLE');
-  const skills = new Set<string>();
-  if (
-    result.rows.some((row) => {
-      const skill = String(row.skill_id);
-      if (skills.has(skill)) return true;
-      skills.add(skill);
-      return false;
-    })
-  )
+  if (!['assessment-1', ASSESSMENT_POLICY_VERSION].includes(plan.version))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (plan.questions.length !== result.rows.length)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (plan.version === 'assessment-1' && result.rows.length > 12)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  const skills = result.rows.map((row) => String(row.skill_id));
+  if (new Set(skills).size !== skills.length)
     throw new StudyError('CONTENT_UNAVAILABLE');
   return result.rows;
 }
