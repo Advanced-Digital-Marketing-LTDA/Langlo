@@ -64,13 +64,73 @@ export async function startPractice(
   return { id };
 }
 
-/** Freeze at most five due skills into a manual, one-question-per-skill review session. */
-export async function startGrammarReview(
-  client: Client,
+async function grammarReviewQuestions(
+  tx: Pick<Client, 'execute'>,
   learner: LearnerSession,
-  input: { language: string; submissionKey: unknown; skillIds: unknown[] },
-  now = Date.now()
+  input: { language: string; skillIds: unknown[] }
 ) {
+  const questions: {
+    skillId: string;
+    questionId: string;
+    contentVersionId: string;
+  }[] = [];
+  for (const skillId of input.skillIds as string[]) {
+    const question = await tx.execute({
+      sql: `SELECT q.id, q.content_version_id FROM questions q
+          JOIN content_versions v ON v.id = q.content_version_id
+          WHERE q.skill_id = ? AND q.language = ? AND q.holdout = 0
+            AND q.prompt IS NOT NULL AND q.answer IS NOT NULL
+            AND v.status IN ('schema-validated', 'pilot-ready')
+            AND v.version = (SELECT MAX(v2.version) FROM content_versions v2
+              WHERE v2.skill_id = q.skill_id AND v2.status IN ('schema-validated', 'pilot-ready'))
+          ORDER BY q.id <> COALESCE((SELECT a.question_id FROM grammar_retention_events e
+            JOIN attempts a ON a.id = e.attempt_id AND a.owner_id = e.owner_id
+            WHERE e.owner_id = ? AND e.language = ? AND e.skill_id = ?
+            ORDER BY e.reviewed_at DESC LIMIT 1), '') DESC, q.id LIMIT 1`,
+      args: [skillId, input.language, learner.userId, input.language, skillId]
+    });
+    if (!question.rows[0]) throw new StudyError('CONTENT_UNAVAILABLE');
+    questions.push({
+      skillId,
+      questionId: String(question.rows[0].id),
+      contentVersionId: String(question.rows[0].content_version_id)
+    });
+  }
+  return questions;
+}
+
+async function replayGrammarReview(
+  tx: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  id: string,
+  input: { language: string; skillIds: unknown[] }
+) {
+  const previous = await tx.execute({
+    sql: 'SELECT owner_id, language, mode, grammar_retention_plan FROM study_sessions WHERE id = ?',
+    args: [id]
+  });
+  if (previous.rows[0]) {
+    const row = previous.rows[0];
+    const plan = JSON.parse(String(row.grammar_retention_plan ?? '{}'));
+    const priorSkills = Array.isArray(plan.questions)
+      ? plan.questions.map((item: { skillId?: string }) => item.skillId)
+      : [];
+    if (
+      row.owner_id !== learner.userId ||
+      row.language !== input.language ||
+      row.mode !== 'mixed-review' ||
+      JSON.stringify(priorSkills) !== JSON.stringify(input.skillIds)
+    )
+      throw new StudyError('NOT_FOUND');
+    return true;
+  }
+  return false;
+}
+
+function validateGrammarReview(input: {
+  submissionKey: unknown;
+  skillIds: unknown[];
+}) {
   if (
     typeof input.submissionKey !== 'string' ||
     !KEY_PATTERN.test(input.submissionKey)
@@ -84,26 +144,20 @@ export async function startGrammarReview(
     new Set(input.skillIds).size !== input.skillIds.length
   )
     throw new StudyError('INVALID_REVIEW_SELECTION');
+}
+
+/** Freeze at most five due skills into a manual, one-question-per-skill review session. */
+export async function startGrammarReview(
+  client: Client,
+  learner: LearnerSession,
+  input: { language: string; submissionKey: unknown; skillIds: unknown[] },
+  now = Date.now()
+) {
+  validateGrammarReview(input);
   const id = `grammar-review:${input.submissionKey}`;
   const tx = await beginWrite(client);
   try {
-    const previous = await tx.execute({
-      sql: 'SELECT owner_id, language, mode, grammar_retention_plan FROM study_sessions WHERE id = ?',
-      args: [id]
-    });
-    if (previous.rows[0]) {
-      const row = previous.rows[0];
-      const plan = JSON.parse(String(row.grammar_retention_plan ?? '{}'));
-      const priorSkills = Array.isArray(plan.questions)
-        ? plan.questions.map((item: { skillId?: string }) => item.skillId)
-        : [];
-      if (
-        row.owner_id !== learner.userId ||
-        row.language !== input.language ||
-        row.mode !== 'mixed-review' ||
-        JSON.stringify(priorSkills) !== JSON.stringify(input.skillIds)
-      )
-        throw new StudyError('NOT_FOUND');
+    if (await replayGrammarReview(tx, learner, id, input)) {
       await tx.commit();
       return { id };
     }
@@ -119,33 +173,7 @@ export async function startGrammarReview(
       args: [learner.userId, input.language]
     });
     if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
-    const questions: {
-      skillId: string;
-      questionId: string;
-      contentVersionId: string;
-    }[] = [];
-    for (const skillId of input.skillIds as string[]) {
-      const question = await tx.execute({
-        sql: `SELECT q.id, q.content_version_id FROM questions q
-          JOIN content_versions v ON v.id = q.content_version_id
-          WHERE q.skill_id = ? AND q.language = ? AND q.holdout = 0
-            AND q.prompt IS NOT NULL AND q.answer IS NOT NULL
-            AND v.status IN ('schema-validated', 'pilot-ready')
-            AND v.version = (SELECT MAX(v2.version) FROM content_versions v2
-              WHERE v2.skill_id = q.skill_id AND v2.status IN ('schema-validated', 'pilot-ready'))
-          ORDER BY q.id <> COALESCE((SELECT a.question_id FROM grammar_retention_events e
-            JOIN attempts a ON a.id = e.attempt_id AND a.owner_id = e.owner_id
-            WHERE e.owner_id = ? AND e.language = ? AND e.skill_id = ?
-            ORDER BY e.reviewed_at DESC LIMIT 1), '') DESC, q.id LIMIT 1`,
-        args: [skillId, input.language, learner.userId, input.language, skillId]
-      });
-      if (!question.rows[0]) throw new StudyError('CONTENT_UNAVAILABLE');
-      questions.push({
-        skillId,
-        questionId: String(question.rows[0].id),
-        contentVersionId: String(question.rows[0].content_version_id)
-      });
-    }
+    const questions = await grammarReviewQuestions(tx, learner, input);
     await tx.execute({
       sql: `INSERT INTO study_sessions (id, owner_id, enrollment_id, language,
         mode, grammar_retention_policy_version, grammar_retention_plan)
@@ -202,6 +230,37 @@ export async function grammarReviewPlan(
   }));
 }
 
+async function discardUnratedPracticeAnswers(
+  tx: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  id: string
+) {
+  await tx.execute({
+    sql: `DELETE FROM attempts WHERE owner_id = ? AND study_session_id = ?
+        AND grammar_rating IS NULL AND EXISTS (
+          SELECT 1 FROM study_sessions s WHERE s.id = attempts.study_session_id
+            AND s.owner_id = attempts.owner_id AND s.grammar_retention_policy_version = ?
+        ) AND (
+          EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
+            AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id AND f.outcome = 'correct')
+          OR (NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
+              AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id)
+            AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
+              AND p.evaluator_version = ? AND p.rubric_version = attempts.content_version_id AND p.outcome = 'correct'))
+        )`,
+    args: [
+      learner.userId,
+      id,
+      GRAMMAR_RETENTION_POLICY_VERSION,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      PREPARED_EVALUATOR_VERSION
+    ]
+  });
+}
+
 /** Mark one of the caller's own practice sessions as completed. */
 export async function finishPractice(
   client: Client,
@@ -220,30 +279,7 @@ export async function finishPractice(
       await tx.commit();
       return;
     }
-    await tx.execute({
-      sql: `DELETE FROM attempts WHERE owner_id = ? AND study_session_id = ?
-        AND grammar_rating IS NULL AND EXISTS (
-          SELECT 1 FROM study_sessions s WHERE s.id = attempts.study_session_id
-            AND s.owner_id = attempts.owner_id AND s.grammar_retention_policy_version = ?
-        ) AND (
-          EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
-            AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id AND f.outcome = 'correct')
-          OR (NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
-              AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id)
-            AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
-              AND p.evaluator_version = ? AND p.rubric_version = attempts.content_version_id AND p.outcome = 'correct'))
-        )`,
-      args: [
-        learner.userId,
-        id,
-        GRAMMAR_RETENTION_POLICY_VERSION,
-        FALLBACK_EVALUATOR_VERSION,
-        FALLBACK_RUBRIC_VERSION,
-        FALLBACK_EVALUATOR_VERSION,
-        FALLBACK_RUBRIC_VERSION,
-        PREPARED_EVALUATOR_VERSION
-      ]
-    });
+    await discardUnratedPracticeAnswers(tx, learner, id);
     await tx.execute({
       sql: "UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND mode IN ('practice', 'mixed-review')",
       args: [id, learner.userId]

@@ -42,3 +42,32 @@ The synthetic desktop screenshot captures the answer, feedback and selected rati
 ## Pending acceptance and limits
 
 The synthetic FSRS feasibility comparison does not establish that the schedule predicts delayed grammar recall. LANGLO-253 calibration still needs delayed recall on unseen equivalent questions across skills, tracks, and learner experience, with leakage controls and uncertainty. CI, live provider behavior, production state, learner exposure, and release readiness remain unverified and are not authorized by this local implementation.
+
+## PR #132 review fixes — 2026-10-20
+
+The approved follow-up fixes the two confirmed content-version defects and adds behavior coverage around the reviewed transaction and route boundaries. Grammar mastery, native flashcard behavior, study settings, UI, dependencies and CI policy remain unchanged.
+
+- A frozen grammar review now resolves both its question and lesson from the plan's content version before its first answer. It can finish after a newer version is published; withdrawn content is still refused, and answers from superseded content do not strengthen the current schedule.
+- Forward migration `0028_current_grammar_content` replaces the two reset triggers so only the effective newest approved content version can reset schedules. Existing migration SQL, snapshots and journal entries are preserved; the journal only gains the new entry. The upgrade regression preserves existing schedule state, permits repeated migration, and still resets on publication of a genuinely newer version.
+- Rating eligibility, owner/session validation, review replay/selection, provisional cleanup, assessment finalization, schedule persistence and event persistence now have focused helpers. Completion, mastery synchronization and retention writes retain their original transaction boundaries and error behavior.
+- New tests cover each rating exclusion independently, lowest-rating precedence, simultaneous conflicting/duplicate ratings, repeated finishing, review replay and invalid selections, foreign rating/discard requests, assessment and practice rollback after a synthetic retention-write failure, saved timezone propagation across both DST transitions, and the browser-facing rating/discard/review actions. The long retention integration scenario is split into aggregation/isolation, settings/review and content-reset/history cases.
+
+### Follow-up red/green evidence
+
+- Before the frozen-version fix, the regression expected `fr-a1-001@1:q2` after v2 publication and received `question: null`. The same scenario now passes, including lesson-version matching, answer/rating submission and completion.
+- Before the trigger correction, both insertion and promotion of older v2 content rewrote the v3 schedule to v2 and incremented its revision. Both regressions now preserve the v3 schedule unchanged; the existing newer-content reset regression still passes.
+- Additional boundary tests verified existing behavior before the refactors: unrated cleanup, owner isolation, duplicate ratings, rollback and timezone propagation already worked. These checks remain green after the refactors.
+
+### Follow-up validation
+
+- Node `24.19.0`, npm `11.9.0`; `npm ci --ignore-scripts`: passed.
+- `npm run check`, `npm run lint`, `npm run format:check`: passed.
+- `npm test -- --coverage --coverage.reporter=json-summary --coverage.reporter=lcov --coverage.reporter=text --coverage.reportsDirectory=/tmp/langlo-fixes-coverage`: passed, 91 files and 1,465 tests.
+- `npm run test:property`: passed, five files and seven tests.
+- Local instrumented changed-line coverage against base `6d939eb`: **337/349 (96.56%)**, calculated by intersecting added/modified source lines from `git diff --unified=0 origin/main -- src` with LCOV `DA` entries. The assessment-results rating/discard actions, lesson rating action, practice review action and session action each have 100% of their instrumented changed lines covered. This is a local line-coverage calculation, not a hosted Codecov or branch-coverage result.
+- `NODE_ENV=production npm run build -- --mode production`: passed after the final unit suite.
+- `npm run test:e2e -- --config=playwright.validation.config.ts`: passed, 104 desktop/mobile tests against the built Node server and synthetic fixtures. The temporary config changed only the local server port to 4189 and was removed after validation.
+
+The first browser launch stopped before running tests because port 4173 was occupied. A subsequent browser run overlapped a unit test that invokes its own build in test mode, replacing the production version checker and invalidating refresh checks. Final browser validation runs after the unit suite and an explicit production-mode build, using a temporary port-4189 config that is removed afterward. No refresh implementation or tests are weakened.
+
+Hosted quality gates, publication of these follow-up changes, delayed-recall calibration, real providers, production migrations and deployment remain separate and unverified by this local evidence.

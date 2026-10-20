@@ -112,7 +112,7 @@ const answerFields = (questionId: string, answer = 'suis') => ({
   submissionKey: randomUUID()
 });
 
-async function finish(id: string) {
+async function finish(id: string, rateAnswers = true) {
   const attempts = [];
   attempts.push(
     await recordAttempt(client, learner, {
@@ -141,8 +141,10 @@ async function finish(id: string) {
       evidenceKind: 'independent'
     })
   );
-  for (const attempt of attempts)
-    await rateGrammarAttempt(client, learner, attempt.id, 'good', id);
+  if (rateAnswers)
+    for (const attempt of attempts)
+      await rateGrammarAttempt(client, learner, attempt.id, 'good', id);
+  return attempts;
 }
 
 async function startEarlyStopAssessment(response: string) {
@@ -503,5 +505,91 @@ describe('completed assessment reports', () => {
         { status: 404 }
       );
     expect(await listContentReports(client, learner)).toEqual([]);
+  });
+});
+
+describe('assessment difficulty and discard actions', () => {
+  it('saves a rating, replays it, and rejects a conflicting rating', async () => {
+    const { id } = await start();
+    const attempts = await finish(id, false);
+    const fields = { attemptId: attempts[0].id, rating: 'good' };
+    expect(await resultsActions.rate(event({ id, fields }))).toEqual({
+      rated: true
+    });
+    expect(await resultsActions.rate(event({ id, fields }))).toEqual({
+      rated: true
+    });
+    await expect(
+      resultsActions.rate(event({ id, fields: { ...fields, rating: 'easy' } }))
+    ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it.each(['rate', 'discard'] as const)(
+    'rejects foreign and mismatched %s requests without writes',
+    async (action) => {
+      const { id } = await start();
+      const attempts = await finish(id, false);
+      const fields = { attemptId: attempts[0].id, rating: 'good' };
+      await expect(
+        resultsActions[action](event({ id, userId: 'learner-b', fields }))
+      ).rejects.toMatchObject({ status: 404 });
+      await expect(
+        resultsActions[action](event({ id: 'missing-session', fields }))
+      ).rejects.toMatchObject({ status: 404 });
+      expect(
+        (
+          await client.execute(
+            'SELECT grammar_rating FROM attempts WHERE id = ?',
+            [attempts[0].id]
+          )
+        ).rows[0].grammar_rating
+      ).toBeNull();
+    }
+  );
+
+  it.each(['rate', 'discard'] as const)(
+    'requires authentication and validates %s form fields',
+    async (action) => {
+      await expect(
+        resultsActions[action](
+          event({ userId: null, fields: { attemptId: 'a', rating: 'good' } })
+        )
+      ).rejects.toMatchObject({ status: 401 });
+      expect(await resultsActions[action](event({ fields: {} }))).toMatchObject(
+        { status: 400 }
+      );
+      if (action === 'rate')
+        expect(
+          await resultsActions.rate(
+            event({ fields: { attemptId: 'a', rating: 'again' } })
+          )
+        ).toMatchObject({ status: 400 });
+    }
+  );
+
+  it('discards only an unrated correct answer and returns to the missing question', async () => {
+    const { id } = await start();
+    const attempts = await finish(id, false);
+    await expect(
+      resultsActions.discard(
+        event({ id, fields: { attemptId: attempts[0].id } })
+      )
+    ).rejects.toMatchObject({ status: 303, location: sessionUrl(id) });
+    expect(
+      (
+        await client.execute('SELECT id FROM attempts WHERE id = ?', [
+          attempts[0].id
+        ])
+      ).rows
+    ).toHaveLength(0);
+    expect(await getAssessment(client, learner, id)).toMatchObject({
+      state: 'active',
+      question: { id: 'fr-a1-001@1:q1' }
+    });
+    await expect(
+      resultsActions.discard(
+        event({ id, fields: { attemptId: attempts[0].id } })
+      )
+    ).rejects.toMatchObject({ status: 404 });
   });
 });

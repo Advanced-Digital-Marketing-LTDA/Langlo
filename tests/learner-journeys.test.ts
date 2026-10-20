@@ -9,7 +9,7 @@ import {
   setExplanationLanguage
 } from '../src/lib/server/enrollment';
 import { getTimezone, setTimezone } from '../src/lib/server/preferences';
-import { pauseStudySession } from '../src/lib/server/study';
+import { pauseStudySession, recordAttempt } from '../src/lib/server/study';
 import {
   finishPractice,
   practiceResultsPath,
@@ -71,6 +71,10 @@ import {
   actions as reviewActions,
   load as reviewLoad
 } from '../src/routes/app/review/+page.server';
+
+import { importContent } from '../src/lib/server/content-import';
+import { approvedPackage } from './fixtures/content-package';
+import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
 
 const learner = testSession('learner-a');
 const other = testSession('learner-b');
@@ -1280,5 +1284,118 @@ describe('decks, review and Anki export', () => {
         suspended: true
       }
     );
+  });
+});
+
+describe('grammar practice rating and review actions', () => {
+  beforeEach(async () => {
+    const content = approvedPackage();
+    for (const version of content.versions)
+      version.lesson = {
+        title: 'Synthetic lesson',
+        explanation: 'Synthetic explanation',
+        examples: [],
+        references: []
+      };
+    await importContent(client, content);
+  });
+
+  async function pendingPractice() {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    const attempt = await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q2',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    return { session, attempt };
+  }
+
+  it('saves lesson ratings and returns actionable validation errors', async () => {
+    const { session, attempt } = await pendingPractice();
+    const params = { language: 'fr', skill: 'fr-a1-001' };
+    const fields = {
+      attemptId: attempt.id,
+      studySessionId: session.id,
+      rating: 'good'
+    };
+    expect(
+      await lessonActions.rate(
+        event({ params, fields: { ...fields, rating: 'again' } })
+      )
+    ).toMatchObject({ status: 400 });
+    expect(
+      await lessonActions.rate(event({ params, fields, userId: 'learner-b' }))
+    ).toMatchObject({ status: 404 });
+    expect(
+      await lessonActions.rate(
+        event({ params: { ...params, skill: 'fr-a1-002' }, fields })
+      )
+    ).toMatchObject({ status: 404 });
+    expect(await lessonActions.rate(event({ params, fields }))).toEqual({
+      rated: true
+    });
+    expect(
+      await lessonActions.rate(
+        event({ params, fields: { ...fields, rating: 'easy' } })
+      )
+    ).toMatchObject({ status: 409 });
+  });
+
+  it('requires login for lesson ratings', async () => {
+    await expect(
+      lessonActions.rate(event({ userId: null, fields: {} }))
+    ).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('starts a due review from the practice action and lists its frozen skill', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const params = { language: 'fr' };
+    expect(
+      await practiceActions.review(
+        event({ params, fields: { submissionKey: randomUUID() } })
+      )
+    ).toMatchObject({ status: 400 });
+    const key = randomUUID();
+    const reviewId = `grammar-review:${key}`;
+    await expect(
+      practiceActions.review(
+        event({ params, fields: { submissionKey: key, skillId: 'fr-a1-001' } })
+      )
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(reviewId)}`
+    });
+    expect(
+      await sessionLoad(event({ params: { id: reviewId } }))
+    ).toMatchObject({
+      summary: { mode: 'mixed-review' },
+      skills: [{ skillId: 'fr-a1-001', available: true, answered: false }]
+    });
+    expect(await practiceLoad(event({ params }))).toMatchObject({
+      dueReviews: [{ skillId: 'fr-a1-001' }]
+    });
+    await expect(
+      sessionActions.finish(event({ params: { id: reviewId }, fields: {} }))
+    ).rejects.toMatchObject({
+      status: 303,
+      location: practiceResultsPath(reviewId)
+    });
   });
 });

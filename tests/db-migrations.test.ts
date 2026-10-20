@@ -262,6 +262,80 @@ async function expectFailedDraftReviewMigration(target: FixtureTarget) {
 }
 
 describe('disposable libSQL migrations', () => {
+  it('upgrades grammar reset triggers without changing stored schedules and only resets for the newest published content', async () => {
+    const target = await fixture();
+    const previous = await mkdtemp(join(tmpdir(), 'langlo-0028-upgrade-'));
+    try {
+      const journal = JSON.parse(
+        await readFile('drizzle/meta/_journal.json', 'utf8')
+      );
+      const index = journal.entries.findIndex(
+        (entry: { tag: string }) => entry.tag === '0028_current_grammar_content'
+      );
+      expect(index).toBeGreaterThan(0);
+      journal.entries = journal.entries.slice(0, index);
+      await mkdir(join(previous, 'meta'));
+      await writeFile(
+        join(previous, 'meta/_journal.json'),
+        JSON.stringify(journal)
+      );
+      for (const entry of journal.entries)
+        await copyFile(
+          `drizzle/${entry.tag}.sql`,
+          join(previous, `${entry.tag}.sql`)
+        );
+      await migrateFixtureDatabase(target, previous);
+      await seedStudy(target);
+      const { client, close } = await openFixtureDatabase(target);
+      try {
+        await client.execute(
+          "INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, scheduler_version, parameters_json) VALUES ('learner-a', 'fr', 'fr-articles', 'content-v1', '{}', 123456, 3, 'fixture', '{}')"
+        );
+        const before = (
+          await client.execute('SELECT * FROM grammar_retention_schedules')
+        ).rows;
+        await migrateFixtureDatabase(target);
+        await migrateFixtureDatabase(target);
+        expect(
+          (await client.execute('SELECT * FROM grammar_retention_schedules'))
+            .rows
+        ).toEqual(before);
+        await client.execute(
+          "UPDATE content_versions SET status = 'pilot-ready' WHERE id = 'content-v2'"
+        );
+        expect(
+          (
+            await client.execute(
+              'SELECT content_version_id, due_at, revision FROM grammar_retention_schedules'
+            )
+          ).rows
+        ).toEqual([
+          { content_version_id: 'content-v2', due_at: 0, revision: 4 }
+        ]);
+        await client.execute(
+          "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('content-backfill', 'fr-articles', 'fr', 3, 'draft')"
+        );
+        await client.execute(
+          "UPDATE content_versions SET status = 'quarantined' WHERE id = 'content-v1'"
+        );
+        await client.execute(
+          "UPDATE content_versions SET status = 'pilot-ready' WHERE id = 'content-v1'"
+        );
+        expect(
+          (
+            await client.execute(
+              'SELECT content_version_id, revision FROM grammar_retention_schedules'
+            )
+          ).rows
+        ).toEqual([{ content_version_id: 'content-v2', revision: 4 }]);
+      } finally {
+        close();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
+    }
+  });
+
   it('preserves legacy data and adopts verified content after a pre-0007 upgrade', async () => {
     const target = await fixture();
     const previous = await mkdtemp(join(tmpdir(), 'langlo-migrations-'));

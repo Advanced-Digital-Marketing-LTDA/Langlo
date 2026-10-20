@@ -274,6 +274,10 @@ async function assessmentAnswerCounts(
   return { incorrect, notSure: notSure.size };
 }
 
+function assessmentStopped(answers: { incorrect: number; notSure: number }) {
+  return answers.incorrect >= 5 || answers.notSure >= 5;
+}
+
 export async function getAssessment(
   client: QueryClient,
   learner: LearnerSession,
@@ -282,7 +286,7 @@ export async function getAssessment(
   const rows = await readPlan(client, learner, id);
   const next = rows.find((row) => !row.answered);
   const answers = await assessmentAnswerCounts(client, learner, id);
-  const stopped = answers.incorrect >= 5 || answers.notSure >= 5;
+  const stopped = assessmentStopped(answers);
   if (
     rows.some((row) => row.status === 'quarantined') &&
     rows[0].state !== 'completed'
@@ -319,8 +323,7 @@ export async function assertAssessmentQuestion(
   if (rows.some((row) => row.status === 'quarantined'))
     throw new StudyError('CONTENT_UNAVAILABLE');
   const answers = await assessmentAnswerCounts(client, learner, id);
-  if (answers.incorrect >= 5 || answers.notSure >= 5)
-    throw new StudyError('STALE_QUESTION');
+  if (assessmentStopped(answers)) throw new StudyError('STALE_QUESTION');
   if (rows.find((row) => !row.answered)?.id !== questionId)
     throw new StudyError('STALE_QUESTION');
   // The plan was frozen at start: an item answered in another session since
@@ -450,38 +453,9 @@ async function awaitingFallbackVerdict(
   return pending.rows.length > 0;
 }
 
-export async function assessmentResults(
-  client: QueryClient,
-  learner: LearnerSession,
-  id: string,
-  options: { awaitFallback?: boolean; now?: number } = {}
-) {
-  const rows = await readPlan(client, learner, id);
-  const answers = await assessmentAnswerCounts(client, learner, id);
-  const ready =
-    rows[0].state === 'completed' ||
-    rows.every((row) => row.answered) ||
-    answers.incorrect >= 5 ||
-    answers.notSure >= 5;
-  if (!ready) throw new StudyError('RESULTS_NOT_READY');
-  if (
-    options.awaitFallback &&
-    (await awaitingFallbackVerdict(
-      client,
-      learner,
-      id,
-      options.now ?? Date.now()
-    ))
-  )
-    throw new StudyError('RESULTS_PENDING');
-  const evaluations = await client.execute({
-    sql: `SELECT e.*, a.id AS recorded_attempt_id, a.question_id, a.content_version_id, a.answer, a.not_sure, a.evidence_kind, a.grammar_rating
-      FROM attempts a LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
-      WHERE a.study_session_id = ? AND a.owner_id = ? ORDER BY a.created_at, a.id, e.created_at, e.id`,
-    args: [id, learner.userId]
-  });
-  const items = rows.flatMap((row) => {
-    const evidence = evaluations.rows.filter(
+function assessmentResultItems(rows: Row[], evaluations: Row[]) {
+  return rows.flatMap((row) => {
+    const evidence = evaluations.filter(
       (entry) => entry.question_id === row.id
     );
     const first = evidence[0];
@@ -502,6 +476,38 @@ export async function assessmentResults(
       rating: first.grammar_rating == null ? null : String(first.grammar_rating)
     };
   });
+}
+
+export async function assessmentResults(
+  client: QueryClient,
+  learner: LearnerSession,
+  id: string,
+  options: { awaitFallback?: boolean; now?: number } = {}
+) {
+  const rows = await readPlan(client, learner, id);
+  const answers = await assessmentAnswerCounts(client, learner, id);
+  const ready =
+    rows[0].state === 'completed' ||
+    rows.every((row) => row.answered) ||
+    assessmentStopped(answers);
+  if (!ready) throw new StudyError('RESULTS_NOT_READY');
+  if (
+    options.awaitFallback &&
+    (await awaitingFallbackVerdict(
+      client,
+      learner,
+      id,
+      options.now ?? Date.now()
+    ))
+  )
+    throw new StudyError('RESULTS_PENDING');
+  const evaluations = await client.execute({
+    sql: `SELECT e.*, a.id AS recorded_attempt_id, a.question_id, a.content_version_id, a.answer, a.not_sure, a.evidence_kind, a.grammar_rating
+      FROM attempts a LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+      WHERE a.study_session_id = ? AND a.owner_id = ? ORDER BY a.created_at, a.id, e.created_at, e.id`,
+    args: [id, learner.userId]
+  });
+  const items = assessmentResultItems(rows, evaluations.rows);
   return {
     id,
     language: String(rows[0].language),

@@ -98,6 +98,14 @@ function isIndependentEvidence(row: Row) {
   );
 }
 
+function unratedCorrectEvidence(row: Row, outcome: unknown) {
+  return (
+    row.grammar_retention_policy_version === GRAMMAR_RETENTION_POLICY_VERSION &&
+    outcome === 'correct' &&
+    row.grammar_rating == null
+  );
+}
+
 /** First response to a logical item wins, across sessions and content versions. */
 export function qualifyingGrammarEvidence(
   rows: Row[],
@@ -130,24 +138,14 @@ export function qualifyingGrammarEvidence(
       evaluations,
       String(row.content_version_id)
     );
-    if (
-      row.grammar_retention_policy_version ===
-        GRAMMAR_RETENTION_POLICY_VERSION &&
-      evaluation?.outcome === 'correct' &&
-      row.grammar_rating == null
-    )
-      continue;
+    if (unratedCorrectEvidence(row, evaluation?.outcome)) continue;
     const key = JSON.stringify([countsFor, itemKey]);
     if (seen.has(key)) continue;
     seen.add(key);
     if (!isIndependentEvidence(row)) continue;
     if (
       !evaluation ||
-      !['correct', 'incorrect'].includes(String(evaluation.outcome)) ||
-      (row.grammar_retention_policy_version ===
-        GRAMMAR_RETENTION_POLICY_VERSION &&
-        evaluation.outcome === 'correct' &&
-        row.grammar_rating == null)
+      !['correct', 'incorrect'].includes(String(evaluation.outcome))
     )
       continue;
     qualified.push({

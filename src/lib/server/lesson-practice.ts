@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { fail } from '@sveltejs/kit';
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import {
   checkAnswer,
   checkAnswerText,
@@ -243,6 +243,33 @@ async function retryQuestion(
 }
 
 /** Practice feedback is persisted history, so a reload cannot erase or upgrade it. */
+function practiceFeedbackFields(
+  row: Row,
+  evaluations: Row[],
+  retentionPolicy: string | null
+) {
+  return {
+    attemptId: String(row.id),
+    questionId: String(row.question_id),
+    contentVersionId: String(row.content_version_id),
+    reportSubmissionKey: randomUUID(),
+    answer: String(row.answer),
+    expectedAnswer:
+      row.expected_answer === null ? null : String(row.expected_answer),
+    outcome: row.not_sure
+      ? ('uncertain' as const)
+      : feedbackOutcome(evaluations, String(row.content_version_id)),
+    evidenceKind: String(row.evidence_kind),
+    receivedHelp: Boolean(row.received_help),
+    requiresRating: retentionPolicy === GRAMMAR_RETENTION_POLICY_VERSION,
+    rating:
+      row.grammar_rating === null
+        ? null
+        : (String(row.grammar_rating) as 'again' | 'hard' | 'good' | 'easy'),
+    notSure: Boolean(row.not_sure)
+  };
+}
+
 export async function practiceFeedback(
   client: Client,
   learner: LearnerSession,
@@ -266,25 +293,11 @@ export async function practiceFeedback(
     args: [learner.userId, row.id]
   });
   return {
-    attemptId: String(row.id),
-    questionId: String(row.question_id),
-    contentVersionId: String(row.content_version_id),
-    reportSubmissionKey: randomUUID(),
-    answer: String(row.answer),
-    expectedAnswer:
-      row.expected_answer === null ? null : String(row.expected_answer),
-    outcome: row.not_sure
-      ? ('uncertain' as const)
-      : feedbackOutcome(evaluations.rows, String(row.content_version_id)),
-    evidenceKind: String(row.evidence_kind),
-    receivedHelp: Boolean(row.received_help),
-    requiresRating:
-      study.grammarRetentionPolicyVersion === GRAMMAR_RETENTION_POLICY_VERSION,
-    rating:
-      row.grammar_rating === null
-        ? null
-        : (String(row.grammar_rating) as 'again' | 'hard' | 'good' | 'easy'),
-    notSure: Boolean(row.not_sure),
+    ...practiceFeedbackFields(
+      row,
+      evaluations.rows,
+      study.grammarRetentionPolicyVersion
+    ),
     retryQuestion:
       study.state === 'active'
         ? await retryQuestion(

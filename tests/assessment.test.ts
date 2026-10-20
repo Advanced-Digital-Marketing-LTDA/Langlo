@@ -784,6 +784,43 @@ describe('saved placement plan', () => {
     ).toEqual([{ rating: 'good' }]);
   });
 
+  it('rolls back the last rating and assessment completion when retention persistence fails', async () => {
+    const { id } = await start();
+    const attempts = [];
+    attempts.push(await answer(id, 'fr-a1-001@1:q2', 'es'));
+    attempts.push(await answer(id, 'fr-a1-002@1:q1', 'On est ici.'));
+    attempts.push(await answer(id, 'fr-a1-003@1:q1', 'es'));
+    for (const attempt of attempts.slice(0, 2))
+      await rateGrammarAttempt(client, learner, attempt.id, 'good', id);
+    await client.execute(
+      "CREATE TRIGGER reject_assessment_review BEFORE INSERT ON grammar_retention_events BEGIN SELECT RAISE(ABORT, 'synthetic assessment failure'); END"
+    );
+    await expect(
+      rateGrammarAttempt(client, learner, attempts[2].id, 'good', id)
+    ).rejects.toThrow(/synthetic assessment failure/);
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    expect(
+      (
+        await client.execute(
+          'SELECT grammar_rating FROM attempts WHERE id = ?',
+          [attempts[2].id]
+        )
+      ).rows[0].grammar_rating
+    ).toBeNull();
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(0);
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+    ).toHaveLength(0);
+    await client.execute('DROP TRIGGER reject_assessment_review');
+    await rateGrammarAttempt(client, learner, attempts[2].id, 'good', id);
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(3);
+  });
+
   it('lets a learner rate a valid answer after a newer version is published', async () => {
     const { id } = await start();
     const stored = await client.execute({

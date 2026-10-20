@@ -16,13 +16,16 @@ const latestVersion =
   "(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1)";
 
 /**
- * The version a session reads for a skill: the one its first attempt at the
+ * The version a session reads for a skill: its frozen review version, else the one its first attempt at the
  * skill was recorded against, so a session that spans an import is finished on
  * the questions it started, and the newest version that is not quarantined
  * otherwise (the newest of all when every version is quarantined). Takes the
  * owner, session and skill, then the skill and language of the fallback.
  */
 const sessionVersionId = `COALESCE(
+    (SELECT json_extract(p.value, '$.contentVersionId') FROM study_sessions s
+      JOIN json_each(s.grammar_retention_plan, '$.questions') p
+      WHERE s.owner_id = ? AND s.id = ? AND json_extract(p.value, '$.skillId') = ?),
     (SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1),
     (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1))`;
 const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = ${sessionVersionId})`;
@@ -97,6 +100,9 @@ async function questionRows(client: Client, read: QuestionRead) {
     args: [
       read.userId,
       read.studySessionId,
+      read.userId,
+      read.studySessionId,
+      read.skillId,
       read.userId,
       read.studySessionId,
       read.skillId,
@@ -197,6 +203,9 @@ async function lessonRow(
       studySessionId === undefined
         ? [skillId, language, explanationLanguage]
         : [
+            userId,
+            studySessionId,
+            skillId,
             userId,
             studySessionId,
             skillId,
