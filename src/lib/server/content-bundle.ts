@@ -16,10 +16,11 @@ import { ContentImportError, type ContentPackage } from './content-import';
 // reviewed only when the whole bundle is approved; the importer then applies
 // its own gates, so a draft bundle is still refused there.
 
-const languages: Record<string, 'fr' | 'de' | 'en'> = {
+const languages: Record<string, 'fr' | 'de' | 'en' | 'pt'> = {
   French: 'fr',
   German: 'de',
-  English: 'en'
+  English: 'en',
+  Portuguese: 'pt'
 };
 
 // The validator requires exactly these columns, in this order.
@@ -59,7 +60,7 @@ export function bundlePackage(
     .map(([id, language, level]) => ({
       id,
       language: languages[language],
-      level: level as 'A1' | 'A2',
+      level: level as 'A1' | 'A2' | 'B1' | 'B2',
       review,
       prerequisites: edges.get(id) ?? []
     }));
