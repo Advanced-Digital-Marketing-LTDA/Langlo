@@ -136,6 +136,34 @@ async function finish(id: string) {
   });
 }
 
+async function startEarlyStopAssessment(response: string) {
+  await client.batch(
+    Array.from({ length: 5 }, (_, index) => {
+      const id = `fr-a1-00${index + 4}`;
+      return [
+        {
+          sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
+          args: [id, 'fr', 'A1']
+        },
+        {
+          sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, 'fr', 1, 'pilot-ready')",
+          args: [`${id}@1`, id]
+        },
+        {
+          sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer) VALUES (?, ?, ?, 'fr', 'typed-blank', 1, ?, 'es')",
+          args: [`${id}@1:q1`, `${id}@1`, id, `Synthetic prompt for ${id}`]
+        }
+      ];
+    }).flat(),
+    'write'
+  );
+  if (response === 'wrong')
+    await client.execute(
+      "UPDATE questions SET format = 'multiple-choice', answer = 'es', alternatives = '[\"es\",\"wrong\"]'"
+    );
+  return start();
+}
+
 describe('assessment page boundaries', () => {
   it('lists only the owner’s unfinished assessments and enrolled tracks', async () => {
     const own = await start();
@@ -324,34 +352,25 @@ describe('assessment answer and completion routes', () => {
     ).toBe(3);
   });
 
-  it.each(['unsure', 'wrong'])(
-    'finalizes through the answer route after five %s responses and exposes only reached items',
-    async (response) => {
-      await client.batch(
-        Array.from({ length: 5 }, (_, index) => {
-          const id = `fr-a1-00${index + 4}`;
-          return [
-            {
-              sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
-              args: [id, 'fr', 'A1']
-            },
-            {
-              sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, 'fr', 1, 'pilot-ready')",
-              args: [`${id}@1`, id]
-            },
-            {
-              sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer) VALUES (?, ?, ?, 'fr', 'typed-blank', 1, ?, 'es')",
-              args: [`${id}@1:q1`, `${id}@1`, id, `Synthetic prompt for ${id}`]
-            }
-          ];
-        }).flat(),
-        'write'
-      );
-      if (response === 'wrong')
-        await client.execute(
-          "UPDATE questions SET format = 'multiple-choice', answer = 'es', alternatives = '[\"es\",\"wrong\"]'"
-        );
-      const { id } = await start();
+  it.each([
+    {
+      response: 'unsure',
+      intent: 'unsure',
+      answer: '',
+      incorrect: 0,
+      uncertain: 5
+    },
+    {
+      response: 'wrong',
+      intent: 'answer',
+      answer: 'wrong',
+      incorrect: 5,
+      uncertain: 0
+    }
+  ])(
+    'finalizes through the answer route after five $response responses and exposes only reached items',
+    async ({ response, intent, answer, incorrect, uncertain }) => {
+      const { id } = await startEarlyStopAssessment(response);
       const questions = [
         'fr-a1-001@1:q1',
         'fr-a1-002@1:q1',
@@ -362,8 +381,8 @@ describe('assessment answer and completion routes', () => {
       for (const questionId of questions) {
         const fields = {
           questionId,
-          intent: response === 'unsure' ? 'unsure' : 'answer',
-          answer: response === 'wrong' ? 'wrong' : '',
+          intent,
+          answer,
           submissionKey: randomUUID()
         };
         await expect(
@@ -385,8 +404,8 @@ describe('assessment answer and completion routes', () => {
         notReached: 3,
         counts: {
           correct: 0,
-          incorrect: response === 'wrong' ? 5 : 0,
-          uncertain: response === 'unsure' ? 5 : 0
+          incorrect,
+          uncertain
         }
       });
       expect(

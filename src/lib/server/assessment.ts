@@ -272,7 +272,7 @@ export async function completeAssessment(
     sql: `SELECT a.question_id, a.content_version_id, e.* FROM attempts a
       JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
       JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
-      WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'assessment' AND s.state = 'active' AND a.not_sure = 0`,
+      WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'assessment' AND s.state IN ('active', 'paused') AND a.not_sure = 0`,
     args: [id, learner.userId]
   });
   const byQuestion = new Map<string, Row[]>();
@@ -288,7 +288,7 @@ export async function completeAssessment(
       'incorrect'
   ).length;
   const completed = await client.execute({
-    sql: `UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND state = 'active' AND assessment_plan IS NOT NULL
+    sql: `UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND state IN ('active', 'paused') AND assessment_plan IS NOT NULL
       AND (? >= 5 OR NOT EXISTS (SELECT 1 FROM json_each(study_sessions.assessment_plan, '$.questions') p
         WHERE NOT EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.question_id = p.value))
         OR (SELECT COUNT(DISTINCT a.question_id) FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.not_sure = 1) >= 5)`,
