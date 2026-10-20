@@ -1,13 +1,7 @@
 import { expect, it } from 'vitest';
 import { studyDayStart } from '../src/lib/server/study-days';
 
-it('exposes the study day boundary helper', () => {
-  expect(studyDayStart).toBeTypeOf('function');
-});
-
 it('starts the UTC study day at 04:00 and advances at that boundary', () => {
-  expect(studyDayStart).toBeTypeOf('function');
-  if (!studyDayStart) return;
   expect(
     studyDayStart(new Date('2026-10-20T03:59:59Z'), 'UTC').toISOString()
   ).toBe('2026-10-19T04:00:00.000Z');
@@ -17,8 +11,6 @@ it('starts the UTC study day at 04:00 and advances at that boundary', () => {
 });
 
 it('uses calendar study days across daylight-saving gaps and folds', () => {
-  expect(studyDayStart).toBeTypeOf('function');
-  if (!studyDayStart) return;
   const beforeSpring = studyDayStart(
     new Date('2026-03-07T16:00:00Z'),
     'America/New_York'
@@ -44,8 +36,6 @@ it('uses calendar study days across daylight-saving gaps and folds', () => {
 });
 
 it('resolves a skipped local calendar date to the first valid study-day start', () => {
-  expect(studyDayStart).toBeTypeOf('function');
-  if (!studyDayStart) return;
   expect(
     studyDayStart(
       new Date('2011-12-29T20:00:00Z'),

@@ -1015,6 +1015,15 @@ describe('decks, review and Anki export', () => {
       scenario: string;
     };
     const second = await preview(client, learner, selected, now);
+    expect(first.days.map(({ saved, selected }) => [saved, selected])).toEqual([
+      [2, 1],
+      [0, 0],
+      [1, 1],
+      [0, 0],
+      [0, 0],
+      [0, 0],
+      [0, 0]
+    ]);
     expect(first).toEqual(second);
     expect(first.saved).toMatchObject({
       desiredRetention: 90,
@@ -1024,12 +1033,11 @@ describe('decks, review and Anki export', () => {
     expect(first.selected).toEqual(selected);
     expect(first.days).toHaveLength(7);
     expect(first.days[0].date).toBe('2026-10-19');
-    expect(first.days[0].selected).toBeGreaterThan(0);
-    expect(first.days.every((day) => day.saved >= 0 && day.selected >= 0)).toBe(
-      true
-    );
-    expect(first.averagePerDay.selected).toBeGreaterThan(0);
-    expect(first.busiestDay.selected.count).toBeGreaterThan(0);
+    expect(first.averagePerDay).toEqual({ saved: 0.4, selected: 0.3 });
+    expect(first.busiestDay).toEqual({
+      saved: { date: '2026-10-19', count: 2 },
+      selected: { date: '2026-10-19', count: 1 }
+    });
     expect(first.scenario).toContain('Good');
     await client.execute({
       sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',

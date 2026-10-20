@@ -22,6 +22,9 @@
 </form>
 {#if data.query.trim()}
   <h2>Search results</h2>
+  <p>
+    Showing up to 50 matching notes. Refine your search to narrow the results.
+  </p>
   {#if data.results.length}
     <ul>
       {#each data.results as note (note.id)}

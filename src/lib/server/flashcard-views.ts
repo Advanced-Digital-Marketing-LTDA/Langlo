@@ -4,14 +4,15 @@ import {
   approveNote,
   createNote,
   FlashcardError,
-  getNote,
   getStudySchedule,
-  ratingIntervals,
+  ratingIntervalsForStoredCard,
   type LearnerSession,
   noteSourceFrom
 } from './flashcards';
 
 type Query = Pick<Client, 'execute'>;
+const searchResultLimit = 50;
+const searchBatchSize = 200;
 export type NoteKind = 'basic' | 'cloze';
 export type NoteSummary = {
   id: string;
@@ -107,41 +108,57 @@ export async function searchNotes(
   const query = search.trim();
   if (!query) return [];
   if (query.length > 100) throw new FlashcardError('INVALID_SEARCH');
-  const result = await client.execute({
-    sql: `SELECT n.id, n.kind, n.status, n.content_json, n.tags_json,
+  const searchTerm = query.toLocaleLowerCase('en');
+  const matches: {
+    id: string;
+    kind: NoteKind;
+    status: string;
+    content: NoteSummary['content'];
+    tags: string[];
+    deck: { id: string; name: string };
+  }[] = [];
+  // SQLite's lower() only folds ASCII; scan bounded batches for Unicode matches.
+  for (
+    let offset = 0;
+    matches.length < searchResultLimit;
+    offset += searchBatchSize
+  ) {
+    const result = await client.execute({
+      sql: `SELECT n.id, n.kind, n.status, n.content_json, n.tags_json,
         n.explanation,
         d.id AS deck_id, d.name AS deck_name
       FROM native_flashcard_notes n
       JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
-      WHERE n.owner_id = ? ORDER BY n.created_at, n.rowid`,
-    args: [learner.userId]
-  });
-  const searchTerm = query.toLocaleLowerCase('en');
-  // SQLite's lower() only folds ASCII, so match Unicode learner content here.
-  return result.rows.flatMap((row) => {
-    const content = JSON.parse(
-      String(row.content_json)
-    ) as NoteSummary['content'];
-    const tags = JSON.parse(String(row.tags_json)) as string[];
-    const matches = [
-      ...Object.values(content),
-      String(row.explanation),
-      ...tags,
-      String(row.deck_name)
-    ].some((value) => value?.toLocaleLowerCase('en').includes(searchTerm));
-    return matches
-      ? [
-          {
-            id: String(row.id),
-            kind: String(row.kind) as NoteKind,
-            status: String(row.status),
-            content,
-            tags,
-            deck: { id: String(row.deck_id), name: String(row.deck_name) }
-          }
-        ]
-      : [];
-  });
+      WHERE n.owner_id = ? ORDER BY n.created_at, n.rowid LIMIT ? OFFSET ?`,
+      args: [learner.userId, searchBatchSize, offset]
+    });
+    for (const row of result.rows) {
+      const content = JSON.parse(
+        String(row.content_json)
+      ) as NoteSummary['content'];
+      const tags = JSON.parse(String(row.tags_json)) as string[];
+      if (
+        ![
+          ...Object.values(content),
+          String(row.explanation),
+          ...tags,
+          String(row.deck_name)
+        ].some((value) => value?.toLocaleLowerCase('en').includes(searchTerm))
+      )
+        continue;
+      matches.push({
+        id: String(row.id),
+        kind: String(row.kind) as NoteKind,
+        status: String(row.status),
+        content,
+        tags,
+        deck: { id: String(row.deck_id), name: String(row.deck_name) }
+      });
+      if (matches.length === searchResultLimit) break;
+    }
+    if (result.rows.length < searchBatchSize) break;
+  }
+  return matches;
 }
 
 /** How many approved, unsuspended cards are due now, however many are listed. */
@@ -191,7 +208,8 @@ export async function listDueCards(
   limit = 20
 ) {
   const result = await client.execute({
-    sql: `SELECT c.id, c.revision, n.id AS note_id, n.kind, n.content_json, d.name AS deck_name
+    sql: `SELECT c.id, c.revision, c.state_json, c.scheduler_version, c.parameters_json,
+        n.kind, n.content_json, n.explanation, d.name AS deck_name
       FROM native_flashcards c
       JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
       JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
@@ -201,27 +219,15 @@ export async function listDueCards(
   });
   const schedule = await getStudySchedule(client, learner);
   const reviewedAt = new Date(now);
-  return Promise.all(
-    result.rows.map(async (row) => {
-      const note = await getNote(client, learner, String(row.note_id));
-      if (!note.card) throw new FlashcardError('INVALID_CARD_STATE');
-      return {
-        id: String(row.id),
-        revision: Number(row.revision),
-        kind: String(row.kind) as NoteKind,
-        deck: String(row.deck_name),
-        content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
-        explanation: note.explanation,
-        intervals: ratingIntervals(
-          note.card.state,
-          note.card.id,
-          note.card.parameters,
-          schedule,
-          reviewedAt
-        )
-      };
-    })
-  );
+  return result.rows.map((row) => ({
+    id: String(row.id),
+    revision: Number(row.revision),
+    kind: String(row.kind) as NoteKind,
+    deck: String(row.deck_name),
+    content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
+    explanation: String(row.explanation),
+    intervals: ratingIntervalsForStoredCard(row, schedule, reviewedAt)
+  }));
 }
 
 /** Quote an Anki text-import field when it holds a tab, newline or quote. */

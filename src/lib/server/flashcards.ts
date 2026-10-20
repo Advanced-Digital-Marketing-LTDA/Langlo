@@ -18,7 +18,10 @@ import type {
   TransactionMode
 } from '@libsql/client';
 import { LibsqlError } from '@libsql/client';
-import { setTimeout as delay } from 'node:timers/promises';
+import {
+  setImmediate as yieldLoop,
+  setTimeout as delay
+} from 'node:timers/promises';
 import { studyDayStart } from './study-days';
 import {
   FlashcardError,
@@ -91,6 +94,7 @@ const defaultStudySchedule: StudySchedule = {
   newCardPreset: '1m+10m',
   relearningPreset: '10m'
 };
+const previewCardLimit = 500;
 const newCardSteps = {
   '10m': ['10m'],
   '1m+10m': ['1m', '10m'],
@@ -207,15 +211,16 @@ function localDate(date: Date, timezone: string): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-function simulateGoodReviews(
+async function simulateGoodReviews(
   rows: Row[],
   schedule: StudySchedule,
   now: Date,
   boundaries: Date[],
   timezone: string
-): number[] {
+): Promise<number[]> {
   const counts = Array.from({ length: 7 }, () => 0);
   const end = boundaries[7].getTime();
+  let reviews = 0;
   for (const row of rows) {
     const cardId = String(row.id);
     const base = readCardScheduler(
@@ -239,6 +244,7 @@ function simulateGoodReviews(
       state = scheduledCard(updated, reviewTime, timezone);
       dueAt = state.due.getTime();
       if (dueAt <= reviewedAt) dueAt = reviewedAt + 60_000;
+      if (++reviews % 64 === 0) await yieldLoop();
     }
   }
   return counts;
@@ -274,19 +280,20 @@ export async function previewStudySchedule(
     sql: `SELECT c.id, c.state_json, c.due_at, c.scheduler_version, c.parameters_json
       FROM native_flashcards c
       JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
-      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved'
-      ORDER BY c.id`,
-    args: [session.userId]
+      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at < ?
+      ORDER BY c.due_at, c.id LIMIT ?`,
+    args: [session.userId, boundaries[7].getTime(), previewCardLimit + 1]
   });
-  const rows = cards.rows;
-  const savedCounts = simulateGoodReviews(
+  const capped = cards.rows.length > previewCardLimit;
+  const rows = cards.rows.slice(0, previewCardLimit);
+  const savedCounts = await simulateGoodReviews(
     rows,
     saved,
     now,
     boundaries,
     timezone
   );
-  const selectedCounts = simulateGoodReviews(
+  const selectedCounts = await simulateGoodReviews(
     rows,
     selected,
     now,
@@ -313,7 +320,9 @@ export async function previewStudySchedule(
     days,
     averagePerDay: { saved: average('saved'), selected: average('selected') },
     busiestDay: { saved: busiest('saved'), selected: busiest('selected') },
-    scenario: 'Illustrative scenario: assumes Good on every simulated review.'
+    scenario: capped
+      ? `Illustrative scenario: assumes Good on every simulated review; shows the earliest ${previewCardLimit} eligible cards due in these seven days.`
+      : 'Illustrative scenario: assumes Good on every simulated review.'
   };
 }
 
@@ -554,6 +563,21 @@ export function ratingIntervals(
     good: intervalLabel(preview[Rating.Good].card, now),
     easy: intervalLabel(preview[Rating.Easy].card, now)
   };
+}
+
+export function ratingIntervalsForStoredCard(
+  row: Row,
+  schedule: StudySchedule,
+  now: Date
+) {
+  return ratingIntervals(
+    decodeCard(String(row.state_json)),
+    String(row.id),
+    readCardScheduler(row.scheduler_version, String(row.parameters_json))
+      .parameters,
+    schedule,
+    now
+  );
 }
 
 function hasValidCardNumbers(card: Card): boolean {
