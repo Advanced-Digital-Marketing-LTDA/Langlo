@@ -217,6 +217,55 @@ describe('migration 0026 Portuguese tracks', () => {
     }
   });
 
+  it('rolls the whole rebuild back when any later statement fails', async () => {
+    const target = await createDisposableFixture();
+    fixtures.push(target);
+    await migrateFixtureDatabase(target, await migrationsBefore0026());
+    await seedStudy(target);
+    const { client, close } = await openFixtureDatabase(target);
+    try {
+      const sqlBefore = (
+        await client.execute(
+          "SELECT name, sql FROM sqlite_master WHERE name IN ('skills', 'enrollments') ORDER BY name"
+        )
+      ).rows.map((r) => ({ ...r }));
+      const statements = (
+        await readFile('drizzle/0026_portuguese_tracks.sql', 'utf8')
+      )
+        .split('--> statement-breakpoint')
+        .map((statement) => statement.trim())
+        .filter(Boolean);
+      // Same all-or-nothing path the deploy uses; the last statement overflows on purpose.
+      await expect(
+        client.migrate([...statements, 'SELECT abs(-9223372036854775808)'])
+      ).rejects.toThrow(/integer overflow/);
+      const sqlAfter = (
+        await client.execute(
+          "SELECT name, sql FROM sqlite_master WHERE name IN ('skills', 'enrollments') ORDER BY name"
+        )
+      ).rows.map((r) => ({ ...r }));
+      expect(sqlAfter).toEqual(sqlBefore);
+      const scratch = await client.execute(
+        "SELECT name FROM sqlite_master WHERE name LIKE '__new_%' UNION ALL SELECT name FROM sqlite_temp_master WHERE name LIKE 'langlo_portuguese%'"
+      );
+      expect(scratch.rows).toEqual([]);
+      await rejects(
+        client,
+        "INSERT INTO skills (id, language, level) VALUES ('pt-b1-001', 'pt', 'B1')",
+        /CHECK constraint failed/
+      );
+      expect(
+        (await client.execute('SELECT count(*) AS n FROM skills')).rows[0].n
+      ).toBe(1);
+      expect(
+        (await client.execute('SELECT count(*) AS n FROM enrollments')).rows[0]
+          .n
+      ).toBe(2);
+    } finally {
+      close();
+    }
+  });
+
   it('leaves no scratch tables behind', async () => {
     const { client, close } = await upgraded();
     try {
