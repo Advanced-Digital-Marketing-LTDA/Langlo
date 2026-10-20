@@ -43,6 +43,52 @@ const answersForSkillOf = (attempt: string, question: string) =>
       WHERE r.retired_at IS NOT NULL AND r.carry_progress = 1
   ) SELECT id FROM source)`;
 
+function assertPreviousSession(
+  row: Row | undefined,
+  learner: LearnerSession,
+  language: string
+) {
+  if (row && row.owner_id !== learner.userId) throw new StudyError('NOT_FOUND');
+  if (row && row.language !== language) throw new StudyError('NOT_FOUND');
+  if (row && row.mode !== 'assessment') throw new StudyError('NOT_FOUND');
+}
+
+async function assessmentQuestions(
+  client: QueryClient,
+  language: string,
+  ownerId: string
+) {
+  const activeSkills = await client.execute({
+    sql: 'SELECT id FROM skills WHERE language = ? AND retired_at IS NULL ORDER BY level, id',
+    args: [language]
+  });
+  const available = await client.execute({
+    sql: `SELECT q.id, q.skill_id, sk.level FROM questions q
+        JOIN skills sk ON sk.id = q.skill_id
+        JOIN content_versions v ON v.id = q.content_version_id
+        WHERE q.language = ? AND q.holdout = 1 AND q.prompt IS NOT NULL AND q.answer IS NOT NULL
+          AND sk.retired_at IS NULL
+          AND v.status IN ('schema-validated', 'pilot-ready')
+          AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id AND v2.status <> 'quarantined')
+          AND NOT EXISTS (SELECT 1 FROM attempts a JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND ${answersForSkillOf('a', 'q')}
+            AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')})
+        ORDER BY sk.level, q.skill_id, q.id`,
+    args: [language, ownerId]
+  });
+  const questionBySkill = new Map(
+    [...available.rows]
+      .reverse()
+      .map((row) => [String(row.skill_id), row] as const)
+  );
+  const questions = activeSkills.rows.flatMap((skill) => {
+    const question = questionBySkill.get(String(skill.id));
+    return question ? [question] : [];
+  });
+  if (!questions.length || questions.length !== activeSkills.rows.length)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  return questions;
+}
+
 /** A saved plan freezes item identities; newly imported content cannot extend it. */
 export async function startAssessment(
   client: Client,
@@ -64,12 +110,7 @@ export async function startAssessment(
       args: [id]
     });
     const previousRow = previous.rows[0];
-    if (previousRow && previousRow.owner_id !== learner.userId)
-      throw new StudyError('NOT_FOUND');
-    if (previousRow && previousRow.language !== input.language)
-      throw new StudyError('NOT_FOUND');
-    if (previousRow && previousRow.mode !== 'assessment')
-      throw new StudyError('NOT_FOUND');
+    assertPreviousSession(previousRow, learner, input.language);
     if (previousRow) {
       await tx.commit();
       return { id };
@@ -80,35 +121,11 @@ export async function startAssessment(
     });
     const enrollment = enrolled.rows[0];
     if (!enrollment) throw new StudyError('NOT_FOUND');
-    const activeSkills = await tx.execute({
-      sql: 'SELECT id FROM skills WHERE language = ? AND retired_at IS NULL ORDER BY level, id',
-      args: [input.language]
-    });
-    const available = await tx.execute({
-      sql: `SELECT q.id, q.skill_id, sk.level FROM questions q
-        JOIN skills sk ON sk.id = q.skill_id
-        JOIN content_versions v ON v.id = q.content_version_id
-        WHERE q.language = ? AND q.holdout = 1 AND q.prompt IS NOT NULL AND q.answer IS NOT NULL
-          AND sk.retired_at IS NULL
-          AND v.status IN ('schema-validated', 'pilot-ready')
-          AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id AND v2.status <> 'quarantined')
-          AND NOT EXISTS (SELECT 1 FROM attempts a JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND ${answersForSkillOf('a', 'q')}
-            AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')})
-        ORDER BY sk.level, q.skill_id, q.id`,
-      args: [input.language, learner.userId]
-    });
-    const questionBySkill = new Map(
-      [...available.rows]
-        .reverse()
-        .map((row) => [String(row.skill_id), row] as const)
+    const questions = await assessmentQuestions(
+      tx,
+      input.language,
+      learner.userId
     );
-    const questions = activeSkills.rows.flatMap((skill) => {
-      const question = questionBySkill.get(String(skill.id));
-      return question ? [question] : [];
-    });
-    if (!questions.length) throw new StudyError('CONTENT_UNAVAILABLE');
-    if (questions.length !== activeSkills.rows.length)
-      throw new StudyError('CONTENT_UNAVAILABLE');
     await tx.execute({
       sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, assessment_plan) VALUES (?, ?, ?, ?, 'assessment', ?)",
       args: [
@@ -144,6 +161,23 @@ const plannedRows = `SELECT s.id AS session_id, s.language, s.state, s.assessmen
   WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'assessment'
   ORDER BY CAST(p.key AS INTEGER)`;
 
+function assertPlan(
+  plan: { version: string; questions: unknown },
+  rows: Row[]
+) {
+  if (!Array.isArray(plan.questions))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (!['assessment-1', ASSESSMENT_POLICY_VERSION].includes(plan.version))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (plan.questions.length !== rows.length)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (plan.version === 'assessment-1' && rows.length > 12)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  const skills = rows.map((row) => String(row.skill_id));
+  if (new Set(skills).size !== skills.length)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+}
+
 async function readPlan(
   client: QueryClient,
   learner: LearnerSession,
@@ -156,17 +190,7 @@ async function readPlan(
   });
   if (!result.rows.length) throw new StudyError('NOT_FOUND');
   const plan = JSON.parse(String(result.rows[0].assessment_plan));
-  if (!Array.isArray(plan.questions))
-    throw new StudyError('CONTENT_UNAVAILABLE');
-  if (!['assessment-1', ASSESSMENT_POLICY_VERSION].includes(plan.version))
-    throw new StudyError('CONTENT_UNAVAILABLE');
-  if (plan.questions.length !== result.rows.length)
-    throw new StudyError('CONTENT_UNAVAILABLE');
-  if (plan.version === 'assessment-1' && result.rows.length > 12)
-    throw new StudyError('CONTENT_UNAVAILABLE');
-  const skills = result.rows.map((row) => String(row.skill_id));
-  if (new Set(skills).size !== skills.length)
-    throw new StudyError('CONTENT_UNAVAILABLE');
+  assertPlan(plan, result.rows);
   return result.rows;
 }
 

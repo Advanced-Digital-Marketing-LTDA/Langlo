@@ -58,3 +58,12 @@ checks the assessment coverage copy, and exercises all three questions. The
 assessment suite also covers early finalization after five explicit `Not sure`
 choices. This record does not claim CI, publication, production database,
 provider, or deployment verification.
+
+## PR review follow-up
+
+CodeScene's first review identified complexity in assessment plan handling and
+a long browser test. The follow-up refactor moved existing validation and
+question selection into focused functions and shortened the browser helper.
+The behavior and query remain the same. Local `check`, lint, format, 1,399 unit
+tests, 7 properties, build, and 104 browser tests passed after the refactor.
+Hosted CodeScene and other PR checks remain separate acceptance gates.

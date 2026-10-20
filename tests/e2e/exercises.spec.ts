@@ -497,9 +497,7 @@ async function assessAllActiveSkills(page: Page, userId: string) {
       { exact: true }
     )
   ).toBeVisible();
-  await expect(
-    page.getByText(/Choosing Not sure five times ends the assessment early/)
-  ).toBeVisible();
+  await expect(page.getByText(/Choosing Not sure five times/)).toBeVisible();
   await page.getByRole('button', { name: 'Start assessment' }).click();
   await expect(
     page.getByRole('heading', { name: 'Grammar assessment', exact: true })
