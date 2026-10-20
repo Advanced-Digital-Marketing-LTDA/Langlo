@@ -5,6 +5,7 @@
   } from '../server/progress';
   import Chip from '../prototype/Chip.svelte';
   import { masteryLabels, masterySymbols } from '../dashboard';
+  import { LEVELS } from '../levels';
   let {
     tracks,
     details = false,
@@ -36,7 +37,7 @@
   {#if !track.skills.length}<p>
       No published skills are available in this track yet.
     </p>{/if}
-  {#each ['A1', 'A2'] as level (level)}
+  {#each LEVELS as level (level)}
     {#if track.skills.some((skill) => skill.level === level)}
       <h3>{level} topics</h3>
       <ul class="skills">
@@ -130,7 +131,7 @@
       {:then catalog}
         {#await track.progress}
           {#if catalog.skills.length}
-            {#each ['A1', 'A2'] as level (level)}
+            {#each LEVELS as level (level)}
               {#if catalog.skills.some((skill) => skill.level === level)}
                 <h3>{level} topics</h3>
                 <ul class="skills" aria-busy="true">

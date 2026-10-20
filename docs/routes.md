@@ -12,7 +12,7 @@ existing `/app/**` no-store/noindex policy and verified-session ownership guard.
 | `/app/assessment/session/[id]/results` | Results only after completion; earlier requests return 409 and foreign IDs return 404.                            |
 | `/app/map` and `/app/progress`         | Owner's versioned grammar evidence, explanations and manual lesson links; unenrolled language filters return 404. |
 | `/app/reports`                         | Owner's latest 100 content reports; no content-editing action.                                                    |
-| `/app/enroll`                          | Enroll in a track (French A1 only; German and English A1/A2); a second enrollment in a language is a 409.         |
+| `/app/enroll`                          | Enroll in a track (fr A1; de, en A1/A2; pt B1/B2); a second enrollment in a language is a 409.                    |
 | `/app/settings`                        | Lesson language per enrollment and the learner's IANA timezone (stored only; due times still use UTC).            |
 | `/app/practice/[language]`             | Start an idempotent practice session for an enrolled language.                                                    |
 | `/app/session/[id]` and `.../results`  | Pick a topic, resume if paused, finish, read answer counts; foreign IDs return 404.                               |

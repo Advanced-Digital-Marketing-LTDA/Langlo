@@ -4,7 +4,7 @@ import { formResult, studyPage } from '../../../lib/server/learner-api';
 import { requireLearnerApi } from '../../../lib/server/learner-session';
 import {
   enroll,
-  EXPLANATION_LANGUAGES,
+  explanationLanguagesByTrack,
   listEnrollments,
   levelsFor,
   TRACK_LANGUAGES
@@ -19,7 +19,7 @@ export const load: PageServerLoad = (event) =>
     levels: Object.fromEntries(
       TRACK_LANGUAGES.map((language) => [language, levelsFor(language)])
     ),
-    explanationLanguages: EXPLANATION_LANGUAGES
+    explanationLanguagesByTrack: explanationLanguagesByTrack()
   }));
 
 export const actions: Actions = {

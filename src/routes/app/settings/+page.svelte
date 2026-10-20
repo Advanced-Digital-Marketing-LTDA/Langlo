@@ -63,7 +63,7 @@
     <label
       >{names[enrollment.language]} explanations
       <select name="explanationLanguage">
-        {#each data.explanationLanguages as language (language)}
+        {#each data.explanationLanguagesByTrack[enrollment.language] ?? [] as language (language)}
           <option
             value={language}
             selected={language === enrollment.explanationLanguage}
