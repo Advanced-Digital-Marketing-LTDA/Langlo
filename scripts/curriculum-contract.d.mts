@@ -32,6 +32,10 @@ export function validateCatalog(
   knownSources: Set<string>,
   registryIds: Set<string>
 ): Catalog;
+export function validateManifestCoversCatalog(
+  manifest: Manifest,
+  catalog: Catalog
+): void;
 export function validateIdRegistry(
   registry: IdRegistry,
   catalog: Catalog,

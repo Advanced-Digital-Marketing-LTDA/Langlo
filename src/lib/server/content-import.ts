@@ -31,10 +31,19 @@ import {
 // version names one package, and a new version must be newer than every
 // version already imported.
 
-const languages = ['fr', 'de', 'en'] as const;
-const levels = ['A1', 'A2'] as const;
-// The contract's five tracks; French A2 is out of scope.
-const tracks = new Set(['fr A1', 'de A1', 'de A2', 'en A1', 'en A2']);
+const languages = ['fr', 'de', 'en', 'pt'] as const;
+// Ordered: a prerequisite may not sit at a higher level than its skill.
+const levels = ['A1', 'A2', 'B1', 'B2'] as const;
+// The contract's tracks; French A2 is out of scope, and Portuguese starts at B1.
+const tracks = new Set([
+  'fr A1',
+  'de A1',
+  'de A2',
+  'en A1',
+  'en A2',
+  'pt B1',
+  'pt B2'
+]);
 export const formats = [
   'multiple-choice',
   'typed-blank',

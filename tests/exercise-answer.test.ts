@@ -67,6 +67,9 @@ describe('accentsFor', () => {
   it('offers the letters a track needs and none for English', () => {
     expect(accentsFor('fr')).toContain('é');
     expect(accentsFor('de')).toContain('ß');
+    expect(accentsFor('pt')).toEqual(
+      expect.arrayContaining(['ã', 'õ', 'ç', 'á', 'é', 'ê', 'ô'])
+    );
     expect(accentsFor('en')).toEqual([]);
     expect(accentsFor('constructor')).toEqual([]);
   });

@@ -5,7 +5,7 @@ import {
   studyPage
 } from '../../../lib/server/learner-api';
 import {
-  EXPLANATION_LANGUAGES,
+  explanationLanguagesByTrack,
   listEnrollments,
   setExplanationLanguage
 } from '../../../lib/server/enrollment';
@@ -19,7 +19,7 @@ import {
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => ({
     enrollments: await listEnrollments(client, learner),
-    explanationLanguages: EXPLANATION_LANGUAGES,
+    explanationLanguagesByTrack: explanationLanguagesByTrack(),
     timezone: await getTimezone(client, learner),
     studySchedule: await getStudySchedule(client, learner)
   }));

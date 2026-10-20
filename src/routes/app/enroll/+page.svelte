@@ -42,7 +42,7 @@
       <label
         >Lesson language
         <select name="explanationLanguage" required>
-          {#each data.explanationLanguages as language (language)}
+          {#each data.explanationLanguagesByTrack[chosen || available[0]] ?? [] as language (language)}
             <option value={language}>{names[language]}</option>
           {/each}
         </select>

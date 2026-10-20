@@ -373,6 +373,7 @@ describe('lesson', () => {
       references: lesson.references,
       explanationLanguage: 'en',
       englishFallback: false,
+      englishOnlyTrack: false,
       newerVersionAvailable: false
     });
   });

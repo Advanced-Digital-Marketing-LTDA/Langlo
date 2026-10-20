@@ -36,6 +36,12 @@
     </p>
   {/if}
 
+  {#if data.lesson.englishOnlyTrack}
+    <p class="callout" role="status">
+      The lessons in this course are written in English.
+    </p>
+  {/if}
+
   {#if data.lesson.englishFallback}
     <p class="callout" role="status">
       This lesson is only available in English for now. Your explanation
