@@ -65,6 +65,15 @@ async function upgraded() {
   await migrateFixtureDatabase(target, await migrationsBefore0026());
   await seedStudy(target);
   const opened = await openFixtureDatabase(target);
+  // Dependants that reference skills(id, language) and that seedStudy does not cover.
+  await opened.client.batch(
+    [
+      "INSERT INTO skills (id, language, level) VALUES ('fr-nouns', 'fr', 'A1')",
+      "INSERT INTO prerequisites (skill_id, prerequisite_id, language) VALUES ('fr-nouns', 'fr-articles', 'fr')",
+      `INSERT INTO card_drafts (id, owner_id, language, skill_id, canonical_mistake, source_id, format, fields_json) VALUES ('draft-a', 'learner-a', 'fr', 'fr-articles', 'un maison', 'langlo:v1:${'a'.repeat(64)}', 'cloze', '{}')`
+    ],
+    'write'
+  );
   const rows = async (client: Client) =>
     Promise.all(
       [
@@ -73,7 +82,9 @@ async function upgraded() {
         'SELECT * FROM questions ORDER BY id',
         'SELECT * FROM content_versions ORDER BY id',
         'SELECT * FROM study_sessions ORDER BY id',
-        'SELECT * FROM attempts ORDER BY id'
+        'SELECT * FROM attempts ORDER BY id',
+        'SELECT * FROM prerequisites ORDER BY skill_id, prerequisite_id',
+        'SELECT * FROM card_drafts ORDER BY id'
       ].map(async (sql) =>
         (await client.execute(sql)).rows.map((r) => ({ ...r }))
       )
@@ -93,6 +104,8 @@ describe('migration 0026 Portuguese tracks', () => {
     try {
       expect(before[0].length).toBeGreaterThan(0);
       expect(before[1].length).toBeGreaterThan(0);
+      expect(before[6].length).toBeGreaterThan(0);
+      expect(before[7].length).toBeGreaterThan(0);
       expect(after).toEqual(before);
       expect((await client.execute('PRAGMA foreign_key_check')).rows).toEqual(
         []
@@ -261,6 +274,41 @@ describe('migration 0026 Portuguese tracks', () => {
         (await client.execute('SELECT count(*) AS n FROM enrollments')).rows[0]
           .n
       ).toBe(2);
+    } finally {
+      close();
+    }
+  });
+
+  it('refuses to run with foreign keys enforced instead of cascading study history away', async () => {
+    const target = await createDisposableFixture();
+    fixtures.push(target);
+    await migrateFixtureDatabase(target, await migrationsBefore0026());
+    await seedStudy(target);
+    const { client, close } = await openFixtureDatabase(target);
+    try {
+      expect(
+        (await client.execute('PRAGMA foreign_keys')).rows[0].foreign_keys
+      ).toBe(1);
+      const statements = (
+        await readFile('drizzle/0026_portuguese_tracks.sql', 'utf8')
+      )
+        .split('--> statement-breakpoint')
+        .map((statement) => statement.trim())
+        .filter(Boolean);
+      // A plain batch keeps foreign_keys on, unlike the libSQL migrate path.
+      await expect(client.batch(statements, 'write')).rejects.toThrow(
+        /foreign_keys_must_be_off/
+      );
+      for (const [table, count] of [
+        ['study_sessions', 2],
+        ['attempts', 1],
+        ['evaluations', 1],
+        ['enrollments', 2],
+        ['skills', 1]
+      ] as const)
+        expect(
+          (await client.execute(`SELECT count(*) AS n FROM ${table}`)).rows[0].n
+        ).toBe(count);
     } finally {
       close();
     }

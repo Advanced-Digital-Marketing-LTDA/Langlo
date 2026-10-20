@@ -1,6 +1,15 @@
 -- Portuguese (Brazil) B1 and B2: widen the language and level checks of skills and enrollments.
 -- SQLite cannot alter a CHECK, so both tables are rebuilt with every row kept; the gate below fails the migration if a row count changes.
 -- The 0003 triggers on both tables are dropped with the tables and recreated here (the track guard now also allows pt B1/B2).
+-- Dropping enrollments cascades into study_sessions when foreign keys are enforced, so the rebuild refuses to run unless the runner turned enforcement off before opening its transaction (libSQL `migrate` does; PRAGMA foreign_keys cannot be changed inside one).
+CREATE TEMP TABLE langlo_portuguese_foreign_keys (
+  foreign_keys_must_be_off integer NOT NULL CHECK(foreign_keys_must_be_off = 0)
+);
+--> statement-breakpoint
+INSERT INTO langlo_portuguese_foreign_keys (foreign_keys_must_be_off) SELECT foreign_keys FROM pragma_foreign_keys;
+--> statement-breakpoint
+DROP TABLE langlo_portuguese_foreign_keys;
+--> statement-breakpoint
 CREATE TEMP TABLE langlo_portuguese_counts (
   table_name text NOT NULL,
   row_count integer NOT NULL
@@ -10,7 +19,6 @@ INSERT INTO langlo_portuguese_counts (table_name, row_count) SELECT 'enrollments
 --> statement-breakpoint
 INSERT INTO langlo_portuguese_counts (table_name, row_count) SELECT 'skills', count(*) FROM skills;
 --> statement-breakpoint
-PRAGMA foreign_keys=OFF;--> statement-breakpoint
 CREATE TABLE `__new_enrollments` (
 	`id` text PRIMARY KEY NOT NULL,
 	`owner_id` text NOT NULL,
@@ -27,7 +35,6 @@ CREATE TABLE `__new_enrollments` (
 INSERT INTO `__new_enrollments`("id", "owner_id", "language", "starting_level", "explanation_language", "created_at") SELECT "id", "owner_id", "language", "starting_level", "explanation_language", "created_at" FROM `enrollments`;--> statement-breakpoint
 DROP TABLE `enrollments`;--> statement-breakpoint
 ALTER TABLE `__new_enrollments` RENAME TO `enrollments`;--> statement-breakpoint
-PRAGMA foreign_keys=ON;--> statement-breakpoint
 CREATE UNIQUE INDEX `enrollments_owner_language_unique` ON `enrollments` (`owner_id`,`language`);--> statement-breakpoint
 CREATE UNIQUE INDEX `enrollments_identity_owner_language` ON `enrollments` (`id`,`owner_id`,`language`);--> statement-breakpoint
 CREATE TABLE `__new_skills` (
