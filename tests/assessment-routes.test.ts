@@ -49,6 +49,20 @@ beforeEach(async () => {
     version.questions[0].holdout = true;
   }
   await importContent(client, pkg);
+  await client.execute(
+    "UPDATE skills SET retired_at = 1 WHERE id = 'fr-articles'"
+  );
+  await client.batch(
+    [
+      {
+        sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-003@1', 'fr-a1-003', 'fr', 1, 'pilot-ready')"
+      },
+      {
+        sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer) VALUES ('fr-a1-003@1:q1', 'fr-a1-003@1', 'fr-a1-003', 'fr', 'typed-blank', 1, 'Synthetic prompt for fr-a1-003', 'es')"
+      }
+    ],
+    'write'
+  );
 });
 
 afterEach(async () => {
@@ -110,6 +124,13 @@ async function finish(id: string) {
     studySessionId: id,
     questionId: 'fr-a1-002@1:q1',
     answer: 'Nous sommes ici.',
+    submissionKey: randomUUID(),
+    evidenceKind: 'independent'
+  });
+  await recordAttempt(client, learner, {
+    studySessionId: id,
+    questionId: 'fr-a1-003@1:q1',
+    answer: 'es',
     submissionKey: randomUUID(),
     evidenceKind: 'independent'
   });
@@ -204,7 +225,7 @@ describe('assessment answer and completion routes', () => {
     expect(await sessionPage(event({ id }))).toMatchObject({
       assessment: {
         answered: 0,
-        total: 2,
+        total: 3,
         question: { id: 'fr-a1-001@1:q1', alternatives: ['suis', 'es', 'est'] }
       }
     });
@@ -274,18 +295,23 @@ describe('assessment answer and completion routes', () => {
       await expect(
         sessionActions.answer(event({ id, fields: final }))
       ).rejects.toMatchObject({ status: 303, location: sessionUrl(id) });
+    const third = answerFields('fr-a1-003@1:q1', 'es');
+    await expect(
+      sessionActions.answer(event({ id, fields: third }))
+    ).rejects.toMatchObject({ status: 303, location: sessionUrl(id) });
     await expect(sessionPage(event({ id }))).rejects.toMatchObject({
       status: 303,
       location: `${sessionUrl(id)}/results`
     });
     expect(await resultsPage(event({ id }))).toMatchObject({
       results: {
-        counts: { correct: 1, incorrect: 0, uncertain: 1 },
+        counts: { correct: 2, incorrect: 0, uncertain: 1 },
         a1Gaps: ['fr-a1-001']
       },
       reportKeys: {
         'fr-a1-001@1:q1': expect.any(String),
-        'fr-a1-002@1:q1': expect.any(String)
+        'fr-a1-002@1:q1': expect.any(String),
+        'fr-a1-003@1:q1': expect.any(String)
       }
     });
     expect(
@@ -295,7 +321,68 @@ describe('assessment answer and completion routes', () => {
           args: [id]
         })
       ).rows[0].n
-    ).toBe(2);
+    ).toBe(3);
+  });
+
+  it('finalizes through the answer route after five explicit Not sure choices and exposes only reached items', async () => {
+    await client.batch(
+      Array.from({ length: 5 }, (_, index) => {
+        const id = `fr-a1-00${index + 4}`;
+        return [
+          {
+            sql: 'INSERT INTO skills (id, language, level) VALUES (?, ?, ?)',
+            args: [id, 'fr', 'A1']
+          },
+          {
+            sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, 'fr', 1, 'pilot-ready')",
+            args: [`${id}@1`, id]
+          },
+          {
+            sql: "INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer) VALUES (?, ?, ?, 'fr', 'typed-blank', 1, ?, 'es')",
+            args: [`${id}@1:q1`, `${id}@1`, id, `Synthetic prompt for ${id}`]
+          }
+        ];
+      }).flat(),
+      'write'
+    );
+    const { id } = await start();
+    const questions = [
+      'fr-a1-001@1:q1',
+      'fr-a1-002@1:q1',
+      'fr-a1-003@1:q1',
+      'fr-a1-004@1:q1',
+      'fr-a1-005@1:q1'
+    ];
+    for (const questionId of questions) {
+      const fields = {
+        questionId,
+        intent: 'unsure',
+        submissionKey: randomUUID()
+      };
+      await expect(
+        sessionActions.answer(event({ id, fields }))
+      ).rejects.toMatchObject({ status: 303 });
+      if (questionId === questions[0])
+        await expect(
+          sessionActions.answer(event({ id, fields }))
+        ).rejects.toMatchObject({ status: 303 });
+    }
+    await expect(sessionPage(event({ id }))).rejects.toMatchObject({
+      status: 303,
+      location: `${sessionUrl(id)}/results`
+    });
+    const result = await resultsPage(event({ id }));
+    if (!result) throw new Error('Results load did not return data');
+    expect(result.results).toMatchObject({
+      total: 8,
+      notReached: 3,
+      counts: { correct: 0, incorrect: 0, uncertain: 5 }
+    });
+    expect(
+      result.results.items.map(
+        (item: { questionId: string }) => item.questionId
+      )
+    ).toEqual(questions);
   });
 
   it('resumes only the owner’s paused saved assessment without revealing feedback', async () => {

@@ -6,13 +6,14 @@
 <svelte:head><title>Start assessment · Langlo</title></svelte:head>
 <h1>Assess {data.language.toUpperCase()} {data.level} grammar</h1>
 <p>
-  Answer up to 12 unseen questions. For an A2 track, this includes A1
-  foundations when available.
+  You will answer one unseen question for each active skill across all levels in
+  this language.
 </p>
 <p>
   Results and expected answers stay hidden until you finish. Choose Not sure
-  whenever you need to. This small sample is guidance for practice, not a CEFR
-  qualification or a complete assessment of your level.
+  whenever you need to. Choosing Not sure five times ends the assessment early.
+  Your results will show the questions you answered and how many were not
+  reached. This assessment guides practice; it is not a CEFR qualification.
 </p>
 <form method="POST" action="?/start">
   <input type="hidden" name="submissionKey" value={data.submissionKey} /><button

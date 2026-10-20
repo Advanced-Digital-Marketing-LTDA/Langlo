@@ -91,7 +91,25 @@ test.beforeAll(async () => {
     }
   );
   pkg.versions[1].questions[0].holdout = true;
+  pkg.versions.push({
+    id: 'fr-a1-003@1',
+    skillId: 'fr-a1-003',
+    version: 1,
+    review: 'approved',
+    questions: [
+      {
+        id: 'fr-a1-003@1:q1',
+        format: 'typed-blank',
+        prompt: 'Synthetic assessment item for the third active skill.',
+        answer: 'synthetic-third-answer',
+        holdout: true
+      }
+    ]
+  });
   await withDatabase((client) => importContent(client, pkg));
+  await withDatabase((client) =>
+    client.execute("UPDATE skills SET retired_at = 1 WHERE id = 'fr-articles'")
+  );
   server = spawn(process.execPath, ['build'], {
     env: {
       ...env,
@@ -471,6 +489,75 @@ async function answerExercise(
   await expect.poll(() => storedAnswers(userId)).toHaveLength(index + 1);
 }
 
+async function assessAllActiveSkills(page: Page, userId: string) {
+  await page.goto(`${base}/app/assessment/fr`);
+  await expect(
+    page.getByText(
+      'You will answer one unseen question for each active skill across all levels in this language.',
+      { exact: true }
+    )
+  ).toBeVisible();
+  await expect(page.getByText(/Choosing Not sure five times/)).toBeVisible();
+  await page.getByRole('button', { name: 'Start assessment' }).click();
+  await expect(
+    page.getByRole('heading', { name: 'Grammar assessment', exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText('Question 1 of 3', { exact: true })
+  ).toBeVisible();
+  expect(await page.content()).not.toContain('synthetic-secret-answer');
+  await page.getByRole('button', { name: 'Not sure', exact: true }).click();
+  await expect(
+    page.getByText('Question 2 of 3', { exact: true })
+  ).toBeVisible();
+  const assessmentUrl = page.url();
+  await page.reload();
+  expect(await page.content()).not.toContain('synthetic-secret-answer');
+  await expect(
+    page.getByText('Question 2 of 3', { exact: true })
+  ).toBeVisible();
+  const premature = await page.request.get(`${assessmentUrl}/results`);
+  expect(premature.status()).toBe(409);
+  const partial = await withDatabase((client) =>
+    client.execute({
+      sql: "SELECT a.id FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id WHERE a.owner_id = ? AND s.mode = 'assessment'",
+      args: [userId]
+    })
+  );
+  const api = await page.request.get(
+    `${base}/app/api/attempts/${partial.rows[0].id}`
+  );
+  expect((await api.json()).attempt.evaluations).toEqual([]);
+  await page
+    .getByRole('textbox', { name: 'Your answer', exact: true })
+    .fill('Nous sommes ici.');
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(
+    page.getByText('Question 3 of 3', { exact: true })
+  ).toBeVisible();
+  await page
+    .getByRole('textbox', { name: 'Your answer', exact: true })
+    .fill('synthetic-third-answer');
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(
+    page.getByRole('heading', { name: 'Assessment results', exact: true })
+  ).toBeVisible();
+  await expect(page.getByText('Correct: 2', { exact: true })).toBeVisible();
+  await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText('Questions not reached: 0', { exact: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText('A1 topics to revisit', { exact: true })
+  ).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
+}
+
 test('all four exercise formats render and submit without overflow', async ({
   page,
   context
@@ -562,53 +649,7 @@ test('all four exercise formats render and submit without overflow', async ({
   await page.reload();
   await expect(feedback).toContainText('Assisted retry');
 
-  await page.goto(`${base}/app/assessment/fr`);
-  await page.getByRole('button', { name: 'Start assessment' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Grammar assessment', exact: true })
-  ).toBeVisible();
-  await expect(
-    page.getByText('Question 1 of 2', { exact: true })
-  ).toBeVisible();
-  expect(await page.content()).not.toContain('synthetic-secret-answer');
-  await page.getByRole('button', { name: 'Not sure', exact: true }).click();
-  await expect(
-    page.getByText('Question 2 of 2', { exact: true })
-  ).toBeVisible();
-  const assessmentUrl = page.url();
-  await page.reload();
-  expect(await page.content()).not.toContain('synthetic-secret-answer');
-  await expect(
-    page.getByText('Question 2 of 2', { exact: true })
-  ).toBeVisible();
-  const premature = await page.request.get(`${assessmentUrl}/results`);
-  expect(premature.status()).toBe(409);
-  const partial = await withDatabase((client) =>
-    client.execute({
-      sql: "SELECT a.id FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id WHERE a.owner_id = ? AND s.mode = 'assessment'",
-      args: [userId]
-    })
-  );
-  const api = await page.request.get(
-    `${base}/app/api/attempts/${partial.rows[0].id}`
-  );
-  expect((await api.json()).attempt.evaluations).toEqual([]);
-  await page
-    .getByRole('textbox', { name: 'Your answer', exact: true })
-    .fill('Nous sommes ici.');
-  await page
-    .getByRole('button', { name: 'Submit answer', exact: true })
-    .click();
-  await expect(
-    page.getByRole('heading', { name: 'Assessment results', exact: true })
-  ).toBeVisible();
-  await expect(page.getByText('Correct: 1', { exact: true })).toBeVisible();
-  await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
-  await expect(
-    page.getByText('A1 topics to revisit', { exact: true })
-  ).toBeVisible();
-  await page.reload();
-  await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
+  await assessAllActiveSkills(page, userId);
   await page.goto(`${base}/app/map`);
   await expect(
     page.getByRole('heading', { name: 'Grammar skill map', exact: true })

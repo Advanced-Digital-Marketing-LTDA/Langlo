@@ -5,9 +5,13 @@ certification or a calibrated prediction of language proficiency.
 
 Only the owner's independent grammar responses with a recognized, certain
 prepared/fallback evaluation qualify. Practice and mixed review qualify after
-submission; assessment responses qualify only after the whole session is
-completed. `Not sure`, uncertain/unresolved evaluations, assisted responses and
-quarantined content cannot add independent evidence. Prepared evaluator
+submission; assessment responses qualify after the assessment is completed,
+either by answering every planned question or by submitting five explicit
+`Not sure` choices in that assessment. On an early finalization, only submitted
+certain answers are considered; unreached questions are not scored. `Not sure`,
+uncertain/unresolved evaluations, assisted responses and quarantined content
+cannot add independent evidence. Evaluator uncertainty does not count toward
+the five-choice stop rule. Prepared evaluator
 `prepared-1` must name the attempt's content version as its rubric; fallback
 `decisions-1` must name `fallback-rubric-1:<contentVersionId>`. Recognized fallback
 supersedes the prepared uncertainty, even when fallback remains uncertain.
