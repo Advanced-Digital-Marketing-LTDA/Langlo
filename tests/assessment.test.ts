@@ -220,7 +220,7 @@ describe('saved placement plan', () => {
     });
     expect(await assessmentResults(client, learner, id)).toMatchObject({
       counts: { correct: 2, incorrect: 0, uncertain: 1 },
-      a1Gaps: ['fr-a1-001']
+      foundationGaps: ['fr-a1-001']
     });
   });
 
@@ -295,7 +295,7 @@ describe('saved placement plan', () => {
     expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(await assessmentResults(client, learner, id)).toMatchObject({
       counts: { correct: 3, incorrect: 0, uncertain: 0 },
-      a1Gaps: []
+      foundationGaps: []
     });
     expect(
       (await getAttempt(client, learner, recorded.id)).evaluations
@@ -796,7 +796,7 @@ describe('saved placement plan', () => {
     const results = await assessmentResults(client, learner, id);
     expect(results).toMatchObject({
       counts: { correct: 2, incorrect: 0, uncertain: 1 },
-      a1Gaps: ['fr-a1-001']
+      foundationGaps: ['fr-a1-001']
     });
     expect(
       (

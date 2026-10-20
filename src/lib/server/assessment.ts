@@ -2,6 +2,8 @@ import type { Client, Row } from '@libsql/client';
 import type { ExerciseQuestion } from '../components/exercises/answer';
 import { beginWrite, type LearnerSession } from './flashcards';
 import { StudyError } from './study-error';
+import { TRACK_LANGUAGES } from './enrollment';
+import { assessmentLevels, foundationLevel } from '../levels';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
@@ -101,7 +103,7 @@ export async function startAssessment(
     !/^[0-9a-f-]{36}$/i.test(input.submissionKey)
   )
     throw new StudyError('INVALID_SUBMISSION_KEY');
-  if (!['fr', 'de', 'en'].includes(input.language))
+  if (!(TRACK_LANGUAGES as readonly string[]).includes(input.language))
     throw new StudyError('NOT_FOUND');
   const id = `assessment:${input.submissionKey}`;
   const tx = await beginWrite(client);
@@ -222,17 +224,20 @@ export async function getAssessment(
     rows[0].state !== 'completed'
   )
     throw new StudyError('CONTENT_UNAVAILABLE');
+  const language = String(rows[0].language);
   return {
     id,
-    language: String(rows[0].language),
+    language,
     state: String(rows[0].state),
     policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
     answered: rows.filter((row) => row.answered).length,
     total: rows.length,
-    coverage: {
-      A1: rows.filter((row) => row.level === 'A1').length,
-      A2: rows.filter((row) => row.level === 'A2').length
-    },
+    coverage: Object.fromEntries(
+      assessmentLevels(language).map((level) => [
+        level,
+        rows.filter((row) => row.level === level).length
+      ])
+    ),
     question: rows[0].state === 'active' && next ? questionFor(next) : null,
     skillId: rows[0].state === 'active' && next ? String(next.skill_id) : null
   };
@@ -403,9 +408,11 @@ export async function assessmentResults(
       evidenceKind: String(first.evidence_kind)
     };
   });
+  const language = String(rows[0].language);
+  const foundation = foundationLevel(language);
   return {
     id,
-    language: String(rows[0].language),
+    language,
     policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
     items,
     total: rows.length,
@@ -415,8 +422,9 @@ export async function assessmentResults(
       incorrect: items.filter((item) => item.outcome === 'incorrect').length,
       uncertain: items.filter((item) => item.outcome === 'uncertain').length
     },
-    a1Gaps: items
-      .filter((item) => item.level === 'A1' && item.outcome !== 'correct')
+    foundationLevel: foundation,
+    foundationGaps: items
+      .filter((item) => item.level === foundation && item.outcome !== 'correct')
       .map((item) => item.skillId)
   };
 }

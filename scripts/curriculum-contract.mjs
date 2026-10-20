@@ -33,6 +33,14 @@ const tracks = [
   'English A1',
   'English A2'
 ];
+// Portuguese (Brazil) joins one level at a time: B2 only after B1.
+const portugueseTracks = ['Portuguese B1', 'Portuguese B2'];
+const supportedTracks = [...tracks, ...portugueseTracks];
+/** The track lists a manifest may declare: the five tracks plus a prefix of the Portuguese ones. */
+const trackLists = [0, 1, 2].map((count) => [
+  ...tracks,
+  ...portugueseTracks.slice(0, count)
+]);
 const allowedEvidence = new Set([
   'source-aligned',
   'local-alignment',
@@ -323,7 +331,10 @@ export function validateManifest(manifest, files) {
     'Unsupported dependency semantics.'
   );
   requireCondition(
-    JSON.stringify(manifest.included_tracks) === JSON.stringify(tracks),
+    trackLists.some(
+      (list) =>
+        JSON.stringify(manifest.included_tracks) === JSON.stringify(list)
+    ),
     'Included tracks do not match the T004 scope.'
   );
   requireCondition(
@@ -370,7 +381,7 @@ function validateCatalogRow(row, catalog, knownSources) {
   ] = row;
   requireCondition(!catalog.has(id), `Duplicate skill ID: ${id}.`);
   requireCondition(
-    tracks.includes(`${language} ${level}`),
+    supportedTracks.includes(`${language} ${level}`),
     `Unsupported language and level: ${language} ${level}.`
   );
   requireCondition(
@@ -393,15 +404,40 @@ function validateCatalogRow(row, catalog, knownSources) {
   catalog.set(id, row);
 }
 
+/** @param {Iterable<string>} present @returns {string[]} The supported tracks among `present`, in canonical order. */
+function orderedTracks(present) {
+  const set = new Set(present);
+  return supportedTracks.filter((track) => set.has(track));
+}
+
 /** @param {CsvRow[]} records */
 function validateCatalogTracks(records) {
   const catalogTracks = new Set(
     records.slice(1).map((row) => `${row[1]} ${row[2]}`)
   );
   requireCondition(
-    catalogTracks.size === tracks.length &&
-      tracks.every((track) => catalogTracks.has(track)),
+    tracks.every((track) => catalogTracks.has(track)),
     'Catalog does not contain exactly the five requested tracks.'
+  );
+  const listed = orderedTracks(catalogTracks);
+  requireCondition(
+    listed.length === catalogTracks.size,
+    'Catalog does not contain exactly the five requested tracks.'
+  );
+  requireCondition(
+    !catalogTracks.has('Portuguese B2') || catalogTracks.has('Portuguese B1'),
+    'Portuguese B2 requires Portuguese B1.'
+  );
+}
+
+/** @param {Manifest} manifest @param {Catalog} catalog */
+export function validateManifestCoversCatalog(manifest, catalog) {
+  const catalogTracks = orderedTracks(
+    [...catalog.values()].map((row) => `${row[1]} ${row[2]}`)
+  );
+  requireCondition(
+    JSON.stringify(manifest.included_tracks) === JSON.stringify(catalogTracks),
+    'Manifest tracks do not match the catalog.'
   );
 }
 
@@ -553,10 +589,10 @@ function validateGraphEdges(nodes, catalog) {
         prerequisite[1] === skill[1],
         `Cross-language prerequisite: ${id} -> ${prerequisiteId}.`
       );
-      const level = /** @type {const} */ ({ A1: 1, A2: 2 });
+      const level = /** @type {const} */ ({ A1: 1, A2: 2, B1: 3, B2: 4 });
       requireCondition(
-        level[/** @type {'A1' | 'A2'} */ (prerequisite[2])] <=
-          level[/** @type {'A1' | 'A2'} */ (skill[2])],
+        level[/** @type {'A1' | 'A2' | 'B1' | 'B2'} */ (prerequisite[2])] <=
+          level[/** @type {'A1' | 'A2' | 'B1' | 'B2'} */ (skill[2])],
         `Higher-level prerequisite: ${id} -> ${prerequisiteId}.`
       );
     }
@@ -627,6 +663,7 @@ export function validateBundle(root, previousIds = []) {
   const records = parseCsv(files.get(manifest.coverage_file));
   const catalog = validateCatalog(records, knownSources, new Set(registry.ids));
   validateIdRegistry(registry, catalog, previousIds);
+  validateManifestCoversCatalog(manifest, catalog);
   validatePublicationStatus(manifest, catalog);
   const graph = JSON.parse(files.get(manifest.prerequisites_file));
   const edges = validateGraph(graph, catalog);

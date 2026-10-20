@@ -3,14 +3,42 @@ import type { Client } from '@libsql/client';
 import type { LearnerSession } from './learner-session';
 import { executeWrite } from './flashcards';
 import { StudyError } from './study-error';
+import { LEVELS } from '../levels';
 
-export const TRACK_LANGUAGES = ['fr', 'de', 'en'] as const;
-export const STARTING_LEVELS = ['A1', 'A2'] as const;
+export const TRACK_LANGUAGES = ['fr', 'de', 'en', 'pt'] as const;
+export const STARTING_LEVELS = LEVELS;
 export const EXPLANATION_LANGUAGES = ['en', 'pt'] as const;
 
-/** The database only accepts French at A1; German and English at A1 or A2. */
+const LEVELS_BY_LANGUAGE: Record<TrackLanguage, readonly StartingLevel[]> = {
+  fr: ['A1'],
+  de: ['A1', 'A2'],
+  en: ['A1', 'A2'],
+  pt: ['B1', 'B2']
+};
+
+/** The database only accepts French at A1, German and English at A1 or A2, Portuguese at B1 or B2. */
 export function levelsFor(language: TrackLanguage): readonly StartingLevel[] {
-  return language === 'fr' ? ['A1'] : STARTING_LEVELS;
+  return LEVELS_BY_LANGUAGE[language];
+}
+
+/** Portuguese lessons are explained in English; the other tracks offer both. */
+export function explanationLanguagesFor(
+  language: TrackLanguage
+): readonly ExplanationLanguage[] {
+  return language === 'pt' ? ['en'] : EXPLANATION_LANGUAGES;
+}
+
+/** Lesson languages offered for every track, keyed by track language. */
+export function explanationLanguagesByTrack(): Record<
+  string,
+  readonly ExplanationLanguage[]
+> {
+  return Object.fromEntries(
+    TRACK_LANGUAGES.map((language) => [
+      language,
+      explanationLanguagesFor(language)
+    ])
+  );
 }
 
 export type TrackLanguage = (typeof TRACK_LANGUAGES)[number];
@@ -74,7 +102,12 @@ export async function enroll(
       'INVALID_ENROLLMENT'
     )
   };
-  if (!levelsFor(enrollment.language).includes(enrollment.startingLevel))
+  if (
+    !levelsFor(enrollment.language).includes(enrollment.startingLevel) ||
+    !explanationLanguagesFor(enrollment.language).includes(
+      enrollment.explanationLanguage
+    )
+  )
     throw new StudyError('INVALID_ENROLLMENT');
   const result = await executeWrite(client, {
     sql: `INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language)
@@ -103,6 +136,8 @@ export async function setExplanationLanguage(
     input.explanationLanguage,
     'INVALID_ENROLLMENT'
   );
+  if (!explanationLanguagesFor(language).includes(explanationLanguage))
+    throw new StudyError('INVALID_ENROLLMENT');
   const result = await executeWrite(client, {
     sql: 'UPDATE enrollments SET explanation_language = ? WHERE owner_id = ? AND language = ?',
     args: [explanationLanguage, learner.userId, language]

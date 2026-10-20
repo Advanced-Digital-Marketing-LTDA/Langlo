@@ -20,10 +20,12 @@
 /tests/playwright-environment.test.ts @Bonobo791
 /tests/db-remote-migrate.test.ts @Bonobo791
 /tests/curriculum-contract.test.ts @Bonobo791
+/tests/curriculum-contract-portuguese.test.ts @Bonobo791
 /tests/curriculum-modules.test.ts @Bonobo791
 /tests/fr-a1-module-01.test.ts    @Bonobo791
 /tests/fixtures/curriculum-module.ts @Bonobo791
 /tests/content-bundle.test.ts    @Bonobo791
+/tests/content-bundle-portuguese.test.ts @Bonobo791
 /tests/test_t003_apkg.py         @Bonobo791
 /tests/test_t003_paths.py        @Bonobo791
 
