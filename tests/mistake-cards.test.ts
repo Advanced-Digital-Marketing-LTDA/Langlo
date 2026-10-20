@@ -123,7 +123,7 @@ describe('mistake-card draft generation', () => {
       expect(note.card).toBeNull();
 
       // A draft is editable content, not schedulable study material.
-      expect(await listDueCards(db.client, learner)).toEqual([]);
+      expect((await listDueCards(db.client, learner)).cards).toEqual([]);
       expect(await countDueCards(db.client, learner)).toBe(0);
       expect(await noteCounts(db.client)).toEqual([1, 0, 0]);
     } finally {
@@ -468,7 +468,7 @@ describe('mistake-card editing and rejection', () => {
       expect(after.card?.id).toBe(draft.cardId);
       expect(after.card?.revision).toBe(1);
       expect(await noteCounts(db.client)).toEqual([1, 1, 0]);
-      expect(await listDueCards(db.client, learner)).toHaveLength(1);
+      expect((await listDueCards(db.client, learner)).cards).toHaveLength(1);
     } finally {
       db.close();
     }
@@ -799,7 +799,7 @@ describe('mistake-card editing and rejection', () => {
         id: draft.id,
         status: 'rejected'
       });
-      expect(await listDueCards(db.client, learner)).toEqual([]);
+      expect((await listDueCards(db.client, learner)).cards).toEqual([]);
       expect(await countDueCards(db.client, learner)).toBe(0);
       await expect(
         updateNote(db.client, learner, draft.id, {
@@ -829,9 +829,9 @@ describe('mistake-card editing and rejection', () => {
         format: 'basic'
       });
       await approveOwnNote(db.client, learner, draft.id);
-      expect(await listDueCards(db.client, learner)).toHaveLength(1);
+      expect((await listDueCards(db.client, learner)).cards).toHaveLength(1);
       await rejectNote(db.client, learner, draft.id);
-      expect(await listDueCards(db.client, learner)).toEqual([]);
+      expect((await listDueCards(db.client, learner)).cards).toEqual([]);
       await expect(
         submitReview(db.client, learner, {
           cardId: draft.cardId,

@@ -3,10 +3,7 @@
   import type { ActionData, PageData } from './$types';
   let { data, form }: { data: PageData; form: ActionData } = $props();
   let revealed = $state(false);
-  const card = $derived(data.cards.find((candidate) => !candidate.unavailable));
-  const unavailable = $derived(
-    data.cards.filter((candidate) => candidate.unavailable).length
-  );
+  const card = $derived(data.cards[0]);
   const ratings = ['again', 'hard', 'good', 'easy'] as const;
   const hideCloze = (text = '') =>
     text.replace(/\{\{c1::[^{}]+\}\}/gu, '[...]');
@@ -22,10 +19,11 @@
 
 <h1>Review</h1>
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
-{#if unavailable}
+{#if data.unavailableCount}
   <p role="alert">
-    {unavailable} due {unavailable === 1 ? 'card needs' : 'cards need'} repair before
-    review.
+    {data.unavailableCount} due {data.unavailableCount === 1
+      ? 'card needs'
+      : 'cards need'} repair before review.
   </p>
 {/if}
 {#if card}
@@ -57,7 +55,7 @@
       <input type="hidden" name="submissionKey" value={data.submissionKey} />
       {#each ratings as rating (rating)}
         <button type="submit" name="rating" value={rating}
-          >{rating} · {card.intervals?.[rating]}</button
+          >{rating} · {card.intervals[rating]}</button
         >
       {/each}
     </form>

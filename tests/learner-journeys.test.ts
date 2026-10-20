@@ -537,14 +537,14 @@ describe('decks, review and Anki export', () => {
       deckId,
       noteForm({ kind: 'basic', front: 'Merci', back: 'Thank you' })
     );
-    expect(await listDueCards(client, learner)).toEqual([]);
+    expect((await listDueCards(client, learner)).cards).toEqual([]);
     await approveNote(client, learner, draft.id);
-    const due = await listDueCards(client, learner);
+    const due = (await listDueCards(client, learner)).cards;
     expect(due).toMatchObject([
       { id: draft.cardId, kind: 'basic', deck: 'French basics', revision: 0 }
     ]);
-    expect(await listDueCards(client, other)).toEqual([]);
-    expect(await listDueCards(client, learner, 0)).toEqual([]);
+    expect((await listDueCards(client, other)).cards).toEqual([]);
+    expect((await listDueCards(client, learner, 0)).cards).toEqual([]);
 
     const { submissionKey, cards } = (await reviewLoad(event())) as {
       submissionKey: string;
@@ -564,7 +564,7 @@ describe('decks, review and Anki export', () => {
       );
     expect(await rate('0')).toEqual({ reviewed: true });
     // The card is rescheduled out of today's queue and a stale revision conflicts.
-    expect(await listDueCards(client, learner)).toEqual([]);
+    expect((await listDueCards(client, learner)).cards).toEqual([]);
     // Same key, different rating: an idempotency conflict, not a stale revision.
     expect(await rate('0', 'easy')).toMatchObject({ status: 409 });
     // A fresh key against the old revision reaches the stale-revision check,
@@ -681,7 +681,9 @@ describe('decks, review and Anki export', () => {
       );
       await approveNote(client, learner, note.id);
     }
-    expect(await listDueCards(client, learner, Date.now(), 2)).toHaveLength(2);
+    expect(
+      (await listDueCards(client, learner, Date.now(), 2)).cards
+    ).toHaveLength(2);
     expect(await countDueCards(client, learner)).toBe(3);
     expect(await countDueCards(client, other)).toBe(0);
     expect(await reviewLoad(event())).toMatchObject({ total: 3 });
@@ -697,7 +699,7 @@ describe('decks, review and Anki export', () => {
         noteForm({ kind: 'basic', front: `Q ${rating}`, back: 'A' })
       );
       await approveNote(client, learner, note.id);
-      const scheduleKey = (await listDueCards(client, learner)).find(
+      const scheduleKey = (await listDueCards(client, learner)).cards.find(
         (card) => card.id === note.cardId
       )?.scheduleKey;
       if (!scheduleKey) throw new Error('Missing due card schedule');
@@ -1217,7 +1219,7 @@ describe('decks, review and Anki export', () => {
     expect(await countDueCards(client, learner)).toBe(1);
     await setCardSuspended(client, learner, 'card:note-suspension', true);
     expect(await countDueCards(client, learner)).toBe(0);
-    expect(await listDueCards(client, learner)).toEqual([]);
+    expect((await listDueCards(client, learner)).cards).toEqual([]);
     await expect(
       setCardSuspended(client, other, 'card:note-suspension', false)
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });

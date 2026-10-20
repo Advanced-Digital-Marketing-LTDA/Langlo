@@ -131,7 +131,8 @@ describe('native flashcard persistence feasibility', () => {
         'note-10000000-0000-4000-8000-000000000002'
       );
       const execute = vi.spyOn(db.client, 'execute');
-      const due = await listDueCards(db.client, learner, Date.now() + 1000);
+      const due = (await listDueCards(db.client, learner, Date.now() + 1000))
+        .cards;
       expect(due).toHaveLength(1);
       expect(due[0].intervals?.good).toBe('10m');
       expect(execute).toHaveBeenCalledTimes(2);
@@ -160,8 +161,8 @@ describe('native flashcard persistence feasibility', () => {
         args: ['ts-fsrs@unsupported', bad.cardId, learner.userId]
       });
       const due = await listDueCards(db.client, learner, Date.now() + 1000);
-      expect(due).toMatchObject([
-        { id: bad.cardId, intervals: null, unavailable: true },
+      expect(due.unavailableCount).toBe(1);
+      expect(due.cards).toMatchObject([
         { id: good.cardId, intervals: { good: expect.any(String) } }
       ]);
       const preview = await previewStudySchedule(db.client, learner, {
@@ -171,6 +172,45 @@ describe('native flashcard persistence feasibility', () => {
       });
       expect(preview.scenario).toContain('1 unreadable card');
       expect(preview.days.some((day) => day.saved > 0)).toBe(true);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('finds a healthy due card after twenty unreadable cards', async () => {
+    const target = await fixture();
+    const learner = testSession('learner-a');
+    const db = await openFixtureDatabase(target);
+    try {
+      await createDeck(db.client, learner, {
+        id: 'deck-many-bad',
+        name: 'Due'
+      });
+      for (let index = 0; index < 21; index += 1) {
+        const id = `note-many-bad-${index}`;
+        await createNote(db.client, learner, {
+          id,
+          sourceId: `langlo:v1:${String(index).padStart(64, '0')}`,
+          deckId: 'deck-many-bad',
+          kind: 'basic',
+          content: { front: id, back: 'Answer' }
+        });
+        await approveNote(db.client, learner, id);
+        await db.client.execute({
+          sql: 'UPDATE native_flashcards SET due_at = ?, scheduler_version = ? WHERE note_id = ? AND owner_id = ?',
+          args: [
+            index,
+            index < 20 ? 'ts-fsrs@unsupported' : 'ts-fsrs@5.4.2',
+            id,
+            learner.userId
+          ]
+        });
+      }
+      const due = await listDueCards(db.client, learner);
+      expect(
+        due.cards.some((card) => card.id === 'card:note-many-bad-20')
+      ).toBe(true);
+      expect(due.unavailableCount).toBe(20);
     } finally {
       db.close();
     }

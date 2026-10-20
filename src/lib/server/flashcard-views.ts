@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
-import type { Client } from '@libsql/client';
+import { setImmediate as yieldLoop } from 'node:timers/promises';
+import type { Client, Row } from '@libsql/client';
 import {
   approveNote,
   createNote,
@@ -216,38 +217,67 @@ export async function listDueCards(
   now: number = Date.now(),
   limit = 20
 ) {
-  const result = await client.execute({
-    sql: `SELECT c.id, c.revision, c.state_json, c.scheduler_version, c.parameters_json,
+  if (limit <= 0) return { cards: [], unavailableCount: 0 };
+  const schedule = await getStudySchedule(client, learner);
+  const reviewedAt = new Date(now);
+  const cards: {
+    id: string;
+    revision: number;
+    kind: NoteKind;
+    deck: string;
+    content: NoteSummary['content'];
+    explanation: string;
+    scheduleKey: string;
+    intervals: ReturnType<typeof ratingIntervalsForStoredCard>;
+  }[] = [];
+  let unavailableCount = 0;
+  let cursor: { dueAt: number; id: string } | null = null;
+  const batchSize = Math.max(20, limit);
+  // shortcut: a fully unreadable queue needs a repair workflow if it grows large.
+  while (cards.length < limit) {
+    const result: { rows: Row[] } = await client.execute({
+      sql: `SELECT c.id, c.due_at, c.revision, c.state_json, c.scheduler_version, c.parameters_json,
         n.kind, n.content_json, n.explanation, d.name AS deck_name
       FROM native_flashcards c
       JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
       JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
       WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at <= ?
+        ${cursor ? 'AND (c.due_at > ? OR (c.due_at = ? AND c.id > ?))' : ''}
       ORDER BY c.due_at, c.id LIMIT ?`,
-    args: [learner.userId, now, limit]
-  });
-  const schedule = await getStudySchedule(client, learner);
-  const reviewedAt = new Date(now);
-  return result.rows.map((row) => {
-    let intervals: ReturnType<typeof ratingIntervalsForStoredCard> | null;
-    try {
-      intervals = ratingIntervalsForStoredCard(row, schedule, reviewedAt);
-    } catch (error) {
-      if (!(error instanceof FlashcardError)) throw error;
-      intervals = null;
+      args: [
+        learner.userId,
+        now,
+        ...(cursor ? [cursor.dueAt, cursor.dueAt, cursor.id] : []),
+        batchSize
+      ]
+    });
+    if (!result.rows.length) break;
+    for (const row of result.rows) {
+      cursor = { dueAt: Number(row.due_at), id: String(row.id) };
+      let intervals: ReturnType<typeof ratingIntervalsForStoredCard>;
+      try {
+        intervals = ratingIntervalsForStoredCard(row, schedule, reviewedAt);
+      } catch (error) {
+        if (!(error instanceof FlashcardError)) throw error;
+        unavailableCount += 1;
+        continue;
+      }
+      cards.push({
+        id: String(row.id),
+        revision: Number(row.revision),
+        kind: String(row.kind) as NoteKind,
+        deck: String(row.deck_name),
+        content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
+        explanation: String(row.explanation),
+        scheduleKey: JSON.stringify(schedule),
+        intervals
+      });
+      if (cards.length === limit) break;
     }
-    return {
-      id: String(row.id),
-      revision: Number(row.revision),
-      kind: String(row.kind) as NoteKind,
-      deck: String(row.deck_name),
-      content: JSON.parse(String(row.content_json)) as NoteSummary['content'],
-      explanation: String(row.explanation),
-      scheduleKey: JSON.stringify(schedule),
-      unavailable: intervals === null,
-      intervals
-    };
-  });
+    if (result.rows.length < batchSize) break;
+    await yieldLoop();
+  }
+  return { cards, unavailableCount };
 }
 
 /** Quote an Anki text-import field when it holds a tab, newline or quote. */

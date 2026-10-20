@@ -15,6 +15,7 @@ const card = (kind: 'basic' | 'cloze', content: object) => ({
 const data = (cards: unknown[]) => ({
   cards,
   total: cards.length,
+  unavailableCount: 0,
   submissionKey: 'key'
 });
 
@@ -52,22 +53,15 @@ it('says nothing is due when there are no cards', async () => {
 
 it('shows a readable due card while reporting one unavailable card', async () => {
   const html = await renderSvelte(page, {
-    data: data([
-      {
-        ...card('basic', { front: 'Broken', back: 'Hidden' }),
-        unavailable: true,
-        intervals: null
-      },
-      {
-        ...card('basic', { front: 'Bonjour', back: 'Hello' }),
-        unavailable: false
-      }
-    ]),
+    data: {
+      ...data([card('basic', { front: 'Bonjour', back: 'Hello' })]),
+      total: 2,
+      unavailableCount: 1
+    },
     form: null
   });
   expect(html).toContain('1 due card needs repair');
   expect(html).toContain('Bonjour');
-  expect(html).not.toContain('Broken');
 });
 
 it('explains that saved timezones set day-based review times', async () => {
