@@ -1,6 +1,9 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
   import { page } from '$app/state';
+  import { tick } from 'svelte';
   import type { ActionData, PageData } from './$types';
+  import { hydration } from '../../../../../../lib/hydration.svelte';
   import Exercise from '../../../../../../lib/components/exercises/Exercise.svelte';
   import ContentReportForm from '../../../../../../lib/components/ContentReportForm.svelte';
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -8,6 +11,40 @@
     form && 'message' in form ? form.message : undefined
   );
   const recorded = $derived(form !== null && 'recorded' in form);
+
+  const outcomeLabel = $derived(
+    data.feedback?.outcome === 'correct'
+      ? 'Correct'
+      : data.feedback?.outcome === 'incorrect'
+        ? 'Incorrect'
+        : 'Uncertain'
+  );
+  // Spoken through a live region that is on the page before the answer, so
+  // the result is announced instead of arriving as already-filled markup.
+  const announcement = $derived.by(() => {
+    const feedback = data.feedback;
+    if (!feedback) return '';
+    if (feedback.rating)
+      return `You rated this ${feedback.rating}. The skill schedule updates when you finish the session.`;
+    return `${outcomeLabel}. ${feedback.notSure ? 'You chose Not sure.' : `Your answer: ${feedback.answer}`}`;
+  });
+
+  let feedbackHeading: HTMLElement | undefined = $state();
+  let ratedMessage: HTMLElement | undefined = $state();
+  let ratePending = $state(false);
+
+  // Answering and rating update the page in place, so keyboard and screen
+  // reader focus has to follow the new result. This runs after the form's
+  // update finishes, which is when SvelteKit has already reset focus.
+  async function focusFeedback() {
+    await tick();
+    focusResult(feedbackHeading, 'feedback heading');
+  }
+
+  function focusResult(target: HTMLElement | undefined, name: string) {
+    if (!target) throw new Error(`The ${name} is missing after the update.`);
+    target.focus();
+  }
 
   function lessonActionUrl(action: 'answer' | 'report') {
     const session = data.exercise
@@ -86,19 +123,12 @@
 
   {#if data.exercise}
     <h2>Practice</h2>
+    <div class="visually-hidden" aria-live="polite" aria-atomic="true">
+      {announcement}
+    </div>
     {#if data.feedback}
-      <section
-        aria-label="Practice feedback"
-        aria-live="polite"
-        class="callout"
-      >
-        <h3>
-          {data.feedback.outcome === 'correct'
-            ? 'Correct'
-            : data.feedback.outcome === 'incorrect'
-              ? 'Incorrect'
-              : 'Uncertain'}
-        </h3>
+      <section aria-label="Practice feedback" class="callout">
+        <h3 tabindex="-1" bind:this={feedbackHeading}>{outcomeLabel}</h3>
         <p>
           {data.feedback.notSure
             ? 'You chose Not sure.'
@@ -120,7 +150,7 @@
         </p>
         {#if data.feedback.requiresRating && !data.feedback.receivedHelp && data.feedback.outcome === 'correct'}
           {#if data.feedback.rating}
-            <p role="status">
+            <p role="status" tabindex="-1" bind:this={ratedMessage}>
               You rated this {data.feedback.rating}. The skill schedule updates
               when you finish the session.
             </p>
@@ -128,6 +158,20 @@
             <form
               method="POST"
               action={`?/rate&session=${encodeURIComponent(data.exercise.studySessionId)}`}
+              use:enhance={() => {
+                ratePending = true;
+                return async ({ result, update }) => {
+                  try {
+                    await update();
+                  } finally {
+                    ratePending = false;
+                  }
+                  if (result.type === 'success') {
+                    await tick();
+                    focusResult(ratedMessage, 'rating message');
+                  }
+                };
+              }}
             >
               <input
                 type="hidden"
@@ -141,9 +185,24 @@
               />
               <fieldset>
                 <legend>How difficult was it to recall the answer?</legend>
-                <button type="submit" name="rating" value="hard">Hard</button>
-                <button type="submit" name="rating" value="good">Good</button>
-                <button type="submit" name="rating" value="easy">Easy</button>
+                <button
+                  type="submit"
+                  name="rating"
+                  value="hard"
+                  disabled={ratePending || !hydration.ready}>Hard</button
+                >
+                <button
+                  type="submit"
+                  name="rating"
+                  value="good"
+                  disabled={ratePending || !hydration.ready}>Good</button
+                >
+                <button
+                  type="submit"
+                  name="rating"
+                  value="easy"
+                  disabled={ratePending || !hydration.ready}>Easy</button
+                >
               </fieldset>
             </form>
           {/if}
@@ -169,6 +228,7 @@
               submissionKey={data.feedback.submissionKey}
               retryAttemptId={data.feedback.attemptId}
               actionUrl={lessonActionUrl('answer')}
+              onanswered={focusFeedback}
               submitLabel="Submit assisted retry"
               {failure}
             />
@@ -192,6 +252,7 @@
           studySessionId={data.exercise.studySessionId}
           submissionKey={data.exercise.submissionKey}
           actionUrl={lessonActionUrl('answer')}
+          onanswered={focusFeedback}
           {failure}
         />
       {/key}
@@ -220,5 +281,17 @@
 
   .sentence {
     display: block;
+  }
+
+  .visually-hidden {
+    border: 0;
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
   }
 </style>
