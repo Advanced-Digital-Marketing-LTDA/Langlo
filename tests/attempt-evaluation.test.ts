@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
+import { GRAMMAR_RETENTION_POLICY_VERSION } from '../src/lib/server/grammar-retention';
 import { recordAttempt } from '../src/lib/server/study';
 import {
   disposeFlashcardFixtures,
@@ -108,6 +109,30 @@ describe('prepared evaluation failures', () => {
       'synthetic evaluation failure'
     );
     expect(await attemptCount()).toBe(before);
+  });
+
+  it('rolls the attempt and evaluation back when the mistake rating cannot be written', async () => {
+    await client.execute({
+      sql: 'UPDATE study_sessions SET grammar_retention_policy_version = ? WHERE id = ?',
+      args: [GRAMMAR_RETENTION_POLICY_VERSION, 'study-a']
+    });
+    await client.execute(
+      "CREATE TRIGGER fail_rating BEFORE UPDATE OF grammar_rating ON attempts BEGIN SELECT RAISE(ABORT, 'synthetic rating failure'); END"
+    );
+    const attempts = await attemptCount();
+    const evaluations = await evaluationCount();
+
+    await expect(attempt('key-1', 'fr-a1-001@1:q1', 'es')).rejects.toThrow(
+      'synthetic rating failure'
+    );
+
+    // The three writes share one batch: none of them survives the failure.
+    expect(await attemptCount()).toBe(attempts);
+    expect(await evaluationCount()).toBe(evaluations);
+    await client.execute('DROP TRIGGER fail_rating');
+    const retried = await attempt('key-1', 'fr-a1-001@1:q1', 'es');
+    expect(retried.duplicate).toBe(false);
+    expect(await evaluationsOf(retried.id)).toHaveLength(1);
   });
 
   it.each([

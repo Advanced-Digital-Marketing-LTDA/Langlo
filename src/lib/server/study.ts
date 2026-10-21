@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Client, Row } from '@libsql/client';
+import type { Client, InStatement, Row } from '@libsql/client';
 import {
   evaluatePrepared,
   PREPARED_EVALUATOR_VERSION
@@ -242,26 +242,99 @@ function validateAttemptInput(input: AttemptInput) {
   if (problem) throw new StudyError(problem);
 }
 
+const replayStatement = (
+  session: LearnerSession,
+  input: AttemptInput
+): InStatement => ({
+  sql: 'SELECT id, study_session_id, question_id, evidence_kind, answer, not_sure FROM attempts WHERE owner_id = ? AND submission_key = ?',
+  args: [session.userId, input.submissionKey]
+});
+
+/**
+ * The reads an attempt starts with. They do not depend on one another, so a
+ * write transaction fetches them in one round trip instead of one each.
+ */
+type Preread = {
+  replay: Row[];
+  study: Row[];
+  answered: Row[] | null;
+  priorEvidence: Row[] | null;
+};
+
+/** Run named statements in one round trip; each result is read back by its name. */
+async function batchRows(
+  tx: WriteTransaction,
+  statements: Record<string, InStatement>
+) {
+  const names = Object.keys(statements);
+  const results = await tx.batch(names.map((name) => statements[name]));
+  return new Map(names.map((name, index) => [name, results[index].rows]));
+}
+
+async function prereadAttempt(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput
+): Promise<Preread> {
+  const independent = input.evidenceKind === 'independent';
+  const rows = await batchRows(tx, {
+    replay: replayStatement(session, input),
+    study: studySessionStatement(session, input),
+    ...(independent
+      ? {
+          answered: answeredStatement(session, input),
+          priorEvidence: priorEvidenceStatement(session, input)
+        }
+      : {})
+  });
+  const named = (name: string) => rows.get(name) ?? null;
+  const replay = named('replay');
+  const study = named('study');
+  if (!replay || !study)
+    throw new Error('The attempt pre-reads did not return their results');
+  return {
+    replay,
+    study,
+    answered: named('answered'),
+    priorEvidence: named('priorEvidence')
+  };
+}
+
+/** Whether an earlier attempt carries this payload; the kind is derived only when it matters. */
+async function isSamePayload(
+  prior: Row,
+  input: AttemptInput,
+  kind: () => Promise<EvidenceKind>
+) {
+  if (prior.study_session_id !== input.studySessionId) return false;
+  if (prior.question_id !== input.questionId) return false;
+  const sameKind =
+    prior.evidence_kind === input.evidenceKind ||
+    prior.evidence_kind === (await kind());
+  return (
+    sameKind &&
+    Boolean(prior.not_sure) === Boolean(input.notSure) &&
+    prior.answer === input.answer
+  );
+}
+
 /** The caller's earlier attempt under this submission key, if any. */
 async function replayAttempt(
   tx: Pick<Client, 'execute'>,
   session: LearnerSession,
-  input: AttemptInput
+  input: AttemptInput,
+  preread?: Preread
 ) {
-  const previous = await tx.execute({
-    sql: 'SELECT id, study_session_id, question_id, evidence_kind, answer, not_sure FROM attempts WHERE owner_id = ? AND submission_key = ?',
-    args: [session.userId, input.submissionKey]
-  });
-  const prior = previous.rows[0];
+  const previous = preread
+    ? preread.replay
+    : (await tx.execute(replayStatement(session, input))).rows;
+  const prior = previous[0];
   if (!prior) return null;
-  const samePayload =
-    prior.study_session_id === input.studySessionId &&
-    prior.question_id === input.questionId &&
-    (prior.evidence_kind === input.evidenceKind ||
-      prior.evidence_kind === (await evidenceKindFor(tx, session, input))) &&
-    Boolean(prior.not_sure) === Boolean(input.notSure) &&
-    prior.answer === input.answer;
-  if (!samePayload) throw new StudyError('IDEMPOTENCY_CONFLICT');
+  const kind = preread
+    ? async () => evidenceKindFrom(input, preread.priorEvidence)
+    : () => evidenceKindFor(tx, session, input);
+  if (!(await isSamePayload(prior, input, kind)))
+    throw new StudyError('IDEMPOTENCY_CONFLICT');
   return { id: String(prior.id), duplicate: true };
 }
 
@@ -349,16 +422,21 @@ async function assertGrammarReviewQuestion(
 }
 
 /** The caller's active session and an available question in its language. */
+const studySessionStatement = (
+  session: LearnerSession,
+  input: AttemptInput
+): InStatement => ({
+  sql: 'SELECT language, state, mode, assessment_plan, grammar_retention_plan, grammar_retention_policy_version FROM study_sessions WHERE id = ? AND owner_id = ?',
+  args: [input.studySessionId, session.userId]
+});
+
 async function attemptSource(
   tx: WriteTransaction,
   session: LearnerSession,
-  input: AttemptInput
+  input: AttemptInput,
+  preread: Preread
 ) {
-  const study = await tx.execute({
-    sql: 'SELECT language, state, mode, assessment_plan, grammar_retention_plan, grammar_retention_policy_version FROM study_sessions WHERE id = ? AND owner_id = ?',
-    args: [input.studySessionId, session.userId]
-  });
-  const studyRow = study.rows[0];
+  const studyRow = preread.study[0];
   if (!studyRow) throw new StudyError('NOT_FOUND');
   if (studyRow.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
   if (studyRow.assessment_plan !== null)
@@ -377,6 +455,7 @@ async function attemptSource(
     skillId: String(questionRow.skill_id),
     language: String(studyRow.language),
     mode: String(studyRow.mode),
+    assessment: studyRow.assessment_plan !== null,
     grammarRetentionPolicyVersion:
       studyRow.grammar_retention_policy_version === null
         ? null
@@ -417,29 +496,36 @@ function preparedQuestion(questionId: string, row: Row) {
   };
 }
 
-/**
- * Record the prepared evaluation of a new attempt in its own transaction. The
- * rubric is the content version whose answer and alternatives were compared.
- */
-async function recordPreparedEvaluation(
-  tx: WriteTransaction,
-  session: LearnerSession,
-  attempt: {
-    id: string;
-    questionId: string;
-    answer: string;
-    contentVersionId: string;
-    question: Row;
-    notSure?: boolean;
-  }
-) {
-  const outcome = attempt.notSure
+type PreparedAttempt = {
+  id: string;
+  questionId: string;
+  answer: string;
+  contentVersionId: string;
+  question: Row;
+  notSure?: boolean;
+};
+
+/** What the question's own rubric says about the answer; nothing is read. */
+function preparedOutcome(attempt: PreparedAttempt) {
+  return attempt.notSure
     ? 'uncertain'
     : evaluatePrepared(
         preparedQuestion(attempt.questionId, attempt.question),
         attempt.answer
       );
-  await tx.execute({
+}
+
+/**
+ * The prepared evaluation of a new attempt, recorded in the transaction that
+ * saves the attempt. The rubric is the content version whose answer and
+ * alternatives were compared.
+ */
+function preparedEvaluationStatement(
+  session: LearnerSession,
+  attempt: PreparedAttempt,
+  outcome: string
+): InStatement {
+  return {
     sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
     args: [
       randomUUID(),
@@ -449,8 +535,7 @@ async function recordPreparedEvaluation(
       attempt.contentVersionId,
       outcome
     ]
-  });
-  return outcome;
+  };
 }
 
 /** Loud, content-free log line: never the answer, prompt or learner. */
@@ -619,28 +704,29 @@ async function recordFallbackEvaluation(
  * A question takes one independent answer per session, whichever tab sent it;
  * the database index enforces the same rule for writes outside this service.
  */
-async function assertNotAnswered(
-  tx: WriteTransaction,
+const answeredStatement = (
   session: LearnerSession,
   input: AttemptInput
-) {
+): InStatement => ({
+  sql: "SELECT 1 FROM attempts WHERE owner_id = ? AND study_session_id = ? AND question_id = ? AND evidence_kind = 'independent'",
+  args: [session.userId, input.studySessionId, input.questionId]
+});
+
+function assertNotAnswered(input: AttemptInput, preread: Preread) {
   if (input.evidenceKind !== 'independent') return;
-  const answered = await tx.execute({
-    sql: "SELECT 1 FROM attempts WHERE owner_id = ? AND study_session_id = ? AND question_id = ? AND evidence_kind = 'independent'",
-    args: [session.userId, input.studySessionId, input.questionId]
-  });
-  if (answered.rows[0]) throw new StudyError('QUESTION_ALREADY_ANSWERED');
+  if (!preread.answered)
+    throw new Error(
+      'The answered check was not read for an independent attempt'
+    );
+  if (preread.answered[0]) throw new StudyError('QUESTION_ALREADY_ANSWERED');
 }
 
-/** Re-presenting a question never creates fresh independent evidence. */
-async function evidenceKindFor(
-  tx: Pick<Client, 'execute'>,
+function priorEvidenceStatement(
   session: LearnerSession,
   input: AttemptInput
-): Promise<EvidenceKind> {
-  if (input.evidenceKind === 'assisted') return 'assisted';
+): InStatement {
   const provisional = provisionalCorrectAttempt('a', 's');
-  const prior = await tx.execute({
+  return {
     sql: `SELECT 1 FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
       WHERE a.owner_id = ? AND a.question_id = ? AND a.study_session_id <> ?
         AND NOT ${provisional.sql} LIMIT 1`,
@@ -650,8 +736,28 @@ async function evidenceKindFor(
       input.studySessionId,
       ...provisional.args
     ]
-  });
-  return prior.rows.length ? 'assisted' : 'independent';
+  };
+}
+
+/** Re-presenting a question never creates fresh independent evidence. */
+function evidenceKindFrom(
+  input: AttemptInput,
+  priorEvidence: Row[] | null
+): EvidenceKind {
+  if (input.evidenceKind === 'assisted') return 'assisted';
+  if (!priorEvidence)
+    throw new Error('Prior evidence was not read for an independent attempt');
+  return priorEvidence.length ? 'assisted' : 'independent';
+}
+
+async function evidenceKindFor(
+  tx: Pick<Client, 'execute'>,
+  session: LearnerSession,
+  input: AttemptInput
+): Promise<EvidenceKind> {
+  if (input.evidenceKind === 'assisted') return 'assisted';
+  const prior = await tx.execute(priorEvidenceStatement(session, input));
+  return evidenceKindFrom(input, prior.rows);
 }
 
 /**
@@ -854,16 +960,17 @@ async function syncAttemptEvidence(
     attemptId: string;
     language: string;
     mode: string;
+    assessment: boolean;
     studySessionId: string;
     outcome: string;
   }
 ) {
   const scope = { ownerId: session.userId, language: attempt.language };
-  const completed = await completeAssessment(
-    tx,
-    session,
-    attempt.studySessionId
-  );
+  // Only an assessment can complete here: for any other session the check is
+  // a read and a write that change nothing, so they are not sent.
+  const completed =
+    attempt.assessment &&
+    (await completeAssessment(tx, session, attempt.studySessionId));
   if (completed) {
     await syncEvidenceLedger(tx, {
       ...scope,
@@ -876,60 +983,65 @@ async function syncAttemptEvidence(
   await syncEvidenceLedger(tx, { ...scope, attemptIds: [attempt.attemptId] });
 }
 
-async function ratePreparedMistake(
-  tx: WriteTransaction,
+/** A wrong first answer under the retention policy is rated 'again' at once. */
+function preparedMistakeStatement(
   session: LearnerSession,
   input: AttemptInput,
   attempt: { id: string; outcome: string; policy: string | null }
-) {
-  if (attempt.outcome !== 'incorrect') return;
-  if (attempt.policy !== GRAMMAR_RETENTION_POLICY_VERSION) return;
-  if (input.evidenceKind !== 'independent') return;
-  if (!input.notSure) {
-    await tx.execute({
-      sql: "UPDATE attempts SET grammar_rating = 'again' WHERE id = ? AND owner_id = ?",
-      args: [attempt.id, session.userId]
-    });
-  }
+): InStatement | null {
+  if (attempt.outcome !== 'incorrect') return null;
+  if (attempt.policy !== GRAMMAR_RETENTION_POLICY_VERSION) return null;
+  if (input.evidenceKind !== 'independent') return null;
+  if (input.notSure) return null;
+  return {
+    sql: "UPDATE attempts SET grammar_rating = 'again' WHERE id = ? AND owner_id = ?",
+    args: [attempt.id, session.userId]
+  };
 }
 
-async function insertAttempt(
-  tx: WriteTransaction,
-  session: LearnerSession,
+function attemptRecord(
   input: AttemptInput,
-  source: Awaited<ReturnType<typeof attemptSource>>
+  source: Awaited<ReturnType<typeof attemptSource>>,
+  kind: EvidenceKind
 ) {
-  const id = randomUUID();
-  await tx.execute({
-    sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure, received_help) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-    args: [
-      id,
-      session.userId,
-      input.studySessionId,
-      input.questionId,
-      source.contentVersionId,
-      source.skillId,
-      source.language,
-      input.submissionKey,
-      await evidenceKindFor(tx, session, input),
-      input.answer,
-      input.notSure ? 1 : 0,
-      input.evidenceKind === 'assisted' ? 1 : 0
-    ]
-  });
-  const attempt = {
-    id,
+  return {
+    id: randomUUID(),
     studySessionId: input.studySessionId,
     mode: source.mode,
     grammarRetentionPolicyVersion: source.grammarRetentionPolicyVersion,
     questionId: input.questionId,
     answer: input.answer,
     contentVersionId: source.contentVersionId,
+    skillId: source.skillId,
     language: source.language,
     question: source.question,
-    notSure: input.notSure
+    notSure: input.notSure,
+    kind
   };
-  return attempt;
+}
+
+function insertAttemptStatement(
+  session: LearnerSession,
+  input: AttemptInput,
+  attempt: ReturnType<typeof attemptRecord>
+): InStatement {
+  return {
+    sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure, received_help) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [
+      attempt.id,
+      session.userId,
+      input.studySessionId,
+      input.questionId,
+      attempt.contentVersionId,
+      attempt.skillId,
+      attempt.language,
+      input.submissionKey,
+      attempt.kind,
+      input.answer,
+      input.notSure ? 1 : 0,
+      input.evidenceKind === 'assisted' ? 1 : 0
+    ]
+  };
 }
 
 async function recordAttemptWrite(
@@ -942,25 +1054,38 @@ async function recordAttemptWrite(
 > {
   const tx = await beginWrite(client);
   try {
-    const replay = await replayAttempt(tx, session, input);
+    const preread = await prereadAttempt(tx, session, input);
+    const replay = await replayAttempt(tx, session, input, preread);
     if (replay) {
       await tx.commit();
       return { result: replay };
     }
-    const source = await attemptSource(tx, session, input);
-    await assertNotAnswered(tx, session, input);
-    const attempt = await insertAttempt(tx, session, input, source);
+    const source = await attemptSource(tx, session, input, preread);
+    assertNotAnswered(input, preread);
+    const attempt = attemptRecord(
+      input,
+      source,
+      evidenceKindFrom(input, preread.priorEvidence)
+    );
     const { id } = attempt;
-    const outcome = await recordPreparedEvaluation(tx, session, attempt);
-    await ratePreparedMistake(tx, session, input, {
+    const outcome = preparedOutcome(attempt);
+    const rating = preparedMistakeStatement(session, input, {
       id,
       outcome,
       policy: source.grammarRetentionPolicyVersion
     });
+    // The attempt, its evaluation and a mistake's rating are known together,
+    // so they are saved in one round trip.
+    await tx.batch([
+      insertAttemptStatement(session, input, attempt),
+      preparedEvaluationStatement(session, attempt, outcome),
+      ...(rating ? [rating] : [])
+    ]);
     await syncAttemptEvidence(tx, session, {
       attemptId: id,
       language: source.language,
       mode: source.mode,
+      assessment: source.assessment,
       studySessionId: input.studySessionId,
       outcome
     });
