@@ -42,7 +42,7 @@ A session keeps the version of its first answer for a skill, so a half-finished 
 
 ## Grammar retention schedules
 
-A learner's grammar retention schedule for a skill always carries over to the skill's newest published version: recall state, due date and review history stay as they are, whether the new version only fixes wording or adds, changes or removes questions. Publishing a version (by insert or by a status change) moves the schedules to it; an older version approved after a newer one moves nothing. Both are triggers on `content_versions` (migration 0032). Migration 0032 also restores schedules that the earlier reset triggers had marked for reset, taking the due date back from the recall state they still store; it stops if such a row has no readable due date.
+A learner's grammar retention schedule for a skill always carries over to the skill's newest published version: recall state, due date and review history stay as they are, whether the new version only fixes wording or adds, changes or removes questions. Publishing a version (by insert or by a status change) moves the schedules to it; an older version approved after a newer one moves nothing. Both are triggers on `content_versions` (migration 0031). The same migration also restores schedules that the earlier reset triggers had marked for reset, taking the due date back from the recall state they still store; it stops if such a row has no readable due date.
 
 ## Record and reversal
 

@@ -4,15 +4,15 @@ Date: 2026-10-21. Request (Andrew): publishing a new lesson version reset learne
 
 ## Scope
 
-- Migration `0032_retention_transfers_to_new_versions` (new; 0000 to 0031 untouched):
-  - Drops the two reset triggers and the two wording-only follow triggers from 0031, and the `content_versions.retention_reset` column 0031 added.
+- Migration `0031_retention_transfers_to_new_versions` (custom SQL, one migration; 0000 to 0030 untouched). It replaces the earlier draft of this PR, which had a `0031_retention_reset_on_meaning_change` plus a `0032`; neither ran on any database, so Andrew allowed folding them into one (2026-10-21). He also allowed editing 0029/0030, but that was not done: databases that already ran them would hit `LEDGER_DRIFT` in `remote-migrate.ts` and keep the triggers anyway.
+  - Drops the reset triggers `grammar_retention_reset_new_content` and `grammar_retention_reset_published_content` (0027, recreated in 0029 and 0030).
   - Adds `grammar_retention_transfer_new_content` and `grammar_retention_transfer_published_content`: when a version becomes the newest published version of a skill (insert or status change), schedules move to it with recall state and due date unchanged and `revision` raised by one. An older version approved after a newer one moves nothing.
   - Restores rows with `reset_required = 1`: `due_at` from the `due` stored in `state_json`, `reset_required = 0`, `revision + 1`. The first statement aborts the migration if such a row has no readable ISO `due`, so nothing is guessed.
 - `src/lib/server/grammar-retention.ts`: a review continues from the stored recall state whenever a schedule exists (a new card only when there is none); the progress view no longer treats a schedule on an earlier version or with the reset flag as stale.
-- `src/lib/server/content-import.ts`, `src/lib/server/content-update.ts`: back to `main` (the wording-only flag logic is gone). `src/lib/server/db/schema.ts`: `retentionReset` removed.
+- `src/lib/server/content-import.ts`, `src/lib/server/content-update.ts`, `src/lib/server/db/schema.ts`: identical to `main` (the draft's wording-only flag is gone).
 - `docs/content-update.md`: the retention section.
 
-Untouched: migrations 0000 to 0031 and their snapshots, the immutable `grammar_retention_events` history, FSRS scheduling, attempts, mastery, quarantine.
+Untouched: migrations 0000 to 0030 and their snapshots, the immutable `grammar_retention_events` history, FSRS scheduling, attempts, mastery, quarantine.
 
 Not covered: a learner who was reset and then reviewed the skill before this migration already has a schedule rebuilt from a new card. Their review events are all still stored; replaying them is not part of this PR.
 
@@ -27,6 +27,8 @@ Red, before the change (tests written first), `npx vitest run tests/content-upda
 - db-migrations: preserves schedules ... through the Portuguese retention rebuild; restores schedules that an earlier version reset from their stored recall state; refuses to restore a reset schedule whose stored state has no due date / an unreadable due date
 
 Green, after: `npx vitest run tests/content-update.test.ts tests/grammar-retention.integration.test.ts tests/db-migrations.test.ts tests/portuguese-migration.test.ts`: `Test Files 4 passed (4)`, `Tests 110 passed (110)`. Related files `content-import`, `lesson-update-notice`, `db-remote-migrate`, `db-cli`, `grammar-retention`: `Test Files 5 passed (5)`, `Tests 140 passed (140)`.
+
+Upgrade path, after folding: `npx vitest run` on `content-update`, `grammar-retention.integration`, `db-migrations`, `portuguese-migration`, `db-remote-migrate`, `db-cli`, `content-import`, `grammar-retention`: `Test Files 8 passed (8)`, `Tests 250 passed (250)`. This includes a database migrated to 0030 where publishing a version reset a learner; migrating (twice) gives the schedule back with its due date. With the restore statement removed: `Tests 2 failed` (restores schedules ...; upgrades a database where publishing reset a learner ...).
 
 Mutations (each restored afterwards):
 

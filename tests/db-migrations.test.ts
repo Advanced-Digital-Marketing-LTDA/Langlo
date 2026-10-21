@@ -319,8 +319,7 @@ describe('disposable libSQL migrations', () => {
           '0028_sturdy_talkback',
           '0029_current_grammar_content',
           '0030_portuguese_grammar_retention',
-          '0031_retention_reset_on_meaning_change',
-          '0032_retention_transfers_to_new_versions'
+          '0031_retention_transfers_to_new_versions'
         ]);
         await migrateFixtureDatabase(target);
         expect(
@@ -412,9 +411,7 @@ describe('disposable libSQL migrations', () => {
 
   async function withResetSchedule(stateJson: string) {
     const target = await fixture();
-    const folder = await prefixThrough(
-      '0031_retention_reset_on_meaning_change'
-    );
+    const folder = await prefixThrough('0030_portuguese_grammar_retention');
     try {
       await migrateFixtureDatabase(target, folder);
     } finally {
@@ -446,6 +443,46 @@ describe('disposable libSQL migrations', () => {
           state_json: state,
           due_at: Date.parse('2026-11-01T10:20:30.456Z'),
           revision: 4,
+          reset_required: 0
+        }
+      ]);
+    } finally {
+      close();
+    }
+  });
+
+  it('upgrades a database where publishing reset a learner and gives the learner their schedule back', async () => {
+    const state = JSON.stringify({ due: '2026-12-24T08:00:00.000Z', reps: 7 });
+    const { client, close, target } = await withResetSchedule(state);
+    try {
+      await client.execute(
+        'UPDATE grammar_retention_schedules SET reset_required = 0, due_at = 1'
+      );
+      await client.execute(
+        "UPDATE content_versions SET status = 'pilot-ready' WHERE id = 'content-v2'"
+      );
+      expect(
+        (
+          await client.execute(
+            'SELECT content_version_id, due_at, reset_required FROM grammar_retention_schedules'
+          )
+        ).rows
+      ).toEqual([
+        { content_version_id: 'content-v2', due_at: 0, reset_required: 1 }
+      ]);
+      await migrateFixtureDatabase(target);
+      await migrateFixtureDatabase(target);
+      expect(
+        (
+          await client.execute(
+            'SELECT content_version_id, state_json, due_at, reset_required FROM grammar_retention_schedules'
+          )
+        ).rows
+      ).toEqual([
+        {
+          content_version_id: 'content-v2',
+          state_json: state,
+          due_at: Date.parse('2026-12-24T08:00:00.000Z'),
           reset_required: 0
         }
       ]);
