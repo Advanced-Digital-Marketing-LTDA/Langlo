@@ -1,0 +1,74 @@
+# Database queue and transaction spans (step A of the database performance plan)
+
+**Scope:** timing only. No behavior, schema, sample rate or query changed. This records local validation; it is not a latency result.
+
+## Changes
+
+- `acquireConnection` wraps a real wait in a `db.queue-wait` span with a `waiters` attribute (requests already waiting ahead). A free connection records no span, so a trace without one means no queueing. A wait that times out fails the span with the existing `SQLITE_BUSY` error.
+- `beginWrite` and `beginRead` open a `db.transaction` span once the connection is held and end it when the transaction commits, rolls back or closes. It carries `write` and `round_trips` (calls to `execute` and `batch`; BEGIN and COMMIT not counted; a batch is one trip). Its duration is how long other requests wait behind the transaction.
+- `tests/tracing-spans.test.ts` now collects `db.*` spans separately, because those tests assert the exact study and mastery span lists; one new test there asserts that `recordAttempt` and `loadProgress` each produce one traced transaction (write and read). Connection span behavior is covered by the new file.
+- If the transaction span cannot start, the connection slot is released before the error propagates.
+
+## Red and green
+
+Observed runner output (Vitest, `tests/db-transactions-spans.test.ts`).
+
+Red, against `db-transactions.ts` as it was before this PR (`5c0dd34`):
+
+```
+ × times a write transaction and reports its round trips when it commits
+ × counts a batch as one round trip
+ × marks a read transaction as not a write
+ × ends the transaction span on rollback and on close without commit
+ × records a queue wait with the number of waiters already ahead
+ × fails the queue-wait span with the busy error when the wait times out
+ × releases the connection when the transaction span cannot start
+ × ends the span and frees the connection when opening the transaction fails
+ Test Files  1 failed (1)
+      Tests  8 failed | 2 passed (10)
+```
+
+The two passing tests are guards that hold by design (no wait span when the connection is free; non-function properties pass through).
+
+Review follow-up, against the first PR commit (`f2b3b13`), before the fix: `releases the connection when the transaction span cannot start` failed with `Test timed out in 1000ms` (a failing span left the connection slot taken). After the fix it passes.
+
+Green, after the change:
+
+```
+ Test Files  4 passed (4)
+      Tests  30 passed (30)
+```
+
+Files run: `tests/db-transactions-spans.test.ts`, `tests/app-database-shared.test.ts`, `tests/app-database.test.ts`, `tests/tracing-spans.test.ts`. `svelte-check` reports 0 errors and 0 warnings; ESLint and Prettier are clean. The full suite, build and browser tests are left to CI.
+
+Codacy follow-up (a span that rejects asynchronously before it starts), against `fb347fb`, before the fix:
+
+```
+ × releases the connection when the transaction span rejects asynchronously 1005ms
+ Error: Test timed out in 1000ms.
+ Unhandled Errors: Error: span rejected
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+```
+
+After the fix (`holdSpan` rejects when the span promise rejects, so the caller releases the slot):
+
+```
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+```
+
+Codecov follow-up (one partial line in the patch: the pass-through branch for non-counted methods was never taken). `executeMultiple` is a round trip too, so every non-terminal transaction method is now counted and that branch is gone. Red, before: `× counts a multi-statement script as one round trip` (`expected { round_trips: +0 } to deeply equal { round_trips: 1 }`). After:
+
+```
+ Test Files  4 passed (4)
+      Tests  33 passed (33)
+```
+
+Branches still uncovered in `db-transactions.ts` by these four files are existing code outside this diff (the already-released guard and the `SQLITE_BUSY` retry loop).
+
+Second Codecov follow-up (one partial line: the `if (finished) return` branch in `holdConnection`, taken when a committed transaction is closed again, was never exercised). New test `reports a transaction once when a committed transaction is closed again` counts `setAttribute` calls on the span. Red, with the guard removed: `× reports a transaction once when a committed transaction is closed again`. With the guard: 14 passed in `tests/db-transactions-spans.test.ts`, and with `tests/tracing-spans.test.ts` 23 passed.
+
+## Reading the traces
+
+In GlitchTip, open the slowest `study.run` traces. A long `db.queue-wait` means requests are stuck behind another transaction; a long `db.transaction` with a high `round_trips` means that transaction spends its time in round trips. Sampling is 25%.
