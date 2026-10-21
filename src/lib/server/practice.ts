@@ -134,13 +134,23 @@ export async function startPractice(
  * Close one of the caller's unfinished practices and delete every answer in
  * it. Unlike finishing, nothing is committed to the review schedule.
  */
-async function discardPractice(
+export async function discardPractice(
   client: Client,
   learner: LearnerSession,
   id: string
 ): Promise<void> {
   const tx = await beginWrite(client);
   try {
+    // Another tab may have finished it since it was chosen; a finished
+    // practice keeps its answers and its committed review schedule.
+    const open = await tx.execute({
+      sql: "SELECT 1 FROM study_sessions WHERE id = ? AND owner_id = ? AND mode = 'practice' AND state IN ('active', 'paused')",
+      args: [id, learner.userId]
+    });
+    if (!open.rows[0]) {
+      await tx.commit();
+      return;
+    }
     await tx.execute({
       sql: 'DELETE FROM attempts WHERE owner_id = ? AND study_session_id = ?',
       args: [learner.userId, id]

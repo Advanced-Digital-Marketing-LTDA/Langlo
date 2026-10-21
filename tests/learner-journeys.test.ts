@@ -11,6 +11,7 @@ import {
 import { getTimezone, setTimezone } from '../src/lib/server/preferences';
 import { pauseStudySession, recordAttempt } from '../src/lib/server/study';
 import {
+  discardPractice,
   finishPractice,
   practiceResultsPath,
   practiceSummary,
@@ -628,6 +629,26 @@ describe('practice sessions', () => {
       id: `practice:${fresh}`,
       answered: 0
     });
+  });
+
+  it('never deletes the answers of a practice another tab already finished', async () => {
+    await closeSeededPractice();
+    const { id } = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await client.execute({
+      sql: `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, grammar_rating) VALUES ('kept-answer', 'learner-a', ?, 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-kept', 'assisted', 'un', 'good')`,
+      args: [id]
+    });
+    // Start over chose this practice, then the other tab finished it.
+    await finishPractice(client, learner, id);
+    await discardPractice(client, learner, id);
+    const kept = await client.execute({
+      sql: 'SELECT COUNT(*) AS n FROM attempts WHERE owner_id = ? AND study_session_id = ?',
+      args: [learner.userId, id]
+    });
+    expect(Number(kept.rows[0].n)).toBe(1);
   });
 
   it('closes every unfinished practice on Start over and begins a new one', async () => {
