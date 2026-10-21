@@ -27,11 +27,17 @@ No text, examples or exercises were copied from either source.
 
 The plan's B1 numbering put some dependants before their prerequisites. The skills were reordered so every prerequisite precedes what needs it, for example past participles (`pt-b1-004`) and the perfeito composto sit before the compound tenses that use them. The skill list itself is the plan's; only the numbering moved. IDs are new, so nothing existing is renumbered.
 
+## Test changes: observed red and green
+
+- **Portuguese example sentence in the module tests** (`practisedText` reads `pt` for Portuguese tracks). Setting a B1 holdout answer equal to a lesson's Portuguese example sentence: with the branch the holdout-separation test fails (`pt-b1-001@1:h03 ... expected true to be false`); with the branch removed the same file passes 9 of 9, so the old English-only reading could not see the collision. Restored: 72 Portuguese module tests pass.
+- **Completeness of a Portuguese course** (new test in `tests/curriculum-modules.test.ts`: the lessons across a track's modules equal its active catalog skills). With `content/pt-b1/module-08.json` moved away it fails (`Portuguese B1: expected [ 'pt-b1-001', ... (33) ] to deeply equal [ ... (38) ]`, five skills without lessons); with the file restored it passes.
+- **Contract fixtures** (`tests/curriculum-contract-portuguese.test.ts` built without the real Portuguese rows). The previous version against the catalog that now holds `pt-b1-001`: 5 failed (`Duplicate skill ID: pt-b1-001`), also seen in CI on the first push. After the change: 7 of 7 pass.
+
 ## Verification
 
 - `npm run validate:curriculum`: PASS, 165 records, 198 edges, bundle 1.2.0.
 - `npm run content:import` dry run on the repository bundle: package 1.2.0, 164 skills, 164 lessons, 2,460 questions, nothing written. No database was opened.
-- Shared module tests over every `content/*/module-NN.json`, including the eight new files: constraints, holdout separation, answer and near-miss consistency, and import once then a second import adds nothing. Run: `tests/curriculum-modules.test.ts`, `tests/content-bundle.test.ts`, `tests/content-bundle-portuguese.test.ts`, `tests/curriculum-contract.test.ts` (429 passed). While authoring, the holdout and alternative checks rejected several drafts; each was rewritten rather than the test relaxed.
+- Shared module tests over every `content/*/module-NN.json`, including the eight new files: constraints, holdout separation, answer and near-miss consistency, and import once then a second import adds nothing. Run: `tests/curriculum-modules.test.ts`, `tests/content-bundle.test.ts`, `tests/content-bundle-portuguese.test.ts`, `tests/curriculum-contract.test.ts` . While authoring, the holdout and alternative checks rejected several drafts; each was rewritten rather than the test relaxed.
 - `npm run check` (0 errors), `npm run lint`, `npm run format:check`, `git diff --check`.
 - The full suite and browser tests were not run here (too slow in this environment); CI runs them.
 
