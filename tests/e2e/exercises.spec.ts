@@ -5,15 +5,11 @@ import { createClient, type Client } from '@libsql/client/sqlite3';
 import {
   expect,
   type BrowserContext,
-  type ConsoleMessage,
   type Locator,
   type Page,
-  type Request,
-  type Response,
   type TestInfo
 } from '@playwright/test';
 import { test } from './coverage-fixture';
-import { readFixtureException } from './fixture-error-diagnostics';
 import { importContent } from '../../src/lib/server/content-import';
 import { approvedPackage } from '../fixtures/content-package';
 import {
@@ -29,8 +25,6 @@ let base = '';
 let fixtureRoot = '';
 let dbFile = '';
 let learnerCookies: Awaited<ReturnType<BrowserContext['cookies']>> | undefined;
-let serverExceptions: NonNullable<ReturnType<typeof readFixtureException>>[] =
-  [];
 
 async function withDatabase<T>(work: (client: Client) => Promise<T>) {
   const client = createClient({ url: `file://${dbFile}` });
@@ -45,7 +39,6 @@ async function withDatabase<T>(work: (client: Client) => Promise<T>) {
 
 test.beforeAll(async () => {
   learnerCookies = undefined;
-  serverExceptions = [];
   const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
   ({ fixtureRoot, dbFile } = createFixtureDatabase());
@@ -119,34 +112,16 @@ test.beforeAll(async () => {
   await withDatabase((client) =>
     client.execute("UPDATE skills SET retired_at = 1 WHERE id = 'fr-articles'")
   );
-  server = spawn(
-    process.execPath,
-    ['--import', './tests/e2e/fixture-error-diagnostics.ts', 'build'],
-    {
-      env: {
-        ...env,
-        LANGLO_FIXTURE_ERROR_CAPTURE: '1',
-        HOST: '127.0.0.1',
-        PORT: String(port),
-        ORIGIN: base,
-        PROTOCOL_HEADER: 'x-forwarded-proto'
-      },
-      stdio: ['ignore', 'pipe', 'pipe']
-    }
-  );
-  for (const stream of [server.stdout, server.stderr]) {
-    let pending = '';
-    stream?.setEncoding('utf8');
-    stream?.on('data', (chunk: string) => {
-      pending = (pending + chunk).slice(-8192);
-      let end: number;
-      while ((end = pending.indexOf('\n')) !== -1) {
-        const safe = readFixtureException(pending.slice(0, end));
-        if (safe && serverExceptions.length < 10) serverExceptions.push(safe);
-        pending = pending.slice(end + 1);
-      }
-    });
-  }
+  server = spawn(process.execPath, ['build'], {
+    env: {
+      ...env,
+      HOST: '127.0.0.1',
+      PORT: String(port),
+      ORIGIN: base,
+      PROTOCOL_HEADER: 'x-forwarded-proto'
+    },
+    stdio: 'ignore'
+  });
   await waitForLive(base);
 });
 
@@ -479,128 +454,6 @@ async function attachScreenshot(
   });
 }
 
-/** Observe fixture answers without moving focus or exposing request payloads. */
-async function observeAnswerSubmission(page: Page, submitControl: Locator) {
-  const started = Date.now();
-  const transport: { ms: number; event: string; status?: number }[] = [];
-  const isAnswer = (request: Request) =>
-    request.method() === 'POST' &&
-    new URL(request.url()).searchParams.has('/answer');
-  const request = (value: Request) => {
-    if (isAnswer(value))
-      transport.push({ ms: Date.now() - started, event: 'POST' });
-  };
-  const response = (value: Response) => {
-    if (isAnswer(value.request()))
-      transport.push({
-        ms: Date.now() - started,
-        event: 'response',
-        status: value.status()
-      });
-  };
-  const failed = (value: Request) => {
-    if (isAnswer(value))
-      transport.push({ ms: Date.now() - started, event: 'requestfailed' });
-  };
-  const events: object[] = [];
-  const consoleEvent = (message: ConsoleMessage) => {
-    const prefix = 'FIXTURE_ANSWER_EVENT ';
-    if (message.text().startsWith(prefix) && events.length < 100)
-      events.push(JSON.parse(message.text().slice(prefix.length)));
-  };
-  page.on('console', consoleEvent);
-  page.on('request', request);
-  page.on('response', response);
-  page.on('requestfailed', failed);
-  const browser = await submitControl.evaluateHandle((element, started) => {
-    const submit = element as HTMLButtonElement;
-    const form = submit.form;
-    let eventCount = 0;
-    const describe = (element: EventTarget | null) =>
-      element instanceof HTMLElement
-        ? {
-            tag: element.tagName,
-            type: element.getAttribute('type'),
-            role: element.getAttribute('role')
-          }
-        : null;
-    const snapshot = () => {
-      const answers = Array.from(
-        form?.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
-          '[name="answer"]'
-        ) ?? []
-      );
-      return {
-        active: describe(document.activeElement),
-        documentFocused: document.hasFocus(),
-        activeIsAnswerSubmit: document.activeElement === submit,
-        submitEnabled: submit ? !submit.disabled : null,
-        answerLengths: answers.map((answer) => answer.value.length),
-        checked: answers.map((answer) =>
-          answer instanceof HTMLInputElement ? answer.checked : null
-        ),
-        valid: answers.map((answer) => answer.validity.valid),
-        validation: Array.from(
-          form?.querySelectorAll('[role="alert"]') ?? []
-        ).map((alert) => {
-          const text = alert.textContent ?? '';
-          if (text.includes('Enter an answer')) return 'EMPTY';
-          if (text.includes('too long')) return 'TOO_LONG';
-          if (text.includes('one of the listed')) return 'NOT_AN_OPTION';
-          if (text.includes('characters')) return 'INVALID';
-          return 'OTHER';
-        })
-      };
-    };
-    const record = (event: Event) => {
-      if (event instanceof KeyboardEvent && event.key !== 'Enter') return;
-      if (eventCount++ < 100)
-        console.debug(
-          'FIXTURE_ANSWER_EVENT ' +
-            JSON.stringify({
-              ms: Date.now() - started,
-              event: event.type,
-              target: describe(event.target),
-              ...snapshot()
-            })
-        );
-    };
-    const types = ['focusin', 'focusout', 'keydown', 'keyup', 'submit'];
-    for (const type of types) document.addEventListener(type, record, true);
-    return {
-      read: snapshot,
-      dispose: () => {
-        for (const type of types)
-          document.removeEventListener(type, record, true);
-      }
-    };
-  }, started);
-  return {
-    transport,
-    elapsed: () => Date.now() - started,
-    async finish() {
-      try {
-        return {
-          events,
-          final: await browser.evaluate((observer) => observer.read())
-        };
-      } catch {
-        // Navigation can destroy this document; retain the streamed event trail.
-        return { events, final: null, observerUnavailable: true };
-      } finally {
-        page.off('console', consoleEvent);
-        page.off('request', request);
-        page.off('response', response);
-        page.off('requestfailed', failed);
-        await browser
-          .evaluate((observer) => observer.dispose())
-          .catch(() => {});
-        await browser.dispose().catch(() => {});
-      }
-    }
-  };
-}
-
 /** Submit blank first (refused, nothing sent), then answer and submit. */
 async function answerExercise(
   page: Page,
@@ -646,45 +499,11 @@ async function answerExercise(
   );
   await expect(submit).toBeEnabled();
   expect(await storedAnswers(userId)).toHaveLength(index);
-  serverExceptions = [];
-  const diagnostics = await observeAnswerSubmission(page, submit);
-  const persistence: { ms: number; count: number }[] = [];
-  const stages: { ms: number; event: string }[] = [];
-  let saved = false;
-  try {
-    await fillAnswer(page, exercise, answerControl);
-    stages.push({ ms: diagnostics.elapsed(), event: 'filled' });
-    await expectUsableLayout(page);
-    stages.push({ ms: diagnostics.elapsed(), event: 'screenshot-start' });
-    await attachScreenshot(page, testInfo, exercise.format);
-    stages.push({ ms: diagnostics.elapsed(), event: 'Enter' });
-    await page.keyboard.press('Enter');
-    await expect
-      .poll(async () => {
-        const answers = await storedAnswers(userId);
-        persistence.push({ ms: diagnostics.elapsed(), count: answers.length });
-        return answers;
-      })
-      .toHaveLength(index + 1);
-    saved = true;
-  } finally {
-    const browser = await diagnostics.finish();
-    console.log(
-      'FIXTURE_ANSWER_DIAGNOSTICS',
-      JSON.stringify({
-        project: testInfo.project.name,
-        question: index + 1,
-        format: exercise.format,
-        saved,
-        expectedAnswerLength: exercise.answer.length,
-        transport: diagnostics.transport,
-        persistence,
-        stages,
-        serverExceptions,
-        ...browser
-      })
-    );
-  }
+  await fillAnswer(page, exercise, answerControl);
+  await expectUsableLayout(page);
+  await attachScreenshot(page, testInfo, exercise.format);
+  await page.keyboard.press('Enter');
+  await expect.poll(() => storedAnswers(userId)).toHaveLength(index + 1);
   const feedback = page.getByRole('region', { name: 'Practice feedback' });
   await expect(feedback).toContainText('Correct');
   await feedback.getByRole('button', { name: 'Good', exact: true }).click();

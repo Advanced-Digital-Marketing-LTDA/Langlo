@@ -159,3 +159,72 @@ Local validation: desktop/mobile four-format journeys both passed (2 passed,
 warnings, and full lint/format checks passed. Unit checks cover the final async
 stack-frame matcher; resetting captured records is local test bookkeeping. No
 full unit/property/build rerun was needed for this test-only capture proposal.
+
+## Pooled SQLite busy-timeout fix (local, awaiting publication approval)
+
+CI run 39599677778 at `941419e` captured `LibsqlError / SQLITE_BUSY`, caused by
+`SqliteError / SQLITE_BUSY`, in the answer-write transaction path. Desktop
+question 1 and mobile question 4 both sent correctly focused/enabled keyboard
+submissions, received HTTP 500, and never persisted the answer. The other 126
+browser tests passed. These exception records establish a database lock failure,
+not a keyboard, validation, hydration or routing failure.
+
+Local reproduction identified a connection-pool configuration defect. The app
+configured the intended 5,000ms SQLite busy timeout using one `PRAGMA` statement.
+libSQL 0.18 opens additional connections for concurrent operations, and the
+PRAGMA applies only to the connection borrowed for that statement. Two concurrent
+queries of `PRAGMA busy_timeout` returned `[5000, 0]` before the fix. The driver's
+installed Config documentation explicitly states that its `timeout` option is
+applied to every file connection, including ones opened after transactions.
+
+A separate worker thread holds a real read transaction against a disposable file
+DB. The app's second pooled connection starts a write, inserts one row, and tries
+to commit while the reader is still locked. The reader releases after a controlled
+100ms hold in its own thread, so it can release while SQLite synchronously waits.
+Before the fix, commit immediately throws `SQLITE_BUSY` at
+`src/lib/server/db-transactions.ts:71`; both new regressions fail. This models a
+legitimate separate reader, including the browser test's independent persistence
+query, without modifying or rescheduling that query. The exact reader holding the
+CI lock was not traced; the reproduced pool defect explains why brief contention
+is turned into an immediate server error. It is an application file-client setup
+defect exposed by the fixture, not an invalid fixture write or a reason to weaken
+the persistence assertion.
+
+Set libSQL's existing `timeout: 5000` option when creating a local `file:` app
+client instead of issuing the one-connection PRAGMA. This preserves the intended
+wait and covers future pooled connections. Remote clients receive no new option
+or PRAGMA. No transaction retries, schema/migration changes, production settings,
+test retries, increased test timeouts or keyboard changes are added. After the
+fix, both connections report 5000 and the contended transaction commits exactly
+one row after the reader releases. All eleven focused database tests pass,
+including existing rollback, isolation and writer-queue regressions.
+
+Remove both temporary diagnostic layers and their sanitizer tests now that the
+exception and mechanism are known. Restore `exercises.spec.ts` exactly to `cbd873a`
+(the map selector refinement and original keyboard/persistence assertions).
+Retain the deterministic pool-setting regression and real-contention regression.
+The diagnostic history above records observations; the temporary probes and
+capture hooks are absent from the proposed final code.
+
+Validation of the local fix:
+
+- Type check: zero errors/warnings; full lint and formatting checks passed.
+- Unit suite: 1,554 passed across 98 files; property suite: 9 passed across 6 files.
+- Normal and coverage builds passed.
+- Full browser suite: 127 passed, 1 failed in 5.3 minutes, zero skips/retries.
+  Both original four-format answer journeys passed (desktop 15.0s, mobile 16.0s),
+  as did both auth-wrapping regressions. Temporary diagnostics were absent.
+- The remaining browser failure is the mobile freshly-scrolled-map URL test at
+  `exercises.spec.ts:786`: lesson content rendered, then the URL became the map
+  URL after fake-clock advancement. Preserve its assertion and map code.
+- Bounded baseline comparison: temporarily restore the old DB initializer and
+  rebuild with all application `src/` files matching main `6ef223e` (verified by
+  an empty source diff). The unchanged mobile map test failed in all three runs:
+  two with the same wrong URL at line 786, one with a pending map timer at line 784. This independently reproduces the map/timer issue without the SQLite fix.
+  It is an existing validation blocker, not a green full-suite result. Restore
+  the DB fix and rebuild afterwards; no map fix or test relaxation is included.
+
+Local browser evidence still uses Chromium 154 rather than CI's 153. Exact-head
+CI for this corrective change requires a separately approved push. The checkout
+adversarial-review checklist was applied as an in-session self-review without an
+external model call; no new high-severity issue was identified in the scoped fix.
