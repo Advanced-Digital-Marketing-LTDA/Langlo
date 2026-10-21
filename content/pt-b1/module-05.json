@@ -984,6 +984,7 @@
             "format": "translation",
             "prompt": "Translate (reflexive): She gets up early.",
             "answer": "Ela se levanta cedo.",
+            "alternatives": ["Ela acorda cedo."],
             "near_misses": ["Ela levanta se cedo.", "Ela me levanta cedo."],
             "holdout": false
           },
@@ -1007,7 +1008,10 @@
             "format": "translation",
             "prompt": "Translate (pronominal): I remember her name.",
             "answer": "Eu me lembro do nome dela.",
-            "alternatives": ["Lembro-me do nome dela."],
+            "alternatives": [
+              "Eu lembro do nome dela.",
+              "Lembro-me do nome dela."
+            ],
             "near_misses": [
               "Eu lembro-me do nome dela.",
               "Eu me lembro o nome dela."
@@ -1075,6 +1079,207 @@
               "Eu se lavo antes de comer."
             ],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-024",
+      "title": "Reflexive, reciprocal and pronominal verbs: lavar-se, encontrar-se, esquecer-se",
+      "explanation": "Reflexive verbs show that the subject acts on itself: me lavo, te lavas, se lava, nos lavamos, se lavam. The pronouns are me, te, se, nos, se. Reciprocal verbs show an action between people: Eles se abraçaram, Nós nos vemos amanhã. Pronominal verbs always take the pronoun, even if the action is not on oneself: queixar-se, arrepender-se, esquecer-se, lembrar-se, sentar-se. Colloquial Brazilian drops the pronoun with some verbs: Eu esqueci (not Eu me esqueci), but Eu me lembro and Eu me sento keep it. In Brazil the pronoun comes before the verb: Eu me levanto cedo.",
+      "examples": [
+        {
+          "pt": "Eu me levanto às seis todos os dias.",
+          "en": "I get up at six every day."
+        },
+        {
+          "pt": "Eles se abraçaram na estação.",
+          "en": "They hugged at the station."
+        },
+        {
+          "pt": "Ela se arrependeu da decisão.",
+          "en": "She regretted the decision."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-024@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-024@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Eu ___ levanto cedo.",
+            "answer": "me",
+            "alternatives": ["te", "me", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q01"
+          },
+          {
+            "id": "pt-b1-024@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Ela ___ lembra do meu nome.",
+            "answer": "se",
+            "alternatives": ["me", "nos", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q02"
+          },
+          {
+            "id": "pt-b1-024@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Nós ___ vemos amanhã.",
+            "answer": "nos",
+            "alternatives": ["nos", "se", "me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q03"
+          },
+          {
+            "id": "pt-b1-024@2:q04",
+            "format": "typed-blank",
+            "prompt": "Os alunos ___ sentaram na frente. (se, reflexivo)",
+            "answer": "se",
+            "near_misses": ["lhes", "os"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q04"
+          },
+          {
+            "id": "pt-b1-024@2:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ arrependo disso. (arrepender-se)",
+            "answer": "me",
+            "near_misses": ["te", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q05"
+          },
+          {
+            "id": "pt-b1-024@2:q06",
+            "format": "typed-blank",
+            "prompt": "Vocês ___ encontram no parque? (encontrar-se)",
+            "answer": "se",
+            "near_misses": ["me", "nos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q06"
+          },
+          {
+            "id": "pt-b1-024@2:q07",
+            "format": "translation",
+            "prompt": "Translate (reflexive): She gets up early.",
+            "answer": "Ela se levanta cedo.",
+            "near_misses": ["Ela levanta se cedo.", "Ela me levanta cedo."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q07"
+          },
+          {
+            "id": "pt-b1-024@2:q08",
+            "format": "translation",
+            "prompt": "Translate (reciprocal): We see each other on Fridays.",
+            "answer": "Nós nos vemos às sextas.",
+            "alternatives": [
+              "A gente se vê às sextas.",
+              "Nós nos vemos às sextas-feiras."
+            ],
+            "near_misses": [
+              "Nós se vemos às sextas.",
+              "Nós vemos às sextas nos."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q08"
+          },
+          {
+            "id": "pt-b1-024@2:q09",
+            "format": "translation",
+            "prompt": "Translate (pronominal): I remember her name.",
+            "answer": "Eu me lembro do nome dela.",
+            "alternatives": ["Lembro-me do nome dela."],
+            "near_misses": [
+              "Eu lembro-me do nome dela.",
+              "Eu me lembro o nome dela."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q09"
+          },
+          {
+            "id": "pt-b1-024@2:q10",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Eu se levanto às seis.",
+            "answer": "Eu me levanto às seis.",
+            "near_misses": ["Eu se levanto às seis.", "Eu te levanto às seis."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q10"
+          },
+          {
+            "id": "pt-b1-024@2:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Eles me abraçaram na estação (they hugged each other).",
+            "answer": "Eles se abraçaram na estação.",
+            "near_misses": [
+              "Eles me abraçaram na estação.",
+              "Eles nos abraçaram na estação."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q11"
+          },
+          {
+            "id": "pt-b1-024@2:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Nós se encontramos ontem.",
+            "answer": "Nós nos encontramos ontem.",
+            "near_misses": [
+              "Nós se encontramos ontem.",
+              "Nós me encontramos ontem."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q12"
+          },
+          {
+            "id": "pt-b1-024@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence (informal, 'Do you remember his name?'):",
+            "answer": "Você se lembra do nome dele?",
+            "alternatives": [
+              "Você se lembra do nome dele?",
+              "Você me lembra do nome dele?",
+              "Você nos lembra do nome dele?"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-024@1:h01"
+          },
+          {
+            "id": "pt-b1-024@2:h02",
+            "format": "typed-blank",
+            "prompt": "A gente ___ na festa. (ver-se, presente)",
+            "answer": "se vê",
+            "near_misses": ["me vê", "nos vê"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-024@1:h02"
+          },
+          {
+            "id": "pt-b1-024@2:h03",
+            "format": "translation",
+            "prompt": "Translate (reflexive): I wash myself before eating.",
+            "answer": "Eu me lavo antes de comer.",
+            "alternatives": ["Lavo-me antes de comer."],
+            "near_misses": [
+              "Eu lavo me antes de comer.",
+              "Eu se lavo antes de comer."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-024@1:h03"
           }
         ]
       }

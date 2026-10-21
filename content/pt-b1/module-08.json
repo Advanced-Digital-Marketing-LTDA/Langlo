@@ -784,7 +784,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the passive: As janelas ___ abertas pelo vento.",
             "answer": "foram",
-            "alternatives": ["foram", "foi", "é"],
+            "alternatives": ["foram", "foi", "são"],
             "holdout": false
           },
           {
@@ -898,6 +898,198 @@
               "Ensina inglês nesta escola."
             ],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-039",
+      "title": "The passive: ser + participle and the passive se",
+      "explanation": "The passive with ser puts the object first: O livro foi escrito por ela. Form it with ser in the tense you need plus the participle, which agrees with the subject: As cartas foram escritas, A casa será vendida. The agent, if mentioned, follows por: pelo diretor, pela empresa. The passive se is more common in speech: Vende-se casa, Falam-se vários idiomas, Aluga-se apartamento. The verb agrees with the thing: Vendem-se casas. Use estar + participle for a result, not an action: A porta está fechada. Do not use the passive se when the agent is a person you name: say Ela escreveu.",
+      "examples": [
+        {
+          "pt": "O livro foi escrito por uma brasileira.",
+          "en": "The book was written by a Brazilian woman."
+        },
+        {
+          "pt": "Vendem-se casas nesta rua.",
+          "en": "Houses are sold on this street."
+        },
+        {
+          "pt": "A porta está fechada desde ontem.",
+          "en": "The door has been closed since yesterday."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-039@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-039@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the passive: A carta ___ escrita ontem.",
+            "answer": "foi",
+            "alternatives": ["está", "foi", "era"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q01"
+          },
+          {
+            "id": "pt-b1-039@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the passive se: ___ casas nesta rua.",
+            "answer": "Vendem-se",
+            "alternatives": ["Vende-se", "Vendemos", "Vendem-se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q02"
+          },
+          {
+            "id": "pt-b1-039@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the passive: As janelas ___ abertas pelo vento.",
+            "answer": "foram",
+            "alternatives": ["foram", "foi", "é"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q03"
+          },
+          {
+            "id": "pt-b1-039@2:q04",
+            "format": "typed-blank",
+            "prompt": "O prédio ___ construído em 2010. (ser, perfeito)",
+            "answer": "foi",
+            "near_misses": ["era", "esteve"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q04"
+          },
+          {
+            "id": "pt-b1-039@2:q05",
+            "format": "typed-blank",
+            "prompt": "___-se apartamento nesta rua. (alugar, passive se)",
+            "answer": "Aluga",
+            "near_misses": ["Alugam", "Alugo"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q05"
+          },
+          {
+            "id": "pt-b1-039@2:q06",
+            "format": "typed-blank",
+            "prompt": "As cartas foram ___ por ela. (escrever, particípio)",
+            "answer": "escritas",
+            "near_misses": ["escritos", "escrita"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q06"
+          },
+          {
+            "id": "pt-b1-039@2:q07",
+            "format": "translation",
+            "prompt": "Translate (passive): The cake was made by my mother.",
+            "answer": "O bolo foi feito pela minha mãe.",
+            "alternatives": ["O bolo foi feito por minha mãe."],
+            "near_misses": [
+              "O bolo foi fez pela minha mãe.",
+              "O bolo foi feita pela minha mãe."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q07"
+          },
+          {
+            "id": "pt-b1-039@2:q08",
+            "format": "translation",
+            "prompt": "Translate (passive se): Portuguese is spoken here.",
+            "answer": "Fala-se português aqui.",
+            "alternatives": ["Aqui se fala português."],
+            "near_misses": ["Falam-se português aqui.", "Fala português aqui."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q08"
+          },
+          {
+            "id": "pt-b1-039@2:q09",
+            "format": "translation",
+            "prompt": "Translate (future passive): The house will be sold.",
+            "answer": "A casa será vendida.",
+            "alternatives": ["A casa vai ser vendida."],
+            "near_misses": ["A casa será vendido.", "A casa é vendida será."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q09"
+          },
+          {
+            "id": "pt-b1-039@2:q10",
+            "format": "correction",
+            "prompt": "Correct the agreement: As portas foram aberto.",
+            "answer": "As portas foram abertas.",
+            "near_misses": [
+              "As portas foram aberto.",
+              "As portas foram abertos."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q10"
+          },
+          {
+            "id": "pt-b1-039@2:q11",
+            "format": "correction",
+            "prompt": "Correct the passive se (plural thing): Vende-se casas.",
+            "answer": "Vendem-se casas.",
+            "near_misses": ["Vende-se casas.", "Vendemos casas."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q11"
+          },
+          {
+            "id": "pt-b1-039@2:q12",
+            "format": "correction",
+            "prompt": "Correct the form: O livro foi escrita por ela.",
+            "answer": "O livro foi escrito por ela.",
+            "near_misses": [
+              "O livro foi escrita por ela.",
+              "O livro foi escrever por ela."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-039@1:q12"
+          },
+          {
+            "id": "pt-b1-039@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the result state (not an action): A loja ___ fechada agora.",
+            "answer": "está",
+            "alternatives": ["está", "foi", "será"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-039@1:h01"
+          },
+          {
+            "id": "pt-b1-039@2:h02",
+            "format": "typed-blank",
+            "prompt": "As casas foram ___ no ano passado. (vender, particípio)",
+            "answer": "vendidas",
+            "near_misses": ["vendido", "vendidos"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-039@1:h02"
+          },
+          {
+            "id": "pt-b1-039@2:h03",
+            "format": "translation",
+            "prompt": "Translate (passive): English is taught in this school.",
+            "answer": "Ensina-se inglês nesta escola.",
+            "alternatives": ["Nesta escola se ensina inglês."],
+            "near_misses": [
+              "Ensinam-se inglês nesta escola.",
+              "Ensina inglês nesta escola."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-039@1:h03"
           }
         ]
       }

@@ -298,7 +298,7 @@ describe('revising already imported lessons', () => {
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
-      expect(revisions).toHaveLength(52);
+      expect(revisions).toHaveLength(55);
       await importContent(client, {
         ...pkg,
         curriculumVersion: '1.2.0',
@@ -506,8 +506,8 @@ describe('module package', () => {
     const declared = lessons.flatMap((lesson) =>
       lesson.version.questions.filter((question) => question.change)
     );
-    // 52 revised lessons of 15 questions each.
-    expect(declared).toHaveLength(52 * 15);
+    // 55 revised lessons of 15 questions each.
+    expect(declared).toHaveLength(55 * 15);
     const imported = new Map(
       modulesPackage(root).versions.flatMap((version) =>
         version.questions.map((question) => [question.id, question] as const)

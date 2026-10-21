@@ -88,6 +88,14 @@ const earlierVersion = (module: Module, lesson: Lesson) =>
       other.skill_id === lesson.skill_id &&
       other.version.version === lesson.version.version - 1
   );
+// Accepted answers that were corrected after their version was imported; the
+// revision carries the corrected list instead of the stored one.
+const correctedAlternatives = new Set([
+  'pt-b1-024@1:q07',
+  'pt-b1-024@1:q09',
+  'pt-b1-033@1:q08',
+  'pt-b1-039@1:q03'
+]);
 // Returns whether the question's prompt gained a grammar form hint.
 function assertHintedQuestion(
   question: Question,
@@ -106,8 +114,14 @@ function assertHintedQuestion(
     'alternatives',
     'near_misses',
     'holdout'
-  ] as const)
-    expect(question[field], `${question.id} ${field}`).toEqual(before[field]);
+  ] as const) {
+    if (field === 'alternatives' && correctedAlternatives.has(before.id))
+      expect(question[field], `${question.id} ${field}`).not.toEqual(
+        before[field]
+      );
+    else
+      expect(question[field], `${question.id} ${field}`).toEqual(before[field]);
+  }
   if (question.prompt === before.prompt) return false;
   expect(question.holdout, question.id).toBe(true);
   const stripped = question.prompt.replace(
@@ -136,7 +150,10 @@ function assertHintRevision(revision: Lesson, earlier: Lesson) {
   const hinted = revised.filter((question, index) =>
     assertHintedQuestion(question, original[index], revision.version.id)
   ).length;
-  expect(hinted, `${id} changes no prompt`).toBeGreaterThan(0);
+  const corrected = original.filter((question) =>
+    correctedAlternatives.has(question.id)
+  ).length;
+  expect(hinted + corrected, `${id} changes nothing`).toBeGreaterThan(0);
 }
 // Ids are unique across every version; prompts within each generation,
 // since a revision repeats its earlier version's prompts.

@@ -410,7 +410,7 @@
             "format": "translation",
             "prompt": "Translate (clear third person): Her house is big.",
             "answer": "A casa dela é grande.",
-            "alternatives": ["A casa dela é bem grande."],
+            "alternatives": ["Sua casa é grande.", "A casa dela é enorme."],
             "near_misses": ["A casa seu é grande.", "A casa de ela é grande."],
             "holdout": false
           },
@@ -481,6 +481,196 @@
               "Esses sapato são caros."
             ],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-033",
+      "title": "Possessives and demonstratives: meu, seu, dele/dela, este, esse, aquele",
+      "explanation": "Possessives agree with the thing owned: meu, minha, meus, minhas; nosso, nossa; seu, sua. Seu and sua can mean your, his, her or their, so in speech people use dele, dela, deles, delas for the third person: o carro dele, a casa dela. Brazilian Portuguese often uses an article before possessives in Brazil: o meu livro or just meu livro. Demonstratives show distance: este/esta/isto (near me), esse/essa/isso (near you or already mentioned), aquele/aquela/aquilo (far from both). In speech este is rare, and esse is common for both near and mentioned things. Isto, isso and aquilo are neutral and do not change: O que é isso?",
+      "examples": [
+        {
+          "pt": "Meu carro é novo, mas o carro dela é velho.",
+          "en": "My car is new, but her car is old."
+        },
+        {
+          "pt": "Esse livro é seu?",
+          "en": "Is that book yours?"
+        },
+        {
+          "pt": "Aquela casa lá longe é nossa.",
+          "en": "That house over there is ours."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-033@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-033@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the possessive: Esta é ___ casa. (my)",
+            "answer": "minha",
+            "alternatives": ["meu", "minha", "meus"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q01"
+          },
+          {
+            "id": "pt-b1-033@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the clear form: A casa ___ é grande. (her)",
+            "answer": "dela",
+            "alternatives": ["sua dela", "dele", "dela"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q02"
+          },
+          {
+            "id": "pt-b1-033@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the demonstrative (far from both): ___ prédio é muito alto.",
+            "answer": "Aquele",
+            "alternatives": ["Aquele", "Este", "Esse"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q03"
+          },
+          {
+            "id": "pt-b1-033@2:q04",
+            "format": "typed-blank",
+            "prompt": "Estes são ___ livros. (our)",
+            "answer": "nossos",
+            "near_misses": ["nosso", "nossas"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q04"
+          },
+          {
+            "id": "pt-b1-033@2:q05",
+            "format": "typed-blank",
+            "prompt": "O que é ___ ? (that, neutral, near you)",
+            "answer": "isso",
+            "near_misses": ["isto", "aquilo"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q05"
+          },
+          {
+            "id": "pt-b1-033@2:q06",
+            "format": "typed-blank",
+            "prompt": "O carro ___ é azul. (his, clear form)",
+            "answer": "dele",
+            "near_misses": ["dela", "deles"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q06"
+          },
+          {
+            "id": "pt-b1-033@2:q07",
+            "format": "translation",
+            "prompt": "Translate (possessive): This is my brother.",
+            "answer": "Este é meu irmão.",
+            "alternatives": ["Este é o meu irmão.", "Esse é meu irmão."],
+            "near_misses": ["Este é minha irmão.", "Este é meus irmão."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q07"
+          },
+          {
+            "id": "pt-b1-033@2:q08",
+            "format": "translation",
+            "prompt": "Translate (clear third person): Her house is big.",
+            "answer": "A casa dela é grande.",
+            "alternatives": ["A casa dela é bem grande."],
+            "near_misses": ["A casa seu é grande.", "A casa de ela é grande."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q08"
+          },
+          {
+            "id": "pt-b1-033@2:q09",
+            "format": "translation",
+            "prompt": "Translate (demonstrative): What is that over there?",
+            "answer": "O que é aquilo?",
+            "alternatives": ["O que é aquilo ali?"],
+            "near_misses": ["O que é aquele?", "O que é esse?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q09"
+          },
+          {
+            "id": "pt-b1-033@2:q10",
+            "format": "correction",
+            "prompt": "Correct the possessive: Esta é meu casa.",
+            "answer": "Esta é minha casa.",
+            "near_misses": ["Esta é meu casa.", "Esta é meus casa."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q10"
+          },
+          {
+            "id": "pt-b1-033@2:q11",
+            "format": "correction",
+            "prompt": "Correct the neutral demonstrative: O que é aquele?",
+            "answer": "O que é aquilo?",
+            "near_misses": ["O que é aquele?", "O que é aquela?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q11"
+          },
+          {
+            "id": "pt-b1-033@2:q12",
+            "format": "correction",
+            "prompt": "Correct the clear form (his): O carro seu é novo, de José.",
+            "answer": "O carro dele é novo.",
+            "alternatives": ["O carro do José é novo."],
+            "near_misses": [
+              "O carro seu é novo, de José.",
+              "O carro dela é novo."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-033@1:q12"
+          },
+          {
+            "id": "pt-b1-033@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the demonstrative (near me): ___ é o meu telefone.",
+            "answer": "Este",
+            "alternatives": ["Este", "Aquele", "Aquilo"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-033@1:h01"
+          },
+          {
+            "id": "pt-b1-033@2:h02",
+            "format": "typed-blank",
+            "prompt": "Nós amamos ___ cidade. (nossa)",
+            "answer": "nossa",
+            "near_misses": ["nosso", "nossas"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-033@1:h02"
+          },
+          {
+            "id": "pt-b1-033@2:h03",
+            "format": "translation",
+            "prompt": "Translate (demonstrative): These shoes are expensive.",
+            "answer": "Estes sapatos são caros.",
+            "alternatives": [
+              "Esses sapatos são caros.",
+              "Estes sapatos são muito caros."
+            ],
+            "near_misses": [
+              "Estes sapatos são caras.",
+              "Esses sapato são caros."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-033@1:h03"
           }
         ]
       }
