@@ -24,6 +24,7 @@ import {
   disposeDisposableFixture
 } from './fixtures/database';
 import { seedStudy } from './fixtures/study';
+import { prefixThrough } from './fixtures/migration-prefix';
 import { seedLegacyPackage } from './fixtures/content-package';
 import { importContent } from '../src/lib/server/content-import';
 import * as schema from '../src/lib/server/db/schema';
@@ -266,29 +267,6 @@ async function expectFailedDraftReviewMigration(target: FixtureTarget) {
 }
 
 describe('disposable libSQL migrations', () => {
-  async function prefixThrough(tag: string) {
-    const directory = await mkdtemp(join(tmpdir(), 'langlo-merge-prefix-'));
-    const journal = JSON.parse(
-      await readFile('drizzle/meta/_journal.json', 'utf8')
-    );
-    const end = journal.entries.findIndex(
-      (entry: { tag: string }) => entry.tag === tag
-    );
-    if (end < 0) throw new Error(`Missing migration ${tag}`);
-    journal.entries = journal.entries.slice(0, end + 1);
-    await mkdir(join(directory, 'meta'));
-    await writeFile(
-      join(directory, 'meta/_journal.json'),
-      JSON.stringify(journal)
-    );
-    for (const entry of journal.entries)
-      await copyFile(
-        `drizzle/${entry.tag}.sql`,
-        join(directory, `${entry.tag}.sql`)
-      );
-    return directory;
-  }
-
   it('accepts the production migration ledger through Portuguese 0026 as an unchanged prefix', async () => {
     const target = await fixture();
     const folder = await prefixThrough('0026_portuguese_tracks');
@@ -408,110 +386,6 @@ describe('disposable libSQL migrations', () => {
       close();
     }
   });
-
-  async function withResetSchedule(stateJson: string) {
-    const target = await fixture();
-    const folder = await prefixThrough('0030_portuguese_grammar_retention');
-    try {
-      await migrateFixtureDatabase(target, folder);
-    } finally {
-      await rm(folder, { recursive: true, force: true });
-    }
-    await seedStudy(target);
-    const opened = await openFixtureDatabase(target);
-    await opened.client.execute({
-      sql: "INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, reset_required, scheduler_version, parameters_json) VALUES ('learner-a', 'fr', 'fr-articles', 'content-v1', ?, 0, 3, 1, 'fixture', '{}')",
-      args: [stateJson]
-    });
-    return { ...opened, target };
-  }
-
-  it('restores schedules that an earlier version reset from their stored recall state', async () => {
-    const state = JSON.stringify({ due: '2026-11-01T10:20:30.456Z', reps: 4 });
-    const { client, close, target } = await withResetSchedule(state);
-    try {
-      await migrateFixtureDatabase(target);
-      expect(
-        (
-          await client.execute(
-            'SELECT content_version_id, state_json, due_at, revision, reset_required FROM grammar_retention_schedules'
-          )
-        ).rows
-      ).toEqual([
-        {
-          content_version_id: 'content-v1',
-          state_json: state,
-          due_at: Date.parse('2026-11-01T10:20:30.456Z'),
-          revision: 4,
-          reset_required: 0
-        }
-      ]);
-    } finally {
-      close();
-    }
-  });
-
-  it('upgrades a database where publishing reset a learner and gives the learner their schedule back', async () => {
-    const state = JSON.stringify({ due: '2026-12-24T08:00:00.000Z', reps: 7 });
-    const { client, close, target } = await withResetSchedule(state);
-    try {
-      await client.execute(
-        'UPDATE grammar_retention_schedules SET reset_required = 0, due_at = 1'
-      );
-      await client.execute(
-        "UPDATE content_versions SET status = 'pilot-ready' WHERE id = 'content-v2'"
-      );
-      expect(
-        (
-          await client.execute(
-            'SELECT content_version_id, due_at, reset_required FROM grammar_retention_schedules'
-          )
-        ).rows
-      ).toEqual([
-        { content_version_id: 'content-v2', due_at: 0, reset_required: 1 }
-      ]);
-      await migrateFixtureDatabase(target);
-      await migrateFixtureDatabase(target);
-      expect(
-        (
-          await client.execute(
-            'SELECT content_version_id, state_json, due_at, reset_required FROM grammar_retention_schedules'
-          )
-        ).rows
-      ).toEqual([
-        {
-          content_version_id: 'content-v2',
-          state_json: state,
-          due_at: Date.parse('2026-12-24T08:00:00.000Z'),
-          reset_required: 0
-        }
-      ]);
-    } finally {
-      close();
-    }
-  });
-
-  it.each([
-    ['no due date', JSON.stringify({ reps: 4 })],
-    ['an unreadable due date', JSON.stringify({ due: 'soon', reps: 4 })]
-  ])(
-    'refuses to restore a reset schedule whose stored state has %s',
-    async (_, state) => {
-      const { client, close, target } = await withResetSchedule(state);
-      try {
-        await expect(migrateFixtureDatabase(target)).rejects.toThrow();
-        expect(
-          (
-            await client.execute(
-              'SELECT due_at, reset_required FROM grammar_retention_schedules'
-            )
-          ).rows
-        ).toEqual([{ due_at: 0, reset_required: 1 }]);
-      } finally {
-        close();
-      }
-    }
-  );
 
   it('refuses the Portuguese retention rebuild when a caller keeps foreign keys enabled', async () => {
     const { client, close } = await beforePortugueseRetention();

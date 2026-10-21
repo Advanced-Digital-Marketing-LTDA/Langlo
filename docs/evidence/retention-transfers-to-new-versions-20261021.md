@@ -30,6 +30,8 @@ Green, after: `npx vitest run tests/content-update.test.ts tests/grammar-retenti
 
 Upgrade path, after folding: `npx vitest run` on `content-update`, `grammar-retention.integration`, `db-migrations`, `portuguese-migration`, `db-remote-migrate`, `db-cli`, `content-import`, `grammar-retention`: `Test Files 8 passed (8)`, `Tests 250 passed (250)`. This includes a database migrated to 0030 where publishing a version reset a learner; migrating (twice) gives the schedule back with its due date. With the restore statement removed: `Tests 2 failed` (restores schedules ...; upgrades a database where publishing reset a learner ...).
 
+The restore tests live in `tests/retention-transfer-migration.test.ts`, and `prefixThrough` moved from `tests/db-migrations.test.ts` to `tests/fixtures/migration-prefix.ts` so both files share it (CodeScene flagged `db-migrations.test.ts` over 1000 lines). After the move: `db-migrations`, `retention-transfer-migration`, `portuguese-migration`: `Test Files 3 passed (3)`, `Tests 33 passed (33)`.
+
 Mutations (each restored afterwards):
 
 - Review resets again when the schedule is on another version or flagged: `Tests 2 failed` (continues the stored recall state ... on an earlier version / with a pending reset).
