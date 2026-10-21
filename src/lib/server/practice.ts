@@ -1,4 +1,5 @@
 import type { Client, Row } from '@libsql/client';
+import { z } from 'zod';
 import type { LearnerSession } from './learner-session';
 import {
   FALLBACK_EVALUATOR_VERSION,
@@ -14,6 +15,21 @@ import {
 } from './grammar-retention';
 
 const KEY_PATTERN = /^[0-9a-f-]{36}$/i;
+const reviewSkillSelection = z
+  .array(z.string())
+  .min(1)
+  .max(5)
+  .refine((ids) => new Set(ids).size === ids.length);
+const grammarPlanHeader = z.object({
+  version: z.literal(GRAMMAR_RETENTION_POLICY_VERSION),
+  questions: z.array(z.unknown()).max(5)
+});
+
+function validateSubmissionKey(value: unknown) {
+  if (typeof value !== 'string' || !KEY_PATTERN.test(value))
+    throw new StudyError('INVALID_SUBMISSION_KEY');
+}
+
 const SESSION_ID_PATTERN = /^[A-Za-z0-9:_-]{1,128}$/;
 
 /**
@@ -47,11 +63,7 @@ export async function startPractice(
   learner: LearnerSession,
   input: { language: string; submissionKey: unknown }
 ): Promise<{ id: string }> {
-  if (
-    typeof input.submissionKey !== 'string' ||
-    !KEY_PATTERN.test(input.submissionKey)
-  )
-    throw new StudyError('INVALID_SUBMISSION_KEY');
+  validateSubmissionKey(input.submissionKey);
   const id = `practice:${input.submissionKey}`;
   await executeWrite(client, {
     sql: `INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, grammar_retention_policy_version)
@@ -104,6 +116,13 @@ async function grammarReviewQuestions(
   return questions;
 }
 
+function reviewPlanSkills(serialized: unknown) {
+  const plan = JSON.parse(String(serialized ?? '{}'));
+  return Array.isArray(plan.questions)
+    ? plan.questions.map((item: { skillId?: string }) => item.skillId)
+    : [];
+}
+
 async function replayGrammarReview(
   tx: Pick<Client, 'execute'>,
   learner: LearnerSession,
@@ -116,10 +135,7 @@ async function replayGrammarReview(
   });
   if (previous.rows[0]) {
     const row = previous.rows[0];
-    const plan = JSON.parse(String(row.grammar_retention_plan ?? '{}'));
-    const priorSkills = Array.isArray(plan.questions)
-      ? plan.questions.map((item: { skillId?: string }) => item.skillId)
-      : [];
+    const priorSkills = reviewPlanSkills(row.grammar_retention_plan);
     assertSessionIdentity(row, learner, input.language, 'mixed-review');
     if (JSON.stringify(priorSkills) !== JSON.stringify(input.skillIds))
       throw new StudyError('NOT_FOUND');
@@ -132,21 +148,35 @@ function validateGrammarReview(input: {
   submissionKey: unknown;
   skillIds: unknown[];
 }) {
-  if (
-    typeof input.submissionKey !== 'string' ||
-    !KEY_PATTERN.test(input.submissionKey)
-  )
-    throw new StudyError('INVALID_SUBMISSION_KEY');
-  if (!Array.isArray(input.skillIds))
-    throw new StudyError('INVALID_REVIEW_SELECTION');
-  if (input.skillIds.length < 1)
-    throw new StudyError('INVALID_REVIEW_SELECTION');
-  if (input.skillIds.length > 5)
-    throw new StudyError('INVALID_REVIEW_SELECTION');
-  if (!input.skillIds.every((id) => typeof id === 'string'))
-    throw new StudyError('INVALID_REVIEW_SELECTION');
-  if (new Set(input.skillIds).size !== input.skillIds.length)
-    throw new StudyError('INVALID_REVIEW_SELECTION');
+  validateSubmissionKey(input.submissionKey);
+  const selection = reviewSkillSelection.safeParse(input.skillIds);
+  if (!selection.success) throw new StudyError('INVALID_REVIEW_SELECTION');
+  return selection.data;
+}
+
+async function assertDueGrammarSelection(
+  tx: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  selection: { language: string; skillIds: string[] },
+  now: number
+) {
+  const due = await dueGrammarReviews(tx, learner, selection.language, now);
+  const dueIds = new Set(due.map((item) => item.skillId));
+  if (!selection.skillIds.every((id) => dueIds.has(id)))
+    throw new StudyError('STALE_GRAMMAR_REVIEW');
+}
+
+async function reviewEnrollmentId(
+  tx: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string
+) {
+  const enrolled = await tx.execute({
+    sql: 'SELECT id FROM enrollments WHERE owner_id = ? AND language = ?',
+    args: [learner.userId, language]
+  });
+  if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
+  return enrolled.rows[0].id;
 }
 
 /** Freeze at most five due skills into a manual, one-question-per-skill review session. */
@@ -156,27 +186,17 @@ export async function startGrammarReview(
   input: { language: string; submissionKey: unknown; skillIds: unknown[] },
   now = Date.now()
 ) {
-  validateGrammarReview(input);
+  const selection = { ...input, skillIds: validateGrammarReview(input) };
   const id = `grammar-review:${input.submissionKey}`;
   const tx = await beginWrite(client);
   try {
-    if (await replayGrammarReview(tx, learner, id, input)) {
+    if (await replayGrammarReview(tx, learner, id, selection)) {
       await tx.commit();
       return { id };
     }
-    const due = await dueGrammarReviews(tx, learner, input.language, now);
-    if (
-      !input.skillIds.every((skillId) =>
-        due.some((item) => item.skillId === skillId)
-      )
-    )
-      throw new StudyError('STALE_GRAMMAR_REVIEW');
-    const enrolled = await tx.execute({
-      sql: 'SELECT id FROM enrollments WHERE owner_id = ? AND language = ?',
-      args: [learner.userId, input.language]
-    });
-    if (!enrolled.rows[0]) throw new StudyError('NOT_FOUND');
-    const questions = await grammarReviewQuestions(tx, learner, input);
+    await assertDueGrammarSelection(tx, learner, selection, now);
+    const enrollmentId = await reviewEnrollmentId(tx, learner, input.language);
+    const questions = await grammarReviewQuestions(tx, learner, selection);
     await tx.execute({
       sql: `INSERT INTO study_sessions (id, owner_id, enrollment_id, language,
         mode, grammar_retention_policy_version, grammar_retention_plan)
@@ -184,7 +204,7 @@ export async function startGrammarReview(
       args: [
         id,
         learner.userId,
-        enrolled.rows[0].id,
+        enrollmentId,
         input.language,
         GRAMMAR_RETENTION_POLICY_VERSION,
         JSON.stringify({ version: GRAMMAR_RETENTION_POLICY_VERSION, questions })
@@ -203,12 +223,12 @@ export async function startGrammarReview(
 function assertGrammarPlan(rows: Row[]) {
   if (rows.some((row) => row.retired_at !== null))
     throw new StudyError('CONTENT_UNAVAILABLE');
-  const plan = JSON.parse(String(rows[0].grammar_retention_plan));
-  if (plan.version !== GRAMMAR_RETENTION_POLICY_VERSION)
+  const plan = grammarPlanHeader.safeParse(
+    JSON.parse(String(rows[0].grammar_retention_plan))
+  );
+  if (!plan.success) throw new StudyError('CONTENT_UNAVAILABLE');
+  if (plan.data.questions.length !== rows.length)
     throw new StudyError('CONTENT_UNAVAILABLE');
-  if (plan.questions.length !== rows.length)
-    throw new StudyError('CONTENT_UNAVAILABLE');
-  if (rows.length > 5) throw new StudyError('CONTENT_UNAVAILABLE');
 }
 
 export async function grammarReviewPlan(

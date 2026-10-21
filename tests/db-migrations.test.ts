@@ -480,29 +480,36 @@ describe('disposable libSQL migrations', () => {
     }
   });
 
+  async function migrateBeforeGrammarResetFix(
+    target: FixtureTarget,
+    previous: string
+  ) {
+    const journal = JSON.parse(
+      await readFile('drizzle/meta/_journal.json', 'utf8')
+    );
+    const index = journal.entries.findIndex(
+      (entry: { tag: string }) => entry.tag === '0029_current_grammar_content'
+    );
+    expect(index).toBeGreaterThan(0);
+    journal.entries = journal.entries.slice(0, index);
+    await mkdir(join(previous, 'meta'));
+    await writeFile(
+      join(previous, 'meta/_journal.json'),
+      JSON.stringify(journal)
+    );
+    for (const entry of journal.entries)
+      await copyFile(
+        `drizzle/${entry.tag}.sql`,
+        join(previous, `${entry.tag}.sql`)
+      );
+    await migrateFixtureDatabase(target, previous);
+  }
+
   it('upgrades grammar reset triggers without changing stored schedules and only resets for the newest published content', async () => {
     const target = await fixture();
     const previous = await mkdtemp(join(tmpdir(), 'langlo-0029-upgrade-'));
     try {
-      const journal = JSON.parse(
-        await readFile('drizzle/meta/_journal.json', 'utf8')
-      );
-      const index = journal.entries.findIndex(
-        (entry: { tag: string }) => entry.tag === '0029_current_grammar_content'
-      );
-      expect(index).toBeGreaterThan(0);
-      journal.entries = journal.entries.slice(0, index);
-      await mkdir(join(previous, 'meta'));
-      await writeFile(
-        join(previous, 'meta/_journal.json'),
-        JSON.stringify(journal)
-      );
-      for (const entry of journal.entries)
-        await copyFile(
-          `drizzle/${entry.tag}.sql`,
-          join(previous, `${entry.tag}.sql`)
-        );
-      await migrateFixtureDatabase(target, previous);
+      await migrateBeforeGrammarResetFix(target, previous);
       await seedStudy(target);
       const { client, close } = await openFixtureDatabase(target);
       try {

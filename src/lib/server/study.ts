@@ -291,11 +291,13 @@ async function availableQuestion(
   studyRow: Row
 ) {
   const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.prompt, q.answer, q.alternatives, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.prompt, q.answer, q.alternatives, v.status, sk.retired_at FROM questions q JOIN content_versions v ON v.id = q.content_version_id JOIN skills sk ON sk.id = q.skill_id AND sk.language = q.language WHERE q.id = ? AND q.language = ?',
     args: [input.questionId, studyRow.language]
   });
   const questionRow = question.rows[0];
   if (!questionRow) throw new StudyError('NOT_FOUND');
+  if (questionRow.retired_at !== null)
+    throw new StudyError('CONTENT_UNAVAILABLE');
   if (isWithheld(questionRow, studyRow.mode))
     throw new StudyError('CONTENT_UNAVAILABLE');
   return questionRow;
@@ -721,8 +723,10 @@ function hasCorrectGrammarEvaluation(rows: Row[]) {
 
 function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
   const row = ownGrammarAttempt(rows, expectedSessionId);
-  if (row.status === 'quarantined') throw new StudyError('NOT_FOUND');
-  if (!['active', 'completed'].includes(String(row.state)))
+  if (
+    row.status === 'quarantined' ||
+    !['active', 'completed'].includes(String(row.state))
+  )
     throw new StudyError('NOT_FOUND');
   if (!hasCorrectGrammarEvaluation(rows))
     throw new StudyError('INVALID_GRAMMAR_RATING');
@@ -733,10 +737,10 @@ function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
 
 function assertDiscardableAttempt(rows: Row[], expectedSessionId: string) {
   const row = ownGrammarAttempt(rows, expectedSessionId);
-  if (row.mode !== 'assessment') throw new StudyError('NOT_FOUND');
-  if (row.state !== 'active') throw new StudyError('NOT_FOUND');
-  if (row.grammar_rating !== null) throw new StudyError('NOT_FOUND');
-  if (!hasCorrectGrammarEvaluation(rows)) throw new StudyError('NOT_FOUND');
+  if (row.mode !== 'assessment' || row.state !== 'active')
+    throw new StudyError('NOT_FOUND');
+  if (row.grammar_rating !== null || !hasCorrectGrammarEvaluation(rows))
+    throw new StudyError('NOT_FOUND');
   return row;
 }
 
@@ -760,7 +764,7 @@ async function persistAttemptRating(
   return false;
 }
 
-async function finalizeRatedAssessment(
+async function finalizeAssessment(
   tx: WriteTransaction,
   learner: LearnerSession,
   row: Row
@@ -797,7 +801,7 @@ export async function rateGrammarAttempt(
       return { duplicate: true, completed: row.state === 'completed' };
     }
     if (row.mode === 'assessment') {
-      const completed = await finalizeRatedAssessment(tx, learner, row);
+      const completed = await finalizeAssessment(tx, learner, row);
       await tx.commit();
       return { duplicate: false, completed };
     }
@@ -826,13 +830,14 @@ export async function discardUnratedAssessmentAnswer(
   const tx = await beginWrite(client);
   try {
     const rows = await grammarAttemptRows(tx, learner, attemptId);
-    assertDiscardableAttempt(rows, expectedSessionId);
+    const row = assertDiscardableAttempt(rows, expectedSessionId);
     const deleted = await tx.execute({
       sql: 'DELETE FROM attempts WHERE id = ? AND owner_id = ? AND grammar_rating IS NULL',
       args: [attemptId, learner.userId]
     });
     if (deleted.rowsAffected !== 1)
       throw new StudyError('STALE_GRAMMAR_RATING');
+    await finalizeAssessment(tx, learner, row);
     await tx.commit();
   } catch (error) {
     await tx.rollback().catch(() => undefined);

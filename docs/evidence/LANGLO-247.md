@@ -137,3 +137,35 @@ After the fix, the retention unit/integration suites passed. The broader focused
 - Codacy CLI was retried with file logging disabled. Its strict JSON report contains `MissingConfig` and no `toolResults`; no local Codacy scan ran. No configuration or dependencies were added to work around it. Hosted Codacy/CodeScene metrics and coverage require separate verification after an authorized push.
 
 Only disposable local fixtures were used. No production provider calls, database changes, deployment, remote replies, thread resolutions or push were performed.
+
+## PR #132 finalization and stale-submission review fixes — 2026-10-21
+
+Base: published head `0d4105322b153b26e5111a7b7929b9a78cf6b279`. Verified and resolved 16 previously fixed GitHub threads against that exact head. Eleven threads remained: two correctness findings, eight distinct maintainability findings, and a second thread repeating the overall practice-complexity finding. Newly implemented fixes remain local pending separate publication authorization.
+
+### Correctness fixes and red/green evidence
+
+- `4331710194`: discarding a provisional correct assessment answer now retries the existing completion helper inside the deletion transaction. A stopped assessment completes after its last unrated answer is discarded, and mastery evidence and qualifying retention events commit with the deletion. The shared helper is named `finalizeAssessment` because both rating and discard use it. Existing completion conditions continue to control whether a session can finish.
+- `4331807024`: the answer transaction's shared `availableQuestion` query joins the skill and checks `retired_at` before storing or evaluating a new answer. This closes the stale-form path for both ordinary practice and frozen mixed reviews. Existing replay semantics and historical answers remain intact.
+- Wrote five regression cases before editing production code: completion after five confirmed incorrect answers, completion after five Not sure responses, rollback after a forced retention persistence failure, and rejection of stale practice and mixed-review forms after retirement. All five failed on the base for the expected behavioral reasons (`/tmp/langlo-final-red.log`).
+- After the minimal fixes, both assessment and grammar-retention suites passed all 69 tests (`/tmp/langlo-final-green.log`). The expanded focused run including assessment routes and migration tests passed 108 tests across four files after the refactors (`/tmp/langlo-final-focused.log`).
+- Rollback verification confirms that a failed retention write restores the discarded answer and active session and leaves evidence, schedules and events absent; retry after removing the synthetic failure completes and writes exactly five qualifying events. Rejected stale submissions leave attempt, evaluation, evidence, schedule and event counts unchanged.
+
+### Remaining maintainability findings
+
+- `4331455720` / `4331790479`, `4331790349`, `4331790398`, `4331790447`: review selection and stored-plan headers use the existing Zod dependency with bounded arrays and unique skill selections. Submission-key validation is shared with ordinary practice. Due-selection validation, owner-scoped enrollment lookup and replay-plan selection are separate focused operations. The same transaction, error codes, selected skill order and one-question-per-skill behavior are preserved.
+- `4331790519` / `4331790564`: rating/discard guards group the session constraints separately from answer eligibility, preserving error precedence and keeping each conditional small.
+- `4331790255`: assessment coverage derives its language from the supplied plan rows, removing a redundant primitive argument without introducing a wrapper type.
+- `4331790623`: extracted the repeated assessment submit-and-replay step from the fifth-wrong-answer test, retaining its replay assertion and all result, evidence and completion checks.
+- The migration-upgrade test still reported in the latest CodeScene gate (`4331456137`, an already resolved thread) now extracts only historical fixture setup. Repository migration SQL, metadata snapshots and journal entries remain unchanged, as do all test assertions.
+
+### Validation and limits
+
+- Node 24.19.0 / npm 11.9.0; `npm ci --ignore-scripts` passed. Validation uses the installed Node runtime and pinned npm CLI directly because the shell's default npm command is a container wrapper.
+- Type checking passed with zero errors and zero warnings; lint passed. `npm run format:check` and `git diff --check` passed after the evidence update.
+- Explicit property run passed: six files, nine tests (`/tmp/langlo-final-property.log`).
+- Full unit suite passed: 98 files, 1,552 tests (`/tmp/langlo-final-full-tests.log`). The explicit production build passed after that suite (`/tmp/langlo-final-build.log`). The first browser run passed 123/124 tests and failed the mobile exercise flow: the fourth answer request returned HTTP 500 and the saved-answer count stayed at three (`/tmp/langlo-final-e2e.log`). This is earlier than the hosted map-panel interception failure. The unchanged mobile test then passed in isolation on both this diff and the exact base build (`/tmp/langlo-final-mobile-recheck.log`, `/tmp/langlo-base-mobile.log`). The full repeat passed all 124 tests with zero skips (`/tmp/langlo-final-e2e-repeat.log`). The unchanged-base full control run passed 122/124 (`/tmp/langlo-base-e2e.log`); both failures were the same exercise saved-answer-count check, on desktop after the third answer and mobile after the fourth. Both base traces also show HTTP 500 on the corresponding answer submission. This establishes that the failure pattern predates this diff, while its exact root cause remains unconfirmed. The initial new-code failure is not discarded. Its trace is preserved under `/tmp/langlo-initial-browser-failure/`.
+- Local adversarial self-review used the repository skill with the current session and no additional provider call. Verdict: `approve`; findings: `[]`. Summary: "No material findings in this follow-up diff. The existing hosted mobile map failure remains a separate acceptance issue." All seven changed files were examined; `/tmp/langlo-final-review.json` records the scope.
+- The hosted foundation failures on the base were inspected separately. The mobile exercise E2E flow times out because the skill-map details panel intercepts clicks on the Map button. Skill-map UI, E2E navigation and timeouts are outside this approved fix scope and were not changed; this remains a separate hosted acceptance issue.
+- Hosted Codacy/CodeScene metrics require reanalysis after publication. No suppression, quality threshold change, dependency change or workflow change was made. No new coverage percentage is claimed.
+
+Only disposable synthetic local fixtures were used. The dirty managed workspace was preserved. No production access, provider calls, migrations, deployment or push occurred.

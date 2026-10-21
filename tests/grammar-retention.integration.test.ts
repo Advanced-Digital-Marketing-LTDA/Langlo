@@ -421,6 +421,41 @@ describe('grammar retention storage and session flow', () => {
     ).rejects.toMatchObject({ code: 'CONTENT_UNAVAILABLE' });
   });
 
+  async function storedHistoryCounts() {
+    const tables = [
+      'attempts',
+      'evaluations',
+      'skill_evidence',
+      'grammar_retention_schedules',
+      'grammar_retention_events'
+    ];
+    const counts = await client.batch(
+      tables.map((table) => `SELECT COUNT(*) AS count FROM ${table}`),
+      'read'
+    );
+    return counts.map((result) => result.rows[0].count);
+  }
+
+  it.each(['practice', 'mixed-review'] as const)(
+    'rejects a loaded %s form submitted after the skill retires',
+    async (mode) => {
+      const session = mode === 'practice' ? await start() : await dueReview();
+      const loaded = await exerciseFor(
+        client,
+        learner,
+        session.id,
+        'fr-a1-001'
+      );
+      expect(loaded?.question).not.toBeNull();
+      const before = await storedHistoryCounts();
+      await retireSkill();
+      await expect(
+        answer(session.id, loaded!.question!.id, 'es')
+      ).rejects.toMatchObject({ code: 'CONTENT_UNAVAILABLE' });
+      expect(await storedHistoryCounts()).toEqual(before);
+    }
+  );
+
   it('keeps the frozen question and lesson after publication before the first answer', async () => {
     const review = await dueReview();
     await client.batch(

@@ -5,6 +5,7 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import {
   getAttempt,
+  discardUnratedAssessmentAnswer,
   rateGrammarAttempt,
   recordAttempt,
   pauseStudySession,
@@ -419,35 +420,39 @@ describe('saved placement plan', () => {
     ).toEqual([{ attempt_id: certain.id, contribution: 1 }]);
   });
 
+  function stoppedAssessmentSubmitter(id: string) {
+    return async (value: string, notSure = false) => {
+      const question = (await getAssessment(client, learner, id)).question!;
+      const input = {
+        studySessionId: id,
+        questionId: question.id,
+        submissionKey: randomUUID(),
+        evidenceKind: 'independent' as const,
+        answer: value,
+        notSure
+      };
+      const options = {
+        fallback: async () => ({
+          outcome: 'incorrect' as const,
+          reason: 'answered' as const,
+          evaluated: true as const
+        })
+      };
+      const result = await recordAttempt(client, learner, input, options);
+      expect(await recordAttempt(client, learner, input, options)).toEqual({
+        id: result.id,
+        duplicate: true
+      });
+    };
+  }
+
   it.each(['prepared', 'fallback'] as const)(
     'saves partial results on the fifth confirmed wrong answer from %s',
     async (evaluation) => {
       const { id } = await expandedAssessment(
         evaluation === 'prepared' ? 'multiple-choice' : 'typed-blank'
       );
-      const submit = async (value: string, notSure = false) => {
-        const question = (await getAssessment(client, learner, id)).question!;
-        const input = {
-          studySessionId: id,
-          questionId: question.id,
-          submissionKey: randomUUID(),
-          evidenceKind: 'independent' as const,
-          answer: value,
-          notSure
-        };
-        const options = {
-          fallback: async () => ({
-            outcome: 'incorrect' as const,
-            reason: 'answered' as const,
-            evaluated: true as const
-          })
-        };
-        const result = await recordAttempt(client, learner, input, options);
-        expect(await recordAttempt(client, learner, input, options)).toEqual({
-          id: result.id,
-          duplicate: true
-        });
-      };
+      const submit = stoppedAssessmentSubmitter(id);
       for (let i = 0; i < 4; i++) await submit('wrong');
       await submit('', true);
       await submit('es');
@@ -803,6 +808,77 @@ describe('saved placement plan', () => {
         })
       ).rows
     ).toEqual([{ rating: 'good' }]);
+  });
+
+  async function stoppedAssessment(stop: 'incorrect' | 'not-sure') {
+    const { id } = await expandedAssessment('multiple-choice');
+    const first = (await getAssessment(client, learner, id)).question!;
+    const provisional = await answer(id, first.id);
+    for (let i = 0; i < 5; i++) {
+      const next = (await getAssessment(client, learner, id)).question!;
+      await answer(
+        id,
+        next.id,
+        stop === 'not-sure' ? '' : 'wrong',
+        stop === 'not-sure'
+      );
+    }
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    return { id, provisional };
+  }
+
+  it.each(['incorrect', 'not-sure'] as const)(
+    'finalizes a stopped assessment after discarding its last unrated answer (%s)',
+    async (stop) => {
+      const { id, provisional } = await stoppedAssessment(stop);
+      await discardUnratedAssessmentAnswer(client, learner, provisional.id, id);
+      expect((await getAssessment(client, learner, id)).state).toBe(
+        'completed'
+      );
+      expect(
+        (
+          await client.execute('SELECT id FROM attempts WHERE id = ?', [
+            provisional.id
+          ])
+        ).rows
+      ).toEqual([]);
+      const evidence = await client.execute('SELECT * FROM skill_evidence');
+      const events = await client.execute(
+        'SELECT * FROM grammar_retention_events'
+      );
+      expect(evidence.rows).toHaveLength(stop === 'incorrect' ? 5 : 0);
+      expect(events.rows).toHaveLength(stop === 'incorrect' ? 5 : 0);
+    }
+  );
+
+  it('rolls back discard, completion and evidence when stopped-assessment retention fails', async () => {
+    const { id, provisional } = await stoppedAssessment('incorrect');
+    await client.execute(
+      "CREATE TRIGGER reject_discard_review BEFORE INSERT ON grammar_retention_events BEGIN SELECT RAISE(ABORT, 'synthetic discard failure'); END"
+    );
+    await expect(
+      discardUnratedAssessmentAnswer(client, learner, provisional.id, id)
+    ).rejects.toThrow(/synthetic discard failure/);
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    expect(
+      (
+        await client.execute('SELECT id FROM attempts WHERE id = ?', [
+          provisional.id
+        ])
+      ).rows
+    ).toHaveLength(1);
+    for (const table of [
+      'skill_evidence',
+      'grammar_retention_events',
+      'grammar_retention_schedules'
+    ])
+      expect((await client.execute(`SELECT * FROM ${table}`)).rows).toEqual([]);
+    await client.execute('DROP TRIGGER reject_discard_review');
+    await discardUnratedAssessmentAnswer(client, learner, provisional.id, id);
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(5);
   });
 
   it('rolls back the last rating and assessment completion when retention persistence fails', async () => {

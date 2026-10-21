@@ -291,7 +291,8 @@ function activeAssessmentQuestion(rows: Row[], stopped: boolean) {
   return rows.find((row) => !row.answered);
 }
 
-function assessmentCoverage(rows: Row[], language: string) {
+function assessmentCoverage(rows: Row[]) {
+  const language = String(rows[0].language);
   return Object.fromEntries(
     assessmentLevels(language).map((level) => [
       level,
@@ -318,7 +319,7 @@ export async function getAssessment(
     policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
     answered: rows.filter((row) => row.answered).length,
     total: rows.length,
-    coverage: assessmentCoverage(rows, language),
+    coverage: assessmentCoverage(rows),
     question: next ? questionFor(next) : null,
     skillId: next ? String(next.skill_id) : null
   };
