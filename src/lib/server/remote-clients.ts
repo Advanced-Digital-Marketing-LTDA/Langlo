@@ -1,5 +1,8 @@
-// A remote client opens a stream per transaction: the server isolates snapshot
-// reads from the open write transaction, so a read has no reason to queue.
+// A remote client opens a stream per transaction. On the dev Turso database
+// (2026-10-21 probe, docs/evidence/remote-reads-skip-queue-20261021.md) a read
+// opened beside an open write transaction and saw the earlier snapshot, so a
+// read is not queued. That is measured once on one database, not guaranteed:
+// if the server answers SQLITE_BUSY, the read fails loudly after its retries.
 // Writes still queue: the server serializes writers and ours adds a timeout.
 // Kept free of imports so Node scripts that open the database can load it.
 const remoteClients = new WeakSet<object>();

@@ -6,6 +6,12 @@
 
 GlitchTip averages after PR 138: `db.queue-wait` 2.32 s of a 2.86 s POST lesson, `db.transaction` 751 ms, one Turso call about 127 ms. The dev Turso probe (2026-10-21, `notes/db-performance/plan.md`) showed that a read transaction opens beside an open write transaction on the same client and sees the earlier snapshot, so serializing reads there is not needed. Local file and in-memory databases keep the queue because they share one connection.
 
+## The assumption and where it comes from
+
+Reads skipping the queue rests on one measurement, not on a repo test (the tests here use a stub and cannot show isolation). The probe ran on the dev Turso database (`langlo-dev-bonobo791.aws-us-east-1.turso.io`, `@libsql/client` 0.18.0) from a Claude cloud container on 2026-10-21, one throwaway table, dropped afterwards. Recorded in the project plan note `notes/db-performance/plan.md` ("Results: dev Turso probe"): a read transaction opened and selected in 42.7 ms while a write transaction was still open on the same client, and saw 0 rows (the uncommitted insert was not visible). A second write transaction waited for the first to commit (finished at 2078 ms with the first held 2000 ms). The probe script is `notes/db-performance/turso-probe.mjs`; it can be rerun against the dev database.
+
+If the assumption is wrong on production: a read answered with `SQLITE_BUSY` is retried 7 times (about 280 ms of backoff in total), then the error is thrown and logged. It does not wait up to 5 s as it did in the queue. That would show as failing GET requests and `db.transaction` spans, not as silent slowness.
+
 ## Changes
 
 - `db-transactions.ts`: `markRemoteClient(client)` records a client as remote. `holdConnection` does not acquire the queue slot for a read transaction on a marked client (no `db.queue-wait`; the `db.transaction` span with `write: false` is still recorded). Write transactions and `executeWrite` still queue on every client.
