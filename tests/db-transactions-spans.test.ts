@@ -5,6 +5,7 @@ type Recorded = {
   name: string;
   attributes?: Record<string, unknown>;
   set: Record<string, unknown>;
+  setCalls: number;
   ended: boolean;
   error?: unknown;
 };
@@ -24,12 +25,14 @@ vi.mock('@sentry/sveltekit', () => ({
       name: options.name,
       attributes: options.attributes,
       set: {},
+      setCalls: 0,
       ended: false
     };
     recorded.push(entry);
     const result = run({
       setAttribute: (key, value) => {
         entry.set[key] = value;
+        entry.setCalls += 1;
       }
     });
     const finish = () => {
@@ -130,6 +133,17 @@ it('ends the transaction span on rollback and on close without commit', async ()
   expect(first.ended).toBe(true);
   expect(second.set).toEqual({ round_trips: 0 });
   expect(second.ended).toBe(true);
+});
+
+it('reports a transaction once when a committed transaction is closed again', async () => {
+  const tx = await beginWrite(client);
+  await tx.execute('INSERT INTO probe (id) VALUES (1)');
+  await tx.commit();
+  tx.close();
+  await settle();
+  const [open] = named('db.transaction');
+  expect(open.setCalls).toBe(1);
+  expect(open.set).toEqual({ round_trips: 1 });
 });
 
 it('records no queue wait when the connection is free', async () => {

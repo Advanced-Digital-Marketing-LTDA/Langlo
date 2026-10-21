@@ -67,6 +67,8 @@ Codecov follow-up (one partial line in the patch: the pass-through branch for no
 
 Branches still uncovered in `db-transactions.ts` by these four files are existing code outside this diff (the already-released guard and the `SQLITE_BUSY` retry loop).
 
+Second Codecov follow-up (one partial line: the `if (finished) return` branch in `holdConnection`, taken when a committed transaction is closed again, was never exercised). New test `reports a transaction once when a committed transaction is closed again` counts `setAttribute` calls on the span. Red, with the guard removed: `× reports a transaction once when a committed transaction is closed again`. With the guard: 14 passed in `tests/db-transactions-spans.test.ts`, and with `tests/tracing-spans.test.ts` 23 passed.
+
 ## Reading the traces
 
 In GlitchTip, open the slowest `study.run` traces. A long `db.queue-wait` means requests are stuck behind another transaction; a long `db.transaction` with a high `round_trips` means that transaction spends its time in round trips. Sampling is 25%.
