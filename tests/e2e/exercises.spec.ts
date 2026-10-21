@@ -807,7 +807,12 @@ async function exploreSkillMap(page: Page) {
   // On phones the topic sheet intentionally overlays the map controls.
   // Dismiss it through the visible control before changing the map view.
   await page.getByRole('button', { name: 'Close topic details' }).click();
-  await expect(page.getByRole('complementary')).toHaveCount(0);
+  await expect(
+    page.getByRole('complementary', {
+      name: 'Synthetic exercise lesson details',
+      exact: true
+    })
+  ).toHaveCount(0);
   await expect(
     page
       .getByRole('region', { name: /FR topic map/u })

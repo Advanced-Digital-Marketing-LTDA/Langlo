@@ -55,3 +55,16 @@ Browser tests use system Chromium and disposable local fixture databases.
 Self-review used the checkout's adversarial-review checklist without an external
 model call. It found no high-severity issue or weakened assertion in this diff.
 Local tests do not establish CI success or deployment status.
+
+## PR #135 local review follow-up
+
+Adversarial review approved the published `16d5410` diff and reported the same
+low-severity selector-precision concern twice. The dismissal check matched every
+complementary landmark on the page. Scope it to the exact accessible name
+`Synthetic exercise lesson details`, consistent with the preceding visibility
+assertion. This preserves the sheet-dismissal requirement without asserting that
+unrelated landmarks must be absent.
+
+The local-only refinement passed targeted ESLint, Prettier and both desktop/mobile
+four-format exercise journeys (2 passed). No production files changed. Publishing
+this refinement or changing PR readiness requires Andrew's new approval.
