@@ -4,7 +4,7 @@ Date: 2026-10-21. Skills pt-b2-016, pt-b2-017, pt-b2-018, pt-b2-019, pt-b2-020. 
 
 ## Scope
 
-5 English lessons, one per skill, in prerequisite order, each with an explanation, three examples, the catalog reference and 15 questions (12 practice and 3 holdouts, all four formats). The Portuguese is Brazilian. The module is not imported anywhere; releasing it needs the curriculum version 1.4.0 bundle.
+5 English lessons, one per skill, in prerequisite order, each with an explanation, three examples, the catalog reference and 15 questions (12 practice covering all four formats, and 3 holdouts in three distinct formats). The Portuguese is Brazilian. The module is not written to any database until an owner applies the content import; releasing it needs the curriculum version 1.4.0 bundle.
 
 ## Review
 

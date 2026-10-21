@@ -19,7 +19,7 @@ Untouched: existing modules and skill IDs, all migrations and Drizzle metadata, 
 7. Discourse connectors (`031` to `035`)
 8. Register and form (`036` to `040`)
 
-Each skill has 12 practice questions and 3 holdouts in all four formats. Holdout prompts name the grammar form needed, as a trailing parenthesis in Portuguese, following the convention of the B1 revisions. Where a prompt is tied to a construction or register (for example the simple pluperfect, mesóclise, formal clitic placement), only that construction is accepted and the near misses are the valid-looking alternatives.
+Each skill has 12 practice questions covering all four formats, and 3 holdouts in three distinct formats. Holdout prompts name the grammar form needed, as a trailing parenthesis in Portuguese, following the convention of the B1 revisions. Where a prompt is tied to a construction or register (for example the simple pluperfect, mesóclise, formal clitic placement), only that construction is accepted and the near misses are the valid-looking alternatives.
 
 ## Review status
 
