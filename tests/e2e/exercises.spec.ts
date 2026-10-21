@@ -42,6 +42,9 @@ test.beforeAll(async () => {
   const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
   ({ fixtureRoot, dbFile } = createFixtureDatabase());
+  // The test polls this file while the server commits; in the default journal
+  // mode an open read makes the server's commit fail with SQLITE_BUSY.
+  await withDatabase((client) => client.execute('PRAGMA journal_mode = WAL'));
   const env = {
     ...process.env,
     APP_ENV: 'test',
