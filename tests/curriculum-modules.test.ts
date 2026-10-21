@@ -65,6 +65,21 @@ const currentLessons = (module: Module) =>
           other.version.version > lesson.version.version
       )
   );
+// The versions of each skill in order, grouped by position: every skill's
+// first version together, then every skill's second, and so on. A group is
+// one complete state of the module, so prompts only need to be unique within it.
+const generations = (module: Module) => {
+  const rank = new Map<string, number>();
+  const groups: Module['lessons'][] = [];
+  for (const lesson of [...module.lessons].sort(
+    (a, b) => a.version.version - b.version.version
+  )) {
+    const index = rank.get(lesson.skill_id) ?? 0;
+    rank.set(lesson.skill_id, index + 1);
+    (groups[index] ??= []).push(lesson);
+  }
+  return groups;
+};
 const revisedSkills = new Set([
   'de-a1-001',
   'de-a1-010',
@@ -94,7 +109,7 @@ const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .map(load);
 
 const practiceText = (module: Module) =>
-  currentLessons(module)
+  module.lessons
     .flatMap((lesson) => [
       ...lesson.examples.map((example) => practisedText(module, example)),
       ...lesson.version.questions
@@ -223,7 +238,7 @@ describe('reviewed curriculum answer keys', () => {
 
 describe.each(files)('%s', (path) => {
   const module = load(path);
-  const questions = currentLessons(module).flatMap(
+  const questions = module.lessons.flatMap(
     (lesson) => lesson.version.questions
   );
 
@@ -350,7 +365,11 @@ describe.each(files)('%s', (path) => {
         }
       }
     }
-    assertUniqueQuestions(questions);
+    expect(new Set(questions.map((q) => q.id)).size).toBe(questions.length);
+    for (const generation of generations(module))
+      assertUniqueQuestions(
+        generation.flatMap((lesson) => lesson.version.questions)
+      );
   });
 
   it('data consistency: answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
@@ -383,14 +402,19 @@ describe.each(files)('%s', (path) => {
   // the colon when the prompt ends with one); nothing else about a question
   // or its lesson may change.
   it('revises a lesson only by naming the grammar form in holdout prompts, and says so for the importer', () => {
-    const revisions = module.lessons.filter((lesson) =>
+    const hasEarlier = (lesson: Module['lessons'][number]) =>
       module.lessons.some(
         (other) =>
           other.skill_id === lesson.skill_id &&
           other.version.version === lesson.version.version - 1
-      )
-    );
-    for (const revision of revisions) {
+      );
+    // A later version with no earlier one beside it is a correction of a
+    // version only databases hold; those are the listed legacy skills.
+    for (const lesson of module.lessons.filter(
+      (item) => item.version.version > 1 && !hasEarlier(item)
+    ))
+      expect(revisedSkills.has(lesson.skill_id), lesson.version.id).toBe(true);
+    for (const revision of module.lessons.filter(hasEarlier)) {
       const earlier = module.lessons.find(
         (other) =>
           other.skill_id === revision.skill_id &&
@@ -405,6 +429,9 @@ describe.each(files)('%s', (path) => {
         'references'
       ] as const)
         expect(revision[field], `${id} ${field}`).toEqual(earlier[field]);
+      expect(revision.version.translations, `${id} translations`).toEqual(
+        earlier.version.translations
+      );
       const revised = revision.version.questions;
       const original = earlier.version.questions;
       expect(revised.length, id).toBe(original.length);
