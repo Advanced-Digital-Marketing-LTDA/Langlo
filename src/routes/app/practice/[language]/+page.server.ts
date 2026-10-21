@@ -57,29 +57,24 @@ export const load: PageServerLoad = async (event) => {
   }
 };
 
+/** An action that begins practice and sends the learner to its session. */
+function practiceAction(begin: typeof startPractice): Actions[string] {
+  return async (event) => {
+    requireLearnerApi(event);
+    const form = await event.request.formData();
+    const practice = await studyPage(event, (client, learner) =>
+      begin(client, learner, {
+        language: event.params.language,
+        submissionKey: form.get('submissionKey')
+      })
+    );
+    redirect(303, `/app/session/${encodeURIComponent(practice.id)}`);
+  };
+}
+
 export const actions: Actions = {
-  start: async (event) => {
-    requireLearnerApi(event);
-    const form = await event.request.formData();
-    const practice = await studyPage(event, (client, learner) =>
-      startPractice(client, learner, {
-        language: event.params.language,
-        submissionKey: form.get('submissionKey')
-      })
-    );
-    redirect(303, `/app/session/${encodeURIComponent(practice.id)}`);
-  },
-  startOver: async (event) => {
-    requireLearnerApi(event);
-    const form = await event.request.formData();
-    const practice = await studyPage(event, (client, learner) =>
-      startPracticeOver(client, learner, {
-        language: event.params.language,
-        submissionKey: form.get('submissionKey')
-      })
-    );
-    redirect(303, `/app/session/${encodeURIComponent(practice.id)}`);
-  },
+  start: practiceAction(startPractice),
+  startOver: practiceAction(startPracticeOver),
   review: async (event) => {
     requireLearnerApi(event);
     const form = await event.request.formData();

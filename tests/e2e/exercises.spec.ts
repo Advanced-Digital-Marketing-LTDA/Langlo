@@ -1268,6 +1268,46 @@ test('rating an answer updates in place and keeps the scroll position', async ({
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 });
 
+test('keeps the rating buttons when the server cannot be reached and records the rating once on retry', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const { userId, studySessionId } = await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await expect(feedback).toContainText('Correct');
+  const good = feedback.getByRole('button', { name: 'Good', exact: true });
+  await expect(good).toBeEnabled();
+  const offline = (route: Route) =>
+    route.request().method() === 'POST' ? route.abort() : route.continue();
+  await page.route('**/app/learn/fr/lesson/fr-a1-001?/rate**', offline);
+  await good.click();
+  await expect(feedback.getByRole('alert')).toContainText(
+    'Could not reach the server. Your rating was not saved.'
+  );
+  await expect(good).toBeEnabled();
+  await expect(page.getByText('Page unavailable')).toHaveCount(0);
+  const ratings = () =>
+    withDatabase((client) =>
+      client.execute({
+        sql: 'SELECT grammar_rating FROM attempts WHERE owner_id = ? AND study_session_id = ?',
+        args: [userId, studySessionId]
+      })
+    );
+  expect((await ratings()).rows).toEqual([{ grammar_rating: null }]);
+
+  await page.unroute('**/app/learn/fr/lesson/fr-a1-001?/rate**', offline);
+  await good.click();
+  await expect(
+    page.getByRole('status').filter({ hasText: /^You rated this good\./ })
+  ).toBeVisible();
+  expect((await ratings()).rows).toEqual([{ grammar_rating: 'good' }]);
+});
+
 test('an answer leaves focus on the feedback heading in view', async ({
   page,
   context

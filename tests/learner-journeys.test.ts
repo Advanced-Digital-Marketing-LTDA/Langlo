@@ -576,7 +576,12 @@ describe('practice sessions', () => {
       id: `practice:${during.submissionKey}`,
       answered: 0
     });
-    // A repeated tap of Start over keeps the new practice open.
+    // A repeated tap of Start over keeps the new practice open, and finishes
+    // any older one that is still unfinished beside it.
+    await client.execute({
+      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, created_at) SELECT 'stray-practice', owner_id, id, language, 'practice', 2 FROM enrollments WHERE owner_id = ? AND language = 'fr'",
+      args: [learner.userId]
+    });
     await expect(
       startPracticeOver(client, learner, {
         language: 'fr',
@@ -586,6 +591,9 @@ describe('practice sessions', () => {
     expect(await unfinishedPractice(client, learner, 'fr')).toMatchObject({
       id: `practice:${during.submissionKey}`
     });
+    expect(
+      (await practiceSummary(client, learner, 'stray-practice')).state
+    ).toBe('completed');
   });
 });
 

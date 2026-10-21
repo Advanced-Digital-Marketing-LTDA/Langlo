@@ -55,20 +55,22 @@ function assertSessionIdentity(
 
 /**
  * The learner's newest unfinished (active or paused) practice session in a
- * language, with how many answers it holds. Review sessions are not included.
+ * language, with how many answers it holds, leaving out `exceptId`. Review
+ * sessions are not included.
  */
 export async function unfinishedPractice(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
-  language: string
+  language: string,
+  exceptId = ''
 ): Promise<{ id: string; answered: number } | null> {
   const found = await client.execute({
     sql: `SELECT s.id,
         (SELECT COUNT(*) FROM attempts a WHERE a.owner_id = s.owner_id AND a.study_session_id = s.id) AS answered
       FROM study_sessions s
-      WHERE s.owner_id = ? AND s.language = ? AND s.mode = 'practice' AND s.state IN ('active', 'paused')
+      WHERE s.owner_id = ? AND s.language = ? AND s.mode = 'practice' AND s.state IN ('active', 'paused') AND s.id <> ?
       ORDER BY s.created_at DESC, s.rowid DESC LIMIT 1`,
-    args: [learner.userId, language]
+    args: [learner.userId, language, exceptId]
   });
   const row = found.rows[0];
   return row ? { id: String(row.id), answered: Number(row.answered) } : null;
@@ -134,15 +136,16 @@ export async function startPracticeOver(
   input: { language: string; submissionKey: unknown }
 ): Promise<{ id: string }> {
   validateSubmissionKey(input.submissionKey);
-  // A repeated tap carries the key of the session it already started.
+  // A repeated tap carries the key of the session it already started: keep it.
   const own = `practice:${input.submissionKey}`;
   for (;;) {
     const unfinished = await unfinishedPractice(
       client,
       learner,
-      input.language
+      input.language,
+      own
     );
-    if (!unfinished || unfinished.id === own) break;
+    if (!unfinished) break;
     await finishPractice(client, learner, unfinished.id);
   }
   return startPractice(client, learner, input);
