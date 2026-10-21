@@ -197,6 +197,226 @@
       }
     },
     {
+      "skill_id": "en-a1-017",
+      "title": "Short instructions and imperatives",
+      "explanation": "An imperative gives an instruction and uses the base verb with no subject: Open your books. Listen to the teacher. For a negative instruction put Don't (or Do not) before the base verb: Don't talk in class. Add please to be polite: Open the door, please. The verb never takes -s or -ing in an imperative.",
+      "examples": [
+        {
+          "en": "Open your books."
+        },
+        {
+          "en": "Don't talk, please."
+        },
+        {
+          "en": "Listen to the teacher."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-017@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-017@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a positive instruction?",
+            "answer": "Open the door.",
+            "alternatives": [
+              "Open the door.",
+              "Opens the door.",
+              "Opening the door."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q01"
+          },
+          {
+            "id": "en-a1-017@2:q02",
+            "format": "multiple-choice",
+            "prompt": "How do you make a negative instruction?",
+            "answer": "Don't + base verb",
+            "alternatives": [
+              "Don't + base verb",
+              "Not + base verb",
+              "Doesn't + base verb"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q02"
+          },
+          {
+            "id": "en-a1-017@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word makes an instruction more polite?",
+            "answer": "please",
+            "alternatives": ["please", "now", "always"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q03"
+          },
+          {
+            "id": "en-a1-017@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct negative instruction?",
+            "answer": "Don't talk, please.",
+            "alternatives": [
+              "Don't talking, please.",
+              "Don't talk, please.",
+              "Not talk, please."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q04"
+          },
+          {
+            "id": "en-a1-017@2:q05",
+            "format": "typed-blank",
+            "prompt": "___ the door, please. (open)",
+            "answer": "Open",
+            "near_misses": ["Opens", "Opening"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q05"
+          },
+          {
+            "id": "en-a1-017@2:q06",
+            "format": "typed-blank",
+            "prompt": "___ talk in class. (negative)",
+            "answer": "Don't",
+            "alternatives": ["Do not"],
+            "near_misses": ["Not", "Doesn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q06"
+          },
+          {
+            "id": "en-a1-017@2:q07",
+            "format": "typed-blank",
+            "prompt": "Listen ___ the teacher. (preposition)",
+            "answer": "to",
+            "near_misses": ["at", "for"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q07"
+          },
+          {
+            "id": "en-a1-017@2:q08",
+            "format": "translation",
+            "prompt": "Write the instruction: open / your books",
+            "answer": "Open your books.",
+            "near_misses": ["Opens your books.", "Open you books."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q08"
+          },
+          {
+            "id": "en-a1-017@2:q09",
+            "format": "translation",
+            "prompt": "Write the instruction: negative: talk / in class",
+            "answer": "Don't talk in class.",
+            "alternatives": ["Do not talk in class."],
+            "near_misses": ["Not talk in class.", "Don't talking in class."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q09"
+          },
+          {
+            "id": "en-a1-017@2:q10",
+            "format": "translation",
+            "prompt": "Write the instruction: listen / to the teacher / please",
+            "answer": "Listen to the teacher, please.",
+            "near_misses": [
+              "Listens to the teacher, please.",
+              "Listen at the teacher, please."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q10"
+          },
+          {
+            "id": "en-a1-017@2:q11",
+            "format": "correction",
+            "prompt": "Correct the instruction: Opens your book.",
+            "answer": "Open your book.",
+            "near_misses": ["Opens your book.", "Opening your book."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q11"
+          },
+          {
+            "id": "en-a1-017@2:q12",
+            "format": "correction",
+            "prompt": "Correct the instruction: Not talk, please.",
+            "answer": "Don't talk, please.",
+            "alternatives": ["Do not talk, please."],
+            "near_misses": ["Not talk, please.", "Doesn't talk, please."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@1:q12"
+          },
+          {
+            "id": "en-a1-017@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence tells someone to close the window? (imperative)",
+            "answer": "Close the window.",
+            "alternatives": [
+              "Closes the window.",
+              "Close the window.",
+              "Closing the window."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-017@1:h01"
+          },
+          {
+            "id": "en-a1-017@2:h02",
+            "format": "typed-blank",
+            "prompt": "Please ___ your name. (write) (imperative)",
+            "answer": "write",
+            "near_misses": ["writes", "writing"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-017@1:h02"
+          },
+          {
+            "id": "en-a1-017@2:h03",
+            "format": "translation",
+            "prompt": "Write the instruction: negative: run / in the school",
+            "answer": "Don't run in the school.",
+            "alternatives": ["Do not run in the school."],
+            "near_misses": [
+              "Not run in the school.",
+              "Don't running in the school."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-017@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Instruções curtas e imperativos",
+            "explanation": "O imperativo dá uma instrução e usa a forma base do verbo, sem sujeito: Open your books. Listen to the teacher. Para dar uma instrução negativa, coloque Don't (ou Do not) antes da forma base: Don't talk in class. Acrescente please para ser mais gentil: Open the door, please. No imperativo, o verbo nunca recebe -s nem -ing.",
+            "examples": [
+              {
+                "en": "Open your books.",
+                "pt": "Abram os livros."
+              },
+              {
+                "en": "Don't talk, please.",
+                "pt": "Não conversem, por favor."
+              },
+              {
+                "en": "Listen to the teacher.",
+                "pt": "Ouçam o professor."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-018",
       "title": "Joining ideas with and, but and or",
       "explanation": "And adds one idea to another: I like tea and coffee. But contrasts two ideas: I like tea, but I don't like coffee. Or offers a choice: Do you want tea or coffee? Put a comma before but when it joins two clauses. These connectors join words, phrases or clauses of the same kind.",
@@ -729,6 +949,217 @@
             "answer": "They can run fast.",
             "near_misses": ["They cans run fast.", "They can runs fast."],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Can para habilidade e permissão",
+            "explanation": "Can é um verbo modal. Use can mais a forma base do verbo para falar de habilidade (I can swim) e can't (cannot) para falar de incapacidade (She can't drive). A forma não muda: não diga She cans. Nas perguntas, coloque can primeiro: Can you swim? Respostas curtas: Yes, I can. No, I can't. Can também serve para pedir permissão: Can I open the window? Não use do nem does com can.",
+            "examples": [
+              {
+                "en": "I can swim.",
+                "pt": "Sei nadar."
+              },
+              {
+                "en": "She can't drive.",
+                "pt": "Ela não sabe dirigir."
+              },
+              {
+                "en": "Can I open the window?",
+                "pt": "Posso abrir a janela?"
+              }
+            ],
+            "references": ["CAM-A1-YLE", "BC-A1-A2"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a1-020",
+      "title": "Can for ability and permission",
+      "explanation": "Can is a modal verb. Use can plus the base verb for ability (I can swim) and can't (cannot) for inability (She can't drive). The form never changes: not She cans. Questions put can first: Can you swim? Short answers: Yes, I can. No, I can't. Can is also used to ask permission: Can I open the window? There is no do or does with can.",
+      "examples": [
+        {
+          "en": "I can swim."
+        },
+        {
+          "en": "She can't drive."
+        },
+        {
+          "en": "Can I open the window?"
+        }
+      ],
+      "references": ["CAM-A1-YLE", "BC-A1-A2"],
+      "version": {
+        "id": "en-a1-020@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-020@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of the verb follows 'can'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -s form", "the -ing form"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q01"
+          },
+          {
+            "id": "en-a1-020@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence says she is able to swim?",
+            "answer": "She can swim.",
+            "alternatives": [
+              "She cans swim.",
+              "She can swim.",
+              "She can swims."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q02"
+          },
+          {
+            "id": "en-a1-020@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which is the negative of 'can'?",
+            "answer": "can't",
+            "alternatives": ["can't", "don't can", "not can"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q03"
+          },
+          {
+            "id": "en-a1-020@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question asks permission?",
+            "answer": "Can I open the window?",
+            "alternatives": [
+              "Can I open the window?",
+              "Do I can open the window?",
+              "I can open the window?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q04"
+          },
+          {
+            "id": "en-a1-020@2:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ swim. (ability)",
+            "answer": "can",
+            "near_misses": ["cans", "could"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q05"
+          },
+          {
+            "id": "en-a1-020@2:q06",
+            "format": "typed-blank",
+            "prompt": "She ___ drive. (negative)",
+            "answer": "can't",
+            "alternatives": ["cannot", "can not"],
+            "near_misses": ["doesn't", "isn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q06"
+          },
+          {
+            "id": "en-a1-020@2:q07",
+            "format": "typed-blank",
+            "prompt": "___ you swim? (question)",
+            "answer": "Can",
+            "near_misses": ["Do", "Are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q07"
+          },
+          {
+            "id": "en-a1-020@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with can: I / swim",
+            "answer": "I can swim.",
+            "near_misses": ["I cans swim.", "I can swimming."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q08"
+          },
+          {
+            "id": "en-a1-020@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with can: she / not / drive",
+            "answer": "She can't drive.",
+            "alternatives": ["She cannot drive.", "She can not drive."],
+            "near_misses": ["She doesn't can drive.", "She can't driving."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q09"
+          },
+          {
+            "id": "en-a1-020@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with can: ask: I / open / the window",
+            "answer": "Can I open the window?",
+            "near_misses": [
+              "Do I can open the window?",
+              "Can I opening the window?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q10"
+          },
+          {
+            "id": "en-a1-020@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She cans swim.",
+            "answer": "She can swim.",
+            "near_misses": ["She cans swim.", "She can swims."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q11"
+          },
+          {
+            "id": "en-a1-020@2:q12",
+            "format": "correction",
+            "prompt": "Correct the question: Do you can swim?",
+            "answer": "Can you swim?",
+            "near_misses": ["Do you can swim?", "Can you swims?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-020@1:q12"
+          },
+          {
+            "id": "en-a1-020@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which is the correct short answer to 'Can you swim?' (no)",
+            "answer": "No, I can't.",
+            "alternatives": [
+              "No, I can't.",
+              "No, I don't.",
+              "No, I can't swims."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-020@1:h01"
+          },
+          {
+            "id": "en-a1-020@2:h02",
+            "format": "typed-blank",
+            "prompt": "He can ___ the piano. (play) (base form)",
+            "answer": "play",
+            "near_misses": ["plays", "playing"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-020@1:h02"
+          },
+          {
+            "id": "en-a1-020@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with can: they / run / fast",
+            "answer": "They can run fast.",
+            "near_misses": ["They cans run fast.", "They can runs fast."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-020@1:h03"
           }
         ],
         "translations": {

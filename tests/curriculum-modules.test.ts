@@ -53,6 +53,18 @@ const practisedText = (
         ? (example.pt ?? '')
         : example.en;
 const load = (path: string) => JSON.parse(read(path)) as Module;
+// A skill with a revision keeps its earlier version beside it so that a
+// database holding that version can take the revision; only the newest
+// version of each skill is what learners are taught and assessed on.
+const currentLessons = (module: Module) =>
+  module.lessons.filter(
+    (lesson) =>
+      !module.lessons.some(
+        (other) =>
+          other.skill_id === lesson.skill_id &&
+          other.version.version > lesson.version.version
+      )
+  );
 const revisedSkills = new Set([
   'de-a1-001',
   'de-a1-010',
@@ -82,7 +94,7 @@ const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .map(load);
 
 const practiceText = (module: Module) =>
-  module.lessons
+  currentLessons(module)
     .flatMap((lesson) => [
       ...lesson.examples.map((example) => practisedText(module, example)),
       ...lesson.version.questions
@@ -116,7 +128,9 @@ it('has a lesson for every active Portuguese skill and no others', () => {
       .sort();
     const authored = allModules
       .filter((module) => module.track === track)
-      .flatMap((module) => module.lessons.map((lesson) => lesson.skill_id))
+      .flatMap((module) =>
+        currentLessons(module).map((lesson) => lesson.skill_id)
+      )
       .sort();
     expect(authored, track).toEqual(expected);
   }
@@ -209,7 +223,7 @@ describe('reviewed curriculum answer keys', () => {
 
 describe.each(files)('%s', (path) => {
   const module = load(path);
-  const questions = module.lessons.flatMap(
+  const questions = currentLessons(module).flatMap(
     (lesson) => lesson.version.questions
   );
 
@@ -234,7 +248,7 @@ describe.each(files)('%s', (path) => {
     const lifecycle = columnIndex('lifecycle_status');
     const level = columnIndex('level');
     const language = columnIndex('language');
-    const ids = module.lessons.map((lesson) => lesson.skill_id);
+    const ids = currentLessons(module).map((lesson) => lesson.skill_id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const [index, id] of ids.entries()) {
       expect(id.startsWith(`${track}-`), id).toBe(true);
@@ -363,6 +377,69 @@ describe.each(files)('%s', (path) => {
     }
   });
 
+  // A revision is a new version of a skill that sits beside the version it
+  // revises. Revisions authored for grammar hints may only add the form the
+  // answer depends on to a holdout prompt, as a trailing parenthesis (before
+  // the colon when the prompt ends with one); nothing else about a question
+  // or its lesson may change.
+  it('revises a lesson only by naming the grammar form in holdout prompts, and says so for the importer', () => {
+    const revisions = module.lessons.filter((lesson) =>
+      module.lessons.some(
+        (other) =>
+          other.skill_id === lesson.skill_id &&
+          other.version.version === lesson.version.version - 1
+      )
+    );
+    for (const revision of revisions) {
+      const earlier = module.lessons.find(
+        (other) =>
+          other.skill_id === revision.skill_id &&
+          other.version.version === revision.version.version - 1
+      )!;
+      const id = revision.skill_id;
+      expect(revision.version.id, id).toBe(`${id}@${revision.version.version}`);
+      for (const field of [
+        'title',
+        'explanation',
+        'examples',
+        'references'
+      ] as const)
+        expect(revision[field], `${id} ${field}`).toEqual(earlier[field]);
+      const revised = revision.version.questions;
+      const original = earlier.version.questions;
+      expect(revised.length, id).toBe(original.length);
+      let hinted = 0;
+      for (const [index, question] of revised.entries()) {
+        const before = original[index];
+        const number = before.id.split(':')[1];
+        expect(question.id, id).toBe(`${revision.version.id}:${number}`);
+        expect([question.change, question.continues], question.id).toEqual([
+          'same',
+          before.id
+        ]);
+        for (const field of [
+          'format',
+          'answer',
+          'alternatives',
+          'near_misses',
+          'holdout'
+        ] as const)
+          expect(question[field], `${question.id} ${field}`).toEqual(
+            before[field]
+          );
+        if (question.prompt === before.prompt) continue;
+        hinted += 1;
+        expect(question.holdout, question.id).toBe(true);
+        const stripped = question.prompt.replace(
+          /^(.*?) \(([^()]+)\)(:?)$/u,
+          (_, text: string, __: string, colon: string) => text + colon
+        );
+        expect(stripped, question.id).toBe(before.prompt);
+      }
+      expect(hinted, `${id} changes no prompt`).toBeGreaterThan(0);
+    }
+  });
+
   it('keeps the module review status and the evidence decision in agreement', () => {
     const decisions = {
       'pending-owner-review': 'pending',
@@ -471,7 +548,7 @@ describe.each(files)('%s', (path) => {
       );
       expect([result.versions, result.questions]).toEqual([
         module.lessons.length,
-        questions.length
+        module.lessons.flatMap((lesson) => lesson.version.questions).length
       ]);
       const again = await importContent(db.client, modulePackage(root, module));
       expect([again.versions, again.questions]).toEqual([0, 0]);

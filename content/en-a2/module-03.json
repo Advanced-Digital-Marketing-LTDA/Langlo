@@ -389,6 +389,227 @@
       }
     },
     {
+      "skill_id": "en-a2-010",
+      "title": "To-infinitive after common verbs",
+      "explanation": "After some frequent verbs the next verb takes to plus the base form: want to, need to, decide to, hope to, plan to, learn to, would like to. Examples: I want to learn English. She decided to move. We hope to see you soon. These verbs do not take -ing. Do not drop to, and do not put a past or -s form after it: not I want to learns.",
+      "examples": [
+        {
+          "en": "I want to learn English."
+        },
+        {
+          "en": "She decided to move."
+        },
+        {
+          "en": "We hope to see you soon."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "BC-A1-A2"],
+      "version": {
+        "id": "en-a2-010@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-010@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which verb pattern is correct?",
+            "answer": "I want to learn English.",
+            "alternatives": [
+              "I want to learn English.",
+              "I want learn English.",
+              "I want learning English."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q01"
+          },
+          {
+            "id": "en-a2-010@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which verb is followed by a to-infinitive?",
+            "answer": "decide",
+            "alternatives": ["decide", "enjoy", "finish"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q02"
+          },
+          {
+            "id": "en-a2-010@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb form comes after 'to'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -ing form", "the past form"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q03"
+          },
+          {
+            "id": "en-a2-010@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence expresses a hope?",
+            "answer": "We hope to see you soon.",
+            "alternatives": [
+              "We hope see you soon.",
+              "We hope to see you soon.",
+              "We hope seeing you soon."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q04"
+          },
+          {
+            "id": "en-a2-010@2:q05",
+            "format": "typed-blank",
+            "prompt": "I want ___ learn English.",
+            "answer": "to",
+            "near_misses": ["for", "at"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q05"
+          },
+          {
+            "id": "en-a2-010@2:q06",
+            "format": "typed-blank",
+            "prompt": "She decided to ___. (move)",
+            "answer": "move",
+            "near_misses": ["moving", "moved"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q06"
+          },
+          {
+            "id": "en-a2-010@2:q07",
+            "format": "typed-blank",
+            "prompt": "We hope to ___ you soon. (see)",
+            "answer": "see",
+            "near_misses": ["saw", "seeing"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q07"
+          },
+          {
+            "id": "en-a2-010@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: I / want / learn / English",
+            "answer": "I want to learn English.",
+            "near_misses": [
+              "I want learn English.",
+              "I want to learning English."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q08"
+          },
+          {
+            "id": "en-a2-010@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: she / decide / move (past)",
+            "answer": "She decided to move.",
+            "near_misses": ["She decided moving.", "She decided to moved."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q09"
+          },
+          {
+            "id": "en-a2-010@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: we / hope / see / you soon",
+            "answer": "We hope to see you soon.",
+            "near_misses": [
+              "We hope seeing you soon.",
+              "We hope to saw you soon."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q10"
+          },
+          {
+            "id": "en-a2-010@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: They plan visit Rome.",
+            "answer": "They plan to visit Rome.",
+            "near_misses": [
+              "They plan visit Rome.",
+              "They plan to visiting Rome."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q11"
+          },
+          {
+            "id": "en-a2-010@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: He wants to goes home.",
+            "answer": "He wants to go home.",
+            "near_misses": ["He wants to goes home.", "He wants go home."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@1:q12"
+          },
+          {
+            "id": "en-a2-010@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "I would like to book a table.",
+            "alternatives": [
+              "I would like to book a table.",
+              "I would like book a table.",
+              "I would like booking a table."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-010@1:h01"
+          },
+          {
+            "id": "en-a2-010@2:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: My brother is learning drive. (to-infinitive)",
+            "answer": "My brother is learning to drive.",
+            "near_misses": [
+              "My brother is learning drive.",
+              "My brother is learning driving."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-010@1:h02"
+          },
+          {
+            "id": "en-a2-010@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: they / need / leave / early",
+            "answer": "They need to leave early.",
+            "near_misses": [
+              "They need leave early.",
+              "They need to leaving early."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-010@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Infinitivo com to depois de verbos comuns",
+            "explanation": "Depois de alguns verbos frequentes, o próximo verbo aparece com to mais a forma base: want to, need to, decide to, hope to, plan to, learn to, would like to. Exemplos: I want to learn English. She decided to move. We hope to see you soon. Esses verbos não são seguidos por -ing. Não omita to nem coloque depois dele uma forma no passado ou com -s: não diga I want to learns.",
+            "examples": [
+              {
+                "en": "I want to learn English.",
+                "pt": "Quero aprender inglês."
+              },
+              {
+                "en": "She decided to move.",
+                "pt": "Ela decidiu se mudar."
+              },
+              {
+                "en": "We hope to see you soon.",
+                "pt": "Esperamos ver você em breve."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "BC-A1-A2"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a2-011",
       "title": "Superlatives with the most and -est",
       "explanation": "Use the superlative to say that something is first in a group. Short adjectives add -est: the tallest, the oldest; with a final -y change to -iest: the happiest. Longer adjectives use the most: the most expensive. Use the before a superlative noun phrase unless a possessive replaces it: the best day, but my best friend. A few are irregular: the best, the worst. Use in or of for the group: the tallest in the class.",
@@ -579,6 +800,226 @@
       }
     },
     {
+      "skill_id": "en-a2-011",
+      "title": "Superlatives with the most and -est",
+      "explanation": "Use the superlative to say that something is first in a group. Short adjectives add -est: the tallest, the oldest; with a final -y change to -iest: the happiest. Longer adjectives use the most: the most expensive. Use the before a superlative noun phrase unless a possessive replaces it: the best day, but my best friend. A few are irregular: the best, the worst. Use in or of for the group: the tallest in the class.",
+      "examples": [
+        {
+          "en": "She is the tallest girl in the class."
+        },
+        {
+          "en": "This is the most expensive hotel."
+        },
+        {
+          "en": "It was the best day of my life."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "BC-A1-A2"],
+      "version": {
+        "id": "en-a2-011@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-011@2:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the superlative of 'tall'?",
+            "answer": "the tallest",
+            "alternatives": ["the tallest", "the most tall", "the taller"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q01"
+          },
+          {
+            "id": "en-a2-011@2:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the superlative of 'expensive'?",
+            "answer": "the most expensive",
+            "alternatives": [
+              "the most expensive",
+              "the expensivest",
+              "the more expensive"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q02"
+          },
+          {
+            "id": "en-a2-011@2:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the superlative of 'good'?",
+            "answer": "the best",
+            "alternatives": ["the best", "the goodest", "the most good"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q03"
+          },
+          {
+            "id": "en-a2-011@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word usually comes before a superlative?",
+            "answer": "the",
+            "alternatives": ["the", "a", "more"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q04"
+          },
+          {
+            "id": "en-a2-011@2:q05",
+            "format": "typed-blank",
+            "prompt": "She is the ___ girl in the class. (tall)",
+            "answer": "tallest",
+            "near_misses": ["taller", "most tall"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q05"
+          },
+          {
+            "id": "en-a2-011@2:q06",
+            "format": "typed-blank",
+            "prompt": "This is the ___ expensive hotel.",
+            "answer": "most",
+            "near_misses": ["more", "much"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q06"
+          },
+          {
+            "id": "en-a2-011@2:q07",
+            "format": "typed-blank",
+            "prompt": "It was the ___ day of my life. (good)",
+            "answer": "best",
+            "near_misses": ["better", "goodest"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q07"
+          },
+          {
+            "id": "en-a2-011@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a superlative: she / be / tall / girl / in the class",
+            "answer": "She is the tallest girl in the class.",
+            "alternatives": ["She's the tallest girl in the class."],
+            "near_misses": [
+              "She is tallest girl in the class.",
+              "She is the most tall girl in the class."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q08"
+          },
+          {
+            "id": "en-a2-011@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a superlative: this / be / expensive / hotel",
+            "answer": "This is the most expensive hotel.",
+            "alternatives": ["This is the most expensive hotel in town."],
+            "near_misses": [
+              "This is the expensivest hotel.",
+              "This is most expensive hotel."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q09"
+          },
+          {
+            "id": "en-a2-011@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a superlative: it / be / good / day / of my life",
+            "answer": "It was the best day of my life.",
+            "near_misses": [
+              "It was the goodest day of my life.",
+              "It was the better day of my life."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q10"
+          },
+          {
+            "id": "en-a2-011@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He is the most tall boy here.",
+            "answer": "He is the tallest boy here.",
+            "alternatives": ["He's the tallest boy here."],
+            "near_misses": [
+              "He is the most tall boy here.",
+              "He is the taller boy here."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q11"
+          },
+          {
+            "id": "en-a2-011@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: This is the most cheap shop.",
+            "answer": "This is the cheapest shop.",
+            "near_misses": [
+              "This is the most cheap shop.",
+              "This is the cheaper shop."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-011@1:q12"
+          },
+          {
+            "id": "en-a2-011@2:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the superlative of 'happy'?",
+            "answer": "the happiest",
+            "alternatives": ["the happiest", "the most happy", "the happyest"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-011@1:h01"
+          },
+          {
+            "id": "en-a2-011@2:h02",
+            "format": "typed-blank",
+            "prompt": "Mount Everest is the ___ mountain in the world. (high) (superlative)",
+            "answer": "highest",
+            "near_misses": ["higher", "most high"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-011@1:h02"
+          },
+          {
+            "id": "en-a2-011@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a superlative: this / be / bad / film / of the year",
+            "answer": "This is the worst film of the year.",
+            "alternatives": ["It is the worst film of the year."],
+            "near_misses": [
+              "This is the baddest film of the year.",
+              "This is the most bad film of the year."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-011@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Superlativos com the most e -est",
+            "explanation": "Use o superlativo para dizer que algo ocupa o primeiro lugar em um grupo. Adjetivos curtos recebem -est: the tallest, the oldest; nos terminados em -y, troque -y por -iest: the happiest. Adjetivos mais longos usam the most: the most expensive. Use the antes de uma expressão com superlativo, a menos que um possessivo o substitua: the best day, mas my best friend. Alguns são irregulares: the best, the worst. Use in ou of para indicar o grupo: the tallest in the class.",
+            "examples": [
+              {
+                "en": "She is the tallest girl in the class.",
+                "pt": "Ela é a garota mais alta da turma."
+              },
+              {
+                "en": "This is the most expensive hotel.",
+                "pt": "Este é o hotel mais caro."
+              },
+              {
+                "en": "It was the best day of my life.",
+                "pt": "Foi o melhor dia da minha vida."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "BC-A1-A2"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a2-012",
       "title": "Comparing how actions are done",
       "explanation": "Compare actions with adverbs. Use as ... as for equal: She runs as fast as me. Use not as ... as for less: He doesn't drive as carefully as she does. Use more plus a long adverb or the -er form of a short one: more slowly, faster, harder, earlier. Irregular: well becomes better. After than use an object pronoun or a short clause: She speaks better than me.",
@@ -743,6 +1184,226 @@
               "They walk slowlier than us."
             ],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Comparando como as ações são feitas",
+            "explanation": "Compare ações usando advérbios. Use as ... as para indicar igualdade: She runs as fast as me. Use not as ... as para indicar menor intensidade: He doesn't drive as carefully as she does. Use more mais um advérbio longo ou a forma com -er de um advérbio curto: more slowly, faster, harder, earlier. A forma irregular de well é better. Depois de than, use um pronome de objeto ou uma oração curta: She speaks better than me.",
+            "examples": [
+              {
+                "en": "She runs as fast as me.",
+                "pt": "Ela corre tão rápido quanto eu."
+              },
+              {
+                "en": "He drives more carefully than his brother.",
+                "pt": "Ele dirige com mais cuidado do que o irmão."
+              },
+              {
+                "en": "She speaks better than me.",
+                "pt": "Ela fala melhor do que eu."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a2-012",
+      "title": "Comparing how actions are done",
+      "explanation": "Compare actions with adverbs. Use as ... as for equal: She runs as fast as me. Use not as ... as for less: He doesn't drive as carefully as she does. Use more plus a long adverb or the -er form of a short one: more slowly, faster, harder, earlier. Irregular: well becomes better. After than use an object pronoun or a short clause: She speaks better than me.",
+      "examples": [
+        {
+          "en": "She runs as fast as me."
+        },
+        {
+          "en": "He drives more carefully than his brother."
+        },
+        {
+          "en": "She speaks better than me."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-012@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-012@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence says two people run equally fast?",
+            "answer": "She runs as fast as me.",
+            "alternatives": [
+              "She runs as fast as me.",
+              "She runs fast than me.",
+              "She runs more fast than me."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q01"
+          },
+          {
+            "id": "en-a2-012@2:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of the adverb 'carefully'?",
+            "answer": "more carefully",
+            "alternatives": ["more carefully", "carefullier", "most carefully"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q02"
+          },
+          {
+            "id": "en-a2-012@2:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'well'?",
+            "answer": "better",
+            "alternatives": ["better", "weller", "more well"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q03"
+          },
+          {
+            "id": "en-a2-012@2:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of the adverb 'fast'?",
+            "answer": "faster",
+            "alternatives": ["faster", "more fast", "fastest"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q04"
+          },
+          {
+            "id": "en-a2-012@2:q05",
+            "format": "typed-blank",
+            "prompt": "She runs as ___ as me. (fast)",
+            "answer": "fast",
+            "near_misses": ["faster", "fastly"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q05"
+          },
+          {
+            "id": "en-a2-012@2:q06",
+            "format": "typed-blank",
+            "prompt": "He drives more ___ than his brother. (carefully)",
+            "answer": "carefully",
+            "near_misses": ["careful", "carefuller"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q06"
+          },
+          {
+            "id": "en-a2-012@2:q07",
+            "format": "typed-blank",
+            "prompt": "She speaks ___ than me. (well)",
+            "answer": "better",
+            "near_misses": ["weller", "more well"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q07"
+          },
+          {
+            "id": "en-a2-012@2:q08",
+            "format": "translation",
+            "prompt": "Write the comparison with an adverb: she / run / as fast as / me",
+            "answer": "She runs as fast as me.",
+            "near_misses": [
+              "She runs as faster as me.",
+              "She runs as fast than me."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q08"
+          },
+          {
+            "id": "en-a2-012@2:q09",
+            "format": "translation",
+            "prompt": "Write the comparison with an adverb: he / drive / more carefully than / his brother",
+            "answer": "He drives more carefully than his brother.",
+            "near_misses": [
+              "He drives more careful than his brother.",
+              "He drives carefullier than his brother."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q09"
+          },
+          {
+            "id": "en-a2-012@2:q10",
+            "format": "translation",
+            "prompt": "Write the comparison with an adverb: she / speak / better than / me",
+            "answer": "She speaks better than me.",
+            "near_misses": [
+              "She speaks weller than me.",
+              "She speaks more good than me."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q10"
+          },
+          {
+            "id": "en-a2-012@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He works more hard than me.",
+            "answer": "He works harder than me.",
+            "near_misses": [
+              "He works more hard than me.",
+              "He works hardly than me."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q11"
+          },
+          {
+            "id": "en-a2-012@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: She sings more good than him.",
+            "answer": "She sings better than him.",
+            "near_misses": [
+              "She sings more good than him.",
+              "She sings weller than him."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-012@1:q12"
+          },
+          {
+            "id": "en-a2-012@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence compares speed correctly?",
+            "answer": "He swims faster than his sister.",
+            "alternatives": [
+              "He swims faster than his sister.",
+              "He swims more fast than his sister.",
+              "He swims fastly than his sister."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-012@1:h01"
+          },
+          {
+            "id": "en-a2-012@2:h02",
+            "format": "typed-blank",
+            "prompt": "My dad gets up ___ than I do. (early) (comparative)",
+            "answer": "earlier",
+            "near_misses": ["more early", "earlyer"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-012@1:h02"
+          },
+          {
+            "id": "en-a2-012@2:h03",
+            "format": "translation",
+            "prompt": "Write the comparison with an adverb: they / walk / more slowly than / us",
+            "answer": "They walk more slowly than us.",
+            "near_misses": [
+              "They walk more slow than us.",
+              "They walk slowlier than us."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-012@1:h03"
           }
         ],
         "translations": {

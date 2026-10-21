@@ -154,7 +154,9 @@ export function modulesPackage(root: string): ContentPackage {
           prompt: q.prompt,
           answer: q.answer,
           alternatives: q.alternatives,
-          holdout: q.holdout
+          holdout: q.holdout,
+          change: q.change,
+          continues: q.continues
         }))
       });
   }

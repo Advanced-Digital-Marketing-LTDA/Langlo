@@ -13,6 +13,9 @@ Imported content is immutable. A correction is a new lesson version of the same 
    A question of the earlier version that no `same` continues is removed. Never reuse a question number for a different meaning without marking it `changed`.
 
 3. A skill's first version carries no declarations; declaring one there is refused.
+
+   In a module file (`content/<track>/module-NN.json`) the revision is a second lesson entry for the skill placed after the version it revises, with the same lesson text. Keep the earlier version in the file: a database that holds it needs the declarations, and a fresh database imports both in order. `change` and `continues` are passed to the importer as written. Tests that count lessons or check prompts look at each skill's newest version.
+
 4. Raise `curriculum_version` in `content/curriculum-manifest.json` by hand. The importer never increments it. It checks that the bump matches the changes it finds:
 
    | Bump  | Needed when the import contains                                                                                        |
