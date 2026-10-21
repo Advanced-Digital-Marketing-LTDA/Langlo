@@ -1,6 +1,11 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { page } from '$app/state';
+  import { hydration } from '../../lib/hydration.svelte';
   let { children } = $props();
+  onMount(() => {
+    hydration.ready = true;
+  });
   const tabs = [
     { href: '/app', label: 'Home' },
     { href: '/app/map', label: 'Skill map' },
@@ -16,15 +21,17 @@
     pathname === href || (href !== '/app' && pathname.startsWith(`${href}/`));
 </script>
 
-<nav class="appnav" aria-label="Study navigation">
-  {#each tabs as tab (tab.href)}
-    <a href={tab.href} aria-current={current(tab.href) ? 'page' : undefined}
-      >{tab.label}</a
-    >
-  {/each}
-</nav>
+<div data-hydrated={hydration.ready || undefined}>
+  <nav class="appnav" aria-label="Study navigation">
+    {#each tabs as tab (tab.href)}
+      <a href={tab.href} aria-current={current(tab.href) ? 'page' : undefined}
+        >{tab.label}</a
+      >
+    {/each}
+  </nav>
 
-{@render children()}
+  {@render children()}
+</div>
 
 <style>
   .appnav {
