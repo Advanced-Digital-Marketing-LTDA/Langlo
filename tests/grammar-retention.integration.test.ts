@@ -325,29 +325,6 @@ describe('grammar retention storage and session flow', () => {
     await completeGrammarSettingsReview(review.id);
   });
 
-  it('resets the affected schedule on new content and preserves immutable events', async () => {
-    await reviewedSkill();
-    await client.execute({
-      sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'pilot-ready')"
-    });
-    const reset = await client.execute({
-      sql: 'SELECT content_version_id, due_at, revision, reset_required FROM grammar_retention_schedules WHERE owner_id = ? AND skill_id = ?',
-      args: [learner.userId, 'fr-a1-001']
-    });
-    expect(reset.rows[0]).toMatchObject({
-      content_version_id: 'fr-a1-001@2',
-      due_at: 0,
-      revision: 2,
-      reset_required: 1
-    });
-    expect(
-      (await client.execute('SELECT * FROM grammar_retention_events')).rows
-    ).toHaveLength(1);
-    await expect(
-      client.execute("UPDATE grammar_retention_events SET rating = 'easy'")
-    ).rejects.toThrow(/cannot be updated/iu);
-  });
-
   async function dueReview() {
     const session = await start();
     await answer(session.id, 'fr-a1-001@1:q1', 'es');
@@ -453,6 +430,91 @@ describe('grammar retention storage and session flow', () => {
         answer(session.id, loaded!.question!.id, 'es')
       ).rejects.toMatchObject({ code: 'CONTENT_UNAVAILABLE' });
       expect(await storedHistoryCounts()).toEqual(before);
+    }
+  );
+
+  const schedulesOf = async () =>
+    (
+      await client.execute({
+        sql: 'SELECT content_version_id, state_json, due_at, revision, reset_required FROM grammar_retention_schedules WHERE owner_id = ? AND skill_id = ?',
+        args: [learner.userId, 'fr-a1-001']
+      })
+    ).rows[0];
+
+  it.each(['insert', 'publish'] as const)(
+    'transfers recall state and due date unchanged to a new version published by %s, and preserves immutable events',
+    async (operation) => {
+      await reviewedSkill();
+      const before = await schedulesOf();
+      expect(Number(before.due_at)).toBeGreaterThan(0);
+      await client.execute({
+        sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, ?)",
+        args: [operation === 'insert' ? 'pilot-ready' : 'draft']
+      });
+      if (operation === 'publish')
+        await client.execute(
+          "UPDATE content_versions SET status = 'schema-validated' WHERE id = 'fr-a1-001@2'"
+        );
+      expect(await schedulesOf()).toEqual({
+        ...before,
+        content_version_id: 'fr-a1-001@2',
+        revision: Number(before.revision) + 1
+      });
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_events')).rows
+      ).toHaveLength(1);
+      await expect(
+        client.execute("UPDATE grammar_retention_events SET rating = 'easy'")
+      ).rejects.toThrow(/cannot be updated/iu);
+    }
+  );
+
+  async function publishSecondVersion() {
+    await client.batch(
+      [
+        "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'pilot-ready')",
+        "INSERT INTO questions (id, content_version_id, skill_id, language, format, prompt, answer, alternatives, holdout) SELECT replace(id, '@1', '@2'), 'fr-a1-001@2', skill_id, language, format, prompt, answer, alternatives, holdout FROM questions WHERE content_version_id = 'fr-a1-001@1'",
+        "INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) SELECT 'fr-a1-001@2', skill_id, language, title, explanation, examples, refs, fingerprint FROM lessons WHERE content_version_id = 'fr-a1-001@1'"
+      ],
+      'write'
+    );
+  }
+
+  // Schedules stored before retention always transferred can still point at
+  // an earlier version or carry a pending reset; the learner's recall state
+  // continues from what is stored either way.
+  it.each([
+    [
+      'on an earlier version',
+      "UPDATE grammar_retention_schedules SET content_version_id = 'fr-a1-001@1'"
+    ],
+    [
+      'with a pending reset',
+      'UPDATE grammar_retention_schedules SET reset_required = 1'
+    ]
+  ])(
+    'continues the stored recall state of a schedule left %s',
+    async (_, update) => {
+      await reviewedSkill();
+      await publishSecondVersion();
+      await client.execute(update);
+      const prior = await schedulesOf();
+      const shown = (await grammarRetentionFor(client, learner, 'fr', 1)).find(
+        (item) => item.skillId === 'fr-a1-001'
+      )?.retention;
+      expect(shown?.dueAt).toBe(Number(prior.due_at));
+      expect(shown?.retrievability).not.toBeNull();
+      const session = await start();
+      const recorded = await answer(session.id, 'fr-a1-001@2:q2', 'es');
+      await rate(recorded.id, session.id, 'good');
+      await finishPractice(client, learner, session.id);
+      const after = await schedulesOf();
+      expect(after.content_version_id).toBe('fr-a1-001@2');
+      expect(
+        (JSON.parse(String(after.state_json)) as { reps: number }).reps
+      ).toBe(
+        (JSON.parse(String(prior.state_json)) as { reps: number }).reps + 1
+      );
     }
   );
 

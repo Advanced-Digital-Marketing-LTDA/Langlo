@@ -43,6 +43,10 @@ A package lists `retirements` (`skillId`, optional `replacedBy`, optional `carry
 
 A session keeps the version of its first answer for a skill, so a half-finished lesson or session finishes on the questions it started. A tab holding a question from another version gets `STALE_QUESTION`; a withdrawn version gets `CONTENT_UNAVAILABLE`. The lesson page of a session on an earlier version says the lesson was updated and that the next session uses the new one.
 
+## Grammar retention schedules
+
+A learner's grammar retention schedule for a skill always carries over to the skill's newest published version: recall state, due date and review history stay as they are, whether the new version only fixes wording or adds, changes or removes questions. Publishing a version (by insert or by a status change) moves the schedules to it; an older version approved after a newer one moves nothing. Both are triggers on `content_versions` (migration 0031). The same migration also restores schedules that the earlier reset triggers had marked for reset, taking the due date back from the recall state they still store; it stops if such a row has no readable due date.
+
 ## Record and reversal
 
 Each import writes `content_changes` rows (skills added or retired, versions added or quarantined, lesson translations added, questions same, changed, new or removed) in its own transaction. Adding a translation to an already-stored lesson is logged as `lesson-translation-added` and requires a minor curriculum bump. Nothing learner-side is rewritten, so mastery is recomputed on every read and there is nothing to restore. To reverse an update, publish a newer version that restores the content under new question ids with the matching declarations. Quarantine withdraws a version and is logged as `version-quarantined`; the newest version that is not quarantined is then what lessons, the mastery catalog, the update notice, assessments and mastery use, and the quarantined version stays readable in `content_versions` and `content_changes`.

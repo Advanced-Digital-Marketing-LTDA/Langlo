@@ -89,13 +89,12 @@ async function currentSkills(
 }
 
 function retentionState(
-  stale: boolean,
   dueAt: number,
   now: number,
   recall: number | null,
   target: number
 ): GrammarRetention['state'] {
-  if (stale || dueAt === now) return 'due';
+  if (dueAt === now) return 'due';
   if (dueAt < now) return 'overdue';
   if (recall !== null && recall < target) return 'below-target';
   return 'scheduled';
@@ -117,7 +116,6 @@ function retentionForSkill(
   target: number,
   now: number
 ) {
-  const currentVersion = skill.content_version_id;
   const available = availableGrammarSkill(skill);
   if (!row || !available)
     return {
@@ -132,20 +130,17 @@ function retentionForSkill(
         target
       }
     };
-  const stale =
-    Boolean(row.reset_required) || row.content_version_id !== currentVersion;
-  const retrievability = stale
-    ? null
-    : studyRetrievability(
-        {
-          stateJson: String(row.state_json),
-          schedulerVersion: String(row.scheduler_version),
-          parametersJson: String(row.parameters_json)
-        },
-        new Date(now)
-      );
-  const dueAt = stale ? now : Number(row.due_at);
-  const state = retentionState(stale, dueAt, now, retrievability, target);
+  // A schedule keeps its recall state across content versions.
+  const retrievability = studyRetrievability(
+    {
+      stateJson: String(row.state_json),
+      schedulerVersion: String(row.scheduler_version),
+      parametersJson: String(row.parameters_json)
+    },
+    new Date(now)
+  );
+  const dueAt = Number(row.due_at);
+  const state = retentionState(dueAt, now, retrievability, target);
   return {
     skillId: String(skill.skill_id),
     title: String(skill.title),
@@ -408,15 +403,6 @@ type GrammarSkillReview = {
   now: number;
 };
 
-function requiresGrammarReset(
-  prior: Row | undefined,
-  currentVersionId: string
-) {
-  if (!prior) return true;
-  if (prior.reset_required) return true;
-  return prior.content_version_id !== currentVersionId;
-}
-
 function scheduleGrammarCandidate(
   prior: Row | undefined,
   ownerId: string,
@@ -424,7 +410,6 @@ function scheduleGrammarCandidate(
 ) {
   const { language, source, rating, studySchedule, timezone, now } = input;
   const expectedRevision = prior ? Number(prior.revision) : 0;
-  const resetRequired = requiresGrammarReset(prior, source.currentVersionId);
   const scheduled = scheduleStudyReview({
     id: `${ownerId}:${language}:${source.skillId}`,
     rating,
@@ -432,7 +417,9 @@ function scheduleGrammarCandidate(
     stateJson: prior ? String(prior.state_json) : null,
     schedulerVersion: prior ? String(prior.scheduler_version) : null,
     parametersJson: prior ? String(prior.parameters_json) : null,
-    resetRequired,
+    // Recall state carries over to new content versions; only a skill with
+    // no schedule yet starts a new card.
+    resetRequired: !prior,
     expectedRevision,
     now: new Date(now),
     timezone
