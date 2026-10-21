@@ -578,9 +578,9 @@
           {
             "id": "pt-b1-019@1:q03",
             "format": "multiple-choice",
-            "prompt": "Choose the correct form: Ela saiu sem que ninguém a ___ . (ver)",
-            "answer": "visse",
-            "alternatives": ["visse", "viu", "vê"],
+            "prompt": "Choose the correct form: Ela sai sem que ninguém a ___ . (ver)",
+            "answer": "veja",
+            "alternatives": ["veja", "vê", "viu"],
             "holdout": false
           },
           {

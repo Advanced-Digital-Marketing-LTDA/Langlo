@@ -730,7 +730,7 @@
           {
             "id": "pt-b1-030@1:q05",
             "format": "typed-blank",
-            "prompt": "Ela depende ___ a família. (depender)",
+            "prompt": "Ela depende ___ seus pais. (depender)",
             "answer": "de",
             "near_misses": ["em", "com"],
             "holdout": false
