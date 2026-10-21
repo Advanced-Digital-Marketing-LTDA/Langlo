@@ -1,0 +1,881 @@
+{
+  "module_id": "pt-b2-module-02",
+  "track": "Portuguese B2",
+  "title": "Compound and complex tenses",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b2-006",
+      "title": "Mais-que-perfeito simples",
+      "explanation": "The simple pluperfect is a one-word past-before-past form, mostly literary or formal. Take the eles form of the pretérito perfeito, drop -m, and add the ending: falaram gives falara, fizeram gives fizera, disseram gives dissera, viram gives vira, saíram gives saíra, foram gives fora. The nós form takes an accent on the vowel before -ramos: faláramos, fizéramos, tivéramos. In speech the compound form (tinha falado) replaces it, but the simple form appears in writing, news and literature: quando cheguei, ele já saíra. Do not confuse it with the perfeito: saiu is a simple past, saíra is anterior to another past moment.",
+      "examples": [
+        {
+          "pt": "Quando cheguei, ele já saíra.",
+          "en": "When I arrived, he had already left."
+        },
+        {
+          "pt": "Eu nunca vira tanta gente num só lugar.",
+          "en": "I had never seen so many people in one place."
+        },
+        {
+          "pt": "Ela dissera a verdade antes de partir.",
+          "en": "She had told the truth before leaving."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-006@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-006@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando cheguei, ele já ___ . (sair)",
+            "answer": "saíra",
+            "alternatives": ["saiu", "saíra", "sairia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Eu nunca ___ tanta gente. (ver)",
+            "answer": "vira",
+            "alternatives": ["vi", "veria", "vira"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela ___ a verdade antes de partir. (dizer)",
+            "answer": "dissera",
+            "alternatives": ["dissera", "disse", "diria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q04",
+            "format": "typed-blank",
+            "prompt": "Eu ___ o livro antes de ver o filme. (ler)",
+            "answer": "lera",
+            "near_misses": ["li", "leria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela já ___ a casa quando o dono chegou. (vender)",
+            "answer": "vendera",
+            "near_misses": ["vendeu", "venderia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nós já ___ o jantar quando ele chegou. (fazer)",
+            "answer": "fizéramos",
+            "near_misses": ["fizemos", "faríamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q07",
+            "format": "translation",
+            "prompt": "Translate (simple pluperfect): He had already left.",
+            "answer": "Ele já saíra.",
+            "alternatives": ["Já saíra."],
+            "near_misses": ["Ele já saiu.", "Ele já tinha saído."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q08",
+            "format": "translation",
+            "prompt": "Translate (simple pluperfect): I had never seen her.",
+            "answer": "Eu nunca a vira.",
+            "alternatives": ["Nunca a vira."],
+            "near_misses": ["Eu nunca a vi.", "Eu nunca a tinha visto."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q09",
+            "format": "translation",
+            "prompt": "Translate (simple pluperfect): She had told me the truth.",
+            "answer": "Ela me dissera a verdade.",
+            "alternatives": ["Ela dissera-me a verdade."],
+            "near_misses": [
+              "Ela me disse a verdade.",
+              "Ela tinha me dito a verdade."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q10",
+            "format": "correction",
+            "prompt": "Correct to the simple pluperfect: Quando cheguei, ele já saiu.",
+            "answer": "Quando cheguei, ele já saíra.",
+            "near_misses": [
+              "Quando cheguei, ele já saiu.",
+              "Quando cheguei, ele já tinha saído."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q11",
+            "format": "correction",
+            "prompt": "Correct to the simple pluperfect: Eu nunca vi tanta gente.",
+            "answer": "Eu nunca vira tanta gente.",
+            "near_misses": [
+              "Eu nunca vi tanta gente.",
+              "Eu nunca tinha visto tanta gente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Ela já fazera o jantar quando cheguei.",
+            "answer": "Ela já fizera o jantar quando cheguei.",
+            "near_misses": [
+              "Ela já fazera o jantar quando cheguei.",
+              "Ela já fez o jantar quando cheguei."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-006@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Contaram o que ele ___ no dia anterior. (fazer) (mais-que-perfeito simples)",
+            "answer": "fizera",
+            "alternatives": ["fizera", "fez", "faria"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-006@1:h02",
+            "format": "typed-blank",
+            "prompt": "Quando a aula começou, o aluno já ___ . (chegar) (mais-que-perfeito simples)",
+            "answer": "chegara",
+            "near_misses": ["chegou", "chegava"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-006@1:h03",
+            "format": "translation",
+            "prompt": "Translate (simple pluperfect): We had arrived before him.",
+            "answer": "Nós chegáramos antes dele.",
+            "alternatives": ["Chegáramos antes dele."],
+            "near_misses": [
+              "Nós chegamos antes dele.",
+              "Nós tínhamos chegado antes dele."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-007",
+      "title": "Futuro do presente composto and futuro do pretérito composto",
+      "explanation": "Terá/terão + participle (futuro do presente composto) marks an event that will be complete before a future point: até sexta, eu terei terminado. Teria/teriam + participle (futuro do pretérito composto) marks what would have happened but did not: eu teria ficado, mas tinha trabalho. Both use ter as the auxiliary and the participle never changes. In speech the future perfect is often replaced by já + present (até sexta, já terminei), but the compound form is the standard written choice. Do not use the simple future where completion before a deadline is the point.",
+      "examples": [
+        {
+          "pt": "Até sexta, eu terei terminado o projeto.",
+          "en": "By Friday, I will have finished the project."
+        },
+        {
+          "pt": "Eu teria ficado, mas tinha trabalho.",
+          "en": "I would have stayed, but I had work."
+        },
+        {
+          "pt": "Quando você chegar, ela já terá saído.",
+          "en": "When you arrive, she will already have left."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-007@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-007@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Amanhã, a essa hora, nós já ___ o relatório. (entregar)",
+            "answer": "teremos entregado",
+            "alternatives": [
+              "entregamos",
+              "teríamos entregado",
+              "teremos entregado"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Eu ___ ido à festa, mas estava doente. (ter)",
+            "answer": "teria",
+            "alternatives": ["teria", "tive", "terei"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando você chegar, ela já ___ . (sair)",
+            "answer": "terá saído",
+            "alternatives": ["teria saído", "terá saído", "saíra"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q04",
+            "format": "typed-blank",
+            "prompt": "Até dezembro, eles já ___ a casa. (vender) (futuro do presente composto)",
+            "answer": "terão vendido",
+            "near_misses": ["venderam", "teriam vendido"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ ajudado, mas ninguém pediu. (ter)",
+            "answer": "teria",
+            "near_misses": ["terei", "tive"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nós ___ viajado mais se tivéssemos dinheiro. (ter)",
+            "answer": "teríamos",
+            "near_misses": ["temos", "tínhamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q07",
+            "format": "translation",
+            "prompt": "Translate (future perfect): By Friday I will have finished.",
+            "answer": "Até sexta, eu terei terminado.",
+            "alternatives": [
+              "Até sexta-feira, eu terei terminado.",
+              "Até sexta, eu já terei terminado."
+            ],
+            "near_misses": [
+              "Até sexta, eu terminarei.",
+              "Até sexta, eu teria terminado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q08",
+            "format": "translation",
+            "prompt": "Translate (conditional perfect): I would have stayed.",
+            "answer": "Eu teria ficado.",
+            "alternatives": ["Teria ficado."],
+            "near_misses": ["Eu ficaria.", "Eu tinha ficado."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q09",
+            "format": "translation",
+            "prompt": "Translate (conditional perfect): They would have called.",
+            "answer": "Eles teriam ligado.",
+            "alternatives": ["Teriam ligado."],
+            "near_misses": ["Eles ligariam.", "Eles tinham ligado."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q10",
+            "format": "correction",
+            "prompt": "Correct the tense: Amanhã, eles já tinham chegado.",
+            "answer": "Amanhã, eles já terão chegado.",
+            "near_misses": [
+              "Amanhã, eles já tinham chegado.",
+              "Amanhã, eles já chegaram."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q11",
+            "format": "correction",
+            "prompt": "Correct the tense: Eu terei ido se tivesse convite.",
+            "answer": "Eu teria ido se tivesse convite.",
+            "near_misses": [
+              "Eu terei ido se tivesse convite.",
+              "Eu ia ir se tivesse convite."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:q12",
+            "format": "correction",
+            "prompt": "Correct the participle: Quando ela voltar, nós já teremos jantamos.",
+            "answer": "Quando ela voltar, nós já teremos jantado.",
+            "near_misses": [
+              "Quando ela voltar, nós já teremos jantamos.",
+              "Quando ela voltar, nós já jantaremos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-007@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se ele tivesse avisado, eles ___ esperado. (ter) (futuro do pretérito composto)",
+            "answer": "teriam",
+            "alternatives": ["terão", "teriam", "tinham"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-007@1:h02",
+            "format": "typed-blank",
+            "prompt": "Em dezembro, ela já ___ o curso. (terminar) (futuro do presente composto)",
+            "answer": "terá terminado",
+            "near_misses": ["terminará", "teria terminado"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-007@1:h03",
+            "format": "translation",
+            "prompt": "Translate (future perfect): They will have arrived by noon.",
+            "answer": "Eles terão chegado até o meio-dia.",
+            "alternatives": ["Até o meio-dia, eles terão chegado."],
+            "near_misses": [
+              "Eles chegarão até o meio-dia.",
+              "Eles teriam chegado até o meio-dia."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-008",
+      "title": "Futuro do subjuntivo composto: tiver + participle",
+      "explanation": "The compound future subjunctive is tiver, tiveres, tiver, tivermos, tiverem + participle. It appears after se, quando, assim que, depois que and logo que when an action will be finished before the main verb: quando você tiver terminado, me ligue. The simple future subjunctive (quando você terminar) only says the two events happen around the same time; the compound form insists on completion first. The main clause is in the future, present or imperative. Do not use the perfeito do subjuntivo (tenha) after these conjunctions, and do not use the imperfect (tivesse): they belong to other constructions.",
+      "examples": [
+        {
+          "pt": "Quando você tiver terminado, me ligue.",
+          "en": "When you have finished, call me."
+        },
+        {
+          "pt": "Se eles tiverem saído, eu deixo um recado.",
+          "en": "If they have left, I will leave a note."
+        },
+        {
+          "pt": "Assim que nós tivermos chegado, ligamos.",
+          "en": "As soon as we have arrived, we will call."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-008@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-008@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the compound future subjunctive: Quando você ___ o trabalho, me avise. (terminar)",
+            "answer": "tiver terminado",
+            "alternatives": [
+              "tiver terminado",
+              "tenha terminado",
+              "tivesse terminado"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the compound future subjunctive: Se eles ___ , deixo um recado. (sair)",
+            "answer": "tiverem saído",
+            "alternatives": ["tenham saído", "tiverem saído", "tivessem saído"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the compound future subjunctive: Assim que nós ___ , ligamos. (chegar)",
+            "answer": "tivermos chegado",
+            "alternatives": [
+              "tenhamos chegado",
+              "tivéssemos chegado",
+              "tivermos chegado"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q04",
+            "format": "typed-blank",
+            "prompt": "Depois que eu ___ jantado, saio. (ter) (futuro do subjuntivo composto)",
+            "answer": "tiver",
+            "near_misses": ["tenha", "tinha"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q05",
+            "format": "typed-blank",
+            "prompt": "Quando elas ___ chegado, começamos. (ter) (futuro do subjuntivo composto)",
+            "answer": "tiverem",
+            "near_misses": ["tenham", "tinham"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q06",
+            "format": "typed-blank",
+            "prompt": "Se você ___ esquecido, eu lembro. (ter) (futuro do subjuntivo composto)",
+            "answer": "tiver",
+            "near_misses": ["tenha", "tivesse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q07",
+            "format": "translation",
+            "prompt": "Translate (compound future subjunctive): When you have finished, call me.",
+            "answer": "Quando você tiver terminado, me ligue.",
+            "alternatives": ["Quando tiver terminado, me ligue."],
+            "near_misses": [
+              "Quando você terminar, me ligue.",
+              "Quando você tenha terminado, me ligue."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q08",
+            "format": "translation",
+            "prompt": "Translate (compound future subjunctive): If they have left, I will leave a note.",
+            "answer": "Se eles tiverem saído, eu deixarei um recado.",
+            "alternatives": [
+              "Se eles tiverem saído, deixo um recado.",
+              "Se eles tiverem saído, eu deixo um recado."
+            ],
+            "near_misses": [
+              "Se eles saírem, eu deixarei um recado.",
+              "Se eles tenham saído, eu deixarei um recado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q09",
+            "format": "translation",
+            "prompt": "Translate (compound future subjunctive): As soon as we have arrived, we will call.",
+            "answer": "Assim que tivermos chegado, ligaremos.",
+            "alternatives": [
+              "Assim que nós tivermos chegado, nós ligaremos.",
+              "Assim que nós tivermos chegado, ligaremos.",
+              "Assim que tivermos chegado, nós ligaremos."
+            ],
+            "near_misses": [
+              "Assim que chegarmos, ligaremos.",
+              "Assim que tenhamos chegado, ligaremos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Quando você tenha terminado, me avise.",
+            "answer": "Quando você tiver terminado, me avise.",
+            "near_misses": [
+              "Quando você tenha terminado, me avise.",
+              "Quando você tinha terminado, me avise."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Assim que nós tínhamos chegado, ligamos.",
+            "answer": "Assim que nós tivermos chegado, ligamos.",
+            "near_misses": [
+              "Assim que nós tínhamos chegado, ligamos.",
+              "Assim que nós tenhamos chegado, ligamos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb in the result: Se ela tiver esquecido, eu lembrava.",
+            "answer": "Se ela tiver esquecido, eu lembro.",
+            "near_misses": [
+              "Se ela tiver esquecido, eu lembrava.",
+              "Se ela tiver esquecido, eu lembrei."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-008@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando eles ___ a prova, vão comemorar. (fazer) (futuro do subjuntivo composto)",
+            "answer": "tiverem feito",
+            "alternatives": ["tenham feito", "tivessem feito", "tiverem feito"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-008@1:h02",
+            "format": "typed-blank",
+            "prompt": "Se nós ___ nos enganado, pedimos desculpas. (ter) (futuro do subjuntivo composto)",
+            "answer": "tivermos",
+            "near_misses": ["tenhamos", "tínhamos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-008@1:h03",
+            "format": "translation",
+            "prompt": "Translate (compound future subjunctive): When she has eaten, we will leave.",
+            "answer": "Quando ela tiver comido, nós sairemos.",
+            "alternatives": ["Quando ela tiver comido, sairemos."],
+            "near_misses": [
+              "Quando ela comer, nós sairemos.",
+              "Quando ela tenha comido, nós sairemos."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-009",
+      "title": "Aspect periphrases: acabar de, voltar a, deixar de, costumar, vir + gerund",
+      "explanation": "Auxiliary verbs plus an infinitive or gerund express aspect, how an action unfolds. Acabar de + infinitive means to have just done something: acabei de chegar. Voltar a + infinitive means to do again: ela voltou a estudar. Deixar de + infinitive means to stop: ele deixou de fumar. Costumar + infinitive means to do habitually: eu costumo acordar cedo. Ir + gerund shows gradual progress (a situação vai melhorando), vir + gerund shows an action that has been going on up to now (vem melhorando desde 2020), and andar + gerund shows repeated or scattered activity (ela anda reclamando muito). Each verb takes its own link word or none: voltar a, deixar de, acabar de, costumar with no preposition.",
+      "examples": [
+        {
+          "pt": "Acabei de chegar do trabalho.",
+          "en": "I have just arrived from work."
+        },
+        {
+          "pt": "Ela voltou a estudar depois de dois anos.",
+          "en": "She started studying again after two years."
+        },
+        {
+          "pt": "A situação vem melhorando desde 2020.",
+          "en": "The situation has been improving since 2020."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-009@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-009@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct verb: Ele ___ de fumar no ano passado. (he stopped smoking)",
+            "answer": "deixou",
+            "alternatives": ["voltou", "deixou", "continuou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct verb: Ela ___ a estudar alemão depois de um ano. (started again)",
+            "answer": "voltou",
+            "alternatives": ["deixou", "acabou", "voltou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct verb: Eu ___ acordar às seis. (usually)",
+            "answer": "costumo",
+            "alternatives": ["costumo", "acabo", "volto"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q04",
+            "format": "typed-blank",
+            "prompt": "A situação ___ melhorando desde 2020. (vir) (presente)",
+            "answer": "vem",
+            "near_misses": ["vai", "está"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ de chegar agora mesmo. (acabar) (presente)",
+            "answer": "acabo",
+            "near_misses": ["acabei", "acabava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ela anda ___ muito ultimamente. (reclamar)",
+            "answer": "reclamando",
+            "near_misses": ["reclamar", "reclamado"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q07",
+            "format": "translation",
+            "prompt": "Translate: He stopped smoking.",
+            "answer": "Ele deixou de fumar.",
+            "alternatives": ["Ele parou de fumar."],
+            "near_misses": ["Ele deixou fumar.", "Ele deixou de fumando."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q08",
+            "format": "translation",
+            "prompt": "Translate: She started working again.",
+            "answer": "Ela voltou a trabalhar.",
+            "near_misses": [
+              "Ela voltou trabalhar.",
+              "Ela voltou de trabalhar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q09",
+            "format": "translation",
+            "prompt": "Translate: I usually wake up early.",
+            "answer": "Eu costumo acordar cedo.",
+            "alternatives": ["Costumo acordar cedo."],
+            "near_misses": [
+              "Eu costumo acordando cedo.",
+              "Eu costumo de acordar cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q10",
+            "format": "correction",
+            "prompt": "Correct the sentence: Ele voltou fumar.",
+            "answer": "Ele voltou a fumar.",
+            "near_misses": ["Ele voltou fumar.", "Ele voltou de fumar."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: Eu costumo de acordar cedo.",
+            "answer": "Eu costumo acordar cedo.",
+            "near_misses": [
+              "Eu costumo de acordar cedo.",
+              "Eu costumo a acordar cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Ela deixou fumar.",
+            "answer": "Ela deixou de fumar.",
+            "near_misses": ["Ela deixou fumar.", "Ela deixou a fumar."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-009@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct verb: Ela ___ ler antes de dormir. (usually) (perífrase sem preposição)",
+            "answer": "costuma",
+            "alternatives": ["costuma", "acaba", "volta"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-009@1:h02",
+            "format": "typed-blank",
+            "prompt": "Elas ___ de jantar agora mesmo. (acabar) (perífrase com de) (pretérito perfeito)",
+            "answer": "acabaram",
+            "near_misses": ["acabam", "acabavam"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-009@1:h03",
+            "format": "translation",
+            "prompt": "Translate (using vir + gerund): She has been studying Portuguese since March.",
+            "answer": "Ela vem estudando português desde março.",
+            "alternatives": ["Ela tem estudado português desde março."],
+            "near_misses": [
+              "Ela está estudando português desde março.",
+              "Ela estuda português desde março."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-010",
+      "title": "Change of state: ficar, tornar-se, virar, passar a",
+      "explanation": "Portuguese has no single verb for become; it chooses by type of change. Ficar + adjective marks a state reached, often temporary or emotional: ela ficou nervosa, ele ficou rico. Tornar-se + noun or adjective marks a lasting or formal change: ele se tornou um escritor famoso. Virar + noun is the informal choice for a change of role or form: a casa virou um museu, ele virou médico. Passar a + infinitive marks the start of a new habit or situation: passamos a morar aqui em 2020. Do not use ficar with a profession (ele ficou médico is wrong in this sense) and do not use ficar directly with an infinitive (ficamos morar is wrong).",
+      "examples": [
+        {
+          "pt": "Ela ficou nervosa com a notícia.",
+          "en": "She got nervous at the news."
+        },
+        {
+          "pt": "Ele se tornou um escritor famoso.",
+          "en": "He became a famous writer."
+        },
+        {
+          "pt": "A casa virou um museu.",
+          "en": "The house became a museum."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-010@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-010@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct verb: Depois da faculdade, ele ___ médico. (became)",
+            "answer": "virou",
+            "alternatives": ["ficou", "teve", "virou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela ___ nervosa com a notícia. (became)",
+            "answer": "ficou",
+            "alternatives": ["ficou", "virou", "passou a"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Meus pais ___ morar em Curitiba em 2020. (began to)",
+            "answer": "passaram a",
+            "alternatives": ["ficaram", "passaram a", "viraram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q04",
+            "format": "typed-blank",
+            "prompt": "A casa velha ___ um museu. (virar) (pretérito)",
+            "answer": "virou",
+            "near_misses": ["virava", "vira"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ele ___ famoso depois do filme. (tornar, com pronome) (pretérito)",
+            "answer": "se tornou",
+            "alternatives": ["tornou-se"],
+            "near_misses": ["tornou", "ficava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q06",
+            "format": "typed-blank",
+            "prompt": "Eu ___ triste quando ouvi a notícia. (ficar) (pretérito)",
+            "answer": "fiquei",
+            "near_misses": ["fico", "ficava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q07",
+            "format": "translation",
+            "prompt": "Translate: She became a famous writer.",
+            "answer": "Ela se tornou uma escritora famosa.",
+            "alternatives": [
+              "Ela tornou-se uma escritora famosa.",
+              "Ela virou uma escritora famosa."
+            ],
+            "near_misses": [
+              "Ela ficou uma escritora famosa.",
+              "Ela tornou uma escritora famosa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q08",
+            "format": "translation",
+            "prompt": "Translate: He became a doctor.",
+            "answer": "Ele virou médico.",
+            "alternatives": ["Ele se tornou médico.", "Ele tornou-se médico."],
+            "near_misses": ["Ele ficou médico.", "Ele tornou médico."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q09",
+            "format": "translation",
+            "prompt": "Translate: We began to live here in 2020.",
+            "answer": "Passamos a morar aqui em 2020.",
+            "alternatives": [
+              "Nós passamos a morar aqui em 2020.",
+              "Passamos a viver aqui em 2020."
+            ],
+            "near_misses": [
+              "Ficamos morar aqui em 2020.",
+              "Viramos morar aqui em 2020."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Ele ficou médico depois da faculdade.",
+            "answer": "Ele virou médico depois da faculdade.",
+            "alternatives": [
+              "Ele se tornou médico depois da faculdade.",
+              "Ele tornou-se médico depois da faculdade."
+            ],
+            "near_misses": [
+              "Ele ficou médico depois da faculdade.",
+              "Ele estava médico depois da faculdade."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: A loja ficou um restaurante.",
+            "answer": "A loja virou um restaurante.",
+            "alternatives": [
+              "A loja se tornou um restaurante.",
+              "A loja tornou-se um restaurante."
+            ],
+            "near_misses": [
+              "A loja ficou um restaurante.",
+              "A loja estava um restaurante."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Nós ficamos morar em São Paulo.",
+            "answer": "Nós passamos a morar em São Paulo.",
+            "alternatives": ["Passamos a morar em São Paulo."],
+            "near_misses": [
+              "Nós ficamos morar em São Paulo.",
+              "Nós viramos morar em São Paulo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-010@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Depois do casamento, ela ___ morar em Lisboa. (began to) (mudança de estado)",
+            "answer": "passou a",
+            "alternatives": ["ficou", "passou a", "virou"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-010@1:h02",
+            "format": "typed-blank",
+            "prompt": "Meus avós ___ muito felizes com a visita. (ficar) (pretérito) (mudança de estado)",
+            "answer": "ficaram",
+            "near_misses": ["ficam", "ficavam"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-010@1:h03",
+            "format": "translation",
+            "prompt": "Translate: The small town became a big city. (mudança de estado)",
+            "answer": "A cidade pequena virou uma cidade grande.",
+            "alternatives": [
+              "A cidade pequena se tornou uma cidade grande.",
+              "A cidade pequena tornou-se uma cidade grande."
+            ],
+            "near_misses": [
+              "A cidade pequena ficou uma cidade grande.",
+              "A cidade pequena tornou uma cidade grande."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

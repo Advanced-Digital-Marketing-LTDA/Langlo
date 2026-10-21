@@ -1,0 +1,881 @@
+{
+  "module_id": "pt-b2-module-07",
+  "track": "Portuguese B2",
+  "title": "Discourse connectors",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b2-031",
+      "title": "Concession: embora, ainda que, por mais que, mesmo que",
+      "explanation": "Concessive clauses grant a point and then add a limit. Embora, ainda que, mesmo que and por mais que take the subjunctive: embora ele esteja cansado, vai trabalhar; por mais que tentasse, não conseguiu; mesmo que chova, vamos sair. Use the present subjunctive for present or future time and the imperfect subjunctive after a past main verb. Apesar de takes a noun or an infinitive instead of a clause: apesar da chuva, apesar de estar doente. Do not use the indicative after embora, ainda que or por mais que (embora ele está cansado is wrong).",
+      "examples": [
+        {
+          "pt": "Embora ele esteja cansado, vai trabalhar.",
+          "en": "Although he is tired, he is going to work."
+        },
+        {
+          "pt": "Por mais que tentasse, ela não conseguiu.",
+          "en": "No matter how hard she tried, she did not succeed."
+        },
+        {
+          "pt": "Mesmo que chova, vamos sair.",
+          "en": "Even if it rains, we will go out."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-031@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-031@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Embora ele ___ cansado, vai trabalhar. (estar)",
+            "answer": "esteja",
+            "alternatives": ["está", "estava", "esteja"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Por mais que ela ___ , não conseguiu. (tentar, imperfeito do subjuntivo)",
+            "answer": "tentasse",
+            "alternatives": ["tentasse", "tentou", "tenta"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ainda que você ___ razão, fale com calma. (ter)",
+            "answer": "tenha",
+            "alternatives": ["tem", "tenha", "tinha"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q04",
+            "format": "typed-blank",
+            "prompt": "Mesmo que ___ muito, vamos sair. (chover)",
+            "answer": "chova",
+            "near_misses": ["chove", "choveu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q05",
+            "format": "typed-blank",
+            "prompt": "Embora ___ tarde, ainda há gente na rua. (ser)",
+            "answer": "seja",
+            "near_misses": ["é", "era"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q06",
+            "format": "typed-blank",
+            "prompt": "Apesar ___ chuva, saímos. (de + a)",
+            "answer": "da",
+            "near_misses": ["a", "na"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q07",
+            "format": "translation",
+            "prompt": "Translate: Although he is tired, he is going to work.",
+            "answer": "Embora ele esteja cansado, vai trabalhar.",
+            "alternatives": ["Ainda que ele esteja cansado, vai trabalhar."],
+            "near_misses": [
+              "Embora ele está cansado, vai trabalhar.",
+              "Embora ele estava cansado, vai trabalhar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q08",
+            "format": "translation",
+            "prompt": "Translate: No matter how much she tried, she did not succeed.",
+            "answer": "Por mais que tentasse, ela não conseguiu.",
+            "alternatives": ["Por mais que ela tentasse, não conseguiu."],
+            "near_misses": [
+              "Por mais que tentou, ela não conseguiu.",
+              "Por mais que tenta, ela não conseguiu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q09",
+            "format": "translation",
+            "prompt": "Translate: Even if it rains, we will go out.",
+            "answer": "Mesmo que chova, vamos sair.",
+            "alternatives": [
+              "Mesmo que chova, nós vamos sair.",
+              "Mesmo que chova, sairemos."
+            ],
+            "near_misses": [
+              "Mesmo que chove, vamos sair.",
+              "Mesmo que choveu, vamos sair."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q10",
+            "format": "correction",
+            "prompt": "Correct the mood: Embora ela tem razão, ninguém concorda.",
+            "answer": "Embora ela tenha razão, ninguém concorda.",
+            "near_misses": [
+              "Embora ela tem razão, ninguém concorda.",
+              "Embora ela tinha razão, ninguém concorda."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q11",
+            "format": "correction",
+            "prompt": "Correct the mood: Ainda que ela chegou cedo, perdeu o voo.",
+            "answer": "Ainda que ela tenha chegado cedo, perdeu o voo.",
+            "alternatives": ["Ainda que ela chegasse cedo, perdeu o voo."],
+            "near_misses": [
+              "Ainda que ela chegou cedo, perdeu o voo.",
+              "Ainda que ela chega cedo, perdeu o voo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:q12",
+            "format": "correction",
+            "prompt": "Correct the mood: Mesmo que ele sabe, não vai dizer.",
+            "answer": "Mesmo que ele saiba, não vai dizer.",
+            "near_misses": [
+              "Mesmo que ele sabe, não vai dizer.",
+              "Mesmo que ele soube, não vai dizer."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-031@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Embora o preço ___ alto, vamos comprar. (ficar) (concessão)",
+            "answer": "fique",
+            "alternatives": ["fica", "fique", "ficou"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-031@1:h02",
+            "format": "typed-blank",
+            "prompt": "Por mais que nós ___ , o time perdeu. (treinar, imperfeito do subjuntivo) (concessão)",
+            "answer": "treinássemos",
+            "near_misses": ["treinamos", "treinaremos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-031@1:h03",
+            "format": "translation",
+            "prompt": "Translate: Even though she is young, she knows a lot. (concessão)",
+            "answer": "Embora ela seja jovem, sabe muito.",
+            "alternatives": ["Ainda que ela seja jovem, sabe muito."],
+            "near_misses": [
+              "Embora ela é jovem, sabe muito.",
+              "Embora ela era jovem, sabe muito."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-032",
+      "title": "Cause and consequence: já que, visto que, de modo que, tão ... que",
+      "explanation": "Já que, visto que and uma vez que introduce a reason the speaker treats as known, and they take the indicative: já que você chegou, vamos começar. Tanto que and tão ... que (or tanto ... que) express an intensity with a result: choveu tanto que a rua alagou, ele falou tão rápido que ninguém entendeu. De modo que, de maneira que and por isso express a consequence: chegou tarde, de modo que perdeu a reunião. Portanto and por conseguinte also mark the result in writing. Do not replace que with como or quanto in the result (tão cansada como dormiu is wrong), and do not use embora, which marks concession, for cause.",
+      "examples": [
+        {
+          "pt": "Já que você chegou, vamos começar.",
+          "en": "Since you have arrived, let us begin."
+        },
+        {
+          "pt": "Choveu tanto que a rua alagou.",
+          "en": "It rained so much that the street flooded."
+        },
+        {
+          "pt": "Ele chegou tarde, de modo que perdeu a reunião.",
+          "en": "He arrived late, so he missed the meeting."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-032@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-032@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: ___ você já chegou, vamos começar. (since, given that)",
+            "answer": "Já que",
+            "alternatives": ["Já que", "Embora", "Para que"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: Choveu tanto ___ a rua alagou. (so much that)",
+            "answer": "que",
+            "alternatives": ["quanto", "que", "porque"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: Estudou muito, ___ passou no exame. (consequence)",
+            "answer": "de modo que",
+            "alternatives": ["embora", "caso", "de modo que"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q04",
+            "format": "typed-blank",
+            "prompt": "___ ele chegou tarde, perdeu a reunião. (visto + que)",
+            "answer": "Visto que",
+            "near_misses": ["Embora", "Caso"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela estava tão cansada ___ dormiu no sofá. (tão ... que)",
+            "answer": "que",
+            "near_misses": ["como", "quanto"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ não há tempo, vamos cancelar. (já + que)",
+            "answer": "Já que",
+            "near_misses": ["Embora", "Caso"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q07",
+            "format": "translation",
+            "prompt": "Translate: Since you have arrived, let us begin.",
+            "answer": "Já que você chegou, vamos começar.",
+            "alternatives": ["Visto que você chegou, vamos começar."],
+            "near_misses": [
+              "Embora você chegou, vamos começar.",
+              "Para que você chegou, vamos começar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q08",
+            "format": "translation",
+            "prompt": "Translate: It rained so much that the street flooded.",
+            "answer": "Choveu tanto que a rua alagou.",
+            "alternatives": ["Choveu tanto que a rua inundou."],
+            "near_misses": [
+              "Choveu tanto quanto a rua alagou.",
+              "Choveu tanto porque a rua alagou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q09",
+            "format": "translation",
+            "prompt": "Translate: He arrived late, so he missed the meeting.",
+            "answer": "Ele chegou tarde, de modo que perdeu a reunião.",
+            "alternatives": ["Ele chegou tarde, por isso perdeu a reunião."],
+            "near_misses": [
+              "Ele chegou tarde, embora perdeu a reunião.",
+              "Ele chegou tarde, caso perdeu a reunião."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q10",
+            "format": "correction",
+            "prompt": "Correct the connector: Estava tão cansada como dormiu no sofá.",
+            "answer": "Estava tão cansada que dormiu no sofá.",
+            "near_misses": [
+              "Estava tão cansada como dormiu no sofá.",
+              "Estava tão cansada quanto dormiu no sofá."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q11",
+            "format": "correction",
+            "prompt": "Correct the connector: Visto ele chegou tarde, perdeu a reunião.",
+            "answer": "Visto que ele chegou tarde, perdeu a reunião.",
+            "near_misses": [
+              "Visto ele chegou tarde, perdeu a reunião.",
+              "Visto de que ele chegou tarde, perdeu a reunião."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:q12",
+            "format": "correction",
+            "prompt": "Correct the connector: Ele falou tão rápido porque ninguém entendeu.",
+            "answer": "Ele falou tão rápido que ninguém entendeu.",
+            "near_misses": [
+              "Ele falou tão rápido porque ninguém entendeu.",
+              "Ele falou tão rápido quanto ninguém entendeu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-032@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: ___ há muita gente, vamos esperar. (given that) (causa)",
+            "answer": "Uma vez que",
+            "alternatives": ["Embora", "Para que", "Uma vez que"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-032@1:h02",
+            "format": "typed-blank",
+            "prompt": "Estava doente; ___ , faltou à aula. (conector de consequência, uma palavra)",
+            "answer": "logo",
+            "near_misses": ["embora", "porque"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-032@1:h03",
+            "format": "translation",
+            "prompt": "Translate: Since it is late, we will leave. (causa)",
+            "answer": "Como é tarde, vamos embora.",
+            "alternatives": ["Já que é tarde, vamos embora."],
+            "near_misses": [
+              "Embora é tarde, vamos embora.",
+              "Caso é tarde, vamos embora."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-033",
+      "title": "Condition and purpose: caso, a menos que, desde que, sem que, para que",
+      "explanation": "These conjunctions take the subjunctive. Caso introduces a possibility (caso você tenha tempo, me ligue), a menos que an exception (vamos sair, a menos que chova), and desde que a condition that must be met (pode usar o carro, desde que tenha cuidado). Sem que means without (saiu sem que ninguém o visse). Para que and a fim de que express purpose (explicou devagar para que todos entendessem). Use the present subjunctive for present or future and the imperfect after a past main verb. Do not use the indicative after these conjunctions (caso você tem tempo is wrong) and do not replace sem que with sem plus a conjugated verb.",
+      "examples": [
+        {
+          "pt": "Caso você tenha tempo, me ligue.",
+          "en": "In case you have time, call me."
+        },
+        {
+          "pt": "Saiu sem que ninguém o visse.",
+          "en": "He left without anyone seeing him."
+        },
+        {
+          "pt": "Pode usar o carro, desde que tenha cuidado.",
+          "en": "You can use the car, provided that you are careful."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-033@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-033@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Caso você ___ tempo, me ligue. (ter)",
+            "answer": "tenha",
+            "alternatives": ["tem", "tenha", "tiver"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Vou sair, a menos que ___ . (chover)",
+            "answer": "chova",
+            "alternatives": ["chove", "chovia", "chova"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Explicou devagar para que todos ___ . (entender, imperfeito do subjuntivo)",
+            "answer": "entendessem",
+            "alternatives": ["entendessem", "entendem", "entenderem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q04",
+            "format": "typed-blank",
+            "prompt": "Pode usar o carro, desde que ___ cuidado. (ter)",
+            "answer": "tenha",
+            "near_misses": ["tem", "tiver"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q05",
+            "format": "typed-blank",
+            "prompt": "Saiu sem que ninguém o ___ . (ver, imperfeito do subjuntivo)",
+            "answer": "visse",
+            "near_misses": ["viu", "vê"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ele trabalha a fim de que a família ___ bem. (viver)",
+            "answer": "viva",
+            "near_misses": ["vive", "vivia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q07",
+            "format": "translation",
+            "prompt": "Translate: In case you have time, call me.",
+            "answer": "Caso você tenha tempo, me ligue.",
+            "alternatives": ["Caso tenha tempo, me ligue."],
+            "near_misses": [
+              "Caso você tem tempo, me ligue.",
+              "Caso você tinha tempo, me ligue."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q08",
+            "format": "translation",
+            "prompt": "Translate: He left without anyone seeing him.",
+            "answer": "Saiu sem que ninguém o visse.",
+            "alternatives": ["Ele saiu sem que ninguém o visse."],
+            "near_misses": [
+              "Saiu sem que ninguém o viu.",
+              "Saiu sem ninguém o ver."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q09",
+            "format": "translation",
+            "prompt": "Translate: You can use the car, provided that you are careful.",
+            "answer": "Pode usar o carro, desde que tenha cuidado.",
+            "alternatives": [
+              "Você pode usar o carro, desde que tenha cuidado."
+            ],
+            "near_misses": [
+              "Pode usar o carro, desde que tem cuidado.",
+              "Pode usar o carro, desde que teve cuidado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q10",
+            "format": "correction",
+            "prompt": "Correct the mood: Caso ela chegou cedo, avise-me.",
+            "answer": "Caso ela chegue cedo, avise-me.",
+            "near_misses": [
+              "Caso ela chegou cedo, avise-me.",
+              "Caso ela chegasse cedo, avise-me."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q11",
+            "format": "correction",
+            "prompt": "Correct the mood: Vamos sair a menos que chove.",
+            "answer": "Vamos sair a menos que chova.",
+            "near_misses": [
+              "Vamos sair a menos que chove.",
+              "Vamos sair a menos que choveu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:q12",
+            "format": "correction",
+            "prompt": "Correct the mood (depois de verbo no passado): Explicou para que todos entendem.",
+            "answer": "Explicou para que todos entendessem.",
+            "near_misses": [
+              "Explicou para que todos entendem.",
+              "Explicou para que todos entenderam."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-033@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Leve o casaco caso ___ frio. (fazer) (condição)",
+            "answer": "faça",
+            "alternatives": ["faça", "faz", "fazia"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-033@1:h02",
+            "format": "typed-blank",
+            "prompt": "Fale baixo para que o bebê não ___ . (acordar) (finalidade)",
+            "answer": "acorde",
+            "near_misses": ["acorda", "acordou"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-033@1:h03",
+            "format": "translation",
+            "prompt": "Translate: He will come unless he is sick. (condição)",
+            "answer": "Ele virá, a menos que esteja doente.",
+            "alternatives": ["Ele virá a menos que esteja doente."],
+            "near_misses": [
+              "Ele virá, a menos que está doente.",
+              "Ele virá, a menos que estava doente."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-034",
+      "title": "Time clauses: antes que, até que, sempre que, logo que",
+      "explanation": "Antes que always takes the subjunctive: saia antes que ela chegue, fechou a janela antes que a chuva começasse. Até que takes the subjunctive when the event is not yet realised or is seen as a goal (esperaremos até que ele volte). Sempre que takes the indicative for a habit (sempre que preciso, ele me ajuda) and the future subjunctive for a future case. Logo que and assim que take the future subjunctive for a future event (logo que chegarmos, ligamos) and the indicative for a past one. Use the imperfect subjunctive after a past main verb when the subjunctive is called for. Do not use the indicative after antes que (antes que ela chega is wrong).",
+      "examples": [
+        {
+          "pt": "Saia antes que ela chegue.",
+          "en": "Leave before she arrives."
+        },
+        {
+          "pt": "Esperaremos até que ele volte.",
+          "en": "We will wait until he returns."
+        },
+        {
+          "pt": "Sempre que preciso, ele me ajuda.",
+          "en": "Whenever I need it, he helps me."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-034@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-034@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Saia antes que ela ___ . (chegar)",
+            "answer": "chegue",
+            "alternatives": ["chega", "chegou", "chegue"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Esperaremos até que ele ___ . (voltar)",
+            "answer": "volte",
+            "alternatives": ["volte", "volta", "voltou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Sempre que eu ___ , ele me ajuda. (precisar) (hábito, indicativo)",
+            "answer": "preciso",
+            "alternatives": ["precise", "preciso", "precisasse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ela saiu antes que o filme ___ . (acabar, imperfeito do subjuntivo)",
+            "answer": "acabasse",
+            "near_misses": ["acabou", "acabava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q05",
+            "format": "typed-blank",
+            "prompt": "Logo que nós ___ , ligamos. (chegar, futuro do subjuntivo)",
+            "answer": "chegarmos",
+            "near_misses": ["chegamos", "cheguemos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q06",
+            "format": "typed-blank",
+            "prompt": "Fiquei ali até que ele ___ . (sair, imperfeito do subjuntivo)",
+            "answer": "saísse",
+            "near_misses": ["saiu", "sai"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q07",
+            "format": "translation",
+            "prompt": "Translate: Leave before she arrives.",
+            "answer": "Saia antes que ela chegue.",
+            "alternatives": ["Vá embora antes que ela chegue."],
+            "near_misses": [
+              "Saia antes que ela chega.",
+              "Saia antes que ela chegou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q08",
+            "format": "translation",
+            "prompt": "Translate: We will wait until he returns.",
+            "answer": "Esperaremos até que ele volte.",
+            "alternatives": ["Vamos esperar até que ele volte."],
+            "near_misses": [
+              "Esperaremos até que ele volta.",
+              "Esperaremos até que ele voltou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q09",
+            "format": "translation",
+            "prompt": "Translate: Whenever I need it, he helps me. (indicativo)",
+            "answer": "Sempre que preciso, ele me ajuda.",
+            "alternatives": ["Sempre que eu preciso, ele me ajuda."],
+            "near_misses": [
+              "Sempre que precise, ele me ajuda.",
+              "Sempre que precisasse, ele me ajuda."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q10",
+            "format": "correction",
+            "prompt": "Correct the mood: Ele fechou a janela antes que a chuva começou.",
+            "answer": "Ele fechou a janela antes que a chuva começasse.",
+            "near_misses": [
+              "Ele fechou a janela antes que a chuva começou.",
+              "Ele fechou a janela antes que a chuva começa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q11",
+            "format": "correction",
+            "prompt": "Correct the mood: Vamos esperar até que a reunião termina.",
+            "answer": "Vamos esperar até que a reunião termine.",
+            "near_misses": [
+              "Vamos esperar até que a reunião termina.",
+              "Vamos esperar até que a reunião terminou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:q12",
+            "format": "correction",
+            "prompt": "Correct the mood: Logo que nós chegamos amanhã, ligamos.",
+            "answer": "Logo que nós chegarmos amanhã, ligamos.",
+            "near_misses": [
+              "Logo que nós chegamos amanhã, ligamos.",
+              "Logo que nós cheguemos amanhã, ligamos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-034@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Fechou tudo antes que a tempestade ___ . (chegar, imperfeito do subjuntivo) (oração temporal)",
+            "answer": "chegasse",
+            "alternatives": ["chegou", "chegasse", "chegava"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-034@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ligue-me logo que ___ em casa. (chegar, futuro do subjuntivo) (oração temporal)",
+            "answer": "chegar",
+            "near_misses": ["chega", "chegue"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-034@1:h03",
+            "format": "translation",
+            "prompt": "Translate: Close the window before it rains. (oração temporal)",
+            "answer": "Feche a janela antes que chova.",
+            "near_misses": [
+              "Feche a janela antes que chove.",
+              "Feche a janela antes que choveu."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-035",
+      "title": "Discourse markers: contrast, addition, clarification",
+      "explanation": "Discourse markers link sentences and show the relation between them. For contrast, use no entanto, contudo, todavia or por outro lado: o plano é bom; no entanto, é caro. For addition, use além disso or ademais: o hotel é limpo; além disso, fica perto da praia. For clarification, use ou seja or isto é: ele é bilíngue, ou seja, fala duas línguas. For result, use portanto, por conseguinte or por isso. These markers usually sit at the start of the second sentence or clause and are set off by commas. Do not swap them: além disso adds and no entanto opposes, and using the wrong one reverses the logic.",
+      "examples": [
+        {
+          "pt": "O plano é bom; no entanto, é caro.",
+          "en": "The plan is good; however, it is expensive."
+        },
+        {
+          "pt": "O hotel é limpo; além disso, fica perto da praia.",
+          "en": "The hotel is clean; besides, it is close to the beach."
+        },
+        {
+          "pt": "Ele é bilíngue, ou seja, fala duas línguas.",
+          "en": "He is bilingual, that is, he speaks two languages."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-035@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-035@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: O plano é bom; ___ , é caro. (contrast)",
+            "answer": "no entanto",
+            "alternatives": ["no entanto", "além disso", "ou seja"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: O hotel é limpo; ___ , fica perto da praia. (addition)",
+            "answer": "além disso",
+            "alternatives": ["no entanto", "além disso", "portanto"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: Ele é bilíngue, ___ , fala duas línguas. (clarification)",
+            "answer": "ou seja",
+            "alternatives": ["contudo", "além disso", "ou seja"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q04",
+            "format": "typed-blank",
+            "prompt": "Estudou pouco; ___ , passou. (contraste, uma palavra)",
+            "answer": "contudo",
+            "near_misses": ["ademais", "portanto"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q05",
+            "format": "typed-blank",
+            "prompt": "A casa é grande; ___ , tem jardim. (adição, uma palavra)",
+            "answer": "ademais",
+            "near_misses": ["contudo", "todavia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q06",
+            "format": "typed-blank",
+            "prompt": "Estava cansada; ___ , foi dormir. (consequência, uma palavra)",
+            "answer": "portanto",
+            "near_misses": ["contudo", "ademais"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q07",
+            "format": "translation",
+            "prompt": "Translate: The plan is good; however, it is expensive.",
+            "answer": "O plano é bom; no entanto, é caro.",
+            "alternatives": [
+              "O plano é bom; contudo, é caro.",
+              "O plano é bom; todavia, é caro."
+            ],
+            "near_misses": [
+              "O plano é bom; além disso, é caro.",
+              "O plano é bom; ou seja, é caro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q08",
+            "format": "translation",
+            "prompt": "Translate: The hotel is clean; besides, it is close to the beach.",
+            "answer": "O hotel é limpo; além disso, fica perto da praia.",
+            "alternatives": ["O hotel é limpo; ademais, fica perto da praia."],
+            "near_misses": [
+              "O hotel é limpo; no entanto, fica perto da praia.",
+              "O hotel é limpo; ou seja, fica perto da praia."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q09",
+            "format": "translation",
+            "prompt": "Translate: He is bilingual, that is, he speaks two languages.",
+            "answer": "Ele é bilíngue, ou seja, fala duas línguas.",
+            "alternatives": ["Ele é bilíngue, isto é, fala duas línguas."],
+            "near_misses": [
+              "Ele é bilíngue, contudo, fala duas línguas.",
+              "Ele é bilíngue, além disso, fala duas línguas."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q10",
+            "format": "correction",
+            "prompt": "Correct the connector (contrast): A comida é boa; além disso, é cara.",
+            "answer": "A comida é boa; no entanto, é cara.",
+            "alternatives": [
+              "A comida é boa; contudo, é cara.",
+              "A comida é boa; todavia, é cara."
+            ],
+            "near_misses": [
+              "A comida é boa; além disso, é cara.",
+              "A comida é boa; ou seja, é cara."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q11",
+            "format": "correction",
+            "prompt": "Correct the connector (addition): O quarto é limpo; no entanto, tem vista para o mar.",
+            "answer": "O quarto é limpo; além disso, tem vista para o mar.",
+            "alternatives": [
+              "O quarto é limpo; ademais, tem vista para o mar."
+            ],
+            "near_misses": [
+              "O quarto é limpo; no entanto, tem vista para o mar.",
+              "O quarto é limpo; ou seja, tem vista para o mar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:q12",
+            "format": "correction",
+            "prompt": "Correct the connector (clarification): Ela é pediatra; contudo, médica de crianças.",
+            "answer": "Ela é pediatra; ou seja, médica de crianças.",
+            "alternatives": ["Ela é pediatra; isto é, médica de crianças."],
+            "near_misses": [
+              "Ela é pediatra; contudo, médica de crianças.",
+              "Ela é pediatra; além disso, médica de crianças."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-035@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best connector: A viagem foi longa; ___ , valeu a pena. (contrast) (conector de discurso)",
+            "answer": "todavia",
+            "alternatives": ["ademais", "portanto", "todavia"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-035@1:h02",
+            "format": "typed-blank",
+            "prompt": "O hotel é caro; ___ , tem ótima vista. (contraste, uma palavra) (conector de discurso)",
+            "answer": "entretanto",
+            "near_misses": ["ademais", "portanto"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-035@1:h03",
+            "format": "translation",
+            "prompt": "Translate: The film is long; however, it is excellent. (conector de discurso)",
+            "answer": "O filme é longo; no entanto, é excelente.",
+            "alternatives": ["O filme é longo; contudo, é excelente."],
+            "near_misses": [
+              "O filme é longo; além disso, é excelente.",
+              "O filme é longo; ou seja, é excelente."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
