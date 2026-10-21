@@ -640,13 +640,11 @@ test('restores the map position after returning from a lesson', async ({
     .toBe(0);
 });
 
-test('preserves map context through native answer, retry, and report posts', async ({
+test('preserves map context through answer, retry, and report posts', async ({
   browser
 }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
-  const scripts = await context.newCDPSession(page);
-  await scripts.send('Emulation.setScriptExecutionDisabled', { value: true });
   const returnTo = '/app/map?language=fr&skill=fr-a1-001&status=weak&x=80&y=0';
   try {
     await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
@@ -1154,4 +1152,133 @@ test('keeps refresh blocked until every mounted exercise is clear', async ({
   expect(answers).toContainEqual(
     expect.objectContaining({ question_id: 'fr-a1-001@1:q2', answer: 'es' })
   );
+});
+
+/** A short viewport, so the practice page scrolls and a reload is visible. */
+async function startScrollScenario(page: Page, context: BrowserContext) {
+  const userId = await signIn(page, context);
+  const studySessionId = `scroll-session-${randomUUID()}`;
+  await seedSession(userId, studySessionId, 'grammar-fsrs-1');
+  await page.setViewportSize({ width: 360, height: 420 });
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=${studySessionId}`
+  );
+  return { userId, studySessionId };
+}
+
+/** Scroll to the bottom and tag the document, so a reload is detectable. */
+async function scrollToBottomAndTag(page: Page) {
+  await page.evaluate(() => {
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    Object.assign(window, { documentTag: 'same-document' });
+  });
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+}
+
+const documentTag = (page: Page) =>
+  page.evaluate(() => (window as { documentTag?: string }).documentTag);
+
+test('rating an answer updates in place and keeps the scroll position', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await expect(feedback).toContainText('Correct');
+
+  await scrollToBottomAndTag(page);
+  await feedback.getByRole('button', { name: 'Good', exact: true }).click();
+
+  const rated = page
+    .getByRole('status')
+    .filter({ hasText: /^You rated this good\./ });
+  await expect(rated).toBeFocused();
+  await expect(rated).toBeInViewport();
+  expect(await documentTag(page)).toBe('same-document');
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
+
+test('an answer leaves focus on the feedback heading in view', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  await startScrollScenario(page, context);
+  await scrollToBottomAndTag(page);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  const heading = feedback.getByRole('heading', { name: 'Correct' });
+  await expect(heading).toBeFocused();
+  await expect(heading).toBeInViewport();
+  expect(await documentTag(page)).toBe('same-document');
+});
+
+test('answer results go to a live region that was already on the page', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  await startScrollScenario(page, context);
+  const announcer = page.locator('[aria-live="polite"]');
+  await expect(announcer).toHaveCount(1);
+  const before = await announcer.elementHandle();
+  await expect(announcer).toHaveText('');
+
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(announcer).toContainText('Correct');
+  const after = await announcer.elementHandle();
+  expect(await page.evaluate(([a, b]) => a === b, [before, after])).toBe(true);
+
+  await page
+    .getByRole('region', { name: 'Practice feedback' })
+    .getByRole('button', { name: 'Good', exact: true })
+    .click();
+  await expect(announcer).toContainText(/^You rated this good\./);
+});
+
+test('answer and rating buttons stay disabled until the page is interactive', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const { userId, studySessionId } = await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(
+    page.getByRole('region', { name: 'Practice feedback' })
+  ).toContainText('Correct');
+  const unanswered = `scroll-session-${randomUUID()}`;
+  await seedSession(userId, unanswered, 'grammar-fsrs-1');
+
+  // Without its scripts the page never becomes interactive.
+  await page.route('**/_app/**/*.js', (route) => route.abort());
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=${studySessionId}`
+  );
+  await expect(
+    page.getByRole('button', { name: 'Good', exact: true })
+  ).toBeDisabled();
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=${unanswered}`
+  );
+  await expect(
+    page.getByRole('button', { name: 'Submit answer', exact: true })
+  ).toBeDisabled();
+  await expect(
+    page.getByRole('button', { name: 'Not sure', exact: true })
+  ).toBeDisabled();
 });
