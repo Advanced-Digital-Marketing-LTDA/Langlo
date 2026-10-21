@@ -305,6 +305,15 @@ describe('revising already imported lessons', () => {
         versions: pkg.versions.filter((version) => !revisions.includes(version))
       });
       const before = await rowsOf(client);
+      // A learner already reviewing a revised skill keeps that schedule.
+      await client.batch(
+        [
+          "INSERT INTO users (id, email, email_verified, created_at, updated_at) VALUES ('learner-a', 'a@example.test', 1, 0, 0)",
+          `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, reset_required, scheduler_version, parameters_json)
+            VALUES ('learner-a', 'en', 'en-a1-005', 'en-a1-005@1', '{"due":"2026-11-02T09:00:00.000Z"}', 1793610000000, 2, 0, 'v1', '{}')`
+        ],
+        'write'
+      );
 
       // The English revisions repeat their Portuguese translation, which is a
       // minor change, so a patch bump is refused and writes nothing.
@@ -338,6 +347,22 @@ describe('revising already imported lessons', () => {
       expect(revised?.prompt).toBe('He ___ a new bike. (buy) (simple past)');
       expect(original?.lineage_key).toBeNull();
       expect(revised?.lineage_key).toBe('h02');
+      // Grammar retention transfers to the revision unchanged (migration 0031).
+      expect(
+        (
+          await client.execute(
+            "SELECT content_version_id, state_json, due_at, revision, reset_required FROM grammar_retention_schedules WHERE owner_id = 'learner-a'"
+          )
+        ).rows.map((row) => ({ ...row }))
+      ).toEqual([
+        {
+          content_version_id: 'en-a1-005@2',
+          state_json: '{"due":"2026-11-02T09:00:00.000Z"}',
+          due_at: 1793610000000,
+          revision: 3,
+          reset_required: 0
+        }
+      ]);
     } finally {
       client.close();
     }

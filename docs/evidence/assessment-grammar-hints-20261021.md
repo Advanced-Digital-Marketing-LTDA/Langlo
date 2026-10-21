@@ -15,7 +15,7 @@ Untouched: migrations, schema, UI components, grading, scoring, French and Germa
 
 ## Consequences to know before the owner applies it
 
-- Grammar retention: with #140 merged first (migration 0032), learners' schedules on the 52 skills transfer to the new versions with recall state and due date unchanged. Without #140, the migration 0030 triggers would reset them, so #140 must merge before this PR.
+- Grammar retention: this branch is stacked on #140 (migration `0031_retention_transfers_to_new_versions`), so learners' schedules on the 52 skills transfer to the new versions with recall state and due date unchanged. `tests/content-import-script.test.ts` (revising already imported lessons) seeds a schedule on `en-a1-005@1`, imports the revisions and asserts the schedule moved to `@2` unchanged; with the 0031 journal entry removed it fails (`due_at: 0`, `reset_required: 1`).
 - `same` questions keep their lineage key, so earlier answers still count toward mastery. A learner who already saw a holdout is not offered its revised wording as a new item.
 - The Portuguese B2 content PR planned as `1.3.0` needs `1.4.0` if this merges first.
 - Hint wording is free text; there is no enforced vocabulary. Applying to any database is an owner action (`npm run content:import`, then `--impact`).
