@@ -20,11 +20,13 @@ vi.mock('@sentry/sveltekit', () => ({
 
 vi.mock('@libsql/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@libsql/client')>();
+  const { isRemoteDatabaseUrl } =
+    await import('../src/lib/server/remote-clients.ts');
   return {
     ...actual,
     // Remote URLs would open a network connection; hand back a stub instead.
     createClient: (options: { url: string }) => {
-      if (!/^(libsql|https?|wss?):/.test(options.url))
+      if (!isRemoteDatabaseUrl(options.url))
         return actual.createClient(options as never);
       const client = stubClient();
       created.push({ url: options.url, client });
@@ -159,16 +161,12 @@ it.each(['memory', 'file'])(
 );
 
 it('does not treat a client it did not mark as remote', async () => {
-  const { client: remote } = await openAppDatabase(
-    config('libsql://marked-only.test')
-  );
   const unmarked = stubClient();
   const writer = await beginWrite(unmarked);
   const reading = beginRead(unmarked);
   expect(await settles(reading)).toBe(false);
   await writer.commit();
   await (await reading).commit();
-  expect(remote).not.toBe(unmarked);
 });
 
 it('keeps the app database module loadable by plain Node scripts', () => {

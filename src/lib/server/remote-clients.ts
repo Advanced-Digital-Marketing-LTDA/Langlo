@@ -15,3 +15,10 @@ export function markRemoteClient(client: object) {
 export function isRemoteClient(client: object) {
   return remoteClients.has(client);
 }
+
+const remoteUrl = /^(libsql|https?|wss?):/i;
+
+/** Whether a database URL points at a remote libSQL server. */
+export function isRemoteDatabaseUrl(databaseUrl: string) {
+  return remoteUrl.test(databaseUrl);
+}

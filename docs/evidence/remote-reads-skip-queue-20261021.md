@@ -1,6 +1,6 @@
 # Remote read transactions skip the connection queue (step B of the database performance plan)
 
-**Scope:** read transactions on remote libSQL (Turso) clients only. Writes, local file and in-memory databases, the 5 s `SQLITE_BUSY` wait, schema and queries are unchanged. This records local validation; it is not a latency result. The effect is checked in GlitchTip after deploy (`db.queue-wait` and the page timings).
+**Scope:** read transactions on remote libSQL (Turso) clients only. Writes (including their 5 s `SQLITE_BUSY` wait), local file and in-memory databases, schema and queries are unchanged. Remote reads never queue, so that wait no longer applies to them. This records local validation; it is not a latency result. The effect is checked in GlitchTip after deploy (`db.queue-wait` and the page timings).
 
 ## Why
 
