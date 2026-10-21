@@ -104,9 +104,7 @@
       "indexes": {
         "accounts_user_id_idx": {
           "name": "accounts_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -115,12 +113,8 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -175,10 +169,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "ai_usage_month_api_pk": {
-          "columns": [
-            "month",
-            "api"
-          ],
+          "columns": ["month", "api"],
           "name": "ai_usage_month_api_pk"
         }
       },
@@ -306,47 +297,28 @@
       "indexes": {
         "attempts_owner_session_question_idx": {
           "name": "attempts_owner_session_question_idx",
-          "columns": [
-            "owner_id",
-            "study_session_id",
-            "question_id"
-          ],
+          "columns": ["owner_id", "study_session_id", "question_id"],
           "isUnique": false
         },
         "attempts_owner_submission_unique": {
           "name": "attempts_owner_submission_unique",
-          "columns": [
-            "owner_id",
-            "submission_key"
-          ],
+          "columns": ["owner_id", "submission_key"],
           "isUnique": true
         },
         "attempts_session_question_independent": {
           "name": "attempts_session_question_independent",
-          "columns": [
-            "owner_id",
-            "study_session_id",
-            "question_id"
-          ],
+          "columns": ["owner_id", "study_session_id", "question_id"],
           "isUnique": true,
           "where": "\"attempts\".\"evidence_kind\" = 'independent'"
         },
         "attempts_identity_owner": {
           "name": "attempts_identity_owner",
-          "columns": [
-            "id",
-            "owner_id"
-          ],
+          "columns": ["id", "owner_id"],
           "isUnique": true
         },
         "attempts_identity_owner_skill_language": {
           "name": "attempts_identity_owner_skill_language",
-          "columns": [
-            "id",
-            "owner_id",
-            "skill_id",
-            "language"
-          ],
+          "columns": ["id", "owner_id", "skill_id", "language"],
           "isUnique": true
         }
       },
@@ -355,12 +327,8 @@
           "name": "attempts_owner_id_users_id_fk",
           "tableFrom": "attempts",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -368,16 +336,8 @@
           "name": "attempts_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk",
           "tableFrom": "attempts",
           "tableTo": "study_sessions",
-          "columnsFrom": [
-            "study_session_id",
-            "owner_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "language"
-          ],
+          "columnsFrom": ["study_session_id", "owner_id", "language"],
+          "columnsTo": ["id", "owner_id", "language"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -391,12 +351,7 @@
             "skill_id",
             "language"
           ],
-          "columnsTo": [
-            "id",
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
+          "columnsTo": ["id", "content_version_id", "skill_id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -497,29 +452,17 @@
       "indexes": {
         "card_drafts_canonical_identity_unique": {
           "name": "card_drafts_canonical_identity_unique",
-          "columns": [
-            "owner_id",
-            "language",
-            "skill_id",
-            "canonical_mistake"
-          ],
+          "columns": ["owner_id", "language", "skill_id", "canonical_mistake"],
           "isUnique": true
         },
         "card_drafts_source_unique": {
           "name": "card_drafts_source_unique",
-          "columns": [
-            "source_id"
-          ],
+          "columns": ["source_id"],
           "isUnique": true
         },
         "card_drafts_identity_owner_source_language": {
           "name": "card_drafts_identity_owner_source_language",
-          "columns": [
-            "id",
-            "owner_id",
-            "source_id",
-            "language"
-          ],
+          "columns": ["id", "owner_id", "source_id", "language"],
           "isUnique": true
         }
       },
@@ -528,12 +471,8 @@
           "name": "card_drafts_owner_id_users_id_fk",
           "tableFrom": "card_drafts",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -541,14 +480,8 @@
           "name": "card_drafts_skill_id_language_skills_id_language_fk",
           "tableFrom": "card_drafts",
           "tableTo": "skills",
-          "columnsFrom": [
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "language"
-          ],
+          "columnsFrom": ["skill_id", "language"],
+          "columnsTo": ["id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -642,9 +575,7 @@
       "indexes": {
         "content_changes_skill": {
           "name": "content_changes_skill",
-          "columns": [
-            "skill_id"
-          ],
+          "columns": ["skill_id"],
           "isUnique": false
         }
       },
@@ -653,12 +584,8 @@
           "name": "content_changes_curriculum_version_curriculum_imports_curriculum_version_fk",
           "tableFrom": "content_changes",
           "tableTo": "curriculum_imports",
-          "columnsFrom": [
-            "curriculum_version"
-          ],
-          "columnsTo": [
-            "curriculum_version"
-          ],
+          "columnsFrom": ["curriculum_version"],
+          "columnsTo": ["curriculum_version"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -751,18 +678,12 @@
       "indexes": {
         "content_reports_owner_submission": {
           "name": "content_reports_owner_submission",
-          "columns": [
-            "owner_id",
-            "submission_key"
-          ],
+          "columns": ["owner_id", "submission_key"],
           "isUnique": true
         },
         "content_reports_owner_created": {
           "name": "content_reports_owner_created",
-          "columns": [
-            "owner_id",
-            "created_at"
-          ],
+          "columns": ["owner_id", "created_at"],
           "isUnique": false
         }
       },
@@ -771,12 +692,8 @@
           "name": "content_reports_owner_id_users_id_fk",
           "tableFrom": "content_reports",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -784,16 +701,8 @@
           "name": "content_reports_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "content_reports",
           "tableTo": "content_versions",
-          "columnsFrom": [
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "skill_id",
-            "language"
-          ],
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
+          "columnsTo": ["id", "skill_id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -807,12 +716,7 @@
             "skill_id",
             "language"
           ],
-          "columnsTo": [
-            "id",
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
+          "columnsTo": ["id", "content_version_id", "skill_id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -892,19 +796,12 @@
       "indexes": {
         "content_versions_skill_version": {
           "name": "content_versions_skill_version",
-          "columns": [
-            "skill_id",
-            "version"
-          ],
+          "columns": ["skill_id", "version"],
           "isUnique": true
         },
         "content_versions_identity_skill_language": {
           "name": "content_versions_identity_skill_language",
-          "columns": [
-            "id",
-            "skill_id",
-            "language"
-          ],
+          "columns": ["id", "skill_id", "language"],
           "isUnique": true
         }
       },
@@ -913,14 +810,8 @@
           "name": "content_versions_skill_id_language_skills_id_language_fk",
           "tableFrom": "content_versions",
           "tableTo": "skills",
-          "columnsFrom": [
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "language"
-          ],
+          "columnsFrom": ["skill_id", "language"],
+          "columnsTo": ["id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1090,24 +981,17 @@
       "indexes": {
         "deliveries_source_unique": {
           "name": "deliveries_source_unique",
-          "columns": [
-            "source_id"
-          ],
+          "columns": ["source_id"],
           "isUnique": true
         },
         "deliveries_card_unique": {
           "name": "deliveries_card_unique",
-          "columns": [
-            "card_draft_id"
-          ],
+          "columns": ["card_draft_id"],
           "isUnique": true
         },
         "deliveries_owner_state": {
           "name": "deliveries_owner_state",
-          "columns": [
-            "owner_id",
-            "state"
-          ],
+          "columns": ["owner_id", "state"],
           "isUnique": false
         }
       },
@@ -1116,12 +1000,8 @@
           "name": "deliveries_owner_id_users_id_fk",
           "tableFrom": "deliveries",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1129,18 +1009,8 @@
           "name": "deliveries_card_draft_id_owner_id_source_id_language_card_drafts_id_owner_id_source_id_language_fk",
           "tableFrom": "deliveries",
           "tableTo": "card_drafts",
-          "columnsFrom": [
-            "card_draft_id",
-            "owner_id",
-            "source_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "source_id",
-            "language"
-          ],
+          "columnsFrom": ["card_draft_id", "owner_id", "source_id", "language"],
+          "columnsTo": ["id", "owner_id", "source_id", "language"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1224,19 +1094,12 @@
       "indexes": {
         "enrollments_owner_language_unique": {
           "name": "enrollments_owner_language_unique",
-          "columns": [
-            "owner_id",
-            "language"
-          ],
+          "columns": ["owner_id", "language"],
           "isUnique": true
         },
         "enrollments_identity_owner_language": {
           "name": "enrollments_identity_owner_language",
-          "columns": [
-            "id",
-            "owner_id",
-            "language"
-          ],
+          "columns": ["id", "owner_id", "language"],
           "isUnique": true
         }
       },
@@ -1245,12 +1108,8 @@
           "name": "enrollments_owner_id_users_id_fk",
           "tableFrom": "enrollments",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1329,20 +1188,12 @@
       "indexes": {
         "evaluations_attempt_version_unique": {
           "name": "evaluations_attempt_version_unique",
-          "columns": [
-            "attempt_id",
-            "evaluator_version",
-            "rubric_version"
-          ],
+          "columns": ["attempt_id", "evaluator_version", "rubric_version"],
           "isUnique": true
         },
         "evaluations_identity_owner_attempt": {
           "name": "evaluations_identity_owner_attempt",
-          "columns": [
-            "id",
-            "owner_id",
-            "attempt_id"
-          ],
+          "columns": ["id", "owner_id", "attempt_id"],
           "isUnique": true
         }
       },
@@ -1351,12 +1202,8 @@
           "name": "evaluations_owner_id_users_id_fk",
           "tableFrom": "evaluations",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1364,14 +1211,8 @@
           "name": "evaluations_attempt_id_owner_id_attempts_id_owner_id_fk",
           "tableFrom": "evaluations",
           "tableTo": "attempts",
-          "columnsFrom": [
-            "attempt_id",
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id"
-          ],
+          "columnsFrom": ["attempt_id", "owner_id"],
+          "columnsTo": ["id", "owner_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1512,21 +1353,12 @@
       "indexes": {
         "grammar_retention_events_session_skill": {
           "name": "grammar_retention_events_session_skill",
-          "columns": [
-            "owner_id",
-            "study_session_id",
-            "skill_id"
-          ],
+          "columns": ["owner_id", "study_session_id", "skill_id"],
           "isUnique": true
         },
         "grammar_retention_events_skill_time": {
           "name": "grammar_retention_events_skill_time",
-          "columns": [
-            "owner_id",
-            "language",
-            "skill_id",
-            "reviewed_at"
-          ],
+          "columns": ["owner_id", "language", "skill_id", "reviewed_at"],
           "isUnique": false
         }
       },
@@ -1535,16 +1367,8 @@
           "name": "grammar_retention_events_owner_id_language_skill_id_grammar_retention_schedules_owner_id_language_skill_id_fk",
           "tableFrom": "grammar_retention_events",
           "tableTo": "grammar_retention_schedules",
-          "columnsFrom": [
-            "owner_id",
-            "language",
-            "skill_id"
-          ],
-          "columnsTo": [
-            "owner_id",
-            "language",
-            "skill_id"
-          ],
+          "columnsFrom": ["owner_id", "language", "skill_id"],
+          "columnsTo": ["owner_id", "language", "skill_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1552,16 +1376,8 @@
           "name": "grammar_retention_events_study_session_id_owner_id_language_study_sessions_id_owner_id_language_fk",
           "tableFrom": "grammar_retention_events",
           "tableTo": "study_sessions",
-          "columnsFrom": [
-            "study_session_id",
-            "owner_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "language"
-          ],
+          "columnsFrom": ["study_session_id", "owner_id", "language"],
+          "columnsTo": ["id", "owner_id", "language"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1569,18 +1385,8 @@
           "name": "grammar_retention_events_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk",
           "tableFrom": "grammar_retention_events",
           "tableTo": "attempts",
-          "columnsFrom": [
-            "attempt_id",
-            "owner_id",
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "skill_id",
-            "language"
-          ],
+          "columnsFrom": ["attempt_id", "owner_id", "skill_id", "language"],
+          "columnsTo": ["id", "owner_id", "skill_id", "language"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1588,16 +1394,8 @@
           "name": "grammar_retention_events_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk",
           "tableFrom": "grammar_retention_events",
           "tableTo": "evaluations",
-          "columnsFrom": [
-            "evaluation_id",
-            "owner_id",
-            "attempt_id"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "attempt_id"
-          ],
+          "columnsFrom": ["evaluation_id", "owner_id", "attempt_id"],
+          "columnsTo": ["id", "owner_id", "attempt_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1605,26 +1403,15 @@
           "name": "grammar_retention_events_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "grammar_retention_events",
           "tableTo": "content_versions",
-          "columnsFrom": [
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "skill_id",
-            "language"
-          ],
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
+          "columnsTo": ["id", "skill_id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "grammar_retention_events_owner_id_id_pk": {
-          "columns": [
-            "owner_id",
-            "id"
-          ],
+          "columns": ["owner_id", "id"],
           "name": "grammar_retention_events_owner_id_id_pk"
         }
       },
@@ -1735,11 +1522,7 @@
       "indexes": {
         "grammar_retention_schedules_owner_due": {
           "name": "grammar_retention_schedules_owner_due",
-          "columns": [
-            "owner_id",
-            "language",
-            "due_at"
-          ],
+          "columns": ["owner_id", "language", "due_at"],
           "isUnique": false
         }
       },
@@ -1748,12 +1531,8 @@
           "name": "grammar_retention_schedules_owner_id_users_id_fk",
           "tableFrom": "grammar_retention_schedules",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1761,14 +1540,8 @@
           "name": "grammar_retention_schedules_skill_id_language_skills_id_language_fk",
           "tableFrom": "grammar_retention_schedules",
           "tableTo": "skills",
-          "columnsFrom": [
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "language"
-          ],
+          "columnsFrom": ["skill_id", "language"],
+          "columnsTo": ["id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1776,27 +1549,15 @@
           "name": "grammar_retention_schedules_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "grammar_retention_schedules",
           "tableTo": "content_versions",
-          "columnsFrom": [
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "skill_id",
-            "language"
-          ],
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
+          "columnsTo": ["id", "skill_id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "grammar_retention_schedules_owner_id_language_skill_id_pk": {
-          "columns": [
-            "owner_id",
-            "language",
-            "skill_id"
-          ],
+          "columns": ["owner_id", "language", "skill_id"],
           "name": "grammar_retention_schedules_owner_id_language_skill_id_pk"
         }
       },
@@ -1860,12 +1621,8 @@
           "name": "learner_preferences_owner_id_users_id_fk",
           "tableFrom": "learner_preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1938,22 +1695,15 @@
           "name": "lesson_translations_content_version_id_lessons_content_version_id_fk",
           "tableFrom": "lesson_translations",
           "tableTo": "lessons",
-          "columnsFrom": [
-            "content_version_id"
-          ],
-          "columnsTo": [
-            "content_version_id"
-          ],
+          "columnsFrom": ["content_version_id"],
+          "columnsTo": ["content_version_id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "lesson_translations_content_version_id_explanation_language_pk": {
-          "columns": [
-            "content_version_id",
-            "explanation_language"
-          ],
+          "columns": ["content_version_id", "explanation_language"],
           "name": "lesson_translations_content_version_id_explanation_language_pk"
         }
       },
@@ -2039,16 +1789,8 @@
           "name": "lessons_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "lessons",
           "tableTo": "content_versions",
-          "columnsFrom": [
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "skill_id",
-            "language"
-          ],
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
+          "columnsTo": ["id", "skill_id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2102,17 +1844,12 @@
       "indexes": {
         "native_flashcard_decks_id_owner_unique": {
           "name": "native_flashcard_decks_id_owner_unique",
-          "columns": [
-            "id",
-            "owner_id"
-          ],
+          "columns": ["id", "owner_id"],
           "isUnique": true
         },
         "native_flashcard_decks_owner": {
           "name": "native_flashcard_decks_owner",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         }
       },
@@ -2121,12 +1858,8 @@
           "name": "native_flashcard_decks_owner_id_users_id_fk",
           "tableFrom": "native_flashcard_decks",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2242,42 +1975,28 @@
       "indexes": {
         "native_flashcard_notes_id_owner_unique": {
           "name": "native_flashcard_notes_id_owner_unique",
-          "columns": [
-            "id",
-            "owner_id"
-          ],
+          "columns": ["id", "owner_id"],
           "isUnique": true
         },
         "native_flashcard_notes_source_owner_unique": {
           "name": "native_flashcard_notes_source_owner_unique",
-          "columns": [
-            "owner_id",
-            "source_id"
-          ],
+          "columns": ["owner_id", "source_id"],
           "isUnique": true
         },
         "native_flashcard_notes_owner_source_attempt_unique": {
           "name": "native_flashcard_notes_owner_source_attempt_unique",
-          "columns": [
-            "owner_id",
-            "source_attempt_id"
-          ],
+          "columns": ["owner_id", "source_attempt_id"],
           "isUnique": true,
           "where": "\"native_flashcard_notes\".\"source_attempt_id\" IS NOT NULL"
         },
         "native_flashcard_notes_owner_deck": {
           "name": "native_flashcard_notes_owner_deck",
-          "columns": [
-            "owner_id",
-            "deck_id"
-          ],
+          "columns": ["owner_id", "deck_id"],
           "isUnique": false
         },
         "native_flashcard_notes_owner_cursor": {
           "name": "native_flashcard_notes_owner_cursor",
-          "columns": [
-            "owner_id"
-          ],
+          "columns": ["owner_id"],
           "isUnique": false
         }
       },
@@ -2286,12 +2005,8 @@
           "name": "native_flashcard_notes_owner_id_users_id_fk",
           "tableFrom": "native_flashcard_notes",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2299,14 +2014,8 @@
           "name": "native_flashcard_notes_deck_id_owner_id_native_flashcard_decks_id_owner_id_fk",
           "tableFrom": "native_flashcard_notes",
           "tableTo": "native_flashcard_decks",
-          "columnsFrom": [
-            "deck_id",
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id"
-          ],
+          "columnsFrom": ["deck_id", "owner_id"],
+          "columnsTo": ["id", "owner_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2389,12 +2098,8 @@
           "name": "native_flashcard_preferences_owner_id_users_id_fk",
           "tableFrom": "native_flashcard_preferences",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2493,11 +2198,7 @@
       "indexes": {
         "native_flashcard_review_events_card_time": {
           "name": "native_flashcard_review_events_card_time",
-          "columns": [
-            "owner_id",
-            "card_id",
-            "reviewed_at"
-          ],
+          "columns": ["owner_id", "card_id", "reviewed_at"],
           "isUnique": false
         }
       },
@@ -2506,24 +2207,15 @@
           "name": "native_flashcard_review_events_card_id_owner_id_native_flashcards_id_owner_id_fk",
           "tableFrom": "native_flashcard_review_events",
           "tableTo": "native_flashcards",
-          "columnsFrom": [
-            "card_id",
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id"
-          ],
+          "columnsFrom": ["card_id", "owner_id"],
+          "columnsTo": ["id", "owner_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "native_flashcard_review_events_owner_id_id_pk": {
-          "columns": [
-            "owner_id",
-            "id"
-          ],
+          "columns": ["owner_id", "id"],
           "name": "native_flashcard_review_events_owner_id_id_pk"
         }
       },
@@ -2639,28 +2331,17 @@
       "indexes": {
         "native_flashcards_id_owner_unique": {
           "name": "native_flashcards_id_owner_unique",
-          "columns": [
-            "id",
-            "owner_id"
-          ],
+          "columns": ["id", "owner_id"],
           "isUnique": true
         },
         "native_flashcards_note_ordinal_unique": {
           "name": "native_flashcards_note_ordinal_unique",
-          "columns": [
-            "owner_id",
-            "note_id",
-            "ordinal"
-          ],
+          "columns": ["owner_id", "note_id", "ordinal"],
           "isUnique": true
         },
         "native_flashcards_owner_due": {
           "name": "native_flashcards_owner_due",
-          "columns": [
-            "owner_id",
-            "suspended",
-            "due_at"
-          ],
+          "columns": ["owner_id", "suspended", "due_at"],
           "isUnique": false
         }
       },
@@ -2669,14 +2350,8 @@
           "name": "native_flashcards_note_id_owner_id_native_flashcard_notes_id_owner_id_fk",
           "tableFrom": "native_flashcards",
           "tableTo": "native_flashcard_notes",
-          "columnsFrom": [
-            "note_id",
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id"
-          ],
+          "columnsFrom": ["note_id", "owner_id"],
+          "columnsTo": ["id", "owner_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2741,14 +2416,8 @@
           "name": "prerequisites_skill_id_language_skills_id_language_fk",
           "tableFrom": "prerequisites",
           "tableTo": "skills",
-          "columnsFrom": [
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "language"
-          ],
+          "columnsFrom": ["skill_id", "language"],
+          "columnsTo": ["id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2756,24 +2425,15 @@
           "name": "prerequisites_prerequisite_id_language_skills_id_language_fk",
           "tableFrom": "prerequisites",
           "tableTo": "skills",
-          "columnsFrom": [
-            "prerequisite_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "language"
-          ],
+          "columnsFrom": ["prerequisite_id", "language"],
+          "columnsTo": ["id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
         "prerequisites_skill_id_prerequisite_id_pk": {
-          "columns": [
-            "skill_id",
-            "prerequisite_id"
-          ],
+          "columns": ["skill_id", "prerequisite_id"],
           "name": "prerequisites_skill_id_prerequisite_id_pk"
         }
       },
@@ -2863,19 +2523,12 @@
       "indexes": {
         "questions_content_version_idx": {
           "name": "questions_content_version_idx",
-          "columns": [
-            "content_version_id"
-          ],
+          "columns": ["content_version_id"],
           "isUnique": false
         },
         "questions_identity_version_skill_language": {
           "name": "questions_identity_version_skill_language",
-          "columns": [
-            "id",
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
+          "columns": ["id", "content_version_id", "skill_id", "language"],
           "isUnique": true
         }
       },
@@ -2884,16 +2537,8 @@
           "name": "questions_content_version_id_skill_id_language_content_versions_id_skill_id_language_fk",
           "tableFrom": "questions",
           "tableTo": "content_versions",
-          "columnsFrom": [
-            "content_version_id",
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "skill_id",
-            "language"
-          ],
+          "columnsFrom": ["content_version_id", "skill_id", "language"],
+          "columnsTo": ["id", "skill_id", "language"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2946,9 +2591,7 @@
       "indexes": {
         "rate_limits_key_unique": {
           "name": "rate_limits_key_unique",
-          "columns": [
-            "key"
-          ],
+          "columns": ["key"],
           "isUnique": true
         }
       },
@@ -3022,16 +2665,12 @@
       "indexes": {
         "sessions_token_unique": {
           "name": "sessions_token_unique",
-          "columns": [
-            "token"
-          ],
+          "columns": ["token"],
           "isUnique": true
         },
         "sessions_user_id_idx": {
           "name": "sessions_user_id_idx",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         }
       },
@@ -3040,12 +2679,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3125,11 +2760,7 @@
       "indexes": {
         "skill_evidence_attempt_scoring_unique": {
           "name": "skill_evidence_attempt_scoring_unique",
-          "columns": [
-            "owner_id",
-            "attempt_id",
-            "scoring_version"
-          ],
+          "columns": ["owner_id", "attempt_id", "scoring_version"],
           "isUnique": true
         }
       },
@@ -3138,12 +2769,8 @@
           "name": "skill_evidence_owner_id_users_id_fk",
           "tableFrom": "skill_evidence",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3151,18 +2778,8 @@
           "name": "skill_evidence_attempt_id_owner_id_skill_id_language_attempts_id_owner_id_skill_id_language_fk",
           "tableFrom": "skill_evidence",
           "tableTo": "attempts",
-          "columnsFrom": [
-            "attempt_id",
-            "owner_id",
-            "skill_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "skill_id",
-            "language"
-          ],
+          "columnsFrom": ["attempt_id", "owner_id", "skill_id", "language"],
+          "columnsTo": ["id", "owner_id", "skill_id", "language"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3170,16 +2787,8 @@
           "name": "skill_evidence_evaluation_id_owner_id_attempt_id_evaluations_id_owner_id_attempt_id_fk",
           "tableFrom": "skill_evidence",
           "tableTo": "evaluations",
-          "columnsFrom": [
-            "evaluation_id",
-            "owner_id",
-            "attempt_id"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "attempt_id"
-          ],
+          "columnsFrom": ["evaluation_id", "owner_id", "attempt_id"],
+          "columnsTo": ["id", "owner_id", "attempt_id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3246,10 +2855,7 @@
       "indexes": {
         "skills_identity_language": {
           "name": "skills_identity_language",
-          "columns": [
-            "id",
-            "language"
-          ],
+          "columns": ["id", "language"],
           "isUnique": true
         }
       },
@@ -3353,19 +2959,12 @@
       "indexes": {
         "study_sessions_identity_owner_language": {
           "name": "study_sessions_identity_owner_language",
-          "columns": [
-            "id",
-            "owner_id",
-            "language"
-          ],
+          "columns": ["id", "owner_id", "language"],
           "isUnique": true
         },
         "study_sessions_owner_state": {
           "name": "study_sessions_owner_state",
-          "columns": [
-            "owner_id",
-            "state"
-          ],
+          "columns": ["owner_id", "state"],
           "isUnique": false
         }
       },
@@ -3374,12 +2973,8 @@
           "name": "study_sessions_owner_id_users_id_fk",
           "tableFrom": "study_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "owner_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["owner_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3387,16 +2982,8 @@
           "name": "study_sessions_enrollment_id_owner_id_language_enrollments_id_owner_id_language_fk",
           "tableFrom": "study_sessions",
           "tableTo": "enrollments",
-          "columnsFrom": [
-            "enrollment_id",
-            "owner_id",
-            "language"
-          ],
-          "columnsTo": [
-            "id",
-            "owner_id",
-            "language"
-          ],
+          "columnsFrom": ["enrollment_id", "owner_id", "language"],
+          "columnsTo": ["id", "owner_id", "language"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3474,9 +3061,7 @@
       "indexes": {
         "users_email_unique": {
           "name": "users_email_unique",
-          "columns": [
-            "email"
-          ],
+          "columns": ["email"],
           "isUnique": true
         }
       },
@@ -3541,9 +3126,7 @@
       "indexes": {
         "verifications_identifier_idx": {
           "name": "verifications_identifier_idx",
-          "columns": [
-            "identifier"
-          ],
+          "columns": ["identifier"],
           "isUnique": false
         }
       },
