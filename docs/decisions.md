@@ -32,3 +32,7 @@ Retain a later per-learner way to connect to Anki profiles. The application must
 ## T010a authentication contract — 2026-10-10
 
 Owner approved early execution of T010a (recorded schedule: October 13) and selected **Better Auth 1.7.x** (Drizzle adapter on the existing libSQL client, Nodemailer behind a `Mailer` interface for the Proton SMTP path) over a hand-rolled `node:crypto` contract. The full contract, rejected alternatives, and T010b/T010c boundaries are recorded in [auth.md](auth.md); evidence in [evidence/T010.md](evidence/T010.md). This records the selection only — no implementation, provisioning, live email, or release is authorized by it.
+
+## JavaScript is required for the learner app — 2026-10-21
+
+Owner decision: the learner app needs JavaScript. Submitting answers, ratings and other study forms without it is not supported, so those buttons stay disabled until the page's scripts are running, rather than posting a plain form that reloads the page.
