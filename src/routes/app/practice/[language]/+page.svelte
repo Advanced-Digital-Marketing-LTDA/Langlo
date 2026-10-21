@@ -17,8 +17,28 @@
 </p>
 <form method="POST" action="?/start">
   <input type="hidden" name="submissionKey" value={data.submissionKey} />
-  <button type="submit">Start practice</button>
+  <button type="submit"
+    >{data.unfinished ? 'Continue practice' : 'Start practice'}</button
+  >
 </form>
+{#if data.unfinished}
+  <p>
+    {data.unfinished.answered}
+    {data.unfinished.answered === 1 ? 'answer' : 'answers'} so far in your unfinished
+    practice.
+  </p>
+  <details>
+    <summary>Start over</summary>
+    <p>
+      This finishes your current practice and begins a new one. Your answers so
+      far stay in your history.
+    </p>
+    <form method="POST" action="?/startOver">
+      <input type="hidden" name="submissionKey" value={data.submissionKey} />
+      <button type="submit">Yes, start over</button>
+    </form>
+  </details>
+{/if}
 {#if form && 'message' in form}<p role="alert">{form.message}</p>{/if}
 {#if data.error}
   <p class="error-box" role="alert">{data.error}</p>

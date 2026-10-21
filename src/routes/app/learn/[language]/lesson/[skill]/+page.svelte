@@ -32,6 +32,7 @@
   let feedbackHeading: HTMLElement | undefined = $state();
   let ratedMessage: HTMLElement | undefined = $state();
   let ratePending = $state(false);
+  let rateUnreachable = $state(false);
 
   // Answering and rating update the page in place, so keyboard and screen
   // reader focus has to follow the new result. This runs after the form's
@@ -160,7 +161,15 @@
               action={`?/rate&session=${encodeURIComponent(data.exercise.studySessionId)}`}
               use:enhance={() => {
                 ratePending = true;
+                rateUnreachable = false;
                 return async ({ result, update }) => {
+                  // No action result at all: keep the buttons so the rating
+                  // can be sent again.
+                  if (result.type === 'error' && result.status === undefined) {
+                    rateUnreachable = true;
+                    ratePending = false;
+                    return;
+                  }
                   try {
                     await update();
                   } finally {
@@ -204,6 +213,12 @@
                   disabled={ratePending || !hydration.ready}>Easy</button
                 >
               </fieldset>
+              {#if rateUnreachable}
+                <p role="alert">
+                  Could not reach the server. Your rating was not saved. Try
+                  again.
+                </p>
+              {/if}
             </form>
           {/if}
         {:else if !data.feedback.receivedHelp && data.feedback.outcome === 'incorrect'}

@@ -4,20 +4,20 @@ LANGLO-44–47 add authenticated assessment start/resume, completed results,
 grammar map/progress and owner-only content reports. Their routes inherit the
 existing `/app/**` no-store/noindex policy and verified-session ownership guard.
 
-| New route                              | Behavior                                                                                                          |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `/app/assessment`                      | Enrolled tracks and the owner's unfinished saved assessments.                                                     |
-| `/app/assessment/[language]`           | Start a bounded, saved holdout assessment for an enrolled language.                                               |
-| `/app/assessment/session/[id]`         | Saved question order, Not sure and reload/resume; no feedback before completion.                                  |
-| `/app/assessment/session/[id]/results` | Results only after completion; earlier requests return 409 and foreign IDs return 404.                            |
-| `/app/map` and `/app/progress`         | Owner's versioned grammar evidence, explanations and manual lesson links; unenrolled language filters return 404. |
-| `/app/reports`                         | Owner's latest 100 content reports; no content-editing action.                                                    |
-| `/app/enroll`                          | Enroll in a track (fr A1; de, en A1/A2; pt B1/B2); a second enrollment in a language is a 409.                    |
-| `/app/settings`                        | Lesson language per enrollment and the learner's IANA timezone (stored only; due times still use UTC).            |
-| `/app/practice/[language]`             | Start an idempotent practice session for an enrolled language.                                                    |
-| `/app/session/[id]` and `.../results`  | Pick a topic, resume if paused, finish, read answer counts; foreign IDs return 404.                               |
-| `/app/decks` and `/app/decks/[id]`     | Create decks, add basic or cloze draft notes, approve notes; `/export` downloads approved notes as Anki text.     |
-| `/app/review`                          | Due, approved flashcards with a show-answer step and again/hard/good/easy ratings.                                |
+| New route                              | Behavior                                                                                                                          |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `/app/assessment`                      | Enrolled tracks and the owner's unfinished saved assessments.                                                                     |
+| `/app/assessment/[language]`           | Start a bounded, saved holdout assessment for an enrolled language.                                                               |
+| `/app/assessment/session/[id]`         | Saved question order, Not sure and reload/resume; no feedback before completion.                                                  |
+| `/app/assessment/session/[id]/results` | Results only after completion; earlier requests return 409 and foreign IDs return 404.                                            |
+| `/app/map` and `/app/progress`         | Owner's versioned grammar evidence, explanations and manual lesson links; unenrolled language filters return 404.                 |
+| `/app/reports`                         | Owner's latest 100 content reports; no content-editing action.                                                                    |
+| `/app/enroll`                          | Enroll in a track (fr A1; de, en A1/A2; pt B1/B2); a second enrollment in a language is a 409.                                    |
+| `/app/settings`                        | Lesson language per enrollment and the learner's IANA timezone (stored only; due times still use UTC).                            |
+| `/app/practice/[language]`             | Continue the unfinished practice of an enrolled language, or start one (idempotent); Start over finishes it and begins a new one. |
+| `/app/session/[id]` and `.../results`  | Pick a topic, resume if paused, finish, read answer counts; foreign IDs return 404.                                               |
+| `/app/decks` and `/app/decks/[id]`     | Create decks, add basic or cloze draft notes, approve notes; `/export` downloads approved notes as Anki text.                     |
+| `/app/review`                          | Due, approved flashcards with a show-answer step and again/hard/good/easy ratings.                                                |
 
 Confirmed eligible practice mistakes can be saved as editable Basic or
 T003-bounded Cloze drafts through `/app/api/attempts/[id]/card`. Drafts stay

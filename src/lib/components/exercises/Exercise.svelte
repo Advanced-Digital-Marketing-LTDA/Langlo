@@ -45,11 +45,18 @@
   let problem = $state('');
   let pending = $state(false);
   let failed = $state(false);
+  let unreachable = $state(false);
   let refreshBlocked = false;
   const setRefreshBlocked = getContext<(blocked: boolean) => void>(
     'app-version-refresh-blocked'
   );
-  const message = $derived(problem || failure || '');
+  const message = $derived(
+    problem ||
+      failure ||
+      (unreachable
+        ? 'Could not reach the server. Your answer was not saved. Try again.'
+        : '')
+  );
   const legendId = $derived(`instruction-${question.id}`);
   const fieldId = $derived(`answer-${question.id}`);
   const problemId = $derived(`exercise-problem-${question.id}`);
@@ -85,10 +92,20 @@
       return;
     }
     pending = true;
+    unreachable = false;
     // This component is replaced once the next question arrives, so the
     // callback is read now rather than from props afterwards.
     const answered = onanswered;
     return async ({ result, update }) => {
+      // The request never produced an action result (offline, or the server
+      // is restarting): keep the page and what was typed, so it can be sent
+      // again with the same submission key.
+      if (result.type === 'error' && result.status === undefined) {
+        unreachable = true;
+        failed = true;
+        pending = false;
+        return;
+      }
       // Keep what was typed when the server refused it.
       await update({ reset: result.type === 'success' });
       if (result.type === 'success') value = '';

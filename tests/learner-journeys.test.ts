@@ -14,7 +14,9 @@ import {
   finishPractice,
   practiceResultsPath,
   practiceSummary,
-  startPractice
+  startPractice,
+  startPracticeOver,
+  unfinishedPractice
 } from '../src/lib/server/practice';
 import {
   addNoteFromForm,
@@ -308,8 +310,17 @@ describe('settings', () => {
   });
 });
 
+// The shared fixture leaves learner-a an unfinished practice; starting practice
+// continues an unfinished one, so these tests begin without it.
+async function closeSeededPractice() {
+  await client.execute(
+    "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-a'"
+  );
+}
+
 describe('practice sessions', () => {
   it('starts one idempotent session per submission key in an enrolled track', async () => {
+    await closeSeededPractice();
     const key = randomUUID();
     const first = await startPractice(client, learner, {
       language: 'fr',
@@ -419,6 +430,7 @@ describe('practice sessions', () => {
   });
 
   it('resumes a paused practice session from its page, for its owner only', async () => {
+    await closeSeededPractice();
     const { id } = await startPractice(client, learner, {
       language: 'fr',
       submissionKey: '5b0c7a52-3f0e-4c2e-8f6e-0d6a3c9b7e10'
@@ -444,6 +456,7 @@ describe('practice sessions', () => {
   });
 
   it('runs start, session, finish and results through the pages', async () => {
+    await closeSeededPractice();
     const { submissionKey } = (await practiceLoad(
       event({ params: { language: 'fr' } })
     )) as { submissionKey: string };
@@ -480,6 +493,99 @@ describe('practice sessions', () => {
     await expect(
       practiceLoad(event({ params: { language: 'de' } }))
     ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('continues the unfinished practice instead of starting another', async () => {
+    await closeSeededPractice();
+    const first = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    // A fresh page load brings a new key; the same practice comes back.
+    expect(
+      await startPractice(client, learner, {
+        language: 'fr',
+        submissionKey: randomUUID()
+      })
+    ).toEqual(first);
+    await pauseStudySession(client, learner, first.id);
+    expect(
+      await startPractice(client, learner, {
+        language: 'fr',
+        submissionKey: randomUUID()
+      })
+    ).toEqual(first);
+    // Another learner is never handed this session.
+    await expect(unfinishedPractice(client, other, 'fr')).resolves.toBeNull();
+    expect(await unfinishedPractice(client, learner, 'fr')).toEqual({
+      id: first.id,
+      answered: 0
+    });
+    await finishPractice(client, learner, first.id);
+    expect(await unfinishedPractice(client, learner, 'fr')).toBeNull();
+    const next = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    expect(next.id).not.toBe(first.id);
+    const rows = await client.execute({
+      sql: "SELECT COUNT(*) AS n FROM study_sessions WHERE owner_id = ? AND id LIKE 'practice:%'",
+      args: [learner.userId]
+    });
+    expect(Number(rows.rows[0].n)).toBe(2);
+  });
+
+  it('shows Continue only while a practice is unfinished, and Start over finishes it', async () => {
+    await closeSeededPractice();
+    const before = (await practiceLoad(
+      event({ params: { language: 'fr' } })
+    )) as { submissionKey: string; unfinished: unknown };
+    expect(before.unfinished).toBeNull();
+    const key = before.submissionKey;
+    await expect(
+      practiceActions.start(
+        event({ params: { language: 'fr' }, fields: { submissionKey: key } })
+      )
+    ).rejects.toMatchObject({ status: 303 });
+    const during = (await practiceLoad(
+      event({ params: { language: 'fr' } })
+    )) as { submissionKey: string; unfinished: unknown };
+    expect(during.unfinished).toEqual({ id: `practice:${key}`, answered: 0 });
+    // An older unfinished practice, left from before starting continued one.
+    await client.execute({
+      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, created_at) SELECT 'older-practice', owner_id, id, language, 'practice', 1 FROM enrollments WHERE owner_id = ? AND language = 'fr'",
+      args: [learner.userId]
+    });
+    // Start over finishes every old practice and begins a new, empty one.
+    await expect(
+      practiceActions.startOver(
+        event({
+          params: { language: 'fr' },
+          fields: { submissionKey: during.submissionKey }
+        })
+      )
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(`practice:${during.submissionKey}`)}`
+    });
+    for (const old of [`practice:${key}`, 'older-practice'])
+      expect((await practiceSummary(client, learner, old)).state).toBe(
+        'completed'
+      );
+    expect(await unfinishedPractice(client, learner, 'fr')).toEqual({
+      id: `practice:${during.submissionKey}`,
+      answered: 0
+    });
+    // A repeated tap of Start over keeps the new practice open.
+    await expect(
+      startPracticeOver(client, learner, {
+        language: 'fr',
+        submissionKey: during.submissionKey
+      })
+    ).resolves.toEqual({ id: `practice:${during.submissionKey}` });
+    expect(await unfinishedPractice(client, learner, 'fr')).toMatchObject({
+      id: `practice:${during.submissionKey}`
+    });
   });
 });
 
@@ -1289,6 +1395,7 @@ describe('decks, review and Anki export', () => {
 
 describe('grammar practice rating and review actions', () => {
   beforeEach(async () => {
+    await closeSeededPractice();
     const content = approvedPackage();
     for (const version of content.versions)
       version.lesson = {

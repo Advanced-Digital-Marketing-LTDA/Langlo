@@ -51,6 +51,12 @@ const learnerEvent = (
   }) as never;
 const event = (userId: string | null, query = '') =>
   learnerEvent(userId, `http://127.0.0.1/app/map${query}`);
+// The shared fixture leaves learner-a an unfinished practice, which starting
+// practice continues; tests that expect a new session finish it first.
+const closeSeededPractice = () =>
+  client.execute(
+    "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-a'"
+  );
 const practiceEvent = (userId: string | null, language = 'fr') =>
   learnerEvent(userId, `http://127.0.0.1/app/practice/${language}`, {
     language
@@ -124,6 +130,7 @@ it('filters an enrolled track without leaking other tracks into the response', a
 });
 
 it('starts practice directly in the selected topic and keeps only safe map context', async () => {
+  await closeSeededPractice();
   const url = 'http://127.0.0.1/app/map?language=fr';
   const form = new URLSearchParams({
     language: 'fr',
@@ -152,6 +159,27 @@ it('starts practice directly in the selected topic and keeps only safe map conte
     owner_id: 'learner-a',
     language: 'fr',
     mode: 'practice'
+  });
+});
+
+it('continues the unfinished practice when a topic is practised from the map', async () => {
+  const request = new Request('http://127.0.0.1/app/map?language=fr', {
+    method: 'POST',
+    body: new URLSearchParams({
+      language: 'fr',
+      skillId: 'fr-a1-001',
+      submissionKey: '00000000-0000-4000-8000-000000000004',
+      returnTo: '/app/map'
+    })
+  });
+  await expect(
+    mapActions.practise({
+      ...(event('learner-a') as object),
+      request
+    } as never)
+  ).rejects.toMatchObject({
+    status: 303,
+    location: `/app/learn/fr/lesson/fr-a1-001?session=study-a&returnTo=${encodeURIComponent('/app/map')}`
   });
 });
 
@@ -197,6 +225,7 @@ it.each([
 ])(
   'keeps the practice redirect internal for return context %s',
   async (returnTo, expected) => {
+    await closeSeededPractice();
     const url = 'http://127.0.0.1/app/map?language=fr';
     const submissionKey = '00000000-0000-4000-8000-000000000003';
     const request = new Request(url, {
