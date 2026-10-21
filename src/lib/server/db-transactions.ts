@@ -89,9 +89,6 @@ async function holdSpan(write: boolean) {
   };
 }
 
-// A call is one round trip whether it carries one statement or a batch.
-const countedCalls = new Set<string | symbol>(['execute', 'batch']);
-
 /** Serialize a standalone statement with transactions using the same client. */
 export async function executeWrite(
   client: Pick<Client, 'execute'>,
@@ -142,7 +139,8 @@ function releaseTransaction(
         return terminal[property as keyof typeof terminal];
       const value = Reflect.get(target, property, target);
       if (typeof value !== 'function') return value;
-      if (!countedCalls.has(property)) return value.bind(target);
+      // Every other method (execute, batch, executeMultiple) is one round trip,
+      // whether it carries one statement or many.
       return (...args: unknown[]) => {
         trips.count += 1;
         return value.apply(target, args);

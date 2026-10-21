@@ -91,6 +91,16 @@ it('counts a batch as one round trip', async () => {
   expect(named('db.transaction')[0].set).toEqual({ round_trips: 1 });
 });
 
+it('counts a multi-statement script as one round trip', async () => {
+  const tx = await beginWrite(client);
+  await tx.executeMultiple(
+    'INSERT INTO probe (id) VALUES (1); INSERT INTO probe (id) VALUES (2);'
+  );
+  await tx.commit();
+  await settle();
+  expect(named('db.transaction')[0].set).toEqual({ round_trips: 1 });
+});
+
 it('marks a read transaction as not a write', async () => {
   const tx = await beginRead(client);
   await tx.execute('SELECT id FROM probe');

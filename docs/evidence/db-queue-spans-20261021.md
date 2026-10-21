@@ -58,6 +58,15 @@ After the fix (`holdSpan` rejects when the span promise rejects, so the caller r
       Tests  31 passed (31)
 ```
 
+Codecov follow-up (one partial line in the patch: the pass-through branch for non-counted methods was never taken). `executeMultiple` is a round trip too, so every non-terminal transaction method is now counted and that branch is gone. Red, before: `× counts a multi-statement script as one round trip` (`expected { round_trips: +0 } to deeply equal { round_trips: 1 }`). After:
+
+```
+ Test Files  4 passed (4)
+      Tests  32 passed (32)
+```
+
+Branches still uncovered in `db-transactions.ts` by these four files are existing code outside this diff (the already-released guard and the `SQLITE_BUSY` retry loop).
+
 ## Reading the traces
 
 In GlitchTip, open the slowest `study.run` traces. A long `db.queue-wait` means requests are stuck behind another transaction; a long `db.transaction` with a high `round_trips` means that transaction spends its time in round trips. Sampling is 25%.
