@@ -35,6 +35,16 @@
 {:else}
   {#each data.tracks as track (track.language)}
     <TrackCard {track} />
+    {#if data.unfinished[track.language]}
+      {@const unfinished = data.unfinished[track.language]}
+      <p class="note">
+        <a href={`/app/session/${encodeURIComponent(unfinished.id)}`}
+          >Continue practice</a
+        >
+        · {unfinished.answered}
+        {unfinished.answered === 1 ? 'answer' : 'answers'} so far
+      </p>
+    {/if}
   {/each}
   <p class="note">
     Grammar evidence is separate from flashcard recall.

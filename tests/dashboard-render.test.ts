@@ -36,9 +36,13 @@ const track = (recommendedId: string | null) => ({
     ? { skillId: recommendedId, reason: 'Revisit this first' }
     : null
 });
-const data = (tracks: unknown[]) => ({
+const data = (
+  tracks: unknown[],
+  unfinished: Record<string, { id: string; answered: number }> = {}
+) => ({
   user: { name: 'Ada', email: 'ada@example.com' },
-  tracks
+  tracks,
+  unfinished
 });
 
 beforeEach(() => setAppState({}));
@@ -112,6 +116,17 @@ it('says so when a track has no published skills', async () => {
   );
   expect(html).not.toContain('Grammar mastery');
   expect(html).not.toContain('Full skill map');
+});
+
+it('links to the unfinished practice of a track, and only when there is one', async () => {
+  const withSession = await renderSvelte(page, {
+    data: data([track(null)], { fr: { id: 'practice:abc', answered: 3 } })
+  });
+  expect(withSession).toContain('href="/app/session/practice%3Aabc"');
+  expect(withSession).toContain('Continue practice');
+  expect(withSession).toMatch(/3\s+answers so far/);
+  const without = await renderSvelte(page, { data: data([track(null)]) });
+  expect(without).not.toContain('/app/session/');
 });
 
 it('shows the empty state with a way to start when there are no tracks', async () => {

@@ -54,6 +54,7 @@ const renderPractice = (overrides = {}) =>
         }
       ],
       dueReviews: [],
+      unfinished: null,
       error: null,
       ...overrides
     }
@@ -89,4 +90,26 @@ it('shows a recoverable message when progress could not be loaded', async () => 
   expect(html).toContain('Try again');
   expect(html).not.toContain('No started topics need work yet');
   expect(html).not.toContain('No published skills are available');
+  // Whether a practice is unfinished is unknown then, so no start button shows.
+  expect(html).not.toContain('Start practice');
+  expect(html).not.toContain('Continue practice');
+});
+
+it('offers Start practice when nothing is unfinished and never Start over', async () => {
+  const html = await renderPractice();
+  expect(html).toContain('Start practice');
+  expect(html).not.toContain('Continue practice');
+  expect(html).not.toContain('Start over');
+});
+
+it('offers only Continue practice, with a confirmed Start over, once a practice is started', async () => {
+  const html = await renderPractice({
+    unfinished: { id: 'practice:abc', answered: 2 }
+  });
+  expect(html).toContain('Continue practice');
+  expect(html).not.toContain('Start practice');
+  expect(html).toMatch(/2\s+answers so far/);
+  expect(html).toContain('action="?/startOver"');
+  expect(html).toMatch(/deletes your answers in the current practice/);
+  expect(html).toContain('This cannot be undone.');
 });
