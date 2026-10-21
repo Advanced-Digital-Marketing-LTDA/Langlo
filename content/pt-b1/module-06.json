@@ -42,7 +42,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb: O café ___ na esquina.",
             "answer": "fica",
-            "alternatives": ["fica", "é", "está sendo"],
+            "alternatives": ["é", "fica", "está sendo"],
             "holdout": false
           },
           {
@@ -50,7 +50,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb: Hoje eu ___ muito cansado.",
             "answer": "estou",
-            "alternatives": ["estou", "sou", "fico"],
+            "alternatives": ["sou", "fico", "estou"],
             "holdout": false
           },
           {
@@ -135,7 +135,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb (becoming): Ele ___ nervoso antes da prova.",
             "answer": "ficou",
-            "alternatives": ["ficou", "foi", "esteve"],
+            "alternatives": ["foi", "esteve", "ficou"],
             "holdout": true
           },
           {
@@ -186,7 +186,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb (possession): Ela ___ um gato.",
             "answer": "tem",
-            "alternatives": ["tem", "há", "é"],
+            "alternatives": ["há", "tem", "é"],
             "holdout": false
           },
           {
@@ -194,7 +194,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb (existence, formal): ___ muitos livros na biblioteca.",
             "answer": "Há",
-            "alternatives": ["Há", "Têm", "Hão"],
+            "alternatives": ["Têm", "Hão", "Há"],
             "holdout": false
           },
           {
@@ -361,7 +361,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the word (purpose): Estudo ___ passar na prova.",
             "answer": "para",
-            "alternatives": ["para", "por", "pelo"],
+            "alternatives": ["por", "pelo", "para"],
             "holdout": false
           },
           {
@@ -377,7 +377,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the word (recipient): Comprei flores ___ minha mãe.",
             "answer": "para",
-            "alternatives": ["para", "por", "pela"],
+            "alternatives": ["por", "para", "pela"],
             "holdout": false
           },
           {
@@ -478,7 +478,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the words (reason): Cheguei atrasado ___ trânsito.",
             "answer": "por causa do",
-            "alternatives": ["por causa do", "para o", "pelo de"],
+            "alternatives": ["para o", "por causa do", "pelo de"],
             "holdout": true
           },
           {
@@ -543,7 +543,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the contraction: Ela vai ___ praia. (a + a)",
             "answer": "à",
-            "alternatives": ["à", "a", "ao"],
+            "alternatives": ["a", "à", "ao"],
             "holdout": false
           },
           {
@@ -551,7 +551,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the contraction: Saímos ___ escritório. (de + o)",
             "answer": "do",
-            "alternatives": ["do", "da", "no"],
+            "alternatives": ["da", "no", "do"],
             "holdout": false
           },
           {
@@ -646,9 +646,9 @@
             "prompt": "Choose the correct sentence (no crase before a verb):",
             "answer": "Começou a chover.",
             "alternatives": [
-              "Começou a chover.",
               "Começou à chover.",
-              "Começou ao chover."
+              "Começou ao chover.",
+              "Começou a chover."
             ],
             "holdout": true
           },
@@ -700,7 +700,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the preposition: Eu gosto ___ música.",
             "answer": "de",
-            "alternatives": ["de", "em", "com"],
+            "alternatives": ["em", "de", "com"],
             "holdout": false
           },
           {
@@ -708,7 +708,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the preposition: Ele sonha ___ viajar.",
             "answer": "com",
-            "alternatives": ["com", "de", "a"],
+            "alternatives": ["de", "a", "com"],
             "holdout": false
           },
           {

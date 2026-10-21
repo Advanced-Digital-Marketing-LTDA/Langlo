@@ -34,7 +34,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the present subjunctive of falar for você:",
             "answer": "fale",
-            "alternatives": ["fale", "fala", "falou"],
+            "alternatives": ["fala", "falou", "fale"],
             "holdout": false
           },
           {
@@ -50,7 +50,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the present subjunctive of fazer for eu:",
             "answer": "faça",
-            "alternatives": ["faça", "faço", "fiz"],
+            "alternatives": ["faço", "faça", "fiz"],
             "holdout": false
           },
           {
@@ -157,7 +157,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the present subjunctive of ler for você:",
             "answer": "leia",
-            "alternatives": ["leia", "lê", "leu"],
+            "alternatives": ["lê", "leia", "leu"],
             "holdout": true
           },
           {
@@ -222,7 +222,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Tomara que ___ certo. (dar)",
             "answer": "dê",
-            "alternatives": ["dê", "dá", "deu"],
+            "alternatives": ["dá", "dê", "deu"],
             "holdout": false
           },
           {
@@ -230,7 +230,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Duvido que ele ___ a resposta. (saber)",
             "answer": "saiba",
-            "alternatives": ["saiba", "sabe", "soube"],
+            "alternatives": ["sabe", "soube", "saiba"],
             "holdout": false
           },
           {
@@ -334,7 +334,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form (belief, indicative): Acho que ela ___ certa. (estar)",
             "answer": "está",
-            "alternatives": ["está", "esteja", "estar"],
+            "alternatives": ["esteja", "estar", "está"],
             "holdout": true
           },
           {
@@ -391,7 +391,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: É importante que você ___ a lição. (fazer)",
             "answer": "faça",
-            "alternatives": ["faça", "faz", "fez"],
+            "alternatives": ["faz", "faça", "fez"],
             "holdout": false
           },
           {
@@ -399,7 +399,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Talvez ela ___ hoje. (vir)",
             "answer": "venha",
-            "alternatives": ["venha", "vem", "veio"],
+            "alternatives": ["vem", "veio", "venha"],
             "holdout": false
           },
           {
@@ -564,7 +564,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Falo devagar para que você ___ . (entender)",
             "answer": "entenda",
-            "alternatives": ["entenda", "entende", "entendeu"],
+            "alternatives": ["entende", "entendeu", "entenda"],
             "holdout": false
           },
           {
@@ -580,7 +580,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ela sai sem que ninguém a ___ . (ver)",
             "answer": "veja",
-            "alternatives": ["veja", "vê", "viu"],
+            "alternatives": ["vê", "veja", "viu"],
             "holdout": false
           },
           {
@@ -690,7 +690,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ele trabalha para que a família ___ bem. (viver)",
             "answer": "viva",
-            "alternatives": ["viva", "vive", "viveu"],
+            "alternatives": ["vive", "viva", "viveu"],
             "holdout": true
           },
           {
@@ -755,7 +755,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Se você ___ tempo, venha. (ter)",
             "answer": "tiver",
-            "alternatives": ["tiver", "tem", "teve"],
+            "alternatives": ["tem", "tiver", "teve"],
             "holdout": false
           },
           {
@@ -763,7 +763,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Quando nós ___ , jantamos. (chegar)",
             "answer": "chegarmos",
-            "alternatives": ["chegarmos", "chegamos", "chegaremos"],
+            "alternatives": ["chegamos", "chegaremos", "chegarmos"],
             "holdout": false
           },
           {
@@ -870,7 +870,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form (habit, indicative): Quando eu ___ cedo, tomo café. (acordar)",
             "answer": "acordo",
-            "alternatives": ["acordo", "acordar", "acorde"],
+            "alternatives": ["acordar", "acorde", "acordo"],
             "holdout": true
           },
           {

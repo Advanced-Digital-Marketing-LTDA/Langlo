@@ -34,7 +34,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ontem eu ___ ao mercado. (ir)",
             "answer": "fui",
-            "alternatives": ["fui", "foi", "ia"],
+            "alternatives": ["foi", "ia", "fui"],
             "holdout": false
           },
           {
@@ -50,7 +50,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Você ___ o filme ontem? (ver)",
             "answer": "viu",
-            "alternatives": ["viu", "vê", "via"],
+            "alternatives": ["vê", "viu", "via"],
             "holdout": false
           },
           {
@@ -148,7 +148,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ele ___ medo do cachorro ontem. (ter)",
             "answer": "teve",
-            "alternatives": ["teve", "tinha", "tem"],
+            "alternatives": ["tinha", "teve", "tem"],
             "holdout": true
           },
           {
@@ -207,7 +207,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Nós ___ no campo todo verão. (ficar)",
             "answer": "ficávamos",
-            "alternatives": ["ficávamos", "ficamos", "ficávemos"],
+            "alternatives": ["ficamos", "ficávamos", "ficávemos"],
             "holdout": false
           },
           {
@@ -215,7 +215,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ele ___ muito dinheiro naquela época. (ter)",
             "answer": "tinha",
-            "alternatives": ["tinha", "teve", "tem"],
+            "alternatives": ["teve", "tem", "tinha"],
             "holdout": false
           },
           {
@@ -313,7 +313,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Quando ela era jovem, ela ___ muito. (viajar)",
             "answer": "viajava",
-            "alternatives": ["viajava", "viajou", "viajaria"],
+            "alternatives": ["viajou", "viajaria", "viajava"],
             "holdout": true
           },
           {
@@ -363,7 +363,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best verb: Eu ___ TV quando o telefone tocou. (ver)",
             "answer": "via",
-            "alternatives": ["via", "vi", "veria"],
+            "alternatives": ["vi", "via", "veria"],
             "holdout": false
           },
           {
@@ -371,7 +371,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best verb: De repente, a porta ___. (abrir)",
             "answer": "abriu",
-            "alternatives": ["abriu", "abria", "abrirá"],
+            "alternatives": ["abria", "abrirá", "abriu"],
             "holdout": false
           },
           {
@@ -540,7 +540,7 @@
             "format": "multiple-choice",
             "prompt": "What is the participle of fazer?",
             "answer": "feito",
-            "alternatives": ["feito", "fazido", "fazendo"],
+            "alternatives": ["fazido", "fazendo", "feito"],
             "holdout": false
           },
           {
@@ -556,7 +556,7 @@
             "format": "multiple-choice",
             "prompt": "What is the participle of falar?",
             "answer": "falado",
-            "alternatives": ["falado", "falato", "falando"],
+            "alternatives": ["falato", "falado", "falando"],
             "holdout": false
           },
           {
@@ -645,7 +645,7 @@
             "format": "multiple-choice",
             "prompt": "What is the participle of dizer?",
             "answer": "dito",
-            "alternatives": ["dito", "dizido", "dizendo"],
+            "alternatives": ["dizido", "dito", "dizendo"],
             "holdout": true
           },
           {
@@ -706,7 +706,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Eu não ___ o filme antes, então gostei. (ver)",
             "answer": "tinha visto",
-            "alternatives": ["tinha visto", "vi", "vejo"],
+            "alternatives": ["vi", "tinha visto", "vejo"],
             "holdout": false
           },
           {
@@ -714,7 +714,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ela disse que ___ o dinheiro. (perder)",
             "answer": "tinha perdido",
-            "alternatives": ["tinha perdido", "perdeu", "perdia"],
+            "alternatives": ["perdeu", "perdia", "tinha perdido"],
             "holdout": false
           },
           {
@@ -812,7 +812,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Ele disse que já ___ o jantar. (preparar)",
             "answer": "tinha preparado",
-            "alternatives": ["tinha preparado", "preparou", "preparava"],
+            "alternatives": ["preparou", "preparava", "tinha preparado"],
             "holdout": true
           },
           {

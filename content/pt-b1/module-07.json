@@ -34,7 +34,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the plural of animal:",
             "answer": "animais",
-            "alternatives": ["animais", "animales", "animals"],
+            "alternatives": ["animales", "animals", "animais"],
             "holdout": false
           },
           {
@@ -50,7 +50,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct article: ___ problema é sério.",
             "answer": "O",
-            "alternatives": ["O", "A", "Os"],
+            "alternatives": ["A", "O", "Os"],
             "holdout": false
           },
           {
@@ -136,7 +136,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the article: ___ capital do Brasil é Brasília (the city).",
             "answer": "A",
-            "alternatives": ["A", "O", "Os"],
+            "alternatives": ["O", "A", "Os"],
             "holdout": true
           },
           {
@@ -194,7 +194,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct word: Ela é mais alta ___ eu.",
             "answer": "do que",
-            "alternatives": ["do que", "quanto", "que de"],
+            "alternatives": ["quanto", "do que", "que de"],
             "holdout": false
           },
           {
@@ -202,7 +202,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the comparative of pequeno:",
             "answer": "menor",
-            "alternatives": ["menor", "mais pequeno", "mais menor"],
+            "alternatives": ["mais pequeno", "mais menor", "menor"],
             "holdout": false
           },
           {
@@ -299,7 +299,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the superlative: Esta é a ___ casa da rua. (grande)",
             "answer": "maior",
-            "alternatives": ["maior", "mais grande", "grandíssima"],
+            "alternatives": ["mais grande", "grandíssima", "maior"],
             "holdout": true
           },
           {
@@ -353,7 +353,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the possessive: Esta é ___ casa. (my)",
             "answer": "minha",
-            "alternatives": ["minha", "meu", "meus"],
+            "alternatives": ["meu", "minha", "meus"],
             "holdout": false
           },
           {
@@ -361,7 +361,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the clear form: A casa ___ é grande. (her)",
             "answer": "dela",
-            "alternatives": ["dela", "sua dela", "dele"],
+            "alternatives": ["sua dela", "dele", "dela"],
             "holdout": false
           },
           {
@@ -513,7 +513,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the word: Não vi ___ ontem. (no one)",
             "answer": "ninguém",
-            "alternatives": ["ninguém", "alguém", "nenhum"],
+            "alternatives": ["alguém", "nenhum", "ninguém"],
             "holdout": false
           },
           {
@@ -529,7 +529,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the word: Há ___ aqui? (someone)",
             "answer": "alguém",
-            "alternatives": ["alguém", "ninguém", "nenhum"],
+            "alternatives": ["ninguém", "alguém", "nenhum"],
             "holdout": false
           },
           {
@@ -621,7 +621,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the word: Você quer ___ para beber? (something)",
             "answer": "algo",
-            "alternatives": ["algo", "nada", "ninguém"],
+            "alternatives": ["nada", "algo", "ninguém"],
             "holdout": true
           },
           {
@@ -683,7 +683,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the adverb of fácil:",
             "answer": "facilmente",
-            "alternatives": ["facilmente", "fácilmente", "facilmento"],
+            "alternatives": ["fácilmente", "facilmente", "facilmento"],
             "holdout": false
           },
           {
@@ -691,7 +691,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the quantifier: Ela bebe ___ água. (a lot of)",
             "answer": "muita",
-            "alternatives": ["muita", "muito", "muitas"],
+            "alternatives": ["muito", "muitas", "muita"],
             "holdout": false
           },
           {
@@ -783,7 +783,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct adverb: Ela trabalha ___ . (cuidadosa)",
             "answer": "cuidadosamente",
-            "alternatives": ["cuidadosamente", "cuidadosa", "cuidadosomente"],
+            "alternatives": ["cuidadosa", "cuidadosomente", "cuidadosamente"],
             "holdout": true
           },
           {

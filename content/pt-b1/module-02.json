@@ -34,7 +34,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best form (repeated up to now): Ultimamente eu ___ muito. (trabalhar)",
             "answer": "tenho trabalhado",
-            "alternatives": ["tenho trabalhado", "trabalhei", "trabalhava"],
+            "alternatives": ["trabalhei", "tenho trabalhado", "trabalhava"],
             "holdout": false
           },
           {
@@ -42,7 +42,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best form (one finished event): Ontem eu ___ o livro. (terminar)",
             "answer": "terminei",
-            "alternatives": ["terminei", "tenho terminado", "terminava"],
+            "alternatives": ["tenho terminado", "terminava", "terminei"],
             "holdout": false
           },
           {
@@ -218,7 +218,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct form: Agora eu ___ um livro. (ler)",
             "answer": "estou lendo",
-            "alternatives": ["estou lendo", "leio", "estou ler"],
+            "alternatives": ["leio", "estou ler", "estou lendo"],
             "holdout": false
           },
           {
@@ -238,7 +238,7 @@
             "format": "multiple-choice",
             "prompt": "What is the gerúndio of partir?",
             "answer": "partindo",
-            "alternatives": ["partindo", "partido", "partir"],
+            "alternatives": ["partido", "partindo", "partir"],
             "holdout": false
           },
           {
@@ -337,7 +337,7 @@
             "format": "multiple-choice",
             "prompt": "What is the gerúndio of pôr?",
             "answer": "pondo",
-            "alternatives": ["pondo", "posto", "pondendo"],
+            "alternatives": ["posto", "pondo", "pondendo"],
             "holdout": true
           },
           {
@@ -402,7 +402,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the preposition: Ela começou ___ chorar.",
             "answer": "a",
-            "alternatives": ["a", "de", "para"],
+            "alternatives": ["de", "a", "para"],
             "holdout": false
           },
           {
@@ -410,7 +410,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb that means 'stop doing': Ele ___ fumar.",
             "answer": "deixou de",
-            "alternatives": ["deixou de", "voltou a", "continuou a"],
+            "alternatives": ["voltou a", "continuou a", "deixou de"],
             "holdout": false
           },
           {
@@ -512,7 +512,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best option: Ela ___ trabalhar mesmo doente.",
             "answer": "continuou a",
-            "alternatives": ["continuou a", "acabou de", "deixou de"],
+            "alternatives": ["acabou de", "deixou de", "continuou a"],
             "holdout": true
           },
           {
@@ -569,7 +569,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best word: Eu ___ comi, obrigado.",
             "answer": "já",
-            "alternatives": ["já", "ainda", "ainda não"],
+            "alternatives": ["ainda", "já", "ainda não"],
             "holdout": false
           },
           {
@@ -577,7 +577,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best word: Ele ___ não chegou.",
             "answer": "ainda",
-            "alternatives": ["ainda", "já", "também"],
+            "alternatives": ["já", "também", "ainda"],
             "holdout": false
           },
           {
@@ -734,7 +734,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best word: Moro aqui ___ 2020.",
             "answer": "desde",
-            "alternatives": ["desde", "durante", "atrás"],
+            "alternatives": ["durante", "atrás", "desde"],
             "holdout": false
           },
           {
@@ -750,7 +750,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the best word: Estudei ___ três horas.",
             "answer": "durante",
-            "alternatives": ["durante", "desde", "atrás"],
+            "alternatives": ["desde", "durante", "atrás"],
             "holdout": false
           },
           {
@@ -861,8 +861,8 @@
             "prompt": "Choose the sentence that means she has lived there since 2015:",
             "answer": "Ela mora em São Paulo desde 2015.",
             "alternatives": [
-              "Ela mora em São Paulo desde 2015.",
               "Ela mora em São Paulo durante 2015.",
+              "Ela mora em São Paulo desde 2015.",
               "Ela mora em São Paulo atrás 2015."
             ],
             "holdout": true

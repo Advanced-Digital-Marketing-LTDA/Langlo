@@ -34,7 +34,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb form: Você ___ português muito bem. (falar)",
             "answer": "fala",
-            "alternatives": ["fala", "falo", "falamos"],
+            "alternatives": ["falo", "fala", "falamos"],
             "holdout": false
           },
           {
@@ -42,7 +42,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the verb form: A gente ___ ao cinema hoje. (ir)",
             "answer": "vai",
-            "alternatives": ["vai", "vamos", "vão"],
+            "alternatives": ["vamos", "vão", "vai"],
             "holdout": false
           },
           {
@@ -212,7 +212,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the direct pronoun: Vi o filme. Eu ___ vi ontem.",
             "answer": "o",
-            "alternatives": ["o", "lhe", "se"],
+            "alternatives": ["lhe", "se", "o"],
             "holdout": false
           },
           {
@@ -228,7 +228,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the pronoun after -r: Vou fazer o bolo. Vou fazê-___ .",
             "answer": "lo",
-            "alternatives": ["lo", "o", "no"],
+            "alternatives": ["o", "lo", "no"],
             "holdout": false
           },
           {
@@ -316,8 +316,8 @@
             "prompt": "Choose the correct sentence (written form, 'she saw us'):",
             "answer": "Ela nos viu na rua.",
             "alternatives": [
-              "Ela nos viu na rua.",
               "Ela lhes viu na rua.",
+              "Ela nos viu na rua.",
               "Ela se viu na rua."
             ],
             "holdout": true
@@ -378,7 +378,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the pronoun: Eu ___ mando uma mensagem. (to you, everyday speech)",
             "answer": "te",
-            "alternatives": ["te", "lhes", "o"],
+            "alternatives": ["lhes", "te", "o"],
             "holdout": false
           },
           {
@@ -386,7 +386,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the pronoun: Ele ___ contou a história. (to us)",
             "answer": "nos",
-            "alternatives": ["nos", "me", "lhes"],
+            "alternatives": ["me", "lhes", "nos"],
             "holdout": false
           },
           {
@@ -489,9 +489,9 @@
             "prompt": "Choose the sentence (written form, 'I asked them for help'):",
             "answer": "Pedi-lhes ajuda.",
             "alternatives": [
-              "Pedi-lhes ajuda.",
               "Pedi-os ajuda.",
-              "Pedi-nos ajuda."
+              "Pedi-nos ajuda.",
+              "Pedi-lhes ajuda."
             ],
             "holdout": true
           },
@@ -543,7 +543,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the pronoun: Eu ___ levanto cedo.",
             "answer": "me",
-            "alternatives": ["me", "te", "se"],
+            "alternatives": ["te", "me", "se"],
             "holdout": false
           },
           {
@@ -551,7 +551,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the pronoun: Ela ___ lembra do meu nome.",
             "answer": "se",
-            "alternatives": ["se", "me", "nos"],
+            "alternatives": ["me", "nos", "se"],
             "holdout": false
           },
           {
@@ -718,7 +718,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the everyday order: ___ amanhã. (call me)",
             "answer": "Me liga",
-            "alternatives": ["Me liga", "Liga-me", "Ligar me"],
+            "alternatives": ["Liga-me", "Ligar me", "Me liga"],
             "holdout": false
           },
           {
@@ -734,7 +734,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the formal order (start of a sentence): ___ a hora, por favor. (tell me)",
             "answer": "Diga-me",
-            "alternatives": ["Diga-me", "Me diga", "Diga me"],
+            "alternatives": ["Me diga", "Diga-me", "Diga me"],
             "holdout": false
           },
           {
@@ -827,8 +827,8 @@
             "prompt": "Choose the everyday sentence ('She called me yesterday'):",
             "answer": "Ela me ligou ontem.",
             "alternatives": [
-              "Ela me ligou ontem.",
               "Ela ligou me ontem.",
+              "Ela me ligou ontem.",
               "Ela lhes ligou ontem."
             ],
             "holdout": true

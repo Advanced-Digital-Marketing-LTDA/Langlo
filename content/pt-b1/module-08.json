@@ -34,7 +34,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the pronoun: O filme ___ vi ontem foi ótimo.",
             "answer": "que",
-            "alternatives": ["que", "quem", "onde"],
+            "alternatives": ["quem", "que", "onde"],
             "holdout": false
           },
           {
@@ -42,7 +42,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the pronoun: O lugar ___ nasci fica longe.",
             "answer": "onde",
-            "alternatives": ["onde", "quem", "o que"],
+            "alternatives": ["quem", "o que", "onde"],
             "holdout": false
           },
           {
@@ -206,7 +206,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the word that opens a question about reason:",
             "answer": "Por que",
-            "alternatives": ["Por que", "Porque", "Porquê"],
+            "alternatives": ["Porque", "Porquê", "Por que"],
             "holdout": false
           },
           {
@@ -222,7 +222,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the word at the end of a question: Você saiu cedo ___ ?",
             "answer": "por quê",
-            "alternatives": ["por quê", "porque", "por que"],
+            "alternatives": ["porque", "por quê", "por que"],
             "holdout": false
           },
           {
@@ -323,7 +323,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the correct question word: ___ é a capital do Brasil?",
             "answer": "Qual",
-            "alternatives": ["Qual", "Quais", "Quantos"],
+            "alternatives": ["Quais", "Qual", "Quantos"],
             "holdout": true
           },
           {
@@ -382,7 +382,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the connector (contrast): Quero ir, ___ não posso.",
             "answer": "mas",
-            "alternatives": ["mas", "porque", "então"],
+            "alternatives": ["porque", "mas", "então"],
             "holdout": false
           },
           {
@@ -390,7 +390,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the connector (result): Estava cansado, ___ dormi.",
             "answer": "então",
-            "alternatives": ["então", "mas", "enquanto"],
+            "alternatives": ["mas", "enquanto", "então"],
             "holdout": false
           },
           {
@@ -496,9 +496,9 @@
             "prompt": "Choose the sentence (while):",
             "answer": "Ele leu enquanto eu cozinhava.",
             "alternatives": [
-              "Ele leu enquanto eu cozinhava.",
               "Ele leu porém eu cozinhava.",
-              "Ele leu porque eu cozinhava."
+              "Ele leu porque eu cozinhava.",
+              "Ele leu enquanto eu cozinhava."
             ],
             "holdout": true
           },
@@ -556,7 +556,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the passive: A carta ___ escrita ontem.",
             "answer": "foi",
-            "alternatives": ["foi", "está", "era"],
+            "alternatives": ["está", "foi", "era"],
             "holdout": false
           },
           {
@@ -564,7 +564,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the passive se: ___ casas nesta rua.",
             "answer": "Vendem-se",
-            "alternatives": ["Vendem-se", "Vende-se", "Vendemos"],
+            "alternatives": ["Vende-se", "Vendemos", "Vendem-se"],
             "holdout": false
           },
           {
@@ -718,7 +718,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the form: Antes de ___ , apague a luz. (nós, sair)",
             "answer": "sairmos",
-            "alternatives": ["sairmos", "sair", "saímos"],
+            "alternatives": ["sair", "saímos", "sairmos"],
             "holdout": false
           },
           {
@@ -734,7 +734,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the form: Depois de nós ___ , fomos embora. (comer)",
             "answer": "comermos",
-            "alternatives": ["comermos", "comer", "comemos"],
+            "alternatives": ["comer", "comermos", "comemos"],
             "holdout": false
           },
           {
@@ -839,7 +839,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the form: Ao ___ em casa, liguei para você. (eu, chegar)",
             "answer": "chegar",
-            "alternatives": ["chegar", "chegarmos", "chegarem"],
+            "alternatives": ["chegarmos", "chegar", "chegarem"],
             "holdout": true
           },
           {
