@@ -35,10 +35,12 @@ let raw: Client;
 
 type Counted = { sqls: string[]; peak: number };
 
+type Track = <T>(sql: string, run: () => Promise<T>) => Promise<T>;
+
 /** Every call is held for a tick so calls issued together are seen as in flight together. */
-function counting(client: Client, counted: Counted): Client {
+function tracker(counted: Counted): Track {
   let inFlight = 0;
-  const track = async <T>(sql: string, run: () => Promise<T>) => {
+  return async (sql, run) => {
     counted.sqls.push(sql);
     inFlight += 1;
     counted.peak = Math.max(counted.peak, inFlight);
@@ -49,41 +51,48 @@ function counting(client: Client, counted: Counted): Client {
       inFlight -= 1;
     }
   };
-  const inTransaction = (tx: Transaction): Transaction =>
-    new Proxy(tx, {
-      get(base, property) {
-        const value = Reflect.get(base, property);
-        if (property === 'execute')
-          return (statement: InStatement) =>
-            track(
-              typeof statement === 'string' ? statement : statement.sql,
-              () => base.execute(statement)
-            );
-        if (property === 'batch')
-          return (statements: InStatement[]) =>
-            track('batch', () => base.batch(statements));
-        if (property === 'commit')
-          return () => track('commit', () => base.commit());
-        return typeof value === 'function' ? value.bind(base) : value;
-      }
-    });
-  return new Proxy(client, {
+}
+
+const sqlOf = (statement: InStatement) =>
+  typeof statement === 'string' ? statement : statement.sql;
+
+type Override<T> = (base: T) => unknown;
+
+/** The object itself, except for the methods that are replaced. */
+function overriding<T extends object>(
+  target: T,
+  replaced: Record<string, Override<T>>
+): T {
+  return new Proxy(target, {
     get(base, property) {
+      const replacement =
+        typeof property === 'string' ? replaced[property] : undefined;
+      if (replacement) return replacement(base);
       const value = Reflect.get(base, property);
-      if (property === 'execute')
-        return (statement: InStatement) =>
-          track(typeof statement === 'string' ? statement : statement.sql, () =>
-            base.execute(statement)
-          );
-      if (property === 'batch')
-        return (statements: InStatement[]) =>
-          track('batch', () => base.batch(statements));
-      if (property === 'transaction')
-        return async (mode: 'write' | 'read') => {
-          counted.sqls.push('begin');
-          return inTransaction(await base.transaction(mode));
-        };
       return typeof value === 'function' ? value.bind(base) : value;
+    }
+  });
+}
+
+const statementCalls = <T extends Client | Transaction>(track: Track) => ({
+  execute: (base: T) => (statement: InStatement) =>
+    track(sqlOf(statement), () => base.execute(statement)),
+  batch: (base: T) => (statements: InStatement[]) =>
+    track('batch', () => base.batch(statements))
+});
+
+function counting(client: Client, counted: Counted): Client {
+  const track = tracker(counted);
+  const inTransaction = (tx: Transaction) =>
+    overriding(tx, {
+      ...statementCalls<Transaction>(track),
+      commit: (base) => () => track('commit', () => base.commit())
+    });
+  return overriding(client, {
+    ...statementCalls<Client>(track),
+    transaction: (base) => async (mode: 'write' | 'read') => {
+      counted.sqls.push('begin');
+      return inTransaction(await base.transaction(mode));
     }
   });
 }

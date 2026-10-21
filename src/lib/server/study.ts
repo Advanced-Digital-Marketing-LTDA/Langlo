@@ -285,6 +285,24 @@ async function prereadAttempt(
   };
 }
 
+/** Whether an earlier attempt carries this payload; the kind is derived only when it matters. */
+async function isSamePayload(
+  prior: Row,
+  input: AttemptInput,
+  kind: () => Promise<EvidenceKind>
+) {
+  if (prior.study_session_id !== input.studySessionId) return false;
+  if (prior.question_id !== input.questionId) return false;
+  const sameKind =
+    prior.evidence_kind === input.evidenceKind ||
+    prior.evidence_kind === (await kind());
+  return (
+    sameKind &&
+    Boolean(prior.not_sure) === Boolean(input.notSure) &&
+    prior.answer === input.answer
+  );
+}
+
 /** The caller's earlier attempt under this submission key, if any. */
 async function replayAttempt(
   tx: Pick<Client, 'execute'>,
@@ -292,22 +310,16 @@ async function replayAttempt(
   input: AttemptInput,
   preread?: Preread
 ) {
-  const previous =
-    preread?.replay ?? (await tx.execute(replayStatement(session, input))).rows;
+  const previous = preread
+    ? preread.replay
+    : (await tx.execute(replayStatement(session, input))).rows;
   const prior = previous[0];
   if (!prior) return null;
-  const kind = () =>
-    preread
-      ? evidenceKindFrom(input, preread.priorEvidence)
-      : evidenceKindFor(tx, session, input);
-  const samePayload =
-    prior.study_session_id === input.studySessionId &&
-    prior.question_id === input.questionId &&
-    (prior.evidence_kind === input.evidenceKind ||
-      prior.evidence_kind === (await kind())) &&
-    Boolean(prior.not_sure) === Boolean(input.notSure) &&
-    prior.answer === input.answer;
-  if (!samePayload) throw new StudyError('IDEMPOTENCY_CONFLICT');
+  const kind = preread
+    ? async () => evidenceKindFrom(input, preread.priorEvidence)
+    : () => evidenceKindFor(tx, session, input);
+  if (!(await isSamePayload(prior, input, kind)))
+    throw new StudyError('IDEMPOTENCY_CONFLICT');
   return { id: String(prior.id), duplicate: true };
 }
 
@@ -974,7 +986,8 @@ function preparedMistakeStatement(
 
 function attemptRecord(
   input: AttemptInput,
-  source: Awaited<ReturnType<typeof attemptSource>>
+  source: Awaited<ReturnType<typeof attemptSource>>,
+  kind: EvidenceKind
 ) {
   return {
     id: randomUUID(),
@@ -984,18 +997,18 @@ function attemptRecord(
     questionId: input.questionId,
     answer: input.answer,
     contentVersionId: source.contentVersionId,
+    skillId: source.skillId,
     language: source.language,
     question: source.question,
-    notSure: input.notSure
+    notSure: input.notSure,
+    kind
   };
 }
 
 function insertAttemptStatement(
   session: LearnerSession,
   input: AttemptInput,
-  source: Awaited<ReturnType<typeof attemptSource>>,
-  attempt: { id: string },
-  kind: EvidenceKind
+  attempt: ReturnType<typeof attemptRecord>
 ): InStatement {
   return {
     sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure, received_help) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -1004,11 +1017,11 @@ function insertAttemptStatement(
       session.userId,
       input.studySessionId,
       input.questionId,
-      source.contentVersionId,
-      source.skillId,
-      source.language,
+      attempt.contentVersionId,
+      attempt.skillId,
+      attempt.language,
       input.submissionKey,
-      kind,
+      attempt.kind,
       input.answer,
       input.notSure ? 1 : 0,
       input.evidenceKind === 'assisted' ? 1 : 0
@@ -1034,7 +1047,11 @@ async function recordAttemptWrite(
     }
     const source = await attemptSource(tx, session, input, preread);
     assertNotAnswered(input, preread);
-    const attempt = attemptRecord(input, source);
+    const attempt = attemptRecord(
+      input,
+      source,
+      evidenceKindFrom(input, preread.priorEvidence)
+    );
     const { id } = attempt;
     const outcome = preparedOutcome(attempt);
     const rating = preparedMistakeStatement(session, input, {
@@ -1045,13 +1062,7 @@ async function recordAttemptWrite(
     // The attempt, its evaluation and a mistake's rating are known together,
     // so they are saved in one round trip.
     await tx.batch([
-      insertAttemptStatement(
-        session,
-        input,
-        source,
-        attempt,
-        evidenceKindFrom(input, preread.priorEvidence)
-      ),
+      insertAttemptStatement(session, input, attempt),
       preparedEvaluationStatement(session, attempt, outcome),
       ...(rating ? [rating] : [])
     ]);
