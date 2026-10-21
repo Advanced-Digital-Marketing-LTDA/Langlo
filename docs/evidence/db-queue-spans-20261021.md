@@ -62,7 +62,7 @@ Codecov follow-up (one partial line in the patch: the pass-through branch for no
 
 ```
  Test Files  4 passed (4)
-      Tests  32 passed (32)
+      Tests  33 passed (33)
 ```
 
 Branches still uncovered in `db-transactions.ts` by these four files are existing code outside this diff (the already-released guard and the `SQLITE_BUSY` retry loop).

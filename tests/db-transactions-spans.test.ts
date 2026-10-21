@@ -80,22 +80,29 @@ it('times a write transaction and reports its round trips when it commits', asyn
   expect(open.ended).toBe(true);
 });
 
-it('counts a batch as one round trip', async () => {
-  const tx = await beginWrite(client);
-  await tx.batch([
-    'INSERT INTO probe (id) VALUES (1)',
-    'INSERT INTO probe (id) VALUES (2)'
-  ]);
-  await tx.commit();
-  await settle();
-  expect(named('db.transaction')[0].set).toEqual({ round_trips: 1 });
-});
+const oneTrip: Array<
+  [string, (tx: Awaited<ReturnType<typeof beginWrite>>) => Promise<unknown>]
+> = [
+  [
+    'a batch',
+    (tx) =>
+      tx.batch([
+        'INSERT INTO probe (id) VALUES (1)',
+        'INSERT INTO probe (id) VALUES (2)'
+      ])
+  ],
+  [
+    'a multi-statement script',
+    (tx) =>
+      tx.executeMultiple(
+        'INSERT INTO probe (id) VALUES (1); INSERT INTO probe (id) VALUES (2);'
+      )
+  ]
+];
 
-it('counts a multi-statement script as one round trip', async () => {
+it.each(oneTrip)('counts %s as one round trip', async (_label, call) => {
   const tx = await beginWrite(client);
-  await tx.executeMultiple(
-    'INSERT INTO probe (id) VALUES (1); INSERT INTO probe (id) VALUES (2);'
-  );
+  await call(tx);
   await tx.commit();
   await settle();
   expect(named('db.transaction')[0].set).toEqual({ round_trips: 1 });
@@ -151,6 +158,30 @@ it('records a queue wait with the number of waiters already ahead', async () => 
   await settle();
   expect(waits.map((entry) => entry.ended)).toEqual([true, true]);
   expect(named('db.transaction')).toHaveLength(3);
+});
+
+it('records a queue wait for a standalone write and runs it after the holder finishes', async () => {
+  const holder = await beginWrite(client);
+  let ran = false;
+  const standalone = executeWrite(
+    client,
+    'INSERT INTO probe (id) VALUES (1)'
+  ).then(() => {
+    ran = true;
+  });
+  await settle();
+  expect(named('db.queue-wait').map((entry) => entry.attributes)).toEqual([
+    { waiters: 0 }
+  ]);
+  expect(ran).toBe(false);
+  await holder.commit();
+  await standalone;
+  await settle();
+  expect(ran).toBe(true);
+  expect(named('db.queue-wait')[0].ended).toBe(true);
+  expect(
+    (await client.execute('SELECT id FROM probe')).rows.map((r) => r.id)
+  ).toEqual([1]);
 });
 
 it('fails the queue-wait span with the busy error when the wait times out', async () => {
