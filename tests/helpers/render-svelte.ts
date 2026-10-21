@@ -17,7 +17,11 @@ function viteServer() {
     resolve: {
       alias: {
         '$app/state': resolve(import.meta.dirname, 'app-state-stub.ts'),
-        '$app/forms': resolve(import.meta.dirname, 'app-forms-stub.ts')
+        '$app/forms': resolve(import.meta.dirname, 'app-forms-stub.ts'),
+        '$app/navigation': resolve(
+          import.meta.dirname,
+          'app-navigation-stub.ts'
+        )
       }
     }
   });

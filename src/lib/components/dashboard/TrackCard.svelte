@@ -48,7 +48,10 @@
     <ul class="skills">
       {#each summary.skills as skill (skill.skillId)}
         <li>
-          <a href={`/app/map#${skill.skillId}`}>{skill.title}</a>
+          <a
+            href={`/app/map?language=${encodeURIComponent(track.language)}&skill=${encodeURIComponent(skill.skillId)}`}
+            >{skill.title}</a
+          >
           <Chip
             variant="mastery"
             symbol={masterySymbols[skill.status]}
