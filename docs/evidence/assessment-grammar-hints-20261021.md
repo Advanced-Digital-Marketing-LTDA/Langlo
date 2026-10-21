@@ -15,7 +15,7 @@ Untouched: migrations, schema, UI components, grading, scoring, French and Germa
 
 ## Consequences to know before the owner applies it
 
-- A new content version resets grammar retention schedules (migration 0030 triggers `grammar_retention_reset_new_content`): learners with a schedule on one of the 52 skills have it marked for reset. This follows from publishing any new version of a skill.
+- Grammar retention: with #140 merged first (migration 0032), learners' schedules on the 52 skills transfer to the new versions with recall state and due date unchanged. Without #140, the migration 0030 triggers would reset them, so #140 must merge before this PR.
 - `same` questions keep their lineage key, so earlier answers still count toward mastery. A learner who already saw a holdout is not offered its revised wording as a new item.
 - The Portuguese B2 content PR planned as `1.3.0` needs `1.4.0` if this merges first.
 - Hint wording is free text; there is no enforced vocabulary. Applying to any database is an owner action (`npm run content:import`, then `--impact`).
