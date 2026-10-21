@@ -29,4 +29,4 @@ Mutations that make the new tests fail: dropping the `markRemoteClient` call in 
 
 ## Not covered here
 
-Remote Turso behavior beyond the dev probe (waits over 2 s, many concurrent streams) is unmeasured. A read that races a write sees the snapshot from when it started, as before for remote clients opened per request.
+Remote Turso behavior beyond the dev probe (waits over 2 s, many concurrent streams) is unmeasured. The dev probe showed a read beside an open write sees the snapshot from before the write commits.
