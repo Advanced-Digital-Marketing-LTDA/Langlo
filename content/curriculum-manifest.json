@@ -1,13 +1,13 @@
 {
   "manifest_version": 1,
-  "curriculum_version": "1.3.0",
+  "curriculum_version": "1.4.0",
   "publication_status": "approved",
   "coverage_file": "docs/curriculum-coverage.csv",
-  "coverage_sha256": "285fbe3845f1aceed12bf795018fe186a620fc77a61af6b64156f48d549145fa",
+  "coverage_sha256": "7545a5e21a7e68bef467175812dde74c291d4ddd932d8d501530533f4f339098",
   "prerequisites_file": "content/prerequisites.json",
-  "prerequisites_sha256": "68d0795a0e22c2f9decb8c3ef8de00c3b214aabe37804e1482604f2b602db45c",
+  "prerequisites_sha256": "892e2aa049e92b9d2b8b34aa2779a0589391fe9cb96cd73a0f43403eabfdae2f",
   "id_registry_file": "content/curriculum-id-registry.json",
-  "id_registry_sha256": "d5c52486adfbfd6693d511d762f930b6ca23f1141e62c23d88c742c7fde09f4f",
+  "id_registry_sha256": "b57959351534735b152b03bc73fed351d5a5cd9eb84c6bec2f8088088c359689",
   "dependency_semantics": "recommended_teaching_order",
   "included_tracks": [
     "French A1",
@@ -15,7 +15,8 @@
     "German A2",
     "English A1",
     "English A2",
-    "Portuguese B1"
+    "Portuguese B1",
+    "Portuguese B2"
   ],
   "selected_subset_tracks": ["French A1"]
 }

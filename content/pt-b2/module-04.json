@@ -1,0 +1,859 @@
+{
+  "module_id": "pt-b2-module-04",
+  "track": "Portuguese B2",
+  "title": "Passive and impersonal forms",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b2-016",
+      "title": "Passive voice: ser + particípio with an agent",
+      "explanation": "The passive is ser + past participle, and the participle agrees in gender and number with the subject: a casa foi construída, os livros foram comprados. The agent follows por, which contracts with the article: pelo, pela, pelos, pelas. The auxiliary ser carries the tense (é construída, foi construída, será construída, tinha sido construída). Use it when the receiver of the action is the topic and the agent is secondary. Do not leave the participle invariable (a casa foi construído is wrong) and do not drop the auxiliary (a casa construiu pelos operários is wrong).",
+      "examples": [
+        {
+          "pt": "A casa foi construída pelos operários.",
+          "en": "The house was built by the workers."
+        },
+        {
+          "pt": "As cartas são escritas por ele.",
+          "en": "The letters are written by him."
+        },
+        {
+          "pt": "O projeto será aprovado pelo conselho.",
+          "en": "The project will be approved by the board."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-016@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-016@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: A casa ___ pelos operários. (construir, pretérito)",
+            "answer": "foi construída",
+            "alternatives": [
+              "foi construído",
+              "foram construída",
+              "foi construída"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: As cartas ___ por ele. (escrever, presente)",
+            "answer": "são escritas",
+            "alternatives": ["são escritas", "são escrito", "é escritas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O projeto ___ pelo conselho. (aprovar, futuro)",
+            "answer": "será aprovado",
+            "alternatives": [
+              "será aprovada",
+              "será aprovado",
+              "seria aprovando"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q04",
+            "format": "typed-blank",
+            "prompt": "Os livros foram ___ pela biblioteca. (comprar)",
+            "answer": "comprados",
+            "near_misses": ["comprado", "compradas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q05",
+            "format": "typed-blank",
+            "prompt": "A janela foi ___ pelo vento. (abrir)",
+            "answer": "aberta",
+            "near_misses": ["aberto", "abrida"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q06",
+            "format": "typed-blank",
+            "prompt": "Os erros foram ___ pelo professor. (descobrir)",
+            "answer": "descobertos",
+            "near_misses": ["descoberto", "descobertas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q07",
+            "format": "translation",
+            "prompt": "Translate (passive): The house was built by the workers.",
+            "answer": "A casa foi construída pelos operários.",
+            "alternatives": ["A casa foi construída pelos trabalhadores."],
+            "near_misses": [
+              "A casa foi construído pelos operários.",
+              "A casa construiu pelos operários."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q08",
+            "format": "translation",
+            "prompt": "Translate (passive): The letters are written by him.",
+            "answer": "As cartas são escritas por ele.",
+            "near_misses": [
+              "As cartas são escrito por ele.",
+              "As cartas escrevem por ele."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q09",
+            "format": "translation",
+            "prompt": "Translate (passive): The project will be approved by the board.",
+            "answer": "O projeto será aprovado pelo conselho.",
+            "alternatives": ["O projeto será aprovado pela diretoria."],
+            "near_misses": [
+              "O projeto será aprovada pelo conselho.",
+              "O projeto aprovará pelo conselho."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q10",
+            "format": "correction",
+            "prompt": "Correct the agreement: A casa foi construído pelos operários.",
+            "answer": "A casa foi construída pelos operários.",
+            "near_misses": [
+              "A casa foi construído pelos operários.",
+              "A casa foi construídas pelos operários."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q11",
+            "format": "correction",
+            "prompt": "Correct the agreement: As cartas foram escrito pelo diretor.",
+            "answer": "As cartas foram escritas pelo diretor.",
+            "near_misses": [
+              "As cartas foram escrito pelo diretor.",
+              "As cartas foram escritos pelo diretor."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:q12",
+            "format": "correction",
+            "prompt": "Correct the agreement: A porta foi fechado pelo vento.",
+            "answer": "A porta foi fechada pelo vento.",
+            "near_misses": [
+              "A porta foi fechado pelo vento.",
+              "A porta foi fechados pelo vento."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-016@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Os documentos ___ pela secretária. (assinar, pretérito) (voz passiva)",
+            "answer": "foram assinados",
+            "alternatives": [
+              "foram assinado",
+              "foram assinados",
+              "foi assinados"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-016@1:h02",
+            "format": "typed-blank",
+            "prompt": "A música foi ___ pelos alunos. (cantar) (voz passiva)",
+            "answer": "cantada",
+            "near_misses": ["cantado", "cantadas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-016@1:h03",
+            "format": "translation",
+            "prompt": "Translate (passive): The windows were broken by the storm. (voz passiva)",
+            "answer": "As janelas foram quebradas pela tempestade.",
+            "alternatives": ["As janelas foram quebradas pelo temporal."],
+            "near_misses": [
+              "As janelas foram quebrado pela tempestade.",
+              "As janelas quebraram pela tempestade."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-017",
+      "title": "Passive se and indeterminate se",
+      "explanation": "Se can build two different structures. With a transitive verb it is the passive se (se apassivadora), and the verb agrees with the thing acted on: vendem-se casas, aluga-se quarto, fazem-se cópias. With a verb that has no direct object, usually one that takes a preposition, it is the indeterminate se, and the verb stays in the third person singular whatever follows: precisa-se de funcionários, trata-se de um erro, reclama-se de problemas. In standard writing, do not use a singular verb with a plural object (vende-se casas is wrong) and do not pluralise the verb with a prepositional complement (precisam-se de funcionários is wrong).",
+      "examples": [
+        {
+          "pt": "Vendem-se casas nesta rua.",
+          "en": "Houses are sold on this street."
+        },
+        {
+          "pt": "Precisa-se de funcionários.",
+          "en": "Employees are needed."
+        },
+        {
+          "pt": "Trata-se de um erro grave.",
+          "en": "It is a serious mistake."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-017@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-017@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ casas nesta rua. (vender-se)",
+            "answer": "Vendem-se",
+            "alternatives": ["Vendem-se", "Vende-se", "Vendemos-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ de funcionários. (precisar-se)",
+            "answer": "Precisa-se",
+            "alternatives": ["Precisam-se", "Precisa-se", "Precisamos-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ quartos para estudantes. (alugar-se)",
+            "answer": "Alugam-se",
+            "alternatives": ["Aluga-se", "Alugamos-se", "Alugam-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q04",
+            "format": "typed-blank",
+            "prompt": "Neste restaurante ___ bem. (comer-se)",
+            "answer": "come-se",
+            "near_misses": ["comem-se", "comemos-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q05",
+            "format": "typed-blank",
+            "prompt": "Nesta loja ___ livros usados. (comprar-se)",
+            "answer": "compram-se",
+            "near_misses": ["compra-se", "compramos-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ de uma decisão importante. (tratar-se)",
+            "answer": "Trata-se",
+            "near_misses": ["Tratam-se", "Tratamos-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q07",
+            "format": "translation",
+            "prompt": "Translate: Houses are sold here.",
+            "answer": "Vendem-se casas aqui.",
+            "alternatives": ["Aqui vendem-se casas.", "Aqui se vendem casas."],
+            "near_misses": ["Vende-se casas aqui.", "Vendemos-se casas aqui."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q08",
+            "format": "translation",
+            "prompt": "Translate: Employees are needed.",
+            "answer": "Precisa-se de funcionários.",
+            "alternatives": ["Precisa-se de empregados."],
+            "near_misses": [
+              "Precisam-se de funcionários.",
+              "Precisamos-se de funcionários."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q09",
+            "format": "translation",
+            "prompt": "Translate: Rooms are rented to students.",
+            "answer": "Alugam-se quartos para estudantes.",
+            "alternatives": ["Alugam-se quartos a estudantes."],
+            "near_misses": [
+              "Aluga-se quartos para estudantes.",
+              "Alugamos-se quartos para estudantes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q10",
+            "format": "correction",
+            "prompt": "Correct the agreement: Vende-se casas nesta rua.",
+            "answer": "Vendem-se casas nesta rua.",
+            "near_misses": [
+              "Vende-se casas nesta rua.",
+              "Vendemos-se casas nesta rua."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q11",
+            "format": "correction",
+            "prompt": "Correct the agreement: Precisam-se de funcionários.",
+            "answer": "Precisa-se de funcionários.",
+            "near_misses": [
+              "Precisam-se de funcionários.",
+              "Precisamos-se de funcionários."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:q12",
+            "format": "correction",
+            "prompt": "Correct the agreement: Aluga-se quartos para estudantes.",
+            "answer": "Alugam-se quartos para estudantes.",
+            "near_misses": [
+              "Aluga-se quartos para estudantes.",
+              "Alugamos-se quartos para estudantes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-017@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ cópias de chaves aqui. (fazer-se) (se apassivador)",
+            "answer": "Fazem-se",
+            "alternatives": ["Faz-se", "Fazemos-se", "Fazem-se"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-017@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ de vários problemas no prédio. (reclamar-se) (se indeterminado)",
+            "answer": "Reclama-se",
+            "near_misses": ["Reclamam-se", "Reclamamos-se"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-017@1:h03",
+            "format": "translation",
+            "prompt": "Translate: Portuguese is spoken here. (se apassivador)",
+            "answer": "Fala-se português aqui.",
+            "alternatives": ["Aqui se fala português."],
+            "near_misses": [
+              "Falam-se português aqui.",
+              "Falamos-se português aqui."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-018",
+      "title": "Estar + particípio: resulting state versus ser + particípio",
+      "explanation": "Ser + participle describes the event or process: a porta foi fechada pelo vento. Estar + participle describes the state that results: a porta está fechada. The participle agrees with the subject in both: as luzes estavam apagadas, as janelas estão abertas. Choose by what you mean: if someone did it, use ser; if you are describing how things are, use estar. An agent phrase fits ser (a porta foi fechada pelo vento) and is unnatural with estar. Do not use ser for a current state: a loja é fechada agora is wrong, a loja está fechada agora is right.",
+      "examples": [
+        {
+          "pt": "A porta está fechada.",
+          "en": "The door is closed."
+        },
+        {
+          "pt": "A porta foi fechada pelo vento.",
+          "en": "The door was closed by the wind."
+        },
+        {
+          "pt": "As luzes estavam apagadas quando chegamos.",
+          "en": "The lights were off when we arrived."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-018@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-018@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: A loja ___ fechada agora. (state)",
+            "answer": "está",
+            "alternatives": ["foi", "está", "será"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: A porta ___ fechada pelo vento ontem. (event)",
+            "answer": "foi",
+            "alternatives": ["está", "estará", "foi"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: As luzes ___ apagadas quando chegamos. (state)",
+            "answer": "estavam",
+            "alternatives": ["estavam", "foram", "serão"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q04",
+            "format": "typed-blank",
+            "prompt": "O jantar ___ servido. (estar) (presente)",
+            "answer": "está",
+            "near_misses": ["foi", "será"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q05",
+            "format": "typed-blank",
+            "prompt": "As janelas ___ abertas desde manhã. (estar) (presente)",
+            "answer": "estão",
+            "near_misses": ["são", "foram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q06",
+            "format": "typed-blank",
+            "prompt": "A mesa ___ posta pelos garçons às oito. (ser) (pretérito perfeito)",
+            "answer": "foi",
+            "near_misses": ["estava", "é"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q07",
+            "format": "translation",
+            "prompt": "Translate: The door is closed.",
+            "answer": "A porta está fechada.",
+            "near_misses": ["A porta é fechada.", "A porta foi fechada."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q08",
+            "format": "translation",
+            "prompt": "Translate: The door was closed by the wind.",
+            "answer": "A porta foi fechada pelo vento.",
+            "near_misses": [
+              "A porta estava fechada pelo vento.",
+              "A porta está fechada pelo vento."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q09",
+            "format": "translation",
+            "prompt": "Translate: The lights were off when we arrived.",
+            "answer": "As luzes estavam apagadas quando chegamos.",
+            "alternatives": ["As luzes estavam apagadas quando nós chegamos."],
+            "near_misses": [
+              "As luzes foram apagadas quando chegamos.",
+              "As luzes eram apagadas quando chegamos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: A loja é fechada agora.",
+            "answer": "A loja está fechada agora.",
+            "near_misses": [
+              "A loja é fechada agora.",
+              "A loja foi fechada agora."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: As janelas são abertas desde manhã.",
+            "answer": "As janelas estão abertas desde manhã.",
+            "near_misses": [
+              "As janelas são abertas desde manhã.",
+              "As janelas foram abertas desde manhã."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: O bolo está feito pela minha avó ontem.",
+            "answer": "O bolo foi feito pela minha avó ontem.",
+            "near_misses": [
+              "O bolo está feito pela minha avó ontem.",
+              "O bolo estava feito pela minha avó ontem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-018@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando cheguei, o relatório já ___ pronto. (state) (estar + particípio)",
+            "answer": "estava",
+            "alternatives": ["estava", "foi", "será"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-018@1:h02",
+            "format": "typed-blank",
+            "prompt": "Amanhã a conta ___ paga. (ser) (ser + particípio) (futuro)",
+            "answer": "será",
+            "near_misses": ["está", "foi"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-018@1:h03",
+            "format": "translation",
+            "prompt": "Translate: The windows are broken. (estar + particípio)",
+            "answer": "As janelas estão quebradas.",
+            "near_misses": [
+              "As janelas são quebradas.",
+              "As janelas foram quebradas."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-019",
+      "title": "Impersonal third person: dizem que, diz-se que",
+      "explanation": "To report what is said or done without naming who does it, Portuguese uses the third person plural with no subject: dizem que ele vai viajar, falam que o prefeito vai renunciar, roubaram minha bolsa. It also uses se with the verb in the singular before a que clause: diz-se que o prédio é antigo, acredita-se que a crise acabou. Use these when the agent is unknown, general or unimportant. Do not use the first person plural (dizemos) for an unnamed group, and do not pluralise se before que (dizem-se que is wrong).",
+      "examples": [
+        {
+          "pt": "Dizem que ele vai viajar amanhã.",
+          "en": "They say he is going to travel tomorrow."
+        },
+        {
+          "pt": "Roubaram minha bolsa no ônibus.",
+          "en": "Someone stole my bag on the bus."
+        },
+        {
+          "pt": "Acredita-se que a crise acabou.",
+          "en": "It is believed that the crisis is over."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-019@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-019@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ que o inverno será frio. (dizer, 3ª pessoa do plural)",
+            "answer": "Dizem",
+            "alternatives": ["Dizemos", "Dizes", "Dizem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ que o prefeito vai renunciar. (falar, 3ª pessoa do plural)",
+            "answer": "Falam",
+            "alternatives": ["Falam", "Falamos", "Falas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ que a crise acabou. (acreditar-se)",
+            "answer": "Acredita-se",
+            "alternatives": ["Acreditam-se", "Acredita-se", "Acreditamos-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q04",
+            "format": "typed-blank",
+            "prompt": "___ minha bolsa no ônibus ontem. (roubar) (3ª pessoa do plural)",
+            "answer": "Roubaram",
+            "near_misses": ["Roubamos", "Roubou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ que o voo atrasou. (anunciar) (3ª pessoa do plural, pretérito)",
+            "answer": "Anunciaram",
+            "near_misses": ["Anunciamos", "Anunciou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ que o prédio é antigo. (dizer-se)",
+            "answer": "Diz-se",
+            "near_misses": ["Dizem-se", "Dizemos-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q07",
+            "format": "translation",
+            "prompt": "Translate (impersonal): They say he is travelling.",
+            "answer": "Dizem que ele está viajando.",
+            "alternatives": ["Falam que ele está viajando."],
+            "near_misses": [
+              "Dizemos que ele está viajando.",
+              "Dizes que ele está viajando."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q08",
+            "format": "translation",
+            "prompt": "Translate (impersonal): They stole my bag.",
+            "answer": "Roubaram minha bolsa.",
+            "alternatives": ["Roubaram a minha bolsa."],
+            "near_misses": ["Roubamos minha bolsa.", "Roubou minha bolsa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q09",
+            "format": "translation",
+            "prompt": "Translate (impersonal): It is believed that the crisis is over.",
+            "answer": "Acredita-se que a crise acabou.",
+            "alternatives": ["Acredita-se que a crise terminou."],
+            "near_misses": [
+              "Acreditam-se que a crise acabou.",
+              "Acreditamos-se que a crise acabou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Dizem-se que o prefeito vai renunciar.",
+            "answer": "Diz-se que o prefeito vai renunciar.",
+            "alternatives": ["Dizem que o prefeito vai renunciar."],
+            "near_misses": [
+              "Dizem-se que o prefeito vai renunciar.",
+              "Dizemos-se que o prefeito vai renunciar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q11",
+            "format": "correction",
+            "prompt": "Correct to the impersonal third person plural (someone stole): Roubou a minha carteira no ônibus.",
+            "answer": "Roubaram a minha carteira no ônibus.",
+            "near_misses": [
+              "Roubou a minha carteira no ônibus.",
+              "Roubamos a minha carteira no ônibus."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:q12",
+            "format": "correction",
+            "prompt": "Correct to the impersonal third person plural (they say): Falamos que o prefeito vai renunciar.",
+            "answer": "Falam que o prefeito vai renunciar.",
+            "near_misses": [
+              "Falamos que o prefeito vai renunciar.",
+              "Falas que o prefeito vai renunciar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-019@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ que o filme é ótimo. (afirmar, 3ª pessoa do plural) (sujeito indeterminado)",
+            "answer": "Afirmam",
+            "alternatives": ["Afirmamos", "Afirmam", "Afirmas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-019@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ que o ministro vai sair. (comentar) (3ª pessoa do plural) (sujeito indeterminado)",
+            "answer": "Comentam",
+            "near_misses": ["Comentamos", "Comentas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-019@1:h03",
+            "format": "translation",
+            "prompt": "Translate (impersonal): They broke into the house. (sujeito indeterminado)",
+            "answer": "Arrombaram a casa.",
+            "near_misses": ["Arrombamos a casa.", "Arrombou a casa."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-020",
+      "title": "Double participles: regular and short forms",
+      "explanation": "Some verbs have two participles: a regular one in -ado or -ido and a short irregular one. Aceitar gives aceitado and aceito; entregar gives entregado and entregue; ganhar gives ganhado and ganho; gastar gives gastado and gasto; pagar gives pagado and pago; eleger gives elegido and eleito; prender gives prendido and preso; matar gives matado and morto; expulsar gives expulsado and expulso. In the passive with ser or estar, use the short form and agree it with the subject: a conta foi paga, o ladrão foi preso, os alunos foram expulsos. The regular form appears with ter and haver in formal writing (tinham entregado), though Brazilian speakers also use the short form there. Do not use the regular form in the passive: foi prendido is wrong.",
+      "examples": [
+        {
+          "pt": "A conta foi paga ontem.",
+          "en": "The bill was paid yesterday."
+        },
+        {
+          "pt": "O ladrão foi preso pela polícia.",
+          "en": "The thief was arrested by the police."
+        },
+        {
+          "pt": "Os alunos foram expulsos da sala.",
+          "en": "The students were expelled from the room."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-020@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-020@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: A conta foi ___ ontem. (pagar)",
+            "answer": "paga",
+            "alternatives": ["paga", "pagada", "pagado"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O ladrão foi ___ pela polícia. (prender)",
+            "answer": "preso",
+            "alternatives": ["prendido", "preso", "prendeu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O prefeito foi ___ em outubro. (eleger)",
+            "answer": "eleito",
+            "alternatives": ["elegido", "elegeu", "eleito"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q04",
+            "format": "typed-blank",
+            "prompt": "A proposta foi ___ pela diretoria. (aceitar)",
+            "answer": "aceita",
+            "near_misses": ["aceitada", "aceitado"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q05",
+            "format": "typed-blank",
+            "prompt": "O dinheiro foi ___ em poucos dias. (gastar)",
+            "answer": "gasto",
+            "near_misses": ["gastado", "gastou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q06",
+            "format": "typed-blank",
+            "prompt": "Os alunos foram ___ da sala. (expulsar)",
+            "answer": "expulsos",
+            "near_misses": ["expulsados", "expulso"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q07",
+            "format": "translation",
+            "prompt": "Translate: The thief was arrested by the police.",
+            "answer": "O ladrão foi preso pela polícia.",
+            "alternatives": ["O ladrão foi preso pelos policiais."],
+            "near_misses": [
+              "O ladrão foi prendido pela polícia.",
+              "O ladrão prendeu pela polícia."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q08",
+            "format": "translation",
+            "prompt": "Translate: The mayor was elected in October.",
+            "answer": "O prefeito foi eleito em outubro.",
+            "near_misses": [
+              "O prefeito foi elegido em outubro.",
+              "O prefeito elegeu em outubro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q09",
+            "format": "translation",
+            "prompt": "Translate: The bill was paid yesterday.",
+            "answer": "A conta foi paga ontem.",
+            "near_misses": [
+              "A conta foi pagada ontem.",
+              "A conta foi pagado ontem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q10",
+            "format": "correction",
+            "prompt": "Correct the participle: O ladrão foi prendido pela polícia.",
+            "answer": "O ladrão foi preso pela polícia.",
+            "near_misses": [
+              "O ladrão foi prendido pela polícia.",
+              "O ladrão foi prendeu pela polícia."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q11",
+            "format": "correction",
+            "prompt": "Correct the participle: A proposta foi aceitada pela diretoria.",
+            "answer": "A proposta foi aceita pela diretoria.",
+            "near_misses": [
+              "A proposta foi aceitada pela diretoria.",
+              "A proposta foi aceito pela diretoria."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:q12",
+            "format": "correction",
+            "prompt": "Correct the participle: A prefeita foi elegida em outubro.",
+            "answer": "A prefeita foi eleita em outubro.",
+            "near_misses": [
+              "A prefeita foi elegida em outubro.",
+              "A prefeita foi eleito em outubro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-020@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Os ingressos foram ___ aos clientes. (entregar) (particípio duplo)",
+            "answer": "entregues",
+            "alternatives": ["entregados", "entregue", "entregues"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-020@1:h02",
+            "format": "typed-blank",
+            "prompt": "O inimigo foi ___ no combate. (matar) (particípio duplo)",
+            "answer": "morto",
+            "near_misses": ["matado", "matou"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-020@1:h03",
+            "format": "translation",
+            "prompt": "Translate: The prize was won by our team. (particípio duplo)",
+            "answer": "O prêmio foi ganho pelo nosso time.",
+            "alternatives": ["O prêmio foi ganho pela nossa equipe."],
+            "near_misses": [
+              "O prêmio foi ganhado pelo nosso time.",
+              "O prêmio ganhou pelo nosso time."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,868 @@
+{
+  "module_id": "pt-b2-module-05",
+  "track": "Portuguese B2",
+  "title": "Relative clauses and reported speech",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b2-021",
+      "title": "Relative clauses with prepositions",
+      "explanation": "A relative clause that needs a preposition keeps the preposition in front of the relative word: a casa em que moro, o livro de que preciso, o homem com quem falei, a empresa para a qual trabalho. After a preposition, use que for things, quem for people, or o qual, a qual, os quais and as quais, which agree with the noun and fuse with the preposition: pelo qual, pela qual, nos quais. Without the preposition the relative is wrong in standard writing: a casa que moro is wrong. A clause that adds extra information about a unique noun sits between commas (Maria, que mora aqui, é médica); a restrictive clause that identifies the noun has none.",
+      "examples": [
+        {
+          "pt": "A casa em que moro é velha.",
+          "en": "The house I live in is old."
+        },
+        {
+          "pt": "O homem com quem falei é médico.",
+          "en": "The man I spoke with is a doctor."
+        },
+        {
+          "pt": "O Pedro, que mora em Lisboa, é médico.",
+          "en": "Pedro, who lives in Lisbon, is a doctor."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-021@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-021@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: A casa ___ moro é velha.",
+            "answer": "em que",
+            "alternatives": ["que", "em que", "cujo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O homem ___ falei é médico.",
+            "answer": "com quem",
+            "alternatives": ["quem", "onde", "com quem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O livro ___ preciso está aqui.",
+            "answer": "de que",
+            "alternatives": ["de que", "que", "em que"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q04",
+            "format": "typed-blank",
+            "prompt": "A empresa para ___ trabalho é grande. (o qual)",
+            "answer": "a qual",
+            "near_misses": ["o qual", "as quais"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q05",
+            "format": "typed-blank",
+            "prompt": "As pessoas ___ trabalho são simpáticas. (com + quem)",
+            "answer": "com quem",
+            "near_misses": ["com que", "quem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q06",
+            "format": "typed-blank",
+            "prompt": "A rua ___ passamos é longa. (por + o qual)",
+            "answer": "pela qual",
+            "near_misses": ["pelo qual", "pelas quais"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q07",
+            "format": "translation",
+            "prompt": "Translate: The house I live in is old.",
+            "answer": "A casa em que moro é velha.",
+            "alternatives": [
+              "A casa onde moro é velha.",
+              "A casa na qual moro é velha."
+            ],
+            "near_misses": [
+              "A casa que moro é velha.",
+              "A casa onde que moro é velha."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q08",
+            "format": "translation",
+            "prompt": "Translate: The man I spoke with is a doctor.",
+            "answer": "O homem com quem falei é médico.",
+            "alternatives": ["O homem com o qual falei é médico."],
+            "near_misses": [
+              "O homem com que falei é médico.",
+              "O homem quem falei é médico."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q09",
+            "format": "translation",
+            "prompt": "Translate: The book I need is here.",
+            "answer": "O livro de que preciso está aqui.",
+            "alternatives": ["O livro do qual preciso está aqui."],
+            "near_misses": [
+              "O livro que preciso está aqui.",
+              "O livro em que preciso está aqui."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q10",
+            "format": "correction",
+            "prompt": "Correct the relative: A casa que moro é velha.",
+            "answer": "A casa em que moro é velha.",
+            "alternatives": [
+              "A casa onde moro é velha.",
+              "A casa na qual moro é velha."
+            ],
+            "near_misses": [
+              "A casa que moro é velha.",
+              "A casa de que moro é velha."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q11",
+            "format": "correction",
+            "prompt": "Correct the relative: A pessoa que falei é médica.",
+            "answer": "A pessoa com quem falei é médica.",
+            "alternatives": ["A pessoa com a qual falei é médica."],
+            "near_misses": [
+              "A pessoa que falei é médica.",
+              "A pessoa de quem falei é médica."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:q12",
+            "format": "correction",
+            "prompt": "Correct the punctuation: O Pedro que mora em Lisboa é médico.",
+            "answer": "O Pedro, que mora em Lisboa, é médico.",
+            "near_misses": [
+              "O Pedro que mora em Lisboa é médico.",
+              "O Pedro que, mora em Lisboa, é médico."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-021@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: A cidade ___ nasci fica no sul. (relativo com preposição)",
+            "answer": "na qual",
+            "alternatives": ["na qual", "que", "cuja"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-021@1:h02",
+            "format": "typed-blank",
+            "prompt": "O amigo ___ falei ontem chegou. (de + quem) (relativo com preposição)",
+            "answer": "de quem",
+            "near_misses": ["quem", "em que"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-021@1:h03",
+            "format": "translation",
+            "prompt": "Translate: The street I walked along is long. (relativo com preposição)",
+            "answer": "A rua pela qual caminhei é longa.",
+            "near_misses": [
+              "A rua que caminhei é longa.",
+              "A rua em que caminhei é longa."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-022",
+      "title": "Cujo and onde, aonde, donde",
+      "explanation": "Cujo means whose and agrees with the thing possessed, not with the owner: o autor cujo livro li, a mulher cuja filha estuda aqui, os alunos cujas notas são altas. It is never followed by an article. Onde marks a place where something is (o hotel onde ficamos), aonde marks movement toward a place, a + onde (a cidade aonde vamos), and donde marks movement from a place, de + onde (a cidade donde viemos). Do not use que with a possessive for whose (o autor que o livro li is wrong), and do not use onde for movement toward or away from a place in careful writing.",
+      "examples": [
+        {
+          "pt": "O autor cujo livro li é famoso.",
+          "en": "The author whose book I read is famous."
+        },
+        {
+          "pt": "A cidade aonde vamos é pequena.",
+          "en": "The city we are going to is small."
+        },
+        {
+          "pt": "A cidade donde viemos fica longe.",
+          "en": "The city we come from is far."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-022@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-022@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O autor ___ livro li ontem é famoso.",
+            "answer": "cujo",
+            "alternatives": ["cuja", "cujos", "cujo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: A mulher ___ filha estuda aqui é minha vizinha.",
+            "answer": "cuja",
+            "alternatives": ["cuja", "cujo", "cujas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Os alunos ___ notas são altas ganham prêmios.",
+            "answer": "cujas",
+            "alternatives": ["cujos", "cujas", "cuja"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q04",
+            "format": "typed-blank",
+            "prompt": "O país ___ capital visitei é grande. (cujo)",
+            "answer": "cuja",
+            "near_misses": ["cujo", "cujas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q05",
+            "format": "typed-blank",
+            "prompt": "A cidade ___ vamos amanhã é pequena. (a + onde, movimento)",
+            "answer": "aonde",
+            "near_misses": ["donde", "cuja"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q06",
+            "format": "typed-blank",
+            "prompt": "A cidade ___ viemos fica longe. (de + onde, movimento de origem)",
+            "answer": "donde",
+            "near_misses": ["aonde", "cujo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q07",
+            "format": "translation",
+            "prompt": "Translate: The author whose book I read is famous.",
+            "answer": "O autor cujo livro li é famoso.",
+            "alternatives": ["O autor cujo livro eu li é famoso."],
+            "near_misses": [
+              "O autor que seu livro li é famoso.",
+              "O autor cuja livro li é famoso."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q08",
+            "format": "translation",
+            "prompt": "Translate (aonde): The city we are going to is small.",
+            "answer": "A cidade aonde vamos é pequena.",
+            "alternatives": ["A cidade para onde vamos é pequena."],
+            "near_misses": [
+              "A cidade donde vamos é pequena.",
+              "A cidade cujo vamos é pequena."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q09",
+            "format": "translation",
+            "prompt": "Translate (donde): The city we come from is far.",
+            "answer": "A cidade donde viemos fica longe.",
+            "alternatives": ["A cidade de onde viemos fica longe."],
+            "near_misses": [
+              "A cidade aonde viemos fica longe.",
+              "A cidade cuja viemos fica longe."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q10",
+            "format": "correction",
+            "prompt": "Correct the relative: A mulher cujo filha estuda aqui é minha vizinha.",
+            "answer": "A mulher cuja filha estuda aqui é minha vizinha.",
+            "near_misses": [
+              "A mulher cujo filha estuda aqui é minha vizinha.",
+              "A mulher cujas filha estuda aqui é minha vizinha."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q11",
+            "format": "correction",
+            "prompt": "Correct the relative: Os alunos que as notas são altas ganham prêmios.",
+            "answer": "Os alunos cujas notas são altas ganham prêmios.",
+            "near_misses": [
+              "Os alunos que as notas são altas ganham prêmios.",
+              "Os alunos cujos notas são altas ganham prêmios."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:q12",
+            "format": "correction",
+            "prompt": "Correct the relative: O lugar aonde nasci é pequeno.",
+            "answer": "O lugar onde nasci é pequeno.",
+            "near_misses": [
+              "O lugar aonde nasci é pequeno.",
+              "O lugar donde nasci é pequeno."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-022@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Os atletas ___ treinos são longos viajam muito. (pronome relativo possessivo)",
+            "answer": "cujos",
+            "alternatives": ["cujo", "cujos", "cujas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-022@1:h02",
+            "format": "typed-blank",
+            "prompt": "O país ___ vieram os turistas é quente. (de + onde, duas palavras)",
+            "answer": "de onde",
+            "near_misses": ["donde", "onde"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-022@1:h03",
+            "format": "translation",
+            "prompt": "Translate (cujo): The student whose grades are high won a prize.",
+            "answer": "O aluno cujas notas são altas ganhou um prêmio.",
+            "near_misses": [
+              "O aluno que as notas são altas ganhou um prêmio.",
+              "O aluno cujos notas são altas ganhou um prêmio."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-023",
+      "title": "Reported statements: tense and time shifts",
+      "explanation": "When the reporting verb is in the past, the reported verb usually moves back one step: presente becomes imperfeito (estou becomes estava), pretérito perfeito becomes mais-que-perfeito (cheguei becomes tinha chegado), futuro becomes futuro do pretérito (viajarei becomes viajaria). Pronouns and time words shift too: hoje becomes naquele dia, ontem becomes no dia anterior, amanhã becomes no dia seguinte, aqui becomes ali or lá. Use que to introduce the report. The shift is the norm in writing; if the situation is still true, speakers may keep the present, but the shifted form is the correct test in this course. Do not leave a present or future verb after a past reporting verb when the shift applies.",
+      "examples": [
+        {
+          "pt": "Ele disse que estava cansado.",
+          "en": "He said he was tired."
+        },
+        {
+          "pt": "Ela disse que morava em Lisboa.",
+          "en": "She said she lived in Lisbon."
+        },
+        {
+          "pt": "Eles disseram que chegariam no dia seguinte.",
+          "en": "They said they would arrive the next day."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-023@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-023@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct reported form: Ele disse: 'Estou cansado.' Ele disse que ___ cansado. (relato no passado)",
+            "answer": "estava",
+            "alternatives": ["estava", "estaria", "estará"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct reported form: Ela disse: 'Moro em Lisboa.' Ela disse que ___ em Lisboa. (relato no passado)",
+            "answer": "morava",
+            "alternatives": ["moraria", "morava", "morará"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct reported form: Eles disseram: 'Chegamos ontem.' Eles disseram que ___ no dia anterior. (relato no passado)",
+            "answer": "tinham chegado",
+            "alternatives": ["chegariam", "chegavam", "tinham chegado"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ela disse: 'Viajarei amanhã.' Ela disse que ___ no dia seguinte. (viajar) (relato no passado)",
+            "answer": "viajaria",
+            "near_misses": ["viajará", "viajava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ele disse: 'Leio muito.' Ele disse que ___ muito. (ler) (relato no passado)",
+            "answer": "lia",
+            "near_misses": ["lê", "leria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ela disse: 'Terminei o trabalho.' Ela disse que ___ o trabalho. (terminar, mais-que-perfeito composto)",
+            "answer": "tinha terminado",
+            "near_misses": ["terminava", "terminaria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q07",
+            "format": "translation",
+            "prompt": "Translate (reported speech): He said he was tired.",
+            "answer": "Ele disse que estava cansado.",
+            "alternatives": ["Ele falou que estava cansado."],
+            "near_misses": [
+              "Ele disse que está cansado.",
+              "Ele disse que estaria cansado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q08",
+            "format": "translation",
+            "prompt": "Translate (reported speech): She said she lived in Lisbon.",
+            "answer": "Ela disse que morava em Lisboa.",
+            "alternatives": ["Ela falou que morava em Lisboa."],
+            "near_misses": [
+              "Ela disse que mora em Lisboa.",
+              "Ela disse que moraria em Lisboa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q09",
+            "format": "translation",
+            "prompt": "Translate (reported speech): They said they would arrive the next day.",
+            "answer": "Eles disseram que chegariam no dia seguinte.",
+            "near_misses": [
+              "Eles disseram que chegarão no dia seguinte.",
+              "Eles disseram que chegam no dia seguinte."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q10",
+            "format": "correction",
+            "prompt": "Correct the reported form (relato no passado): Ele disse que chegará no dia seguinte.",
+            "answer": "Ele disse que chegaria no dia seguinte.",
+            "near_misses": [
+              "Ele disse que chegará no dia seguinte.",
+              "Ele disse que chegava no dia seguinte."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q11",
+            "format": "correction",
+            "prompt": "Correct the reported form (relato no passado): Ela disse que mora em Lisboa naquele tempo.",
+            "answer": "Ela disse que morava em Lisboa naquele tempo.",
+            "near_misses": [
+              "Ela disse que mora em Lisboa naquele tempo.",
+              "Ela disse que morou em Lisboa naquele tempo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:q12",
+            "format": "correction",
+            "prompt": "Correct the reported form (relato no passado): Ela disse que terminou o trabalho antes.",
+            "answer": "Ela disse que tinha terminado o trabalho antes.",
+            "alternatives": ["Ela disse que terminara o trabalho antes."],
+            "near_misses": [
+              "Ela disse que terminou o trabalho antes.",
+              "Ela disse que terminaria o trabalho antes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-023@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct reported form: Ele disse: 'Faço ginástica.' Ele disse que ___ ginástica. (discurso indireto)",
+            "answer": "fazia",
+            "alternatives": ["faz", "faria", "fazia"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-023@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ela disse: 'Saí cedo.' Ela disse que ___ cedo. (sair, mais-que-perfeito composto) (discurso indireto)",
+            "answer": "tinha saído",
+            "near_misses": ["saiu", "saía"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-023@1:h03",
+            "format": "translation",
+            "prompt": "Translate (reported speech): He said he would call the next day. (discurso indireto)",
+            "answer": "Ele disse que ligaria no dia seguinte.",
+            "alternatives": ["Ele disse que telefonaria no dia seguinte."],
+            "near_misses": [
+              "Ele disse que ligará no dia seguinte.",
+              "Ele disse que liga no dia seguinte."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-024",
+      "title": "Reported questions and requests",
+      "explanation": "A reported yes/no question uses se: ela perguntou se eu estava cansado. A reported question with a question word keeps that word and moves the verb back: ele perguntou onde eu morava, ela perguntou o que eu queria. A reported request or order uses que plus the imperfect subjunctive after a past verb: ele pediu que eu esperasse, o chefe mandou que nós saíssemos, a professora pediu que os alunos prestassem atenção. Do not use que for a yes/no question (perguntou que eu estava is wrong) and do not leave the present indicative or the infinitive after que in a request.",
+      "examples": [
+        {
+          "pt": "Ela perguntou se eu estava cansado.",
+          "en": "She asked whether I was tired."
+        },
+        {
+          "pt": "Ele perguntou onde eu morava.",
+          "en": "He asked where I lived."
+        },
+        {
+          "pt": "Ele me pediu que eu esperasse.",
+          "en": "He asked me to wait."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-024@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-024@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct word: Ela perguntou ___ eu estava cansado. (pergunta sim/não)",
+            "answer": "se",
+            "alternatives": ["que", "se", "porque"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele pediu que eu ___ . (esperar)",
+            "answer": "esperasse",
+            "alternatives": ["espero", "esperar", "esperasse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O chefe mandou que nós ___ cedo. (sair)",
+            "answer": "saíssemos",
+            "alternatives": ["saíssemos", "saímos", "saiamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ele perguntou onde eu ___ . (morar) (relato no passado)",
+            "answer": "morava",
+            "near_misses": ["moro", "moraria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela perguntou o que eu ___ . (querer) (relato no passado)",
+            "answer": "queria",
+            "near_misses": ["quero", "queira"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q06",
+            "format": "typed-blank",
+            "prompt": "A professora pediu que os alunos ___ atenção. (prestar)",
+            "answer": "prestassem",
+            "near_misses": ["prestar", "prestam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q07",
+            "format": "translation",
+            "prompt": "Translate (reported question): She asked if I was tired.",
+            "answer": "Ela perguntou se eu estava cansado.",
+            "near_misses": [
+              "Ela perguntou se eu estou cansado.",
+              "Ela perguntou que eu estava cansado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q08",
+            "format": "translation",
+            "prompt": "Translate (reported question): He asked where I lived.",
+            "answer": "Ele perguntou onde eu morava.",
+            "alternatives": ["Ele perguntou onde eu vivia."],
+            "near_misses": [
+              "Ele perguntou onde eu moro.",
+              "Ele perguntou onde eu moraria."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q09",
+            "format": "translation",
+            "prompt": "Translate (reported request): He asked me to wait.",
+            "answer": "Ele me pediu que eu esperasse.",
+            "alternatives": ["Ele pediu que eu esperasse."],
+            "near_misses": [
+              "Ele me pediu que eu espero.",
+              "Ele me pediu que eu esperar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q10",
+            "format": "correction",
+            "prompt": "Correct the word: Ele perguntou que eu queria café.",
+            "answer": "Ele perguntou se eu queria café.",
+            "near_misses": [
+              "Ele perguntou que eu queria café.",
+              "Ele perguntou porque eu queria café."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Ele pediu que eu esperar.",
+            "answer": "Ele pediu que eu esperasse.",
+            "near_misses": [
+              "Ele pediu que eu esperar.",
+              "Ele pediu que eu espero."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: O chefe mandou que nós saímos cedo.",
+            "answer": "O chefe mandou que nós saíssemos cedo.",
+            "near_misses": [
+              "O chefe mandou que nós saímos cedo.",
+              "O chefe mandou que nós saiamos cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-024@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O professor pediu que nós ___ a lição. (copiar) (discurso indireto)",
+            "answer": "copiássemos",
+            "alternatives": ["copiássemos", "copiamos", "copiemos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-024@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ele perguntou o que nós ___ no sábado. (fazer, imperfeito) (discurso indireto)",
+            "answer": "fazíamos",
+            "near_misses": ["fazemos", "fizéssemos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-024@1:h03",
+            "format": "translation",
+            "prompt": "Translate (reported request): She asked us to leave. (discurso indireto)",
+            "answer": "Ela pediu que saíssemos.",
+            "alternatives": ["Ela nos pediu que saíssemos."],
+            "near_misses": ["Ela pediu que saímos.", "Ela pediu que saiamos."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-025",
+      "title": "Reporting verbs that mark stance",
+      "explanation": "The reporting verb shows how the speaker treats a claim. Alegar reports a claim without vouching for it (ele alegou que estava doente). Afirmar, garantir and admitir report what the person stated, promised or conceded, with the indicative and the shifted tense (ela admitiu que errou, o diretor garantiu que a obra estaria pronta). Negar que and sugerir que take the subjunctive after a past verb: ele negou que tivesse mentido, ela sugeriu que esperássemos. Negar may also take an infinitive (negou ter mentido). Do not use the indicative after negar que or sugerir que, and do not use the subjunctive after alegar que or admitir que.",
+      "examples": [
+        {
+          "pt": "Ele alegou que estava doente.",
+          "en": "He claimed he was sick."
+        },
+        {
+          "pt": "Ela admitiu que errou.",
+          "en": "She admitted she was wrong."
+        },
+        {
+          "pt": "Ele negou que tivesse mentido.",
+          "en": "He denied that he had lied."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-025@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-025@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele negou que ___ o dinheiro. (pegar, mais-que-perfeito do subjuntivo)",
+            "answer": "tivesse pegado",
+            "alternatives": ["tinha pegado", "pegou", "tivesse pegado"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb that marks a claim you doubt: Ele ___ que estava doente. (alleged)",
+            "answer": "alegou",
+            "alternatives": ["alegou", "garantiu", "reconheceu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela sugeriu que nós ___ mais cedo. (sair, imperfeito do subjuntivo)",
+            "answer": "saíssemos",
+            "alternatives": ["saímos", "saíssemos", "saiamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ela ___ que errou. (admitir) (pretérito perfeito)",
+            "answer": "admitiu",
+            "near_misses": ["admite", "admitia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q05",
+            "format": "typed-blank",
+            "prompt": "O diretor garantiu que a obra ___ pronta em maio. (estar, futuro do pretérito)",
+            "answer": "estaria",
+            "near_misses": ["estará", "estava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ele negou que ___ mentido. (ter, imperfeito do subjuntivo)",
+            "answer": "tivesse",
+            "near_misses": ["tinha", "teve"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q07",
+            "format": "translation",
+            "prompt": "Translate (reporting verb): He denied that he had lied.",
+            "answer": "Ele negou que tivesse mentido.",
+            "alternatives": ["Ele negou ter mentido."],
+            "near_misses": [
+              "Ele negou que tinha mentido.",
+              "Ele negou que mentiu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q08",
+            "format": "translation",
+            "prompt": "Translate (reporting verb): She admitted she was wrong.",
+            "answer": "Ela admitiu que estava errada.",
+            "alternatives": ["Ela admitiu que errou."],
+            "near_misses": [
+              "Ela admitiu que estivesse errada.",
+              "Ela admitiu que está errada."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q09",
+            "format": "translation",
+            "prompt": "Translate (reporting verb): He claimed he was sick.",
+            "answer": "Ele alegou que estava doente.",
+            "alternatives": ["Ele alegou estar doente."],
+            "near_misses": [
+              "Ele alegou que estivesse doente.",
+              "Ele alegou que está doente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q10",
+            "format": "correction",
+            "prompt": "Correct the mood: Ela negou que tinha pegado o dinheiro.",
+            "answer": "Ela negou que tivesse pegado o dinheiro.",
+            "alternatives": ["Ela negou ter pegado o dinheiro."],
+            "near_misses": [
+              "Ela negou que tinha pegado o dinheiro.",
+              "Ela negou que pegou o dinheiro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q11",
+            "format": "correction",
+            "prompt": "Correct the mood: Ele sugeriu que nós saímos mais cedo.",
+            "answer": "Ele sugeriu que nós saíssemos mais cedo.",
+            "near_misses": [
+              "Ele sugeriu que nós saímos mais cedo.",
+              "Ele sugeriu que nós saiamos mais cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Ele alegou que esteja doente.",
+            "answer": "Ele alegou que estava doente.",
+            "near_misses": [
+              "Ele alegou que esteja doente.",
+              "Ele alegou que estivesse doente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-025@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: O réu negou que ___ envolvido. (estar, imperfeito do subjuntivo) (verbo de relato)",
+            "answer": "estivesse",
+            "alternatives": ["estava", "estivesse", "esteve"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-025@1:h02",
+            "format": "typed-blank",
+            "prompt": "A empresa garantiu que o preço ___ igual. (continuar, futuro do pretérito) (verbo de relato)",
+            "answer": "continuaria",
+            "near_misses": ["continuará", "continuava"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-025@1:h03",
+            "format": "translation",
+            "prompt": "Translate (reporting verb): She suggested that we return. (verbo de relato)",
+            "answer": "Ela sugeriu que voltássemos.",
+            "alternatives": ["Ela nos sugeriu que voltássemos."],
+            "near_misses": [
+              "Ela sugeriu que voltamos.",
+              "Ela sugeriu que voltemos."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

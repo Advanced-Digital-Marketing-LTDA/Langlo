@@ -1,0 +1,811 @@
+{
+  "module_id": "pt-b2-module-08",
+  "track": "Portuguese B2",
+  "title": "Register and form",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b2-036",
+      "title": "Written and spoken register",
+      "explanation": "Brazilian Portuguese has a spoken register and a formal written one, and a B2 reader recognises both. Speech shortens words: pra for para, tá for está, cadê for onde está, and the tag question né. Speech also uses a gente where formal writing uses nós, and você or tu where formal writing may use o senhor or a senhora; vós is archaic and appears only in old texts and liturgy. In formal writing, spell the full forms: vou para casa, está tudo bem, nós fomos ao cinema. Do not use the spoken shortcuts in an essay or a formal letter, and do not use the formal forms with the wrong verb ending (nós foi is wrong).",
+      "examples": [
+        {
+          "pt": "Vou para casa agora.",
+          "en": "I am going home now."
+        },
+        {
+          "pt": "Está tudo bem?",
+          "en": "Is everything fine?"
+        },
+        {
+          "pt": "Nós fomos ao cinema.",
+          "en": "We went to the cinema."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-036@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-036@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the formal written equivalent of: Vou pra casa.",
+            "answer": "Vou para casa.",
+            "alternatives": ["Vou pra casa.", "Vou para casa.", "Vou à casa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the formal written equivalent of: A gente foi ao cinema.",
+            "answer": "Nós fomos ao cinema.",
+            "alternatives": [
+              "A gente foi ao cinema.",
+              "Nós foi ao cinema.",
+              "Nós fomos ao cinema."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the formal written equivalent of: Tá tudo bem?",
+            "answer": "Está tudo bem?",
+            "alternatives": [
+              "Está tudo bem?",
+              "Tá tudo bem?",
+              "Estás tudo bem?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q04",
+            "format": "typed-blank",
+            "prompt": "Vou ___ casa. (pra, forma escrita)",
+            "answer": "para",
+            "near_misses": ["pra", "pa"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ pronto? (tá, forma escrita)",
+            "answer": "Está",
+            "near_misses": ["Tá", "Estar"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ fomos ao cinema. (a gente, forma escrita)",
+            "answer": "Nós",
+            "near_misses": ["A gente", "Nos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q07",
+            "format": "translation",
+            "prompt": "Translate (formal register): We went to the cinema.",
+            "answer": "Nós fomos ao cinema.",
+            "alternatives": ["Fomos ao cinema."],
+            "near_misses": ["A gente foi ao cinema.", "Nós foi ao cinema."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q08",
+            "format": "translation",
+            "prompt": "Translate (formal register): Is everything fine?",
+            "answer": "Está tudo bem?",
+            "near_misses": ["Tá tudo bem?", "Estás tudo bem?"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q09",
+            "format": "translation",
+            "prompt": "Translate (formal register): I am going home.",
+            "answer": "Vou para casa.",
+            "alternatives": ["Estou indo para casa.", "Eu vou para casa."],
+            "near_misses": ["Vou pra casa.", "Vou pa casa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q10",
+            "format": "correction",
+            "prompt": "Rewrite in formal register: Vou pra casa agora.",
+            "answer": "Vou para casa agora.",
+            "near_misses": ["Vou pra casa agora.", "Vou pa casa agora."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q11",
+            "format": "correction",
+            "prompt": "Rewrite in formal register: A gente chegou tarde.",
+            "answer": "Nós chegamos tarde.",
+            "near_misses": ["A gente chegou tarde.", "Nós chegou tarde."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:q12",
+            "format": "correction",
+            "prompt": "Rewrite in formal register: Tá cedo, né?",
+            "answer": "Está cedo, não é?",
+            "near_misses": ["Tá cedo, né?", "Está cedo, né?"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-036@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the formal written equivalent of: Cadê o livro? (registro formal)",
+            "answer": "Onde está o livro?",
+            "alternatives": [
+              "Onde está o livro?",
+              "Cadê o livro?",
+              "Onde tá o livro?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-036@1:h02",
+            "format": "typed-blank",
+            "prompt": "Vai chover, ___ ? (né, forma escrita) (registro formal)",
+            "answer": "não é",
+            "near_misses": ["né", "não"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-036@1:h03",
+            "format": "translation",
+            "prompt": "Translate (formal register): He is not here. (registro formal)",
+            "answer": "Ele não está aqui.",
+            "near_misses": ["Ele não tá aqui.", "Ele não estar aqui."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-037",
+      "title": "Diminutives, augmentatives and the superlative -íssimo",
+      "explanation": "Evaluative suffixes change size or tone. The diminutive -inho or -zinho shows small size or affection: casa gives casinha, livro gives livrinho, pão gives pãozinho, café gives cafezinho, flor gives florzinha, amor gives amorzinho. Use -zinho after a stressed vowel, a nasal sound or a consonant (pão, café, flor, amor), and -inho after an unstressed final vowel, which drops (casa, livro). The augmentative -ão marks large size or intensity: grande gives grandão. The superlative -íssimo means very: bonito gives bonitíssimo, lindo gives lindíssimo, feliz gives felicíssimo, with the c from the stem. Do not form the superlative from the written form of the adjective (felizíssimo is wrong).",
+      "examples": [
+        {
+          "pt": "Ela comprou uma casinha.",
+          "en": "She bought a little house."
+        },
+        {
+          "pt": "Você quer um cafezinho?",
+          "en": "Would you like a little coffee?"
+        },
+        {
+          "pt": "Ele está felicíssimo.",
+          "en": "He is very happy."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-037@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-037@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: casa + diminutive",
+            "answer": "casinha",
+            "alternatives": ["casazinha", "casita", "casinha"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: pão + diminutive",
+            "answer": "pãozinho",
+            "alternatives": ["pãozinho", "pãinho", "pãozito"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: bonito + -íssimo",
+            "answer": "bonitíssimo",
+            "alternatives": ["bonitissimo", "bonitíssimo", "bonitosíssimo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q04",
+            "format": "typed-blank",
+            "prompt": "livro + diminutive: ___",
+            "answer": "livrinho",
+            "near_misses": ["livrito", "livreiro"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q05",
+            "format": "typed-blank",
+            "prompt": "grande + augmentative: ___",
+            "answer": "grandão",
+            "near_misses": ["grandona", "grande-ão"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q06",
+            "format": "typed-blank",
+            "prompt": "feliz + -íssimo: ___",
+            "answer": "felicíssimo",
+            "near_misses": ["felizíssimo", "felicissimo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q07",
+            "format": "translation",
+            "prompt": "Translate (diminutive): She bought a little house.",
+            "answer": "Ela comprou uma casinha.",
+            "near_misses": [
+              "Ela comprou uma casazinha.",
+              "Ela comprou uma casita."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q08",
+            "format": "translation",
+            "prompt": "Translate (-íssimo): He is very happy.",
+            "answer": "Ele está felicíssimo.",
+            "near_misses": ["Ele está felizíssimo.", "Ele está felicissimo."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q09",
+            "format": "translation",
+            "prompt": "Translate (diminutive): Would you like a little coffee?",
+            "answer": "Você quer um cafezinho?",
+            "alternatives": ["Quer um cafezinho?"],
+            "near_misses": [
+              "Você quer um cafeinho?",
+              "Você quer um café zinho?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q10",
+            "format": "correction",
+            "prompt": "Correct the diminutive: Quero um pãinho.",
+            "answer": "Quero um pãozinho.",
+            "near_misses": ["Quero um pãinho.", "Quero um pãozito."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q11",
+            "format": "correction",
+            "prompt": "Correct the diminutive: Moro numa casazinha.",
+            "answer": "Moro numa casinha.",
+            "near_misses": ["Moro numa casazinha.", "Moro numa casita."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:q12",
+            "format": "correction",
+            "prompt": "Correct the superlative: A paisagem é bonitosíssima.",
+            "answer": "A paisagem é bonitíssima.",
+            "near_misses": [
+              "A paisagem é bonitosíssima.",
+              "A paisagem é bonitissima."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-037@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: flor + diminutive with -zinha (formação de diminutivo)",
+            "answer": "florzinha",
+            "alternatives": ["florinha", "florzinha", "flozinha"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-037@1:h02",
+            "format": "typed-blank",
+            "prompt": "amor + diminutive with -zinho: ___ (diminutivo)",
+            "answer": "amorzinho",
+            "near_misses": ["amorinho", "amorito"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-037@1:h03",
+            "format": "translation",
+            "prompt": "Translate (-íssimo): The beach is very beautiful. (superlativo)",
+            "answer": "A praia é lindíssima.",
+            "near_misses": ["A praia é lindissima.", "A praia é lindosíssima."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-038",
+      "title": "Word formation: -ção, -mento, -dade",
+      "explanation": "Portuguese forms abstract nouns with suffixes, and recognising them lets you read word families. The suffix -ção or -ação turns many verbs into nouns of action: educar gives educação, criar gives criação, construir gives construção. The suffix -mento also builds nouns of action or result: pensar gives pensamento, mover gives movimento. The suffix -dade builds nouns of quality from adjectives: feliz gives felicidade, capaz gives capacidade, real gives realidade. Some stems change: difícil gives dificuldade. Match the suffix to the stem the language already uses; do not coin forms such as educamento or felização, which do not exist.",
+      "examples": [
+        {
+          "pt": "A educação é importante.",
+          "en": "Education is important."
+        },
+        {
+          "pt": "A felicidade é rara.",
+          "en": "Happiness is rare."
+        },
+        {
+          "pt": "O movimento foi rápido.",
+          "en": "The movement was fast."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-038@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-038@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the noun from the verb: educar",
+            "answer": "educação",
+            "alternatives": ["educação", "educamento", "educadade"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the noun from the verb: pensar",
+            "answer": "pensamento",
+            "alternatives": ["pensação", "pensamento", "pensadade"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the noun from the adjective: feliz",
+            "answer": "felicidade",
+            "alternatives": ["felização", "felizmento", "felicidade"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q04",
+            "format": "typed-blank",
+            "prompt": "criar → ___",
+            "answer": "criação",
+            "near_misses": ["criamento", "criadade"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q05",
+            "format": "typed-blank",
+            "prompt": "mover → ___",
+            "answer": "movimento",
+            "near_misses": ["movição", "movidade"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q06",
+            "format": "typed-blank",
+            "prompt": "capaz → ___",
+            "answer": "capacidade",
+            "near_misses": ["capacção", "capazmento"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q07",
+            "format": "translation",
+            "prompt": "Translate: Education is important.",
+            "answer": "A educação é importante.",
+            "alternatives": ["Educação é importante."],
+            "near_misses": [
+              "O educamento é importante.",
+              "A educadade é importante."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q08",
+            "format": "translation",
+            "prompt": "Translate: Happiness is rare.",
+            "answer": "A felicidade é rara.",
+            "near_misses": ["A felização é rara.", "A felizmento é rara."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q09",
+            "format": "translation",
+            "prompt": "Translate: The movement was fast.",
+            "answer": "O movimento foi rápido.",
+            "alternatives": ["O movimento foi veloz."],
+            "near_misses": ["O movição foi rápido.", "O movidade foi rápido."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q10",
+            "format": "correction",
+            "prompt": "Correct the noun: A criamento de empregos é urgente.",
+            "answer": "A criação de empregos é urgente.",
+            "near_misses": [
+              "A criamento de empregos é urgente.",
+              "A criadade de empregos é urgente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q11",
+            "format": "correction",
+            "prompt": "Correct the noun: A capacção da sala é de cinquenta pessoas.",
+            "answer": "A capacidade da sala é de cinquenta pessoas.",
+            "near_misses": [
+              "A capacção da sala é de cinquenta pessoas.",
+              "A capazmento da sala é de cinquenta pessoas."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:q12",
+            "format": "correction",
+            "prompt": "Correct the noun: O pensação dele mudou.",
+            "answer": "O pensamento dele mudou.",
+            "near_misses": [
+              "O pensação dele mudou.",
+              "O pensadade dele mudou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-038@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the noun from the verb: construir (formação de palavras)",
+            "answer": "construção",
+            "alternatives": ["construmento", "construidade", "construção"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-038@1:h02",
+            "format": "typed-blank",
+            "prompt": "difícil → ___ (formação de palavras)",
+            "answer": "dificuldade",
+            "near_misses": ["dificilidade", "dificilção"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-038@1:h03",
+            "format": "translation",
+            "prompt": "Translate: Reality is complex. (formação de palavras)",
+            "answer": "A realidade é complexa.",
+            "alternatives": ["Realidade é complexa."],
+            "near_misses": [
+              "A realização é complexa.",
+              "A realmento é complexa."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-039",
+      "title": "Adjective position and ser or estar with adjectives",
+      "explanation": "Most adjectives follow the noun, but some change meaning with position. Before the noun they often carry a figurative or personal sense; after it, a literal one. Um grande homem is a great man and um homem grande is a big man; um pobre homem is an unfortunate man and um homem pobre is a man without money; um velho amigo is a friend of long standing and um amigo velho is an elderly friend; um carro novo is a brand-new car and um novo carro is another car. With ser, an adjective states a lasting quality, and with estar a state or a change: ele é chato means he is a boring person, ele está chato means he is being annoying now. Do not use ser for a temporary state (ela é cansada hoje is wrong).",
+      "examples": [
+        {
+          "pt": "Ele é um grande homem.",
+          "en": "He is a great man."
+        },
+        {
+          "pt": "Ele é um homem grande.",
+          "en": "He is a big man."
+        },
+        {
+          "pt": "Ela está cansada hoje.",
+          "en": "She is tired today."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-039@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-039@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence that means 'a great man':",
+            "answer": "Ele é um grande homem.",
+            "alternatives": [
+              "Ele é um homem grande.",
+              "Ele é um grande homem.",
+              "Ele é um homem de grande."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence that means 'a friend of many years':",
+            "answer": "Ele é um velho amigo.",
+            "alternatives": [
+              "Ele é um amigo velho.",
+              "Ele é um amigo de velho.",
+              "Ele é um velho amigo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct verb: Ele ___ chato hoje, mas normalmente é simpático. (estado)",
+            "answer": "está",
+            "alternatives": ["está", "é", "foi"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ele é um ___ . (friend of many years: velho + amigo)",
+            "answer": "velho amigo",
+            "near_misses": ["amigo velho", "amigo de velho"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela é uma ___ . (unfortunate woman: pobre + mulher)",
+            "answer": "pobre mulher",
+            "near_misses": ["mulher pobre", "mulher de pobre"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q06",
+            "format": "typed-blank",
+            "prompt": "Eles compraram um ___ . (brand-new car: novo + carro)",
+            "answer": "carro novo",
+            "near_misses": ["novo carro", "carro de novo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q07",
+            "format": "translation",
+            "prompt": "Translate: He is a great man.",
+            "answer": "Ele é um grande homem.",
+            "near_misses": [
+              "Ele é um homem grande.",
+              "Ele é um homem de grande."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q08",
+            "format": "translation",
+            "prompt": "Translate: He is a big man (tall and large).",
+            "answer": "Ele é um homem grande.",
+            "near_misses": [
+              "Ele é um grande homem.",
+              "Ele é um homem de grande."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q09",
+            "format": "translation",
+            "prompt": "Translate: He is a boring person.",
+            "answer": "Ele é chato.",
+            "near_misses": ["Ele está chato.", "Ele fica chato."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q10",
+            "format": "correction",
+            "prompt": "Correct the position (without money): Ele é um pobre homem, não tem dinheiro.",
+            "answer": "Ele é um homem pobre, não tem dinheiro.",
+            "near_misses": [
+              "Ele é um pobre homem, não tem dinheiro.",
+              "Ele é um homem de pobre, não tem dinheiro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q11",
+            "format": "correction",
+            "prompt": "Correct the position (friend of many years): Ela é uma amiga velha desde a infância.",
+            "answer": "Ela é uma velha amiga desde a infância.",
+            "near_misses": [
+              "Ela é uma amiga velha desde a infância.",
+              "Ela é uma velha de amiga desde a infância."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb (temporary state): Ela é cansada hoje.",
+            "answer": "Ela está cansada hoje.",
+            "near_misses": ["Ela é cansada hoje.", "Ela foi cansada hoje."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-039@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence that means 'an unfortunate man': (posição do adjetivo)",
+            "answer": "Ele é um pobre homem.",
+            "alternatives": [
+              "Ele é um pobre homem.",
+              "Ele é um homem pobre.",
+              "Ele é um homem de pobre."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-039@1:h02",
+            "format": "typed-blank",
+            "prompt": "Eles alugaram uma ___ . (another house: nova + casa) (posição do adjetivo)",
+            "answer": "nova casa",
+            "near_misses": ["casa nova", "casa de nova"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-039@1:h03",
+            "format": "translation",
+            "prompt": "Translate: She is nervous today. (estado)",
+            "answer": "Ela está nervosa hoje.",
+            "near_misses": ["Ela é nervosa hoje.", "Ela foi nervosa hoje."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-040",
+      "title": "Spelling reform of 1990",
+      "explanation": "The Orthographic Agreement of 1990, in force in Brazil, changed several spellings. The circumflex was dropped in the words ending in -oo and in the forms êem: voo, enjoo, veem, creem, leem. The acute was dropped in the diphthong éi and ói of paroxytone words: ideia, heroico, jiboia. The trema was dropped except in foreign names: frequência, linguiça. Hyphens follow the prefix: no hyphen before a different vowel, or before r or s, which are doubled (autoescola, antirreligioso), and a hyphen before the same vowel or h (micro-ondas, anti-inflamatório). The letters k, w and y are now part of the alphabet. Do not write the old forms (idéia, vôo, vêem), and do not hyphenate where the rule joins the word.",
+      "examples": [
+        {
+          "pt": "Tenho uma ideia.",
+          "en": "I have an idea."
+        },
+        {
+          "pt": "O voo foi longo.",
+          "en": "The flight was long."
+        },
+        {
+          "pt": "Eles veem tudo.",
+          "en": "They see everything."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-040@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-040@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: a thought or plan",
+            "answer": "ideia",
+            "alternatives": ["idéia", "idea", "ideia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: a trip by plane",
+            "answer": "voo",
+            "alternatives": ["voo", "vôo", "vo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: a school for learning to drive",
+            "answer": "autoescola",
+            "alternatives": ["auto-escola", "autoescola", "auto escola"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q04",
+            "format": "typed-blank",
+            "prompt": "Reform spelling: eles ___ (ver, presente)",
+            "answer": "veem",
+            "near_misses": ["vêem", "vem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q05",
+            "format": "typed-blank",
+            "prompt": "Reform spelling: a ___ (freqüência, sem trema)",
+            "answer": "frequência",
+            "near_misses": ["freqüência", "frequencia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q06",
+            "format": "typed-blank",
+            "prompt": "Reform spelling: o ___ (aparelho de cozinha)",
+            "answer": "micro-ondas",
+            "near_misses": ["microondas", "micro ondas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q07",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): I have an idea.",
+            "answer": "Tenho uma ideia.",
+            "alternatives": ["Eu tenho uma ideia."],
+            "near_misses": ["Tenho uma idéia.", "Tenho uma idea."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q08",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): The flight was long.",
+            "answer": "O voo foi longo.",
+            "near_misses": ["O vôo foi longo.", "O vo foi longo."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q09",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): They see everything.",
+            "answer": "Eles veem tudo.",
+            "near_misses": ["Eles vêem tudo.", "Eles vem tudo."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q10",
+            "format": "correction",
+            "prompt": "Correct to the 1990 spelling: Ela teve uma idéia.",
+            "answer": "Ela teve uma ideia.",
+            "near_misses": ["Ela teve uma idéia.", "Ela teve uma idea."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q11",
+            "format": "correction",
+            "prompt": "Correct to the 1990 spelling: O vôo atrasou.",
+            "answer": "O voo atrasou.",
+            "near_misses": ["O vôo atrasou.", "O vo atrasou."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:q12",
+            "format": "correction",
+            "prompt": "Correct to the 1990 spelling: Eles vêem o mar.",
+            "answer": "Eles veem o mar.",
+            "near_misses": ["Eles vêem o mar.", "Eles vem o mar."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-040@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: (ortografia atual)",
+            "answer": "heroico",
+            "alternatives": ["herôico", "heroico", "heróico"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-040@1:h02",
+            "format": "typed-blank",
+            "prompt": "Reform spelling: eles ___ (crer, presente) (ortografia atual)",
+            "answer": "creem",
+            "near_misses": ["crêem", "crem"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-040@1:h03",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): I live near a driving school. (ortografia atual)",
+            "answer": "Moro perto de uma autoescola.",
+            "alternatives": ["Eu moro perto de uma autoescola."],
+            "near_misses": [
+              "Moro perto de uma auto-escola.",
+              "Moro perto de uma auto escola."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

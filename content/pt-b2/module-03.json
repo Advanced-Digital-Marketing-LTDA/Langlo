@@ -1,0 +1,815 @@
+{
+  "module_id": "pt-b2-module-03",
+  "track": "Portuguese B2",
+  "title": "Infinitive, gerund and participle",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b2-011",
+      "title": "Infinitivo pessoal",
+      "explanation": "The personal (inflected) infinitive adds person endings to the infinitive: falar, falares, falar, falarmos, falarem. Use it when the infinitive has its own subject, different from the main verb's: pedi para eles esperarem, é importante nós chegarmos cedo, antes de vocês saírem. It is not used when the subject is the same and the infinitive follows a verb of will or ability (quero sair, posso entrar), and for a single subject the ending is optional. Do not use the conjugated present here: say é difícil elas aceitarem, not é difícil elas aceitam.",
+      "examples": [
+        {
+          "pt": "Pedi para eles esperarem.",
+          "en": "I asked them to wait."
+        },
+        {
+          "pt": "É importante nós chegarmos cedo.",
+          "en": "It is important for us to arrive early."
+        },
+        {
+          "pt": "Foi bom estarmos aqui.",
+          "en": "It was good for us to be here."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-011@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-011@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: É importante nós ___ cedo. (chegar)",
+            "answer": "chegarmos",
+            "alternatives": ["chegarmos", "chegar", "chegamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Pedi para eles ___ em silêncio. (entrar)",
+            "answer": "entrarem",
+            "alternatives": ["entrar", "entrarem", "entram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Para vocês ___ a prova, estudem muito. (passar)",
+            "answer": "passarem",
+            "alternatives": ["passar", "passam", "passarem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q04",
+            "format": "typed-blank",
+            "prompt": "É difícil elas ___ a verdade. (aceitar)",
+            "answer": "aceitarem",
+            "near_misses": ["aceitar", "aceitam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q05",
+            "format": "typed-blank",
+            "prompt": "O professor pediu para nós ___ atenção. (prestar)",
+            "answer": "prestarmos",
+            "near_misses": ["prestar", "prestamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q06",
+            "format": "typed-blank",
+            "prompt": "Foi bom nós ___ aqui. (estar)",
+            "answer": "estarmos",
+            "near_misses": ["estar", "estamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q07",
+            "format": "translation",
+            "prompt": "Translate (personal infinitive): It is important that we arrive early.",
+            "answer": "É importante chegarmos cedo.",
+            "alternatives": ["É importante nós chegarmos cedo."],
+            "near_misses": [
+              "É importante chegar cedo.",
+              "É importante chegamos cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q08",
+            "format": "translation",
+            "prompt": "Translate (personal infinitive): I asked them to wait.",
+            "answer": "Pedi para eles esperarem.",
+            "alternatives": ["Eu pedi para eles esperarem."],
+            "near_misses": [
+              "Pedi para eles esperar.",
+              "Pedi para eles esperam."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q09",
+            "format": "translation",
+            "prompt": "Translate (personal infinitive): It is good for us to be here.",
+            "answer": "É bom estarmos aqui.",
+            "alternatives": ["É bom nós estarmos aqui."],
+            "near_misses": ["É bom estar aqui.", "É bom estamos aqui."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q10",
+            "format": "correction",
+            "prompt": "Correct the infinitive: Pedi para eles entrar.",
+            "answer": "Pedi para eles entrarem.",
+            "near_misses": ["Pedi para eles entrar.", "Pedi para eles entram."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q11",
+            "format": "correction",
+            "prompt": "Correct the infinitive: É importante nós chegar cedo.",
+            "answer": "É importante nós chegarmos cedo.",
+            "near_misses": [
+              "É importante nós chegar cedo.",
+              "É importante nós chegamos cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:q12",
+            "format": "correction",
+            "prompt": "Correct the infinitive: Antes de vocês sair, apaguem a luz.",
+            "answer": "Antes de vocês saírem, apaguem a luz.",
+            "near_misses": [
+              "Antes de vocês sair, apaguem a luz.",
+              "Antes de vocês saem, apaguem a luz."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-011@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Combinamos de eles ___ às oito. (vir) (infinitivo pessoal)",
+            "answer": "virem",
+            "alternatives": ["vir", "vêm", "virem"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-011@1:h02",
+            "format": "typed-blank",
+            "prompt": "Foi uma pena vocês ___ tão cedo. (sair) (infinitivo pessoal)",
+            "answer": "saírem",
+            "near_misses": ["sair", "saem"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-011@1:h03",
+            "format": "translation",
+            "prompt": "Translate (personal infinitive): It is hard for them to understand.",
+            "answer": "É difícil eles entenderem.",
+            "alternatives": ["É difícil para eles entenderem."],
+            "near_misses": [
+              "É difícil eles entender.",
+              "É difícil eles entendem."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-012",
+      "title": "Causative and perception verbs with an infinitive",
+      "explanation": "Mandar, deixar, fazer and the perception verbs ver, ouvir and sentir take an object and then an infinitive: ela me fez rir, eu os ouvi cantar, ele nos deixou sair. The object comes before the infinitive and is the infinitive's subject. In standard written Portuguese the object is a clitic (me, nos, o, a, os, as) and the infinitive stays uninflected. Do not turn the infinitive into a conjugated form or a gerund after the causative: ela me fez rir, not ela me fez rindo. Written style may place the clitic after the main verb (deixou-nos sair).",
+      "examples": [
+        {
+          "pt": "Ela me fez rir.",
+          "en": "She made me laugh."
+        },
+        {
+          "pt": "Eu os ouvi cantar.",
+          "en": "I heard them sing."
+        },
+        {
+          "pt": "Ele nos deixou sair.",
+          "en": "He let us leave."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-012@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-012@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Eu os ouvi ___ . (cantar)",
+            "answer": "cantar",
+            "alternatives": ["cantam", "cantar", "cantaram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela me fez ___ . (rir)",
+            "answer": "rir",
+            "alternatives": ["ri", "rindo", "rir"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct pronoun: Ele mandou ___ sair. (us)",
+            "answer": "nos",
+            "alternatives": ["nos", "nós", "nosso"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q04",
+            "format": "typed-blank",
+            "prompt": "Eu a vi ___ pela rua. (passar)",
+            "answer": "passar",
+            "near_misses": ["passou", "passa"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q05",
+            "format": "typed-blank",
+            "prompt": "A professora deixou-nos ___ mais cedo. (sair)",
+            "answer": "sair",
+            "near_misses": ["saímos", "saindo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q06",
+            "format": "typed-blank",
+            "prompt": "O barulho ___ acordar. (fazer + me) (pretérito)",
+            "answer": "me fez",
+            "alternatives": ["fez-me"],
+            "near_misses": ["me fiz", "me faz"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q07",
+            "format": "translation",
+            "prompt": "Translate (causative): She made me laugh.",
+            "answer": "Ela me fez rir.",
+            "alternatives": ["Ela fez-me rir."],
+            "near_misses": ["Ela me fez rindo.", "Ela me fez riu."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q08",
+            "format": "translation",
+            "prompt": "Translate (perception): I heard them sing.",
+            "answer": "Eu os ouvi cantar.",
+            "alternatives": ["Ouvi-os cantar."],
+            "near_misses": ["Eu os ouvi cantam.", "Eu os ouvi cantaram."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q09",
+            "format": "translation",
+            "prompt": "Translate (causative): He let us leave.",
+            "answer": "Ele nos deixou sair.",
+            "alternatives": ["Ele deixou-nos sair."],
+            "near_misses": ["Ele nos deixou saímos.", "Ele nos deixou saindo."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q10",
+            "format": "correction",
+            "prompt": "Correct the infinitive: Ela me fez rindo.",
+            "answer": "Ela me fez rir.",
+            "near_misses": ["Ela me fez rindo.", "Ela me fez ri."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Ele mandou nós sair.",
+            "answer": "Ele nos mandou sair.",
+            "alternatives": ["Ele mandou-nos sair."],
+            "near_misses": ["Ele mandou nós sair.", "Ele nos mandou saímos."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb form: Eu os vi chegaram.",
+            "answer": "Eu os vi chegar.",
+            "near_misses": ["Eu os vi chegaram.", "Eu os vi chega."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-012@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Deixei-os ___ sozinhos. (ficar) (infinitivo com objeto)",
+            "answer": "ficar",
+            "alternatives": ["ficar", "ficaram", "ficando"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-012@1:h02",
+            "format": "typed-blank",
+            "prompt": "Mandei-as ___ cedo. (voltar) (infinitivo com objeto)",
+            "answer": "voltar",
+            "near_misses": ["voltaram", "voltando"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-012@1:h03",
+            "format": "translation",
+            "prompt": "Translate (perception): I saw her enter.",
+            "answer": "Eu a vi entrar.",
+            "alternatives": ["Vi-a entrar."],
+            "near_misses": ["Eu a vi entrou.", "Eu a vi entra."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-013",
+      "title": "Gerund clauses",
+      "explanation": "A gerund clause (-ndo) adds an action that happens at the same time as the main verb, or expresses manner, cause or condition. It shares the subject of the main verb: ela saiu correndo, estando cansado, ele dormiu cedo, chegando em casa, liguei para ela. It is formed by replacing -r with -ndo: correr gives correndo, ser gives sendo, estar gives estando. The gerund does not follow a preposition (use ao + infinitive: ao chegar). Do not use the gerund for an action that happens after the main verb, and do not use the gerundismo vou estar enviando.",
+      "examples": [
+        {
+          "pt": "Ela saiu correndo.",
+          "en": "She left running."
+        },
+        {
+          "pt": "Estando cansado, ele dormiu cedo.",
+          "en": "Being tired, he slept early."
+        },
+        {
+          "pt": "Chegando em casa, liguei para ela.",
+          "en": "Arriving home, I called her."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-013@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-013@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela saiu ___ . (correr)",
+            "answer": "correndo",
+            "alternatives": ["correr", "corrido", "correndo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ cansado, ele foi dormir. (estar)",
+            "answer": "Estando",
+            "alternatives": ["Estando", "Estar", "Estado"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ em casa, liguei para ela. (chegar)",
+            "answer": "Chegando",
+            "alternatives": ["Chegar", "Chegando", "Chegam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ele trabalha ___ música. (ouvir)",
+            "answer": "ouvindo",
+            "near_misses": ["ouvir", "ouvido"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela respondeu ___ . (sorrir)",
+            "answer": "sorrindo",
+            "near_misses": ["sorrir", "sorrido"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ assim, vamos mudar o plano. (ser)",
+            "answer": "Sendo",
+            "near_misses": ["Ser", "Sido"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q07",
+            "format": "translation",
+            "prompt": "Translate (gerund): She left running.",
+            "answer": "Ela saiu correndo.",
+            "alternatives": ["Saiu correndo."],
+            "near_misses": ["Ela saiu correr.", "Ela saiu corrida."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q08",
+            "format": "translation",
+            "prompt": "Translate (gerund): Being tired, he slept early.",
+            "answer": "Estando cansado, ele dormiu cedo.",
+            "alternatives": ["Estando cansado, dormiu cedo."],
+            "near_misses": [
+              "Estar cansado, ele dormiu cedo.",
+              "Estado cansado, ele dormiu cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q09",
+            "format": "translation",
+            "prompt": "Translate (gerund): Arriving home, I called her.",
+            "answer": "Chegando em casa, liguei para ela.",
+            "alternatives": ["Chegando em casa, eu liguei para ela."],
+            "near_misses": [
+              "Chegar em casa, liguei para ela.",
+              "Chegam em casa, liguei para ela."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Ela saiu correr.",
+            "answer": "Ela saiu correndo.",
+            "near_misses": ["Ela saiu correr.", "Ela saiu corrido."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Estado cansado, ele dormiu.",
+            "answer": "Estando cansado, ele dormiu.",
+            "near_misses": [
+              "Estado cansado, ele dormiu.",
+              "Estar cansado, ele dormiu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Ele trabalha ouvido música.",
+            "answer": "Ele trabalha ouvindo música.",
+            "near_misses": [
+              "Ele trabalha ouvido música.",
+              "Ele trabalha ouvir música."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-013@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele entrou na sala ___ . (rir) (gerúndio)",
+            "answer": "rindo",
+            "alternatives": ["rir", "rindo", "rido"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-013@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ela estudou a noite toda ___ café. (beber) (gerúndio)",
+            "answer": "bebendo",
+            "near_misses": ["beber", "bebido"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-013@1:h03",
+            "format": "translation",
+            "prompt": "Translate (gerund): She walked singing.",
+            "answer": "Ela caminhou cantando.",
+            "alternatives": ["Caminhou cantando."],
+            "near_misses": ["Ela caminhou cantar.", "Ela caminhou cantado."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-014",
+      "title": "Participial clauses",
+      "explanation": "A participial clause puts the past participle first and the noun after it, and it states that something is finished before the main action: terminado o trabalho, saímos. The participle agrees in gender and number with the noun that follows: terminada a reunião, terminados os exames, feitas as contas. Dito isso and feito isso are fixed forms. This is formal, written style. Do not leave the participle invariable (terminado a reunião is wrong) and do not swap in the gerund when the point is completion: terminando o trabalho describes simultaneous action.",
+      "examples": [
+        {
+          "pt": "Terminado o trabalho, saímos.",
+          "en": "Once the work was finished, we left."
+        },
+        {
+          "pt": "Terminada a reunião, todos saíram.",
+          "en": "Once the meeting was over, everyone left."
+        },
+        {
+          "pt": "Dito isso, ele saiu.",
+          "en": "That said, he left."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-014@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-014@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ o trabalho, saímos. (terminar)",
+            "answer": "Terminado",
+            "alternatives": ["Terminado", "Terminada", "Terminados"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ a reunião, todos saíram. (terminar)",
+            "answer": "Terminada",
+            "alternatives": ["Terminado", "Terminada", "Terminados"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ os exames, viajamos. (fazer)",
+            "answer": "Feitos",
+            "alternatives": ["Feito", "Feitas", "Feitos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q04",
+            "format": "typed-blank",
+            "prompt": "___ o jantar, assistimos ao filme. (servir)",
+            "answer": "Servido",
+            "near_misses": ["Servida", "Servindo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ as cartas, ela saiu. (escrever)",
+            "answer": "Escritas",
+            "near_misses": ["Escrita", "Escritos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ isso, ele saiu. (dizer)",
+            "answer": "Dito",
+            "near_misses": ["Dita", "Ditos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q07",
+            "format": "translation",
+            "prompt": "Translate (participial clause): Once the work was finished, we left.",
+            "answer": "Terminado o trabalho, saímos.",
+            "alternatives": ["Terminado o trabalho, nós saímos."],
+            "near_misses": [
+              "Terminando o trabalho, saímos.",
+              "Terminada o trabalho, saímos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q08",
+            "format": "translation",
+            "prompt": "Translate (participial clause): Once the meeting was over, everyone left.",
+            "answer": "Terminada a reunião, todos saíram.",
+            "alternatives": ["Terminada a reunião, todos foram embora."],
+            "near_misses": [
+              "Terminado a reunião, todos saíram.",
+              "Terminando a reunião, todos saíram."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q09",
+            "format": "translation",
+            "prompt": "Translate (participial clause): That said, he left.",
+            "answer": "Dito isso, ele saiu.",
+            "near_misses": ["Dizendo isso, ele saiu.", "Dito isso, ele saía."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q10",
+            "format": "correction",
+            "prompt": "Correct the agreement: Terminado a reunião, todos saíram.",
+            "answer": "Terminada a reunião, todos saíram.",
+            "near_misses": [
+              "Terminado a reunião, todos saíram.",
+              "Terminados a reunião, todos saíram."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q11",
+            "format": "correction",
+            "prompt": "Correct the agreement: Feito os exames, viajamos.",
+            "answer": "Feitos os exames, viajamos.",
+            "near_misses": [
+              "Feito os exames, viajamos.",
+              "Feitas os exames, viajamos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Escrevido o livro, ele descansou.",
+            "answer": "Escrito o livro, ele descansou.",
+            "near_misses": [
+              "Escrevido o livro, ele descansou.",
+              "Escrita o livro, ele descansou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-014@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: ___ as provas, os alunos saíram. (corrigir) (oração participial)",
+            "answer": "Corrigidas",
+            "alternatives": ["Corrigido", "Corrigidos", "Corrigidas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-014@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ a casa, mudamos de bairro. (vender) (oração participial)",
+            "answer": "Vendida",
+            "near_misses": ["Vendido", "Vendendo"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-014@1:h03",
+            "format": "translation",
+            "prompt": "Translate (participial clause): Once the letters were sent, she rested.",
+            "answer": "Enviadas as cartas, ela descansou.",
+            "near_misses": [
+              "Enviado as cartas, ela descansou.",
+              "Enviando as cartas, ela descansou."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-015",
+      "title": "Infinitive or subjunctive after verbs of will and hope",
+      "explanation": "After verbs of wanting, hoping, preferring and asking, Portuguese chooses by subject. When the subject is the same, use the infinitive: quero sair, ela espera ganhar, nós precisamos estudar. When the subjects differ, use que plus the subjunctive: quero que você saia, ele prefere que nós fiquemos, ela pediu que eles esperassem. Do not use que with an infinitive (quero que sair is wrong), and do not use a bare subject plus infinitive in standard writing after querer (quero você sair is wrong). After a past main verb the subjunctive is imperfect.",
+      "examples": [
+        {
+          "pt": "Quero sair cedo.",
+          "en": "I want to leave early."
+        },
+        {
+          "pt": "Quero que você saia cedo.",
+          "en": "I want you to leave early."
+        },
+        {
+          "pt": "Ela espera ganhar.",
+          "en": "She hopes to win."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-015@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-015@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Eu quero ___ cedo. (sair)",
+            "answer": "sair",
+            "alternatives": ["que saia", "sair", "saio"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Eu quero que você ___ cedo. (sair)",
+            "answer": "saia",
+            "alternatives": ["sair", "sai", "saia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela espera ___ no exame. (passar)",
+            "answer": "passar",
+            "alternatives": ["passar", "passando", "passa"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ele prefere que nós ___ aqui. (ficar)",
+            "answer": "fiquemos",
+            "near_misses": ["ficar", "ficamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q05",
+            "format": "typed-blank",
+            "prompt": "Nós precisamos ___ mais. (estudar)",
+            "answer": "estudar",
+            "near_misses": ["estudamos", "estudando"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ela pediu que eles ___ em silêncio. (esperar) (pretérito)",
+            "answer": "esperassem",
+            "near_misses": ["esperar", "esperam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q07",
+            "format": "translation",
+            "prompt": "Translate: I want to leave early.",
+            "answer": "Quero sair cedo.",
+            "alternatives": ["Eu quero sair cedo."],
+            "near_misses": ["Quero que saia cedo.", "Quero saio cedo."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q08",
+            "format": "translation",
+            "prompt": "Translate: I want you to leave early.",
+            "answer": "Quero que você saia cedo.",
+            "alternatives": ["Eu quero que você saia cedo."],
+            "near_misses": [
+              "Quero você sair cedo.",
+              "Quero que você sai cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q09",
+            "format": "translation",
+            "prompt": "Translate: She hopes to win.",
+            "answer": "Ela espera ganhar.",
+            "alternatives": ["Ela espera vencer."],
+            "near_misses": ["Ela espera que ganhar.", "Ela espera ganha."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q10",
+            "format": "correction",
+            "prompt": "Correct the sentence: Quero que sair cedo.",
+            "answer": "Quero sair cedo.",
+            "near_misses": ["Quero que sair cedo.", "Quero que saio cedo."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: Eu quero você sair cedo.",
+            "answer": "Eu quero que você saia cedo.",
+            "alternatives": ["Quero que você saia cedo."],
+            "near_misses": [
+              "Eu quero você sair cedo.",
+              "Eu quero que você sair cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Eu espero que ganhar o prêmio.",
+            "answer": "Eu espero ganhar o prêmio.",
+            "near_misses": [
+              "Eu espero que ganhar o prêmio.",
+              "Eu espero que ganhe o prêmio."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-015@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Meu chefe quer que eu ___ a reunião. (organizar) (subjuntivo ou infinitivo)",
+            "answer": "organize",
+            "alternatives": ["organize", "organizar", "organizo"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-015@1:h02",
+            "format": "typed-blank",
+            "prompt": "Eu pretendo ___ o curso no ano que vem. (começar) (subjuntivo ou infinitivo)",
+            "answer": "começar",
+            "near_misses": ["que comece", "começo"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-015@1:h03",
+            "format": "translation",
+            "prompt": "Translate: She wants him to call. (subjuntivo ou infinitivo)",
+            "answer": "Ela quer que ele ligue.",
+            "alternatives": ["Ela quer que ele telefone."],
+            "near_misses": ["Ela quer ele ligar.", "Ela quer que ele liga."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
