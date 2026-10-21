@@ -298,7 +298,7 @@
           {
             "id": "pt-b2-037@1:h01",
             "format": "multiple-choice",
-            "prompt": "Choose the correct form: flor + diminutive (formação de diminutivo)",
+            "prompt": "Choose the correct form: flor + diminutive with -zinha (formação de diminutivo)",
             "answer": "florzinha",
             "alternatives": ["florinha", "florzinha", "flozinha"],
             "holdout": true
@@ -306,7 +306,7 @@
           {
             "id": "pt-b2-037@1:h02",
             "format": "typed-blank",
-            "prompt": "amor + diminutive: ___ (diminutivo)",
+            "prompt": "amor + diminutive with -zinho: ___ (diminutivo)",
             "answer": "amorzinho",
             "near_misses": ["amorinho", "amorito"],
             "holdout": true
