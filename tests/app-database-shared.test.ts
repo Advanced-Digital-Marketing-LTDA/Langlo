@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { once } from 'node:events';
+import { Worker } from 'node:worker_threads';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
@@ -146,6 +148,64 @@ it('keeps file-client reads isolated from an open transaction', async () => {
   expect(
     (await client.execute('SELECT value FROM shared_write_probe')).rows
   ).toEqual([{ value: 'committed' }]);
+});
+
+it('configures the busy timeout on every pooled file connection', async () => {
+  const target = await createDisposableFixture();
+  fixtures.push(target);
+  const { client } = await openShared(target.databaseUrl);
+  const connections = await Promise.all([
+    client.execute('PRAGMA busy_timeout'),
+    client.execute('PRAGMA busy_timeout')
+  ]);
+  expect(connections.map((result) => result.rows[0].timeout)).toEqual([
+    5000, 5000
+  ]);
+});
+
+it('commits a pooled writer after another connection releases its read lock', async () => {
+  const target = await createDisposableFixture();
+  fixtures.push(target);
+  const { client } = await openShared(target.databaseUrl);
+  // Concurrent operations create the second pool connection used by this writer.
+  await Promise.all([client.execute('SELECT 1'), client.execute('SELECT 1')]);
+  const reader = new Worker(
+    `
+    const { parentPort, workerData } = require('node:worker_threads');
+    const { createClient } = require('@libsql/client/sqlite3');
+    (async () => {
+      const client = createClient({ url: workerData });
+      const tx = await client.transaction('read');
+      await tx.execute('SELECT * FROM shared_write_probe');
+      parentPort.once('message', () => {
+        // Release from another thread while the writer is inside SQLite's
+        // synchronous busy wait. This is controlled contention, not a retry.
+        setTimeout(async () => {
+          await tx.commit();
+          tx.close();
+          client.close();
+          parentPort.close();
+        }, 100);
+      });
+      parentPort.postMessage('locked');
+    })().catch((error) => { throw error; });
+  `,
+    { eval: true, workerData: target.databaseUrl }
+  );
+  let tx: Awaited<ReturnType<typeof beginWrite>> | undefined;
+  try {
+    expect((await once(reader, 'message'))[0]).toBe('locked');
+    tx = await beginWrite(client);
+    await tx.execute("INSERT INTO shared_write_probe VALUES (1, 'saved once')");
+    reader.postMessage('release');
+    await tx.commit();
+    expect(
+      (await client.execute('SELECT * FROM shared_write_probe')).rows
+    ).toEqual([{ id: 1, value: 'saved once' }]);
+  } finally {
+    tx?.close();
+    await reader.terminate();
+  }
 });
 
 it('times out a queued writer without releasing the active transaction', async () => {

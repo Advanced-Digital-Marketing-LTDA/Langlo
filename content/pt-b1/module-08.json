@@ -1,0 +1,869 @@
+{
+  "module_id": "pt-b1-module-08",
+  "track": "Portuguese B1",
+  "title": "Connecting ideas",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b1-036",
+      "title": "Relative pronouns: que, quem and onde",
+      "explanation": "Que is the main relative pronoun for things and people: O livro que li é bom, A mulher que conheci é médica. Quem refers to people only and follows a preposition: A pessoa com quem falei, O homem de quem gosto. Onde refers to a place: A cidade onde moro é pequena. Use em que for a place if you prefer: A casa em que moro. O que means what and also joins a whole clause: Não sei o que ele quer, Ele chegou tarde, o que me irritou. Do not leave the preposition out: O amigo de quem falei, not O amigo quem falei.",
+      "examples": [
+        {
+          "pt": "O livro que li ontem é muito bom.",
+          "en": "The book I read yesterday is very good."
+        },
+        {
+          "pt": "A pessoa com quem falei era simpática.",
+          "en": "The person I spoke to was nice."
+        },
+        {
+          "pt": "A cidade onde moro é pequena.",
+          "en": "The city where I live is small."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-036@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-036@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: O filme ___ vi ontem foi ótimo.",
+            "answer": "que",
+            "alternatives": ["quem", "que", "onde"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: O lugar ___ nasci fica longe.",
+            "answer": "onde",
+            "alternatives": ["quem", "o que", "onde"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: A amiga com ___ viajei é brasileira.",
+            "answer": "quem",
+            "alternatives": ["quem", "que", "onde"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q04",
+            "format": "typed-blank",
+            "prompt": "Esta é a casa ___ moro. (place)",
+            "answer": "onde",
+            "near_misses": ["quem", "o que"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q05",
+            "format": "typed-blank",
+            "prompt": "O homem ___ falei é meu chefe. (de + person)",
+            "answer": "de quem",
+            "near_misses": ["de que o", "onde"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q06",
+            "format": "typed-blank",
+            "prompt": "Não sei ___ ele quer. (what)",
+            "answer": "o que",
+            "near_misses": ["que", "quem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q07",
+            "format": "translation",
+            "prompt": "Translate (relative): The woman who works here is my aunt.",
+            "answer": "A mulher que trabalha aqui é minha tia.",
+            "alternatives": ["A mulher que trabalha aqui é a minha tia."],
+            "near_misses": [
+              "A mulher quem trabalha aqui é minha tia.",
+              "A mulher onde trabalha aqui é minha tia."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q08",
+            "format": "translation",
+            "prompt": "Translate (relative): This is the restaurant where we ate.",
+            "answer": "Este é o restaurante onde comemos.",
+            "alternatives": [
+              "Este é o restaurante em que comemos.",
+              "Esse é o restaurante onde comemos."
+            ],
+            "near_misses": [
+              "Este é o restaurante quem comemos.",
+              "Este é o restaurante que onde comemos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q09",
+            "format": "translation",
+            "prompt": "Translate (relative): I do not know what she wants.",
+            "answer": "Não sei o que ela quer.",
+            "alternatives": ["Eu não sei o que ela quer."],
+            "near_misses": ["Não sei que ela quer.", "Não sei quem ela quer."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q10",
+            "format": "correction",
+            "prompt": "Correct the pronoun: O amigo quem eu falei chegou.",
+            "answer": "O amigo de quem eu falei chegou.",
+            "near_misses": [
+              "O amigo quem eu falei chegou.",
+              "O amigo onde eu falei chegou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: O livro quem li é bom.",
+            "answer": "O livro que li é bom.",
+            "near_misses": ["O livro quem li é bom.", "O livro onde li é bom."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: A cidade que moro é pequena.",
+            "answer": "A cidade onde moro é pequena.",
+            "alternatives": ["A cidade em que moro é pequena."],
+            "near_misses": [
+              "A cidade que moro é pequena.",
+              "A cidade quem moro é pequena."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-036@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence ('the teacher I like'):",
+            "answer": "O professor de quem gosto.",
+            "alternatives": [
+              "O professor de quem gosto.",
+              "O professor quem gosto.",
+              "O professor onde gosto."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-036@1:h02",
+            "format": "typed-blank",
+            "prompt": "A pessoa ___ escrevi é minha irmã. (to whom)",
+            "answer": "para quem",
+            "near_misses": ["para que", "para onde"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-036@1:h03",
+            "format": "translation",
+            "prompt": "Translate (relative): The car that he bought is blue.",
+            "answer": "O carro que ele comprou é azul.",
+            "near_misses": [
+              "O carro quem ele comprou é azul.",
+              "O carro onde ele comprou é azul."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-037",
+      "title": "Interrogatives and por que, porque, por quê, porquê",
+      "explanation": "Question words: quem (who), o que (what), qual/quais (which), quanto (how much), quando (when), onde (where), como (how), por que (why). Qual agrees in number: Qual é o seu nome? Quais são seus planos? Quanto changes with the noun: quantos livros, quantas pessoas. Four spellings of 'why/because': por que (two words) opens a question: Por que você chegou tarde? Por quê (accented) comes at the end: Você chegou tarde por quê? Porque (one word) answers: Porque o ônibus atrasou. Porquê (one word, accented) is a noun, the reason: Não sei o porquê.",
+      "examples": [
+        {
+          "pt": "Por que você chegou tarde?",
+          "en": "Why did you arrive late?"
+        },
+        {
+          "pt": "Porque o ônibus atrasou.",
+          "en": "Because the bus was late."
+        },
+        {
+          "pt": "Qual é o seu nome?",
+          "en": "What is your name?"
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-037@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-037@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the word that opens a question about reason:",
+            "answer": "Por que",
+            "alternatives": ["Porque", "Porquê", "Por que"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the word for the answer:",
+            "answer": "Porque",
+            "alternatives": ["Porque", "Por que", "Por quê"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the word at the end of a question: Você saiu cedo ___ ?",
+            "answer": "por quê",
+            "alternatives": ["porque", "por quê", "por que"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q04",
+            "format": "typed-blank",
+            "prompt": "___ você está triste? (why)",
+            "answer": "Por que",
+            "near_misses": ["Porque", "Porquê"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q05",
+            "format": "typed-blank",
+            "prompt": "Não sei o ___ . (the reason, noun)",
+            "answer": "porquê",
+            "near_misses": ["porque", "por quê"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ são seus planos? (which, plural)",
+            "answer": "Quais",
+            "near_misses": ["Qual", "Quantos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q07",
+            "format": "translation",
+            "prompt": "Translate (question): Why did you leave?",
+            "answer": "Por que você saiu?",
+            "alternatives": ["Por que saiu?", "Por que você foi embora?"],
+            "near_misses": ["Porque você saiu?", "Por que saiu você porque?"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q08",
+            "format": "translation",
+            "prompt": "Translate (answer): Because I was tired.",
+            "answer": "Porque eu estava cansado.",
+            "alternatives": [
+              "Porque estava cansado.",
+              "Porque eu estava cansada."
+            ],
+            "near_misses": [
+              "Por que eu estava cansado.",
+              "Porquê eu estava cansado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q09",
+            "format": "translation",
+            "prompt": "Translate (question): How many books do you have?",
+            "answer": "Quantos livros você tem?",
+            "alternatives": [
+              "Quantos livros tu tens?",
+              "Quantos livros você tem aí?"
+            ],
+            "near_misses": [
+              "Quanto livros você tem?",
+              "Quantas livros você tem?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q10",
+            "format": "correction",
+            "prompt": "Correct the spelling: Porque você está aqui?",
+            "answer": "Por que você está aqui?",
+            "near_misses": ["Porque você está aqui?", "Porquê você está aqui?"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q11",
+            "format": "correction",
+            "prompt": "Correct the spelling: Você chegou tarde porque?",
+            "answer": "Você chegou tarde por quê?",
+            "near_misses": [
+              "Você chegou tarde porque?",
+              "Você chegou tarde por que?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word: Quantas livros você tem?",
+            "answer": "Quantos livros você tem?",
+            "near_misses": [
+              "Quantas livros você tem?",
+              "Quanto livros você tem?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-037@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct question word: ___ é a capital do Brasil?",
+            "answer": "Qual",
+            "alternatives": ["Quais", "Qual", "Quantos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-037@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ pessoas vieram à festa? (how many, feminine plural)",
+            "answer": "Quantas",
+            "near_misses": ["Quantos", "Quanto"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-037@1:h03",
+            "format": "translation",
+            "prompt": "Translate (question): Where do you live?",
+            "answer": "Onde você mora?",
+            "alternatives": ["Onde tu moras?", "Onde você vive?"],
+            "near_misses": ["Quando você mora?", "Como você mora?"],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-038",
+      "title": "Connectors: porque, como, quando, enquanto, mas, porém, então",
+      "explanation": "Porque and como introduce a cause: Fiquei em casa porque estava doente. Como estava doente, fiquei em casa. Como at the start of a sentence means since. Quando and enquanto give time: Quando cheguei, ela saiu; Enquanto você cozinha, eu arrumo. Mas, porém and contudo show contrast: Quero ir, mas não posso. Porém and contudo are more formal and often come after the first word. Então shows a result: Estava cansado, então dormi. Portanto and por isso also mark consequence. Use e for addition and ou for choice. A comma comes before mas, porém and então.",
+      "examples": [
+        {
+          "pt": "Fiquei em casa porque estava doente.",
+          "en": "I stayed home because I was sick."
+        },
+        {
+          "pt": "Quero ir, mas não posso.",
+          "en": "I want to go, but I cannot."
+        },
+        {
+          "pt": "Estava cansado, então dormi cedo.",
+          "en": "I was tired, so I slept early."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-038@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-038@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the connector (cause): Fiquei em casa ___ estava doente.",
+            "answer": "porque",
+            "alternatives": ["porque", "mas", "então"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the connector (contrast): Quero ir, ___ não posso.",
+            "answer": "mas",
+            "alternatives": ["porque", "mas", "então"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the connector (result): Estava cansado, ___ dormi.",
+            "answer": "então",
+            "alternatives": ["mas", "enquanto", "então"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q04",
+            "format": "typed-blank",
+            "prompt": "___ você cozinha, eu arrumo a casa. (while)",
+            "answer": "Enquanto",
+            "near_misses": ["Quando", "Porque"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q05",
+            "format": "typed-blank",
+            "prompt": "___ cheguei, ela já tinha saído. (when)",
+            "answer": "Quando",
+            "near_misses": ["Enquanto", "Mas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ele é rico; ___ , não é feliz. (formal contrast)",
+            "answer": "porém",
+            "near_misses": ["então", "porque"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q07",
+            "format": "translation",
+            "prompt": "Translate (cause): I did not go because it was raining.",
+            "answer": "Não fui porque estava chovendo.",
+            "alternatives": [
+              "Não fui porque chovia.",
+              "Eu não fui porque estava chovendo."
+            ],
+            "near_misses": [
+              "Não fui então estava chovendo.",
+              "Não fui mas estava chovendo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q08",
+            "format": "translation",
+            "prompt": "Translate (contrast): It is cheap, but it is not good.",
+            "answer": "É barato, mas não é bom.",
+            "alternatives": ["É barato, porém não é bom."],
+            "near_misses": [
+              "É barato, então não é bom.",
+              "É barato, porque não é bom."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q09",
+            "format": "translation",
+            "prompt": "Translate (result): It was late, so we left.",
+            "answer": "Era tarde, então saímos.",
+            "alternatives": ["Era tarde, por isso saímos."],
+            "near_misses": [
+              "Era tarde, mas saímos.",
+              "Era tarde, porque saímos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q10",
+            "format": "correction",
+            "prompt": "Correct the connector: Estava com fome, mas comi um sanduíche.",
+            "answer": "Estava com fome, então comi um sanduíche.",
+            "alternatives": ["Estava com fome, por isso comi um sanduíche."],
+            "near_misses": [
+              "Estava com fome, mas comi um sanduíche.",
+              "Estava com fome, porque comi um sanduíche."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q11",
+            "format": "correction",
+            "prompt": "Correct the connector (cause): Fiquei em casa então estava doente.",
+            "answer": "Fiquei em casa porque estava doente.",
+            "near_misses": [
+              "Fiquei em casa então estava doente.",
+              "Fiquei em casa mas estava doente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:q12",
+            "format": "correction",
+            "prompt": "Correct the connector: Quero sair, então não posso.",
+            "answer": "Quero sair, mas não posso.",
+            "near_misses": [
+              "Quero sair, então não posso.",
+              "Quero sair, porque não posso."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-038@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence (while):",
+            "answer": "Ele leu enquanto eu cozinhava.",
+            "alternatives": [
+              "Ele leu porém eu cozinhava.",
+              "Ele leu porque eu cozinhava.",
+              "Ele leu enquanto eu cozinhava."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-038@1:h02",
+            "format": "typed-blank",
+            "prompt": "___ estava cansada, ela dormiu cedo. (since, at the start)",
+            "answer": "Como",
+            "near_misses": ["Quando", "Mas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-038@1:h03",
+            "format": "translation",
+            "prompt": "Translate (time): When I got home, it was already dark.",
+            "answer": "Quando cheguei em casa, já estava escuro.",
+            "alternatives": [
+              "Quando cheguei a casa, já estava escuro.",
+              "Quando cheguei em casa, já era noite."
+            ],
+            "near_misses": [
+              "Enquanto cheguei em casa, já estava escuro.",
+              "Porque cheguei em casa, já estava escuro."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-039",
+      "title": "The passive: ser + participle and the passive se",
+      "explanation": "The passive with ser puts the object first: O livro foi escrito por ela. Form it with ser in the tense you need plus the participle, which agrees with the subject: As cartas foram escritas, A casa será vendida. The agent, if mentioned, follows por: pelo diretor, pela empresa. The passive se is more common in speech: Vende-se casa, Falam-se vários idiomas, Aluga-se apartamento. The verb agrees with the thing: Vendem-se casas. Use estar + participle for a result, not an action: A porta está fechada. Do not use the passive se when the agent is a person you name: say Ela escreveu.",
+      "examples": [
+        {
+          "pt": "O livro foi escrito por uma brasileira.",
+          "en": "The book was written by a Brazilian woman."
+        },
+        {
+          "pt": "Vendem-se casas nesta rua.",
+          "en": "Houses are sold on this street."
+        },
+        {
+          "pt": "A porta está fechada desde ontem.",
+          "en": "The door has been closed since yesterday."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-039@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-039@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the passive: A carta ___ escrita ontem.",
+            "answer": "foi",
+            "alternatives": ["está", "foi", "era"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the passive se: ___ casas nesta rua.",
+            "answer": "Vendem-se",
+            "alternatives": ["Vende-se", "Vendemos", "Vendem-se"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the passive: As janelas ___ abertas pelo vento.",
+            "answer": "foram",
+            "alternatives": ["foram", "foi", "são"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q04",
+            "format": "typed-blank",
+            "prompt": "O prédio ___ construído em 2010. (ser, perfeito)",
+            "answer": "foi",
+            "near_misses": ["era", "esteve"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q05",
+            "format": "typed-blank",
+            "prompt": "___-se apartamento nesta rua. (alugar, passive se)",
+            "answer": "Aluga",
+            "near_misses": ["Alugam", "Alugo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q06",
+            "format": "typed-blank",
+            "prompt": "As cartas foram ___ por ela. (escrever, particípio)",
+            "answer": "escritas",
+            "near_misses": ["escritos", "escrita"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q07",
+            "format": "translation",
+            "prompt": "Translate (passive): The cake was made by my mother.",
+            "answer": "O bolo foi feito pela minha mãe.",
+            "alternatives": ["O bolo foi feito por minha mãe."],
+            "near_misses": [
+              "O bolo foi fez pela minha mãe.",
+              "O bolo foi feita pela minha mãe."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q08",
+            "format": "translation",
+            "prompt": "Translate (passive se): Portuguese is spoken here.",
+            "answer": "Fala-se português aqui.",
+            "alternatives": ["Aqui se fala português."],
+            "near_misses": ["Falam-se português aqui.", "Fala português aqui."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q09",
+            "format": "translation",
+            "prompt": "Translate (future passive): The house will be sold.",
+            "answer": "A casa será vendida.",
+            "alternatives": ["A casa vai ser vendida."],
+            "near_misses": ["A casa será vendido.", "A casa é vendida será."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q10",
+            "format": "correction",
+            "prompt": "Correct the agreement: As portas foram aberto.",
+            "answer": "As portas foram abertas.",
+            "near_misses": [
+              "As portas foram aberto.",
+              "As portas foram abertos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q11",
+            "format": "correction",
+            "prompt": "Correct the passive se (plural thing): Vende-se casas.",
+            "answer": "Vendem-se casas.",
+            "near_misses": ["Vende-se casas.", "Vendemos casas."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: O livro foi escrita por ela.",
+            "answer": "O livro foi escrito por ela.",
+            "near_misses": [
+              "O livro foi escrita por ela.",
+              "O livro foi escrever por ela."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-039@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the result state (not an action): A loja ___ fechada agora.",
+            "answer": "está",
+            "alternatives": ["está", "foi", "será"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-039@1:h02",
+            "format": "typed-blank",
+            "prompt": "As casas foram ___ no ano passado. (vender, particípio)",
+            "answer": "vendidas",
+            "near_misses": ["vendido", "vendidos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-039@1:h03",
+            "format": "translation",
+            "prompt": "Translate (passive): English is taught in this school.",
+            "answer": "Ensina-se inglês nesta escola.",
+            "alternatives": ["Nesta escola se ensina inglês."],
+            "near_misses": [
+              "Ensinam-se inglês nesta escola.",
+              "Ensina inglês nesta escola."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-040",
+      "title": "The personal infinitive: para eu fazer, antes de sairmos",
+      "explanation": "The personal infinitive is an infinitive with a person ending. It is formed from the infinitive: eu falar, tu falares, ele falar, nós falarmos, vocês falarem. Use it when the infinitive has a different subject from the main verb: Para eu poder ir, preciso terminar; Antes de sairmos, apague a luz; É importante eles saberem. Common triggers are prepositions: para, antes de, depois de, sem, até, por and ao. In everyday speech the personal infinitive is mostly used with nós and eles, and the plain infinitive is kept when the subject is the same: Antes de sair, apague a luz.",
+      "examples": [
+        {
+          "pt": "Para eu poder ir, preciso terminar o trabalho.",
+          "en": "So that I can go, I need to finish the work."
+        },
+        {
+          "pt": "Antes de sairmos, apague a luz.",
+          "en": "Before we leave, turn off the light."
+        },
+        {
+          "pt": "É importante eles saberem a verdade.",
+          "en": "It is important that they know the truth."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-040@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-040@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the form: Antes de ___ , apague a luz. (nós, sair)",
+            "answer": "sairmos",
+            "alternatives": ["sair", "saímos", "sairmos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the form: Para eles ___ chegar, precisam sair agora. (poder)",
+            "answer": "poderem",
+            "alternatives": ["poderem", "poder", "podem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the form: Depois de nós ___ , fomos embora. (comer)",
+            "answer": "comermos",
+            "alternatives": ["comer", "comermos", "comemos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q04",
+            "format": "typed-blank",
+            "prompt": "Para eu ___ ir, preciso terminar. (poder)",
+            "answer": "poder",
+            "near_misses": ["posso", "poderem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q05",
+            "format": "typed-blank",
+            "prompt": "Sem eles ___ , não vamos começar. (chegar)",
+            "answer": "chegarem",
+            "near_misses": ["chegar", "chegam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q06",
+            "format": "typed-blank",
+            "prompt": "É bom nós ___ cedo. (sair, nós)",
+            "answer": "sairmos",
+            "near_misses": ["sair", "saímos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q07",
+            "format": "translation",
+            "prompt": "Translate (personal infinitive): Before we eat, wash your hands.",
+            "answer": "Antes de comermos, lave as mãos.",
+            "alternatives": ["Antes de comermos, lavem as mãos."],
+            "near_misses": [
+              "Antes de comemos, lave as mãos.",
+              "Antes de comer nós, lave as mãos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q08",
+            "format": "translation",
+            "prompt": "Translate (personal infinitive): It is important that they study.",
+            "answer": "É importante eles estudarem.",
+            "alternatives": ["É importante elas estudarem."],
+            "near_misses": [
+              "É importante eles estudar.",
+              "É importante eles estudam."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q09",
+            "format": "translation",
+            "prompt": "Translate (same subject, plain infinitive): Before leaving, I turn off the light.",
+            "answer": "Antes de sair, eu apago a luz.",
+            "alternatives": ["Antes de sair, apago a luz."],
+            "near_misses": [
+              "Antes de sairmos, eu apago a luz.",
+              "Antes de saio, eu apago a luz."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Antes de nós sair, apague a luz.",
+            "answer": "Antes de nós sairmos, apague a luz.",
+            "alternatives": ["Antes de sairmos, apague a luz."],
+            "near_misses": [
+              "Antes de nós sair, apague a luz.",
+              "Antes de nós saímos, apague a luz."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Para eles chegar, precisam sair.",
+            "answer": "Para eles chegarem, precisam sair.",
+            "near_misses": [
+              "Para eles chegar, precisam sair.",
+              "Para eles chegam, precisam sair."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Depois de eles saem, eu limpo.",
+            "answer": "Depois de eles saírem, eu limpo.",
+            "near_misses": [
+              "Depois de eles saem, eu limpo.",
+              "Depois de eles sair, eu limpo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-040@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the form: Ao ___ em casa, liguei para você. (eu, chegar)",
+            "answer": "chegar",
+            "alternatives": ["chegarmos", "chegar", "chegarem"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-040@1:h02",
+            "format": "typed-blank",
+            "prompt": "Eles pediram para nós ___ cedo. (voltar)",
+            "answer": "voltarmos",
+            "near_misses": ["voltar", "voltamos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-040@1:h03",
+            "format": "translation",
+            "prompt": "Translate (personal infinitive): For us to win, we need to train.",
+            "answer": "Para nós ganharmos, precisamos treinar.",
+            "alternatives": [
+              "Para ganharmos, precisamos treinar.",
+              "Para nós vencermos, precisamos treinar."
+            ],
+            "near_misses": [
+              "Para nós ganhar, precisamos treinar.",
+              "Para nós ganhamos, precisamos treinar."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
