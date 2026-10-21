@@ -272,6 +272,12 @@ export const contentVersions = sqliteTable(
     })
       .notNull()
       .default('draft'),
+    // Whether publishing this version resets learners' grammar retention
+    // schedules for the skill (a trigger reads it). The importer clears it for
+    // a wording-only version, which moves the schedules to it unchanged.
+    retentionReset: integer('retention_reset', { mode: 'boolean' })
+      .notNull()
+      .default(true),
     createdAt: createdAt()
   },
   (table) => [

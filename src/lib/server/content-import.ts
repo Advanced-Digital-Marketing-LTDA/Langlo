@@ -13,7 +13,7 @@ import {
   validateDeclarations,
   writeChanges,
   type BumpLevel,
-  type PlannedQuestion
+  type VersionPlan
 } from './content-update';
 
 // Checked grammar-content import (T012). Writes only the shared, unowned
@@ -550,7 +550,7 @@ async function insertVersion(
   tx: Transaction,
   version: PackageVersion,
   language: string,
-  planned: PlannedQuestion[]
+  plan: VersionPlan
 ) {
   const taken = await tx.execute({
     sql: `SELECT id FROM questions WHERE id IN (${version.questions.map(() => '?').join(', ')})`,
@@ -559,17 +559,21 @@ async function insertVersion(
   if (taken.rows.length > 0)
     fail('CONTENT_CONFLICT', `question ${String(taken.rows[0].id)}`);
   await tx.execute({
-    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status, fingerprint) VALUES (?, ?, ?, ?, ?, ?)',
+    sql: 'INSERT INTO content_versions (id, skill_id, language, version, status, fingerprint, retention_reset) VALUES (?, ?, ?, ?, ?, ?, ?)',
     args: [
       version.id,
       version.skillId,
       language,
       version.version,
       version.review === 'quarantined' ? 'quarantined' : 'schema-validated',
-      versionFingerprint(version)
+      versionFingerprint(version),
+      // Only a wording-only version leaves learners' grammar recall valid.
+      Number(plan.level !== 'patch')
     ]
   });
-  const lineage = new Map(planned.map((item) => [item.id, item.lineageKey]));
+  const lineage = new Map(
+    plan.questions.map((item) => [item.id, item.lineageKey])
+  );
   for (const question of version.questions)
     await tx.execute({
       sql: 'INSERT INTO questions (id, content_version_id, skill_id, language, format, holdout, prompt, answer, alternatives, lineage_key) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
@@ -771,7 +775,7 @@ async function importVersions(
     const stored = await storedVersion(tx, version);
     if (stored === undefined) {
       const plan = planVersion(version, await priorVersion(tx, version));
-      await insertVersion(tx, version, skill.language, plan.questions);
+      await insertVersion(tx, version, skill.language, plan);
       logVersion(set, version, plan);
       await importLesson(tx, version, set);
       result.versions += 1;

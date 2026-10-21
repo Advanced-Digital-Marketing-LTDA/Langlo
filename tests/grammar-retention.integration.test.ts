@@ -456,6 +456,48 @@ describe('grammar retention storage and session flow', () => {
     }
   );
 
+  const schedulesOf = async () =>
+    (
+      await client.execute({
+        sql: 'SELECT content_version_id, state_json, due_at, revision, reset_required FROM grammar_retention_schedules WHERE owner_id = ? AND skill_id = ?',
+        args: [learner.userId, 'fr-a1-001']
+      })
+    ).rows[0];
+
+  it.each(['insert', 'publish'] as const)(
+    'keeps recall state and due date when a wording-only version is published by %s',
+    async (operation) => {
+      await reviewedSkill();
+      const before = await schedulesOf();
+      expect(Number(before.due_at)).toBeGreaterThan(0);
+      await client.execute({
+        sql: "INSERT INTO content_versions (id, skill_id, language, version, status, retention_reset) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, ?, 0)",
+        args: [operation === 'insert' ? 'pilot-ready' : 'draft']
+      });
+      if (operation === 'publish')
+        await client.execute(
+          "UPDATE content_versions SET status = 'schema-validated' WHERE id = 'fr-a1-001@2'"
+        );
+      expect(await schedulesOf()).toEqual({
+        ...before,
+        content_version_id: 'fr-a1-001@2',
+        revision: Number(before.revision) + 1
+      });
+    }
+  );
+
+  it('does not move a schedule to a wording-only version that is not the newest', async () => {
+    await reviewedSkill();
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@3', 'fr-a1-001', 'fr', 3, 'pilot-ready')"
+    );
+    const before = await schedulesOf();
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status, retention_reset) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'pilot-ready', 0)"
+    );
+    expect(await schedulesOf()).toEqual(before);
+  });
+
   it('keeps the frozen question and lesson after publication before the first answer', async () => {
     const review = await dueReview();
     await client.batch(

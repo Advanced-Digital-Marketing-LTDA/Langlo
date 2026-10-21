@@ -218,6 +218,13 @@
       "when": 1792539646152,
       "tag": "0030_portuguese_grammar_retention",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "6",
+      "when": 1792598096158,
+      "tag": "0031_retention_reset_on_meaning_change",
+      "breakpoints": true
     }
   ]
 }
