@@ -49,7 +49,9 @@ const practisedText = (
     ? (example.fr ?? '')
     : module.track.startsWith('German')
       ? (example.de ?? '')
-      : example.en;
+      : module.track.startsWith('Portuguese')
+        ? (example.pt ?? '')
+        : example.en;
 const load = (path: string) => JSON.parse(read(path)) as Module;
 const revisedSkills = new Set([
   'de-a1-001',
@@ -91,6 +93,33 @@ const practiceText = (module: Module) =>
 
 it('finds the authored modules this suite covers', () => {
   expect(files.length).toBeGreaterThan(0);
+});
+
+// A Portuguese track in the catalog has a lesson for every active skill, so a
+// renamed or deleted module file cannot silently leave skills without lessons.
+it('has a lesson for every active Portuguese skill and no others', () => {
+  const language = columnIndex('language');
+  const level = columnIndex('level');
+  const lifecycle = columnIndex('lifecycle_status');
+  const rows = [...catalog.values()].filter(
+    (row) => row[language] === 'Portuguese'
+  );
+  const tracks = new Set(rows.map((row) => `Portuguese ${row[level]}`));
+  expect(tracks.size).toBeGreaterThan(0);
+  for (const track of tracks) {
+    const expected = rows
+      .filter(
+        (row) =>
+          `Portuguese ${row[level]}` === track && row[lifecycle] === 'active'
+      )
+      .map((row) => row[0])
+      .sort();
+    const authored = allModules
+      .filter((module) => module.track === track)
+      .flatMap((module) => module.lessons.map((lesson) => lesson.skill_id))
+      .sort();
+    expect(authored, track).toEqual(expected);
+  }
 });
 
 describe('reviewed curriculum answer keys', () => {

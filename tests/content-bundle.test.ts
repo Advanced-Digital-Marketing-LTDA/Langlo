@@ -167,7 +167,7 @@ describe('content bundle import', () => {
   it('imports the approved repository bundle once', async () => {
     const pkg = bundlePackage(process.cwd());
     expect(pkg.publicationStatus).toBe('approved');
-    expect(pkg.curriculumVersion).toBe('1.1.0');
+    expect(pkg.curriculumVersion).toBe('1.2.0');
     expect(pkg.skills.every((skill) => skill.review === 'approved')).toBe(true);
     // Expected counts come from the source files, not from the package.
     const rows = parseCsv(

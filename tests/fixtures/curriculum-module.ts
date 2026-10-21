@@ -22,7 +22,7 @@ export type Lesson = {
   skill_id: string;
   title: string;
   explanation: string;
-  examples: { fr?: string; de?: string; en: string }[];
+  examples: { fr?: string; de?: string; pt?: string; en: string }[];
   references: string[];
   version: { id: string; version: number; questions: Question[] };
 };
