@@ -197,6 +197,11 @@ describe('lesson page load round trips', () => {
     );
     expect(stored.rows[0]).toMatchObject({ attempts: 1, evaluations: 1 });
     expect(counted.sqls.length).toBeLessThanOrEqual(ANSWER_BUDGET);
+    // Only an assessment can complete from an answer; a practice answer sends
+    // neither the count nor the completing update.
+    expect(
+      counted.sqls.some((sql) => sql.startsWith('UPDATE study_sessions'))
+    ).toBe(false);
   });
 
   it('overlaps the lesson reads with the practice reads', async () => {
