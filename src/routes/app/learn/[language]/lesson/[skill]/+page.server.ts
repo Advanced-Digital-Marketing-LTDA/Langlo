@@ -10,9 +10,8 @@ import {
   requireLearnerPage
 } from '../../../../../../lib/server/learner-session';
 import {
-  exerciseFor,
   lessonFor,
-  practiceFeedback,
+  practiceFor,
   ratePracticeAnswer,
   recordAnswer,
   reportLessonIssue
@@ -54,19 +53,27 @@ export const load: PageServerLoad = async (event) => {
   const studySessionId = event.url.searchParams.get('session');
   const returnTo = normalizeMapReturnTo(event.url.searchParams.get('returnTo'));
   try {
-    return await withDatabase(event.locals.config, async (client) => ({
-      language,
-      returnTo,
-      unavailable: false as const,
-      reportSubmissionKey: randomUUID(),
-      lesson: await lessonFor(client, learner, {
+    return await withDatabase(event.locals.config, async (client) => {
+      // The lesson and the practice state are independent reads: one round
+      // trip each is the cost, so they overlap instead of queueing.
+      const [lesson, practice] = await Promise.all([
+        lessonFor(client, learner, {
+          language,
+          skillId: skill,
+          studySessionId
+        }),
+        practiceFor(client, learner, studySessionId, skill)
+      ]);
+      return {
         language,
-        skillId: skill,
-        studySessionId
-      }),
-      exercise: await exerciseFor(client, learner, studySessionId, skill),
-      feedback: await practiceFeedback(client, learner, studySessionId, skill)
-    }));
+        returnTo,
+        unavailable: false as const,
+        reportSubmissionKey: randomUUID(),
+        lesson,
+        exercise: practice.exercise,
+        feedback: practice.feedback
+      };
+    });
   } catch (thrown) {
     return lessonFailure(thrown, language, returnTo);
   }
