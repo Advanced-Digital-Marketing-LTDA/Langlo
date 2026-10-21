@@ -833,23 +833,8 @@ describe('grammar retention schedules after a revision', () => {
       )
     ).rows.map((row) => ({ ...row }));
 
-  it('keeps the schedule when every question only has its wording fixed', async () => {
+  it('keeps the schedule on the published version when a quarantined version is skipped', async () => {
     await scheduleOnFirstVersion();
-    await importContent(
-      client,
-      update('0.1.1', [
-        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
-        same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
-      ])
-    );
-    expect(await schedule()).toEqual([
-      { content_version_id: 'fr-a1-001@2', due_at: 5000, reset_required: 0 }
-    ]);
-  });
-
-  it('resets the schedule when the version it continues was never published', async () => {
-    await scheduleOnFirstVersion();
-    // Quarantined, so learners stay on @1, but it changes q2.
     const quarantined = update('0.2.0', [
       same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
       question('fr-a1-001@2:q2', { change: 'changed' })
@@ -859,7 +844,6 @@ describe('grammar retention schedules after a revision', () => {
     expect(await schedule()).toEqual([
       { content_version_id: 'fr-a1-001@1', due_at: 5000, reset_required: 0 }
     ]);
-    // @3 only fixes wording against @2, yet @1 to @3 changes q2.
     const third = update('0.2.1', [
       same('fr-a1-001@3:q1', 'fr-a1-001@2:q1'),
       same('fr-a1-001@3:q2', 'fr-a1-001@2:q2')
@@ -868,32 +852,45 @@ describe('grammar retention schedules after a revision', () => {
     third.versions[0].version = 3;
     await importContent(client, third);
     expect(await schedule()).toEqual([
-      { content_version_id: 'fr-a1-001@3', due_at: 0, reset_required: 1 }
+      { content_version_id: 'fr-a1-001@3', due_at: 5000, reset_required: 0 }
     ]);
   });
 
   it.each([
     [
-      'a question changes meaning',
+      '0.1.1',
+      'only its wording fixed',
+      [
+        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+        same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+      ]
+    ],
+    [
+      '0.2.0',
+      'a question that changes meaning',
       [
         same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
         question('fr-a1-001@2:q2', { change: 'changed' })
       ]
     ],
-    ['a question is removed', [same('fr-a1-001@2:q1', 'fr-a1-001@1:q1')]],
+    ['0.2.0', 'a question removed', [same('fr-a1-001@2:q1', 'fr-a1-001@1:q1')]],
     [
-      'a question is added',
+      '0.2.0',
+      'a question added',
       [
         same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
         same('fr-a1-001@2:q2', 'fr-a1-001@1:q2'),
         question('fr-a1-001@2:q3', { change: 'new' })
       ]
     ]
-  ])('resets the schedule when %s', async (_, questions) => {
-    await scheduleOnFirstVersion();
-    await importContent(client, update('0.2.0', questions));
-    expect(await schedule()).toEqual([
-      { content_version_id: 'fr-a1-001@2', due_at: 0, reset_required: 1 }
-    ]);
-  });
+  ])(
+    'transfers the schedule unchanged to a version (%s) with %s',
+    async (curriculum, _, questions) => {
+      await scheduleOnFirstVersion();
+      await importContent(client, update(curriculum, questions));
+      expect(await schedule()).toEqual([
+        { content_version_id: 'fr-a1-001@2', due_at: 5000, reset_required: 0 }
+      ]);
+    }
+  );
 });

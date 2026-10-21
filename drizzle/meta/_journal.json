@@ -225,6 +225,13 @@
       "when": 1792598096158,
       "tag": "0031_retention_reset_on_meaning_change",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "6",
+      "when": 1792599761700,
+      "tag": "0032_retention_transfers_to_new_versions",
+      "breakpoints": true
     }
   ]
 }

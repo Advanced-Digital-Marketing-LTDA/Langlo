@@ -319,7 +319,8 @@ describe('disposable libSQL migrations', () => {
           '0028_sturdy_talkback',
           '0029_current_grammar_content',
           '0030_portuguese_grammar_retention',
-          '0031_retention_reset_on_meaning_change'
+          '0031_retention_reset_on_meaning_change',
+          '0032_retention_transfers_to_new_versions'
         ]);
         await migrateFixtureDatabase(target);
         expect(
@@ -396,7 +397,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT content_version_id, reset_required FROM grammar_retention_schedules'
           )
         ).rows
-      ).toEqual([{ content_version_id: 'content-v2', reset_required: 1 }]);
+      ).toEqual([{ content_version_id: 'content-v2', reset_required: 0 }]);
       await client.execute("DELETE FROM users WHERE id = 'learner-a'");
       expect(
         (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
@@ -408,6 +409,72 @@ describe('disposable libSQL migrations', () => {
       close();
     }
   });
+
+  async function withResetSchedule(stateJson: string) {
+    const target = await fixture();
+    const folder = await prefixThrough(
+      '0031_retention_reset_on_meaning_change'
+    );
+    try {
+      await migrateFixtureDatabase(target, folder);
+    } finally {
+      await rm(folder, { recursive: true, force: true });
+    }
+    await seedStudy(target);
+    const opened = await openFixtureDatabase(target);
+    await opened.client.execute({
+      sql: "INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, reset_required, scheduler_version, parameters_json) VALUES ('learner-a', 'fr', 'fr-articles', 'content-v1', ?, 0, 3, 1, 'fixture', '{}')",
+      args: [stateJson]
+    });
+    return { ...opened, target };
+  }
+
+  it('restores schedules that an earlier version reset from their stored recall state', async () => {
+    const state = JSON.stringify({ due: '2026-11-01T10:20:30.456Z', reps: 4 });
+    const { client, close, target } = await withResetSchedule(state);
+    try {
+      await migrateFixtureDatabase(target);
+      expect(
+        (
+          await client.execute(
+            'SELECT content_version_id, state_json, due_at, revision, reset_required FROM grammar_retention_schedules'
+          )
+        ).rows
+      ).toEqual([
+        {
+          content_version_id: 'content-v1',
+          state_json: state,
+          due_at: Date.parse('2026-11-01T10:20:30.456Z'),
+          revision: 4,
+          reset_required: 0
+        }
+      ]);
+    } finally {
+      close();
+    }
+  });
+
+  it.each([
+    ['no due date', JSON.stringify({ reps: 4 })],
+    ['an unreadable due date', JSON.stringify({ due: 'soon', reps: 4 })]
+  ])(
+    'refuses to restore a reset schedule whose stored state has %s',
+    async (_, state) => {
+      const { client, close, target } = await withResetSchedule(state);
+      try {
+        await expect(migrateFixtureDatabase(target)).rejects.toThrow();
+        expect(
+          (
+            await client.execute(
+              'SELECT due_at, reset_required FROM grammar_retention_schedules'
+            )
+          ).rows
+        ).toEqual([{ due_at: 0, reset_required: 1 }]);
+      } finally {
+        close();
+      }
+    }
+  );
 
   it('refuses the Portuguese retention rebuild when a caller keeps foreign keys enabled', async () => {
     const { client, close } = await beforePortugueseRetention();
@@ -506,7 +573,7 @@ describe('disposable libSQL migrations', () => {
     await migrateFixtureDatabase(target, previous);
   }
 
-  it('upgrades grammar reset triggers without changing stored schedules and only resets for the newest published content', async () => {
+  it('upgrades grammar retention triggers without changing stored schedules and only moves schedules to the newest published content', async () => {
     const target = await fixture();
     const previous = await mkdtemp(join(tmpdir(), 'langlo-0029-upgrade-'));
     try {
@@ -536,7 +603,7 @@ describe('disposable libSQL migrations', () => {
             )
           ).rows
         ).toEqual([
-          { content_version_id: 'content-v2', due_at: 0, revision: 4 }
+          { content_version_id: 'content-v2', due_at: 123456, revision: 4 }
         ]);
         await client.execute(
           "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('content-backfill', 'fr-articles', 'fr', 3, 'draft')"

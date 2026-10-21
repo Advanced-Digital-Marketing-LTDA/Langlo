@@ -76,13 +76,7 @@ export type VersionPlan = {
   questions: PlannedQuestion[];
   removed: PriorQuestion[];
   level: BumpLevel;
-  // Only wording changed since a published earlier version, so learners'
-  // grammar recall is still valid. A baseline that learners never saw (a
-  // quarantined or unpublished version) cannot vouch for that.
-  wordingOnly: boolean;
 };
-
-const publishedStatuses = new Set(['schema-validated', 'pilot-ready']);
 
 function checkQuestionDeclarations(pkg: ContentPackage) {
   for (const version of pkg.versions)
@@ -142,7 +136,7 @@ export function validateDeclarations(pkg: ContentPackage) {
 /** Decide lineage keys, removals and the bump level for one new version. */
 export function planVersion(
   version: PackageVersion,
-  prior: { questions: PriorQuestion[]; status?: string } | undefined
+  prior: { questions: PriorQuestion[] } | undefined
 ): VersionPlan {
   if (prior === undefined) {
     const declared = version.questions.find(
@@ -159,8 +153,7 @@ export function planVersion(
         previousId: null
       })),
       removed: [],
-      level: 'minor',
-      wordingOnly: false
+      level: 'minor'
     };
   }
   const earlier = new Map(
@@ -202,15 +195,7 @@ export function planVersion(
   );
   const onlyWording =
     removed.length === 0 && questions.every((q) => q.change === 'same');
-  return {
-    questions,
-    removed,
-    level: onlyWording ? 'patch' : 'minor',
-    wordingOnly:
-      onlyWording &&
-      prior.status !== undefined &&
-      publishedStatuses.has(prior.status)
-  };
+  return { questions, removed, level: onlyWording ? 'patch' : 'minor' };
 }
 
 /** The newest earlier version of the skill that has questions, with them. */
@@ -225,7 +210,7 @@ export async function priorVersion(db: Executor, version: PackageVersion) {
       `${version.id} is older than a version of ${version.skillId} that is already stored`
     );
   const found = await db.execute({
-    sql: 'SELECT v.id, v.status FROM content_versions v WHERE v.skill_id = ? AND v.version < ? AND EXISTS (SELECT 1 FROM questions q WHERE q.content_version_id = v.id) ORDER BY v.version DESC LIMIT 1',
+    sql: 'SELECT v.id FROM content_versions v WHERE v.skill_id = ? AND v.version < ? AND EXISTS (SELECT 1 FROM questions q WHERE q.content_version_id = v.id) ORDER BY v.version DESC LIMIT 1',
     args: [version.skillId, version.version]
   });
   if (found.rows.length === 0) return undefined;
@@ -236,7 +221,6 @@ export async function priorVersion(db: Executor, version: PackageVersion) {
   });
   return {
     id,
-    status: String(found.rows[0].status),
     questions: rows.rows.map((row): PriorQuestion => ({
       id: String(row.id),
       lineageKey: row.lineage_key === null ? null : String(row.lineage_key),

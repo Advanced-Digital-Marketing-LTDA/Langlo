@@ -350,7 +350,8 @@ describe('migration 0026 Portuguese tracks', () => {
         '0028_sturdy_talkback',
         '0029_current_grammar_content',
         '0030_portuguese_grammar_retention',
-        '0031_retention_reset_on_meaning_change'
+        '0031_retention_reset_on_meaning_change',
+        '0032_retention_transfers_to_new_versions'
       ]);
       const result = await applyRemoteTestPlan(client, migrations, {
         host,
