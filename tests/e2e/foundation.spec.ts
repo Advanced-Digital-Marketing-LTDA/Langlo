@@ -1,6 +1,49 @@
 import { expect } from '@playwright/test';
 import { test } from './coverage-fixture';
 
+test('homepage auth controls are visible, touch-sized and keyboard operable', async ({
+  page
+}) => {
+  await page.goto('/');
+  const signIn = page.getByRole('link', { name: 'Sign in', exact: true });
+  const signUp = page.getByRole('link', { name: 'Sign up', exact: true });
+  for (const [link, destination] of [
+    [signIn, '/login'],
+    [signUp, '/signup']
+  ] as const) {
+    await expect(link).toBeVisible();
+    await expect(link).toBeInViewport();
+    await expect(link).toHaveAttribute('href', destination);
+    const bounds = await link.boundingBox();
+    expect(bounds!.width).toBeGreaterThanOrEqual(44);
+    expect(bounds!.height).toBeGreaterThanOrEqual(44);
+  }
+
+  await page.getByRole('link', { name: 'Privacy', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  await expect(signIn).toBeFocused();
+  expect(
+    await signIn.evaluate((element) => getComputedStyle(element).outlineStyle)
+  ).toBe('solid');
+  await page.keyboard.press('Tab');
+  await expect(signUp).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/signup$/);
+  await expect(
+    page.getByRole('heading', { name: 'Create an account', exact: true })
+  ).toBeVisible();
+
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Privacy', exact: true }).focus();
+  await page.keyboard.press('Tab');
+  await expect(signIn).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL(/\/login$/);
+  await expect(
+    page.getByRole('heading', { name: 'Sign in', exact: true })
+  ).toBeVisible();
+});
+
 test('public shell works with keyboard navigation and browser history', async ({
   page
 }) => {
