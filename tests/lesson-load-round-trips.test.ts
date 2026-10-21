@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Client, InStatement } from '@libsql/client';
+import type { Client, InStatement, Transaction } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
@@ -16,6 +16,9 @@ import { approvedPackage } from './fixtures/content-package';
 // The lesson page is reloaded after every answer and each database call costs
 // a network round trip in production, so the number of calls and whether they
 // overlap are part of the page's behavior.
+
+// Measured: 4 reads, begin, 11 statements and commit. Raising it needs a reason.
+const ANSWER_BUDGET = 15;
 
 const held = vi.hoisted(() => ({ client: undefined as Client | undefined }));
 
@@ -46,6 +49,24 @@ function counting(client: Client, counted: Counted): Client {
       inFlight -= 1;
     }
   };
+  const inTransaction = (tx: Transaction): Transaction =>
+    new Proxy(tx, {
+      get(base, property) {
+        const value = Reflect.get(base, property);
+        if (property === 'execute')
+          return (statement: InStatement) =>
+            track(
+              typeof statement === 'string' ? statement : statement.sql,
+              () => base.execute(statement)
+            );
+        if (property === 'batch')
+          return (statements: InStatement[]) =>
+            track('batch', () => base.batch(statements));
+        if (property === 'commit')
+          return () => track('commit', () => base.commit());
+        return typeof value === 'function' ? value.bind(base) : value;
+      }
+    });
   return new Proxy(client, {
     get(base, property) {
       const value = Reflect.get(base, property);
@@ -57,6 +78,11 @@ function counting(client: Client, counted: Counted): Client {
       if (property === 'batch')
         return (statements: InStatement[]) =>
           track('batch', () => base.batch(statements));
+      if (property === 'transaction')
+        return async (mode: 'write' | 'read') => {
+          counted.sqls.push('begin');
+          return inTransaction(await base.transaction(mode));
+        };
       return typeof value === 'function' ? value.bind(base) : value;
     }
   });
@@ -135,6 +161,33 @@ describe('lesson page load round trips', () => {
     });
     expect(feedbackReads(counted.sqls)).toBe(1);
     expect(counted.sqls.length).toBeLessThanOrEqual(12);
+  });
+
+  it('saves an answer in few round trips', async () => {
+    const counted: Counted = { sqls: [], peak: 0 };
+    const form = new FormData();
+    for (const [name, value] of Object.entries({
+      studySessionId: 'study-a',
+      submissionKey: 'k1',
+      questionId: 'fr-a1-001@1:q1',
+      answer: 'suis'
+    }))
+      form.set(name, value);
+
+    const result = await recordAnswer(
+      counting(raw, counted),
+      testSession('learner-a'),
+      form,
+      'fr-a1-001'
+    );
+
+    expect(result).toMatchObject({ recorded: true, duplicate: false });
+    const stored = await raw.execute(
+      `SELECT COUNT(*) AS attempts, COUNT(e.id) AS evaluations FROM attempts a
+        LEFT JOIN evaluations e ON e.attempt_id = a.id WHERE a.submission_key = 'k1'`
+    );
+    expect(stored.rows[0]).toMatchObject({ attempts: 1, evaluations: 1 });
+    expect(counted.sqls.length).toBeLessThanOrEqual(ANSWER_BUDGET);
   });
 
   it('overlaps the lesson reads with the practice reads', async () => {
