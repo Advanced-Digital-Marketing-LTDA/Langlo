@@ -6,13 +6,12 @@ const databases = new Map<string, ReturnType<typeof initializeDatabase>>();
 async function initializeDatabase(databaseUrl: string, databaseToken?: string) {
   const client = createClient({
     url: databaseUrl,
-    authToken: databaseToken
+    authToken: databaseToken,
+    // A PRAGMA configures only the borrowed connection; this covers the pool.
+    ...(databaseUrl.startsWith('file:') ? { timeout: 5000 } : {})
   });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
-    // Remote libSQL (Turso) rejects busy_timeout; it only applies to local files.
-    if (databaseUrl.startsWith('file:'))
-      await client.execute('PRAGMA busy_timeout = 5000');
     const [{ drizzle }, schema] = await Promise.all([
       import('drizzle-orm/libsql'),
       import('./schema.ts')

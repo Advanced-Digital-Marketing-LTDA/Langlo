@@ -3,14 +3,14 @@ import type { RuntimeConfig } from '../src/lib/server/config';
 
 const state = vi.hoisted(() => ({
   executed: [] as { url: string; sql: string }[],
-  clients: [] as { url: string }[],
+  clients: [] as { url: string; timeout?: number }[],
   closed: 0,
   failNext: false
 }));
 
 vi.mock('@libsql/client', () => ({
-  createClient: ({ url }: { url: string }) => {
-    state.clients.push({ url });
+  createClient: ({ url, timeout }: { url: string; timeout?: number }) => {
+    state.clients.push({ url, timeout });
     return {
       execute: async (sql: string) => {
         state.executed.push({ url, sql });
@@ -55,6 +55,7 @@ describe('openAppDatabase', () => {
 
     expect(second.client).toBe(first.client);
     expect(state.clients).toHaveLength(1);
+    expect(state.clients[0].timeout).toBeUndefined();
     expect(state.executed).toEqual([
       { url: config.databaseUrl, sql: 'PRAGMA foreign_keys = ON' }
     ]);
@@ -62,7 +63,7 @@ describe('openAppDatabase', () => {
     expect(state.closed).toBe(0);
   });
 
-  it('keeps busy_timeout setup for local file databases', async () => {
+  it('sets the driver busy timeout for local file databases', async () => {
     const config: RuntimeConfig = {
       ...remote,
       environment: 'test',
@@ -70,9 +71,9 @@ describe('openAppDatabase', () => {
     };
     await openAppDatabase(config);
     await openAppDatabase(config);
+    expect(state.clients).toEqual([{ url: config.databaseUrl, timeout: 5000 }]);
     expect(state.executed.map(({ sql }) => sql)).toEqual([
-      'PRAGMA foreign_keys = ON',
-      'PRAGMA busy_timeout = 5000'
+      'PRAGMA foreign_keys = ON'
     ]);
   });
 
