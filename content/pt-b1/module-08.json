@@ -778,10 +778,7 @@
             "format": "translation",
             "prompt": "Translate (personal infinitive): It is important that they study.",
             "answer": "É importante eles estudarem.",
-            "alternatives": [
-              "É importante que eles estudem.",
-              "É importante elas estudarem."
-            ],
+            "alternatives": ["É importante elas estudarem."],
             "near_misses": [
               "É importante eles estudar.",
               "É importante eles estudam."

@@ -789,7 +789,7 @@
           {
             "id": "pt-b1-035@1:h02",
             "format": "typed-blank",
-            "prompt": "Tenho ___ coisas para fazer. (quantas)",
+            "prompt": "Tenho ___ coisas para fazer. (so many)",
             "answer": "tantas",
             "near_misses": ["tanto", "tanta"],
             "holdout": true
