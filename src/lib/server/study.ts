@@ -500,19 +500,20 @@ async function finishFallback(
   }
 }
 
+function isRetentionAssessment(attempt: FallbackAttempt) {
+  return (
+    attempt.mode === 'assessment' &&
+    attempt.grammarRetentionPolicyVersion === GRAMMAR_RETENTION_POLICY_VERSION
+  );
+}
+
 async function settleFallback(
   client: Client,
   session: LearnerSession,
   attempt: FallbackAttempt,
   retentionAssessmentOnly = false
 ) {
-  if (
-    retentionAssessmentOnly &&
-    (attempt.mode !== 'assessment' ||
-      attempt.grammarRetentionPolicyVersion !==
-        GRAMMAR_RETENTION_POLICY_VERSION)
-  )
-    return;
+  if (retentionAssessmentOnly && !isRetentionAssessment(attempt)) return;
   const tx = await beginWrite(client);
   try {
     await tx.execute({
@@ -703,23 +704,60 @@ function isUnassistedGrammarAttempt(row: Row, expectedSessionId: string) {
   );
 }
 
-function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
+function ownGrammarAttempt(rows: Row[], expectedSessionId: string) {
   const row = rows[0];
-  if (
-    !row ||
-    !isUnassistedGrammarAttempt(row, expectedSessionId) ||
-    row.status === 'quarantined' ||
-    !['active', 'completed'].includes(String(row.state))
-  )
+  if (!row) throw new StudyError('NOT_FOUND');
+  if (!isUnassistedGrammarAttempt(row, expectedSessionId))
     throw new StudyError('NOT_FOUND');
-  if (
-    feedbackEvaluation(rows, String(row.content_version_id))?.outcome !==
+  return row;
+}
+
+function hasCorrectGrammarEvaluation(rows: Row[]) {
+  return (
+    feedbackEvaluation(rows, String(rows[0].content_version_id))?.outcome ===
     'correct'
-  )
+  );
+}
+
+function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
+  const row = ownGrammarAttempt(rows, expectedSessionId);
+  if (row.status === 'quarantined') throw new StudyError('NOT_FOUND');
+  if (!['active', 'completed'].includes(String(row.state)))
+    throw new StudyError('NOT_FOUND');
+  if (!hasCorrectGrammarEvaluation(rows))
     throw new StudyError('INVALID_GRAMMAR_RATING');
   if (!['schema-validated', 'pilot-ready'].includes(String(row.status)))
     throw new StudyError('CONTENT_UNAVAILABLE');
   return row;
+}
+
+function assertDiscardableAttempt(rows: Row[], expectedSessionId: string) {
+  const row = ownGrammarAttempt(rows, expectedSessionId);
+  if (row.mode !== 'assessment') throw new StudyError('NOT_FOUND');
+  if (row.state !== 'active') throw new StudyError('NOT_FOUND');
+  if (row.grammar_rating !== null) throw new StudyError('NOT_FOUND');
+  if (!hasCorrectGrammarEvaluation(rows)) throw new StudyError('NOT_FOUND');
+  return row;
+}
+
+async function persistAttemptRating(
+  tx: WriteTransaction,
+  learner: LearnerSession,
+  row: Row,
+  rating: GrammarRating
+) {
+  if (row.grammar_rating !== null) {
+    if (row.grammar_rating !== rating)
+      throw new StudyError('STALE_GRAMMAR_RATING');
+    return true;
+  }
+  if (row.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
+  const changed = await tx.execute({
+    sql: 'UPDATE attempts SET grammar_rating = ? WHERE id = ? AND owner_id = ? AND grammar_rating IS NULL',
+    args: [rating, row.attempt_id, learner.userId]
+  });
+  if (changed.rowsAffected !== 1) throw new StudyError('STALE_GRAMMAR_RATING');
+  return false;
 }
 
 async function finalizeRatedAssessment(
@@ -744,29 +782,20 @@ async function finalizeRatedAssessment(
 export async function rateGrammarAttempt(
   client: Client,
   learner: LearnerSession,
-  attemptId: string,
-  rating: GrammarRating,
-  expectedSessionId: string
+  input: { attemptId: string; rating: GrammarRating; expectedSessionId: string }
 ) {
+  const { attemptId, rating, expectedSessionId } = input;
   if (!['hard', 'good', 'easy'].includes(rating))
     throw new StudyError('INVALID_GRAMMAR_RATING');
   const tx = await beginWrite(client);
   try {
     const rows = await grammarAttemptRows(tx, learner, attemptId);
     const row = assertRateableAttempt(rows, expectedSessionId);
-    if (row.grammar_rating !== null) {
-      if (row.grammar_rating !== rating)
-        throw new StudyError('STALE_GRAMMAR_RATING');
+    const duplicate = await persistAttemptRating(tx, learner, row, rating);
+    if (duplicate) {
       await tx.commit();
       return { duplicate: true, completed: row.state === 'completed' };
     }
-    if (row.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
-    const changed = await tx.execute({
-      sql: 'UPDATE attempts SET grammar_rating = ? WHERE id = ? AND owner_id = ? AND grammar_rating IS NULL',
-      args: [rating, attemptId, learner.userId]
-    });
-    if (changed.rowsAffected !== 1)
-      throw new StudyError('STALE_GRAMMAR_RATING');
     if (row.mode === 'assessment') {
       const completed = await finalizeRatedAssessment(tx, learner, row);
       await tx.commit();
@@ -797,17 +826,7 @@ export async function discardUnratedAssessmentAnswer(
   const tx = await beginWrite(client);
   try {
     const rows = await grammarAttemptRows(tx, learner, attemptId);
-    const row = rows[0];
-    if (
-      !row ||
-      !isUnassistedGrammarAttempt(row, expectedSessionId) ||
-      row.mode !== 'assessment' ||
-      row.state !== 'active' ||
-      row.grammar_rating !== null ||
-      feedbackEvaluation(rows, String(row.content_version_id))?.outcome !==
-        'correct'
-    )
-      throw new StudyError('NOT_FOUND');
+    assertDiscardableAttempt(rows, expectedSessionId);
     const deleted = await tx.execute({
       sql: 'DELETE FROM attempts WHERE id = ? AND owner_id = ? AND grammar_rating IS NULL',
       args: [attemptId, learner.userId]
@@ -858,17 +877,54 @@ async function ratePreparedMistake(
   input: AttemptInput,
   attempt: { id: string; outcome: string; policy: string | null }
 ) {
-  if (
-    attempt.outcome === 'incorrect' &&
-    attempt.policy === GRAMMAR_RETENTION_POLICY_VERSION &&
-    input.evidenceKind === 'independent' &&
-    !input.notSure
-  ) {
+  if (attempt.outcome !== 'incorrect') return;
+  if (attempt.policy !== GRAMMAR_RETENTION_POLICY_VERSION) return;
+  if (input.evidenceKind !== 'independent') return;
+  if (!input.notSure) {
     await tx.execute({
       sql: "UPDATE attempts SET grammar_rating = 'again' WHERE id = ? AND owner_id = ?",
       args: [attempt.id, session.userId]
     });
   }
+}
+
+async function insertAttempt(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput,
+  source: Awaited<ReturnType<typeof attemptSource>>
+) {
+  const id = randomUUID();
+  await tx.execute({
+    sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure, received_help) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [
+      id,
+      session.userId,
+      input.studySessionId,
+      input.questionId,
+      source.contentVersionId,
+      source.skillId,
+      source.language,
+      input.submissionKey,
+      await evidenceKindFor(tx, session, input),
+      input.answer,
+      input.notSure ? 1 : 0,
+      input.evidenceKind === 'assisted' ? 1 : 0
+    ]
+  });
+  const attempt = {
+    id,
+    studySessionId: input.studySessionId,
+    mode: source.mode,
+    grammarRetentionPolicyVersion: source.grammarRetentionPolicyVersion,
+    questionId: input.questionId,
+    answer: input.answer,
+    contentVersionId: source.contentVersionId,
+    language: source.language,
+    question: source.question,
+    notSure: input.notSure
+  };
+  return attempt;
 }
 
 async function recordAttemptWrite(
@@ -888,36 +944,8 @@ async function recordAttemptWrite(
     }
     const source = await attemptSource(tx, session, input);
     await assertNotAnswered(tx, session, input);
-    const id = randomUUID();
-    await tx.execute({
-      sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure, received_help) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [
-        id,
-        session.userId,
-        input.studySessionId,
-        input.questionId,
-        source.contentVersionId,
-        source.skillId,
-        source.language,
-        input.submissionKey,
-        await evidenceKindFor(tx, session, input),
-        input.answer,
-        input.notSure ? 1 : 0,
-        input.evidenceKind === 'assisted' ? 1 : 0
-      ]
-    });
-    const attempt = {
-      id,
-      studySessionId: input.studySessionId,
-      mode: source.mode,
-      grammarRetentionPolicyVersion: source.grammarRetentionPolicyVersion,
-      questionId: input.questionId,
-      answer: input.answer,
-      contentVersionId: source.contentVersionId,
-      language: source.language,
-      question: source.question,
-      notSure: input.notSure
-    };
+    const attempt = await insertAttempt(tx, session, input, source);
+    const { id } = attempt;
     const outcome = await recordPreparedEvaluation(tx, session, attempt);
     await ratePreparedMistake(tx, session, input, {
       id,

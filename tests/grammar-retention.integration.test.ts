@@ -78,7 +78,11 @@ async function rate(
   sessionId: string,
   rating: 'hard' | 'good' | 'easy'
 ) {
-  return rateGrammarAttempt(client, learner, attemptId, rating, sessionId);
+  return rateGrammarAttempt(client, learner, {
+    attemptId: attemptId,
+    rating: rating,
+    expectedSessionId: sessionId
+  });
 }
 
 describe('grammar retention storage and session flow', () => {
@@ -205,6 +209,50 @@ describe('grammar retention storage and session flow', () => {
     expect(await dueGrammarReviews(client, other, 'fr')).toEqual([]);
   });
 
+  async function completeGrammarSettingsReview(reviewId: string) {
+    const repeated = await answer(reviewId, 'fr-a1-001@1:q2', 'es');
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT evidence_kind, received_help FROM attempts WHERE id = ?',
+          args: [repeated.id]
+        })
+      ).rows[0]
+    ).toEqual({ evidence_kind: 'assisted', received_help: 0 });
+    await rate(repeated.id, reviewId, 'good');
+    await finishPractice(client, learner, reviewId);
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT rating FROM grammar_retention_events WHERE owner_id = ? AND study_session_id = ?',
+          args: [learner.userId, reviewId]
+        })
+      ).rows
+    ).toEqual([{ rating: 'good' }]);
+    const updatedParameters = JSON.parse(
+      String(
+        (
+          await client.execute({
+            sql: 'SELECT parameters_json FROM grammar_retention_schedules WHERE owner_id = ? AND skill_id = ?',
+            args: [learner.userId, 'fr-a1-001']
+          })
+        ).rows[0].parameters_json
+      )
+    );
+    expect(updatedParameters).toMatchObject({
+      request_retention: 0.95,
+      learning_steps: ['30m'],
+      relearning_steps: ['1h']
+    });
+    const summary = await practiceSummary(client, learner, reviewId);
+    expect(summary.mode).toBe('mixed-review');
+    expect(summary.answered).toBe(1);
+    await finishPractice(client, learner, reviewId);
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(2);
+  }
+
   it('keeps due dates stable until a review uses updated settings', async () => {
     await reviewedSkill();
     const dueBeforeSettingsChange = Number(
@@ -274,47 +322,7 @@ describe('grammar retention storage and session flow', () => {
     ).toMatchObject({
       question: { id: 'fr-a1-001@1:q2' }
     });
-    const repeated = await answer(review.id, 'fr-a1-001@1:q2', 'es');
-    expect(
-      (
-        await client.execute({
-          sql: 'SELECT evidence_kind, received_help FROM attempts WHERE id = ?',
-          args: [repeated.id]
-        })
-      ).rows[0]
-    ).toEqual({ evidence_kind: 'assisted', received_help: 0 });
-    await rate(repeated.id, review.id, 'good');
-    await finishPractice(client, learner, review.id);
-    expect(
-      (
-        await client.execute({
-          sql: 'SELECT rating FROM grammar_retention_events WHERE owner_id = ? AND study_session_id = ?',
-          args: [learner.userId, review.id]
-        })
-      ).rows
-    ).toEqual([{ rating: 'good' }]);
-    const updatedParameters = JSON.parse(
-      String(
-        (
-          await client.execute({
-            sql: 'SELECT parameters_json FROM grammar_retention_schedules WHERE owner_id = ? AND skill_id = ?',
-            args: [learner.userId, 'fr-a1-001']
-          })
-        ).rows[0].parameters_json
-      )
-    );
-    expect(updatedParameters).toMatchObject({
-      request_retention: 0.95,
-      learning_steps: ['30m'],
-      relearning_steps: ['1h']
-    });
-    const summary = await practiceSummary(client, learner, review.id);
-    expect(summary.mode).toBe('mixed-review');
-    expect(summary.answered).toBe(1);
-    await finishPractice(client, learner, review.id);
-    expect(
-      (await client.execute('SELECT * FROM grammar_retention_events')).rows
-    ).toHaveLength(2);
+    await completeGrammarSettingsReview(review.id);
   });
 
   it('resets the affected schedule on new content and preserves immutable events', async () => {
@@ -351,6 +359,67 @@ describe('grammar retention storage and session flow', () => {
       skillIds: ['fr-a1-001']
     });
   }
+
+  async function retireSkill() {
+    await client.execute(
+      "UPDATE skills SET retired_at = 1 WHERE id = 'fr-a1-001'"
+    );
+  }
+
+  it('does not schedule a skill retired after a practice answer', async () => {
+    const session = await start();
+    await answer(session.id, 'fr-a1-001@1:q1', 'es');
+    await retireSkill();
+    await finishPractice(client, learner, session.id);
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+    ).toHaveLength(0);
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(0);
+  });
+
+  it('preserves historical reviews without updating a skill retired before completion', async () => {
+    const review = await dueReview();
+    const priorSchedules = (
+      await client.execute('SELECT * FROM grammar_retention_schedules')
+    ).rows;
+    const priorEvents = (
+      await client.execute('SELECT * FROM grammar_retention_events')
+    ).rows;
+    const recorded = await answer(review.id, 'fr-a1-001@1:q2', 'es');
+    await rate(recorded.id, review.id, 'good');
+    await retireSkill();
+    await finishPractice(client, learner, review.id);
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+    ).toEqual(priorSchedules);
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toEqual(priorEvents);
+  });
+
+  it('refuses a frozen review plan containing a retired skill', async () => {
+    const review = await dueReview();
+    await retireSkill();
+    await expect(
+      grammarReviewPlan(client, learner, review.id)
+    ).rejects.toMatchObject({ code: 'CONTENT_UNAVAILABLE' });
+  });
+
+  it('does not serve a retired frozen review question or lesson', async () => {
+    const review = await dueReview();
+    await retireSkill();
+    expect(
+      await exerciseFor(client, learner, review.id, 'fr-a1-001')
+    ).toMatchObject({
+      question: null,
+      notice: 'This content is not available right now.'
+    });
+    await expect(
+      getSessionLesson(client, learner, review.id, 'fr-a1-001')
+    ).rejects.toMatchObject({ code: 'CONTENT_UNAVAILABLE' });
+  });
 
   it('keeps the frozen question and lesson after publication before the first answer', async () => {
     const review = await dueReview();
@@ -467,7 +536,11 @@ describe('grammar retention storage and session flow', () => {
     const session = await start();
     const recorded = await answer(session.id, 'fr-a1-001@1:q2', 'es');
     await expect(
-      rateGrammarAttempt(client, other, recorded.id, 'good', session.id)
+      rateGrammarAttempt(client, other, {
+        attemptId: recorded.id,
+        rating: 'good',
+        expectedSessionId: session.id
+      })
     ).rejects.toMatchObject({ code: 'NOT_FOUND' });
     await expect(
       finishPractice(client, other, session.id)

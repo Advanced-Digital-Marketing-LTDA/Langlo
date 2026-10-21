@@ -234,7 +234,11 @@ describe('Portuguese placement assessment', () => {
       attempts.push(await answer(id, question, 'fui'));
     expect((await getAssessment(client, learner, id)).state).toBe('active');
     for (const attempt of attempts)
-      await rateGrammarAttempt(client, learner, attempt.id, 'good', id);
+      await rateGrammarAttempt(client, learner, {
+        attemptId: attempt.id,
+        rating: 'good',
+        expectedSessionId: id
+      });
     expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(
       (

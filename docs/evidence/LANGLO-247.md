@@ -103,3 +103,37 @@ New forward migration `0030_portuguese_grammar_retention` widens the grammar sch
 - `npm run test:e2e -- --config=playwright.validation.config.ts`: passed, 104 desktop/mobile tests against the production build with synthetic fixtures. The temporary config used local port 4189 and was removed afterward.
 
 No production ledger was edited, no production migration was run, and no existing commit was rewritten. Hosted CI and deployment remain separate acceptance gates.
+
+## Remaining PR #132 review fixes — 2026-10-21
+
+Base: `93542cd8914dcc53413d3500b591043273ab3ee7`, including the skill-map merge from main. The working tree was clean before this follow-up. No migration SQL, snapshots, journal entries, schema, package files, CI configuration, UI markup or styles were changed.
+
+### Review dispositions and implementation
+
+- Retired-skill correctness finding (`4331464132`): candidate loading joins the active/retired skill state, and eligibility rejects retired content before aggregation or persistence. Frozen plan reads reject a retired skill, and question/lesson reads check retirement in their payload query. Completing an existing session preserves prior schedules and immutable events without creating a new retired-skill review.
+- Shared rating/discard validation (`4331291044`, `4331291046`, related CodeScene findings): owner/session/policy/assistance checks and correct-evaluation selection are shared. Rating persistence, replay checks and assessment finalization are separate operations inside the original transaction. Distinct error behavior is preserved. The internal rating function accepts one command object; both route callers and every test caller were adapted without changing HTTP payloads.
+- Eligibility and precedence (`4331291039`, related CodeScene findings): separate named eligibility, lowest-rating, current-content, source-selection and completed-session checks. Repeated unassisted questions remain eligible for retention while excluded from distinct-item mastery; no mastery threshold or scheduling policy changed.
+- Persistence method-size findings: schedule insert/update statements share the same ordered values, retain optimistic revision checks and stay in the caller's transaction. Schedule calculation is separate from persistence and event insertion.
+- Other production complexity findings: assessment availability, active-item selection, coverage and result summaries are focused helpers; current mastery candidate selection is separated from first-item deduplication; review identity validation is shared; answer insertion and fallback eligibility are separated from orchestration.
+- Flashcards file-size finding (`4331286363`): connection serialization and transaction lifecycle helpers moved into `db-transactions.ts`. The original flashcards exports remain available. Helper bodies compare identically with the base, ignoring the trailing blank line.
+- Test-size findings (`4331288215`, `4331456187`, `4331696796`, `4331696873`): extracted coherent setup, completion, rating, reporting and navigation steps. Existing `expect` call counts are unchanged in exercise E2E (142) and assessment tests (98); grammar retention assertions increase from 64 to 71. No tests or assertions were removed or skipped.
+- Earlier frozen-version and older-publication P2 findings remain covered by their existing regressions. Existing migration files were not edited to answer those comments. Already resolved migration-test-size findings were left untouched.
+
+### Observed red and green
+
+Four new retirement regressions were written before changing production code. The focused red run failed all four tests (24 unrelated tests intentionally filtered out): a retired skill received a new schedule, an existing schedule advanced, a frozen plan resolved instead of rejecting, and a retired question was served. Log: `/tmp/langlo-valid-red.log`.
+
+After the fix, the retention unit/integration suites passed. The broader focused run passed 199 tests across nine files; after consolidating session identity validation, 92 tests across four affected suites passed. Coverage includes foreign-owner refusals, conflicting/concurrent rating replay, unrated cleanup, retention-write rollback, frozen content, DST/settings behavior and retired-history preservation. Logs: `/tmp/langlo-valid-green.log`, `/tmp/langlo-valid-focused.log`, `/tmp/langlo-valid-final-focused.log`.
+
+### Local validation and acceptance boundaries
+
+- Node 24.19.0 and npm 11.9.0; `npm ci --ignore-scripts` passed.
+- Final type checks and lint passed; type checking reported zero errors and zero warnings. Formatting and diff checks are repeated after this evidence update.
+- `npm test`: 98 files, 1,547 tests passed (`/tmp/langlo-valid-full-tests.log`).
+- `npm run test:property`: six files, nine tests passed (`/tmp/langlo-valid-property.log`).
+- Explicit production build passed after the unit suite (`/tmp/langlo-valid-build.log`).
+- `npm run test:e2e -- --config=playwright.validation.config.ts`: 124 desktop/mobile tests passed against the production build with synthetic fixtures (`/tmp/langlo-valid-e2e.log`). The temporary config used port 4189 and was removed after the run. The reporter emitted source-coverage warnings on this ordinary production build; browser behavior passed, but this run does not establish a new source-coverage percentage.
+- Local adversarial review used the current session with the repository skill's Tier 3 checklist. Verdict: `approve`. Summary: "No material findings in the local follow-up diff." Findings: `[]`. This is a self-review, not an independent provider review; `/tmp/langlo-valid-review.json` records the examined files.
+- Codacy CLI was retried with file logging disabled. Its strict JSON report contains `MissingConfig` and no `toolResults`; no local Codacy scan ran. No configuration or dependencies were added to work around it. Hosted Codacy/CodeScene metrics and coverage require separate verification after an authorized push.
+
+Only disposable local fixtures were used. No production provider calls, database changes, deployment, remote replies, thread resolutions or push were performed.

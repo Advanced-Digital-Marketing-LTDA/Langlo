@@ -300,7 +300,11 @@ describe('saved placement plan', () => {
       foundationGaps: []
     });
     for (const item of results.items)
-      await rateGrammarAttempt(client, learner, item.attemptId, 'good', id);
+      await rateGrammarAttempt(client, learner, {
+        attemptId: item.attemptId,
+        rating: 'good',
+        expectedSessionId: id
+      });
     expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(
       (await getAttempt(client, learner, recorded.id)).evaluations
@@ -334,7 +338,7 @@ describe('saved placement plan', () => {
     expect(row.rows[0]).toMatchObject({ not_sure: 1, outcome: 'uncertain' });
   });
 
-  it('saves a partial result after the fifth explicit Not sure and counts only certain answers as evidence', async () => {
+  async function assessmentWithSixAnswers() {
     await addHoldoutSkills(
       ['fr-a1-004', 'fr-a1-005', 'fr-a1-006', 'fr-a1-007', 'fr-a1-008'].map(
         (id) => ({ id, language: 'fr', level: 'A1' })
@@ -357,6 +361,11 @@ describe('saved placement plan', () => {
     await answer(id, questions[3], '', true);
     await answer(id, questions[4], '', true);
     await answer(id, questions[5], '', true);
+    return { id, questions, certain };
+  }
+
+  it('saves a partial result after the fifth explicit Not sure and counts only certain answers as evidence', async () => {
+    const { id, questions, certain } = await assessmentWithSixAnswers();
     expect(await getAssessment(client, learner, id)).toMatchObject({
       total: 8,
       answered: 6,
@@ -392,7 +401,11 @@ describe('saved placement plan', () => {
         )
       ).rows
     ).toEqual([]);
-    await rateGrammarAttempt(client, learner, certain.id, 'good', id);
+    await rateGrammarAttempt(client, learner, {
+      attemptId: certain.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
     expect(await getAssessment(client, learner, id)).toMatchObject({
       state: 'completed',
       question: null
@@ -459,7 +472,11 @@ describe('saved placement plan', () => {
       });
       for (const item of results.items)
         if (item.outcome === 'correct' && item.rating === null)
-          await rateGrammarAttempt(client, learner, item.attemptId, 'good', id);
+          await rateGrammarAttempt(client, learner, {
+            attemptId: item.attemptId,
+            rating: 'good',
+            expectedSessionId: id
+          });
       expect(await getAssessment(client, learner, id)).toMatchObject({
         state: 'completed',
         question: null
@@ -772,7 +789,11 @@ describe('saved placement plan', () => {
       (result) => result.attemptId === recorded.id
     );
     expect(item).toMatchObject({ outcome: 'correct', rating: null });
-    await rateGrammarAttempt(client, learner, recorded.id, 'good', id);
+    await rateGrammarAttempt(client, learner, {
+      attemptId: recorded.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
     expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(
       (
@@ -791,12 +812,20 @@ describe('saved placement plan', () => {
     attempts.push(await answer(id, 'fr-a1-002@1:q1', 'On est ici.'));
     attempts.push(await answer(id, 'fr-a1-003@1:q1', 'es'));
     for (const attempt of attempts.slice(0, 2))
-      await rateGrammarAttempt(client, learner, attempt.id, 'good', id);
+      await rateGrammarAttempt(client, learner, {
+        attemptId: attempt.id,
+        rating: 'good',
+        expectedSessionId: id
+      });
     await client.execute(
       "CREATE TRIGGER reject_assessment_review BEFORE INSERT ON grammar_retention_events BEGIN SELECT RAISE(ABORT, 'synthetic assessment failure'); END"
     );
     await expect(
-      rateGrammarAttempt(client, learner, attempts[2].id, 'good', id)
+      rateGrammarAttempt(client, learner, {
+        attemptId: attempts[2].id,
+        rating: 'good',
+        expectedSessionId: id
+      })
     ).rejects.toThrow(/synthetic assessment failure/);
     expect((await getAssessment(client, learner, id)).state).toBe('active');
     expect(
@@ -814,7 +843,11 @@ describe('saved placement plan', () => {
       (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
     ).toHaveLength(0);
     await client.execute('DROP TRIGGER reject_assessment_review');
-    await rateGrammarAttempt(client, learner, attempts[2].id, 'good', id);
+    await rateGrammarAttempt(client, learner, {
+      attemptId: attempts[2].id,
+      rating: 'good',
+      expectedSessionId: id
+    });
     expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(
       (await client.execute('SELECT * FROM grammar_retention_events')).rows
@@ -843,7 +876,11 @@ describe('saved placement plan', () => {
       sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'pilot-ready')"
     });
     await expect(
-      rateGrammarAttempt(client, learner, attempts[0].id, 'good', id)
+      rateGrammarAttempt(client, learner, {
+        attemptId: attempts[0].id,
+        rating: 'good',
+        expectedSessionId: id
+      })
     ).resolves.toMatchObject({ duplicate: false });
   });
 
@@ -979,8 +1016,16 @@ describe('saved placement plan', () => {
         })
       ).rows
     ).toEqual([]);
-    await rateGrammarAttempt(client, learner, correct.id, 'good', id);
-    await rateGrammarAttempt(client, learner, alsoCorrect.id, 'good', id);
+    await rateGrammarAttempt(client, learner, {
+      attemptId: correct.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
+    await rateGrammarAttempt(client, learner, {
+      attemptId: alsoCorrect.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
     expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(
       (
@@ -1018,7 +1063,11 @@ describe('saved placement plan', () => {
     await answer(id, 'fr-a1-003@1:q1', 'es');
     const results = await assessmentResults(client, learner, id);
     for (const item of results.items)
-      await rateGrammarAttempt(client, learner, item.attemptId, 'good', id);
+      await rateGrammarAttempt(client, learner, {
+        attemptId: item.attemptId,
+        rating: 'good',
+        expectedSessionId: id
+      });
     await expect(start()).rejects.toMatchObject({
       code: 'CONTENT_UNAVAILABLE'
     });

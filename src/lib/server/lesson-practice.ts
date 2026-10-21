@@ -45,6 +45,15 @@ export async function lessonFor(
   return getSessionLesson(client, learner, page.studySessionId, page.skillId);
 }
 
+function needsPracticeRating(
+  feedback: Awaited<ReturnType<typeof practiceFeedback>>
+) {
+  if (!feedback?.requiresRating) return false;
+  if (feedback.outcome !== 'correct') return false;
+  if (feedback.rating !== null) return false;
+  return !feedback.receivedHelp;
+}
+
 /**
  * The next exercise of the learner's own session, when the page was opened
  * from one. A session that cannot serve a question yields a notice instead.
@@ -63,12 +72,7 @@ export async function exerciseFor(
       studySessionId,
       skillId
     );
-    if (
-      feedback?.requiresRating &&
-      feedback?.outcome === 'correct' &&
-      feedback.rating === null &&
-      !feedback.receivedHelp
-    )
+    if (needsPracticeRating(feedback))
       return {
         studySessionId,
         notice: 'Rate this answer before continuing with this topic.',
@@ -104,19 +108,15 @@ export async function ratePracticeAnswer(
     return fail(400, { message: 'Choose Hard, Good, or Easy.' });
   const attempt = await getAttempt(client, learner, attemptId);
   const session = await getStudySession(client, learner, studySessionId);
-  if (
-    attempt.skillId !== skillId ||
-    attempt.studySessionId !== studySessionId ||
-    session.mode === 'assessment'
-  )
+  if (attempt.skillId !== skillId) throw new StudyError('NOT_FOUND');
+  if (attempt.studySessionId !== studySessionId)
     throw new StudyError('NOT_FOUND');
-  await rateGrammarAttempt(
-    client,
-    learner,
+  if (session.mode === 'assessment') throw new StudyError('NOT_FOUND');
+  await rateGrammarAttempt(client, learner, {
     attemptId,
-    rating as 'hard' | 'good' | 'easy',
-    studySessionId
-  );
+    rating: rating as 'hard' | 'good' | 'easy',
+    expectedSessionId: studySessionId
+  });
   return { rated: true as const };
 }
 

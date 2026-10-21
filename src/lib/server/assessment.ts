@@ -280,20 +280,36 @@ function assessmentStopped(answers: { incorrect: number; notSure: number }) {
   return answers.incorrect >= 5 || answers.notSure >= 5;
 }
 
+function assertAssessmentAvailable(rows: Row[]) {
+  if (rows.some((row) => row.status === 'quarantined'))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+}
+
+function activeAssessmentQuestion(rows: Row[], stopped: boolean) {
+  if (rows[0].state !== 'active') return undefined;
+  if (stopped) return undefined;
+  return rows.find((row) => !row.answered);
+}
+
+function assessmentCoverage(rows: Row[], language: string) {
+  return Object.fromEntries(
+    assessmentLevels(language).map((level) => [
+      level,
+      rows.filter((row) => row.level === level).length
+    ])
+  );
+}
+
 export async function getAssessment(
   client: QueryClient,
   learner: LearnerSession,
   id: string
 ) {
   const rows = await readPlan(client, learner, id);
-  const next = rows.find((row) => !row.answered);
   const answers = await assessmentAnswerCounts(client, learner, id);
   const stopped = assessmentStopped(answers);
-  if (
-    rows.some((row) => row.status === 'quarantined') &&
-    rows[0].state !== 'completed'
-  )
-    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (rows[0].state !== 'completed') assertAssessmentAvailable(rows);
+  const next = activeAssessmentQuestion(rows, stopped);
   const language = String(rows[0].language);
   return {
     id,
@@ -302,18 +318,9 @@ export async function getAssessment(
     policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
     answered: rows.filter((row) => row.answered).length,
     total: rows.length,
-    coverage: Object.fromEntries(
-      assessmentLevels(language).map((level) => [
-        level,
-        rows.filter((row) => row.level === level).length
-      ])
-    ),
-    question:
-      rows[0].state === 'active' && !stopped && next ? questionFor(next) : null,
-    skillId:
-      rows[0].state === 'active' && !stopped && next
-        ? String(next.skill_id)
-        : null
+    coverage: assessmentCoverage(rows, language),
+    question: next ? questionFor(next) : null,
+    skillId: next ? String(next.skill_id) : null
   };
 }
 
@@ -325,12 +332,20 @@ export async function assertAssessmentQuestion(
   questionId: string
 ) {
   const rows = await readPlan(client, learner, id);
-  if (rows.some((row) => row.status === 'quarantined'))
-    throw new StudyError('CONTENT_UNAVAILABLE');
+  assertAssessmentAvailable(rows);
   const answers = await assessmentAnswerCounts(client, learner, id);
   if (assessmentStopped(answers)) throw new StudyError('STALE_QUESTION');
   if (rows.find((row) => !row.answered)?.id !== questionId)
     throw new StudyError('STALE_QUESTION');
+  await assertUnseenAssessmentQuestion(client, learner, id, questionId);
+}
+
+async function assertUnseenAssessmentQuestion(
+  client: QueryClient,
+  learner: LearnerSession,
+  id: string,
+  questionId: string
+) {
   // The plan was frozen at start: an item answered in another session since
   // then is no longer unseen, and counting it would reward a revealed answer.
   const provisional = provisionalCorrectAttempt('a', 's');
@@ -483,6 +498,23 @@ function assessmentResultItems(rows: Row[], evaluations: Row[]) {
   });
 }
 
+function assessmentResultSummary(
+  items: ReturnType<typeof assessmentResultItems>,
+  foundation: string
+) {
+  return {
+    counts: {
+      correct: items.filter((item) => item.outcome === 'correct').length,
+      incorrect: items.filter((item) => item.outcome === 'incorrect').length,
+      uncertain: items.filter((item) => item.outcome === 'uncertain').length
+    },
+    foundationLevel: foundation,
+    foundationGaps: items
+      .filter((item) => item.level === foundation && item.outcome !== 'correct')
+      .map((item) => item.skillId)
+  };
+}
+
 export async function assessmentResults(
   client: QueryClient,
   learner: LearnerSession,
@@ -525,14 +557,6 @@ export async function assessmentResults(
     items,
     total: rows.length,
     notReached: rows.length - items.length,
-    counts: {
-      correct: items.filter((item) => item.outcome === 'correct').length,
-      incorrect: items.filter((item) => item.outcome === 'incorrect').length,
-      uncertain: items.filter((item) => item.outcome === 'uncertain').length
-    },
-    foundationLevel: foundation,
-    foundationGaps: items
-      .filter((item) => item.level === foundation && item.outcome !== 'correct')
-      .map((item) => item.skillId)
+    ...assessmentResultSummary(items, foundation)
   };
 }

@@ -53,13 +53,11 @@ export const actions: Actions = {
     )
       return fail(400, { message: 'Choose Hard, Good, or Easy.' });
     await studyPage(event, (client, learner) =>
-      rateGrammarAttempt(
-        client,
-        learner,
-        attemptId,
-        rating as 'hard' | 'good' | 'easy',
-        event.params.id
-      )
+      rateGrammarAttempt(client, learner, {
+        attemptId: attemptId,
+        rating: rating as 'hard' | 'good' | 'easy',
+        expectedSessionId: event.params.id
+      })
     );
     return { rated: true };
   },

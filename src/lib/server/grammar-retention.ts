@@ -36,10 +36,17 @@ const ratingOrder: GrammarRating[] = ['again', 'hard', 'good', 'easy'];
 function qualifyingRating(
   candidate: GrammarReviewCandidate
 ): GrammarRating | null {
-  if (!candidate.available || candidate.receivedHelp || candidate.notSure)
-    return null;
+  if (!candidate.available) return null;
+  if (candidate.receivedHelp) return null;
+  if (candidate.notSure) return null;
   if (candidate.outcome === 'incorrect') return 'again';
   return candidate.outcome === 'correct' ? candidate.rating : null;
+}
+
+function lowestRating(first: GrammarRating, second: GrammarRating) {
+  return ratingOrder.indexOf(first) < ratingOrder.indexOf(second)
+    ? first
+    : second;
 }
 
 /** One completed session contributes at most its lowest qualifying rating per skill. */
@@ -51,8 +58,7 @@ export function aggregateGrammarRatings(
     const rating = qualifyingRating(candidate);
     if (!rating) continue;
     const prior = result.get(candidate.skillId);
-    if (!prior || ratingOrder.indexOf(rating) < ratingOrder.indexOf(prior))
-      result.set(candidate.skillId, rating);
+    result.set(candidate.skillId, lowestRating(prior ?? rating, rating));
   }
   return result;
 }
@@ -237,11 +243,12 @@ async function grammarCandidates(
         a.not_sure, a.grammar_rating, a.created_at, q.lineage_key,
         (SELECT v2.id FROM content_versions v2 WHERE v2.skill_id = a.skill_id AND v2.language = a.language
           AND v2.status IN ('schema-validated', 'pilot-ready') ORDER BY v2.version DESC LIMIT 1) AS current_version_id,
-        v.status, e.id, e.evaluator_version, e.rubric_version,
+        v.status, sk.retired_at, e.id, e.evaluator_version, e.rubric_version,
         e.outcome
       FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
       JOIN questions q ON q.id = a.question_id
       JOIN content_versions v ON v.id = a.content_version_id
+      JOIN skills sk ON sk.id = a.skill_id AND sk.language = a.language
       LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
       WHERE a.owner_id = ? AND a.study_session_id = ?
       ORDER BY a.created_at, a.rowid, e.created_at, e.id`,
@@ -255,15 +262,28 @@ async function grammarCandidates(
     );
     return { row, evaluation, outcome: evaluation?.outcome };
   });
-  return attempts.map(({ row, evaluation, outcome }) => ({
+  return attempts.map(grammarCandidate);
+}
+
+function isCurrentGrammarContent(row: Row) {
+  if (row.retired_at !== null) return false;
+  if (row.status === 'quarantined') return false;
+  return row.current_version_id === row.content_version_id;
+}
+
+function grammarCandidate(attempt: {
+  row: Row;
+  evaluation: ReturnType<typeof feedbackEvaluation>;
+  outcome: unknown;
+}) {
+  const { row, evaluation, outcome } = attempt;
+  return {
     skillId: String(row.skill_id),
     outcome: outcome as GrammarOutcome,
     evidenceKind: String(row.evidence_kind) as 'independent' | 'assisted',
     receivedHelp: Boolean(row.received_help),
     notSure: Boolean(row.not_sure),
-    available:
-      row.status !== 'quarantined' &&
-      row.current_version_id === row.content_version_id,
+    available: isCurrentGrammarContent(row),
     rating: row.grammar_rating as GrammarRating | null,
     attemptId: String(row.attempt_id),
     evaluationId: evaluation ? String(evaluation.id) : '',
@@ -274,7 +294,7 @@ async function grammarCandidates(
       contentVersionId: String(row.content_version_id),
       questionId: String(row.question_id)
     })
-  }));
+  };
 }
 
 type GrammarCandidate = Awaited<ReturnType<typeof grammarCandidates>>[number];
@@ -300,44 +320,33 @@ async function persistGrammarSchedule(
     exists,
     scheduled
   } = input;
-  if (exists) {
-    const updated = await tx.execute({
-      sql: `UPDATE grammar_retention_schedules SET content_version_id = ?,
-          state_json = ?, due_at = ?, revision = ?, reset_required = 0,
-          scheduler_version = ?, parameters_json = ?
-          WHERE owner_id = ? AND language = ? AND skill_id = ? AND revision = ?`,
-      args: [
-        currentVersion,
-        scheduled.stateJson,
-        scheduled.dueAt,
-        scheduled.revision,
-        scheduled.schedulerVersion,
-        scheduled.parametersJson,
-        ownerId,
-        language,
-        skillId,
-        expectedRevision
-      ]
-    });
-    if (updated.rowsAffected !== 1) throw new Error('Stale grammar schedule');
-  } else {
+  const values = [
+    currentVersion,
+    scheduled.stateJson,
+    scheduled.dueAt,
+    scheduled.revision,
+    scheduled.schedulerVersion,
+    scheduled.parametersJson,
+    ownerId,
+    language,
+    skillId
+  ];
+  if (!exists) {
     await tx.execute({
-      sql: `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id,
-          content_version_id, state_json, due_at, revision, reset_required,
-          scheduler_version, parameters_json) VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?)`,
-      args: [
-        ownerId,
-        language,
-        skillId,
-        currentVersion,
-        scheduled.stateJson,
-        scheduled.dueAt,
-        scheduled.revision,
-        scheduled.schedulerVersion,
-        scheduled.parametersJson
-      ]
+      sql: `INSERT INTO grammar_retention_schedules (content_version_id, state_json,
+        due_at, revision, scheduler_version, parameters_json, owner_id, language, skill_id,
+        reset_required) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+      args: values
     });
+    return;
   }
+  const updated = await tx.execute({
+    sql: `UPDATE grammar_retention_schedules SET content_version_id = ?, state_json = ?,
+      due_at = ?, revision = ?, scheduler_version = ?, parameters_json = ?, reset_required = 0
+      WHERE owner_id = ? AND language = ? AND skill_id = ? AND revision = ?`,
+    args: [...values, expectedRevision]
+  });
+  if (updated.rowsAffected !== 1) throw new Error('Stale grammar schedule');
 }
 
 async function recordGrammarReviewEvent(
@@ -389,28 +398,54 @@ async function recordGrammarReviewEvent(
   });
 }
 
+type GrammarSkillReview = {
+  studySessionId: string;
+  language: string;
+  source: GrammarCandidate;
+  rating: GrammarRating;
+  studySchedule: Awaited<ReturnType<typeof getStudySchedule>>;
+  timezone: string;
+  now: number;
+};
+
+function requiresGrammarReset(
+  prior: Row | undefined,
+  currentVersionId: string
+) {
+  if (!prior) return true;
+  if (prior.reset_required) return true;
+  return prior.content_version_id !== currentVersionId;
+}
+
+function scheduleGrammarCandidate(
+  prior: Row | undefined,
+  ownerId: string,
+  input: GrammarSkillReview
+) {
+  const { language, source, rating, studySchedule, timezone, now } = input;
+  const expectedRevision = prior ? Number(prior.revision) : 0;
+  const resetRequired = requiresGrammarReset(prior, source.currentVersionId);
+  const scheduled = scheduleStudyReview({
+    id: `${ownerId}:${language}:${source.skillId}`,
+    rating,
+    schedule: studySchedule,
+    stateJson: prior ? String(prior.state_json) : null,
+    schedulerVersion: prior ? String(prior.scheduler_version) : null,
+    parametersJson: prior ? String(prior.parameters_json) : null,
+    resetRequired,
+    expectedRevision,
+    now: new Date(now),
+    timezone
+  });
+  return { expectedRevision, scheduled };
+}
+
 async function commitGrammarSkill(
   tx: Pick<Client, 'execute'>,
   learner: LearnerSession,
-  input: {
-    studySessionId: string;
-    language: string;
-    source: GrammarCandidate;
-    rating: GrammarRating;
-    studySchedule: Awaited<ReturnType<typeof getStudySchedule>>;
-    timezone: string;
-    now: number;
-  }
+  input: GrammarSkillReview
 ) {
-  const {
-    studySessionId,
-    language,
-    source,
-    rating,
-    studySchedule,
-    timezone,
-    now
-  } = input;
+  const { studySessionId, language, source, rating, now } = input;
   const skillId = source.skillId;
   const duplicate = await tx.execute({
     sql: 'SELECT 1 FROM grammar_retention_events WHERE owner_id = ? AND study_session_id = ? AND skill_id = ?',
@@ -422,23 +457,11 @@ async function commitGrammarSkill(
     args: [learner.userId, language, skillId]
   });
   const prior = stored.rows[0];
-  const expectedRevision = prior ? Number(prior.revision) : 0;
-  const resetRequired =
-    !prior ||
-    Boolean(prior.reset_required) ||
-    prior.content_version_id !== source.currentVersionId;
-  const scheduled = scheduleStudyReview({
-    id: `${learner.userId}:${language}:${skillId}`,
-    rating,
-    schedule: studySchedule,
-    stateJson: prior ? String(prior.state_json) : null,
-    schedulerVersion: prior ? String(prior.scheduler_version) : null,
-    parametersJson: prior ? String(prior.parameters_json) : null,
-    resetRequired,
-    expectedRevision,
-    now: new Date(now),
-    timezone
-  });
+  const { expectedRevision, scheduled } = scheduleGrammarCandidate(
+    prior,
+    learner.userId,
+    input
+  );
   await persistGrammarSchedule(tx, {
     ownerId: learner.userId,
     language,
@@ -459,6 +482,29 @@ async function commitGrammarSkill(
   });
 }
 
+function completedGrammarLanguage(session: Row | undefined) {
+  if (!session) return null;
+  if (session.state !== 'completed') return null;
+  if (
+    session.grammar_retention_policy_version !==
+    GRAMMAR_RETENTION_POLICY_VERSION
+  )
+    return null;
+  return String(session.language);
+}
+
+function reviewSource(
+  candidates: GrammarCandidate[],
+  skillId: string,
+  rating: GrammarRating
+) {
+  return candidates.find((candidate) => {
+    if (candidate.skillId !== skillId) return false;
+    if (!candidate.evaluationId) return false;
+    return qualifyingRating(candidate) === rating;
+  });
+}
+
 /** Commit at most one qualifying FSRS event per skill when the whole session finishes. */
 export async function commitGrammarSessionReviews(
   tx: Pick<Client, 'execute'>,
@@ -470,15 +516,8 @@ export async function commitGrammarSessionReviews(
     sql: 'SELECT language, state, grammar_retention_policy_version FROM study_sessions WHERE id = ? AND owner_id = ?',
     args: [studySessionId, learner.userId]
   });
-  const session = sessionResult.rows[0];
-  if (
-    !session ||
-    session.state !== 'completed' ||
-    session.grammar_retention_policy_version !==
-      GRAMMAR_RETENTION_POLICY_VERSION
-  )
-    return;
-  const language = String(session.language);
+  const language = completedGrammarLanguage(sessionResult.rows[0]);
+  if (language === null) return;
   const candidates = await grammarCandidates(tx, learner, studySessionId);
   const ratings = aggregateGrammarRatings(candidates);
   const studySchedule = await getStudySchedule(tx, learner);
@@ -491,12 +530,7 @@ export async function commitGrammarSessionReviews(
     : 'UTC';
 
   for (const [skillId, rating] of ratings) {
-    const source = candidates.find(
-      (candidate) =>
-        candidate.skillId === skillId &&
-        qualifyingRating(candidate) === rating &&
-        candidate.evaluationId
-    );
+    const source = reviewSource(candidates, skillId, rating);
     if (source)
       await commitGrammarSkill(tx, learner, {
         studySessionId,

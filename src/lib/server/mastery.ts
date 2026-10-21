@@ -106,6 +106,28 @@ function unratedCorrectEvidence(row: Row, outcome: unknown) {
   );
 }
 
+function grammarEvidenceCandidate(
+  evaluations: Row[],
+  current?: CurrentContent
+) {
+  const row = evaluations[0];
+  const itemKey = effectiveLineageKey({
+    lineageKey: row.lineage_key == null ? null : String(row.lineage_key),
+    contentVersionId: String(row.content_version_id),
+    questionId: String(row.question_id)
+  });
+  const countsFor = current
+    ? carriedTo(String(row.skill_id), current.carry)
+    : String(row.skill_id);
+  if (current && !current.keys.get(countsFor)?.has(itemKey)) return null;
+  const evaluation = feedbackEvaluation(
+    evaluations,
+    String(row.content_version_id)
+  );
+  if (unratedCorrectEvidence(row, evaluation?.outcome)) return null;
+  return { row, itemKey, countsFor, evaluation };
+}
+
 /** First response to a logical item wins, across sessions and content versions. */
 export function qualifyingGrammarEvidence(
   rows: Row[],
@@ -124,21 +146,9 @@ export function qualifyingGrammarEvidence(
     correct: boolean;
   }[] = [];
   for (const evaluations of attempts) {
-    const row = evaluations[0];
-    const itemKey = effectiveLineageKey({
-      lineageKey: row.lineage_key == null ? null : String(row.lineage_key),
-      contentVersionId: String(row.content_version_id),
-      questionId: String(row.question_id)
-    });
-    const countsFor = current
-      ? carriedTo(String(row.skill_id), current.carry)
-      : String(row.skill_id);
-    if (current && !current.keys.get(countsFor)?.has(itemKey)) continue;
-    const evaluation = feedbackEvaluation(
-      evaluations,
-      String(row.content_version_id)
-    );
-    if (unratedCorrectEvidence(row, evaluation?.outcome)) continue;
+    const candidate = grammarEvidenceCandidate(evaluations, current);
+    if (!candidate) continue;
+    const { row, itemKey, countsFor, evaluation } = candidate;
     const key = JSON.stringify([countsFor, itemKey]);
     if (seen.has(key)) continue;
     seen.add(key);

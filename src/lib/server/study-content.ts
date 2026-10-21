@@ -13,7 +13,7 @@ import { getAssessment } from './assessment';
  * content withdrawn by a quarantine import is never served after the check.
  */
 const latestVersion =
-  "(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1)";
+  "(SELECT v.id, v.status, sk.retired_at FROM content_versions v JOIN skills sk ON sk.id = v.skill_id AND sk.language = v.language WHERE v.skill_id = ? AND v.language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1)";
 
 /**
  * The version a session reads for a skill: its frozen review version, else the one its first attempt at the
@@ -28,7 +28,7 @@ const sessionVersionId = `COALESCE(
       WHERE s.owner_id = ? AND s.id = ? AND json_extract(p.value, '$.skillId') = ?),
     (SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1),
     (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1))`;
-const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = ${sessionVersionId})`;
+const sessionVersion = `(SELECT v.id, v.status, sk.retired_at FROM content_versions v JOIN skills sk ON sk.id = v.skill_id AND sk.language = v.language WHERE v.id = ${sessionVersionId})`;
 
 export type SessionRow = {
   language: string;
@@ -66,7 +66,8 @@ export async function ownSession(
 /** Reject a joined version row that is missing or withdrawn. */
 function assertAvailable(row: Row | undefined): asserts row is Row {
   if (!row) throw new StudyError('NOT_FOUND');
-  if (row.status === 'quarantined') throw new StudyError('CONTENT_UNAVAILABLE');
+  if (row.status === 'quarantined' || row.retired_at != null)
+    throw new StudyError('CONTENT_UNAVAILABLE');
 }
 
 /** What a question read is scoped to: the owner, session, skill and its mode. */
@@ -86,7 +87,7 @@ type QuestionRead = {
  */
 async function questionRows(client: Client, read: QuestionRead) {
   const found = await client.execute({
-    sql: `SELECT s.state, v.status, q.id, q.format, q.prompt, q.alternatives,
+    sql: `SELECT s.state, v.status, v.retired_at, q.id, q.format, q.prompt, q.alternatives,
             EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.study_session_id = ? AND a.question_id = q.id) AS answered
           FROM study_sessions s
           CROSS JOIN ${sessionVersion} v
@@ -194,7 +195,7 @@ async function lessonRow(
   if (typeof read.skillId !== 'string') throw new StudyError('NOT_FOUND');
   const { userId, studySessionId, language, skillId } = read;
   const found = await client.execute({
-    sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs,
+    sql: `SELECT v.id AS version_id, v.status, v.retired_at, l.title, l.explanation, l.examples, l.refs,
             t.title AS t_title, t.explanation AS t_explanation, t.examples AS t_examples, t.refs AS t_refs
           FROM ${studySessionId === undefined ? latestVersion : sessionVersion} v
           LEFT JOIN lessons l ON l.content_version_id = v.id

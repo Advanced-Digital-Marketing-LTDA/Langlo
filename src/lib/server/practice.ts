@@ -1,4 +1,4 @@
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import type { LearnerSession } from './learner-session';
 import {
   FALLBACK_EVALUATOR_VERSION,
@@ -24,6 +24,17 @@ const SESSION_ID_PATTERN = /^[A-Za-z0-9:_-]{1,128}$/;
 export function practiceResultsPath(id: string): string {
   if (!SESSION_ID_PATTERN.test(id)) throw new StudyError('NOT_FOUND');
   return `/app/session/${encodeURIComponent(id)}/results`;
+}
+
+function assertSessionIdentity(
+  row: Row,
+  learner: LearnerSession,
+  language: string,
+  mode: string
+) {
+  if (row.owner_id !== learner.userId) throw new StudyError('NOT_FOUND');
+  if (row.language !== language) throw new StudyError('NOT_FOUND');
+  if (row.mode !== mode) throw new StudyError('NOT_FOUND');
 }
 
 /**
@@ -53,14 +64,8 @@ export async function startPractice(
     args: [id]
   });
   const row = saved.rows[0];
-  // Missing: not enrolled. Mismatched: the key belongs to someone else's session.
-  if (
-    !row ||
-    row.owner_id !== learner.userId ||
-    row.language !== input.language ||
-    row.mode !== 'practice'
-  )
-    throw new StudyError('NOT_FOUND');
+  if (!row) throw new StudyError('NOT_FOUND');
+  assertSessionIdentity(row, learner, input.language, 'practice');
   return { id };
 }
 
@@ -115,12 +120,8 @@ async function replayGrammarReview(
     const priorSkills = Array.isArray(plan.questions)
       ? plan.questions.map((item: { skillId?: string }) => item.skillId)
       : [];
-    if (
-      row.owner_id !== learner.userId ||
-      row.language !== input.language ||
-      row.mode !== 'mixed-review' ||
-      JSON.stringify(priorSkills) !== JSON.stringify(input.skillIds)
-    )
+    assertSessionIdentity(row, learner, input.language, 'mixed-review');
+    if (JSON.stringify(priorSkills) !== JSON.stringify(input.skillIds))
       throw new StudyError('NOT_FOUND');
     return true;
   }
@@ -136,13 +137,15 @@ function validateGrammarReview(input: {
     !KEY_PATTERN.test(input.submissionKey)
   )
     throw new StudyError('INVALID_SUBMISSION_KEY');
-  if (
-    !Array.isArray(input.skillIds) ||
-    input.skillIds.length < 1 ||
-    input.skillIds.length > 5 ||
-    !input.skillIds.every((id) => typeof id === 'string') ||
-    new Set(input.skillIds).size !== input.skillIds.length
-  )
+  if (!Array.isArray(input.skillIds))
+    throw new StudyError('INVALID_REVIEW_SELECTION');
+  if (input.skillIds.length < 1)
+    throw new StudyError('INVALID_REVIEW_SELECTION');
+  if (input.skillIds.length > 5)
+    throw new StudyError('INVALID_REVIEW_SELECTION');
+  if (!input.skillIds.every((id) => typeof id === 'string'))
+    throw new StudyError('INVALID_REVIEW_SELECTION');
+  if (new Set(input.skillIds).size !== input.skillIds.length)
     throw new StudyError('INVALID_REVIEW_SELECTION');
 }
 
@@ -197,6 +200,17 @@ export async function startGrammarReview(
   }
 }
 
+function assertGrammarPlan(rows: Row[]) {
+  if (rows.some((row) => row.retired_at !== null))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  const plan = JSON.parse(String(rows[0].grammar_retention_plan));
+  if (plan.version !== GRAMMAR_RETENTION_POLICY_VERSION)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (plan.questions.length !== rows.length)
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  if (rows.length > 5) throw new StudyError('CONTENT_UNAVAILABLE');
+}
+
 export async function grammarReviewPlan(
   client: Client,
   learner: LearnerSession,
@@ -204,7 +218,7 @@ export async function grammarReviewPlan(
 ) {
   const found = await client.execute({
     sql: `SELECT s.language, s.grammar_retention_plan, p.value AS plan_item,
-        sk.id AS skill_id, COALESCE(l.title, sk.id) AS title,
+        sk.id AS skill_id, sk.retired_at, COALESCE(l.title, sk.id) AS title,
         EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = s.owner_id
           AND a.study_session_id = s.id AND a.question_id = json_extract(p.value, '$.questionId')) AS answered
       FROM study_sessions s JOIN json_each(s.grammar_retention_plan, '$.questions') p
@@ -216,13 +230,7 @@ export async function grammarReviewPlan(
     args: [id, learner.userId]
   });
   if (!found.rows.length) throw new StudyError('NOT_FOUND');
-  const plan = JSON.parse(String(found.rows[0].grammar_retention_plan));
-  if (
-    plan.version !== GRAMMAR_RETENTION_POLICY_VERSION ||
-    plan.questions.length !== found.rows.length ||
-    found.rows.length > 5
-  )
-    throw new StudyError('CONTENT_UNAVAILABLE');
+  assertGrammarPlan(found.rows);
   return found.rows.map((row) => ({
     skillId: String(row.skill_id),
     title: String(row.title),

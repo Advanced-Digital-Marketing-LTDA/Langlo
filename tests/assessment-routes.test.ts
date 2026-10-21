@@ -143,7 +143,11 @@ async function finish(id: string, rateAnswers = true) {
   );
   if (rateAnswers)
     for (const attempt of attempts)
-      await rateGrammarAttempt(client, learner, attempt.id, 'good', id);
+      await rateGrammarAttempt(client, learner, {
+        attemptId: attempt.id,
+        rating: 'good',
+        expectedSessionId: id
+      });
   return attempts;
 }
 
