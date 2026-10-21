@@ -31,6 +31,19 @@ function lessonFailure(thrown: unknown, language: string, returnTo: string) {
   throw thrown;
 }
 
+/**
+ * Both reads finish before the page fails, so one failure never hides the
+ * other: an outage outranks a missing lesson and is not shown as a 404.
+ */
+function mostSevereFailure(results: PromiseSettledResult<unknown>[]) {
+  const reasons = results.flatMap((result) =>
+    result.status === 'rejected' ? [result.reason] : []
+  );
+  return (
+    reasons.find((reason) => !(reason instanceof StudyError)) ?? reasons[0]
+  );
+}
+
 /** Run with the app database, which is always closed afterwards. */
 async function withDatabase<T>(
   config: App.Locals['config'],
@@ -56,7 +69,7 @@ export const load: PageServerLoad = async (event) => {
     return await withDatabase(event.locals.config, async (client) => {
       // The lesson and the practice state are independent reads: one round
       // trip each is the cost, so they overlap instead of queueing.
-      const [lesson, practice] = await Promise.all([
+      const settled = await Promise.allSettled([
         lessonFor(client, learner, {
           language,
           skillId: skill,
@@ -64,6 +77,14 @@ export const load: PageServerLoad = async (event) => {
         }),
         practiceFor(client, learner, studySessionId, skill)
       ]);
+      const [lessonRead, practiceRead] = settled;
+      if (
+        lessonRead.status === 'rejected' ||
+        practiceRead.status === 'rejected'
+      )
+        throw mostSevereFailure(settled);
+      const lesson = lessonRead.value;
+      const practice = practiceRead.value;
       return {
         language,
         returnTo,

@@ -261,27 +261,42 @@ type Preread = {
   priorEvidence: Row[] | null;
 };
 
+/** Run named statements in one round trip; each result is read back by its name. */
+async function batchRows(
+  tx: WriteTransaction,
+  statements: Record<string, InStatement>
+) {
+  const names = Object.keys(statements);
+  const results = await tx.batch(names.map((name) => statements[name]));
+  return new Map(names.map((name, index) => [name, results[index].rows]));
+}
+
 async function prereadAttempt(
   tx: WriteTransaction,
   session: LearnerSession,
   input: AttemptInput
 ): Promise<Preread> {
   const independent = input.evidenceKind === 'independent';
-  const [replay, study, answered, priorEvidence] = await tx.batch([
-    replayStatement(session, input),
-    studySessionStatement(session, input),
+  const rows = await batchRows(tx, {
+    replay: replayStatement(session, input),
+    study: studySessionStatement(session, input),
     ...(independent
-      ? [
-          answeredStatement(session, input),
-          priorEvidenceStatement(session, input)
-        ]
-      : [])
-  ]);
+      ? {
+          answered: answeredStatement(session, input),
+          priorEvidence: priorEvidenceStatement(session, input)
+        }
+      : {})
+  });
+  const named = (name: string) => rows.get(name) ?? null;
+  const replay = named('replay');
+  const study = named('study');
+  if (!replay || !study)
+    throw new Error('The attempt pre-reads did not return their results');
   return {
-    replay: replay.rows,
-    study: study.rows,
-    answered: answered?.rows ?? null,
-    priorEvidence: priorEvidence?.rows ?? null
+    replay,
+    study,
+    answered: named('answered'),
+    priorEvidence: named('priorEvidence')
   };
 }
 
