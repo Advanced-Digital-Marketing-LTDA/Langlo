@@ -558,6 +558,11 @@ describe('practice sessions', () => {
       sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, created_at) SELECT ?, owner_id, id, language, 'practice', ? FROM enrollments WHERE owner_id = ? AND language = 'fr'",
       args: [id, createdAt, learner.userId]
     });
+  const seedRatedAnswer = (sessionId: string, id: string, rating: string) =>
+    client.execute({
+      sql: `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, grammar_rating) VALUES (?, 'learner-a', ?, 'question-1', 'content-v1', 'fr-articles', 'fr', ?, 'assisted', 'un', ?)`,
+      args: [id, sessionId, `submit-${id}`, rating]
+    });
   const loadKey = async () =>
     (await practiceLoad(event({ params: { language: 'fr' } }))) as {
       submissionKey: string;
@@ -592,13 +597,8 @@ describe('practice sessions', () => {
       language: 'fr',
       submissionKey: randomUUID()
     });
-    const answer = (attemptId: string, rating: string) =>
-      client.execute({
-        sql: `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, grammar_rating) VALUES (?, 'learner-a', ?, 'question-1', 'content-v1', 'fr-articles', 'fr', ?, 'assisted', 'un', ?)`,
-        args: [attemptId, id, `submit-${attemptId}`, rating]
-      });
-    await answer('rated-answer', 'good');
-    await answer('plain-answer', 'again');
+    await seedRatedAnswer(id, 'rated-answer', 'good');
+    await seedRatedAnswer(id, 'plain-answer', 'again');
     const count = async (table: string) =>
       Number(
         (
@@ -637,10 +637,7 @@ describe('practice sessions', () => {
       language: 'fr',
       submissionKey: randomUUID()
     });
-    await client.execute({
-      sql: `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, grammar_rating) VALUES ('kept-answer', 'learner-a', ?, 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-kept', 'assisted', 'un', 'good')`,
-      args: [id]
-    });
+    await seedRatedAnswer(id, 'kept-answer', 'good');
     // Start over chose this practice, then the other tab finished it.
     await finishPractice(client, learner, id);
     await discardPractice(client, learner, id);
