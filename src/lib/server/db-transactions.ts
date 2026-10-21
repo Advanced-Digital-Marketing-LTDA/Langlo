@@ -149,11 +149,12 @@ function releaseTransaction(
   });
 }
 
-async function beginTransaction(client: Client, mode: TransactionMode) {
+/** Take the connection and start timing how long it is held. */
+async function holdConnection(client: Client, write: boolean) {
   const release = await acquireConnection(client);
   let hold: Awaited<ReturnType<typeof holdSpan>>;
   try {
-    hold = await holdSpan(mode === 'write');
+    hold = await holdSpan(write);
   } catch (error) {
     // The slot is taken: tracing trouble must not leave the connection held.
     release();
@@ -168,6 +169,11 @@ async function beginTransaction(client: Client, mode: TransactionMode) {
     hold.end(trips.count);
     release();
   };
+  return { finish, trips };
+}
+
+async function beginTransaction(client: Client, mode: TransactionMode) {
+  const { finish, trips } = await holdConnection(client, mode === 'write');
   for (let attempt = 0; ; attempt += 1) {
     try {
       return releaseTransaction(await client.transaction(mode), finish, trips);
