@@ -138,6 +138,18 @@ function assertHintRevision(revision: Lesson, earlier: Lesson) {
   ).length;
   expect(hinted, `${id} changes no prompt`).toBeGreaterThan(0);
 }
+// Ids are unique across every version; prompts within each generation,
+// since a revision repeats its earlier version's prompts.
+function assertUniqueAcrossVersions(module: Module) {
+  const ids = module.lessons.flatMap((lesson) =>
+    lesson.version.questions.map((q) => q.id)
+  );
+  expect(new Set(ids).size).toBe(ids.length);
+  for (const generation of generations(module))
+    assertUniqueQuestions(
+      generation.flatMap((lesson) => lesson.version.questions)
+    );
+}
 const revisedSkills = new Set([
   'de-a1-001',
   'de-a1-010',
@@ -423,11 +435,7 @@ describe.each(files)('%s', (path) => {
         }
       }
     }
-    expect(new Set(questions.map((q) => q.id)).size).toBe(questions.length);
-    for (const generation of generations(module))
-      assertUniqueQuestions(
-        generation.flatMap((lesson) => lesson.version.questions)
-      );
+    assertUniqueAcrossVersions(module);
   });
 
   it('data consistency: answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
