@@ -68,3 +68,50 @@ unrelated landmarks must be absent.
 The local-only refinement passed targeted ESLint, Prettier and both desktop/mobile
 four-format exercise journeys (2 passed). No production files changed. Publishing
 this refinement or changing PR readiness requires Andrew's new approval.
+
+## PR #135 saved-answer CI diagnostics
+
+Quality run 39592830380 at `cbd873ac2709f8ef4a50a1928968d5717b2951ec`
+passed 127 browser tests and failed the mobile four-format journey: question 3
+expected three persisted answers but found two after keyboard Enter. The earlier
+run 39590565236 failed the same assertion at different questions. These failures
+are distinct from the original mobile map interception; no root cause is yet
+proven and the selector refinement does not claim to fix answer submission.
+
+Add passive, test-only observation around the existing answer journey. Normal CI
+console output labelled `FIXTURE_ANSWER_DIAGNOSTICS` reports question/format,
+relative timing, focus transitions and Enter/submit targets, whether the answer
+Submit is focused/enabled, answer lengths and checked states, native validity,
+categorized validation messages, answer POST initiation/status, and each existing
+persistence poll's count. Browser events stream into the test process so native
+navigation cannot erase the entire event trail. Observer cleanup tolerates a
+removed document without replacing the original assertion error.
+
+The diagnostics do not focus, blur, scroll, navigate, submit or change controls.
+Existing keyboard actions, screenshots, persistence assertions, polling intervals
+and timeouts remain intact. No retries or application changes are added. Logs
+contain only synthetic fixture metadata, lengths, booleans and fixed categories;
+no answer text, URLs, request payloads, headers, credentials, cookies, session IDs
+or submission keys are logged.
+
+A temporary copy of the test deliberately blurred Submit immediately before
+Enter, only to verify the failure reporting. The unchanged assertion failed:
+`Expected length: 1`, `Received length: 0`. Console diagnostics showed Enter on
+`BODY`, `activeIsAnswerSubmit: false`, Submit enabled, selected fixture answer,
+no POST, and eight persistence samples remaining at zero. This demonstrates that
+focus loss can produce the signature and that the diagnostics distinguish it;
+it does not establish CI's cause. The temporary probe was removed.
+
+Validation uses installed Chromium 154.0.8037.57; CI uses Chromium 153.0.8010.12.
+The CI browser download was denied by network restrictions, so exact-browser
+reproduction remains unavailable. Publication requires Andrew's approval.
+
+Final local validation: both unchanged desktop/mobile four-format journeys passed
+(2 passed, 47.1 seconds, zero retries). All eight Enter events targeted the actual
+answer Submit, all eight POST responses were HTTP 200, and all eight answers
+persisted. Type checking reported zero errors/warnings; full ESLint and Prettier
+checks passed. The diagnostic diff changes only this evidence file and
+`tests/e2e/exercises.spec.ts`. Existing unit/property/build validation above is
+baseline evidence; those suites were not rerun for this test-only observation.
+Passive instrumentation can affect timing, so a green diagnostic CI run alone
+will not prove the intermittent failure fixed.
