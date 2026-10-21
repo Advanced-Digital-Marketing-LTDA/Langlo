@@ -18,7 +18,8 @@ vi.mock('@sentry/sveltekit', () => ({
       attributes: options.attributes,
       set: {}
     };
-    recorded.push(entry);
+    // Connection spans (db.*) are covered in db-transactions-spans.test.ts.
+    if (!options.name.startsWith('db.')) recorded.push(entry);
     return run({
       setAttribute: (key, value) => {
         entry.set[key] = value;
