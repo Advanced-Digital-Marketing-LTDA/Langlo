@@ -332,7 +332,7 @@
           {
             "id": "pt-b2-032@1:h02",
             "format": "typed-blank",
-            "prompt": "Estava doente; ___ , faltou à aula. (conector de consequência, uma palavra)",
+            "prompt": "Estava doente; ___ , faltou à aula. (conector de consequência, uma palavra que começa com l)",
             "answer": "logo",
             "near_misses": ["embora", "porque"],
             "holdout": true
@@ -745,7 +745,7 @@
           {
             "id": "pt-b2-035@1:q04",
             "format": "typed-blank",
-            "prompt": "Estudou pouco; ___ , passou. (contraste, uma palavra)",
+            "prompt": "Estudou pouco; ___ , passou. (contraste, uma palavra que começa com c)",
             "answer": "contudo",
             "near_misses": ["ademais", "portanto"],
             "holdout": false
@@ -753,7 +753,7 @@
           {
             "id": "pt-b2-035@1:q05",
             "format": "typed-blank",
-            "prompt": "A casa é grande; ___ , tem jardim. (adição, uma palavra)",
+            "prompt": "A casa é grande; ___ , tem jardim. (adição, uma palavra que começa com a)",
             "answer": "ademais",
             "near_misses": ["contudo", "todavia"],
             "holdout": false
@@ -761,7 +761,7 @@
           {
             "id": "pt-b2-035@1:q06",
             "format": "typed-blank",
-            "prompt": "Estava cansada; ___ , foi dormir. (consequência, uma palavra)",
+            "prompt": "Estava cansada; ___ , foi dormir. (consequência, uma palavra que começa com p)",
             "answer": "portanto",
             "near_misses": ["contudo", "ademais"],
             "holdout": false
@@ -857,7 +857,7 @@
           {
             "id": "pt-b2-035@1:h02",
             "format": "typed-blank",
-            "prompt": "O hotel é caro; ___ , tem ótima vista. (contraste, uma palavra) (conector de discurso)",
+            "prompt": "O hotel é caro; ___ , tem ótima vista. (contraste, uma palavra que começa com e) (conector de discurso)",
             "answer": "entretanto",
             "near_misses": ["ademais", "portanto"],
             "holdout": true

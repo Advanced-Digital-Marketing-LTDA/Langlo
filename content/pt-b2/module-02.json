@@ -32,7 +32,7 @@
           {
             "id": "pt-b2-006@1:q01",
             "format": "multiple-choice",
-            "prompt": "Choose the correct form: Quando cheguei, ele já ___ . (sair)",
+            "prompt": "Choose the correct form: Quando cheguei, ele já ___ . (sair) (mais-que-perfeito simples)",
             "answer": "saíra",
             "alternatives": ["saiu", "saíra", "sairia"],
             "holdout": false
@@ -40,7 +40,7 @@
           {
             "id": "pt-b2-006@1:q02",
             "format": "multiple-choice",
-            "prompt": "Choose the correct form: Eu nunca ___ tanta gente. (ver)",
+            "prompt": "Choose the correct form: Eu nunca ___ tanta gente. (ver) (mais-que-perfeito simples)",
             "answer": "vira",
             "alternatives": ["vi", "veria", "vira"],
             "holdout": false
@@ -48,7 +48,7 @@
           {
             "id": "pt-b2-006@1:q03",
             "format": "multiple-choice",
-            "prompt": "Choose the correct form: Ela ___ a verdade antes de partir. (dizer)",
+            "prompt": "Choose the correct form: Ela ___ a verdade antes de partir. (dizer) (mais-que-perfeito simples)",
             "answer": "dissera",
             "alternatives": ["dissera", "disse", "diria"],
             "holdout": false
