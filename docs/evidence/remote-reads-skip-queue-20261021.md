@@ -27,6 +27,16 @@ Mutations that make the new tests fail: dropping the `markRemoteClient` call in 
 
 `npm run check`: 0 errors, 0 warnings. The full suite is left to CI.
 
+## CI follow-up: Node scripts could not load the database module
+
+The first push imported `db-transactions.ts` into `db/app.ts`. That pulled `./tracing` (a SvelteKit-only import chain) into the Node scripts that open the database, and 28 e2e tests failed on `node scripts/accounts-provision.ts`:
+
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/runner/work/Langlo/Langlo/src/lib/server/tracing' imported from /home/runner/work/Langlo/Langlo/src/lib/server/db-transactions.ts
+```
+
+Reproduced locally with `node scripts/accounts-provision.ts --app --email x@example.test --name X` (same error); main loads fine. The marker now lives in `remote-clients.ts`, which has no imports, and `db-transactions.ts` and `db/app.ts` both import it. The same command now reaches its own argument check (`Provision rejected: ...`). New test `keeps the app database module loadable by plain Node scripts` loads `db/app.ts` under plain Node. With the change: 31 passed across the four test files, `npm run check` 0 errors.
+
 ## Not covered here
 
 Remote Turso behavior beyond the dev probe (waits over 2 s, many concurrent streams) is unmeasured. The dev probe showed a read beside an open write sees the snapshot from before the write commits.

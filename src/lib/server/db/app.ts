@@ -1,6 +1,6 @@
 import { createClient } from '@libsql/client';
 import type { RuntimeConfig } from '../config.ts';
-import { markRemoteClient } from '../db-transactions.ts';
+import { markRemoteClient } from '../remote-clients.ts';
 
 const remoteUrl = /^(libsql|https?|wss?):/i;
 

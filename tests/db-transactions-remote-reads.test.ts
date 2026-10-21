@@ -1,3 +1,4 @@
+import { spawnSync } from 'node:child_process';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 
@@ -121,4 +122,16 @@ it('does not treat a client it did not mark as remote', async () => {
   await writer.commit();
   await (await reading).commit();
   expect(remote).not.toBe(unmarked);
+});
+
+it('keeps the app database module loadable by plain Node scripts', () => {
+  // Scripts such as accounts-provision run under Node, not Vite, so this module
+  // must not pull in extensionless or SvelteKit-only imports.
+  const result = spawnSync(
+    process.execPath,
+    ['-e', "import('./src/lib/server/db/app.ts')"],
+    { encoding: 'utf8' }
+  );
+  expect(result.stderr).toBe('');
+  expect(result.status).toBe(0);
 });
