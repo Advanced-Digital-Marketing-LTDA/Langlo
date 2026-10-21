@@ -12,6 +12,7 @@ import { join } from 'node:path';
 import { createClient } from '@libsql/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { runContentImport } from '../scripts/content-import';
+import { importContent } from '../src/lib/server/content-import';
 import { modulesPackage } from '../src/lib/server/content-modules';
 import { migrateFixtureDatabase } from '../src/lib/server/db/migrate';
 import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
@@ -38,6 +39,8 @@ type RawLesson = {
       prompt: string;
       answer: string;
       holdout?: boolean;
+      change?: string;
+      continues?: string;
     }[];
     translations?: {
       pt: {
@@ -64,6 +67,8 @@ const modules = readdirSync(join(root, 'content'), { withFileTypes: true })
       )
   );
 const lessons = modules.flatMap((module) => module.lessons);
+// A revised lesson sits beside the version it revises, so lessons outnumber skills.
+const skills = new Set(lessons.map((lesson) => lesson.skill_id)).size;
 const questions = lessons.reduce((n, l) => n + l.version.questions.length, 0);
 const latestMigrationTag = (
   JSON.parse(
@@ -113,7 +118,7 @@ describe('content import script', () => {
     const { code, out } = await run([]);
     expect(code).toBe(0);
     expect(out).toContain(
-      `${lessons.length} skills, ${lessons.length} lessons, ${questions} questions`
+      `${skills} skills, ${lessons.length} lessons, ${questions} questions`
     );
     expect(out).toContain('nothing written');
   });
@@ -158,7 +163,7 @@ describe('content import script', () => {
     const env = { DATABASE_URL: target.databaseUrl };
     const argv = ['--apply', '--confirm-host', 'local'];
     expect((await run(argv, env)).code).toBe(0);
-    expect(await count('skills')).toBe(lessons.length);
+    expect(await count('skills')).toBe(skills);
     expect(await count('content_versions')).toBe(lessons.length);
     expect(await count('questions')).toBe(questions);
     expect((await run(argv, env)).code).toBe(0);
@@ -277,6 +282,93 @@ describe('content import script', () => {
   });
 });
 
+describe('revising already imported lessons', () => {
+  const rowsOf = async (client: ReturnType<typeof createClient>) =>
+    (
+      await client.execute(
+        'SELECT id, content_version_id, prompt, answer, alternatives, lineage_key FROM questions ORDER BY id'
+      )
+    ).rows;
+
+  it('adds each revision as a new version that continues the stored one', async () => {
+    await migrateFixtureDatabase(target);
+    const client = createClient({ url: target.databaseUrl });
+    try {
+      const pkg = modulesPackage(root);
+      const revisions = pkg.versions.filter((version) =>
+        version.questions.some((question) => question.change)
+      );
+      expect(revisions).toHaveLength(52);
+      await importContent(client, {
+        ...pkg,
+        curriculumVersion: '1.2.0',
+        versions: pkg.versions.filter((version) => !revisions.includes(version))
+      });
+      const before = await rowsOf(client);
+      // A learner already reviewing a revised skill keeps that schedule.
+      await client.batch(
+        [
+          "INSERT INTO users (id, email, email_verified, created_at, updated_at) VALUES ('learner-a', 'a@example.test', 1, 0, 0)",
+          `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, reset_required, scheduler_version, parameters_json)
+            VALUES ('learner-a', 'en', 'en-a1-005', 'en-a1-005@1', '{"due":"2026-11-02T09:00:00.000Z"}', 1793610000000, 2, 0, 'v1', '{}')`
+        ],
+        'write'
+      );
+
+      // The English revisions repeat their Portuguese translation, which is a
+      // minor change, so a patch bump is refused and writes nothing.
+      await expect(
+        importContent(client, { ...pkg, curriculumVersion: '1.2.1' })
+      ).rejects.toMatchObject({ code: 'VERSION_BUMP' });
+      expect(await rowsOf(client)).toEqual(before);
+
+      const result = await importContent(client, {
+        ...pkg,
+        curriculumVersion: '1.3.0'
+      });
+      expect(result.versions).toBe(revisions.length);
+      expect(result.questions).toBe(revisions.length * 15);
+
+      const after = await rowsOf(client);
+      expect(
+        after.filter((row) => before.some((b) => b.id === row.id))
+      ).toEqual(before);
+      const changes = await client.execute(
+        "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.3.0' GROUP BY kind ORDER BY kind"
+      );
+      expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
+        ['lesson-translation-added', 25],
+        ['question-same', revisions.length * 15],
+        ['version-added', revisions.length]
+      ]);
+      // Wording continues the earlier question, so it keeps that question's key.
+      const revised = after.find((row) => row.id === 'en-a1-005@2:h02');
+      const original = after.find((row) => row.id === 'en-a1-005@1:h02');
+      expect(revised?.prompt).toBe('He ___ a new bike. (buy) (simple past)');
+      expect(original?.lineage_key).toBeNull();
+      expect(revised?.lineage_key).toBe('h02');
+      // Grammar retention transfers to the revision unchanged (migration 0031).
+      expect(
+        (
+          await client.execute(
+            "SELECT content_version_id, state_json, due_at, revision, reset_required FROM grammar_retention_schedules WHERE owner_id = 'learner-a'"
+          )
+        ).rows.map((row) => ({ ...row }))
+      ).toEqual([
+        {
+          content_version_id: 'en-a1-005@2',
+          state_json: '{"due":"2026-11-02T09:00:00.000Z"}',
+          due_at: 1793610000000,
+          revision: 3,
+          reset_required: 0
+        }
+      ]);
+    } finally {
+      client.close();
+    }
+  });
+});
+
 describe('module package', () => {
   function withModule(content: string, check: (dir: string) => void) {
     const dir = mkdtempSync(join(tmpdir(), 'langlo-modules-'));
@@ -337,7 +429,8 @@ describe('module package', () => {
     const authored = lessons.filter(
       (lesson) => lesson.version.translations?.pt
     );
-    expect(authored).toHaveLength(45);
+    // 45 first versions plus the 25 English revisions that repeat their translation.
+    expect(authored).toHaveLength(70);
 
     const importedById = new Map(
       modulesPackage(root).versions.map((version) => [version.id, version])
@@ -407,6 +500,24 @@ describe('module package', () => {
         (example) => example.en === 'When is the class?'
       )?.pt
     ).toBe('Quando é a aula?');
+  });
+
+  it('passes the change declarations of revised questions through the import package', () => {
+    const declared = lessons.flatMap((lesson) =>
+      lesson.version.questions.filter((question) => question.change)
+    );
+    // 52 revised lessons of 15 questions each.
+    expect(declared).toHaveLength(52 * 15);
+    const imported = new Map(
+      modulesPackage(root).versions.flatMap((version) =>
+        version.questions.map((question) => [question.id, question] as const)
+      )
+    );
+    for (const source of declared)
+      expect(
+        [imported.get(source.id)?.change, imported.get(source.id)?.continues],
+        source.id
+      ).toEqual([source.change, source.continues]);
   });
 
   function rejectsBadTranslation(

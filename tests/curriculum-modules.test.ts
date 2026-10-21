@@ -11,7 +11,9 @@ import {
   modulePackage,
   normalize,
   typedAnswers,
-  type Module
+  type Lesson,
+  type Module,
+  type Question
 } from './fixtures/curriculum-module';
 
 // Authored curriculum modules after French A1 module 01 (which keeps its own
@@ -53,6 +55,101 @@ const practisedText = (
         ? (example.pt ?? '')
         : example.en;
 const load = (path: string) => JSON.parse(read(path)) as Module;
+// A skill with a revision keeps its earlier version beside it so that a
+// database holding that version can take the revision; only the newest
+// version of each skill is what learners are taught and assessed on.
+const currentLessons = (module: Module) =>
+  module.lessons.filter(
+    (lesson) =>
+      !module.lessons.some(
+        (other) =>
+          other.skill_id === lesson.skill_id &&
+          other.version.version > lesson.version.version
+      )
+  );
+// The versions of each skill in order, grouped by position: every skill's
+// first version together, then every skill's second, and so on. A group is
+// one complete state of the module, so prompts only need to be unique within it.
+const generations = (module: Module) => {
+  const rank = new Map<string, number>();
+  const groups: Module['lessons'][] = [];
+  for (const lesson of [...module.lessons].sort(
+    (a, b) => a.version.version - b.version.version
+  )) {
+    const index = rank.get(lesson.skill_id) ?? 0;
+    rank.set(lesson.skill_id, index + 1);
+    (groups[index] ??= []).push(lesson);
+  }
+  return groups;
+};
+const earlierVersion = (module: Module, lesson: Lesson) =>
+  module.lessons.find(
+    (other) =>
+      other.skill_id === lesson.skill_id &&
+      other.version.version === lesson.version.version - 1
+  );
+// Returns whether the question's prompt gained a grammar form hint.
+function assertHintedQuestion(
+  question: Question,
+  before: Question,
+  versionId: string
+) {
+  const number = before.id.split(':')[1];
+  expect(question.id, versionId).toBe(`${versionId}:${number}`);
+  expect([question.change, question.continues], question.id).toEqual([
+    'same',
+    before.id
+  ]);
+  for (const field of [
+    'format',
+    'answer',
+    'alternatives',
+    'near_misses',
+    'holdout'
+  ] as const)
+    expect(question[field], `${question.id} ${field}`).toEqual(before[field]);
+  if (question.prompt === before.prompt) return false;
+  expect(question.holdout, question.id).toBe(true);
+  const stripped = question.prompt.replace(
+    /^(.*?) \(([^()]+)\)(:?)$/u,
+    (_, text: string, __: string, colon: string) => text + colon
+  );
+  expect(stripped, question.id).toBe(before.prompt);
+  return true;
+}
+function assertHintRevision(revision: Lesson, earlier: Lesson) {
+  const id = revision.skill_id;
+  expect(revision.version.id, id).toBe(`${id}@${revision.version.version}`);
+  for (const field of [
+    'title',
+    'explanation',
+    'examples',
+    'references'
+  ] as const)
+    expect(revision[field], `${id} ${field}`).toEqual(earlier[field]);
+  expect(revision.version.translations, `${id} translations`).toEqual(
+    earlier.version.translations
+  );
+  const revised = revision.version.questions;
+  const original = earlier.version.questions;
+  expect(revised.length, id).toBe(original.length);
+  const hinted = revised.filter((question, index) =>
+    assertHintedQuestion(question, original[index], revision.version.id)
+  ).length;
+  expect(hinted, `${id} changes no prompt`).toBeGreaterThan(0);
+}
+// Ids are unique across every version; prompts within each generation,
+// since a revision repeats its earlier version's prompts.
+function assertUniqueAcrossVersions(module: Module) {
+  const ids = module.lessons.flatMap((lesson) =>
+    lesson.version.questions.map((q) => q.id)
+  );
+  expect(new Set(ids).size).toBe(ids.length);
+  for (const generation of generations(module))
+    assertUniqueQuestions(
+      generation.flatMap((lesson) => lesson.version.questions)
+    );
+}
 const revisedSkills = new Set([
   'de-a1-001',
   'de-a1-010',
@@ -116,7 +213,9 @@ it('has a lesson for every active Portuguese skill and no others', () => {
       .sort();
     const authored = allModules
       .filter((module) => module.track === track)
-      .flatMap((module) => module.lessons.map((lesson) => lesson.skill_id))
+      .flatMap((module) =>
+        currentLessons(module).map((lesson) => lesson.skill_id)
+      )
       .sort();
     expect(authored, track).toEqual(expected);
   }
@@ -234,7 +333,7 @@ describe.each(files)('%s', (path) => {
     const lifecycle = columnIndex('lifecycle_status');
     const level = columnIndex('level');
     const language = columnIndex('language');
-    const ids = module.lessons.map((lesson) => lesson.skill_id);
+    const ids = currentLessons(module).map((lesson) => lesson.skill_id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const [index, id] of ids.entries()) {
       expect(id.startsWith(`${track}-`), id).toBe(true);
@@ -336,7 +435,7 @@ describe.each(files)('%s', (path) => {
         }
       }
     }
-    assertUniqueQuestions(questions);
+    assertUniqueAcrossVersions(module);
   });
 
   it('data consistency: answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
@@ -360,6 +459,24 @@ describe.each(files)('%s', (path) => {
       }
       const misses = (q.near_misses ?? []).map(normalize);
       expect(new Set(misses).size, q.id).toBe(misses.length);
+    }
+  });
+
+  // A revision is a new version of a skill that sits beside the version it
+  // revises. Revisions authored for grammar hints may only add the form the
+  // answer depends on to a holdout prompt, as a trailing parenthesis (before
+  // the colon when the prompt ends with one); nothing else about a question
+  // or its lesson may change.
+  it('revises a lesson only by naming the grammar form in holdout prompts, and says so for the importer', () => {
+    // A later version with no earlier one beside it is a correction of a
+    // version only databases hold; those are the listed legacy skills.
+    for (const lesson of module.lessons.filter(
+      (item) => item.version.version > 1 && !earlierVersion(module, item)
+    ))
+      expect(revisedSkills.has(lesson.skill_id), lesson.version.id).toBe(true);
+    for (const revision of module.lessons) {
+      const earlier = earlierVersion(module, revision);
+      if (earlier) assertHintRevision(revision, earlier);
     }
   });
 
@@ -471,7 +588,7 @@ describe.each(files)('%s', (path) => {
       );
       expect([result.versions, result.questions]).toEqual([
         module.lessons.length,
-        questions.length
+        module.lessons.flatMap((lesson) => lesson.version.questions).length
       ]);
       const again = await importContent(db.client, modulePackage(root, module));
       expect([again.versions, again.questions]).toEqual([0, 0]);

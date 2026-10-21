@@ -617,6 +617,250 @@
       }
     },
     {
+      "skill_id": "en-a2-015",
+      "title": "First conditional for likely possibilities",
+      "explanation": "Use if plus the present simple for a likely condition and will plus the base verb for its result: If it rains, we will stay at home. The if-clause uses the present, not will: not If it will rain. You can put the if-clause second without a comma: We will stay at home if it rains. Questions: What will you do if you miss the bus?",
+      "examples": [
+        {
+          "en": "If it rains, we will stay at home."
+        },
+        {
+          "en": "I will call you if I am late."
+        },
+        {
+          "en": "What will you do if you miss the bus?"
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-015@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-015@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct first conditional?",
+            "answer": "If it rains, we will stay at home.",
+            "alternatives": [
+              "If it rains, we will stay at home.",
+              "If it will rain, we stay at home.",
+              "If it rain, we will stay at home."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q01"
+          },
+          {
+            "id": "en-a2-015@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which tense follows 'if' in a first conditional?",
+            "answer": "the present simple",
+            "alternatives": [
+              "the present simple",
+              "will + base verb",
+              "the past simple"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q02"
+          },
+          {
+            "id": "en-a2-015@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which tense gives the result?",
+            "answer": "will + base verb",
+            "alternatives": [
+              "will + base verb",
+              "the present simple",
+              "the -ing form"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q03"
+          },
+          {
+            "id": "en-a2-015@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question is correct?",
+            "answer": "What will you do if you miss the bus?",
+            "alternatives": [
+              "What will you do if you will miss the bus?",
+              "What will you do if you miss the bus?",
+              "What you do if you miss the bus?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q04"
+          },
+          {
+            "id": "en-a2-015@2:q05",
+            "format": "typed-blank",
+            "prompt": "If it ___, we will stay at home. (rain)",
+            "answer": "rains",
+            "near_misses": ["will rain", "rained"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q05"
+          },
+          {
+            "id": "en-a2-015@2:q06",
+            "format": "typed-blank",
+            "prompt": "I will call you if I ___ late. (be)",
+            "answer": "am",
+            "near_misses": ["will be", "was"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q06"
+          },
+          {
+            "id": "en-a2-015@2:q07",
+            "format": "typed-blank",
+            "prompt": "If you miss the bus, you ___ walk. (will)",
+            "answer": "will",
+            "near_misses": ["would", "did"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q07"
+          },
+          {
+            "id": "en-a2-015@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with if: it / rain / we / stay at home",
+            "answer": "If it rains, we will stay at home.",
+            "alternatives": ["If it rains, we'll stay at home."],
+            "near_misses": [
+              "If it will rain, we will stay at home.",
+              "If it rains, we stay at home will."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q08"
+          },
+          {
+            "id": "en-a2-015@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with if: I / be late / I / call you",
+            "answer": "If I am late, I will call you.",
+            "alternatives": ["If I'm late, I'll call you."],
+            "near_misses": [
+              "If I will be late, I will call you.",
+              "If I am late, I call will you."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q09"
+          },
+          {
+            "id": "en-a2-015@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with if: ask: what / you / do / you miss the bus",
+            "answer": "What will you do if you miss the bus?",
+            "near_misses": [
+              "What will you do if you will miss the bus?",
+              "What you will do if you miss the bus?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q10"
+          },
+          {
+            "id": "en-a2-015@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: If it will snow, we will build a snowman.",
+            "answer": "If it snows, we will build a snowman.",
+            "alternatives": ["If it snows, we'll build a snowman."],
+            "near_misses": [
+              "If it will snow, we will build a snowman.",
+              "If it snowed, we will build a snowman."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q11"
+          },
+          {
+            "id": "en-a2-015@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: If she comes, I giving her the keys.",
+            "answer": "If she comes, I will give her the keys.",
+            "alternatives": ["If she comes, I'll give her the keys."],
+            "near_misses": [
+              "If she comes, I giving her the keys.",
+              "If she will come, I will give her the keys."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-015@1:q12"
+          },
+          {
+            "id": "en-a2-015@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence talks about a likely future event? (first conditional)",
+            "answer": "If you study hard, you will pass the test.",
+            "alternatives": [
+              "If you study hard, you will pass the test.",
+              "If you will study hard, you pass the test.",
+              "If you studied hard, you will pass the test."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-015@1:h01"
+          },
+          {
+            "id": "en-a2-015@2:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: If the shop is closed, we would go tomorrow. (first conditional)",
+            "answer": "If the shop is closed, we will go tomorrow.",
+            "alternatives": ["If the shop is closed, we'll go tomorrow."],
+            "near_misses": [
+              "If the shop is closed, we would go tomorrow.",
+              "If the shop will be closed, we will go tomorrow."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-015@1:h02"
+          },
+          {
+            "id": "en-a2-015@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with if: you / not hurry / you / miss the train (first conditional)",
+            "answer": "If you don't hurry, you will miss the train.",
+            "alternatives": [
+              "If you do not hurry, you will miss the train.",
+              "If you don't hurry, you'll miss the train."
+            ],
+            "near_misses": [
+              "If you won't hurry, you will miss the train.",
+              "If you don't hurry, you miss will the train."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-015@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Primeiro condicional para possibilidades prováveis",
+            "explanation": "Use if mais o presente simples para uma condição provável e will mais a forma base do verbo para seu resultado: If it rains, we will stay at home. Na oração com if, use o presente, e não will: não diga If it will rain. Você também pode colocar a oração com if no fim, sem vírgula: We will stay at home if it rains. Perguntas: What will you do if you miss the bus?",
+            "examples": [
+              {
+                "en": "If it rains, we will stay at home.",
+                "pt": "Se chover, vamos ficar em casa."
+              },
+              {
+                "en": "I will call you if I am late.",
+                "pt": "Vou ligar para você se me atrasar."
+              },
+              {
+                "en": "What will you do if you miss the bus?",
+                "pt": "O que você vai fazer se perder o ônibus?"
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a2-016",
       "title": "Reporting statements and requests",
       "explanation": "To report what someone says now, use says that plus a clause: She says that she is tired. The word that is optional. Change the pronoun when the speaker changes: 'I am tired' becomes She says she is tired. To report a request or order use asked or told plus an object plus to and the base verb: He asked me to open the door. She told us not to be late.",
@@ -792,6 +1036,237 @@
               "The doctor told me to not eating sugar."
             ],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Relatando afirmações e pedidos",
+            "explanation": "Para relatar o que alguém diz no presente, use says that mais uma oração: She says that she is tired. That é opcional. Mude o pronome quando a pessoa que fala mudar: 'I am tired' vira She says she is tired. Para relatar um pedido ou uma ordem, use asked ou told mais um objeto, seguido de to e da forma base do verbo: He asked me to open the door. She told us not to be late.",
+            "examples": [
+              {
+                "en": "She says that she is tired.",
+                "pt": "Ela diz que está cansada."
+              },
+              {
+                "en": "He asked me to open the door.",
+                "pt": "Ele me pediu para abrir a porta."
+              },
+              {
+                "en": "She told us not to be late.",
+                "pt": "Ela nos disse para não nos atrasarmos."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a2-016",
+      "title": "Reporting statements and requests",
+      "explanation": "To report what someone says now, use says that plus a clause: She says that she is tired. The word that is optional. Change the pronoun when the speaker changes: 'I am tired' becomes She says she is tired. To report a request or order use asked or told plus an object plus to and the base verb: He asked me to open the door. She told us not to be late.",
+      "examples": [
+        {
+          "en": "She says that she is tired."
+        },
+        {
+          "en": "He asked me to open the door."
+        },
+        {
+          "en": "She told us not to be late."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-016@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-016@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence reports 'I am tired'?",
+            "answer": "She says she is tired.",
+            "alternatives": [
+              "She says she is tired.",
+              "She says I am tired.",
+              "She says she am tired."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q01"
+          },
+          {
+            "id": "en-a2-016@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which pattern reports a request?",
+            "answer": "asked + object + to + base verb",
+            "alternatives": [
+              "asked + object + to + base verb",
+              "asked + that + base verb",
+              "asked + -ing"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q02"
+          },
+          {
+            "id": "en-a2-016@2:q03",
+            "format": "multiple-choice",
+            "prompt": "How do you report a negative order?",
+            "answer": "told + object + not to + base verb",
+            "alternatives": [
+              "told + object + not to + base verb",
+              "told + object + to not + -ing",
+              "told + don't + base verb"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q03"
+          },
+          {
+            "id": "en-a2-016@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence about the door is correct?",
+            "answer": "He asked me to open the door.",
+            "alternatives": [
+              "He asked me to open the door.",
+              "He asked me open the door.",
+              "He asked me opening the door."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q04"
+          },
+          {
+            "id": "en-a2-016@2:q05",
+            "format": "typed-blank",
+            "prompt": "She says that she ___ tired. (be)",
+            "answer": "is",
+            "near_misses": ["am", "are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q05"
+          },
+          {
+            "id": "en-a2-016@2:q06",
+            "format": "typed-blank",
+            "prompt": "He asked me ___ open the door.",
+            "answer": "to",
+            "near_misses": ["for", "that"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q06"
+          },
+          {
+            "id": "en-a2-016@2:q07",
+            "format": "typed-blank",
+            "prompt": "She told us not ___ be late.",
+            "answer": "to",
+            "near_misses": ["for", "that"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q07"
+          },
+          {
+            "id": "en-a2-016@2:q08",
+            "format": "translation",
+            "prompt": "Report what was said: she says: 'I am tired.'",
+            "answer": "She says she is tired.",
+            "alternatives": ["She says that she is tired."],
+            "near_misses": ["She says I am tired.", "She says she am tired."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q08"
+          },
+          {
+            "id": "en-a2-016@2:q09",
+            "format": "translation",
+            "prompt": "Report what was said: he asked me: 'Open the door, please.'",
+            "answer": "He asked me to open the door.",
+            "near_misses": [
+              "He asked me open the door.",
+              "He asked me to opened the door."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q09"
+          },
+          {
+            "id": "en-a2-016@2:q10",
+            "format": "translation",
+            "prompt": "Report what was said: she told us: 'Don't be late.'",
+            "answer": "She told us not to be late.",
+            "near_misses": [
+              "She told us to not being late.",
+              "She told us don't be late."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q10"
+          },
+          {
+            "id": "en-a2-016@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He says that I am hungry. (he is hungry)",
+            "answer": "He says that he is hungry.",
+            "alternatives": ["He says he is hungry."],
+            "near_misses": [
+              "He says that I am hungry.",
+              "He says that he am hungry."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q11"
+          },
+          {
+            "id": "en-a2-016@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: She asked me closing the window.",
+            "answer": "She asked me to close the window.",
+            "near_misses": [
+              "She asked me closing the window.",
+              "She asked me to closed the window."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-016@1:q12"
+          },
+          {
+            "id": "en-a2-016@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence reports a request?",
+            "answer": "My mother asked us to wash the dishes.",
+            "alternatives": [
+              "My mother asked us wash the dishes.",
+              "My mother asked us to wash the dishes.",
+              "My mother asked us washing the dishes."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-016@1:h01"
+          },
+          {
+            "id": "en-a2-016@2:h02",
+            "format": "typed-blank",
+            "prompt": "They say they ___ happy here. (be) (present simple)",
+            "answer": "are",
+            "near_misses": ["is", "am"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-016@1:h02"
+          },
+          {
+            "id": "en-a2-016@2:h03",
+            "format": "translation",
+            "prompt": "Report what was said: the doctor told me: 'Don't eat sugar.'",
+            "answer": "The doctor told me not to eat sugar.",
+            "near_misses": [
+              "The doctor told me don't eat sugar.",
+              "The doctor told me to not eating sugar."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-016@1:h03"
           }
         ],
         "translations": {
