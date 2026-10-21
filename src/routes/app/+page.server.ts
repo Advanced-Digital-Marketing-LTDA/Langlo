@@ -5,6 +5,7 @@ import { applyAuthCookies } from '../../lib/server/auth-cookies';
 import { requireLearnerPage } from '../../lib/server/learner-session';
 import { studyPage } from '../../lib/server/learner-api';
 import { loadProgress } from '../../lib/server/progress';
+import { unfinishedPractice } from '../../lib/server/practice';
 
 export const load: PageServerLoad = async (event) => {
   // Learner data must be loaded with the session this returns, never with a
@@ -13,10 +14,21 @@ export const load: PageServerLoad = async (event) => {
   const user = event.locals.user;
   const progress =
     event.locals.config?.dataEnabled && event.locals.config.databaseUrl
-      ? await studyPage(event, (client, learner) =>
-          loadProgress(client, learner)
-        )
-      : { tracks: [] };
+      ? await studyPage(event, async (client, learner) => {
+          const loaded = await loadProgress(client, learner);
+          const unfinished: Record<string, { id: string; answered: number }> =
+            {};
+          for (const track of loaded.tracks) {
+            const found = await unfinishedPractice(
+              client,
+              learner,
+              track.language
+            );
+            if (found) unfinished[track.language] = found;
+          }
+          return { ...loaded, unfinished };
+        })
+      : { tracks: [], unfinished: {} };
   return {
     user: { name: user?.name ?? '', email: user?.email ?? '' },
     ...progress

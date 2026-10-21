@@ -24,6 +24,18 @@ This policy requires Traefik to append its observed peer address and to be the o
 
 Do not set `DATA_ENABLED=true` until LANGLO-124 / T039 (internal issue 1093) verifies the test database's identity, contents, and schema state and completes its separate migration work ([remote-test-migrations.md](remote-test-migrations.md)); the pending auth and query-authorization gates are accepted; and the owner authorizes enabling real pilot accounts. This container task does not connect to or migrate any database.
 
+## Rolling updates (Dockerfile build pack)
+
+A Docker Compose deployment recreates the stack, so the app is briefly down on every deploy and an answer sent in that window fails. Coolify's rolling updates start the new container, wait for its health check, then stop the old one ([Coolify rolling updates](https://coolify.io/docs/applications/deployments/rolling-updates)); they need the **Dockerfile** build pack instead of Docker Compose. The image's `HEALTHCHECK` (`GET /health/live`) is what Coolify waits on.
+
+`compose.yaml` is not read under the Dockerfile build pack, so everything it fixes or defaults must be set as runtime Environment Variables in Coolify instead, or the app starts without it:
+
+- `ADDRESS_HEADER=x-forwarded-for` and `XFF_DEPTH=1` (the client-address policy above; production auth rejects a missing policy)
+- `APP_ORIGIN`, plus `APP_ENV`, `DATA_ENABLED`, `APP_BUILD_SHA`, `DATABASE_URL`, `TURSO_AUTH_TOKEN`, `BETTER_AUTH_SECRET`, `MAIL_TRANSPORT`, `MAIL_FROM`, `PROTON_SMTP_TOKEN`, `SMTP_HOST`, `SMTP_PORT` and `BODY_SIZE_LIMIT` as in the runtime variables above (Compose defaulted `MAIL_TRANSPORT` to `capture`)
+- `PUBLIC_GLITCHTIP_DSN`, `PUBLIC_APP_ENV` and `PUBLIC_APP_BUILD_SHA`
+
+`compose.yaml` also sets `init: true` and a 35-second `stop_grace_period`; the Dockerfile does not, so check the old container still drains in-flight requests after the switch. This repository has not been deployed this way yet; the Compose settings above stay the documented path until it is.
+
 ## Local synthetic preview
 
 With Docker Engine and the Compose plugin installed, run from the repository root:

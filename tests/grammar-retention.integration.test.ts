@@ -57,6 +57,10 @@ afterEach(async () => {
 });
 
 async function start() {
+  // The shared fixture leaves an unfinished practice, which starting continues.
+  await client.execute(
+    "UPDATE study_sessions SET state = 'completed' WHERE id = 'study-a'"
+  );
   return startPractice(client, learner, {
     language: 'fr',
     submissionKey: randomUUID()
@@ -124,6 +128,8 @@ describe('grammar retention storage and session flow', () => {
   it('treats an abandoned unrated correct answer as unseen for later evidence', async () => {
     const abandoned = await start();
     await answer(abandoned.id, 'fr-a1-001@1:q2', 'es');
+    // Starting continues an unfinished practice, so a later one needs this one finished.
+    await finishPractice(client, learner, abandoned.id);
 
     const resumed = await start();
     const repeated = await answer(resumed.id, 'fr-a1-001@1:q2', 'es');
