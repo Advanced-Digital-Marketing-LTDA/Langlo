@@ -6,7 +6,7 @@ Date: 2026-10-21. Board: LANGLO-262 to 269 under LANGLO-258; LANGLO-278 (manifes
 
 Content only: 40 B1 skills (`pt-b1-001` to `pt-b1-040`), 8 module files in `content/pt-b1/` (40 English lessons, 600 questions), the coverage rows, prerequisite nodes and edges, ID registry entries, and the manifest bump from 1.1.0 to 1.2.0 with `Portuguese B1` added to `included_tracks`. Platform support (validator, importer, migration 0026, app code) was merged earlier in the Portuguese platform PR.
 
-Two test helpers changed so the shared module tests can run on Portuguese: `tests/fixtures/curriculum-module.ts` lets an example carry a `pt` sentence, and `tests/curriculum-modules.test.ts` reads that sentence when checking that practised text appears in the lesson (English tracks still read `en`). `tests/content-bundle.test.ts` expects version 1.2.0. Nothing else in the tests, the existing tracks or the migrations changed.
+Two test helpers changed so the shared module tests can run on Portuguese: `tests/fixtures/curriculum-module.ts` lets an example carry a `pt` sentence, and `tests/curriculum-modules.test.ts` reads that sentence when checking that practised text appears in the lesson (English tracks still read `en`). `tests/content-bundle.test.ts` expects version 1.2.0. `tests/curriculum-contract-portuguese.test.ts` appended synthetic `pt-b1-001` rows to the checked-in catalog, which now holds the real ones, so it builds its fixtures from the catalog without the Portuguese rows (same assertions). Nothing else in the tests, the existing tracks or the migrations changed.
 
 Untouched: existing modules and skill IDs, all migrations and Drizzle metadata, learner data, scoring, FSRS, the landing page track list.
 

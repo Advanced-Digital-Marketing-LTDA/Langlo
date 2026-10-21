@@ -30,6 +30,16 @@ const files = new Map(
   ].map((path) => [path, readFileSync(resolve(root, path), 'utf8')])
 );
 
+// The checked-in bundle now holds the real Portuguese rows. These tests model
+// the catalog without them, so synthetic Portuguese rows never collide with it.
+const core = records.filter(
+  (row, index) => index === 0 || row[1] !== 'Portuguese'
+);
+const coreCatalog = validateCatalog(core, knownSources, new Set(registry.ids));
+const coreNodes = graph.nodes.filter(
+  (node: { skill_id: string }) => !node.skill_id.startsWith('pt-')
+);
+
 const coreTracks = [
   'French A1',
   'German A1',
@@ -76,7 +86,7 @@ describe('Portuguese tracks in the curriculum contract', () => {
   });
 
   it('accepts Portuguese B1 and B2 catalog rows and refuses other Portuguese levels', () => {
-    const base = records.slice(0, 1).concat(records.slice(1));
+    const base = core;
     expect(() =>
       validate(
         [...base, ptRow('pt-b1-001', 'B1'), ptRow('pt-b2-001', 'B2')],
@@ -93,12 +103,12 @@ describe('Portuguese tracks in the curriculum contract', () => {
 
   it('refuses Portuguese B2 without Portuguese B1', () => {
     expect(() =>
-      validate([...records, ptRow('pt-b2-001', 'B2')], ['pt-b2-001'])
+      validate([...core, ptRow('pt-b2-001', 'B2')], ['pt-b2-001'])
     ).toThrow(/Portuguese B2 requires Portuguese B1/u);
   });
 
   it('still requires all five existing tracks', () => {
-    const withoutFrench = records.filter(
+    const withoutFrench = core.filter(
       (row, index) => index === 0 || row[1] !== 'French'
     );
     expect(() =>
@@ -107,10 +117,7 @@ describe('Portuguese tracks in the curriculum contract', () => {
   });
 
   it('requires the manifest to list exactly the tracks the catalog holds', () => {
-    const withPt = validate(
-      [...records, ptRow('pt-b1-001', 'B1')],
-      ['pt-b1-001']
-    );
+    const withPt = validate([...core, ptRow('pt-b1-001', 'B1')], ['pt-b1-001']);
     const listed = [...coreTracks, 'Portuguese B1'];
     expect(() =>
       validateManifestCoversCatalog(
@@ -127,7 +134,7 @@ describe('Portuguese tracks in the curriculum contract', () => {
     expect(() =>
       validateManifestCoversCatalog(
         { ...manifest, included_tracks: listed },
-        catalog
+        coreCatalog
       )
     ).toThrow(/Manifest tracks do not match the catalog/u);
     expect(() =>
@@ -137,16 +144,12 @@ describe('Portuguese tracks in the curriculum contract', () => {
 
   it('lets B2 skills depend on B1 skills but never the reverse, and never across languages', () => {
     const ids = ['pt-b1-001', 'pt-b2-001'];
-    const rows = [
-      ...records,
-      ptRow('pt-b1-001', 'B1'),
-      ptRow('pt-b2-001', 'B2')
-    ];
+    const rows = [...core, ptRow('pt-b1-001', 'B1'), ptRow('pt-b2-001', 'B2')];
     const withPt = validate(rows, ids);
     const nodes = (b1: string[], b2: string[]) => ({
       ...graph,
       nodes: [
-        ...graph.nodes,
+        ...coreNodes,
         { skill_id: 'pt-b1-001', prerequisites: b1 },
         { skill_id: 'pt-b2-001', prerequisites: b2 }
       ]
