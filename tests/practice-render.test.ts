@@ -90,6 +90,9 @@ it('shows a recoverable message when progress could not be loaded', async () => 
   expect(html).toContain('Try again');
   expect(html).not.toContain('No started topics need work yet');
   expect(html).not.toContain('No published skills are available');
+  // Whether a practice is unfinished is unknown then, so no start button shows.
+  expect(html).not.toContain('Start practice');
+  expect(html).not.toContain('Continue practice');
 });
 
 it('offers Start practice when nothing is unfinished and never Start over', async () => {

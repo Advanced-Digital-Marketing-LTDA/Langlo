@@ -15,35 +15,35 @@
   A practice session groups your answers so you can pause, resume and review
   them. Practice answers never replace an assessment.
 </p>
-<form method="POST" action="?/start">
-  <input type="hidden" name="submissionKey" value={data.submissionKey} />
-  <button type="submit"
-    >{data.unfinished ? 'Continue practice' : 'Start practice'}</button
-  >
-</form>
-{#if data.unfinished}
-  <p>
-    {data.unfinished.answered}
-    {data.unfinished.answered === 1 ? 'answer' : 'answers'} so far in your unfinished
-    practice.
-  </p>
-  <details>
-    <summary>Start over</summary>
-    <p>
-      This finishes your current practice and begins a new one. Answers you
-      rated or got wrong stay in your history; correct answers you have not
-      rated yet are not kept.
-    </p>
-    <form method="POST" action="?/startOver">
-      <input type="hidden" name="submissionKey" value={data.submissionKey} />
-      <button type="submit">Yes, start over</button>
-    </form>
-  </details>
-{/if}
 {#if form && 'message' in form}<p role="alert">{form.message}</p>{/if}
 {#if data.error}
   <p class="error-box" role="alert">{data.error}</p>
 {:else}
+  <form method="POST" action="?/start">
+    <input type="hidden" name="submissionKey" value={data.submissionKey} />
+    <button type="submit"
+      >{data.unfinished ? 'Continue practice' : 'Start practice'}</button
+    >
+  </form>
+  {#if data.unfinished}
+    <p>
+      {data.unfinished.answered}
+      {data.unfinished.answered === 1 ? 'answer' : 'answers'} so far in your unfinished
+      practice.
+    </p>
+    <details>
+      <summary>Start over</summary>
+      <p>
+        This finishes your current practice and begins a new one. Answers you
+        rated or got wrong stay in your history; correct answers you have not
+        rated yet are not kept.
+      </p>
+      <form method="POST" action="?/startOver">
+        <input type="hidden" name="submissionKey" value={data.submissionKey} />
+        <button type="submit">Yes, start over</button>
+      </form>
+    </details>
+  {/if}
   <section aria-label="Due grammar reviews">
     <h2>Due grammar reviews</h2>
     <p>
