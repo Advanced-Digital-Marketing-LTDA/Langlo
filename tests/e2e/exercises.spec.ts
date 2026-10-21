@@ -24,6 +24,7 @@ let server: ChildProcess;
 let base = '';
 let fixtureRoot = '';
 let dbFile = '';
+let learnerCookies: Awaited<ReturnType<BrowserContext['cookies']>> | undefined;
 
 async function withDatabase<T>(work: (client: Client) => Promise<T>) {
   const client = createClient({ url: `file://${dbFile}` });
@@ -37,6 +38,7 @@ async function withDatabase<T>(work: (client: Client) => Promise<T>) {
 }
 
 test.beforeAll(async () => {
+  learnerCookies = undefined;
   const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
   ({ fixtureRoot, dbFile } = createFixtureDatabase());
@@ -159,14 +161,20 @@ const exercises: Exercise[] = [
   }
 ];
 
-/** Sign in through the rendered form and return the learner's id. */
+/** Sign in through the form once, then reuse this synthetic fixture session. */
 async function signIn(page: Page, context: BrowserContext) {
   await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
-  await page.goto(`${base}/login`);
-  await page.getByLabel('Email').fill('exercises@example.test');
-  await page.getByLabel('Password').fill('exercise-password-0000');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  if (learnerCookies) {
+    await context.addCookies(learnerCookies);
+    await page.goto(`${base}/app`);
+  } else {
+    await page.goto(`${base}/login`);
+    await page.getByLabel('Email').fill('exercises@example.test');
+    await page.getByLabel('Password').fill('exercise-password-0000');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  }
   await expect(page).toHaveURL(`${base}/app`);
+  learnerCookies ??= await context.cookies();
   const { user } = await (
     await page.request.get(`${base}/api/auth/get-session`)
   ).json();
@@ -180,8 +188,8 @@ async function seedSession(
 ) {
   await withDatabase(async (client) => {
     await client.execute({
-      sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('exercise-enrollment', ?, 'fr', 'A1', 'en') ON CONFLICT(owner_id, language) DO NOTHING",
-      args: [userId]
+      sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES (?, ?, 'fr', 'A1', 'en') ON CONFLICT(owner_id, language) DO NOTHING",
+      args: [`exercise-enrollment-${userId}`, userId]
     });
     const enrollment = await client.execute({
       sql: 'SELECT id FROM enrollments WHERE owner_id = ? AND language = ?',
@@ -582,6 +590,235 @@ async function assessAllActiveSkills(page: Page, userId: string) {
   ).toHaveCount(2);
 }
 
+test('restores the map position after returning from a lesson', async ({
+  page,
+  context
+}) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  const userId = await signIn(page, context);
+  await seedSession(userId, 'map-scroll-session');
+  await page.goto(`${base}/app/map?language=fr&skill=fr-a1-003`);
+  const viewport = page.getByRole('region', { name: /FR topic map/u });
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(0);
+  await page.locator('#map-skill-fr-a1-001').click();
+  await viewport.evaluate((element) => {
+    element.scrollLeft = Math.min(
+      200,
+      element.scrollWidth - element.clientWidth
+    );
+  });
+  await expect
+    .poll(async () => Number(new URL(page.url()).searchParams.get('x')))
+    .toBeGreaterThan(0);
+  await page.getByRole('link', { name: 'Open lesson' }).click();
+  await page.getByRole('link', { name: 'Back to skill map' }).click();
+  await expect(page).toHaveURL(/\/app\/map\?.*x=\d+/u);
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft))
+    .toBeGreaterThan(0);
+  await viewport.evaluate((element) => {
+    element.scrollLeft = 0;
+  });
+  await expect.poll(() => new URL(page.url()).searchParams.get('x')).toBe('0');
+  await page.getByRole('link', { name: 'Open lesson' }).click();
+  await page.getByRole('link', { name: 'Back to skill map' }).click();
+  await expect
+    .poll(() => viewport.evaluate((element) => element.scrollLeft))
+    .toBe(0);
+});
+
+test('preserves map context through native answer, retry, and report posts', async ({
+  browser
+}) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const scripts = await context.newCDPSession(page);
+  await scripts.send('Emulation.setScriptExecutionDisabled', { value: true });
+  const returnTo = '/app/map?language=fr&skill=fr-a1-001&status=weak&x=80&y=0';
+  try {
+    await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
+    await page.goto(`${base}/signup`);
+    await page.getByLabel('Name').fill('Native Map Learner');
+    await page.getByLabel('Email').fill('native-map@example.test');
+    await page.getByLabel('Password').fill('native-map-password-0000');
+    await page.getByRole('button', { name: 'Create account' }).click();
+    await expect(page).toHaveURL(`${base}/app`);
+    const { user } = await (
+      await page.request.get(`${base}/api/auth/get-session`)
+    ).json();
+    await seedSession(user.id as string, 'native-map-session');
+    await page.goto(
+      `${base}/app/learn/fr/lesson/fr-a1-001?session=native-map-session&returnTo=${encodeURIComponent(returnTo)}`
+    );
+    const back = page.getByRole('link', { name: 'Back to skill map' });
+    await expect(back).toHaveAttribute('href', returnTo);
+    await page.getByRole('radio', { name: 'es', exact: true }).check();
+    await page
+      .getByRole('button', { name: 'Submit answer', exact: true })
+      .click();
+    await expect(back).toHaveAttribute('href', returnTo);
+    const feedback = page.getByRole('region', { name: 'Practice feedback' });
+    await feedback.getByText('Try this question again (assisted)').click();
+    await feedback.getByRole('radio', { name: 'suis', exact: true }).check();
+    await feedback
+      .getByRole('button', { name: 'Submit assisted retry' })
+      .click();
+    await expect(back).toHaveAttribute('href', returnTo);
+    await feedback.getByText('Report a content issue', { exact: true }).click();
+    await feedback.getByRole('button', { name: 'Send report' }).click();
+    await expect(page.getByRole('status')).toContainText('Report saved');
+    await expect(back).toHaveAttribute('href', returnTo);
+    await page.goto(
+      `${base}/app/learn/fr/lesson/fr-a1-001?returnTo=${encodeURIComponent(returnTo)}`
+    );
+    await page.getByText('Report a content issue', { exact: true }).click();
+    await page.getByRole('button', { name: 'Send report' }).click();
+    await expect(page.getByRole('status')).toContainText('Report saved');
+    await expect(back).toHaveAttribute('href', returnTo);
+  } finally {
+    await context.close();
+  }
+});
+
+test('opens a dashboard topic in its language when another language sorts first', async ({
+  page,
+  context
+}) => {
+  const userId = await signIn(page, context);
+  await seedSession(userId, 'dashboard-map-session');
+  await withDatabase((client) =>
+    client.execute({
+      sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('dashboard-en', ?, 'en', 'A1', 'en')",
+      args: [userId]
+    })
+  );
+  try {
+    await page.goto(`${base}/app`);
+    await page
+      .getByRole('region', { name: 'FR dashboard' })
+      .getByRole('link', { name: 'Synthetic exercise lesson', exact: true })
+      .click();
+    await expect(page).toHaveURL(/\/app\/map\?language=fr&skill=fr-a1-001/u);
+    await expect(
+      page.getByRole('complementary', {
+        name: 'Synthetic exercise lesson details'
+      })
+    ).toBeVisible();
+  } finally {
+    await withDatabase((client) =>
+      client.execute("DELETE FROM enrollments WHERE id = 'dashboard-en'")
+    );
+  }
+});
+
+async function observeMapTimer(page: Page) {
+  await page.evaluate(() => {
+    const schedule = window.setTimeout;
+    const cancel = window.clearTimeout;
+    let timer: number | undefined;
+    window.setTimeout = ((
+      handler: TimerHandler,
+      delay?: number,
+      ...args: unknown[]
+    ) => {
+      const id = schedule(handler, delay, ...args);
+      if (delay === 180) {
+        timer = id;
+        Reflect.set(window, 'mapTimerPending', true);
+      }
+      return id;
+    }) as typeof window.setTimeout;
+    window.clearTimeout = (id) => {
+      if (id === timer) Reflect.set(window, 'mapTimerPending', false);
+      cancel(id);
+    };
+  });
+}
+
+test('does not rewrite the lesson URL after leaving a freshly scrolled map', async ({
+  page,
+  context
+}) => {
+  const userId = await signIn(page, context);
+  await seedSession(userId, 'map-fast-exit-session');
+  await page.goto(`${base}/app/map`);
+  await page.locator('#map-skill-fr-a1-001').click();
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
+  await page.evaluate(() => Reflect.set(window, 'mapDocumentMarker', true));
+  await observeMapTimer(page);
+  await page
+    .getByRole('region', { name: /FR topic map/u })
+    .evaluate((element) => {
+      element.scrollLeft = 50;
+      element.dispatchEvent(new Event('scroll'));
+    });
+  expect(
+    await page.evaluate(() => Reflect.get(window, 'mapTimerPending'))
+  ).toBe(true);
+  await page
+    .getByRole('link', { name: 'Open lesson', exact: true })
+    .evaluate((link: HTMLAnchorElement) => link.click());
+  await page.clock.runFor(50);
+  await expect(
+    page.getByRole('heading', {
+      name: 'Synthetic exercise lesson',
+      exact: true
+    })
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => Reflect.get(window, 'mapDocumentMarker'))
+  ).toBe(true);
+  expect(
+    await page.evaluate(() => Reflect.get(window, 'mapTimerPending'))
+  ).toBe(false);
+  await page.clock.fastForward(500);
+  await expect(page).toHaveURL(/\/app\/learn\/fr\/lesson\/fr-a1-001\?/u);
+});
+
+async function exploreSkillMap(page: Page) {
+  await page.goto(`${base}/app/map`);
+  await expect(
+    page.getByRole('heading', { name: 'Grammar skill map', exact: true })
+  ).toBeVisible();
+  await expect(page.getByText(/^\s*◐\s*Practising\s*$/).first()).toBeVisible();
+  const manual = page
+    .getByRole('button', { name: /Synthetic exercise lesson/ })
+    .first();
+  await manual.focus();
+  await expect(manual).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(
+    page.getByRole('complementary', {
+      name: 'Synthetic exercise lesson details'
+    })
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'List view' })).toBeVisible();
+  await page.getByRole('button', { name: 'List view' }).click();
+  await expect(
+    page.getByRole('list').getByText('Synthetic exercise lesson')
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await manual.click();
+  await page.getByRole('link', { name: 'Open lesson' }).click();
+  await expect(
+    page.getByRole('heading', {
+      name: 'Synthetic exercise lesson',
+      exact: true
+    })
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Back to skill map' }).click();
+  await expect(page).toHaveURL(/\/app\/map\?.*skill=fr-a1-001/);
+  await page.getByRole('button', { name: 'Practise this topic' }).click();
+  await expect(page).toHaveURL(/\/app\/learn\/fr\/lesson\/fr-a1-001\?session=/);
+  await expect(
+    page.getByRole('heading', { name: 'Synthetic exercise lesson' })
+  ).toBeVisible();
+  await page.getByRole('link', { name: 'Back to skill map' }).click();
+}
+
 test('all four exercise formats render and submit without overflow', async ({
   page,
   context
@@ -680,24 +917,7 @@ test('all four exercise formats render and submit without overflow', async ({
   await expect(feedback).toContainText('Assisted retry');
 
   await assessAllActiveSkills(page, userId);
-  await page.goto(`${base}/app/map`);
-  await expect(
-    page.getByRole('heading', { name: 'Grammar skill map', exact: true })
-  ).toBeVisible();
-  await expect(page.getByText(/^\s*◐\s*Practising\s*$/).first()).toBeVisible();
-  const manual = page.getByRole('link', {
-    name: 'Open Synthetic exercise lesson',
-    exact: true
-  });
-  await manual.focus();
-  await expect(manual).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(
-    page.getByRole('heading', {
-      name: 'Synthetic exercise lesson',
-      exact: true
-    })
-  ).toBeVisible();
+  await exploreSkillMap(page);
   await page.goto(`${base}/app/progress`);
   await expect(
     page.getByRole('heading', { name: 'Grammar progress', exact: true })
@@ -726,7 +946,7 @@ test('all four exercise formats render and submit without overflow', async ({
   ).toBeVisible();
   await expect(page.getByText(/^\s*◐\s*Practising\s*$/).first()).toBeVisible();
   await page.getByRole('link', { name: 'Full skill map', exact: true }).click();
-  await expect(page).toHaveURL(`${base}/app/map`);
+  await expect(page).toHaveURL(/\/app\/map(?:\?.*)?$/);
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth
