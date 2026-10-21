@@ -1,0 +1,256 @@
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { createClient, LibsqlError, type Client } from '@libsql/client';
+
+type Recorded = {
+  name: string;
+  attributes?: Record<string, unknown>;
+  set: Record<string, unknown>;
+  setCalls: number;
+  ended: boolean;
+  error?: unknown;
+};
+const recorded = vi.hoisted<Recorded[]>(() => []);
+const failing = vi.hoisted(() => ({ name: '', rejects: false }));
+
+vi.mock('@sentry/sveltekit', () => ({
+  startSpan: (
+    options: { name: string; attributes?: Record<string, unknown> },
+    run: (active: { setAttribute: (k: string, v: unknown) => void }) => unknown
+  ) => {
+    if (options.name === failing.name) {
+      if (failing.rejects) return Promise.reject(new Error('span rejected'));
+      throw new Error('span unavailable');
+    }
+    const entry: Recorded = {
+      name: options.name,
+      attributes: options.attributes,
+      set: {},
+      setCalls: 0,
+      ended: false
+    };
+    recorded.push(entry);
+    const result = run({
+      setAttribute: (key, value) => {
+        entry.set[key] = value;
+        entry.setCalls += 1;
+      }
+    });
+    const finish = () => {
+      entry.ended = true;
+    };
+    Promise.resolve(result).then(finish, (error: unknown) => {
+      entry.error = error;
+      finish();
+    });
+    return result;
+  }
+}));
+
+import {
+  beginRead,
+  beginWrite,
+  executeWrite
+} from '../src/lib/server/db-transactions';
+
+let client: Client;
+beforeEach(async () => {
+  recorded.length = 0;
+  failing.name = '';
+  failing.rejects = false;
+  client = createClient({ url: ':memory:' });
+  await client.execute('CREATE TABLE probe (id INTEGER PRIMARY KEY)');
+});
+afterEach(() => {
+  vi.useRealTimers();
+  client.close();
+});
+
+const named = (name: string) => recorded.filter((entry) => entry.name === name);
+const settle = () => new Promise((resolve) => setImmediate(resolve));
+
+it('times a write transaction and reports its round trips when it commits', async () => {
+  const tx = await beginWrite(client);
+  await tx.execute('INSERT INTO probe (id) VALUES (1)');
+  await tx.execute('INSERT INTO probe (id) VALUES (2)');
+  await tx.execute('SELECT id FROM probe');
+  const [open] = named('db.transaction');
+  expect(open.attributes).toEqual({ write: true });
+  expect(open.ended).toBe(false);
+  await tx.commit();
+  await settle();
+  expect(named('db.transaction')).toHaveLength(1);
+  expect(open.set).toEqual({ round_trips: 3 });
+  expect(open.ended).toBe(true);
+});
+
+const oneTrip: Array<
+  [string, (tx: Awaited<ReturnType<typeof beginWrite>>) => Promise<unknown>]
+> = [
+  [
+    'a batch',
+    (tx) =>
+      tx.batch([
+        'INSERT INTO probe (id) VALUES (1)',
+        'INSERT INTO probe (id) VALUES (2)'
+      ])
+  ],
+  [
+    'a multi-statement script',
+    (tx) =>
+      tx.executeMultiple(
+        'INSERT INTO probe (id) VALUES (1); INSERT INTO probe (id) VALUES (2);'
+      )
+  ]
+];
+
+it.each(oneTrip)('counts %s as one round trip', async (_label, call) => {
+  const tx = await beginWrite(client);
+  await call(tx);
+  await tx.commit();
+  await settle();
+  expect(named('db.transaction')[0].set).toEqual({ round_trips: 1 });
+});
+
+it('marks a read transaction as not a write', async () => {
+  const tx = await beginRead(client);
+  await tx.execute('SELECT id FROM probe');
+  await tx.commit();
+  await settle();
+  const [read] = named('db.transaction');
+  expect(read.attributes).toEqual({ write: false });
+  expect(read.set).toEqual({ round_trips: 1 });
+});
+
+it('ends the transaction span on rollback and on close without commit', async () => {
+  const rolledBack = await beginWrite(client);
+  await rolledBack.execute('INSERT INTO probe (id) VALUES (1)');
+  await rolledBack.rollback();
+  const closed = await beginWrite(client);
+  closed.close();
+  await settle();
+  const [first, second] = named('db.transaction');
+  expect(first.set).toEqual({ round_trips: 1 });
+  expect(first.ended).toBe(true);
+  expect(second.set).toEqual({ round_trips: 0 });
+  expect(second.ended).toBe(true);
+});
+
+it('reports a transaction once when a committed transaction is closed again', async () => {
+  const tx = await beginWrite(client);
+  await tx.execute('INSERT INTO probe (id) VALUES (1)');
+  await tx.commit();
+  tx.close();
+  await settle();
+  const [open] = named('db.transaction');
+  expect(open.setCalls).toBe(1);
+  expect(open.set).toEqual({ round_trips: 1 });
+});
+
+it('records no queue wait when the connection is free', async () => {
+  const tx = await beginWrite(client);
+  await tx.commit();
+  await executeWrite(client, 'INSERT INTO probe (id) VALUES (1)');
+  expect(named('db.queue-wait')).toEqual([]);
+});
+
+it('records a queue wait with the number of waiters already ahead', async () => {
+  const holder = await beginWrite(client);
+  const second = beginRead(client);
+  const third = beginRead(client);
+  await settle();
+  const waits = named('db.queue-wait');
+  expect(waits.map((entry) => entry.attributes)).toEqual([
+    { waiters: 0 },
+    { waiters: 1 }
+  ]);
+  expect(waits.map((entry) => entry.ended)).toEqual([false, false]);
+  await holder.commit();
+  const secondTx = await second;
+  await secondTx.commit();
+  const thirdTx = await third;
+  await thirdTx.commit();
+  await settle();
+  expect(waits.map((entry) => entry.ended)).toEqual([true, true]);
+  expect(named('db.transaction')).toHaveLength(3);
+});
+
+it('records a queue wait for a standalone write and runs it after the holder finishes', async () => {
+  const holder = await beginWrite(client);
+  let ran = false;
+  const standalone = executeWrite(
+    client,
+    'INSERT INTO probe (id) VALUES (1)'
+  ).then(() => {
+    ran = true;
+  });
+  await settle();
+  expect(named('db.queue-wait').map((entry) => entry.attributes)).toEqual([
+    { waiters: 0 }
+  ]);
+  expect(ran).toBe(false);
+  await holder.commit();
+  await standalone;
+  await settle();
+  expect(ran).toBe(true);
+  expect(named('db.queue-wait')[0].ended).toBe(true);
+  expect(
+    (await client.execute('SELECT id FROM probe')).rows.map((r) => r.id)
+  ).toEqual([1]);
+});
+
+it('fails the queue-wait span with the busy error when the wait times out', async () => {
+  vi.useFakeTimers();
+  const holder = await beginWrite(client);
+  const waiting = beginRead(client);
+  const rejection = expect(waiting).rejects.toMatchObject({
+    code: 'SQLITE_BUSY'
+  });
+  await vi.advanceTimersByTimeAsync(5000);
+  await rejection;
+  expect(named('db.queue-wait')).toHaveLength(1);
+  expect(named('db.queue-wait')[0].ended).toBe(true);
+  expect(named('db.queue-wait')[0].error).toMatchObject({
+    code: 'SQLITE_BUSY'
+  });
+  expect(named('db.transaction')).toHaveLength(1);
+  await holder.rollback();
+});
+
+it('releases the connection when the transaction span cannot start', async () => {
+  failing.name = 'db.transaction';
+  await expect(beginWrite(client)).rejects.toThrow('span unavailable');
+  failing.name = '';
+  const tx = await beginWrite(client);
+  await tx.commit();
+}, 1000);
+
+it('releases the connection when the transaction span rejects asynchronously', async () => {
+  failing.name = 'db.transaction';
+  failing.rejects = true;
+  await expect(beginWrite(client)).rejects.toThrow('span rejected');
+  failing.name = '';
+  const tx = await beginWrite(client);
+  await tx.commit();
+}, 1000);
+
+it('ends the span and frees the connection when opening the transaction fails', async () => {
+  vi.spyOn(client, 'transaction').mockRejectedValueOnce(
+    new LibsqlError('cannot open', 'SQLITE_ERROR')
+  );
+  await expect(beginWrite(client)).rejects.toMatchObject({
+    code: 'SQLITE_ERROR'
+  });
+  await settle();
+  const [failed] = named('db.transaction');
+  expect(failed.set).toEqual({ round_trips: 0 });
+  expect(failed.ended).toBe(true);
+  const next = await beginWrite(client);
+  await next.commit();
+}, 1000);
+
+it('passes non-function transaction properties through', async () => {
+  const tx = await beginWrite(client);
+  expect(tx.closed).toBe(false);
+  await tx.commit();
+  expect(tx.closed).toBe(true);
+});
