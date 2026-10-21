@@ -1,0 +1,883 @@
+{
+  "module_id": "pt-b2-module-01",
+  "track": "Portuguese B2",
+  "title": "Subjunctive and conditionals",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b2-001",
+      "title": "Pretérito imperfeito do subjuntivo: forms",
+      "explanation": "The imperfect subjunctive is built from the eles form of the pretérito perfeito: remove -ram and add -sse, -sses, -sse, -ssemos, -ssem. Falaram gives falasse; fizeram gives fizesse; tiveram gives tivesse; foram gives fosse; viram gives visse; disseram gives dissesse; vieram gives viesse. The nós form always carries an accent: falássemos, fizéssemos, tivéssemos, fôssemos. Use it after a past main verb that expresses wish, request or doubt (eu queria que, ela pediu que), and in hypotheses after se. Do not use the indicative imperfect there: say eu queria que ele viesse, not que ele vinha.",
+      "examples": [
+        {
+          "pt": "Eu queria que você viesse mais cedo.",
+          "en": "I wanted you to come earlier."
+        },
+        {
+          "pt": "Ela esperava que nós soubéssemos a resposta.",
+          "en": "She hoped we knew the answer."
+        },
+        {
+          "pt": "Se ele tivesse dinheiro, ajudaria a família.",
+          "en": "If he had money, he would help the family."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-001@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-001@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se eu ___ tempo, eu leria mais. (ter)",
+            "answer": "tivesse",
+            "alternatives": ["tinha", "tenha", "tivesse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele queria que nós ___ cedo. (chegar)",
+            "answer": "chegássemos",
+            "alternatives": ["chegássemos", "chegamos", "cheguemos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se você ___ a verdade, não ficaria bravo. (saber)",
+            "answer": "soubesse",
+            "alternatives": ["sabe", "soubesse", "soube"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q04",
+            "format": "typed-blank",
+            "prompt": "Se ela ___ aqui, ajudaria. (estar)",
+            "answer": "estivesse",
+            "near_misses": ["estava", "estiver"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eu queria que eles ___ mais devagar. (falar)",
+            "answer": "falassem",
+            "near_misses": ["falaram", "falem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q06",
+            "format": "typed-blank",
+            "prompt": "Se nós ___ ricos, compraríamos uma casa. (ser)",
+            "answer": "fôssemos",
+            "near_misses": ["fossemos", "somos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q07",
+            "format": "translation",
+            "prompt": "Translate (imperfect subjunctive): I wanted her to come.",
+            "answer": "Eu queria que ela viesse.",
+            "alternatives": ["Queria que ela viesse."],
+            "near_misses": [
+              "Eu queria que ela vinha.",
+              "Eu queria que ela veio."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q08",
+            "format": "translation",
+            "prompt": "Translate (imperfect subjunctive): She asked that we wait.",
+            "answer": "Ela pediu que esperássemos.",
+            "alternatives": ["Ela pediu que a gente esperasse."],
+            "near_misses": [
+              "Ela pediu que esperamos.",
+              "Ela pediu que esperemos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q09",
+            "format": "translation",
+            "prompt": "Translate (imperfect subjunctive): I hoped she would say yes.",
+            "answer": "Eu esperava que ela dissesse sim.",
+            "alternatives": ["Esperava que ela dissesse sim."],
+            "near_misses": [
+              "Eu esperava que ela disse sim.",
+              "Eu esperava que ela diga sim."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Eu queria que ele vinha mais cedo.",
+            "answer": "Eu queria que ele viesse mais cedo.",
+            "near_misses": [
+              "Eu queria que ele vinha mais cedo.",
+              "Eu queria que ele venha mais cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Se eu fazesse isso, ela ficaria brava.",
+            "answer": "Se eu fizesse isso, ela ficaria brava.",
+            "near_misses": [
+              "Se eu fazesse isso, ela ficaria brava.",
+              "Se eu faço isso, ela ficaria brava."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Se eles teriam mais tempo, viajariam.",
+            "answer": "Se eles tivessem mais tempo, viajariam.",
+            "near_misses": [
+              "Se eles teriam mais tempo, viajariam.",
+              "Se eles têm mais tempo, viajariam."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-001@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela esperava que o filho ___ a verdade. (dizer) (imperfeito do subjuntivo)",
+            "answer": "dissesse",
+            "alternatives": ["disse", "dissesse", "diga"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-001@1:h02",
+            "format": "typed-blank",
+            "prompt": "Se nós ___ mais férias, ficaríamos na praia. (ter) (imperfeito do subjuntivo)",
+            "answer": "tivéssemos",
+            "near_misses": ["tivemos", "tínhamos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-001@1:h03",
+            "format": "translation",
+            "prompt": "Translate (imperfect subjunctive): I wanted them to leave.",
+            "answer": "Eu queria que eles saíssem.",
+            "alternatives": ["Queria que eles saíssem."],
+            "near_misses": [
+              "Eu queria que eles saíram.",
+              "Eu queria que eles saiam."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-002",
+      "title": "Se + imperfeito do subjuntivo with the futuro do pretérito",
+      "explanation": "For a hypothesis that is unreal or unlikely now, put the condition in the imperfect subjunctive after se and the result in the futuro do pretérito: se eu ganhasse na loteria, compraria uma casa. The subjunctive verb is the condition; the conditional verb is the result. In speech, the imperfect indicative often replaces the conditional in the result (eu comprava uma casa), but written Portuguese and this course use the conditional. Do not put the conditional after se: say se eu tivesse tempo, not se eu teria tempo. The two clauses can swap places: eu viajaria mais se tivesse tempo.",
+      "examples": [
+        {
+          "pt": "Se eu ganhasse na loteria, compraria uma casa.",
+          "en": "If I won the lottery, I would buy a house."
+        },
+        {
+          "pt": "Seria mais fácil se você me ajudasse.",
+          "en": "It would be easier if you helped me."
+        },
+        {
+          "pt": "O que você faria se fosse presidente?",
+          "en": "What would you do if you were president?"
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-002@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-002@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se eu ___ mais dinheiro, eu viajaria. (ter)",
+            "answer": "tivesse",
+            "alternatives": ["tivesse", "teria", "tenho"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se ela estudasse, ela ___ no exame. (passar)",
+            "answer": "passaria",
+            "alternatives": ["passou", "passaria", "passava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nós ___ mais se ele cozinhasse. (comer)",
+            "answer": "comeríamos",
+            "alternatives": ["comemos", "comíamos", "comeríamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q04",
+            "format": "typed-blank",
+            "prompt": "Se eu ___ você, eu aceitaria. (ser)",
+            "answer": "fosse",
+            "near_misses": ["era", "sou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eles ___ se tivessem tempo. (vir)",
+            "answer": "viriam",
+            "near_misses": ["vieram", "vinham"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q06",
+            "format": "typed-blank",
+            "prompt": "Se ele ___ mais cedo, pegaria o trem. (acordar)",
+            "answer": "acordasse",
+            "near_misses": ["acordaria", "acordou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q07",
+            "format": "translation",
+            "prompt": "Translate (hypothesis): If I had a car, I would travel more.",
+            "answer": "Se eu tivesse um carro, eu viajaria mais.",
+            "alternatives": [
+              "Se eu tivesse um carro, viajaria mais.",
+              "Se tivesse um carro, eu viajaria mais.",
+              "Eu viajaria mais se tivesse um carro."
+            ],
+            "near_misses": [
+              "Se eu teria um carro, eu viajaria mais.",
+              "Se eu tenho um carro, eu viajaria mais."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q08",
+            "format": "translation",
+            "prompt": "Translate (hypothesis): She would help if she knew.",
+            "answer": "Ela ajudaria se soubesse.",
+            "alternatives": ["Ela ajudaria se ela soubesse."],
+            "near_misses": [
+              "Ela ajudaria se sabe.",
+              "Ela ajudava se soubesse."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q09",
+            "format": "translation",
+            "prompt": "Translate (hypothesis): What would you do if you won?",
+            "answer": "O que você faria se ganhasse?",
+            "alternatives": ["O que você faria se você ganhasse?"],
+            "near_misses": [
+              "O que você faria se ganha?",
+              "O que você fazia se ganhasse?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q10",
+            "format": "correction",
+            "prompt": "Correct the condition: Se eu teria tempo, eu iria à festa.",
+            "answer": "Se eu tivesse tempo, eu iria à festa.",
+            "near_misses": [
+              "Se eu teria tempo, eu iria à festa.",
+              "Se eu tenho tempo, eu iria à festa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb in the result: Se ele estudasse, ele passou.",
+            "answer": "Se ele estudasse, ele passaria.",
+            "near_misses": [
+              "Se ele estudasse, ele passou.",
+              "Se ele estudasse, ele passa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:q12",
+            "format": "correction",
+            "prompt": "Correct the condition: Se nós podíamos, viajaríamos juntos.",
+            "answer": "Se nós pudéssemos, viajaríamos juntos.",
+            "near_misses": [
+              "Se nós podíamos, viajaríamos juntos.",
+              "Se nós podemos, viajaríamos juntos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-002@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se o aluno ___ a lição, o professor ficaria contente. (fazer) (imperfeito do subjuntivo)",
+            "answer": "fizesse",
+            "alternatives": ["faria", "fez", "fizesse"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-002@1:h02",
+            "format": "typed-blank",
+            "prompt": "Elas ___ o trabalho hoje se não estivessem doentes. (terminar) (futuro do pretérito)",
+            "answer": "terminariam",
+            "near_misses": ["terminaram", "terminavam"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-002@1:h03",
+            "format": "translation",
+            "prompt": "Translate (hypothesis): We would sleep more if we lived here.",
+            "answer": "Nós dormiríamos mais se morássemos aqui.",
+            "alternatives": ["Dormiríamos mais se morássemos aqui."],
+            "near_misses": [
+              "Nós dormiríamos mais se moramos aqui.",
+              "Nós dormíamos mais se morássemos aqui."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-003",
+      "title": "Past hypotheses: se tivesse + participle, teria + participle",
+      "explanation": "For what would have happened but did not, use the mais-que-perfeito do subjuntivo after se (tivesse + participle) and the futuro do pretérito composto in the result (teria + participle): se eu tivesse estudado, teria passado. The auxiliary is ter, in the imperfect subjunctive in the condition and in the conditional in the result. The participle does not change with the subject: se elas tivessem chegado, teríamos saído. In speech the result often uses the mais-que-perfeito composto (tinha passado). Do not use the future subjunctive here: say se eu tivesse ido, not se eu for ido.",
+      "examples": [
+        {
+          "pt": "Se eu tivesse estudado, teria passado no exame.",
+          "en": "If I had studied, I would have passed the exam."
+        },
+        {
+          "pt": "Teríamos chegado a tempo se tivéssemos saído antes.",
+          "en": "We would have arrived on time if we had left earlier."
+        },
+        {
+          "pt": "Se ela tivesse sabido, teria ligado.",
+          "en": "If she had known, she would have called."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-003@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-003@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se eu ___ cedo, teria visto o filme. (chegar)",
+            "answer": "tivesse chegado",
+            "alternatives": ["chegasse", "tivesse chegado", "teria chegado"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se você tivesse ligado, eu ___ ido. (ter)",
+            "answer": "teria",
+            "alternatives": ["tinha", "tivesse", "teria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nós ___ perdido o voo se tivéssemos demorado. (ter)",
+            "answer": "teríamos",
+            "alternatives": ["teríamos", "tivemos", "temos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q04",
+            "format": "typed-blank",
+            "prompt": "Se ela ___ estudado, teria passado. (ter)",
+            "answer": "tivesse",
+            "near_misses": ["teria", "tinha"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ comprado a casa se tivesse tido dinheiro. (ter)",
+            "answer": "teria",
+            "near_misses": ["tive", "tivesse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q06",
+            "format": "typed-blank",
+            "prompt": "Se eles tivessem ___, teríamos ficado. (dizer)",
+            "answer": "dito",
+            "near_misses": ["dizido", "disso"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q07",
+            "format": "translation",
+            "prompt": "Translate (past hypothesis): If I had known, I would have helped.",
+            "answer": "Se eu tivesse sabido, teria ajudado.",
+            "alternatives": [
+              "Se tivesse sabido, eu teria ajudado.",
+              "Se eu tivesse sabido, eu teria ajudado.",
+              "Eu teria ajudado se tivesse sabido."
+            ],
+            "near_misses": [
+              "Se eu soubesse, teria ajudado.",
+              "Se eu sabia, teria ajudado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q08",
+            "format": "translation",
+            "prompt": "Translate (past hypothesis): We would have won if we had played better.",
+            "answer": "Nós teríamos ganhado se tivéssemos jogado melhor.",
+            "alternatives": [
+              "Teríamos ganhado se tivéssemos jogado melhor.",
+              "Nós teríamos ganho se tivéssemos jogado melhor.",
+              "Teríamos ganho se tivéssemos jogado melhor."
+            ],
+            "near_misses": [
+              "Nós ganharíamos se tivéssemos jogado melhor.",
+              "Nós teríamos ganhado se jogássemos melhor."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q09",
+            "format": "translation",
+            "prompt": "Translate (past hypothesis): She would have come if you had invited her.",
+            "answer": "Ela teria vindo se você a tivesse convidado.",
+            "alternatives": [
+              "Ela teria vindo se você tivesse convidado ela.",
+              "Ela teria vindo se você tivesse convidado."
+            ],
+            "near_misses": [
+              "Ela vinha se você a tivesse convidado.",
+              "Ela teria vindo se você a convidasse."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q10",
+            "format": "correction",
+            "prompt": "Correct the condition: Se eu estudasse mais ontem, teria passado.",
+            "answer": "Se eu tivesse estudado mais ontem, teria passado.",
+            "near_misses": [
+              "Se eu estudasse mais ontem, teria passado.",
+              "Se eu estudo mais ontem, teria passado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q11",
+            "format": "correction",
+            "prompt": "Correct the result: Se ela tivesse chegado, ela ia ter visto o filme.",
+            "answer": "Se ela tivesse chegado, ela teria visto o filme.",
+            "near_misses": [
+              "Se ela tivesse chegado, ela ia ter visto o filme.",
+              "Se ela tivesse chegado, ela verá o filme."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:q12",
+            "format": "correction",
+            "prompt": "Correct the auxiliary: Se nós havíamos saído antes, teríamos chegado.",
+            "answer": "Se nós tivéssemos saído antes, teríamos chegado.",
+            "near_misses": [
+              "Se nós havíamos saído antes, teríamos chegado.",
+              "Se nós saímos antes, teríamos chegado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-003@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se eles ___ avisado, nós teríamos esperado. (ter) (mais-que-perfeito do subjuntivo)",
+            "answer": "tivessem",
+            "alternatives": ["tivessem", "teriam", "tinham"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-003@1:h02",
+            "format": "typed-blank",
+            "prompt": "Se o time tivesse ___ mais, teria vencido. (treinar) (mais-que-perfeito do subjuntivo)",
+            "answer": "treinado",
+            "near_misses": ["treinar", "treinando"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-003@1:h03",
+            "format": "translation",
+            "prompt": "Translate (past hypothesis): If you had asked, I would have told you.",
+            "answer": "Se você tivesse perguntado, eu teria contado.",
+            "alternatives": [
+              "Se tivesse perguntado, eu teria contado.",
+              "Se você tivesse perguntado, teria contado."
+            ],
+            "near_misses": [
+              "Se você perguntasse, eu teria contado.",
+              "Se você perguntava, eu teria contado."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-004",
+      "title": "Pretérito perfeito composto do subjuntivo: tenha + participle",
+      "explanation": "The perfect subjunctive is tenha, tenhas, tenha, tenhamos, tenham + participle. It places a completed event in the past after a main verb in the present that expresses doubt, emotion or opinion: duvido que ele tenha chegado, fico feliz que vocês tenham vindo, é possível que ela tenha esquecido. It contrasts with the imperfect subjunctive, which follows a past main verb (eu duvidava que ele chegasse). It also appears after talvez and espero que when the event is already finished. Do not use the perfeito indicative after these verbs: say duvido que ele tenha chegado, not duvido que ele chegou.",
+      "examples": [
+        {
+          "pt": "Duvido que ele tenha chegado.",
+          "en": "I doubt that he has arrived."
+        },
+        {
+          "pt": "Fico feliz que vocês tenham vindo.",
+          "en": "I am glad that you came."
+        },
+        {
+          "pt": "É possível que ela tenha esquecido a data.",
+          "en": "It is possible that she forgot the date."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-004@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-004@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Duvido que eles ___ a notícia. (receber)",
+            "answer": "tenham recebido",
+            "alternatives": ["receberam", "recebessem", "tenham recebido"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Espero que você ___ bem. (dormir)",
+            "answer": "tenha dormido",
+            "alternatives": ["tenha dormido", "dormiu", "dorme"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Não acho que ela ___ o livro ainda. (ler)",
+            "answer": "tenha lido",
+            "alternatives": ["leu", "tenha lido", "lesse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q04",
+            "format": "typed-blank",
+            "prompt": "É possível que ele ___ o ônibus. (perder)",
+            "answer": "tenha perdido",
+            "near_misses": ["perdeu", "perca"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q05",
+            "format": "typed-blank",
+            "prompt": "Tomara que vocês ___ chegado bem. (ter)",
+            "answer": "tenham",
+            "near_misses": ["têm", "tiveram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q06",
+            "format": "typed-blank",
+            "prompt": "Estou contente que você ___ passado no exame. (ter)",
+            "answer": "tenha",
+            "near_misses": ["tem", "teve"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q07",
+            "format": "translation",
+            "prompt": "Translate (perfect subjunctive): I doubt she has called.",
+            "answer": "Duvido que ela tenha ligado.",
+            "alternatives": ["Eu duvido que ela tenha ligado."],
+            "near_misses": ["Duvido que ela ligou.", "Duvido que ela liga."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q08",
+            "format": "translation",
+            "prompt": "Translate (perfect subjunctive): I am glad that you have come.",
+            "answer": "Fico feliz que você tenha vindo.",
+            "alternatives": [
+              "Estou feliz que você tenha vindo.",
+              "Fico contente que você tenha vindo."
+            ],
+            "near_misses": [
+              "Fico feliz que você veio.",
+              "Fico feliz que você vem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q09",
+            "format": "translation",
+            "prompt": "Translate (perfect subjunctive): It is possible that they forgot.",
+            "answer": "É possível que eles tenham esquecido.",
+            "alternatives": ["Pode ser que eles tenham esquecido."],
+            "near_misses": [
+              "É possível que eles esqueceram.",
+              "É possível que eles esqueçam."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Duvido que ele chegou ontem.",
+            "answer": "Duvido que ele tenha chegado ontem.",
+            "near_misses": [
+              "Duvido que ele chegou ontem.",
+              "Duvido que ele chegue ontem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Espero que vocês gostaram do jantar.",
+            "answer": "Espero que vocês tenham gostado do jantar.",
+            "near_misses": [
+              "Espero que vocês gostaram do jantar.",
+              "Espero que vocês gostem do jantar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Não acho que ela terminou o trabalho.",
+            "answer": "Não acho que ela tenha terminado o trabalho.",
+            "near_misses": [
+              "Não acho que ela terminou o trabalho.",
+              "Não acho que ela termine o trabalho."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-004@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Lamento que eles ___ a reunião. (cancelar) (perfeito composto do subjuntivo)",
+            "answer": "tenham cancelado",
+            "alternatives": ["cancelaram", "tenham cancelado", "cancelassem"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-004@1:h02",
+            "format": "typed-blank",
+            "prompt": "Talvez o carteiro ___ a carta ontem. (trazer) (perfeito composto do subjuntivo)",
+            "answer": "tenha trazido",
+            "near_misses": ["trouxe", "traga"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-004@1:h03",
+            "format": "translation",
+            "prompt": "Translate (perfect subjunctive): I do not think he has understood.",
+            "answer": "Não acho que ele tenha entendido.",
+            "alternatives": ["Eu não acho que ele tenha entendido."],
+            "near_misses": [
+              "Não acho que ele entendeu.",
+              "Não acho que ele entende."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-005",
+      "title": "Indicative or subjunctive: opinion, certainty and doubt",
+      "explanation": "After verbs and expressions of certainty and fact use the indicative: acho que, tenho certeza de que, é verdade que, sei que. After doubt, denial and negated opinion use the subjunctive: duvido que, não acho que, não é verdade que, nego que. The same verb can switch mood with the meaning: acho que ele vem (indicative, I believe it) but não acho que ele venha (subjunctive, I doubt it). Talvez, possivelmente and quem sabe also take the subjunctive. The question form do you think that follows the same rule: você acha que ele vem? is neutral, while você não acha que ele venha? expects doubt.",
+      "examples": [
+        {
+          "pt": "Acho que ela vem hoje.",
+          "en": "I think she is coming today."
+        },
+        {
+          "pt": "Não acho que ela venha hoje.",
+          "en": "I do not think she is coming today."
+        },
+        {
+          "pt": "Tenho certeza de que ele sabe a resposta.",
+          "en": "I am sure he knows the answer."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-005@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b2-005@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Tenho certeza de que ele ___ aqui. (estar)",
+            "answer": "está",
+            "alternatives": ["está", "esteja", "estivesse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Não acho que ela ___ a resposta. (saber)",
+            "answer": "saiba",
+            "alternatives": ["sabe", "saiba", "soube"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: É verdade que vocês ___ casados? (ser)",
+            "answer": "são",
+            "alternatives": ["sejam", "fossem", "são"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q04",
+            "format": "typed-blank",
+            "prompt": "Duvido que o time ___ o jogo. (ganhar)",
+            "answer": "ganhe",
+            "near_misses": ["ganha", "ganhou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q05",
+            "format": "typed-blank",
+            "prompt": "Sei que ele ___ muito. (trabalhar)",
+            "answer": "trabalha",
+            "near_misses": ["trabalhe", "trabalhasse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q06",
+            "format": "typed-blank",
+            "prompt": "Talvez eles ___ amanhã. (vir)",
+            "answer": "venham",
+            "near_misses": ["vêm", "vieram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q07",
+            "format": "translation",
+            "prompt": "Translate (opinion, certainty): I know that she lives here.",
+            "answer": "Sei que ela mora aqui.",
+            "alternatives": ["Eu sei que ela mora aqui."],
+            "near_misses": [
+              "Sei que ela more aqui.",
+              "Sei que ela morasse aqui."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q08",
+            "format": "translation",
+            "prompt": "Translate (doubt): I do not think she lives here.",
+            "answer": "Não acho que ela more aqui.",
+            "alternatives": ["Eu não acho que ela more aqui."],
+            "near_misses": [
+              "Não acho que ela mora aqui.",
+              "Não acho que ela morava aqui."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q09",
+            "format": "translation",
+            "prompt": "Translate (doubt): Maybe he knows the way.",
+            "answer": "Talvez ele saiba o caminho.",
+            "alternatives": ["Talvez ele saiba como chegar."],
+            "near_misses": [
+              "Talvez ele sabe o caminho.",
+              "Talvez ele soube o caminho."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q10",
+            "format": "correction",
+            "prompt": "Correct the mood: Não acho que ele sabe a resposta.",
+            "answer": "Não acho que ele saiba a resposta.",
+            "near_misses": [
+              "Não acho que ele sabe a resposta.",
+              "Não acho que ele soube a resposta."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q11",
+            "format": "correction",
+            "prompt": "Correct the mood: Tenho certeza de que ela esteja em casa.",
+            "answer": "Tenho certeza de que ela está em casa.",
+            "near_misses": [
+              "Tenho certeza de que ela esteja em casa.",
+              "Tenho certeza de que ela estivesse em casa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:q12",
+            "format": "correction",
+            "prompt": "Correct the mood: Talvez ela chega mais tarde.",
+            "answer": "Talvez ela chegue mais tarde.",
+            "near_misses": [
+              "Talvez ela chega mais tarde.",
+              "Talvez ela chegou mais tarde."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b2-005@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Não é verdade que o filme ___ ruim. (ser) (modo correto)",
+            "answer": "seja",
+            "alternatives": ["é", "foi", "seja"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-005@1:h02",
+            "format": "typed-blank",
+            "prompt": "Quem sabe nós ___ a casa no ano que vem. (comprar) (modo correto)",
+            "answer": "compremos",
+            "near_misses": ["compramos", "compraremos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b2-005@1:h03",
+            "format": "translation",
+            "prompt": "Translate (opinion, certainty): It is true that they won.",
+            "answer": "É verdade que eles ganharam.",
+            "alternatives": ["É verdade que elas ganharam."],
+            "near_misses": [
+              "É verdade que eles ganhem.",
+              "É verdade que eles ganhassem."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}
