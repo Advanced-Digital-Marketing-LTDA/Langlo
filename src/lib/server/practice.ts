@@ -132,8 +132,9 @@ export async function startPractice(
 
 /**
  * Finish every unfinished practice of the learner in a language and start a
- * fresh one. Answers already given stay in the history; finishing is the same
- * as pressing Finish session.
+ * fresh one. Finishing is the same as pressing Finish session: answers that
+ * were rated or not correct stay in the history, and correct answers not yet
+ * rated are dropped.
  */
 export async function startPracticeOver(
   client: Client,

@@ -521,6 +521,18 @@ describe('practice sessions', () => {
     );
     // Another learner is never handed this session.
     await expect(unfinishedPractice(client, other, 'fr')).resolves.toBeNull();
+    // Another learner starting or starting over never touches this session.
+    await startPractice(client, other, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await startPracticeOver(client, other, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    expect((await practiceSummary(client, learner, first.id)).state).toBe(
+      'active'
+    );
     expect(await unfinishedPractice(client, learner, 'fr')).toEqual({
       id: first.id,
       answered: 0

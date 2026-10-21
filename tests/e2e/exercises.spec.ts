@@ -1101,12 +1101,19 @@ test('keeps the typed answer when the server cannot be reached and records it on
   ).toBeEnabled();
   const offline = (route: Route) =>
     route.request().method() === 'POST' ? route.abort() : route.continue();
+  const submissionKeys: (string | null)[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes('?/answer'))
+      submissionKeys.push(
+        new URLSearchParams(request.postData() ?? '').get('submissionKey')
+      );
+  });
   await page.route('**/app/learn/fr/lesson/fr-a1-001?/answer**', offline);
   await page
     .getByRole('button', { name: 'Submit answer', exact: true })
     .click();
   await expect(page.getByRole('alert')).toContainText(
-    'Could not reach the server. Your answer was not saved.'
+    'Could not confirm the server received your answer.'
   );
   await expect(answer).toBeChecked();
   await expect(page.getByText('Page unavailable')).toHaveCount(0);
@@ -1122,6 +1129,10 @@ test('keeps the typed answer when the server cannot be reached and records it on
   expect(await storedAnswers(userId, studySessionId)).toEqual([
     expect.objectContaining({ question_id: 'fr-a1-001@1:q1', answer: 'suis' })
   ]);
+  // The retry is the same submission, not a new one.
+  expect(submissionKeys).toHaveLength(2);
+  expect(submissionKeys[0]).toBeTruthy();
+  expect(submissionKeys[1]).toBe(submissionKeys[0]);
 });
 
 test('continues the unfinished practice from the practice page', async ({
@@ -1287,7 +1298,7 @@ test('keeps the rating buttons when the server cannot be reached and records the
   await page.route('**/app/learn/fr/lesson/fr-a1-001?/rate**', offline);
   await good.click();
   await expect(feedback.getByRole('alert')).toContainText(
-    'Could not reach the server. Your rating was not saved.'
+    'Could not confirm the server received your rating.'
   );
   await expect(good).toBeEnabled();
   await expect(page.getByText('Page unavailable')).toHaveCount(0);

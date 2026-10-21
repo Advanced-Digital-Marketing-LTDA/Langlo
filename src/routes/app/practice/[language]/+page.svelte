@@ -30,8 +30,9 @@
   <details>
     <summary>Start over</summary>
     <p>
-      This finishes your current practice and begins a new one. Your answers so
-      far stay in your history.
+      This finishes your current practice and begins a new one. Answers you
+      rated or got wrong stay in your history; correct answers you have not
+      rated yet are not kept.
     </p>
     <form method="POST" action="?/startOver">
       <input type="hidden" name="submissionKey" value={data.submissionKey} />

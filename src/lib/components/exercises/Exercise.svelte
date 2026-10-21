@@ -54,7 +54,7 @@
     problem ||
       failure ||
       (unreachable
-        ? 'Could not reach the server. Your answer was not saved. Try again.'
+        ? 'Could not confirm the server received your answer. Try again.'
         : '')
   );
   const legendId = $derived(`instruction-${question.id}`);

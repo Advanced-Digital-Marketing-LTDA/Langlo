@@ -10,10 +10,17 @@
 
 ## Behavior evidence
 
-- **Unit/route:** `tests/learner-journeys.test.ts` (continue, pause, finish then new, other learner, Start over with an older unfinished session, repeated tap), `tests/progress-routes.test.ts` (map continues the session), `tests/practice-render.test.ts` and `tests/dashboard-render.test.ts` (labels, link, no "Start practice" once started).
-- **Browser:** `tests/e2e/exercises.spec.ts` — the unreachable-server answer test failed before the change (no message, page replaced) and passes after it; the unreachable-server rating test and the continue test pass. Both ran on desktop and mobile profiles.
+- **Unit/route:** `tests/learner-journeys.test.ts` (continue, pause resumes, finish then new, other learner never touched by start or Start over, Start over with older unfinished sessions, repeated tap, replay of a finished Start over), `tests/progress-routes.test.ts` (map continues the session), `tests/practice-render.test.ts` and `tests/dashboard-render.test.ts` (labels, link, no "Start practice" once started).
+- **Browser (local, desktop and mobile profiles):** `tests/e2e/exercises.spec.ts` — the unreachable-server answer test (typed answer kept, retry sends the same submission key and stores one answer), the unreachable-server rating test, and the continue test pass.
+- **Red before the change (recorded):** with `Exercise.svelte` reverted, the answer test failed on desktop: `Error: expect(locator).toContainText(expected) failed — Locator: getByRole('alert') — element(s) not found`; the page had been replaced by the error page.
 - Existing tests that assumed every start creates a new session now finish the fixture's seeded unfinished practice first (`tests/learner-journeys.test.ts`, `tests/progress-routes.test.ts`, `tests/grammar-retention.integration.test.ts`).
+- Start over finishes the practice exactly as Finish session does, so correct answers not yet rated are dropped (`discardUnratedPracticeAnswers`); the page says so.
 
-## Checks run
+## Checks run locally
 
-Only the files above, with Node 22.22.0 (the repo asks for 24.19; dependencies installed without the lockfile because `npm ci` rejects it on this Node). `svelte-check`, `eslint` on the changed files and `prettier --check` pass. The full unit and e2e suites were not run here; CI runs them.
+`svelte-check`, `eslint`, `prettier --check`, the unit files above and the three e2e tests above, on Node 22.22.0 with dependencies installed without the lockfile (`npm ci` rejects it on this Node).
+
+## Pending acceptance
+
+- A run on the required toolchain (Node 24.19.0, npm 11.9.0, `npm ci`) with the full command list from AGENTS.md (`check`, `lint`, `format:check`, `test`, `test:property`, `build`, `test:e2e`) and its saved output. CI runs the full suite on every push; this was not run locally.
+- Real-deploy confirmation that a redeploy mid-answer keeps the typed answer (only simulated here by aborting the request).

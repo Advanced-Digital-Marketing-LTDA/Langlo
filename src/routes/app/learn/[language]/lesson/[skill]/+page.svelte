@@ -215,8 +215,7 @@
               </fieldset>
               {#if rateUnreachable}
                 <p role="alert">
-                  Could not reach the server. Your rating was not saved. Try
-                  again.
+                  Could not confirm the server received your rating. Try again.
                 </p>
               {/if}
             </form>
