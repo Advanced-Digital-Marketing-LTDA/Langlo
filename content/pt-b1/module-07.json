@@ -217,8 +217,8 @@
             "id": "pt-b1-032@1:q05",
             "format": "typed-blank",
             "prompt": "Hoje faz ___ frio quanto ontem. (igualdade)",
-            "answer": "tanto",
-            "near_misses": ["tão", "mais"],
+            "answer": "tão",
+            "near_misses": ["tanto", "mais"],
             "holdout": false
           },
           {
