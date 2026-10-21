@@ -1,0 +1,32 @@
+# Remote read transactions skip the connection queue (step B of the database performance plan)
+
+**Scope:** read transactions on remote libSQL (Turso) clients only. Writes, local file and in-memory databases, the 5 s `SQLITE_BUSY` wait, schema and queries are unchanged. This records local validation; it is not a latency result. The effect is checked in GlitchTip after deploy (`db.queue-wait` and the page timings).
+
+## Why
+
+GlitchTip averages after PR 138: `db.queue-wait` 2.32 s of a 2.86 s POST lesson, `db.transaction` 751 ms, one Turso call about 127 ms. The dev Turso probe (2026-10-21, `notes/db-performance/plan.md`) showed that a read transaction opens beside an open write transaction on the same client and sees the earlier snapshot, so serializing reads there is not needed. Local file and in-memory databases keep the queue because they share one connection.
+
+## Changes
+
+- `db-transactions.ts`: `markRemoteClient(client)` records a client as remote. `holdConnection` does not acquire the queue slot for a read transaction on a marked client (no `db.queue-wait`; the `db.transaction` span with `write: false` is still recorded). Write transactions and `executeWrite` still queue on every client.
+- `db/app.ts`: `initializeDatabase` marks the client when the URL scheme is `libsql`, `http(s)` or `ws(s)`. Any other URL (file, `:memory:`) stays unmarked and queues as before.
+
+## Red and green
+
+`tests/db-transactions-remote-reads.test.ts` (5 tests, remote URLs use a stub client; no network). Red, before the change (2 failed, 3 passed):
+
+```
+ × opens a read transaction beside an open write transaction on a remote database
+ × does not make a write wait for an open read on a remote database
+AssertionError: expected false to be true // Object.is equality
+```
+
+Green, after: 5 passed; with `tests/db-transactions-spans.test.ts`, `tests/app-database-shared.test.ts` and `tests/app-database.test.ts`: `Test Files 4 passed (4)`, `Tests 30 passed (30)`.
+
+Mutations that make the new tests fail: dropping the `markRemoteClient` call in `app.ts` (2 fail), removing the remote check in `holdConnection` (2 fail), letting writes bypass too (`still queues a second write behind an open write` fails).
+
+`npm run check`: 0 errors, 0 warnings. The full suite is left to CI.
+
+## Not covered here
+
+Remote Turso behavior beyond the dev probe (waits over 2 s, many concurrent streams) is unmeasured. A read that races a write sees the snapshot from when it started, as before for remote clients opened per request.

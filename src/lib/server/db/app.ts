@@ -1,5 +1,8 @@
 import { createClient } from '@libsql/client';
 import type { RuntimeConfig } from '../config.ts';
+import { markRemoteClient } from '../db-transactions.ts';
+
+const remoteUrl = /^(libsql|https?|wss?):/i;
 
 const databases = new Map<string, ReturnType<typeof initializeDatabase>>();
 
@@ -10,6 +13,7 @@ async function initializeDatabase(databaseUrl: string, databaseToken?: string) {
     // A PRAGMA configures only the borrowed connection; this covers the pool.
     ...(databaseUrl.startsWith('file:') ? { timeout: 5000 } : {})
   });
+  if (remoteUrl.test(databaseUrl)) markRemoteClient(client);
   try {
     await client.execute('PRAGMA foreign_keys = ON');
     const [{ drizzle }, schema] = await Promise.all([
