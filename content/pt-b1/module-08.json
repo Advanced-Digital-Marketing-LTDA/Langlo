@@ -784,7 +784,7 @@
             "format": "multiple-choice",
             "prompt": "Choose the passive: As janelas ___ abertas pelo vento.",
             "answer": "foram",
-            "alternatives": ["foram", "foi", "são"],
+            "alternatives": ["foram", "foi", "é"],
             "holdout": false
           },
           {

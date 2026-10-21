@@ -984,7 +984,6 @@
             "format": "translation",
             "prompt": "Translate (reflexive): She gets up early.",
             "answer": "Ela se levanta cedo.",
-            "alternatives": ["Ela acorda cedo."],
             "near_misses": ["Ela levanta se cedo.", "Ela me levanta cedo."],
             "holdout": false
           },
@@ -1008,10 +1007,7 @@
             "format": "translation",
             "prompt": "Translate (pronominal): I remember her name.",
             "answer": "Eu me lembro do nome dela.",
-            "alternatives": [
-              "Eu lembro do nome dela.",
-              "Lembro-me do nome dela."
-            ],
+            "alternatives": ["Lembro-me do nome dela."],
             "near_misses": [
               "Eu lembro-me do nome dela.",
               "Eu me lembro o nome dela."
