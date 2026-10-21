@@ -13,6 +13,7 @@ import {
   type TestInfo
 } from '@playwright/test';
 import { test } from './coverage-fixture';
+import { readFixtureException } from './fixture-error-diagnostics';
 import { importContent } from '../../src/lib/server/content-import';
 import { approvedPackage } from '../fixtures/content-package';
 import {
@@ -28,6 +29,8 @@ let base = '';
 let fixtureRoot = '';
 let dbFile = '';
 let learnerCookies: Awaited<ReturnType<BrowserContext['cookies']>> | undefined;
+let serverExceptions: NonNullable<ReturnType<typeof readFixtureException>>[] =
+  [];
 
 async function withDatabase<T>(work: (client: Client) => Promise<T>) {
   const client = createClient({ url: `file://${dbFile}` });
@@ -42,6 +45,7 @@ async function withDatabase<T>(work: (client: Client) => Promise<T>) {
 
 test.beforeAll(async () => {
   learnerCookies = undefined;
+  serverExceptions = [];
   const port = await reservePort();
   base = `http://127.0.0.1:${port}`;
   ({ fixtureRoot, dbFile } = createFixtureDatabase());
@@ -115,16 +119,34 @@ test.beforeAll(async () => {
   await withDatabase((client) =>
     client.execute("UPDATE skills SET retired_at = 1 WHERE id = 'fr-articles'")
   );
-  server = spawn(process.execPath, ['build'], {
-    env: {
-      ...env,
-      HOST: '127.0.0.1',
-      PORT: String(port),
-      ORIGIN: base,
-      PROTOCOL_HEADER: 'x-forwarded-proto'
-    },
-    stdio: 'ignore'
-  });
+  server = spawn(
+    process.execPath,
+    ['--import', './tests/e2e/fixture-error-diagnostics.ts', 'build'],
+    {
+      env: {
+        ...env,
+        LANGLO_FIXTURE_ERROR_CAPTURE: '1',
+        HOST: '127.0.0.1',
+        PORT: String(port),
+        ORIGIN: base,
+        PROTOCOL_HEADER: 'x-forwarded-proto'
+      },
+      stdio: ['ignore', 'pipe', 'pipe']
+    }
+  );
+  for (const stream of [server.stdout, server.stderr]) {
+    let pending = '';
+    stream?.setEncoding('utf8');
+    stream?.on('data', (chunk: string) => {
+      pending = (pending + chunk).slice(-8192);
+      let end: number;
+      while ((end = pending.indexOf('\n')) !== -1) {
+        const safe = readFixtureException(pending.slice(0, end));
+        if (safe && serverExceptions.length < 10) serverExceptions.push(safe);
+        pending = pending.slice(end + 1);
+      }
+    });
+  }
   await waitForLive(base);
 });
 
@@ -624,6 +646,7 @@ async function answerExercise(
   );
   await expect(submit).toBeEnabled();
   expect(await storedAnswers(userId)).toHaveLength(index);
+  serverExceptions = [];
   const diagnostics = await observeAnswerSubmission(page, submit);
   const persistence: { ms: number; count: number }[] = [];
   const stages: { ms: number; event: string }[] = [];
@@ -657,6 +680,7 @@ async function answerExercise(
         transport: diagnostics.transport,
         persistence,
         stages,
+        serverExceptions,
         ...browser
       })
     );

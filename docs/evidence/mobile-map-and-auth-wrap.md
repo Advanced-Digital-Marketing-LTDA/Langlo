@@ -115,3 +115,47 @@ checks passed. The diagnostic diff changes only this evidence file and
 baseline evidence; those suites were not rerun for this test-only observation.
 Passive instrumentation can affect timing, so a green diagnostic CI run alone
 will not prove the intermittent failure fixed.
+
+## Local fixture exception capture proposal
+
+Diagnostic CI run 39595870199 at `98888c3` failed mobile question 1 with a correctly
+focused/enabled keyboard submission: POST began at 282ms, returned HTTP 500 at
+307ms, and the stored count stayed zero. This rules out lost focus for that
+failure. The exception itself is unknown: the exercise fixture discarded server
+stdio, and the production error hook intentionally projects only an unexpected
+error category.
+
+Proposed test-only follow-up preloads a fixture observer into the existing
+exercise server. It observes Sentry's original exception before the application
+sanitizer, without replacing the application hook, initializing a transport or
+configuring a DSN. It runs only with the explicit fixture flag, test environment,
+local file database and capture mail transport. Output is a closed projection of
+known error names, database codes and known function names; exception messages,
+paths, arbitrary codes, cookies, headers, tokens and values are discarded.
+Causes are limited to three and exception records to ten. Piped stdout/stderr
+have an 8KiB line buffer and only recognized, revalidated structured exception
+records enter the answer diagnostics. Other output is discarded. Records reset
+before each answer. Assertions, keyboard actions, polling and timeouts remain
+unchanged. No application or production configuration files change.
+
+Observed red: new sanitization tests failed before the helper existed. After
+implementation, three focused unit tests passed, including cyclic causes,
+malformed output and credential-bearing names/messages/stack paths. A temporary
+fixture-only trigger deliberately rejected attempt inserts. The unchanged
+persistence assertion failed (expected 1, received 0); POST returned HTTP 500 and
+the console captured `LibsqlError / SQLITE_CONSTRAINT`, caused by
+`SqliteError / SQLITE_CONSTRAINT_TRIGGER`, with only fixed function names.
+The private marker in the trigger message was absent from console output. This
+validates capture; it does not identify the actual CI exception. The temporary
+probe was removed. A standalone no-DSN probe also confirmed exception observation.
+
+The remaining hypothesis is an exception in the answer write/transaction or
+constraint path; client focus is excluded for the captured CI failure. The
+specific code must be observed before proposing an application fix. Publishing
+this follow-up requires separate approval.
+
+Local validation: desktop/mobile four-format journeys both passed (2 passed,
+43.2 seconds); three sanitizer tests passed; type checking found zero errors or
+warnings, and full lint/format checks passed. Unit checks cover the final async
+stack-frame matcher; resetting captured records is local test bookkeeping. No
+full unit/property/build rerun was needed for this test-only capture proposal.
