@@ -82,7 +82,6 @@
             "format": "translation",
             "prompt": "Translate (informal we): We live in São Paulo.",
             "answer": "A gente mora em São Paulo.",
-            "alternatives": ["Nós moramos em São Paulo."],
             "near_misses": [
               "A gente moramos em São Paulo.",
               "A gente moram em São Paulo."
@@ -171,10 +170,6 @@
             "format": "translation",
             "prompt": "Translate (informal we): We want to eat now.",
             "answer": "A gente quer comer agora.",
-            "alternatives": [
-              "Nós queremos comer agora.",
-              "A gente quer almoçar agora."
-            ],
             "near_misses": [
               "A gente queremos comer agora.",
               "A gente querem comer agora."
@@ -260,7 +255,7 @@
             "format": "translation",
             "prompt": "Translate (written form): I saw her.",
             "answer": "Eu a vi.",
-            "alternatives": ["Vi-a.", "Eu vi ela."],
+            "alternatives": ["Vi-a."],
             "near_misses": ["Eu lhe vi.", "Eu se vi."],
             "holdout": false
           },
@@ -269,7 +264,7 @@
             "format": "translation",
             "prompt": "Translate (written form): She wants to see them.",
             "answer": "Ela quer vê-los.",
-            "alternatives": ["Ela quer vê-las.", "Ela quer ver eles."],
+            "alternatives": ["Ela quer vê-las."],
             "near_misses": ["Ela quer vê-lhes.", "Ela quer ver-los."],
             "holdout": false
           },
@@ -278,7 +273,7 @@
             "format": "translation",
             "prompt": "Translate (everyday speech): I invited him.",
             "answer": "Eu convidei ele.",
-            "alternatives": ["Eu o convidei.", "Convidei-o."],
+            "alternatives": ["Eu o convidei."],
             "near_misses": ["Eu convidei lhe.", "Eu convidei se."],
             "holdout": false
           },
@@ -335,7 +330,7 @@
             "format": "translation",
             "prompt": "Translate (written form): We saw them yesterday.",
             "answer": "Nós os vimos ontem.",
-            "alternatives": ["Vimo-los ontem.", "Nós vimos eles ontem."],
+            "alternatives": ["Vimo-los ontem."],
             "near_misses": ["Nós lhes vimos ontem.", "Nós se vimos ontem."],
             "holdout": true
           }
@@ -418,7 +413,6 @@
             "format": "translation",
             "prompt": "Translate (everyday speech): I told her the truth.",
             "answer": "Eu disse a verdade para ela.",
-            "alternatives": ["Eu lhe disse a verdade.", "Disse-lhe a verdade."],
             "near_misses": [
               "Eu disse a verdade ela.",
               "Eu lhe a verdade disse."
@@ -445,10 +439,7 @@
             "format": "translation",
             "prompt": "Translate (written form): I gave them the keys.",
             "answer": "Dei-lhes as chaves.",
-            "alternatives": [
-              "Eu lhes dei as chaves.",
-              "Dei as chaves para eles."
-            ],
+            "alternatives": ["Eu lhes dei as chaves."],
             "near_misses": ["Dei-os as chaves.", "Dei-se as chaves."],
             "holdout": false
           },
@@ -787,7 +778,6 @@
             "format": "translation",
             "prompt": "Translate (formal, written): He told me the truth.",
             "answer": "Disse-me a verdade.",
-            "alternatives": ["Ele me disse a verdade."],
             "near_misses": ["Me disse a verdade.", "Disse a mim verdade."],
             "holdout": false
           },
