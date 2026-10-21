@@ -31,7 +31,7 @@ Green, after: 5 passed; with `tests/db-transactions-spans.test.ts`, `tests/app-d
 
 Mutations that make the new tests fail: dropping the `markRemoteClient` call in `app.ts` (2 fail), removing the remote check in `holdConnection` (2 fail), letting writes bypass too (`still queues a second write behind an open write` fails).
 
-`npm run check`: 0 errors, 0 warnings. The full suite is left to CI.
+Checks from the repo's list (AGENTS.md), run in the cloud container on the final commit: `npm run check` 0 errors, 0 warnings; `npm run lint` clean; `npm run format:check` clean; `npm run build` completes (adapter-node). Run for this change only: the four targeted test files (37 passed). Deferred to CI, which runs them on every push: `npm test` (full suite, too slow here), `npm run test:property`, and `npm run test:e2e` (needs the built server and browsers; it already caught the Node-script import described below).
 
 ## CI follow-up: Node scripts could not load the database module
 
