@@ -40,7 +40,7 @@ afterEach(async () => {
   );
 });
 
-async function migrationsBefore0026() {
+async function portugueseMigrationPrefix(inclusive = false) {
   const directory = await mkdtemp(join(tmpdir(), 'langlo-migrations-'));
   folders.push(directory);
   const journal = JSON.parse(
@@ -50,7 +50,7 @@ async function migrationsBefore0026() {
     (entry: { tag: string }) => entry.tag === '0026_portuguese_tracks'
   );
   if (index < 0) throw new Error('migration 0026 is missing');
-  journal.entries = journal.entries.slice(0, index);
+  journal.entries = journal.entries.slice(0, index + (inclusive ? 1 : 0));
   await mkdir(join(directory, 'meta'));
   await writeFile(
     join(directory, 'meta/_journal.json'),
@@ -67,7 +67,7 @@ async function migrationsBefore0026() {
 async function upgraded() {
   const target = await createDisposableFixture();
   fixtures.push(target);
-  await migrateFixtureDatabase(target, await migrationsBefore0026());
+  await migrateFixtureDatabase(target, await portugueseMigrationPrefix());
   await seedStudy(target);
   const opened = await openFixtureDatabase(target);
   // Dependants that reference skills(id, language) and that seedStudy does not cover.
@@ -95,7 +95,7 @@ async function upgraded() {
       )
     );
   const before = await rows(opened.client);
-  await migrateFixtureDatabase(target);
+  await migrateFixtureDatabase(target, await portugueseMigrationPrefix(true));
   return { ...opened, before, after: await rows(opened.client), rows };
 }
 
@@ -238,7 +238,7 @@ describe('migration 0026 Portuguese tracks', () => {
   it('rolls the whole rebuild back when any later statement fails', async () => {
     const target = await createDisposableFixture();
     fixtures.push(target);
-    await migrateFixtureDatabase(target, await migrationsBefore0026());
+    await migrateFixtureDatabase(target, await portugueseMigrationPrefix());
     await seedStudy(target);
     const { client, close } = await openFixtureDatabase(target);
     try {
@@ -287,7 +287,7 @@ describe('migration 0026 Portuguese tracks', () => {
   it('refuses to run with foreign keys enforced instead of cascading study history away', async () => {
     const target = await createDisposableFixture();
     fixtures.push(target);
-    await migrateFixtureDatabase(target, await migrationsBefore0026());
+    await migrateFixtureDatabase(target, await portugueseMigrationPrefix());
     await seedStudy(target);
     const { client, close } = await openFixtureDatabase(target);
     try {
@@ -322,7 +322,7 @@ describe('migration 0026 Portuguese tracks', () => {
   it('upgrades a populated database through the remote apply path without losing study history', async () => {
     const target = await createDisposableFixture();
     fixtures.push(target);
-    await migrateFixtureDatabase(target, await migrationsBefore0026());
+    await migrateFixtureDatabase(target, await portugueseMigrationPrefix());
     await seedStudy(target);
     const { client, close } = await openFixtureDatabase(target);
     try {
@@ -345,14 +345,20 @@ describe('migration 0026 Portuguese tracks', () => {
       const host = 'remote.example.test';
       const state = await readMigrationState(client, migrations, host);
       expect(state.pending.map((m) => m.tag)).toEqual([
-        '0026_portuguese_tracks'
+        '0026_portuguese_tracks',
+        '0027_peaceful_albert_cleary',
+        '0028_sturdy_talkback',
+        '0029_current_grammar_content',
+        '0030_portuguese_grammar_retention'
       ]);
       const result = await applyRemoteTestPlan(client, migrations, {
         host,
         confirmHost: host,
         planId: state.planId
       });
-      expect(result.applied).toEqual(['0026_portuguese_tracks']);
+      expect(result.applied).toEqual(
+        state.pending.map((migration) => migration.tag)
+      );
       expect(await counts()).toEqual(before);
       expect(before.every((n) => Number(n) > 0)).toBe(true);
       await client.execute(

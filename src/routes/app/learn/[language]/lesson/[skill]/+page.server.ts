@@ -13,6 +13,7 @@ import {
   exerciseFor,
   lessonFor,
   practiceFeedback,
+  ratePracticeAnswer,
   recordAnswer,
   reportLessonIssue
 } from '../../../../../../lib/server/lesson-practice';
@@ -102,6 +103,20 @@ export const actions: Actions = {
           event.params.skill,
           fallbackEvaluator(client, event.locals.config)
         )
+      );
+    } catch (thrown) {
+      const described =
+        thrown instanceof StudyError && describeLearnerError(thrown.code);
+      if (!described) throw thrown;
+      return fail(described.status, { message: described.message });
+    }
+  },
+  rate: async (event) => {
+    const learner = requireLearnerApi(event);
+    const form = await event.request.formData();
+    try {
+      return await withDatabase(event.locals.config, (client) =>
+        ratePracticeAnswer(client, learner, form, event.params.skill)
       );
     } catch (thrown) {
       const described =

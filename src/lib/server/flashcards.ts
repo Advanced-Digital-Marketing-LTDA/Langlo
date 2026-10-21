@@ -10,18 +10,10 @@ import {
   type Grade,
   type FSRSParameters
 } from 'ts-fsrs';
-import type {
-  Client,
-  InStatement,
-  Row,
-  Transaction,
-  TransactionMode
-} from '@libsql/client';
-import { LibsqlError } from '@libsql/client';
-import {
-  setImmediate as yieldLoop,
-  setTimeout as delay
-} from 'node:timers/promises';
+import type { Client, Row } from '@libsql/client';
+import { setImmediate as yieldLoop } from 'node:timers/promises';
+import { beginWrite, executeWrite } from './db-transactions';
+export { beginRead, beginWrite, executeWrite } from './db-transactions';
 import { studyDayStart } from './study-days';
 import {
   FlashcardError,
@@ -109,8 +101,6 @@ const relearningSteps = {
 } as const;
 const reviewIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
-// shortcut: remote transactions serialize too; split if throughput proves limiting.
-const connectionQueues = new WeakMap<object, Set<() => void>>();
 const ratings: Record<RatingName, Grade> = {
   again: Rating.Again,
   hard: Rating.Hard,
@@ -356,119 +346,6 @@ export async function previewStudySchedule(
   };
 }
 
-function releaseConnection(client: object, queue: Set<() => void>) {
-  let released = false;
-  return () => {
-    if (released) return;
-    released = true;
-    const next = queue.values().next().value;
-    if (next) {
-      queue.delete(next);
-      next();
-    } else {
-      connectionQueues.delete(client);
-    }
-  };
-}
-
-function acquireConnection(client: object): Promise<() => void> {
-  const active = connectionQueues.get(client);
-  if (!active) {
-    const queue = new Set<() => void>();
-    connectionQueues.set(client, queue);
-    return Promise.resolve(releaseConnection(client, queue));
-  }
-  return new Promise((resolve, reject) => {
-    const resume = () => {
-      clearTimeout(timer);
-      resolve(releaseConnection(client, active));
-    };
-    const timer = setTimeout(() => {
-      // Remove this waiter without releasing another request's active slot.
-      active.delete(resume);
-      reject(
-        new LibsqlError(
-          'Timed out waiting for the database connection',
-          'SQLITE_BUSY'
-        )
-      );
-    }, 5000);
-    active.add(resume);
-  });
-}
-
-/** Serialize a standalone statement with transactions using the same client. */
-export async function executeWrite(
-  client: Pick<Client, 'execute'>,
-  statement: InStatement | string
-) {
-  const finish = await acquireConnection(client);
-  try {
-    return await client.execute(statement);
-  } finally {
-    finish();
-  }
-}
-
-function releaseTransaction(transaction: Transaction, finish: () => void) {
-  const terminal = {
-    commit: async () => {
-      try {
-        await transaction.commit();
-      } catch (error) {
-        await transaction.rollback().catch(() => undefined);
-        throw error;
-      } finally {
-        finish();
-      }
-    },
-    rollback: async () => {
-      try {
-        await transaction.rollback();
-      } finally {
-        finish();
-      }
-    },
-    close: () => {
-      try {
-        transaction.close();
-      } finally {
-        finish();
-      }
-    }
-  };
-  return new Proxy(transaction, {
-    get(target, property) {
-      if (Object.hasOwn(terminal, property))
-        return terminal[property as keyof typeof terminal];
-      const value = Reflect.get(target, property, target);
-      return typeof value === 'function' ? value.bind(target) : value;
-    }
-  });
-}
-
-async function beginTransaction(client: Client, mode: TransactionMode) {
-  const finish = await acquireConnection(client);
-  for (let attempt = 0; ; attempt += 1) {
-    try {
-      return releaseTransaction(await client.transaction(mode), finish);
-    } catch (error) {
-      if (
-        (error as { code?: string }).code !== 'SQLITE_BUSY' ||
-        attempt === 7
-      ) {
-        finish();
-        throw error;
-      }
-      // Back off only after the failed attempt finishes, then retry serially.
-      await delay(10 * (attempt + 1));
-    }
-  }
-}
-
-export const beginWrite = (client: Client) => beginTransaction(client, 'write');
-export const beginRead = (client: Client) => beginTransaction(client, 'read');
-
 function isFiniteNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
@@ -671,6 +548,67 @@ function encodeCard(card: Card): string {
 
 function newCard(now = new Date()): Card {
   return createEmptyCard(now);
+}
+
+/** Apply one persisted review with the same scheduler and settings as flashcards. */
+export function scheduleStudyReview(input: {
+  id: string;
+  rating: RatingName;
+  schedule: StudySchedule;
+  stateJson: string | null;
+  schedulerVersion: string | null;
+  parametersJson: string | null;
+  resetRequired: boolean;
+  expectedRevision: number;
+  now: Date;
+  timezone: string;
+}) {
+  const baseParameters = input.parametersJson
+    ? readCardScheduler(input.schedulerVersion, input.parametersJson).parameters
+    : parameters;
+  const effectiveParameters = parametersForSchedule(
+    input.schedule,
+    baseParameters
+  );
+  const card =
+    input.stateJson && !input.resetRequired
+      ? decodeCard(input.stateJson)
+      : newCard(input.now);
+  const updated = scheduledCard(
+    deterministicScheduler(effectiveParameters).next(
+      cardWithId(card, input.id),
+      input.now,
+      ratings[input.rating]
+    ).card,
+    input.now,
+    input.timezone
+  );
+  const result = {
+    revision: input.expectedRevision + 1,
+    dueAt: updated.due.getTime()
+  };
+  return {
+    schedulerVersion,
+    parametersJson: JSON.stringify(effectiveParameters),
+    stateJson: encodeCard(updated),
+    resultJson: JSON.stringify(result),
+    revision: result.revision,
+    dueAt: result.dueAt
+  };
+}
+
+export function studyRetrievability(
+  input: {
+    stateJson: string;
+    schedulerVersion: string;
+    parametersJson: string;
+  },
+  now: Date
+) {
+  return readCardScheduler(
+    input.schedulerVersion,
+    input.parametersJson
+  ).scheduler.get_retrievability(decodeCard(input.stateJson), now, false);
 }
 
 export async function createDeck(

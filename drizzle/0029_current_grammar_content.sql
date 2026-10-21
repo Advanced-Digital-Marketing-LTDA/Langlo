@@ -1,0 +1,7 @@
+DROP TRIGGER `grammar_retention_reset_new_content`;
+--> statement-breakpoint
+DROP TRIGGER `grammar_retention_reset_published_content`;
+--> statement-breakpoint
+CREATE TRIGGER `grammar_retention_reset_new_content` AFTER INSERT ON `content_versions` WHEN `NEW`.`status` IN ('schema-validated', 'pilot-ready') AND NOT EXISTS (SELECT 1 FROM content_versions v WHERE v.skill_id = NEW.skill_id AND v.language = NEW.language AND v.status IN ('schema-validated', 'pilot-ready') AND v.version > NEW.version) BEGIN UPDATE `grammar_retention_schedules` SET `content_version_id` = `NEW`.`id`, `due_at` = 0, `revision` = `revision` + 1, `reset_required` = 1 WHERE `skill_id` = `NEW`.`skill_id` AND `language` = `NEW`.`language` AND `content_version_id` <> `NEW`.`id`; END;
+--> statement-breakpoint
+CREATE TRIGGER `grammar_retention_reset_published_content` AFTER UPDATE OF `status` ON `content_versions` WHEN `OLD`.`status` NOT IN ('schema-validated', 'pilot-ready') AND `NEW`.`status` IN ('schema-validated', 'pilot-ready') AND NOT EXISTS (SELECT 1 FROM content_versions v WHERE v.skill_id = NEW.skill_id AND v.language = NEW.language AND v.status IN ('schema-validated', 'pilot-ready') AND v.version > NEW.version) BEGIN UPDATE `grammar_retention_schedules` SET `content_version_id` = `NEW`.`id`, `due_at` = 0, `revision` = `revision` + 1, `reset_required` = 1 WHERE `skill_id` = `NEW`.`skill_id` AND `language` = `NEW`.`language` AND `content_version_id` <> `NEW`.`id`; END;

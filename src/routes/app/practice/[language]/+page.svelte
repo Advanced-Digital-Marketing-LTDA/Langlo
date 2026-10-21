@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { PageData } from './$types';
+  import type { ActionData, PageData } from './$types';
   import Chip from '../../../../lib/prototype/Chip.svelte';
   import { masteryLabels, masterySymbols } from '../../../../lib/dashboard';
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head>
@@ -19,9 +19,39 @@
   <input type="hidden" name="submissionKey" value={data.submissionKey} />
   <button type="submit">Start practice</button>
 </form>
+{#if form && 'message' in form}<p role="alert">{form.message}</p>{/if}
 {#if data.error}
   <p class="error-box" role="alert">{data.error}</p>
 {:else}
+  <section aria-label="Due grammar reviews">
+    <h2>Due grammar reviews</h2>
+    <p>
+      Each review covers one question per topic, with up to five topics in a
+      session. Choose which due topics to include.
+    </p>
+    {#if data.dueReviews.length}
+      <form method="POST" action="?/review">
+        <input type="hidden" name="submissionKey" value={data.submissionKey} />
+        <fieldset>
+          <legend>Select due topics</legend>
+          {#each data.dueReviews as review (review.skillId)}
+            <label>
+              <input
+                type="checkbox"
+                name="skillId"
+                value={review.skillId}
+                checked
+              />
+              {review.title}
+            </label>
+          {/each}
+        </fieldset>
+        <button type="submit">Review selected topics</button>
+      </form>
+    {:else}
+      <p>No grammar skills are due right now.</p>
+    {/if}
+  </section>
   <section aria-label="Recommended practice">
     <h2>Recommended practice</h2>
     {#if data.recommendations.length}

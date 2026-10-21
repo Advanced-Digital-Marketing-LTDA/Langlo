@@ -13,25 +13,29 @@ import { getAssessment } from './assessment';
  * content withdrawn by a quarantine import is never served after the check.
  */
 const latestVersion =
-  "(SELECT id, status FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1)";
+  "(SELECT v.id, v.status, sk.retired_at FROM content_versions v JOIN skills sk ON sk.id = v.skill_id AND sk.language = v.language WHERE v.skill_id = ? AND v.language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1)";
 
 /**
- * The version a session reads for a skill: the one its first attempt at the
+ * The version a session reads for a skill: its frozen review version, else the one its first attempt at the
  * skill was recorded against, so a session that spans an import is finished on
  * the questions it started, and the newest version that is not quarantined
  * otherwise (the newest of all when every version is quarantined). Takes the
  * owner, session and skill, then the skill and language of the fallback.
  */
 const sessionVersionId = `COALESCE(
+    (SELECT json_extract(p.value, '$.contentVersionId') FROM study_sessions s
+      JOIN json_each(s.grammar_retention_plan, '$.questions') p
+      WHERE s.owner_id = ? AND s.id = ? AND json_extract(p.value, '$.skillId') = ?),
     (SELECT content_version_id FROM attempts WHERE owner_id = ? AND study_session_id = ? AND skill_id = ? ORDER BY created_at, id LIMIT 1),
     (SELECT id FROM content_versions WHERE skill_id = ? AND language = ? ORDER BY status = 'quarantined', version DESC LIMIT 1))`;
-const sessionVersion = `(SELECT id, status FROM content_versions WHERE id = ${sessionVersionId})`;
+const sessionVersion = `(SELECT v.id, v.status, sk.retired_at FROM content_versions v JOIN skills sk ON sk.id = v.skill_id AND sk.language = v.language WHERE v.id = ${sessionVersionId})`;
 
 export type SessionRow = {
   language: string;
   mode: string;
   state: string;
   assessmentPlan: string | null;
+  grammarRetentionPolicyVersion: string | null;
 };
 
 export async function ownSession(
@@ -41,7 +45,7 @@ export async function ownSession(
 ): Promise<SessionRow> {
   if (typeof studySessionId !== 'string') throw new StudyError('NOT_FOUND');
   const found = await client.execute({
-    sql: 'SELECT language, mode, state, assessment_plan FROM study_sessions WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT language, mode, state, assessment_plan, grammar_retention_policy_version FROM study_sessions WHERE id = ? AND owner_id = ?',
     args: [studySessionId, session.userId]
   });
   const row = found.rows[0];
@@ -51,14 +55,19 @@ export async function ownSession(
     mode: String(row.mode),
     state: String(row.state),
     assessmentPlan:
-      row.assessment_plan === null ? null : String(row.assessment_plan)
+      row.assessment_plan === null ? null : String(row.assessment_plan),
+    grammarRetentionPolicyVersion:
+      row.grammar_retention_policy_version === null
+        ? null
+        : String(row.grammar_retention_policy_version)
   };
 }
 
 /** Reject a joined version row that is missing or withdrawn. */
 function assertAvailable(row: Row | undefined): asserts row is Row {
   if (!row) throw new StudyError('NOT_FOUND');
-  if (row.status === 'quarantined') throw new StudyError('CONTENT_UNAVAILABLE');
+  if (row.status === 'quarantined' || row.retired_at != null)
+    throw new StudyError('CONTENT_UNAVAILABLE');
 }
 
 /** What a question read is scoped to: the owner, session, skill and its mode. */
@@ -78,16 +87,23 @@ type QuestionRead = {
  */
 async function questionRows(client: Client, read: QuestionRead) {
   const found = await client.execute({
-    sql: `SELECT s.state, v.status, q.id, q.format, q.prompt, q.alternatives,
+    sql: `SELECT s.state, v.status, v.retired_at, q.id, q.format, q.prompt, q.alternatives,
             EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = ? AND a.study_session_id = ? AND a.question_id = q.id) AS answered
           FROM study_sessions s
           CROSS JOIN ${sessionVersion} v
           LEFT JOIN questions q ON q.content_version_id = v.id AND q.prompt IS NOT NULL AND (q.holdout = 0 OR ? = 'assessment')
+            AND (s.grammar_retention_plan IS NULL OR EXISTS (
+              SELECT 1 FROM json_each(s.grammar_retention_plan, '$.questions') p
+              WHERE json_extract(p.value, '$.skillId') = q.skill_id
+                AND json_extract(p.value, '$.questionId') = q.id))
           WHERE s.id = ? AND s.owner_id = ?
           ORDER BY q.id`,
     args: [
       read.userId,
       read.studySessionId,
+      read.userId,
+      read.studySessionId,
+      read.skillId,
       read.userId,
       read.studySessionId,
       read.skillId,
@@ -179,7 +195,7 @@ async function lessonRow(
   if (typeof read.skillId !== 'string') throw new StudyError('NOT_FOUND');
   const { userId, studySessionId, language, skillId } = read;
   const found = await client.execute({
-    sql: `SELECT v.id AS version_id, v.status, l.title, l.explanation, l.examples, l.refs,
+    sql: `SELECT v.id AS version_id, v.status, v.retired_at, l.title, l.explanation, l.examples, l.refs,
             t.title AS t_title, t.explanation AS t_explanation, t.examples AS t_examples, t.refs AS t_refs
           FROM ${studySessionId === undefined ? latestVersion : sessionVersion} v
           LEFT JOIN lessons l ON l.content_version_id = v.id
@@ -188,6 +204,9 @@ async function lessonRow(
       studySessionId === undefined
         ? [skillId, language, explanationLanguage]
         : [
+            userId,
+            studySessionId,
+            skillId,
             userId,
             studySessionId,
             skillId,

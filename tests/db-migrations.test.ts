@@ -16,6 +16,10 @@ import {
 import { migrateFixtureDatabase } from '../src/lib/server/db/migrate';
 import { isTable } from 'drizzle-orm';
 import {
+  loadMigrations,
+  readMigrationState
+} from '../src/lib/server/db/remote-migrate';
+import {
   createDisposableFixture,
   disposeDisposableFixture
 } from './fixtures/database';
@@ -262,6 +266,301 @@ async function expectFailedDraftReviewMigration(target: FixtureTarget) {
 }
 
 describe('disposable libSQL migrations', () => {
+  async function prefixThrough(tag: string) {
+    const directory = await mkdtemp(join(tmpdir(), 'langlo-merge-prefix-'));
+    const journal = JSON.parse(
+      await readFile('drizzle/meta/_journal.json', 'utf8')
+    );
+    const end = journal.entries.findIndex(
+      (entry: { tag: string }) => entry.tag === tag
+    );
+    if (end < 0) throw new Error(`Missing migration ${tag}`);
+    journal.entries = journal.entries.slice(0, end + 1);
+    await mkdir(join(directory, 'meta'));
+    await writeFile(
+      join(directory, 'meta/_journal.json'),
+      JSON.stringify(journal)
+    );
+    for (const entry of journal.entries)
+      await copyFile(
+        `drizzle/${entry.tag}.sql`,
+        join(directory, `${entry.tag}.sql`)
+      );
+    return directory;
+  }
+
+  it('accepts the production migration ledger through Portuguese 0026 as an unchanged prefix', async () => {
+    const target = await fixture();
+    const folder = await prefixThrough('0026_portuguese_tracks');
+    try {
+      await migrateFixtureDatabase(target, folder);
+      await seedStudy(target);
+      const { client, close } = await openFixtureDatabase(target);
+      try {
+        const migrations = loadMigrations();
+        expect(migrations[26]).toMatchObject({
+          tag: '0026_portuguese_tracks',
+          when: 1792536374088,
+          hash: '2295986c1ea163749769e062ad8d617e61599a592d536d294af10057317dada3'
+        });
+        const ledger = (
+          await client.execute(
+            'SELECT hash, created_at FROM __drizzle_migrations ORDER BY created_at'
+          )
+        ).rows;
+        const state = await readMigrationState(
+          client,
+          migrations,
+          'fixture.local'
+        );
+        expect(state.applied).toHaveLength(27);
+        expect(state.pending.map((m) => m.tag)).toEqual([
+          '0027_peaceful_albert_cleary',
+          '0028_sturdy_talkback',
+          '0029_current_grammar_content',
+          '0030_portuguese_grammar_retention'
+        ]);
+        await migrateFixtureDatabase(target);
+        expect(
+          (
+            await client.execute(
+              'SELECT hash, created_at FROM __drizzle_migrations ORDER BY created_at'
+            )
+          ).rows.slice(0, 27)
+        ).toEqual(ledger);
+        expect(
+          (await readMigrationState(client, migrations, 'fixture.local'))
+            .pending
+        ).toHaveLength(0);
+      } finally {
+        close();
+      }
+    } finally {
+      await rm(folder, { recursive: true, force: true });
+    }
+  });
+
+  async function beforePortugueseRetention() {
+    const target = await fixture();
+    const folder = await prefixThrough('0029_current_grammar_content');
+    try {
+      await migrateFixtureDatabase(target, folder);
+    } finally {
+      await rm(folder, { recursive: true, force: true });
+    }
+    await seedStudy(target);
+    const opened = await openFixtureDatabase(target);
+    await opened.client.batch(
+      [
+        "INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, scheduler_version, parameters_json) VALUES ('learner-a', 'fr', 'fr-articles', 'content-v1', '{}', 123456, 1, 'fixture', '{}')",
+        "INSERT INTO grammar_retention_events (id, owner_id, study_session_id, language, skill_id, attempt_id, evaluation_id, content_version_id, lineage_key, expected_revision, rating, reviewed_at, scheduler_version, parameters_json, result_json, state_json) VALUES ('review-a', 'learner-a', 'study-a', 'fr', 'fr-articles', 'attempt-a', 'evaluation-a', 'content-v1', 'item-a', 0, 'again', 1, 'fixture', '{}', '{}', '{}')"
+      ],
+      'write'
+    );
+    return { ...opened, target };
+  }
+
+  it('preserves schedules, history and immutability guards through the Portuguese retention rebuild', async () => {
+    const { client, close, target } = await beforePortugueseRetention();
+    try {
+      const schedules = (
+        await client.execute('SELECT * FROM grammar_retention_schedules')
+      ).rows;
+      const events = (
+        await client.execute('SELECT * FROM grammar_retention_events')
+      ).rows;
+      await migrateFixtureDatabase(target);
+      await migrateFixtureDatabase(target);
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+      ).toEqual(schedules);
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_events')).rows
+      ).toEqual(events);
+      expect((await client.execute('PRAGMA foreign_key_check')).rows).toEqual(
+        []
+      );
+      await expect(
+        client.execute("UPDATE grammar_retention_events SET rating = 'easy'")
+      ).rejects.toThrow(/cannot be updated/);
+      await expect(
+        client.execute('DELETE FROM grammar_retention_events')
+      ).rejects.toThrow(/cannot be deleted/);
+      await client.execute(
+        "UPDATE content_versions SET status = 'pilot-ready' WHERE id = 'content-v2'"
+      );
+      expect(
+        (
+          await client.execute(
+            'SELECT content_version_id, reset_required FROM grammar_retention_schedules'
+          )
+        ).rows
+      ).toEqual([{ content_version_id: 'content-v2', reset_required: 1 }]);
+      await client.execute("DELETE FROM users WHERE id = 'learner-a'");
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+      ).toEqual([]);
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_events')).rows
+      ).toEqual([]);
+    } finally {
+      close();
+    }
+  });
+
+  it('refuses the Portuguese retention rebuild when a caller keeps foreign keys enabled', async () => {
+    const { client, close } = await beforePortugueseRetention();
+    try {
+      const schedules = (
+        await client.execute('SELECT * FROM grammar_retention_schedules')
+      ).rows;
+      const events = (
+        await client.execute('SELECT * FROM grammar_retention_events')
+      ).rows;
+      const migration = loadMigrations().find(
+        (m) => m.tag === '0030_portuguese_grammar_retention'
+      );
+      if (!migration) throw new Error('Missing Portuguese retention migration');
+      await expect(client.batch(migration.statements, 'write')).rejects.toThrow(
+        /must_be_off/
+      );
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+      ).toEqual(schedules);
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_events')).rows
+      ).toEqual(events);
+    } finally {
+      close();
+    }
+  });
+
+  it('rolls back the Portuguese retention rebuild on a late failure', async () => {
+    const { client, close } = await beforePortugueseRetention();
+    try {
+      const schedules = (
+        await client.execute('SELECT * FROM grammar_retention_schedules')
+      ).rows;
+      const events = (
+        await client.execute('SELECT * FROM grammar_retention_events')
+      ).rows;
+      const before = (
+        await client.execute(
+          "SELECT name, sql FROM sqlite_master WHERE name LIKE 'grammar_retention_%' ORDER BY name"
+        )
+      ).rows;
+      const migration = loadMigrations().find(
+        (m) => m.tag === '0030_portuguese_grammar_retention'
+      );
+      if (!migration) throw new Error('Missing Portuguese retention migration');
+      await expect(
+        client.migrate([
+          ...migration.statements,
+          'SELECT * FROM synthetic_missing_table'
+        ])
+      ).rejects.toThrow();
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+      ).toEqual(schedules);
+      expect(
+        (await client.execute('SELECT * FROM grammar_retention_events')).rows
+      ).toEqual(events);
+      expect(
+        (
+          await client.execute(
+            "SELECT name, sql FROM sqlite_master WHERE name LIKE 'grammar_retention_%' ORDER BY name"
+          )
+        ).rows
+      ).toEqual(before);
+      expect((await client.execute('PRAGMA foreign_key_check')).rows).toEqual(
+        []
+      );
+    } finally {
+      close();
+    }
+  });
+
+  async function migrateBeforeGrammarResetFix(
+    target: FixtureTarget,
+    previous: string
+  ) {
+    const journal = JSON.parse(
+      await readFile('drizzle/meta/_journal.json', 'utf8')
+    );
+    const index = journal.entries.findIndex(
+      (entry: { tag: string }) => entry.tag === '0029_current_grammar_content'
+    );
+    expect(index).toBeGreaterThan(0);
+    journal.entries = journal.entries.slice(0, index);
+    await mkdir(join(previous, 'meta'));
+    await writeFile(
+      join(previous, 'meta/_journal.json'),
+      JSON.stringify(journal)
+    );
+    for (const entry of journal.entries)
+      await copyFile(
+        `drizzle/${entry.tag}.sql`,
+        join(previous, `${entry.tag}.sql`)
+      );
+    await migrateFixtureDatabase(target, previous);
+  }
+
+  it('upgrades grammar reset triggers without changing stored schedules and only resets for the newest published content', async () => {
+    const target = await fixture();
+    const previous = await mkdtemp(join(tmpdir(), 'langlo-0029-upgrade-'));
+    try {
+      await migrateBeforeGrammarResetFix(target, previous);
+      await seedStudy(target);
+      const { client, close } = await openFixtureDatabase(target);
+      try {
+        await client.execute(
+          "INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, scheduler_version, parameters_json) VALUES ('learner-a', 'fr', 'fr-articles', 'content-v1', '{}', 123456, 3, 'fixture', '{}')"
+        );
+        const before = (
+          await client.execute('SELECT * FROM grammar_retention_schedules')
+        ).rows;
+        await migrateFixtureDatabase(target);
+        await migrateFixtureDatabase(target);
+        expect(
+          (await client.execute('SELECT * FROM grammar_retention_schedules'))
+            .rows
+        ).toEqual(before);
+        await client.execute(
+          "UPDATE content_versions SET status = 'pilot-ready' WHERE id = 'content-v2'"
+        );
+        expect(
+          (
+            await client.execute(
+              'SELECT content_version_id, due_at, revision FROM grammar_retention_schedules'
+            )
+          ).rows
+        ).toEqual([
+          { content_version_id: 'content-v2', due_at: 0, revision: 4 }
+        ]);
+        await client.execute(
+          "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('content-backfill', 'fr-articles', 'fr', 3, 'draft')"
+        );
+        await client.execute(
+          "UPDATE content_versions SET status = 'quarantined' WHERE id = 'content-v1'"
+        );
+        await client.execute(
+          "UPDATE content_versions SET status = 'pilot-ready' WHERE id = 'content-v1'"
+        );
+        expect(
+          (
+            await client.execute(
+              'SELECT content_version_id, revision FROM grammar_retention_schedules'
+            )
+          ).rows
+        ).toEqual([{ content_version_id: 'content-v2', revision: 4 }]);
+      } finally {
+        close();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
+    }
+  });
+
   it('preserves legacy data and adopts verified content after a pre-0007 upgrade', async () => {
     const target = await fixture();
     const previous = await mkdtemp(join(tmpdir(), 'langlo-migrations-'));
@@ -288,7 +587,7 @@ describe('disposable libSQL migrations', () => {
         const contentSql =
           'SELECT id, skill_id, language, version, status, created_at FROM content_versions ORDER BY id';
         const objectsSql =
-          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT IN ('sqlite_autoindex_lessons_1', 'attempts_session_question_independent', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'sqlite_autoindex_native_flashcard_preferences_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_owner_cursor', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update', 'enrollments_supported_track_insert', 'enrollments_supported_track_update', 'enrollments_portuguese_explanation_insert', 'enrollments_portuguese_explanation_update') ORDER BY name";
+          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT LIKE 'grammar_retention_%' AND name NOT IN ('sqlite_autoindex_lessons_1', 'sqlite_autoindex_grammar_retention_events_1', 'sqlite_autoindex_grammar_retention_schedules_1', 'attempts_session_question_independent', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'sqlite_autoindex_native_flashcard_preferences_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_owner_cursor', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update', 'enrollments_supported_track_insert', 'enrollments_supported_track_update', 'enrollments_portuguese_explanation_insert', 'enrollments_portuguese_explanation_update') ORDER BY name";
         const content = (await client.execute(contentSql)).rows;
         const attempts = (
           await client.execute(

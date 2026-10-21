@@ -5,6 +5,8 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import {
   getAttempt,
+  discardUnratedAssessmentAnswer,
+  rateGrammarAttempt,
   recordAttempt,
   pauseStudySession,
   resumeStudySession
@@ -292,11 +294,19 @@ describe('saved placement plan', () => {
       duplicate: true
     });
     await answer(id, 'fr-a1-003@1:q1', 'es');
-    expect((await getAssessment(client, learner, id)).state).toBe('completed');
-    expect(await assessmentResults(client, learner, id)).toMatchObject({
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    const results = await assessmentResults(client, learner, id);
+    expect(results).toMatchObject({
       counts: { correct: 3, incorrect: 0, uncertain: 0 },
       foundationGaps: []
     });
+    for (const item of results.items)
+      await rateGrammarAttempt(client, learner, {
+        attemptId: item.attemptId,
+        rating: 'good',
+        expectedSessionId: id
+      });
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(
       (await getAttempt(client, learner, recorded.id)).evaluations
     ).toHaveLength(1);
@@ -329,7 +339,7 @@ describe('saved placement plan', () => {
     expect(row.rows[0]).toMatchObject({ not_sure: 1, outcome: 'uncertain' });
   });
 
-  it('saves a partial result after the fifth explicit Not sure and counts only certain answers as evidence', async () => {
+  async function assessmentWithSixAnswers() {
     await addHoldoutSkills(
       ['fr-a1-004', 'fr-a1-005', 'fr-a1-006', 'fr-a1-007', 'fr-a1-008'].map(
         (id) => ({ id, language: 'fr', level: 'A1' })
@@ -352,6 +362,11 @@ describe('saved placement plan', () => {
     await answer(id, questions[3], '', true);
     await answer(id, questions[4], '', true);
     await answer(id, questions[5], '', true);
+    return { id, questions, certain };
+  }
+
+  it('saves a partial result after the fifth explicit Not sure and counts only certain answers as evidence', async () => {
+    const { id, questions, certain } = await assessmentWithSixAnswers();
     expect(await getAssessment(client, learner, id)).toMatchObject({
       total: 8,
       answered: 6,
@@ -365,7 +380,7 @@ describe('saved placement plan', () => {
     expect(await getAssessment(client, learner, id)).toMatchObject({
       total: 8,
       answered: 7,
-      state: 'completed',
+      state: 'active',
       question: null
     });
     const results = await assessmentResults(client, learner, id);
@@ -386,8 +401,50 @@ describe('saved placement plan', () => {
           'SELECT attempt_id, contribution FROM skill_evidence'
         )
       ).rows
+    ).toEqual([]);
+    await rateGrammarAttempt(client, learner, {
+      attemptId: certain.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
+    expect(await getAssessment(client, learner, id)).toMatchObject({
+      state: 'completed',
+      question: null
+    });
+    expect(
+      (
+        await client.execute(
+          'SELECT attempt_id, contribution FROM skill_evidence'
+        )
+      ).rows
     ).toEqual([{ attempt_id: certain.id, contribution: 1 }]);
   });
+
+  function stoppedAssessmentSubmitter(id: string) {
+    return async (value: string, notSure = false) => {
+      const question = (await getAssessment(client, learner, id)).question!;
+      const input = {
+        studySessionId: id,
+        questionId: question.id,
+        submissionKey: randomUUID(),
+        evidenceKind: 'independent' as const,
+        answer: value,
+        notSure
+      };
+      const options = {
+        fallback: async () => ({
+          outcome: 'incorrect' as const,
+          reason: 'answered' as const,
+          evaluated: true as const
+        })
+      };
+      const result = await recordAttempt(client, learner, input, options);
+      expect(await recordAttempt(client, learner, input, options)).toEqual({
+        id: result.id,
+        duplicate: true
+      });
+    };
+  }
 
   it.each(['prepared', 'fallback'] as const)(
     'saves partial results on the fifth confirmed wrong answer from %s',
@@ -395,29 +452,7 @@ describe('saved placement plan', () => {
       const { id } = await expandedAssessment(
         evaluation === 'prepared' ? 'multiple-choice' : 'typed-blank'
       );
-      const submit = async (value: string, notSure = false) => {
-        const question = (await getAssessment(client, learner, id)).question!;
-        const input = {
-          studySessionId: id,
-          questionId: question.id,
-          submissionKey: randomUUID(),
-          evidenceKind: 'independent' as const,
-          answer: value,
-          notSure
-        };
-        const options = {
-          fallback: async () => ({
-            outcome: 'incorrect' as const,
-            reason: 'answered' as const,
-            evaluated: true as const
-          })
-        };
-        const result = await recordAttempt(client, learner, input, options);
-        expect(await recordAttempt(client, learner, input, options)).toEqual({
-          id: result.id,
-          duplicate: true
-        });
-      };
+      const submit = stoppedAssessmentSubmitter(id);
       for (let i = 0; i < 4; i++) await submit('wrong');
       await submit('', true);
       await submit('es');
@@ -430,14 +465,26 @@ describe('saved placement plan', () => {
       ).rejects.toMatchObject({ code: 'RESULTS_NOT_READY' });
       await submit('wrong');
       expect(await getAssessment(client, learner, id)).toMatchObject({
-        state: 'completed',
+        state: 'active',
         answered: 7,
         question: null
       });
-      expect(await assessmentResults(client, learner, id)).toMatchObject({
+      const results = await assessmentResults(client, learner, id);
+      expect(results).toMatchObject({
         total: 9,
         notReached: 2,
         counts: { correct: 1, incorrect: 5, uncertain: 1 }
+      });
+      for (const item of results.items)
+        if (item.outcome === 'correct' && item.rating === null)
+          await rateGrammarAttempt(client, learner, {
+            attemptId: item.attemptId,
+            rating: 'good',
+            expectedSessionId: id
+          });
+      expect(await getAssessment(client, learner, id)).toMatchObject({
+        state: 'completed',
+        question: null
       });
       const evidence = await client.execute({
         sql: `SELECT COUNT(*) AS total, SUM(se.contribution) AS correct
@@ -673,9 +720,249 @@ describe('saved placement plan', () => {
     }
   );
 
+  it('hides rating controls for completed assessments without the retention policy', async () => {
+    const { id } = await start();
+    await client.execute({
+      sql: 'UPDATE study_sessions SET grammar_retention_policy_version = NULL WHERE id = ?',
+      args: [id]
+    });
+    const plan = JSON.parse(
+      String(
+        (
+          await client.execute({
+            sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+            args: [id]
+          })
+        ).rows[0].assessment_plan
+      )
+    );
+    for (const questionId of plan.questions as string[])
+      await answer(id, questionId, 'es');
+    expect(await assessmentResults(client, learner, id)).toMatchObject({
+      grammarRetentionEnabled: false
+    });
+  });
+
+  it('reuses a holdout from an abandoned correct answer that was never rated', async () => {
+    await client.execute(
+      "UPDATE questions SET holdout = 0 WHERE id = 'fr-a1-001@1:q1'"
+    );
+    const first = await start();
+    const questionId = String(
+      (await getAssessment(client, learner, first.id)).question?.id
+    );
+    await answer(first.id, questionId, 'es');
+
+    const second = await start();
+    expect((await getAssessment(client, learner, second.id)).question?.id).toBe(
+      questionId
+    );
+  });
+
+  it('keeps an assessment in its rating stage when its final answer is fallback-correct', async () => {
+    const { id } = await start();
+    const stored = await client.execute({
+      sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+      args: [id]
+    });
+    const questionIds = JSON.parse(String(stored.rows[0].assessment_plan))
+      .questions as string[];
+    for (const questionId of questionIds.slice(0, -1))
+      await answer(id, questionId, '', true);
+    const lastQuestionId = questionIds[questionIds.length - 1];
+    const recorded = await recordAttempt(
+      client,
+      learner,
+      {
+        studySessionId: id,
+        questionId: lastQuestionId,
+        submissionKey: randomUUID(),
+        evidenceKind: 'independent',
+        answer: 'Nous voici.'
+      },
+      {
+        fallback: async () => ({
+          outcome: 'correct' as const,
+          reason: 'answered' as const,
+          evaluated: true as const
+        })
+      }
+    );
+
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    const item = (await assessmentResults(client, learner, id)).items.find(
+      (result) => result.attemptId === recorded.id
+    );
+    expect(item).toMatchObject({ outcome: 'correct', rating: null });
+    await rateGrammarAttempt(client, learner, {
+      attemptId: recorded.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT rating FROM grammar_retention_events WHERE owner_id = ? AND study_session_id = ?',
+          args: [learner.userId, id]
+        })
+      ).rows
+    ).toEqual([{ rating: 'good' }]);
+  });
+
+  async function stoppedAssessment(stop: 'incorrect' | 'not-sure') {
+    const { id } = await expandedAssessment('multiple-choice');
+    const first = (await getAssessment(client, learner, id)).question!;
+    const provisional = await answer(id, first.id);
+    for (let i = 0; i < 5; i++) {
+      const next = (await getAssessment(client, learner, id)).question!;
+      await answer(
+        id,
+        next.id,
+        stop === 'not-sure' ? '' : 'wrong',
+        stop === 'not-sure'
+      );
+    }
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    return { id, provisional };
+  }
+
+  it.each(['incorrect', 'not-sure'] as const)(
+    'finalizes a stopped assessment after discarding its last unrated answer (%s)',
+    async (stop) => {
+      const { id, provisional } = await stoppedAssessment(stop);
+      await discardUnratedAssessmentAnswer(client, learner, provisional.id, id);
+      expect((await getAssessment(client, learner, id)).state).toBe(
+        'completed'
+      );
+      expect(
+        (
+          await client.execute('SELECT id FROM attempts WHERE id = ?', [
+            provisional.id
+          ])
+        ).rows
+      ).toEqual([]);
+      const evidence = await client.execute('SELECT * FROM skill_evidence');
+      const events = await client.execute(
+        'SELECT * FROM grammar_retention_events'
+      );
+      expect(evidence.rows).toHaveLength(stop === 'incorrect' ? 5 : 0);
+      expect(events.rows).toHaveLength(stop === 'incorrect' ? 5 : 0);
+    }
+  );
+
+  it('rolls back discard, completion and evidence when stopped-assessment retention fails', async () => {
+    const { id, provisional } = await stoppedAssessment('incorrect');
+    await client.execute(
+      "CREATE TRIGGER reject_discard_review BEFORE INSERT ON grammar_retention_events BEGIN SELECT RAISE(ABORT, 'synthetic discard failure'); END"
+    );
+    await expect(
+      discardUnratedAssessmentAnswer(client, learner, provisional.id, id)
+    ).rejects.toThrow(/synthetic discard failure/);
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    expect(
+      (
+        await client.execute('SELECT id FROM attempts WHERE id = ?', [
+          provisional.id
+        ])
+      ).rows
+    ).toHaveLength(1);
+    for (const table of [
+      'skill_evidence',
+      'grammar_retention_events',
+      'grammar_retention_schedules'
+    ])
+      expect((await client.execute(`SELECT * FROM ${table}`)).rows).toEqual([]);
+    await client.execute('DROP TRIGGER reject_discard_review');
+    await discardUnratedAssessmentAnswer(client, learner, provisional.id, id);
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(5);
+  });
+
+  it('rolls back the last rating and assessment completion when retention persistence fails', async () => {
+    const { id } = await start();
+    const attempts = [];
+    attempts.push(await answer(id, 'fr-a1-001@1:q2', 'es'));
+    attempts.push(await answer(id, 'fr-a1-002@1:q1', 'On est ici.'));
+    attempts.push(await answer(id, 'fr-a1-003@1:q1', 'es'));
+    for (const attempt of attempts.slice(0, 2))
+      await rateGrammarAttempt(client, learner, {
+        attemptId: attempt.id,
+        rating: 'good',
+        expectedSessionId: id
+      });
+    await client.execute(
+      "CREATE TRIGGER reject_assessment_review BEFORE INSERT ON grammar_retention_events BEGIN SELECT RAISE(ABORT, 'synthetic assessment failure'); END"
+    );
+    await expect(
+      rateGrammarAttempt(client, learner, {
+        attemptId: attempts[2].id,
+        rating: 'good',
+        expectedSessionId: id
+      })
+    ).rejects.toThrow(/synthetic assessment failure/);
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    expect(
+      (
+        await client.execute(
+          'SELECT grammar_rating FROM attempts WHERE id = ?',
+          [attempts[2].id]
+        )
+      ).rows[0].grammar_rating
+    ).toBeNull();
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(0);
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
+    ).toHaveLength(0);
+    await client.execute('DROP TRIGGER reject_assessment_review');
+    await rateGrammarAttempt(client, learner, {
+      attemptId: attempts[2].id,
+      rating: 'good',
+      expectedSessionId: id
+    });
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
+    expect(
+      (await client.execute('SELECT * FROM grammar_retention_events')).rows
+    ).toHaveLength(3);
+  });
+
+  it('lets a learner rate a valid answer after a newer version is published', async () => {
+    const { id } = await start();
+    const stored = await client.execute({
+      sql: 'SELECT assessment_plan FROM study_sessions WHERE id = ?',
+      args: [id]
+    });
+    const questionIds = JSON.parse(String(stored.rows[0].assessment_plan))
+      .questions as string[];
+    const answers = new Map([
+      ['fr-a1-001@1:q2', 'es'],
+      ['fr-a1-002@1:q1', 'On est ici.'],
+      ['fr-a1-003@1:q1', 'es']
+    ]);
+    const attempts = [];
+    for (const questionId of questionIds)
+      attempts.push(
+        await answer(id, questionId, answers.get(questionId) ?? 'es')
+      );
+    await client.execute({
+      sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'pilot-ready')"
+    });
+    await expect(
+      rateGrammarAttempt(client, learner, {
+        attemptId: attempts[0].id,
+        rating: 'good',
+        expectedSessionId: id
+      })
+    ).resolves.toMatchObject({ duplicate: false });
+  });
+
   it('does not offer a holdout again when a later content version republishes the same item', async () => {
     const first = await start();
-    await answer(first.id, 'fr-a1-001@1:q2');
+    await answer(first.id, 'fr-a1-001@1:q2', 'not an accepted response');
     const pkg = approvedPackage();
     const republished = structuredClone(pkg.versions[0]);
     republished.id = 'fr-a1-001@2';
@@ -697,7 +984,7 @@ describe('saved placement plan', () => {
 
   it('offers a holdout again when a later content version changes its meaning', async () => {
     const first = await start();
-    await answer(first.id, 'fr-a1-001@1:q2');
+    await answer(first.id, 'fr-a1-001@1:q2', 'not an accepted response');
     const pkg = approvedPackage();
     const revised = structuredClone(pkg.versions[0]);
     revised.id = 'fr-a1-001@2';
@@ -735,7 +1022,7 @@ describe('saved placement plan', () => {
 
   it('does not offer a holdout again when a retired skill carried its answer over', async () => {
     const first = await start();
-    await answer(first.id, 'fr-a1-001@1:q2');
+    await answer(first.id, 'fr-a1-001@1:q2', 'not an accepted response');
     await client.execute(
       "UPDATE skills SET retired_at = 1, replaced_by = 'fr-a1-002', carry_progress = 1 WHERE id = 'fr-a1-001'"
     );
@@ -771,7 +1058,7 @@ describe('saved placement plan', () => {
   it('rejects a planned item the learner already answered in another session', async () => {
     const first = await start();
     const second = await start();
-    await answer(first.id, 'fr-a1-001@1:q2');
+    await answer(first.id, 'fr-a1-001@1:q2', 'not an accepted response');
     await expect(answer(second.id, 'fr-a1-001@1:q2')).rejects.toMatchObject({
       code: 'STALE_QUESTION'
     });
@@ -798,6 +1085,24 @@ describe('saved placement plan', () => {
       counts: { correct: 2, incorrect: 0, uncertain: 1 },
       foundationGaps: ['fr-a1-001']
     });
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT attempt_id, contribution FROM skill_evidence'
+        })
+      ).rows
+    ).toEqual([]);
+    await rateGrammarAttempt(client, learner, {
+      attemptId: correct.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
+    await rateGrammarAttempt(client, learner, {
+      attemptId: alsoCorrect.id,
+      rating: 'good',
+      expectedSessionId: id
+    });
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
     expect(
       (
         await client.execute({
@@ -832,6 +1137,13 @@ describe('saved placement plan', () => {
     await answer(id, 'fr-a1-001@1:q2');
     await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
     await answer(id, 'fr-a1-003@1:q1', 'es');
+    const results = await assessmentResults(client, learner, id);
+    for (const item of results.items)
+      await rateGrammarAttempt(client, learner, {
+        attemptId: item.attemptId,
+        rating: 'good',
+        expectedSessionId: id
+      });
     await expect(start()).rejects.toMatchObject({
       code: 'CONTENT_UNAVAILABLE'
     });

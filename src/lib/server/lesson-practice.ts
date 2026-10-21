@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { fail } from '@sveltejs/kit';
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import {
   checkAnswer,
   checkAnswerText,
@@ -16,11 +16,13 @@ import {
   getSessionLesson,
   getStudySession,
   nextQuestion,
+  rateGrammarAttempt,
   recordAttempt,
   StudyError
 } from './study';
 import { ownSession } from './study-content';
 import { feedbackOutcome } from './assessment';
+import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 import { reportContentForm } from './content-reports';
 import type { ExerciseQuestion } from '../components/exercises/answer';
 
@@ -43,6 +45,15 @@ export async function lessonFor(
   return getSessionLesson(client, learner, page.studySessionId, page.skillId);
 }
 
+function needsPracticeRating(
+  feedback: Awaited<ReturnType<typeof practiceFeedback>>
+) {
+  if (!feedback?.requiresRating) return false;
+  if (feedback.outcome !== 'correct') return false;
+  if (feedback.rating !== null) return false;
+  return !feedback.receivedHelp;
+}
+
 /**
  * The next exercise of the learner's own session, when the page was opened
  * from one. A session that cannot serve a question yields a notice instead.
@@ -55,6 +66,18 @@ export async function exerciseFor(
 ) {
   if (!studySessionId) return null;
   try {
+    const feedback = await practiceFeedback(
+      client,
+      learner,
+      studySessionId,
+      skillId
+    );
+    if (needsPracticeRating(feedback))
+      return {
+        studySessionId,
+        notice: 'Rate this answer before continuing with this topic.',
+        question: null
+      };
     const next = await nextQuestion(client, learner, studySessionId, skillId);
     // One key per page load: a repeated tap of Submit replays, not duplicates.
     return {
@@ -69,6 +92,32 @@ export async function exerciseFor(
     if (!described) throw thrown;
     return { studySessionId, notice: described.message, question: null };
   }
+}
+
+/** Save a correct practice response's difficulty rating. */
+export async function ratePracticeAnswer(
+  client: Client,
+  learner: LearnerSession,
+  form: FormData,
+  skillId: string
+) {
+  const attemptId = field(form, 'attemptId');
+  const studySessionId = field(form, 'studySessionId');
+  const rating = field(form, 'rating');
+  if (!['hard', 'good', 'easy'].includes(rating))
+    return fail(400, { message: 'Choose Hard, Good, or Easy.' });
+  const attempt = await getAttempt(client, learner, attemptId);
+  const session = await getStudySession(client, learner, studySessionId);
+  if (attempt.skillId !== skillId) throw new StudyError('NOT_FOUND');
+  if (attempt.studySessionId !== studySessionId)
+    throw new StudyError('NOT_FOUND');
+  if (session.mode === 'assessment') throw new StudyError('NOT_FOUND');
+  await rateGrammarAttempt(client, learner, {
+    attemptId,
+    rating: rating as 'hard' | 'good' | 'easy',
+    expectedSessionId: studySessionId
+  });
+  return { rated: true as const };
 }
 
 /**
@@ -194,6 +243,33 @@ async function retryQuestion(
 }
 
 /** Practice feedback is persisted history, so a reload cannot erase or upgrade it. */
+function practiceFeedbackFields(
+  row: Row,
+  evaluations: Row[],
+  retentionPolicy: string | null
+) {
+  return {
+    attemptId: String(row.id),
+    questionId: String(row.question_id),
+    contentVersionId: String(row.content_version_id),
+    reportSubmissionKey: randomUUID(),
+    answer: String(row.answer),
+    expectedAnswer:
+      row.expected_answer === null ? null : String(row.expected_answer),
+    outcome: row.not_sure
+      ? ('uncertain' as const)
+      : feedbackOutcome(evaluations, String(row.content_version_id)),
+    evidenceKind: String(row.evidence_kind),
+    receivedHelp: Boolean(row.received_help),
+    requiresRating: retentionPolicy === GRAMMAR_RETENTION_POLICY_VERSION,
+    rating:
+      row.grammar_rating === null
+        ? null
+        : (String(row.grammar_rating) as 'again' | 'hard' | 'good' | 'easy'),
+    notSure: Boolean(row.not_sure)
+  };
+}
+
 export async function practiceFeedback(
   client: Client,
   learner: LearnerSession,
@@ -217,18 +293,11 @@ export async function practiceFeedback(
     args: [learner.userId, row.id]
   });
   return {
-    attemptId: String(row.id),
-    questionId: String(row.question_id),
-    contentVersionId: String(row.content_version_id),
-    reportSubmissionKey: randomUUID(),
-    answer: String(row.answer),
-    expectedAnswer:
-      row.expected_answer === null ? null : String(row.expected_answer),
-    outcome: row.not_sure
-      ? ('uncertain' as const)
-      : feedbackOutcome(evaluations.rows, String(row.content_version_id)),
-    evidenceKind: String(row.evidence_kind),
-    notSure: Boolean(row.not_sure),
+    ...practiceFeedbackFields(
+      row,
+      evaluations.rows,
+      study.grammarRetentionPolicyVersion
+    ),
     retryQuestion:
       study.state === 'active'
         ? await retryQuestion(

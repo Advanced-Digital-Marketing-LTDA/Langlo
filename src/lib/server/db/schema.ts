@@ -446,6 +446,8 @@ export const studySessions = sqliteTable(
     pausedAt: integer('paused_at'),
     // Versioned question IDs, pinned when an assessment starts.
     assessmentPlan: text('assessment_plan'),
+    grammarRetentionPlan: text('grammar_retention_plan'),
+    grammarRetentionPolicyVersion: text('grammar_retention_policy_version'),
     createdAt: createdAt()
   },
   (table) => [
@@ -487,6 +489,12 @@ export const attempts = sqliteTable(
     skillId: text('skill_id').notNull(),
     language: text('language').notNull(),
     submissionKey: text('submission_key').notNull(),
+    grammarRating: text('grammar_rating', {
+      enum: ['again', 'hard', 'good', 'easy']
+    }),
+    receivedHelp: integer('received_help', { mode: 'boolean' })
+      .notNull()
+      .default(false),
     evidenceKind: text('evidence_kind', {
       enum: ['independent', 'assisted']
     }).notNull(),
@@ -540,6 +548,10 @@ export const attempts = sqliteTable(
     check(
       'attempts_evidence_kind',
       sql`${table.evidenceKind} IN ('independent', 'assisted')`
+    ),
+    check(
+      'attempts_grammar_rating',
+      sql`${table.grammarRating} IS NULL OR ${table.grammarRating} IN ('again', 'hard', 'good', 'easy')`
     )
   ]
 );
@@ -1030,6 +1042,166 @@ export const nativeFlashcardReviewEvents = sqliteTable(
     check(
       'native_flashcard_review_events_state_json',
       sql`${table.stateJson} IS NULL OR json_valid(${table.stateJson})`
+    )
+  ]
+);
+
+export const grammarRetentionSchedules = sqliteTable(
+  'grammar_retention_schedules',
+  {
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    language: text('language').notNull(),
+    skillId: text('skill_id').notNull(),
+    contentVersionId: text('content_version_id').notNull(),
+    stateJson: text('state_json').notNull(),
+    dueAt: integer('due_at').notNull(),
+    revision: integer('revision').notNull().default(0),
+    resetRequired: integer('reset_required', { mode: 'boolean' })
+      .notNull()
+      .default(false),
+    schedulerVersion: text('scheduler_version').notNull(),
+    parametersJson: text('parameters_json').notNull(),
+    createdAt: createdAt()
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerId, table.language, table.skillId] }),
+    foreignKey({
+      columns: [table.skillId, table.language],
+      foreignColumns: [skills.id, skills.language]
+    }),
+    foreignKey({
+      columns: [table.contentVersionId, table.skillId, table.language],
+      foreignColumns: [
+        contentVersions.id,
+        contentVersions.skillId,
+        contentVersions.language
+      ]
+    }),
+    index('grammar_retention_schedules_owner_due').on(
+      table.ownerId,
+      table.language,
+      table.dueAt
+    ),
+    check(
+      'grammar_retention_schedules_language',
+      sql`${table.language} IN ('fr', 'de', 'en', 'pt')`
+    ),
+    check(
+      'grammar_retention_schedules_due',
+      sql`typeof(${table.dueAt}) = 'integer' AND ${table.dueAt} >= 0`
+    ),
+    check(
+      'grammar_retention_schedules_revision',
+      sql`typeof(${table.revision}) = 'integer' AND ${table.revision} >= 0`
+    ),
+    check(
+      'grammar_retention_schedules_reset',
+      sql`typeof(${table.resetRequired}) = 'integer' AND ${table.resetRequired} IN (0, 1)`
+    ),
+    check(
+      'grammar_retention_schedules_state',
+      sql`json_valid(${table.stateJson})`
+    ),
+    check(
+      'grammar_retention_schedules_parameters',
+      sql`json_valid(${table.parametersJson})`
+    )
+  ]
+);
+
+export const grammarRetentionEvents = sqliteTable(
+  'grammar_retention_events',
+  {
+    id: text('id').notNull(),
+    ownerId: text('owner_id').notNull(),
+    studySessionId: text('study_session_id').notNull(),
+    language: text('language').notNull(),
+    skillId: text('skill_id').notNull(),
+    attemptId: text('attempt_id').notNull(),
+    evaluationId: text('evaluation_id').notNull(),
+    contentVersionId: text('content_version_id').notNull(),
+    lineageKey: text('lineage_key').notNull(),
+    expectedRevision: integer('expected_revision').notNull(),
+    rating: text('rating', {
+      enum: ['again', 'hard', 'good', 'easy']
+    }).notNull(),
+    reviewedAt: integer('reviewed_at').notNull(),
+    schedulerVersion: text('scheduler_version').notNull(),
+    parametersJson: text('parameters_json').notNull(),
+    resultJson: text('result_json').notNull(),
+    stateJson: text('state_json').notNull()
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerId, table.id] }),
+    uniqueIndex('grammar_retention_events_session_skill').on(
+      table.ownerId,
+      table.studySessionId,
+      table.skillId
+    ),
+    foreignKey({
+      columns: [table.ownerId, table.language, table.skillId],
+      foreignColumns: [
+        grammarRetentionSchedules.ownerId,
+        grammarRetentionSchedules.language,
+        grammarRetentionSchedules.skillId
+      ]
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.studySessionId, table.ownerId, table.language],
+      foreignColumns: [
+        studySessions.id,
+        studySessions.ownerId,
+        studySessions.language
+      ]
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.attemptId, table.ownerId, table.skillId, table.language],
+      foreignColumns: [
+        attempts.id,
+        attempts.ownerId,
+        attempts.skillId,
+        attempts.language
+      ]
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.evaluationId, table.ownerId, table.attemptId],
+      foreignColumns: [
+        evaluations.id,
+        evaluations.ownerId,
+        evaluations.attemptId
+      ]
+    }).onDelete('cascade'),
+    foreignKey({
+      columns: [table.contentVersionId, table.skillId, table.language],
+      foreignColumns: [
+        contentVersions.id,
+        contentVersions.skillId,
+        contentVersions.language
+      ]
+    }),
+    index('grammar_retention_events_skill_time').on(
+      table.ownerId,
+      table.language,
+      table.skillId,
+      table.reviewedAt
+    ),
+    check(
+      'grammar_retention_events_rating',
+      sql`${table.rating} IN ('again', 'hard', 'good', 'easy')`
+    ),
+    check(
+      'grammar_retention_events_revision',
+      sql`typeof(${table.expectedRevision}) = 'integer' AND ${table.expectedRevision} >= 0`
+    ),
+    check(
+      'grammar_retention_events_reviewed_at',
+      sql`typeof(${table.reviewedAt}) = 'integer' AND ${table.reviewedAt} >= 0`
+    ),
+    check(
+      'grammar_retention_events_json',
+      sql`json_valid(${table.parametersJson}) AND json_valid(${table.resultJson}) AND json_valid(${table.stateJson})`
     )
   ]
 );

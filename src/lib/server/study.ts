@@ -14,11 +14,21 @@ import {
 import type { FallbackEvaluator } from './evaluation/runtime';
 import { beginWrite, executeWrite, type LearnerSession } from './flashcards';
 import { syncEvidenceLedger } from './mastery';
+import {
+  commitGrammarSessionReviews,
+  GRAMMAR_RETENTION_POLICY_VERSION,
+  type GrammarRating
+} from './grammar-retention';
 import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
 import type { ExerciseFormat } from '../components/exercises/answer';
-import { assertAssessmentQuestion, completeAssessment } from './assessment';
+import {
+  assertAssessmentQuestion,
+  completeAssessment,
+  feedbackEvaluation,
+  provisionalCorrectAttempt
+} from './assessment';
 
 export { getLesson, getSessionLesson, nextQuestion } from './study-content';
 export { StudyError };
@@ -83,7 +93,15 @@ const visibleEvaluations = `SELECT e.* FROM evaluations e
   JOIN attempts a ON a.id = e.attempt_id AND a.owner_id = e.owner_id
   JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
   WHERE e.owner_id = ? AND e.attempt_id = ?
-    AND (s.mode <> 'assessment' OR s.state = 'completed')
+    AND (s.mode <> 'assessment' OR s.state = 'completed' OR (
+      s.assessment_plan IS NOT NULL AND (
+        NOT EXISTS (SELECT 1 FROM json_each(s.assessment_plan, '$.questions') p
+          WHERE NOT EXISTS (SELECT 1 FROM attempts planned WHERE planned.owner_id = s.owner_id
+            AND planned.study_session_id = s.id AND planned.question_id = p.value))
+        OR (SELECT COUNT(DISTINCT answered.question_id) FROM attempts answered
+          WHERE answered.owner_id = s.owner_id AND answered.study_session_id = s.id
+            AND answered.not_sure = 1) >= 5
+      )))
   ORDER BY e.created_at, e.id`;
 
 export async function listStudySessions(
@@ -273,11 +291,13 @@ async function availableQuestion(
   studyRow: Row
 ) {
   const question = await tx.execute({
-    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.prompt, q.answer, q.alternatives, v.status FROM questions q JOIN content_versions v ON v.id = q.content_version_id WHERE q.id = ? AND q.language = ?',
+    sql: 'SELECT q.content_version_id, q.skill_id, q.holdout, q.format, q.prompt, q.answer, q.alternatives, v.status, sk.retired_at FROM questions q JOIN content_versions v ON v.id = q.content_version_id JOIN skills sk ON sk.id = q.skill_id AND sk.language = q.language WHERE q.id = ? AND q.language = ?',
     args: [input.questionId, studyRow.language]
   });
   const questionRow = question.rows[0];
   if (!questionRow) throw new StudyError('NOT_FOUND');
+  if (questionRow.retired_at !== null)
+    throw new StudyError('CONTENT_UNAVAILABLE');
   if (isWithheld(questionRow, studyRow.mode))
     throw new StudyError('CONTENT_UNAVAILABLE');
   return questionRow;
@@ -303,6 +323,31 @@ async function assertSessionVersion(
     throw new StudyError('STALE_QUESTION');
 }
 
+async function assertGrammarReviewQuestion(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput,
+  questionRow: Row
+) {
+  const planned = await tx.execute({
+    sql: `SELECT 1 FROM study_sessions s JOIN json_each(s.grammar_retention_plan, '$.questions') p
+        WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'mixed-review'
+          AND s.grammar_retention_policy_version = ?
+          AND json_extract(p.value, '$.skillId') = ?
+          AND json_extract(p.value, '$.questionId') = ?
+          AND json_extract(p.value, '$.contentVersionId') = ?`,
+    args: [
+      input.studySessionId,
+      session.userId,
+      GRAMMAR_RETENTION_POLICY_VERSION,
+      questionRow.skill_id,
+      input.questionId,
+      questionRow.content_version_id
+    ]
+  });
+  if (!planned.rows.length) throw new StudyError('STALE_QUESTION');
+}
+
 /** The caller's active session and an available question in its language. */
 async function attemptSource(
   tx: WriteTransaction,
@@ -310,7 +355,7 @@ async function attemptSource(
   input: AttemptInput
 ) {
   const study = await tx.execute({
-    sql: 'SELECT language, state, mode, assessment_plan FROM study_sessions WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT language, state, mode, assessment_plan, grammar_retention_plan, grammar_retention_policy_version FROM study_sessions WHERE id = ? AND owner_id = ?',
     args: [input.studySessionId, session.userId]
   });
   const studyRow = study.rows[0];
@@ -325,11 +370,17 @@ async function attemptSource(
     );
   const questionRow = await availableQuestion(tx, input, studyRow);
   await assertSessionVersion(tx, session, input, questionRow);
+  if (studyRow.grammar_retention_plan !== null)
+    await assertGrammarReviewQuestion(tx, session, input, questionRow);
   return {
     contentVersionId: String(questionRow.content_version_id),
     skillId: String(questionRow.skill_id),
     language: String(studyRow.language),
     mode: String(studyRow.mode),
+    grammarRetentionPolicyVersion:
+      studyRow.grammar_retention_policy_version === null
+        ? null
+        : String(studyRow.grammar_retention_policy_version),
     question: questionRow
   };
 }
@@ -416,6 +467,8 @@ function logFallback(reason: FallbackReason | 'not-configured' | 'failed') {
 type FallbackAttempt = {
   id: string;
   studySessionId: string;
+  mode: string;
+  grammarRetentionPolicyVersion: string | null;
   questionId: string;
   answer: string;
   contentVersionId: string;
@@ -424,21 +477,65 @@ type FallbackAttempt = {
 };
 
 /** Record that the fallback is finished without a verdict, so results stop waiting for it. */
+async function finishFallback(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  attempt: FallbackAttempt,
+  attemptOnly: boolean
+) {
+  const completed =
+    attempt.mode === 'assessment' &&
+    (await completeAssessment(tx, session, attempt.studySessionId));
+  if (completed) {
+    await syncEvidenceLedger(tx, {
+      ownerId: session.userId,
+      language: attempt.language,
+      studySessionId: attempt.studySessionId
+    });
+    await commitGrammarSessionReviews(tx, session, attempt.studySessionId);
+  } else if (attemptOnly) {
+    await syncEvidenceLedger(tx, {
+      ownerId: session.userId,
+      language: attempt.language,
+      attemptIds: [attempt.id]
+    });
+  }
+}
+
+function isRetentionAssessment(attempt: FallbackAttempt) {
+  return (
+    attempt.mode === 'assessment' &&
+    attempt.grammarRetentionPolicyVersion === GRAMMAR_RETENTION_POLICY_VERSION
+  );
+}
+
 async function settleFallback(
   client: Client,
   session: LearnerSession,
-  attempt: FallbackAttempt
+  attempt: FallbackAttempt,
+  retentionAssessmentOnly = false
 ) {
-  await executeWrite(client, {
-    sql: "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, 'uncertain')",
-    args: [
-      randomUUID(),
-      session.userId,
-      attempt.id,
-      FALLBACK_SETTLED_EVALUATOR_VERSION,
-      `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
-    ]
-  });
+  if (retentionAssessmentOnly && !isRetentionAssessment(attempt)) return;
+  const tx = await beginWrite(client);
+  try {
+    await tx.execute({
+      sql: "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, 'uncertain')",
+      args: [
+        randomUUID(),
+        session.userId,
+        attempt.id,
+        FALLBACK_SETTLED_EVALUATOR_VERSION,
+        `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
+      ]
+    });
+    await finishFallback(tx, session, attempt, false);
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
 }
 
 async function recordFallbackVerdict(
@@ -460,18 +557,7 @@ async function recordFallbackVerdict(
         outcome
       ]
     });
-    const completed = await completeAssessment(
-      tx,
-      session,
-      attempt.studySessionId
-    );
-    await syncEvidenceLedger(tx, {
-      ownerId: session.userId,
-      language: attempt.language,
-      ...(completed
-        ? { studySessionId: attempt.studySessionId }
-        : { attemptIds: [attempt.id] })
-    });
+    await finishFallback(tx, session, attempt, true);
     await tx.commit();
   } catch (error) {
     await tx.rollback().catch(() => undefined);
@@ -493,9 +579,13 @@ async function recordFallbackEvaluation(
   fallback: FallbackEvaluator | undefined
 ) {
   const prepared = preparedQuestion(attempt.questionId, attempt.question);
-  if (prepared.format === 'multiple-choice' || prepared.answer === null) return;
+  if (prepared.format === 'multiple-choice' || prepared.answer === null) {
+    await settleFallback(client, session, attempt, true);
+    return;
+  }
   if (!fallback) {
     logFallback('not-configured');
+    await settleFallback(client, session, attempt, true);
     return;
   }
   try {
@@ -549,9 +639,17 @@ async function evidenceKindFor(
   input: AttemptInput
 ): Promise<EvidenceKind> {
   if (input.evidenceKind === 'assisted') return 'assisted';
+  const provisional = provisionalCorrectAttempt('a', 's');
   const prior = await tx.execute({
-    sql: 'SELECT 1 FROM attempts WHERE owner_id = ? AND question_id = ? AND study_session_id <> ? LIMIT 1',
-    args: [session.userId, input.questionId, input.studySessionId]
+    sql: `SELECT 1 FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
+      WHERE a.owner_id = ? AND a.question_id = ? AND a.study_session_id <> ?
+        AND NOT ${provisional.sql} LIMIT 1`,
+    args: [
+      session.userId,
+      input.questionId,
+      input.studySessionId,
+      ...provisional.args
+    ]
   });
   return prior.rows.length ? 'assisted' : 'independent';
 }
@@ -579,6 +677,176 @@ export async function recordAttempt(
   return recorded.result;
 }
 
+async function grammarAttemptRows(
+  tx: WriteTransaction,
+  learner: LearnerSession,
+  attemptId: string
+) {
+  const found = await tx.execute({
+    sql: `SELECT a.id AS attempt_id, a.owner_id, a.study_session_id,
+          a.skill_id, a.language, a.question_id, a.content_version_id,
+          a.evidence_kind, a.received_help, a.not_sure, a.grammar_rating,
+          s.mode, s.state, s.grammar_retention_policy_version, v.status,
+          e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
+        FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
+        JOIN content_versions v ON v.id = a.content_version_id
+        LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+        WHERE a.id = ? AND a.owner_id = ? ORDER BY e.created_at, e.id`,
+    args: [attemptId, learner.userId]
+  });
+  return found.rows;
+}
+
+function isUnassistedGrammarAttempt(row: Row, expectedSessionId: string) {
+  return (
+    row.study_session_id === expectedSessionId &&
+    row.grammar_retention_policy_version === GRAMMAR_RETENTION_POLICY_VERSION &&
+    !row.received_help &&
+    !row.not_sure
+  );
+}
+
+function ownGrammarAttempt(rows: Row[], expectedSessionId: string) {
+  const row = rows[0];
+  if (!row) throw new StudyError('NOT_FOUND');
+  if (!isUnassistedGrammarAttempt(row, expectedSessionId))
+    throw new StudyError('NOT_FOUND');
+  return row;
+}
+
+function hasCorrectGrammarEvaluation(rows: Row[]) {
+  return (
+    feedbackEvaluation(rows, String(rows[0].content_version_id))?.outcome ===
+    'correct'
+  );
+}
+
+function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
+  const row = ownGrammarAttempt(rows, expectedSessionId);
+  if (
+    row.status === 'quarantined' ||
+    !['active', 'completed'].includes(String(row.state))
+  )
+    throw new StudyError('NOT_FOUND');
+  if (!hasCorrectGrammarEvaluation(rows))
+    throw new StudyError('INVALID_GRAMMAR_RATING');
+  if (!['schema-validated', 'pilot-ready'].includes(String(row.status)))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+  return row;
+}
+
+function assertDiscardableAttempt(rows: Row[], expectedSessionId: string) {
+  const row = ownGrammarAttempt(rows, expectedSessionId);
+  if (row.mode !== 'assessment' || row.state !== 'active')
+    throw new StudyError('NOT_FOUND');
+  if (row.grammar_rating !== null || !hasCorrectGrammarEvaluation(rows))
+    throw new StudyError('NOT_FOUND');
+  return row;
+}
+
+async function persistAttemptRating(
+  tx: WriteTransaction,
+  learner: LearnerSession,
+  row: Row,
+  rating: GrammarRating
+) {
+  if (row.grammar_rating !== null) {
+    if (row.grammar_rating !== rating)
+      throw new StudyError('STALE_GRAMMAR_RATING');
+    return true;
+  }
+  if (row.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
+  const changed = await tx.execute({
+    sql: 'UPDATE attempts SET grammar_rating = ? WHERE id = ? AND owner_id = ? AND grammar_rating IS NULL',
+    args: [rating, row.attempt_id, learner.userId]
+  });
+  if (changed.rowsAffected !== 1) throw new StudyError('STALE_GRAMMAR_RATING');
+  return false;
+}
+
+async function finalizeAssessment(
+  tx: WriteTransaction,
+  learner: LearnerSession,
+  row: Row
+) {
+  const studySessionId = String(row.study_session_id);
+  const completed = await completeAssessment(tx, learner, studySessionId);
+  if (completed) {
+    await syncEvidenceLedger(tx, {
+      ownerId: learner.userId,
+      language: String(row.language),
+      studySessionId
+    });
+    await commitGrammarSessionReviews(tx, learner, studySessionId);
+  }
+  return completed;
+}
+
+/** Add a learner difficulty rating to a correct response and finish an assessment if ready. */
+export async function rateGrammarAttempt(
+  client: Client,
+  learner: LearnerSession,
+  input: { attemptId: string; rating: GrammarRating; expectedSessionId: string }
+) {
+  const { attemptId, rating, expectedSessionId } = input;
+  if (!['hard', 'good', 'easy'].includes(rating))
+    throw new StudyError('INVALID_GRAMMAR_RATING');
+  const tx = await beginWrite(client);
+  try {
+    const rows = await grammarAttemptRows(tx, learner, attemptId);
+    const row = assertRateableAttempt(rows, expectedSessionId);
+    const duplicate = await persistAttemptRating(tx, learner, row, rating);
+    if (duplicate) {
+      await tx.commit();
+      return { duplicate: true, completed: row.state === 'completed' };
+    }
+    if (row.mode === 'assessment') {
+      const completed = await finalizeAssessment(tx, learner, row);
+      await tx.commit();
+      return { duplicate: false, completed };
+    }
+    await syncEvidenceLedger(tx, {
+      ownerId: learner.userId,
+      language: String(row.language),
+      attemptIds: [attemptId]
+    });
+    await tx.commit();
+    return { duplicate: false, completed: false };
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
+/** Remove a provisional correct assessment response the learner declined to rate. */
+export async function discardUnratedAssessmentAnswer(
+  client: Client,
+  learner: LearnerSession,
+  attemptId: string,
+  expectedSessionId: string
+) {
+  const tx = await beginWrite(client);
+  try {
+    const rows = await grammarAttemptRows(tx, learner, attemptId);
+    const row = assertDiscardableAttempt(rows, expectedSessionId);
+    const deleted = await tx.execute({
+      sql: 'DELETE FROM attempts WHERE id = ? AND owner_id = ? AND grammar_rating IS NULL',
+      args: [attemptId, learner.userId]
+    });
+    if (deleted.rowsAffected !== 1)
+      throw new StudyError('STALE_GRAMMAR_RATING');
+    await finalizeAssessment(tx, learner, row);
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
 async function syncAttemptEvidence(
   tx: WriteTransaction,
   session: LearnerSession,
@@ -601,10 +869,67 @@ async function syncAttemptEvidence(
       ...scope,
       studySessionId: attempt.studySessionId
     });
+    await commitGrammarSessionReviews(tx, session, attempt.studySessionId);
     return;
   }
   if (attempt.mode === 'assessment' || attempt.outcome === 'uncertain') return;
   await syncEvidenceLedger(tx, { ...scope, attemptIds: [attempt.attemptId] });
+}
+
+async function ratePreparedMistake(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput,
+  attempt: { id: string; outcome: string; policy: string | null }
+) {
+  if (attempt.outcome !== 'incorrect') return;
+  if (attempt.policy !== GRAMMAR_RETENTION_POLICY_VERSION) return;
+  if (input.evidenceKind !== 'independent') return;
+  if (!input.notSure) {
+    await tx.execute({
+      sql: "UPDATE attempts SET grammar_rating = 'again' WHERE id = ? AND owner_id = ?",
+      args: [attempt.id, session.userId]
+    });
+  }
+}
+
+async function insertAttempt(
+  tx: WriteTransaction,
+  session: LearnerSession,
+  input: AttemptInput,
+  source: Awaited<ReturnType<typeof attemptSource>>
+) {
+  const id = randomUUID();
+  await tx.execute({
+    sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure, received_help) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    args: [
+      id,
+      session.userId,
+      input.studySessionId,
+      input.questionId,
+      source.contentVersionId,
+      source.skillId,
+      source.language,
+      input.submissionKey,
+      await evidenceKindFor(tx, session, input),
+      input.answer,
+      input.notSure ? 1 : 0,
+      input.evidenceKind === 'assisted' ? 1 : 0
+    ]
+  });
+  const attempt = {
+    id,
+    studySessionId: input.studySessionId,
+    mode: source.mode,
+    grammarRetentionPolicyVersion: source.grammarRetentionPolicyVersion,
+    questionId: input.questionId,
+    answer: input.answer,
+    contentVersionId: source.contentVersionId,
+    language: source.language,
+    question: source.question,
+    notSure: input.notSure
+  };
+  return attempt;
 }
 
 async function recordAttemptWrite(
@@ -624,34 +949,14 @@ async function recordAttemptWrite(
     }
     const source = await attemptSource(tx, session, input);
     await assertNotAnswered(tx, session, input);
-    const id = randomUUID();
-    await tx.execute({
-      sql: 'INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, not_sure) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      args: [
-        id,
-        session.userId,
-        input.studySessionId,
-        input.questionId,
-        source.contentVersionId,
-        source.skillId,
-        source.language,
-        input.submissionKey,
-        await evidenceKindFor(tx, session, input),
-        input.answer,
-        input.notSure ? 1 : 0
-      ]
-    });
-    const attempt = {
-      id,
-      studySessionId: input.studySessionId,
-      questionId: input.questionId,
-      answer: input.answer,
-      contentVersionId: source.contentVersionId,
-      language: source.language,
-      question: source.question,
-      notSure: input.notSure
-    };
+    const attempt = await insertAttempt(tx, session, input, source);
+    const { id } = attempt;
     const outcome = await recordPreparedEvaluation(tx, session, attempt);
+    await ratePreparedMistake(tx, session, input, {
+      id,
+      outcome,
+      policy: source.grammarRetentionPolicyVersion
+    });
     await syncAttemptEvidence(tx, session, {
       attemptId: id,
       language: source.language,

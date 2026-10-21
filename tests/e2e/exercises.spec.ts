@@ -181,7 +181,11 @@ async function signIn(page: Page, context: BrowserContext) {
   return user.id as string;
 }
 
-async function seedSession(userId: string, sessionId = 'exercise-session') {
+async function seedSession(
+  userId: string,
+  sessionId = 'exercise-session',
+  retentionPolicyVersion: string | null = null
+) {
   await withDatabase(async (client) => {
     await client.execute({
       sql: "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES (?, ?, 'fr', 'A1', 'en') ON CONFLICT(owner_id, language) DO NOTHING",
@@ -192,8 +196,13 @@ async function seedSession(userId: string, sessionId = 'exercise-session') {
       args: [userId, 'fr']
     });
     await client.execute({
-      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES (?, ?, ?, 'fr', 'practice')",
-      args: [sessionId, userId, String(enrollment.rows[0]?.id)]
+      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, grammar_retention_policy_version) VALUES (?, ?, ?, 'fr', 'practice', ?)",
+      args: [
+        sessionId,
+        userId,
+        String(enrollment.rows[0]?.id),
+        retentionPolicyVersion
+      ]
     });
   });
 }
@@ -495,6 +504,41 @@ async function answerExercise(
   await attachScreenshot(page, testInfo, exercise.format);
   await page.keyboard.press('Enter');
   await expect.poll(() => storedAnswers(userId)).toHaveLength(index + 1);
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await expect(feedback).toContainText('Correct');
+  await feedback.getByRole('button', { name: 'Good', exact: true }).click();
+  if (index === 0) await attachScreenshot(page, testInfo, 'grammar-rating');
+}
+
+async function rateAssessmentResults(page: Page) {
+  const ratings = page.getByRole('button', { name: 'Good', exact: true });
+  await expect(ratings).toHaveCount(2);
+  await ratings.first().click();
+  await expect(
+    page.getByText('You rated this good.', { exact: true })
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Good', exact: true }).click();
+  await expect(
+    page.getByText('You rated this good.', { exact: true })
+  ).toHaveCount(2);
+}
+
+async function completeAssessmentAnswers(page: Page) {
+  await page
+    .getByRole('textbox', { name: 'Your answer', exact: true })
+    .fill('Nous sommes ici.');
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(
+    page.getByText('Question 3 of 3', { exact: true })
+  ).toBeVisible();
+  await page
+    .getByRole('textbox', { name: 'Your answer', exact: true })
+    .fill('synthetic-third-answer');
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
 }
 
 async function assessAllActiveSkills(page: Page, userId: string) {
@@ -537,21 +581,7 @@ async function assessAllActiveSkills(page: Page, userId: string) {
     `${base}/app/api/attempts/${partial.rows[0].id}`
   );
   expect((await api.json()).attempt.evaluations).toEqual([]);
-  await page
-    .getByRole('textbox', { name: 'Your answer', exact: true })
-    .fill('Nous sommes ici.');
-  await page
-    .getByRole('button', { name: 'Submit answer', exact: true })
-    .click();
-  await expect(
-    page.getByText('Question 3 of 3', { exact: true })
-  ).toBeVisible();
-  await page
-    .getByRole('textbox', { name: 'Your answer', exact: true })
-    .fill('synthetic-third-answer');
-  await page
-    .getByRole('button', { name: 'Submit answer', exact: true })
-    .click();
+  await completeAssessmentAnswers(page);
   await expect(
     page.getByRole('heading', { name: 'Assessment results', exact: true })
   ).toBeVisible();
@@ -565,6 +595,7 @@ async function assessAllActiveSkills(page: Page, userId: string) {
   ).toBeVisible();
   await page.reload();
   await expect(page.getByText('Uncertain: 1', { exact: true })).toBeVisible();
+  await rateAssessmentResults(page);
 }
 
 test('restores the map position after returning from a lesson', async ({
@@ -796,73 +827,55 @@ async function exploreSkillMap(page: Page) {
   await page.getByRole('link', { name: 'Back to skill map' }).click();
 }
 
-test('all four exercise formats render and submit without overflow', async ({
-  page,
-  context
-}, testInfo) => {
-  test.setTimeout(40000);
-  const userId = await signIn(page, context);
-  await seedSession(userId);
-  await expectBlankAttemptsRefused(page);
-  expect(await storedAnswers(userId)).toEqual([]);
-
-  await page.goto(
-    `${base}/app/learn/fr/lesson/fr-a1-001?session=exercise-session`
+async function exerciseRetryAndReport(page: Page, userId: string) {
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await feedback.getByText('Try this question again (assisted)').click();
+  await feedback
+    .getByRole('button', { name: 'Submit assisted retry', exact: true })
+    .click();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const ids = await page
+    .getByRole('alert')
+    .evaluateAll((nodes) => nodes.map((node) => node.id));
+  expect(ids).toHaveLength(2);
+  expect(new Set(ids).size).toBe(2);
+  await feedback.getByText('Try this question again (assisted)').click();
+  await feedback.getByText('Report a content issue', { exact: true }).click();
+  await feedback
+    .getByRole('button', { name: 'Send report', exact: true })
+    .click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Report saved' })
+  ).toContainText('Report saved');
+  const exactReport = await withDatabase((client) =>
+    client.execute({
+      sql: 'SELECT question_id, content_version_id FROM content_reports WHERE owner_id = ? ORDER BY created_at, rowid LIMIT 1',
+      args: [userId]
+    })
   );
-  const submissions: string[] = [];
-  page.on('request', (request) => {
-    if (
-      request.method() === 'POST' &&
-      request.url().includes('/lesson/') &&
-      request.url().includes('/answer')
-    )
-      submissions.push(request.url());
+  expect(exactReport.rows[0]).toMatchObject({
+    question_id: 'fr-a1-001@1:q1',
+    content_version_id: 'fr-a1-001@1'
   });
-  for (const index of exercises.keys()) {
-    await answerExercise(page, testInfo, userId, index);
-    if (index === 0) {
-      const feedback = page.getByRole('region', { name: 'Practice feedback' });
-      await feedback.getByText('Try this question again (assisted)').click();
-      await feedback
-        .getByRole('button', { name: 'Submit assisted retry', exact: true })
-        .click();
-      await page
-        .getByRole('button', { name: 'Submit answer', exact: true })
-        .click();
-      const ids = await page
-        .getByRole('alert')
-        .evaluateAll((nodes) => nodes.map((node) => node.id));
-      expect(ids).toHaveLength(2);
-      expect(new Set(ids).size).toBe(2);
-      await feedback.getByText('Try this question again (assisted)').click();
-      await feedback
-        .getByText('Report a content issue', { exact: true })
-        .click();
-      await feedback
-        .getByRole('button', { name: 'Send report', exact: true })
-        .click();
-      await expect(page.getByRole('status')).toContainText('Report saved');
-      const exactReport = await withDatabase((client) =>
-        client.execute({
-          sql: 'SELECT question_id, content_version_id FROM content_reports WHERE owner_id = ? ORDER BY created_at, rowid LIMIT 1',
-          args: [userId]
-        })
-      );
-      expect(exactReport.rows[0]).toMatchObject({
-        question_id: 'fr-a1-001@1:q1',
-        content_version_id: 'fr-a1-001@1'
-      });
-      await page.reload();
-    }
-  }
+  await page.reload();
+}
 
+async function verifyCompletedExercises(
+  page: Page,
+  userId: string,
+  submissions: string[]
+) {
   expect(submissions).toHaveLength(4);
   expect(new URL(page.url()).searchParams.get('session')).toBe(
     'exercise-session'
   );
-  await expect(page.getByRole('status')).toContainText(
-    'You have answered every question'
-  );
+  await expect(
+    page
+      .getByRole('status')
+      .filter({ hasText: 'You have answered every question' })
+  ).toContainText('You have answered every question');
   expect(await storedAnswers(userId)).toEqual(
     exercises.map((exercise, index) => ({
       question_id: `fr-a1-001@1:q${index + 1}`,
@@ -871,9 +884,11 @@ test('all four exercise formats render and submit without overflow', async ({
     }))
   );
   await page.reload();
-  await expect(page.getByRole('status')).toContainText(
-    'You have answered every question'
-  );
+  await expect(
+    page
+      .getByRole('status')
+      .filter({ hasText: 'You have answered every question' })
+  ).toContainText('You have answered every question');
   const feedback = page.getByRole('region', { name: 'Practice feedback' });
   await expect(feedback).toContainText('Correct');
   await feedback.getByText('Try this question again (assisted)').click();
@@ -886,9 +901,9 @@ test('all four exercise formats render and submit without overflow', async ({
   );
   await page.reload();
   await expect(feedback).toContainText('Assisted retry');
+}
 
-  await assessAllActiveSkills(page, userId);
-  await exploreSkillMap(page);
+async function expectProgressAndHome(page: Page) {
   await page.goto(`${base}/app/progress`);
   await expect(
     page.getByRole('heading', { name: 'Grammar progress', exact: true })
@@ -923,6 +938,9 @@ test('all four exercise formats render and submit without overflow', async ({
       () => document.documentElement.scrollWidth <= window.innerWidth
     )
   ).toBe(true);
+}
+
+async function reportLessonIssue(page: Page) {
   await page.goto(`${base}/app/learn/fr/lesson/fr-a1-001`);
   await page.getByText('Report a content issue', { exact: true }).click();
   await page.getByLabel('What needs attention?').selectOption('unclear');
@@ -948,6 +966,43 @@ test('all four exercise formats render and submit without overflow', async ({
   await expect(
     page.getByText('fr-a1-001@1', { exact: true }).first()
   ).toBeVisible();
+}
+
+test('all four exercise formats render and submit without overflow', async ({
+  page,
+  context
+}, testInfo) => {
+  test.setTimeout(40000);
+  const userId = await signIn(page, context);
+  await seedSession(userId, 'exercise-session', 'grammar-fsrs-1');
+  await expectBlankAttemptsRefused(page);
+  expect(await storedAnswers(userId)).toEqual([]);
+
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=exercise-session`
+  );
+  const submissions: string[] = [];
+  page.on('request', (request) => {
+    if (
+      request.method() === 'POST' &&
+      request.url().includes('/lesson/') &&
+      request.url().includes('/answer')
+    )
+      submissions.push(request.url());
+  });
+  for (const index of exercises.keys()) {
+    await answerExercise(page, testInfo, userId, index);
+    if (index === 0) {
+      await exerciseRetryAndReport(page, userId);
+    }
+  }
+
+  await verifyCompletedExercises(page, userId, submissions);
+
+  await assessAllActiveSkills(page, userId);
+  await exploreSkillMap(page);
+  await expectProgressAndHome(page);
+  await reportLessonIssue(page);
 });
 
 test('waits for a saved answer before refreshing to the detected app version', async ({

@@ -15,7 +15,11 @@ import {
   getAssessment,
   startAssessment
 } from '../src/lib/server/assessment';
-import { getLesson, recordAttempt } from '../src/lib/server/study';
+import {
+  getLesson,
+  recordAttempt,
+  rateGrammarAttempt
+} from '../src/lib/server/study';
 import { assessmentLevels, foundationLevel } from '../src/lib/levels';
 import { load as enrollLoad } from '../src/routes/app/enroll/+page.server';
 import { load as settingsLoad } from '../src/routes/app/settings/+page.server';
@@ -217,6 +221,41 @@ describe('Portuguese placement assessment', () => {
       foundationLevel: 'B1',
       foundationGaps: ['pt-b1-002']
     });
+  });
+
+  it('completes Portuguese B1/B2 ratings and stores owner-scoped retention events', async () => {
+    const { id } = await seedPortugueseAssessment();
+    const attempts = [];
+    for (const question of [
+      'pt-b1-001@1:h01',
+      'pt-b1-002@1:h01',
+      'pt-b2-001@1:h01'
+    ])
+      attempts.push(await answer(id, question, 'fui'));
+    expect((await getAssessment(client, learner, id)).state).toBe('active');
+    for (const attempt of attempts)
+      await rateGrammarAttempt(client, learner, {
+        attemptId: attempt.id,
+        rating: 'good',
+        expectedSessionId: id
+      });
+    expect((await getAssessment(client, learner, id)).state).toBe('completed');
+    expect(
+      (
+        await client.execute(
+          'SELECT language, owner_id, rating FROM grammar_retention_events ORDER BY skill_id'
+        )
+      ).rows
+    ).toEqual(
+      Array.from({ length: 3 }, () => ({
+        language: 'pt',
+        owner_id: learner.userId,
+        rating: 'good'
+      }))
+    );
+    expect(
+      (await assessmentResults(client, learner, id)).foundationGaps
+    ).toEqual([]);
   });
 
   it('keeps A1 and A2 coverage and gaps for the existing tracks', async () => {

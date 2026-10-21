@@ -13,6 +13,7 @@ import {
   PREPARED_EVALUATOR_VERSION,
   type PreparedOutcome
 } from './evaluation/prepared';
+import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 
 export const ASSESSMENT_POLICY_VERSION = 'assessment-2';
 type QueryClient = Pick<Client, 'execute'>;
@@ -45,6 +46,33 @@ const answersForSkillOf = (attempt: string, question: string) =>
       WHERE r.retired_at IS NOT NULL AND r.carry_progress = 1
   ) SELECT id FROM source)`;
 
+export function provisionalCorrectAttempt(attempt: string, session: string) {
+  return {
+    sql: `(${session}.grammar_retention_policy_version IS ?
+      AND ${attempt}.grammar_rating IS NULL AND (
+        EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = ${attempt}.id
+          AND f.owner_id = ${attempt}.owner_id AND f.evaluator_version = ?
+          AND f.rubric_version = ? || ':' || ${attempt}.content_version_id
+          AND f.outcome = 'correct')
+        OR (NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = ${attempt}.id
+            AND f.owner_id = ${attempt}.owner_id AND f.evaluator_version = ?
+            AND f.rubric_version = ? || ':' || ${attempt}.content_version_id)
+          AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = ${attempt}.id
+            AND p.owner_id = ${attempt}.owner_id AND p.evaluator_version = ?
+            AND p.rubric_version = ${attempt}.content_version_id
+            AND p.outcome = 'correct'))
+      ))`,
+    args: [
+      GRAMMAR_RETENTION_POLICY_VERSION,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      PREPARED_EVALUATOR_VERSION
+    ]
+  };
+}
+
 function assertPreviousSession(
   row: Row | undefined,
   learner: LearnerSession,
@@ -65,6 +93,7 @@ async function assessmentQuestions(
     sql: 'SELECT id FROM skills WHERE language = ? AND retired_at IS NULL ORDER BY level, id',
     args: [input.language]
   });
+  const provisional = provisionalCorrectAttempt('a', 's');
   const available = await client.execute({
     sql: `SELECT q.id, q.skill_id, sk.level FROM questions q
         JOIN skills sk ON sk.id = q.skill_id
@@ -73,10 +102,12 @@ async function assessmentQuestions(
           AND sk.retired_at IS NULL
           AND v.status IN ('schema-validated', 'pilot-ready')
           AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id AND v2.status <> 'quarantined')
-          AND NOT EXISTS (SELECT 1 FROM attempts a JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND ${answersForSkillOf('a', 'q')}
+          AND NOT EXISTS (SELECT 1 FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
+            JOIN questions aq ON aq.id = a.question_id WHERE a.owner_id = ? AND ${answersForSkillOf('a', 'q')}
+            AND NOT ${provisional.sql}
             AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')})
         ORDER BY sk.level, q.skill_id, q.id`,
-    args: [input.language, learner.userId]
+    args: [input.language, learner.userId, ...provisional.args]
   });
   const questionBySkill = new Map(
     [...available.rows]
@@ -126,7 +157,7 @@ export async function startAssessment(
     if (!enrollment) throw new StudyError('NOT_FOUND');
     const questions = await assessmentQuestions(tx, learner, input);
     await tx.execute({
-      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, assessment_plan) VALUES (?, ?, ?, ?, 'assessment', ?)",
+      sql: "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, assessment_plan, grammar_retention_policy_version) VALUES (?, ?, ?, ?, 'assessment', ?, ?)",
       args: [
         id,
         learner.userId,
@@ -135,7 +166,8 @@ export async function startAssessment(
         JSON.stringify({
           version: ASSESSMENT_POLICY_VERSION,
           questions: questions.map((row) => String(row.id))
-        })
+        }),
+        GRAMMAR_RETENTION_POLICY_VERSION
       ]
     });
     await tx.commit();
@@ -150,6 +182,7 @@ export async function startAssessment(
 
 // One statement reads state, quarantine and answered position together.
 const plannedRows = `SELECT s.id AS session_id, s.language, s.state, s.assessment_plan,
+  s.grammar_retention_policy_version,
   q.id, q.skill_id, q.content_version_id, q.format, q.prompt, q.answer, q.alternatives,
   v.status, sk.level,
   EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = s.owner_id AND a.study_session_id = s.id AND a.question_id = q.id) AS answered
@@ -212,18 +245,72 @@ function questionFor(row: Row): ExerciseQuestion {
   };
 }
 
+async function assessmentAnswerCounts(
+  client: QueryClient,
+  learner: LearnerSession,
+  id: string
+) {
+  const result = await client.execute({
+    sql: `SELECT a.question_id, a.content_version_id, a.not_sure, e.* FROM attempts a
+      JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
+      LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+      WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'assessment'
+        AND s.state IN ('active', 'paused')`,
+    args: [id, learner.userId]
+  });
+  const byQuestion = new Map<string, Row[]>();
+  const notSure = new Set<string>();
+  for (const row of result.rows) {
+    const key = String(row.question_id);
+    const evidence = byQuestion.get(key) ?? [];
+    evidence.push(row);
+    byQuestion.set(key, evidence);
+    if (row.not_sure) notSure.add(key);
+  }
+  const incorrect = [...byQuestion.values()].filter(
+    (evidence) =>
+      !evidence[0].not_sure &&
+      feedbackOutcome(evidence, String(evidence[0].content_version_id)) ===
+        'incorrect'
+  ).length;
+  return { incorrect, notSure: notSure.size };
+}
+
+function assessmentStopped(answers: { incorrect: number; notSure: number }) {
+  return answers.incorrect >= 5 || answers.notSure >= 5;
+}
+
+function assertAssessmentAvailable(rows: Row[]) {
+  if (rows.some((row) => row.status === 'quarantined'))
+    throw new StudyError('CONTENT_UNAVAILABLE');
+}
+
+function activeAssessmentQuestion(rows: Row[], stopped: boolean) {
+  if (rows[0].state !== 'active') return undefined;
+  if (stopped) return undefined;
+  return rows.find((row) => !row.answered);
+}
+
+function assessmentCoverage(rows: Row[]) {
+  const language = String(rows[0].language);
+  return Object.fromEntries(
+    assessmentLevels(language).map((level) => [
+      level,
+      rows.filter((row) => row.level === level).length
+    ])
+  );
+}
+
 export async function getAssessment(
   client: QueryClient,
   learner: LearnerSession,
   id: string
 ) {
   const rows = await readPlan(client, learner, id);
-  const next = rows.find((row) => !row.answered);
-  if (
-    rows.some((row) => row.status === 'quarantined') &&
-    rows[0].state !== 'completed'
-  )
-    throw new StudyError('CONTENT_UNAVAILABLE');
+  const answers = await assessmentAnswerCounts(client, learner, id);
+  const stopped = assessmentStopped(answers);
+  if (rows[0].state !== 'completed') assertAssessmentAvailable(rows);
+  const next = activeAssessmentQuestion(rows, stopped);
   const language = String(rows[0].language);
   return {
     id,
@@ -232,14 +319,9 @@ export async function getAssessment(
     policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
     answered: rows.filter((row) => row.answered).length,
     total: rows.length,
-    coverage: Object.fromEntries(
-      assessmentLevels(language).map((level) => [
-        level,
-        rows.filter((row) => row.level === level).length
-      ])
-    ),
-    question: rows[0].state === 'active' && next ? questionFor(next) : null,
-    skillId: rows[0].state === 'active' && next ? String(next.skill_id) : null
+    coverage: assessmentCoverage(rows),
+    question: next ? questionFor(next) : null,
+    skillId: next ? String(next.skill_id) : null
   };
 }
 
@@ -251,18 +333,31 @@ export async function assertAssessmentQuestion(
   questionId: string
 ) {
   const rows = await readPlan(client, learner, id);
-  if (rows.some((row) => row.status === 'quarantined'))
-    throw new StudyError('CONTENT_UNAVAILABLE');
+  assertAssessmentAvailable(rows);
+  const answers = await assessmentAnswerCounts(client, learner, id);
+  if (assessmentStopped(answers)) throw new StudyError('STALE_QUESTION');
   if (rows.find((row) => !row.answered)?.id !== questionId)
     throw new StudyError('STALE_QUESTION');
+  await assertUnseenAssessmentQuestion(client, learner, id, questionId);
+}
+
+async function assertUnseenAssessmentQuestion(
+  client: QueryClient,
+  learner: LearnerSession,
+  id: string,
+  questionId: string
+) {
   // The plan was frozen at start: an item answered in another session since
   // then is no longer unseen, and counting it would reward a revealed answer.
+  const provisional = provisionalCorrectAttempt('a', 's');
   const seenElsewhere = await client.execute({
     sql: `SELECT 1 FROM questions q JOIN attempts a ON a.owner_id = ? AND a.study_session_id <> ? AND ${answersForSkillOf('a', 'q')}
+      JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
       JOIN questions aq ON aq.id = a.question_id
+      AND NOT ${provisional.sql}
       AND ${itemOf('aq', 'a.question_id', 'a.content_version_id')} = ${itemOf('q', 'q.id', 'q.content_version_id')}
       WHERE q.id = ? LIMIT 1`,
-    args: [learner.userId, id, questionId]
+    args: [learner.userId, id, ...provisional.args, questionId]
   });
   if (seenElsewhere.rows.length) throw new StudyError('STALE_QUESTION');
 }
@@ -273,31 +368,46 @@ export async function completeAssessment(
   learner: LearnerSession,
   id: string
 ) {
-  const evaluations = await client.execute({
-    sql: `SELECT a.question_id, a.content_version_id, e.* FROM attempts a
-      JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
-      JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
-      WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'assessment' AND s.state IN ('active', 'paused') AND a.not_sure = 0`,
-    args: [id, learner.userId]
-  });
-  const byQuestion = new Map<string, Row[]>();
-  for (const row of evaluations.rows) {
-    const key = String(row.question_id);
-    const evidence = byQuestion.get(key) ?? [];
-    evidence.push(row);
-    byQuestion.set(key, evidence);
-  }
-  const incorrect = [...byQuestion.values()].filter(
-    (evidence) =>
-      feedbackOutcome(evidence, String(evidence[0].content_version_id)) ===
-      'incorrect'
-  ).length;
+  const { incorrect } = await assessmentAnswerCounts(client, learner, id);
   const completed = await client.execute({
     sql: `UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND state IN ('active', 'paused') AND assessment_plan IS NOT NULL
       AND (? >= 5 OR NOT EXISTS (SELECT 1 FROM json_each(study_sessions.assessment_plan, '$.questions') p
         WHERE NOT EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.question_id = p.value))
-        OR (SELECT COUNT(DISTINCT a.question_id) FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.not_sure = 1) >= 5)`,
-    args: [id, learner.userId, incorrect]
+        OR (SELECT COUNT(DISTINCT a.question_id) FROM attempts a WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id AND a.not_sure = 1) >= 5)
+      AND (study_sessions.grammar_retention_policy_version IS NOT ? OR NOT EXISTS (
+        SELECT 1 FROM attempts a WHERE a.owner_id = study_sessions.owner_id
+          AND a.study_session_id = study_sessions.id AND a.grammar_rating IS NULL
+          AND (
+            EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = a.id AND f.owner_id = a.owner_id
+              AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || a.content_version_id AND f.outcome = 'correct')
+            OR (NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = a.id AND f.owner_id = a.owner_id
+                AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || a.content_version_id)
+              AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = a.id AND p.owner_id = a.owner_id
+                AND p.evaluator_version = ? AND p.rubric_version = a.content_version_id AND p.outcome = 'correct'))
+          )))
+      AND (study_sessions.grammar_retention_policy_version IS NOT ? OR NOT EXISTS (
+        SELECT 1 FROM attempts a JOIN evaluations p ON p.attempt_id = a.id AND p.owner_id = a.owner_id
+          AND p.evaluator_version = ? AND p.rubric_version = a.content_version_id AND p.outcome = 'uncertain'
+        WHERE a.owner_id = study_sessions.owner_id AND a.study_session_id = study_sessions.id
+          AND a.not_sure = 0 AND a.created_at > ?
+          AND NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = a.id AND f.owner_id = a.owner_id AND f.evaluator_version IN (?, ?))
+      ))`,
+    args: [
+      id,
+      learner.userId,
+      incorrect,
+      GRAMMAR_RETENTION_POLICY_VERSION,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      PREPARED_EVALUATOR_VERSION,
+      GRAMMAR_RETENTION_POLICY_VERSION,
+      PREPARED_EVALUATOR_VERSION,
+      Date.now() - FALLBACK_WAIT_MS,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_SETTLED_EVALUATOR_VERSION
+    ]
   });
   return completed.rowsAffected > 0;
 }
@@ -364,32 +474,9 @@ async function awaitingFallbackVerdict(
   return pending.rows.length > 0;
 }
 
-export async function assessmentResults(
-  client: QueryClient,
-  learner: LearnerSession,
-  id: string,
-  options: { awaitFallback?: boolean; now?: number } = {}
-) {
-  const rows = await readPlan(client, learner, id);
-  if (rows[0].state !== 'completed') throw new StudyError('RESULTS_NOT_READY');
-  if (
-    options.awaitFallback &&
-    (await awaitingFallbackVerdict(
-      client,
-      learner,
-      id,
-      options.now ?? Date.now()
-    ))
-  )
-    throw new StudyError('RESULTS_PENDING');
-  const evaluations = await client.execute({
-    sql: `SELECT e.*, a.id AS recorded_attempt_id, a.question_id, a.content_version_id, a.answer, a.not_sure, a.evidence_kind
-      FROM attempts a LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
-      WHERE a.study_session_id = ? AND a.owner_id = ? ORDER BY a.created_at, a.id, e.created_at, e.id`,
-    args: [id, learner.userId]
-  });
-  const items = rows.flatMap((row) => {
-    const evidence = evaluations.rows.filter(
+function assessmentResultItems(rows: Row[], evaluations: Row[]) {
+  return rows.flatMap((row) => {
+    const evidence = evaluations.filter(
       (entry) => entry.question_id === row.id
     );
     const first = evidence[0];
@@ -402,21 +489,21 @@ export async function assessmentResults(
       prompt: String(row.prompt),
       answer: String(first.answer),
       expectedAnswer: String(row.answer),
+      attemptId: String(first.recorded_attempt_id),
       outcome: first?.not_sure
         ? ('uncertain' as const)
         : feedbackOutcome(evidence, String(row.content_version_id)),
-      evidenceKind: String(first.evidence_kind)
+      evidenceKind: String(first.evidence_kind),
+      rating: first.grammar_rating == null ? null : String(first.grammar_rating)
     };
   });
-  const language = String(rows[0].language);
-  const foundation = foundationLevel(language);
+}
+
+function assessmentResultSummary(
+  items: ReturnType<typeof assessmentResultItems>,
+  foundation: string
+) {
   return {
-    id,
-    language,
-    policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
-    items,
-    total: rows.length,
-    notReached: rows.length - items.length,
     counts: {
       correct: items.filter((item) => item.outcome === 'correct').length,
       incorrect: items.filter((item) => item.outcome === 'incorrect').length,
@@ -426,5 +513,51 @@ export async function assessmentResults(
     foundationGaps: items
       .filter((item) => item.level === foundation && item.outcome !== 'correct')
       .map((item) => item.skillId)
+  };
+}
+
+export async function assessmentResults(
+  client: QueryClient,
+  learner: LearnerSession,
+  id: string,
+  options: { awaitFallback?: boolean; now?: number } = {}
+) {
+  const rows = await readPlan(client, learner, id);
+  const answers = await assessmentAnswerCounts(client, learner, id);
+  const ready =
+    rows[0].state === 'completed' ||
+    rows.every((row) => row.answered) ||
+    assessmentStopped(answers);
+  if (!ready) throw new StudyError('RESULTS_NOT_READY');
+  if (
+    options.awaitFallback &&
+    (await awaitingFallbackVerdict(
+      client,
+      learner,
+      id,
+      options.now ?? Date.now()
+    ))
+  )
+    throw new StudyError('RESULTS_PENDING');
+  const evaluations = await client.execute({
+    sql: `SELECT e.*, a.id AS recorded_attempt_id, a.question_id, a.content_version_id, a.answer, a.not_sure, a.evidence_kind, a.grammar_rating
+      FROM attempts a LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+      WHERE a.study_session_id = ? AND a.owner_id = ? ORDER BY a.created_at, a.id, e.created_at, e.id`,
+    args: [id, learner.userId]
+  });
+  const items = assessmentResultItems(rows, evaluations.rows);
+  const language = String(rows[0].language);
+  const foundation = foundationLevel(language);
+  return {
+    id,
+    language,
+    policyVersion: String(JSON.parse(String(rows[0].assessment_plan)).version),
+    grammarRetentionEnabled:
+      rows[0].grammar_retention_policy_version ===
+      GRAMMAR_RETENTION_POLICY_VERSION,
+    items,
+    total: rows.length,
+    notReached: rows.length - items.length,
+    ...assessmentResultSummary(items, foundation)
   };
 }
