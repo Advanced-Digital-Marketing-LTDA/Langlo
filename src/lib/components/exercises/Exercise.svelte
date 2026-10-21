@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { getContext, onDestroy } from 'svelte';
+  import { hydration } from '../../hydration.svelte';
   import {
     answerActionUrl,
     checkAnswer,
@@ -18,7 +19,8 @@
     failure = undefined,
     actionUrl = undefined,
     retryAttemptId = undefined,
-    submitLabel = 'Submit answer'
+    submitLabel = 'Submit answer',
+    onanswered = undefined
   }: {
     question: ExerciseQuestion;
     language: string;
@@ -28,6 +30,8 @@
     actionUrl?: string | undefined;
     retryAttemptId?: string | undefined;
     submitLabel?: string;
+    /** Runs after an accepted answer has updated the page. */
+    onanswered?: (() => Promise<void>) | undefined;
   } = $props();
 
   const instructions: Record<ExerciseFormat, string> = {
@@ -81,12 +85,16 @@
       return;
     }
     pending = true;
+    // This component is replaced once the next question arrives, so the
+    // callback is read now rather than from props afterwards.
+    const answered = onanswered;
     return async ({ result, update }) => {
       // Keep what was typed when the server refused it.
       await update({ reset: result.type === 'success' });
       if (result.type === 'success') value = '';
       failed = result.type === 'failure';
       pending = false;
+      if (result.type === 'success') await answered?.();
     };
   }}
 >
@@ -133,9 +141,14 @@
     <p id={problemId} class="problem" role="alert">{message}</p>
   {/if}
 
-  <button type="submit" disabled={pending}>{submitLabel}</button>
-  <button type="submit" name="intent" value="unsure" disabled={pending}
-    >Not sure</button
+  <button type="submit" disabled={pending || !hydration.ready}
+    >{submitLabel}</button
+  >
+  <button
+    type="submit"
+    name="intent"
+    value="unsure"
+    disabled={pending || !hydration.ready}>Not sure</button
   >
 </form>
 
