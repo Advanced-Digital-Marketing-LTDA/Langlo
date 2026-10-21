@@ -410,7 +410,7 @@
             "format": "translation",
             "prompt": "Translate (clear third person): Her house is big.",
             "answer": "A casa dela é grande.",
-            "alternatives": ["A casa dela é enorme."],
+            "alternatives": ["A casa dela é bem grande."],
             "near_misses": ["A casa seu é grande.", "A casa de ela é grande."],
             "holdout": false
           },
