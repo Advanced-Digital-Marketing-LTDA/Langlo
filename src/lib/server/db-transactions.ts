@@ -152,7 +152,14 @@ function releaseTransaction(
 
 async function beginTransaction(client: Client, mode: TransactionMode) {
   const release = await acquireConnection(client);
-  const hold = await holdSpan(mode === 'write');
+  let hold: Awaited<ReturnType<typeof holdSpan>>;
+  try {
+    hold = await holdSpan(mode === 'write');
+  } catch (error) {
+    // The slot is taken: tracing trouble must not leave the connection held.
+    release();
+    throw error;
+  }
   const trips = { count: 0 };
   let finished = false;
   const finish = () => {

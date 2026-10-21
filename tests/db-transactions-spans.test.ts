@@ -1,19 +1,22 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { createClient, type Client } from '@libsql/client';
+import { createClient, LibsqlError, type Client } from '@libsql/client';
 
 type Recorded = {
   name: string;
   attributes?: Record<string, unknown>;
   set: Record<string, unknown>;
   ended: boolean;
+  error?: unknown;
 };
 const recorded = vi.hoisted<Recorded[]>(() => []);
+const failing = vi.hoisted(() => ({ name: '' }));
 
 vi.mock('@sentry/sveltekit', () => ({
   startSpan: (
     options: { name: string; attributes?: Record<string, unknown> },
     run: (active: { setAttribute: (k: string, v: unknown) => void }) => unknown
   ) => {
+    if (options.name === failing.name) throw new Error('span unavailable');
     const entry: Recorded = {
       name: options.name,
       attributes: options.attributes,
@@ -29,7 +32,10 @@ vi.mock('@sentry/sveltekit', () => ({
     const finish = () => {
       entry.ended = true;
     };
-    Promise.resolve(result).then(finish, finish);
+    Promise.resolve(result).then(finish, (error: unknown) => {
+      entry.error = error;
+      finish();
+    });
     return result;
   }
 }));
@@ -43,6 +49,7 @@ import {
 let client: Client;
 beforeEach(async () => {
   recorded.length = 0;
+  failing.name = '';
   client = createClient({ url: ':memory:' });
   await client.execute('CREATE TABLE probe (id INTEGER PRIMARY KEY)');
 });
@@ -143,6 +150,39 @@ it('fails the queue-wait span with the busy error when the wait times out', asyn
   await rejection;
   expect(named('db.queue-wait')).toHaveLength(1);
   expect(named('db.queue-wait')[0].ended).toBe(true);
+  expect(named('db.queue-wait')[0].error).toMatchObject({
+    code: 'SQLITE_BUSY'
+  });
   expect(named('db.transaction')).toHaveLength(1);
   await holder.rollback();
+});
+
+it('releases the connection when the transaction span cannot start', async () => {
+  failing.name = 'db.transaction';
+  await expect(beginWrite(client)).rejects.toThrow('span unavailable');
+  failing.name = '';
+  const tx = await beginWrite(client);
+  await tx.commit();
+}, 1000);
+
+it('ends the span and frees the connection when opening the transaction fails', async () => {
+  vi.spyOn(client, 'transaction').mockRejectedValueOnce(
+    new LibsqlError('cannot open', 'SQLITE_ERROR')
+  );
+  await expect(beginWrite(client)).rejects.toMatchObject({
+    code: 'SQLITE_ERROR'
+  });
+  await settle();
+  const [failed] = named('db.transaction');
+  expect(failed.set).toEqual({ round_trips: 0 });
+  expect(failed.ended).toBe(true);
+  const next = await beginWrite(client);
+  await next.commit();
+}, 1000);
+
+it('passes non-function transaction properties through', async () => {
+  const tx = await beginWrite(client);
+  expect(tx.closed).toBe(false);
+  await tx.commit();
+  expect(tx.closed).toBe(true);
 });

@@ -7,6 +7,7 @@ type Recorded = {
   set: Record<string, unknown>;
 };
 const recorded = vi.hoisted<Recorded[]>(() => []);
+const connectionSpans = vi.hoisted<Recorded[]>(() => []);
 
 vi.mock('@sentry/sveltekit', () => ({
   startSpan: (
@@ -18,8 +19,8 @@ vi.mock('@sentry/sveltekit', () => ({
       attributes: options.attributes,
       set: {}
     };
-    // Connection spans (db.*) are covered in db-transactions-spans.test.ts.
-    if (!options.name.startsWith('db.')) recorded.push(entry);
+    // Connection spans (db.*) stay out of the exact study/mastery span lists.
+    (options.name.startsWith('db.') ? connectionSpans : recorded).push(entry);
     return run({
       setAttribute: (key, value) => {
         entry.set[key] = value;
@@ -53,6 +54,7 @@ let close: () => void;
 const learner = testSession('learner-a');
 beforeEach(async () => {
   recorded.length = 0;
+  connectionSpans.length = 0;
   ({ client, close } = await openFixtureDatabase(await fixture()));
   await importContent(client, approvedPackage());
 });
@@ -127,6 +129,27 @@ it('computeMastery traces read phases while answer creation traces ledger sync',
   expect(
     recorded.find((entry) => entry.name === 'mastery.sync-evidence')?.attributes
   ).toEqual({ rows: 1 });
+});
+
+it('answers and progress reads hold the connection under traced transactions', async () => {
+  connectionSpans.length = 0;
+  await recordAttempt(client, learner, {
+    studySessionId: 'study-a',
+    questionId: 'fr-a1-001@1:q1',
+    submissionKey: 'connection-traced',
+    evidenceKind: 'independent',
+    answer: 'suis'
+  });
+  expect(connectionSpans.map((entry) => entry.attributes)).toEqual([
+    { write: true }
+  ]);
+  expect(connectionSpans[0].set.round_trips).toBeGreaterThan(1);
+  connectionSpans.length = 0;
+  await loadProgress(client, learner, 'fr');
+  expect(connectionSpans.map((entry) => entry.attributes)).toEqual([
+    { write: false }
+  ]);
+  expect(connectionSpans[0].set.round_trips).toBeGreaterThan(1);
 });
 
 it('loadProgress rejects a missing enrollment before computing mastery', async () => {
