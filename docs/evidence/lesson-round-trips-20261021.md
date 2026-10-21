@@ -16,7 +16,7 @@ Each call costs about 127 ms from the Coolify host to Turso. One answer cost 38 
 
 ## Red and green
 
-`tests/lesson-load-round-trips.test.ts` (4 tests). Red on main:
+`tests/lesson-load-round-trips.test.ts` (5 tests). Red on main:
 
 ```
 × saves an answer in few round trips      AssertionError: expected 21 to be less than or equal to 15
@@ -24,7 +24,9 @@ Each call costs about 127 ms from the Coolify host to Turso. One answer cost 38 
 × overlaps the lesson reads with the practice reads   expected 1 to be greater than or equal to 2
 ```
 
-Green after: 4 passed.
+Green after: 5 passed. The review also added two tests that fail on the earlier code: a database outage beside a missing lesson must not become a 404 (red on `Promise.all`), and a lesson read and a practice read must be in flight together (red when awaited one after the other).
+
+`tests/attempt-write-batch.test.ts` (26 tests) pins what the batched write must keep: which refusal wins when several apply, that corrupt question data leaves no attempt, evaluation or evidence row, the evidence ledger rows for correct, incorrect, not-sure and fallback answers, and the mistake rating. Run against main's `study.ts`, 24 pass (behavior unchanged) and the 2 tests that assert an assessment completion is skipped for practice answers fail, as that skip is this change. `attempt-evaluation.test.ts` also gained a test where the rating update inside the batch fails and the whole answer rolls back.
 
 `tests/question-lookup-indexes.test.ts` (2 tests) explains the exact statement the next-question read sends. Red without the migration: both fail (`expected false to be true`, no index in the plan). Green with it: 2 passed.
 
