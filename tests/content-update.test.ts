@@ -847,6 +847,31 @@ describe('grammar retention schedules after a revision', () => {
     ]);
   });
 
+  it('resets the schedule when the version it continues was never published', async () => {
+    await scheduleOnFirstVersion();
+    // Quarantined, so learners stay on @1, but it changes q2.
+    const quarantined = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      question('fr-a1-001@2:q2', { change: 'changed' })
+    ]);
+    quarantined.versions[0].review = 'quarantined';
+    await importContent(client, quarantined);
+    expect(await schedule()).toEqual([
+      { content_version_id: 'fr-a1-001@1', due_at: 5000, reset_required: 0 }
+    ]);
+    // @3 only fixes wording against @2, yet @1 to @3 changes q2.
+    const third = update('0.2.1', [
+      same('fr-a1-001@3:q1', 'fr-a1-001@2:q1'),
+      same('fr-a1-001@3:q2', 'fr-a1-001@2:q2')
+    ]);
+    third.versions[0].id = 'fr-a1-001@3';
+    third.versions[0].version = 3;
+    await importContent(client, third);
+    expect(await schedule()).toEqual([
+      { content_version_id: 'fr-a1-001@3', due_at: 0, reset_required: 1 }
+    ]);
+  });
+
   it.each([
     [
       'a question changes meaning',

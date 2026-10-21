@@ -498,6 +498,36 @@ describe('grammar retention storage and session flow', () => {
     expect(await schedulesOf()).toEqual(before);
   });
 
+  it('does not move a schedule when a wording-only version older than the newest is approved', async () => {
+    await reviewedSkill();
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@3', 'fr-a1-001', 'fr', 3, 'pilot-ready')"
+    );
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status, retention_reset) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'draft', 0)"
+    );
+    const before = await schedulesOf();
+    await client.execute(
+      "UPDATE content_versions SET status = 'schema-validated' WHERE id = 'fr-a1-001@2'"
+    );
+    expect(await schedulesOf()).toEqual(before);
+  });
+
+  it('keeps a pending reset when a wording-only version follows the version that caused it', async () => {
+    await reviewedSkill();
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('fr-a1-001@2', 'fr-a1-001', 'fr', 2, 'pilot-ready')"
+    );
+    await client.execute(
+      "INSERT INTO content_versions (id, skill_id, language, version, status, retention_reset) VALUES ('fr-a1-001@3', 'fr-a1-001', 'fr', 3, 'pilot-ready', 0)"
+    );
+    expect(await schedulesOf()).toMatchObject({
+      content_version_id: 'fr-a1-001@3',
+      due_at: 0,
+      reset_required: 1
+    });
+  });
+
   it('keeps the frozen question and lesson after publication before the first answer', async () => {
     const review = await dueReview();
     await client.batch(

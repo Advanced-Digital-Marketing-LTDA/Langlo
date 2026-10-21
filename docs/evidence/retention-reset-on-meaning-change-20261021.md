@@ -17,10 +17,17 @@ Untouched: migrations 0000 to 0030 and their snapshots, FSRS scheduling and stal
 - Version that adds, changes or removes a question, or any version not inserted by the importer: reset as before.
 - Existing rows get the column default, so already stored versions behave as before.
 
-## Verification (local, run files only)
+## Verification (local)
 
-- `tests/grammar-retention.integration.test.ts`: new tests that a wording-only version keeps state and due date by insert and by publish, and does not move a schedule when it is not the newest. With the new triggers disabled, the two keep tests fail and the rest pass.
-- `tests/content-update.test.ts`: new tests that an all-`same` revision keeps the schedule and that a changed, removed or added question resets it. With the importer always storing 1, the keep test fails.
-- `tests/db-migrations.test.ts`, `tests/portuguese-migration.test.ts`: pending-migration lists include 0031.
-- Also run and passing: `tests/db-remote-migrate.test.ts`, `tests/db-cli.test.ts`. `svelte-check` 0 errors; Prettier and ESLint clean.
-- Not run: the full suite and e2e (left to CI). Applying the migration to any real database is an owner action.
+Commands run from the repository root with Node 22 and npm 11 (the container has Node 22; the repo pins 24, `--engine-strict=false`).
+
+- `npx -y npm@11.9.0 ci --ignore-scripts --engine-strict=false`: installed.
+- Targeted tests, `npx vitest run <files>`: `grammar-retention.integration` (35), `content-update` (45), `content-import`, `lesson-update-notice`, `db-migrations`, `portuguese-migration`, `db-remote-migrate`, `db-cli`: all pass.
+- `npx svelte-check --tsconfig ./tsconfig.json`: 0 errors, 0 warnings. `npx eslint .`: exit 0. `npx prettier --check .`: all files match. `npx vite build` (adapter-node): done.
+- Red then green:
+  - Follow triggers disabled (their `retention_reset = 0` condition changed to `= 2`): `FAIL ... keeps recall state and due date when a wording-only version is published by insert` and `... by publish`; 31 others pass. Restored: pass.
+  - Importer always storing 1: `FAIL tests/content-update.test.ts > ... keeps the schedule when every question only has its wording fixed`; 43 others pass. Restored: pass.
+  - Importer fix for a quarantined baseline stashed: `FAIL ... resets the schedule when the version it continues was never published`; 44 others pass. With it: pass.
+  - Newest-version guard removed from the publish-path follow trigger: `FAIL ... does not move a schedule when a wording-only version older than the newest is approved`. Restored: pass.
+  - `reset_required = 0` added to the follow trigger: `FAIL ... keeps a pending reset when a wording-only version follows the version that caused it`. Restored: pass.
+- Not run in the container: the full `npm test`, `npm run test:property` and `npm run test:e2e`. The project owner's standing rule is that the full suite is too slow to run in the cloud environment; CI runs it on this pull request.

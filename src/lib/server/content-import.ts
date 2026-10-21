@@ -568,7 +568,7 @@ async function insertVersion(
       version.review === 'quarantined' ? 'quarantined' : 'schema-validated',
       versionFingerprint(version),
       // Only a wording-only version leaves learners' grammar recall valid.
-      Number(plan.level !== 'patch')
+      Number(!plan.wordingOnly)
     ]
   });
   const lineage = new Map(
