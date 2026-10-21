@@ -177,6 +177,206 @@
       }
     },
     {
+      "skill_id": "en-a1-005",
+      "title": "Past simple of frequent regular and irregular verbs",
+      "explanation": "Use the past simple for finished actions with a time word like yesterday. Regular verbs add -ed (play, played; work, worked; watch, watched). Spelling changes: study becomes studied; stop becomes stopped. Irregular verbs have their own forms and must be learned: go, went; have, had; see, saw; eat, ate; buy, bought; make, made. The past form is the same for all persons: I went, she went, they went.",
+      "examples": [
+        {
+          "en": "I played football yesterday."
+        },
+        {
+          "en": "She went to the market."
+        },
+        {
+          "en": "We ate pizza."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-005@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-005@2:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the past tense of 'play'?",
+            "answer": "played",
+            "alternatives": ["played", "plaied", "playd"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q01"
+          },
+          {
+            "id": "en-a1-005@2:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the past tense of 'go'?",
+            "answer": "went",
+            "alternatives": ["went", "goed", "gone"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q02"
+          },
+          {
+            "id": "en-a1-005@2:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the past tense of 'have'?",
+            "answer": "had",
+            "alternatives": ["had", "haved", "has"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q03"
+          },
+          {
+            "id": "en-a1-005@2:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the past tense of 'study'?",
+            "answer": "studied",
+            "alternatives": ["studied", "studyed", "studdied"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q04"
+          },
+          {
+            "id": "en-a1-005@2:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ football yesterday. (play)",
+            "answer": "played",
+            "near_misses": ["play", "plays"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q05"
+          },
+          {
+            "id": "en-a1-005@2:q06",
+            "format": "typed-blank",
+            "prompt": "She ___ to the market. (go)",
+            "answer": "went",
+            "near_misses": ["go", "goed"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q06"
+          },
+          {
+            "id": "en-a1-005@2:q07",
+            "format": "typed-blank",
+            "prompt": "We ___ pizza on Friday. (eat)",
+            "answer": "ate",
+            "near_misses": ["eat", "eated"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q07"
+          },
+          {
+            "id": "en-a1-005@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: I / play / football / yesterday",
+            "answer": "I played football yesterday.",
+            "near_misses": [
+              "I play football yesterday.",
+              "I plays football yesterday."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q08"
+          },
+          {
+            "id": "en-a1-005@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: she / go / to the market",
+            "answer": "She went to the market.",
+            "near_misses": ["She goed to the market.", "She go to the market."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q09"
+          },
+          {
+            "id": "en-a1-005@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: we / buy / bread",
+            "answer": "We bought bread.",
+            "near_misses": ["We buyed bread.", "We buy bread."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q10"
+          },
+          {
+            "id": "en-a1-005@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She goed to school.",
+            "answer": "She went to school.",
+            "near_misses": ["She goed to school.", "She gone to school."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q11"
+          },
+          {
+            "id": "en-a1-005@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: We eated pizza.",
+            "answer": "We ate pizza.",
+            "near_misses": ["We eated pizza.", "We eaten pizza."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-005@1:q12"
+          },
+          {
+            "id": "en-a1-005@2:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the past tense of 'see'? (simple past)",
+            "answer": "saw",
+            "alternatives": ["saw", "seen", "seed"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-005@1:h01"
+          },
+          {
+            "id": "en-a1-005@2:h02",
+            "format": "typed-blank",
+            "prompt": "He ___ a new bike. (buy) (simple past)",
+            "answer": "bought",
+            "near_misses": ["buyed", "buy"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-005@1:h02"
+          },
+          {
+            "id": "en-a1-005@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence in the past simple: they / watch / TV / last night",
+            "answer": "They watched TV last night.",
+            "near_misses": [
+              "They watch TV last night.",
+              "They watchd TV last night."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-005@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Passado simples: verbos regulares e irregulares frequentes",
+            "explanation": "Use o passado simples para ações concluídas, geralmente com uma expressão de tempo como yesterday. Verbos regulares recebem -ed (play, played; work, worked; watch, watched). Há mudanças de grafia: study vira studied; stop vira stopped. Verbos irregulares têm formas próprias que precisam ser aprendidas: go, went; have, had; see, saw; eat, ate; buy, bought; make, made. A forma do passado é igual para todas as pessoas: I went, she went, they went.",
+            "examples": [
+              {
+                "en": "I played football yesterday.",
+                "pt": "Joguei futebol ontem."
+              },
+              {
+                "en": "She went to the market.",
+                "pt": "Ela foi ao mercado."
+              },
+              {
+                "en": "We ate pizza.",
+                "pt": "Nós comemos pizza."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-006",
       "title": "Yes/no questions with be and do",
       "explanation": "For yes/no questions with be, put be before the subject: Are you a teacher? Is she at home? For other verbs in the present simple, use do or does before the subject and the base verb: Do you like tea? Does she work here? Use does with he, she and it. Short answers repeat the auxiliary: Yes, I do. No, he doesn't. Yes, she is. No, they aren't.",
@@ -327,6 +527,212 @@
             "answer": "Are they at school?",
             "near_misses": ["Is they at school?", "Do they at school?"],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Perguntas de sim ou não com be e do",
+            "explanation": "Em perguntas de sim ou não com be, coloque be antes do sujeito: Are you a teacher? Is she at home? Com outros verbos no presente simples, use do ou does antes do sujeito e a forma base do verbo: Do you like tea? Does she work here? Use does com he, she e it. Nas respostas curtas, repita o auxiliar: Yes, I do. No, he doesn't. Yes, she is. No, they aren't.",
+            "examples": [
+              {
+                "en": "Are you a teacher?",
+                "pt": "Você é professor(a)?"
+              },
+              {
+                "en": "Do you like tea?",
+                "pt": "Você gosta de chá?"
+              },
+              {
+                "en": "Does she work here?",
+                "pt": "Ela trabalha aqui?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a1-006",
+      "title": "Yes/no questions with be and do",
+      "explanation": "For yes/no questions with be, put be before the subject: Are you a teacher? Is she at home? For other verbs in the present simple, use do or does before the subject and the base verb: Do you like tea? Does she work here? Use does with he, she and it. Short answers repeat the auxiliary: Yes, I do. No, he doesn't. Yes, she is. No, they aren't.",
+      "examples": [
+        {
+          "en": "Are you a teacher?"
+        },
+        {
+          "en": "Do you like tea?"
+        },
+        {
+          "en": "Does she work here?"
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-006@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-006@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which question uses 'do' correctly?",
+            "answer": "Do you like tea?",
+            "alternatives": [
+              "Are you like tea?",
+              "Do you like tea?",
+              "Does you like tea?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q01"
+          },
+          {
+            "id": "en-a1-006@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which auxiliary goes with 'she' in a present simple question?",
+            "answer": "Does",
+            "alternatives": ["Do", "Does", "Is"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q02"
+          },
+          {
+            "id": "en-a1-006@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which is the correct short answer to 'Do you like tea?' (yes)",
+            "answer": "Yes, I do.",
+            "alternatives": ["Yes, I do.", "Yes, I like.", "Yes, I am."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q03"
+          },
+          {
+            "id": "en-a1-006@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which is the correct short answer to 'Is he a teacher?' (no)",
+            "answer": "No, he isn't.",
+            "alternatives": [
+              "No, he isn't.",
+              "No, he doesn't.",
+              "No, he don't."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q04"
+          },
+          {
+            "id": "en-a1-006@2:q05",
+            "format": "typed-blank",
+            "prompt": "___ you like tea? (do)",
+            "answer": "Do",
+            "near_misses": ["Does", "Are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q05"
+          },
+          {
+            "id": "en-a1-006@2:q06",
+            "format": "typed-blank",
+            "prompt": "___ she work here? (do)",
+            "answer": "Does",
+            "near_misses": ["Do", "Is"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q06"
+          },
+          {
+            "id": "en-a1-006@2:q07",
+            "format": "typed-blank",
+            "prompt": "___ he a teacher? (be)",
+            "answer": "Is",
+            "near_misses": ["Does", "Are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q07"
+          },
+          {
+            "id": "en-a1-006@2:q08",
+            "format": "translation",
+            "prompt": "Write the question: you / like / tea",
+            "answer": "Do you like tea?",
+            "near_misses": ["You like tea?", "Are you like tea?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q08"
+          },
+          {
+            "id": "en-a1-006@2:q09",
+            "format": "translation",
+            "prompt": "Write the question: she / work / here",
+            "answer": "Does she work here?",
+            "near_misses": ["Do she work here?", "Does she works here?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q09"
+          },
+          {
+            "id": "en-a1-006@2:q10",
+            "format": "translation",
+            "prompt": "Write the question: they / at home",
+            "answer": "Are they at home?",
+            "near_misses": ["Do they at home?", "Is they at home?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q10"
+          },
+          {
+            "id": "en-a1-006@2:q11",
+            "format": "correction",
+            "prompt": "Correct the question: Does you like coffee?",
+            "answer": "Do you like coffee?",
+            "near_misses": ["Does you like coffee?", "Are you like coffee?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q11"
+          },
+          {
+            "id": "en-a1-006@2:q12",
+            "format": "correction",
+            "prompt": "Correct the question: Do he work here?",
+            "answer": "Does he work here?",
+            "near_misses": ["Do he work here?", "Does he works here?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-006@1:q12"
+          },
+          {
+            "id": "en-a1-006@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which is the correct short answer to 'Does she live here?' (no)",
+            "answer": "No, she doesn't.",
+            "alternatives": [
+              "No, she doesn't.",
+              "No, she isn't.",
+              "No, she don't."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-006@1:h01"
+          },
+          {
+            "id": "en-a1-006@2:h02",
+            "format": "translation",
+            "prompt": "Write the question: he / like / music (present simple)",
+            "answer": "Does he like music?",
+            "near_misses": ["Do he like music?", "Does he likes music?"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-006@1:h02"
+          },
+          {
+            "id": "en-a1-006@2:h03",
+            "format": "correction",
+            "prompt": "Correct the question: Is they at school?",
+            "answer": "Are they at school?",
+            "near_misses": ["Is they at school?", "Do they at school?"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-006@1:h03"
           }
         ],
         "translations": {
@@ -524,6 +930,207 @@
       }
     },
     {
+      "skill_id": "en-a1-007",
+      "title": "Questions with who, what, where, when and how",
+      "explanation": "Question words open the question. Who asks about people, what about things, where about places, when about time and how about the way or state. In the present simple, add do or does and the base verb: Where do you live? What does she like? When does the class start? With be, put be after the question word: When is the class? Who is your teacher? How are you? Do not use the order of a statement: Where you live? is wrong.",
+      "examples": [
+        {
+          "en": "Where do you live?"
+        },
+        {
+          "en": "What does she like?"
+        },
+        {
+          "en": "When is the class?"
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-007@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-007@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks about a place?",
+            "answer": "Where",
+            "alternatives": ["Where", "When", "Who"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q01"
+          },
+          {
+            "id": "en-a1-007@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks about a person?",
+            "answer": "Who",
+            "alternatives": ["Where", "When", "Who"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q02"
+          },
+          {
+            "id": "en-a1-007@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks about time?",
+            "answer": "When",
+            "alternatives": ["Where", "When", "Who"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q03"
+          },
+          {
+            "id": "en-a1-007@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which question has the right word order?",
+            "answer": "Where do you live?",
+            "alternatives": [
+              "Where you live?",
+              "Where do you live?",
+              "Where you do live?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q04"
+          },
+          {
+            "id": "en-a1-007@2:q05",
+            "format": "typed-blank",
+            "prompt": "___ do you live? (place)",
+            "answer": "Where",
+            "near_misses": ["When", "Who"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q05"
+          },
+          {
+            "id": "en-a1-007@2:q06",
+            "format": "typed-blank",
+            "prompt": "___ is the class? (time)",
+            "answer": "When",
+            "near_misses": ["Where", "What"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q06"
+          },
+          {
+            "id": "en-a1-007@2:q07",
+            "format": "typed-blank",
+            "prompt": "___ is your teacher? (person)",
+            "answer": "Who",
+            "near_misses": ["What", "Where"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q07"
+          },
+          {
+            "id": "en-a1-007@2:q08",
+            "format": "translation",
+            "prompt": "Write the question: where / you / live",
+            "answer": "Where do you live?",
+            "near_misses": ["Where you live?", "Where does you live?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q08"
+          },
+          {
+            "id": "en-a1-007@2:q09",
+            "format": "translation",
+            "prompt": "Write the question: what / she / like",
+            "answer": "What does she like?",
+            "near_misses": ["What she likes?", "What do she like?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q09"
+          },
+          {
+            "id": "en-a1-007@2:q10",
+            "format": "translation",
+            "prompt": "Write the question: when / the class / start",
+            "answer": "When does the class start?",
+            "near_misses": [
+              "When the class starts?",
+              "When do the class start?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q10"
+          },
+          {
+            "id": "en-a1-007@2:q11",
+            "format": "correction",
+            "prompt": "Correct the question: Where you work?",
+            "answer": "Where do you work?",
+            "near_misses": ["Where you work?", "Where does you work?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q11"
+          },
+          {
+            "id": "en-a1-007@2:q12",
+            "format": "correction",
+            "prompt": "Correct the question: What do she eat?",
+            "answer": "What does she eat?",
+            "near_misses": ["What do she eat?", "What does she eats?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-007@1:q12"
+          },
+          {
+            "id": "en-a1-007@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which question word asks about a thing?",
+            "answer": "What",
+            "alternatives": ["What", "Who", "When"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-007@1:h01"
+          },
+          {
+            "id": "en-a1-007@2:h02",
+            "format": "typed-blank",
+            "prompt": "___ are you? (how you feel)",
+            "answer": "How",
+            "near_misses": ["Who", "What"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-007@1:h02"
+          },
+          {
+            "id": "en-a1-007@2:h03",
+            "format": "translation",
+            "prompt": "Write the question: who / he / meet (present simple)",
+            "answer": "Who does he meet?",
+            "near_misses": ["Who he meets?", "Who do he meet?"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-007@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Perguntas com who, what, where, when e how",
+            "explanation": "As palavras interrogativas abrem a pergunta. Who pergunta sobre pessoas, what sobre coisas, where sobre lugares, when sobre tempo e how sobre modo ou estado. No presente simples, acrescente do ou does e use a forma base do verbo: Where do you live? What does she like? When does the class start? Com be, coloque be depois da palavra interrogativa: When is the class? Who is your teacher? How are you? Não use a ordem de uma afirmação: Where you live? está errado.",
+            "examples": [
+              {
+                "en": "Where do you live?",
+                "pt": "Onde você mora?"
+              },
+              {
+                "en": "What does she like?",
+                "pt": "Do que ela gosta?"
+              },
+              {
+                "en": "When is the class?",
+                "pt": "Quando é a aula?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-008",
       "title": "Negative statements with be and do",
       "explanation": "With be, add not after the verb: I am not tired. He isn't at home. They aren't here. With other verbs in the present simple, use don't (do not) or doesn't (does not) before the base verb: They don't live here. She doesn't like coffee. The main verb does not take -s after doesn't. Both the full and the contracted forms are correct.",
@@ -692,6 +1299,230 @@
               "Anna doesn't speaks French."
             ],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Frases negativas com be e do",
+            "explanation": "Com be, coloque not depois do verbo: I am not tired. He isn't at home. They aren't here. Com outros verbos no presente simples, use don't (do not) ou doesn't (does not) antes da forma base do verbo: They don't live here. She doesn't like coffee. Depois de doesn't, o verbo principal não recebe -s. Tanto as formas completas quanto as contraídas estão corretas.",
+            "examples": [
+              {
+                "en": "I am not tired.",
+                "pt": "Não estou cansado(a)."
+              },
+              {
+                "en": "She doesn't like coffee.",
+                "pt": "Ela não gosta de café."
+              },
+              {
+                "en": "They don't live here.",
+                "pt": "Eles não moram aqui."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a1-008",
+      "title": "Negative statements with be and do",
+      "explanation": "With be, add not after the verb: I am not tired. He isn't at home. They aren't here. With other verbs in the present simple, use don't (do not) or doesn't (does not) before the base verb: They don't live here. She doesn't like coffee. The main verb does not take -s after doesn't. Both the full and the contracted forms are correct.",
+      "examples": [
+        {
+          "en": "I am not tired."
+        },
+        {
+          "en": "She doesn't like coffee."
+        },
+        {
+          "en": "They don't live here."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-008@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-008@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which negative goes with 'she' in the present simple?",
+            "answer": "doesn't",
+            "alternatives": ["don't", "doesn't", "isn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q01"
+          },
+          {
+            "id": "en-a1-008@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which negative goes with 'they' in the present simple?",
+            "answer": "don't",
+            "alternatives": ["don't", "doesn't", "isn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q02"
+          },
+          {
+            "id": "en-a1-008@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct negative with be?",
+            "answer": "He isn't at home.",
+            "alternatives": [
+              "He doesn't at home.",
+              "He isn't at home.",
+              "He not is at home."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q03"
+          },
+          {
+            "id": "en-a1-008@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which form of the verb follows 'doesn't'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -s form", "the -ing form"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q04"
+          },
+          {
+            "id": "en-a1-008@2:q05",
+            "format": "typed-blank",
+            "prompt": "She ___ like coffee. (negative)",
+            "answer": "doesn't",
+            "alternatives": ["does not"],
+            "near_misses": ["don't", "isn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q05"
+          },
+          {
+            "id": "en-a1-008@2:q06",
+            "format": "typed-blank",
+            "prompt": "They ___ live here. (negative)",
+            "answer": "don't",
+            "alternatives": ["do not"],
+            "near_misses": ["doesn't", "aren't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q06"
+          },
+          {
+            "id": "en-a1-008@2:q07",
+            "format": "typed-blank",
+            "prompt": "I ___ tired. (negative be)",
+            "answer": "am not",
+            "alternatives": ["'m not"],
+            "near_misses": ["isn't", "don't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q07"
+          },
+          {
+            "id": "en-a1-008@2:q08",
+            "format": "translation",
+            "prompt": "Write the negative sentence: she / like / coffee",
+            "answer": "She doesn't like coffee.",
+            "alternatives": ["She does not like coffee."],
+            "near_misses": [
+              "She don't like coffee.",
+              "She doesn't likes coffee."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q08"
+          },
+          {
+            "id": "en-a1-008@2:q09",
+            "format": "translation",
+            "prompt": "Write the negative sentence: they / live / here",
+            "answer": "They don't live here.",
+            "alternatives": ["They do not live here."],
+            "near_misses": [
+              "They doesn't live here.",
+              "They don't lives here."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q09"
+          },
+          {
+            "id": "en-a1-008@2:q10",
+            "format": "translation",
+            "prompt": "Write the negative sentence: he / at home",
+            "answer": "He isn't at home.",
+            "alternatives": ["He is not at home.", "He's not at home."],
+            "near_misses": ["He doesn't at home.", "He not is at home."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q10"
+          },
+          {
+            "id": "en-a1-008@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He don't work here.",
+            "answer": "He doesn't work here.",
+            "alternatives": ["He does not work here."],
+            "near_misses": ["He don't work here.", "He doesn't works here."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q11"
+          },
+          {
+            "id": "en-a1-008@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: We doesn't play tennis.",
+            "answer": "We don't play tennis.",
+            "alternatives": ["We do not play tennis."],
+            "near_misses": [
+              "We doesn't play tennis.",
+              "We don't plays tennis."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@1:q12"
+          },
+          {
+            "id": "en-a1-008@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct negative with do?",
+            "answer": "I don't like tea.",
+            "alternatives": [
+              "I doesn't like tea.",
+              "I don't like tea.",
+              "I not like tea."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-008@1:h01"
+          },
+          {
+            "id": "en-a1-008@2:h02",
+            "format": "translation",
+            "prompt": "Write the negative sentence: we / at school",
+            "answer": "We aren't at school.",
+            "alternatives": ["We are not at school.", "We're not at school."],
+            "near_misses": ["We don't at school.", "We isn't at school."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-008@1:h02"
+          },
+          {
+            "id": "en-a1-008@2:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: Anna don't speak French. (present simple)",
+            "answer": "Anna doesn't speak French.",
+            "alternatives": ["Anna does not speak French."],
+            "near_misses": [
+              "Anna don't speak French.",
+              "Anna doesn't speaks French."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-008@1:h03"
           }
         ],
         "translations": {

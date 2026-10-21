@@ -16,6 +16,8 @@ export type Question = {
   alternatives?: string[];
   near_misses?: string[];
   holdout: boolean;
+  change?: 'same' | 'changed' | 'new';
+  continues?: string;
 };
 
 export type Lesson = {
@@ -24,7 +26,12 @@ export type Lesson = {
   explanation: string;
   examples: { fr?: string; de?: string; pt?: string; en: string }[];
   references: string[];
-  version: { id: string; version: number; questions: Question[] };
+  version: {
+    id: string;
+    version: number;
+    questions: Question[];
+    translations?: Record<string, unknown>;
+  };
 };
 
 export type Module = {
@@ -140,7 +147,9 @@ export function modulePackage(
         prompt: q.prompt,
         answer: q.answer,
         alternatives: q.alternatives,
-        holdout: q.holdout
+        holdout: q.holdout,
+        change: q.change,
+        continues: q.continues
       }))
     }))
   };

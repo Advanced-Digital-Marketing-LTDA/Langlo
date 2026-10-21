@@ -13,6 +13,9 @@ Imported content is immutable. A correction is a new lesson version of the same 
    A question of the earlier version that no `same` continues is removed. Never reuse a question number for a different meaning without marking it `changed`.
 
 3. A skill's first version carries no declarations; declaring one there is refused.
+
+   In a module file (`content/<track>/module-NN.json`) the revision is a second lesson entry for the skill placed after the version it revises, with the same lesson text. Keep the earlier version in the file: a database that holds it needs the declarations, and a fresh database imports both in order. `change` and `continues` are passed to the importer as written. Tests that count lessons or check prompts look at each skill's newest version.
+
 4. Raise `curriculum_version` in `content/curriculum-manifest.json` by hand. The importer never increments it. It checks that the bump matches the changes it finds:
 
    | Bump  | Needed when the import contains                                                                                        |
@@ -39,6 +42,10 @@ A package lists `retirements` (`skillId`, optional `replacedBy`, optional `carry
 ## What a learner sees
 
 A session keeps the version of its first answer for a skill, so a half-finished lesson or session finishes on the questions it started. A tab holding a question from another version gets `STALE_QUESTION`; a withdrawn version gets `CONTENT_UNAVAILABLE`. The lesson page of a session on an earlier version says the lesson was updated and that the next session uses the new one.
+
+## Grammar retention schedules
+
+A learner's grammar retention schedule for a skill always carries over to the skill's newest published version: recall state, due date and review history stay as they are, whether the new version only fixes wording or adds, changes or removes questions. Publishing a version (by insert or by a status change) moves the schedules to it; an older version approved after a newer one moves nothing. Both are triggers on `content_versions` (migration 0031). The same migration also restores schedules that the earlier reset triggers had marked for reset, taking the due date back from the recall state they still store; it stops if such a row has no readable due date.
 
 ## Record and reversal
 

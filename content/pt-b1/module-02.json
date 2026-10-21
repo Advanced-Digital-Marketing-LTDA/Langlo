@@ -191,6 +191,220 @@
       }
     },
     {
+      "skill_id": "pt-b1-006",
+      "title": "Pretérito perfeito composto: tenho + participle for repeated action up to now",
+      "explanation": "In Portuguese the perfeito composto (tenho + participle) does not mean a single finished event, as the English present perfect often does. It means an action that has repeated, or a situation that has kept going, up to now: Tenho trabalhado muito ultimamente (I have been working a lot lately). For one completed event, use the simple perfeito: Já comi (I have eaten). Form it with the present of ter plus the unchanging participle: tenho feito, tens feito, tem feito, temos feito, têm feito. It often appears with ultimamente, nos últimos meses and desde que.",
+      "examples": [
+        {
+          "pt": "Ultimamente tenho dormido pouco.",
+          "en": "Lately I have been sleeping little."
+        },
+        {
+          "pt": "Ela tem viajado muito este ano.",
+          "en": "She has been travelling a lot this year."
+        },
+        {
+          "pt": "Nós temos estudado português todas as noites.",
+          "en": "We have been studying Portuguese every night."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-006@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-006@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best form (repeated up to now): Ultimamente eu ___ muito. (trabalhar)",
+            "answer": "tenho trabalhado",
+            "alternatives": ["trabalhei", "tenho trabalhado", "trabalhava"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q01"
+          },
+          {
+            "id": "pt-b1-006@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the best form (one finished event): Ontem eu ___ o livro. (terminar)",
+            "answer": "terminei",
+            "alternatives": ["tenho terminado", "terminava", "terminei"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q02"
+          },
+          {
+            "id": "pt-b1-006@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the best form (repeated up to now): Eles ___ muito ultimamente. (viajar)",
+            "answer": "têm viajado",
+            "alternatives": ["têm viajado", "viajaram", "viajam"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q03"
+          },
+          {
+            "id": "pt-b1-006@2:q04",
+            "format": "typed-blank",
+            "prompt": "Nos últimos meses, ela ___ muito. (estudar)",
+            "answer": "tem estudado",
+            "near_misses": ["estudou", "tem estudando"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q04"
+          },
+          {
+            "id": "pt-b1-006@2:q05",
+            "format": "typed-blank",
+            "prompt": "Nós ___ cada vez mais cansados. (ficar)",
+            "answer": "temos ficado",
+            "near_misses": ["ficamos", "temos ficando"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q05"
+          },
+          {
+            "id": "pt-b1-006@2:q06",
+            "format": "typed-blank",
+            "prompt": "Ultimamente você ___ chegar tarde. (costumar)",
+            "answer": "tem costumado",
+            "near_misses": ["costumou", "tem costumando"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q06"
+          },
+          {
+            "id": "pt-b1-006@2:q07",
+            "format": "translation",
+            "prompt": "Translate (repeated up to now): I have been eating badly lately.",
+            "answer": "Ultimamente tenho comido mal.",
+            "alternatives": [
+              "Ultimamente eu tenho comido mal.",
+              "Tenho comido mal ultimamente.",
+              "Eu tenho comido mal ultimamente."
+            ],
+            "near_misses": [
+              "Ultimamente comi mal.",
+              "Ultimamente eu comia mal."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q07"
+          },
+          {
+            "id": "pt-b1-006@2:q08",
+            "format": "translation",
+            "prompt": "Translate (repeated up to now): They have been calling every day.",
+            "answer": "Eles têm ligado todos os dias.",
+            "alternatives": [
+              "Eles têm ligado todo dia.",
+              "Elas têm ligado todos os dias."
+            ],
+            "near_misses": [
+              "Eles ligaram todos os dias.",
+              "Eles têm ligando todos os dias."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q08"
+          },
+          {
+            "id": "pt-b1-006@2:q09",
+            "format": "translation",
+            "prompt": "Translate (repeated up to now): We have been training a lot this year.",
+            "answer": "Nós temos treinado muito este ano.",
+            "alternatives": [
+              "Temos treinado muito este ano.",
+              "Nós temos treinado muito neste ano."
+            ],
+            "near_misses": [
+              "Nós treinamos muito este ano.",
+              "Nós temos treinando muito este ano."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q09"
+          },
+          {
+            "id": "pt-b1-006@2:q10",
+            "format": "correction",
+            "prompt": "Correct the form (one finished event): Ontem eu tenho comprado um carro.",
+            "answer": "Ontem eu comprei um carro.",
+            "near_misses": [
+              "Ontem eu tenho comprado um carro.",
+              "Ontem eu comprava um carro."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q10"
+          },
+          {
+            "id": "pt-b1-006@2:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Ela tem estudando muito.",
+            "answer": "Ela tem estudado muito.",
+            "near_misses": [
+              "Ela tem estudando muito.",
+              "Ela tem estudar muito."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q11"
+          },
+          {
+            "id": "pt-b1-006@2:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Nós tem corrido todas as manhãs.",
+            "answer": "Nós temos corrido todas as manhãs.",
+            "near_misses": [
+              "Nós tem corrido todas as manhãs.",
+              "Nós têm corrido todas as manhãs."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-006@1:q12"
+          },
+          {
+            "id": "pt-b1-006@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best form (repeated up to now): Este mês nós ___ pouco. (sair) (pretérito perfeito composto)",
+            "answer": "temos saído",
+            "alternatives": ["temos saído", "saímos", "saíamos"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-006@1:h01"
+          },
+          {
+            "id": "pt-b1-006@2:h02",
+            "format": "typed-blank",
+            "prompt": "Eu ___ muito café ultimamente. (beber) (pretérito perfeito composto)",
+            "answer": "tenho bebido",
+            "near_misses": ["bebi", "tenho bebendo"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-006@1:h02"
+          },
+          {
+            "id": "pt-b1-006@2:h03",
+            "format": "translation",
+            "prompt": "Translate (repeated up to now): It has been raining a lot lately. (pretérito perfeito composto)",
+            "answer": "Tem chovido muito ultimamente.",
+            "alternatives": [
+              "Ultimamente tem chovido muito.",
+              "Ultimamente tem chovido bastante."
+            ],
+            "near_misses": [
+              "Choveu muito ultimamente.",
+              "Tem chovendo muito ultimamente."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-006@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "pt-b1-007",
       "title": "Estar + gerúndio: actions in progress, now and then",
       "explanation": "Use estar + gerúndio for an action in progress at the moment you speak or at a past moment. Brazilian Portuguese uses the gerúndio, not the European a + infinitive. Form the gerúndio by replacing the infinitive ending: -ar becomes -ando (falando), -er becomes -endo (comendo), -ir becomes -indo (partindo). Irregular: pôr gives pondo, vir gives vindo, ter gives tendo. Present: Estou lendo. Past in progress: Estava lendo quando você ligou. The gerúndio does not change for person or gender, and estar changes as usual.",
@@ -362,6 +576,212 @@
               "Eu estava dormir quando você ligou."
             ],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-007",
+      "title": "Estar + gerúndio: actions in progress, now and then",
+      "explanation": "Use estar + gerúndio for an action in progress at the moment you speak or at a past moment. Brazilian Portuguese uses the gerúndio, not the European a + infinitive. Form the gerúndio by replacing the infinitive ending: -ar becomes -ando (falando), -er becomes -endo (comendo), -ir becomes -indo (partindo). Irregular: pôr gives pondo, vir gives vindo, ter gives tendo. Present: Estou lendo. Past in progress: Estava lendo quando você ligou. The gerúndio does not change for person or gender, and estar changes as usual.",
+      "examples": [
+        {
+          "pt": "Agora eu estou estudando para a prova.",
+          "en": "Right now I am studying for the test."
+        },
+        {
+          "pt": "Quando você chegou, eles estavam jantando.",
+          "en": "When you arrived, they were having dinner."
+        },
+        {
+          "pt": "Ela está trabalhando em casa esta semana.",
+          "en": "She is working at home this week."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-007@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-007@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Agora eu ___ um livro. (ler)",
+            "answer": "estou lendo",
+            "alternatives": ["leio", "estou ler", "estou lendo"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q01"
+          },
+          {
+            "id": "pt-b1-007@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando você ligou, nós ___ . (jantar)",
+            "answer": "estávamos jantando",
+            "alternatives": [
+              "estávamos jantando",
+              "jantamos",
+              "estávamos jantar"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q02"
+          },
+          {
+            "id": "pt-b1-007@2:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the gerúndio of partir?",
+            "answer": "partindo",
+            "alternatives": ["partido", "partindo", "partir"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q03"
+          },
+          {
+            "id": "pt-b1-007@2:q04",
+            "format": "typed-blank",
+            "prompt": "Eles ___ o jogo agora. (ver)",
+            "answer": "estão vendo",
+            "near_misses": ["estão ver", "veem"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q04"
+          },
+          {
+            "id": "pt-b1-007@2:q05",
+            "format": "typed-blank",
+            "prompt": "O que você ___ ? (fazer)",
+            "answer": "está fazendo",
+            "near_misses": ["está fazer", "faz"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q05"
+          },
+          {
+            "id": "pt-b1-007@2:q06",
+            "format": "typed-blank",
+            "prompt": "Ela ___ quando o telefone tocou. (dormir)",
+            "answer": "estava dormindo",
+            "near_misses": ["estava dormir", "dormiu"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q06"
+          },
+          {
+            "id": "pt-b1-007@2:q07",
+            "format": "translation",
+            "prompt": "Translate (in progress now): I am cooking.",
+            "answer": "Eu estou cozinhando.",
+            "alternatives": ["Estou cozinhando."],
+            "near_misses": ["Eu cozinho.", "Eu estou cozinhar."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q07"
+          },
+          {
+            "id": "pt-b1-007@2:q08",
+            "format": "translation",
+            "prompt": "Translate (in progress then): They were watching TV.",
+            "answer": "Eles estavam vendo TV.",
+            "alternatives": [
+              "Eles estavam assistindo TV.",
+              "Eles estavam assistindo à TV.",
+              "Elas estavam vendo TV."
+            ],
+            "near_misses": ["Eles viram TV.", "Eles estavam ver TV."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q08"
+          },
+          {
+            "id": "pt-b1-007@2:q09",
+            "format": "translation",
+            "prompt": "Translate (in progress now): We are waiting for the bus.",
+            "answer": "Nós estamos esperando o ônibus.",
+            "alternatives": [
+              "Estamos esperando o ônibus.",
+              "A gente está esperando o ônibus."
+            ],
+            "near_misses": [
+              "Nós esperamos o ônibus.",
+              "Nós estamos esperar o ônibus."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q09"
+          },
+          {
+            "id": "pt-b1-007@2:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Eu estou comer agora.",
+            "answer": "Eu estou comendo agora.",
+            "near_misses": ["Eu estou comer agora.", "Eu estou comido agora."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q10"
+          },
+          {
+            "id": "pt-b1-007@2:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Ela estava dormido quando liguei.",
+            "answer": "Ela estava dormindo quando liguei.",
+            "near_misses": [
+              "Ela estava dormido quando liguei.",
+              "Ela estava dormir quando liguei."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q11"
+          },
+          {
+            "id": "pt-b1-007@2:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Nós estamos falamos com o chefe.",
+            "answer": "Nós estamos falando com o chefe.",
+            "near_misses": [
+              "Nós estamos falamos com o chefe.",
+              "Nós estamos falado com o chefe."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-007@1:q12"
+          },
+          {
+            "id": "pt-b1-007@2:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the gerúndio of pôr?",
+            "answer": "pondo",
+            "alternatives": ["posto", "pondo", "pondendo"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-007@1:h01"
+          },
+          {
+            "id": "pt-b1-007@2:h02",
+            "format": "typed-blank",
+            "prompt": "Elas ___ roupas novas agora. (comprar) (estar + gerúndio)",
+            "answer": "estão comprando",
+            "near_misses": ["estão comprar", "compraram"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-007@1:h02"
+          },
+          {
+            "id": "pt-b1-007@2:h03",
+            "format": "translation",
+            "prompt": "Translate (in progress then): I was sleeping when you called. (estar + gerúndio)",
+            "answer": "Eu estava dormindo quando você ligou.",
+            "alternatives": [
+              "Estava dormindo quando você ligou.",
+              "Eu estava dormindo quando tu ligaste."
+            ],
+            "near_misses": [
+              "Eu dormi quando você ligou.",
+              "Eu estava dormir quando você ligou."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-007@1:h03"
           }
         ]
       }
@@ -542,6 +962,211 @@
       }
     },
     {
+      "skill_id": "pt-b1-008",
+      "title": "Aspect verbs: acabar de, começar a, voltar a, deixar de, continuar a",
+      "explanation": "These verbs plus an infinitive show a stage of an action. Acabar de + infinitive means to have just done something: Acabei de chegar (I just arrived). Começar a + infinitive is to start doing: Começou a chover. Voltar a + infinitive is to do again: Voltei a estudar. Deixar de + infinitive is to stop doing: Deixei de fumar. Continuar a (or continuar + gerúndio, common in Brazil) is to keep doing: Continuo a trabalhar, or Continuo trabalhando. Mind the preposition: acabar de, começar a, voltar a, deixar de, continuar a.",
+      "examples": [
+        {
+          "pt": "Acabei de chegar em casa.",
+          "en": "I have just arrived home."
+        },
+        {
+          "pt": "Ele começou a estudar português no ano passado.",
+          "en": "He started studying Portuguese last year."
+        },
+        {
+          "pt": "Eles deixaram de morar aqui.",
+          "en": "They stopped living here."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-008@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-008@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the preposition: Eu acabei ___ chegar.",
+            "answer": "de",
+            "alternatives": ["de", "a", "em"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q01"
+          },
+          {
+            "id": "pt-b1-008@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the preposition: Ela começou ___ chorar.",
+            "answer": "a",
+            "alternatives": ["de", "a", "para"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q02"
+          },
+          {
+            "id": "pt-b1-008@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb that means 'stop doing': Ele ___ fumar.",
+            "answer": "deixou de",
+            "alternatives": ["voltou a", "continuou a", "deixou de"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q03"
+          },
+          {
+            "id": "pt-b1-008@2:q04",
+            "format": "typed-blank",
+            "prompt": "Nós ___ jogar futebol depois da lesão. (voltar)",
+            "answer": "voltamos a",
+            "near_misses": ["voltamos de", "voltamos em"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q04"
+          },
+          {
+            "id": "pt-b1-008@2:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ sair quando você ligou. (acabar)",
+            "answer": "acabei de",
+            "near_misses": ["acabei a", "acabei em"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q05"
+          },
+          {
+            "id": "pt-b1-008@2:q06",
+            "format": "typed-blank",
+            "prompt": "Elas ___ trabalhar aqui em 2020. (começar)",
+            "answer": "começaram a",
+            "near_misses": ["começaram de", "começaram em"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q06"
+          },
+          {
+            "id": "pt-b1-008@2:q07",
+            "format": "translation",
+            "prompt": "Translate (just happened): She has just left.",
+            "answer": "Ela acabou de sair.",
+            "alternatives": ["Ela acabou de ir embora.", "Acabou de sair."],
+            "near_misses": ["Ela deixou de sair.", "Ela acabou sair."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q07"
+          },
+          {
+            "id": "pt-b1-008@2:q08",
+            "format": "translation",
+            "prompt": "Translate (stop): We stopped eating meat.",
+            "answer": "Nós deixamos de comer carne.",
+            "alternatives": [
+              "Deixamos de comer carne.",
+              "A gente deixou de comer carne."
+            ],
+            "near_misses": [
+              "Nós acabamos de comer carne.",
+              "Nós deixamos comer carne."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q08"
+          },
+          {
+            "id": "pt-b1-008@2:q09",
+            "format": "translation",
+            "prompt": "Translate (again): He started smoking again.",
+            "answer": "Ele voltou a fumar.",
+            "alternatives": ["Ele voltou a fumar de novo."],
+            "near_misses": ["Ele deixou de fumar.", "Ele voltou fumar."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q09"
+          },
+          {
+            "id": "pt-b1-008@2:q10",
+            "format": "correction",
+            "prompt": "Correct the preposition: Eu acabei a chegar agora.",
+            "answer": "Eu acabei de chegar agora.",
+            "near_misses": [
+              "Eu acabei a chegar agora.",
+              "Eu acabei em chegar agora."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q10"
+          },
+          {
+            "id": "pt-b1-008@2:q11",
+            "format": "correction",
+            "prompt": "Correct the preposition: Ela começou de estudar ontem.",
+            "answer": "Ela começou a estudar ontem.",
+            "near_misses": [
+              "Ela começou de estudar ontem.",
+              "Ela começou em estudar ontem."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q11"
+          },
+          {
+            "id": "pt-b1-008@2:q12",
+            "format": "correction",
+            "prompt": "Correct the meaning (he did not stop): Ele deixou de correr todos os dias.",
+            "answer": "Ele continuou a correr todos os dias.",
+            "alternatives": [
+              "Ele continuou correndo todos os dias.",
+              "Ele continua a correr todos os dias."
+            ],
+            "near_misses": [
+              "Ele deixou de correr todos os dias.",
+              "Ele acabou de correr todos os dias."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-008@1:q12"
+          },
+          {
+            "id": "pt-b1-008@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best option: Ela ___ trabalhar mesmo doente.",
+            "answer": "continuou a",
+            "alternatives": ["acabou de", "deixou de", "continuou a"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-008@1:h01"
+          },
+          {
+            "id": "pt-b1-008@2:h02",
+            "format": "typed-blank",
+            "prompt": "Nós ___ morar aqui. (continuar) (presente do indicativo)",
+            "answer": "continuamos a",
+            "near_misses": ["continuamos de", "continuamos em"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-008@1:h02"
+          },
+          {
+            "id": "pt-b1-008@2:h03",
+            "format": "translation",
+            "prompt": "Translate (keep doing): They keep working.",
+            "answer": "Eles continuam trabalhando.",
+            "alternatives": [
+              "Eles continuam a trabalhar.",
+              "Elas continuam trabalhando."
+            ],
+            "near_misses": [
+              "Eles continuam trabalhar.",
+              "Eles deixam de trabalhar."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-008@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "pt-b1-009",
       "title": "Já, ainda and ainda não with present, perfeito and future",
       "explanation": "Já means already or by now: Já comi (I have already eaten). Ainda means still: Ainda moro aqui. Ainda não means not yet: Ainda não comi. With the perfeito, já shows the action is done, and ainda não shows it has not happened up to now. In questions, Já comeu? asks whether it is done. With the present, ainda means a situation continues: Ele ainda está dormindo. With the future, já means very soon: Já volto (I will be right back). Word order is flexible, but ainda não stays together and goes before the verb.",
@@ -702,6 +1327,201 @@
             ],
             "near_misses": ["Nós já decidimos.", "Nós ainda decidimos."],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-009",
+      "title": "Já, ainda and ainda não with present, perfeito and future",
+      "explanation": "Já means already or by now: Já comi (I have already eaten). Ainda means still: Ainda moro aqui. Ainda não means not yet: Ainda não comi. With the perfeito, já shows the action is done, and ainda não shows it has not happened up to now. In questions, Já comeu? asks whether it is done. With the present, ainda means a situation continues: Ele ainda está dormindo. With the future, já means very soon: Já volto (I will be right back). Word order is flexible, but ainda não stays together and goes before the verb.",
+      "examples": [
+        {
+          "pt": "Já almocei, obrigado.",
+          "en": "I have already had lunch, thanks."
+        },
+        {
+          "pt": "Ela ainda não chegou.",
+          "en": "She has not arrived yet."
+        },
+        {
+          "pt": "Meu irmão ainda mora com meus pais.",
+          "en": "My brother still lives with my parents."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-009@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-009@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best word: Eu ___ comi, obrigado.",
+            "answer": "já",
+            "alternatives": ["ainda", "já", "ainda não"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q01"
+          },
+          {
+            "id": "pt-b1-009@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the best word: Ele ___ não chegou.",
+            "answer": "ainda",
+            "alternatives": ["já", "também", "ainda"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q02"
+          },
+          {
+            "id": "pt-b1-009@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the best option (he still lives there): Ele ___ mora lá.",
+            "answer": "ainda",
+            "alternatives": ["ainda", "já", "ainda não"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q03"
+          },
+          {
+            "id": "pt-b1-009@2:q04",
+            "format": "typed-blank",
+            "prompt": "Você ___ terminou o relatório? (already)",
+            "answer": "já",
+            "near_misses": ["ainda", "ainda não"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q04"
+          },
+          {
+            "id": "pt-b1-009@2:q05",
+            "format": "typed-blank",
+            "prompt": "Nós ___ não vimos esse filme. (not yet)",
+            "answer": "ainda",
+            "near_misses": ["já", "nunca"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q05"
+          },
+          {
+            "id": "pt-b1-009@2:q06",
+            "format": "typed-blank",
+            "prompt": "Espere um pouco, eu ___ volto. (right back)",
+            "answer": "já",
+            "near_misses": ["ainda", "jamais"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q06"
+          },
+          {
+            "id": "pt-b1-009@2:q07",
+            "format": "translation",
+            "prompt": "Translate (not yet): I have not eaten yet.",
+            "answer": "Eu ainda não comi.",
+            "alternatives": ["Ainda não comi.", "Eu não comi ainda."],
+            "near_misses": ["Eu já comi.", "Eu não ainda comi."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q07"
+          },
+          {
+            "id": "pt-b1-009@2:q08",
+            "format": "translation",
+            "prompt": "Translate (already): They have already arrived.",
+            "answer": "Eles já chegaram.",
+            "alternatives": ["Elas já chegaram."],
+            "near_misses": ["Eles ainda chegaram.", "Eles ainda não chegaram."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q08"
+          },
+          {
+            "id": "pt-b1-009@2:q09",
+            "format": "translation",
+            "prompt": "Translate (still): She still works here.",
+            "answer": "Ela ainda trabalha aqui.",
+            "near_misses": [
+              "Ela já trabalha aqui.",
+              "Ela ainda não trabalha aqui."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q09"
+          },
+          {
+            "id": "pt-b1-009@2:q10",
+            "format": "correction",
+            "prompt": "Correct the word (he is still sleeping): Ele já está dormindo, não acordou.",
+            "answer": "Ele ainda está dormindo, não acordou.",
+            "near_misses": [
+              "Ele já está dormindo, não acordou.",
+              "Ele ainda não está dormindo, não acordou."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q10"
+          },
+          {
+            "id": "pt-b1-009@2:q11",
+            "format": "correction",
+            "prompt": "Correct the word order: Eu não ainda terminei.",
+            "answer": "Eu ainda não terminei.",
+            "near_misses": ["Eu não ainda terminei.", "Eu já não terminei."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q11"
+          },
+          {
+            "id": "pt-b1-009@2:q12",
+            "format": "correction",
+            "prompt": "Correct the meaning (it is done): Eu ainda não terminei, pode ver.",
+            "answer": "Eu já terminei, pode ver.",
+            "near_misses": [
+              "Eu ainda não terminei, pode ver.",
+              "Eu ainda terminei, pode ver."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-009@1:q12"
+          },
+          {
+            "id": "pt-b1-009@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence that says he has already left:",
+            "answer": "Ele já saiu.",
+            "alternatives": [
+              "Ele já saiu.",
+              "Ele ainda não saiu.",
+              "Ele ainda saiu."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-009@1:h01"
+          },
+          {
+            "id": "pt-b1-009@2:h02",
+            "format": "typed-blank",
+            "prompt": "Eu ___ , estou com fome. (not yet + jantar, perfeito)",
+            "answer": "ainda não jantei",
+            "near_misses": ["já jantei", "ainda jantei"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-009@1:h02"
+          },
+          {
+            "id": "pt-b1-009@2:h03",
+            "format": "translation",
+            "prompt": "Translate (not yet): We have not decided yet. (pretérito perfeito)",
+            "answer": "Nós ainda não decidimos.",
+            "alternatives": [
+              "Ainda não decidimos.",
+              "Nós não decidimos ainda."
+            ],
+            "near_misses": ["Nós já decidimos.", "Nós ainda decidimos."],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-009@1:h03"
           }
         ]
       }
@@ -890,6 +1710,224 @@
               "Eu o vi durante uma semana."
             ],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-010",
+      "title": "Duration and time since: há, faz, desde, durante, atrás",
+      "explanation": "Há and faz both mean ago or for when they count time. Há dois anos que moro aqui and Faz dois anos que moro aqui mean I have lived here for two years. With a past event, há or atrás gives time ago: Cheguei há dois dias, or Cheguei dois dias atrás. Do not use há and atrás together. Desde marks the starting point: Moro aqui desde 2020. Durante marks the span: Estudei durante três horas. Brazilians often use faz in speech and há in writing. Desde does not take a time length, and durante does not take a starting point.",
+      "examples": [
+        {
+          "pt": "Moro aqui há três anos.",
+          "en": "I have lived here for three years."
+        },
+        {
+          "pt": "Ela chegou dois dias atrás.",
+          "en": "She arrived two days ago."
+        },
+        {
+          "pt": "Trabalho nesta empresa desde 2019.",
+          "en": "I have worked at this company since 2019."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-010@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-010@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best word: Moro aqui ___ 2020.",
+            "answer": "desde",
+            "alternatives": ["durante", "atrás", "desde"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q01"
+          },
+          {
+            "id": "pt-b1-010@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the best word: Ele chegou duas horas ___ .",
+            "answer": "atrás",
+            "alternatives": ["atrás", "desde", "durante"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q02"
+          },
+          {
+            "id": "pt-b1-010@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the best word: Estudei ___ três horas.",
+            "answer": "durante",
+            "alternatives": ["desde", "durante", "atrás"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q03"
+          },
+          {
+            "id": "pt-b1-010@2:q04",
+            "format": "typed-blank",
+            "prompt": "___ cinco anos que não vejo meu primo. (ago)",
+            "answer": "Faz",
+            "near_misses": ["Desde", "Durante"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q04"
+          },
+          {
+            "id": "pt-b1-010@2:q05",
+            "format": "typed-blank",
+            "prompt": "Eu a conheci ___ um mês. (a month ago, with há)",
+            "answer": "há",
+            "near_misses": ["desde", "durante"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q05"
+          },
+          {
+            "id": "pt-b1-010@2:q06",
+            "format": "typed-blank",
+            "prompt": "Nós falamos ___ o jantar inteiro. (throughout)",
+            "answer": "durante",
+            "near_misses": ["desde", "atrás"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q06"
+          },
+          {
+            "id": "pt-b1-010@2:q07",
+            "format": "translation",
+            "prompt": "Translate (for): I have lived here for two years.",
+            "answer": "Moro aqui há dois anos.",
+            "alternatives": [
+              "Faz dois anos que moro aqui.",
+              "Eu moro aqui há dois anos.",
+              "Há dois anos que moro aqui."
+            ],
+            "near_misses": [
+              "Moro aqui desde dois anos.",
+              "Moro aqui durante dois anos atrás."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q07"
+          },
+          {
+            "id": "pt-b1-010@2:q08",
+            "format": "translation",
+            "prompt": "Translate (since): She has studied since January.",
+            "answer": "Ela estuda desde janeiro.",
+            "alternatives": ["Ela estuda português desde janeiro."],
+            "near_misses": [
+              "Ela estuda há janeiro.",
+              "Ela estuda durante janeiro."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q08"
+          },
+          {
+            "id": "pt-b1-010@2:q09",
+            "format": "translation",
+            "prompt": "Translate (ago): He called three days ago.",
+            "answer": "Ele ligou há três dias.",
+            "alternatives": [
+              "Ele ligou três dias atrás.",
+              "Ele telefonou há três dias."
+            ],
+            "near_misses": [
+              "Ele ligou desde três dias.",
+              "Ele ligou durante três dias."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q09"
+          },
+          {
+            "id": "pt-b1-010@2:q10",
+            "format": "correction",
+            "prompt": "Correct the word: Eu moro aqui desde cinco anos.",
+            "answer": "Eu moro aqui há cinco anos.",
+            "alternatives": ["Eu moro aqui faz cinco anos."],
+            "near_misses": [
+              "Eu moro aqui desde cinco anos.",
+              "Eu moro aqui durante cinco anos."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q10"
+          },
+          {
+            "id": "pt-b1-010@2:q11",
+            "format": "correction",
+            "prompt": "Correct the word: Ele chegou há dois dias atrás.",
+            "answer": "Ele chegou há dois dias.",
+            "alternatives": ["Ele chegou dois dias atrás."],
+            "near_misses": [
+              "Ele chegou há dois dias atrás.",
+              "Ele chegou desde dois dias."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q11"
+          },
+          {
+            "id": "pt-b1-010@2:q12",
+            "format": "correction",
+            "prompt": "Correct the word: Dormi desde oito horas.",
+            "answer": "Dormi durante oito horas.",
+            "near_misses": [
+              "Dormi desde oito horas.",
+              "Dormi atrás oito horas."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-010@1:q12"
+          },
+          {
+            "id": "pt-b1-010@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence that means she has lived there since 2015:",
+            "answer": "Ela mora em São Paulo desde 2015.",
+            "alternatives": [
+              "Ela mora em São Paulo durante 2015.",
+              "Ela mora em São Paulo desde 2015.",
+              "Ela mora em São Paulo atrás 2015."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-010@1:h01"
+          },
+          {
+            "id": "pt-b1-010@2:h02",
+            "format": "typed-blank",
+            "prompt": "Nós nos casamos ___ . (ten years ago, with há)",
+            "answer": "há dez anos",
+            "near_misses": ["desde dez anos", "durante dez anos"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-010@1:h02"
+          },
+          {
+            "id": "pt-b1-010@2:h03",
+            "format": "translation",
+            "prompt": "Translate (ago): I saw him a week ago. (pretérito perfeito)",
+            "answer": "Eu o vi há uma semana.",
+            "alternatives": [
+              "Eu vi ele há uma semana.",
+              "Vi ele uma semana atrás.",
+              "Eu o vi uma semana atrás."
+            ],
+            "near_misses": [
+              "Eu o vi desde uma semana.",
+              "Eu o vi durante uma semana."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-010@1:h03"
           }
         ]
       }

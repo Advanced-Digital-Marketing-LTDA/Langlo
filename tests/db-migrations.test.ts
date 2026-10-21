@@ -24,6 +24,7 @@ import {
   disposeDisposableFixture
 } from './fixtures/database';
 import { seedStudy } from './fixtures/study';
+import { prefixThrough } from './fixtures/migration-prefix';
 import { seedLegacyPackage } from './fixtures/content-package';
 import { importContent } from '../src/lib/server/content-import';
 import * as schema from '../src/lib/server/db/schema';
@@ -266,29 +267,6 @@ async function expectFailedDraftReviewMigration(target: FixtureTarget) {
 }
 
 describe('disposable libSQL migrations', () => {
-  async function prefixThrough(tag: string) {
-    const directory = await mkdtemp(join(tmpdir(), 'langlo-merge-prefix-'));
-    const journal = JSON.parse(
-      await readFile('drizzle/meta/_journal.json', 'utf8')
-    );
-    const end = journal.entries.findIndex(
-      (entry: { tag: string }) => entry.tag === tag
-    );
-    if (end < 0) throw new Error(`Missing migration ${tag}`);
-    journal.entries = journal.entries.slice(0, end + 1);
-    await mkdir(join(directory, 'meta'));
-    await writeFile(
-      join(directory, 'meta/_journal.json'),
-      JSON.stringify(journal)
-    );
-    for (const entry of journal.entries)
-      await copyFile(
-        `drizzle/${entry.tag}.sql`,
-        join(directory, `${entry.tag}.sql`)
-      );
-    return directory;
-  }
-
   it('accepts the production migration ledger through Portuguese 0026 as an unchanged prefix', async () => {
     const target = await fixture();
     const folder = await prefixThrough('0026_portuguese_tracks');
@@ -318,7 +296,8 @@ describe('disposable libSQL migrations', () => {
           '0027_peaceful_albert_cleary',
           '0028_sturdy_talkback',
           '0029_current_grammar_content',
-          '0030_portuguese_grammar_retention'
+          '0030_portuguese_grammar_retention',
+          '0031_retention_transfers_to_new_versions'
         ]);
         await migrateFixtureDatabase(target);
         expect(
@@ -395,7 +374,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT content_version_id, reset_required FROM grammar_retention_schedules'
           )
         ).rows
-      ).toEqual([{ content_version_id: 'content-v2', reset_required: 1 }]);
+      ).toEqual([{ content_version_id: 'content-v2', reset_required: 0 }]);
       await client.execute("DELETE FROM users WHERE id = 'learner-a'");
       expect(
         (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
@@ -505,7 +484,7 @@ describe('disposable libSQL migrations', () => {
     await migrateFixtureDatabase(target, previous);
   }
 
-  it('upgrades grammar reset triggers without changing stored schedules and only resets for the newest published content', async () => {
+  it('upgrades grammar retention triggers without changing stored schedules and only moves schedules to the newest published content', async () => {
     const target = await fixture();
     const previous = await mkdtemp(join(tmpdir(), 'langlo-0029-upgrade-'));
     try {
@@ -535,7 +514,7 @@ describe('disposable libSQL migrations', () => {
             )
           ).rows
         ).toEqual([
-          { content_version_id: 'content-v2', due_at: 0, revision: 4 }
+          { content_version_id: 'content-v2', due_at: 123456, revision: 4 }
         ]);
         await client.execute(
           "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('content-backfill', 'fr-articles', 'fr', 3, 'draft')"
