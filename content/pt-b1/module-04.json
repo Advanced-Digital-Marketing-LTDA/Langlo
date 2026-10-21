@@ -1,0 +1,903 @@
+{
+  "module_id": "pt-b1-module-04",
+  "track": "Portuguese B1",
+  "title": "The present subjunctive",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b1-016",
+      "title": "Forming the present subjunctive: regular and frequent irregular verbs",
+      "explanation": "Form the present subjunctive from the eu form of the present indicative: drop the -o and add the opposite vowel. -ar verbs take -e (fale, falemos, falem) and -er and -ir verbs take -a (coma, parta, comamos, partam). So fazer gives faça and dizer gives diga. Verbs with an irregular eu form keep that stem: ter gives tenha, vir gives venha, sair gives saia, ver gives veja, pôr gives ponha, trazer gives traga. A few verbs are fully irregular: ser (seja), estar (esteja), ir (vá), dar (dê), saber (saiba), querer (queira), haver (haja). Spelling changes keep the sound: pagar gives pague, buscar gives busque.",
+      "examples": [
+        {
+          "pt": "Quero que você fale com ela.",
+          "en": "I want you to talk to her."
+        },
+        {
+          "pt": "É melhor que a gente saia cedo.",
+          "en": "It is better for us to leave early."
+        },
+        {
+          "pt": "Espero que eles sejam felizes.",
+          "en": "I hope they are happy."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-016@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-016@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the present subjunctive of falar for você:",
+            "answer": "fale",
+            "alternatives": ["fale", "fala", "falou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the present subjunctive of comer for eles:",
+            "answer": "comam",
+            "alternatives": ["comam", "comem", "comeram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the present subjunctive of fazer for eu:",
+            "answer": "faça",
+            "alternatives": ["faça", "faço", "fiz"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q04",
+            "format": "typed-blank",
+            "prompt": "Quero que ele ___ aqui. (estar)",
+            "answer": "esteja",
+            "near_misses": ["está", "estar"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q05",
+            "format": "typed-blank",
+            "prompt": "Espero que você ___ a verdade. (dizer)",
+            "answer": "diga",
+            "near_misses": ["diz", "disse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q06",
+            "format": "typed-blank",
+            "prompt": "É importante que nós ___ cedo. (sair)",
+            "answer": "saiamos",
+            "near_misses": ["saímos", "saíamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q07",
+            "format": "translation",
+            "prompt": "Translate (subjunctive): I want you to come early.",
+            "answer": "Quero que você venha cedo.",
+            "alternatives": [
+              "Eu quero que você venha cedo.",
+              "Quero que tu venhas cedo."
+            ],
+            "near_misses": [
+              "Quero que você vem cedo.",
+              "Quero você venha cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q08",
+            "format": "translation",
+            "prompt": "Translate (subjunctive): I hope she is home.",
+            "answer": "Espero que ela esteja em casa.",
+            "alternatives": ["Eu espero que ela esteja em casa."],
+            "near_misses": [
+              "Espero que ela está em casa.",
+              "Espero ela esteja em casa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q09",
+            "format": "translation",
+            "prompt": "Translate (subjunctive): It is important that we know the answer.",
+            "answer": "É importante que a gente saiba a resposta.",
+            "alternatives": [
+              "É importante que nós saibamos a resposta.",
+              "É importante que saibamos a resposta."
+            ],
+            "near_misses": [
+              "É importante que a gente sabe a resposta.",
+              "É importante que a gente sabe resposta."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Quero que você faz isso agora.",
+            "answer": "Quero que você faça isso agora.",
+            "near_misses": [
+              "Quero que você faz isso agora.",
+              "Quero que você fazer isso agora."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Espero que ela é feliz.",
+            "answer": "Espero que ela seja feliz.",
+            "near_misses": [
+              "Espero que ela é feliz.",
+              "Espero que ela era feliz."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:q12",
+            "format": "correction",
+            "prompt": "Correct the spelling: Espero que você paga a conta.",
+            "answer": "Espero que você pague a conta.",
+            "near_misses": [
+              "Espero que você paga a conta.",
+              "Espero que você page a conta."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-016@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the present subjunctive of ler for você:",
+            "answer": "leia",
+            "alternatives": ["leia", "lê", "leu"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-016@1:h02",
+            "format": "typed-blank",
+            "prompt": "Espero que eles ___ o presente. (trazer)",
+            "answer": "tragam",
+            "near_misses": ["trazem", "trouxeram"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-016@1:h03",
+            "format": "translation",
+            "prompt": "Translate (subjunctive): I want them to give me the keys.",
+            "answer": "Quero que eles me deem as chaves.",
+            "alternatives": [
+              "Eu quero que eles me deem as chaves.",
+              "Quero que elas me deem as chaves."
+            ],
+            "near_misses": [
+              "Quero que eles me dão as chaves.",
+              "Quero que eles me deram as chaves."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-017",
+      "title": "Subjunctive after volition, emotion and doubt: quero que, tomara que, duvido que",
+      "explanation": "Use the present subjunctive in the subordinate clause after que when the main verb expresses will, feeling or doubt, and the subject changes. Volition: querer, pedir, preferir, esperar que (Quero que você venha). Emotion: gostar de, ter medo de, estar feliz por que (Fico feliz que você esteja aqui). Doubt: duvidar que, não achar que, não acreditar que (Duvido que ele saiba). Tomara que is always followed by the subjunctive: Tomara que dê certo. If the subject is the same, use the infinitive instead: Quero viajar. After acho que, the indicative is used.",
+      "examples": [
+        {
+          "pt": "Peço que vocês cheguem às nove.",
+          "en": "I ask you to arrive at nine."
+        },
+        {
+          "pt": "Tomara que amanhã faça sol.",
+          "en": "I hope it is sunny tomorrow."
+        },
+        {
+          "pt": "Duvido que ela venha à festa.",
+          "en": "I doubt she will come to the party."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-017@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-017@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quero que você ___ comigo. (ficar)",
+            "answer": "fique",
+            "alternatives": ["fique", "fica", "ficar"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Tomara que ___ certo. (dar)",
+            "answer": "dê",
+            "alternatives": ["dê", "dá", "deu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Duvido que ele ___ a resposta. (saber)",
+            "answer": "saiba",
+            "alternatives": ["saiba", "sabe", "soube"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q04",
+            "format": "typed-blank",
+            "prompt": "Não acho que ela ___ sozinha. (vir)",
+            "answer": "venha",
+            "near_misses": ["vem", "veio"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q05",
+            "format": "typed-blank",
+            "prompt": "Fico feliz que vocês ___ aqui. (estar)",
+            "answer": "estejam",
+            "near_misses": ["estão", "estavam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q06",
+            "format": "typed-blank",
+            "prompt": "Prefiro que a gente ___ de táxi. (ir)",
+            "answer": "vá",
+            "near_misses": ["vai", "foi"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q07",
+            "format": "translation",
+            "prompt": "Translate (will): I want you to wait.",
+            "answer": "Quero que você espere.",
+            "alternatives": [
+              "Eu quero que você espere.",
+              "Quero que tu esperes."
+            ],
+            "near_misses": ["Quero que você espera.", "Quero você esperar."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q08",
+            "format": "translation",
+            "prompt": "Translate (doubt): I doubt he is at home.",
+            "answer": "Duvido que ele esteja em casa.",
+            "alternatives": ["Eu duvido que ele esteja em casa."],
+            "near_misses": [
+              "Duvido que ele está em casa.",
+              "Duvido ele esteja em casa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q09",
+            "format": "translation",
+            "prompt": "Translate (emotion): I am glad you like it.",
+            "answer": "Fico feliz que você goste.",
+            "alternatives": [
+              "Estou feliz que você goste.",
+              "Eu fico feliz que você goste."
+            ],
+            "near_misses": [
+              "Fico feliz que você gosta.",
+              "Fico feliz você goste."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Espero que você vem amanhã.",
+            "answer": "Espero que você venha amanhã.",
+            "near_misses": [
+              "Espero que você vem amanhã.",
+              "Espero que você veio amanhã."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Não acho que ele sabe a resposta.",
+            "answer": "Não acho que ele saiba a resposta.",
+            "near_misses": [
+              "Não acho que ele sabe a resposta.",
+              "Não acho que ele soube a resposta."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:q12",
+            "format": "correction",
+            "prompt": "Same subject, use the infinitive: Eu quero que eu viajar.",
+            "answer": "Eu quero viajar.",
+            "near_misses": [
+              "Eu quero que eu viajar.",
+              "Eu quero que eu viaje."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-017@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form (belief, indicative): Acho que ela ___ certa. (estar)",
+            "answer": "está",
+            "alternatives": ["está", "esteja", "estar"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-017@1:h02",
+            "format": "typed-blank",
+            "prompt": "Não acredito que isso ___ verdade. (ser)",
+            "answer": "seja",
+            "near_misses": ["é", "foi"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-017@1:h03",
+            "format": "translation",
+            "prompt": "Translate (hope): I hope you have a good trip.",
+            "answer": "Espero que você faça uma boa viagem.",
+            "alternatives": [
+              "Tomara que você faça uma boa viagem.",
+              "Espero que tenha uma boa viagem."
+            ],
+            "near_misses": [
+              "Espero que você faz uma boa viagem.",
+              "Espero que você fez uma boa viagem."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-018",
+      "title": "Subjunctive after impersonal expressions and with talvez, pode ser que",
+      "explanation": "Impersonal expressions of opinion, need and possibility take the subjunctive when a clause with que follows: é importante que, é necessário que, é melhor que, é bom que, é possível que, é preciso que, pode ser que, é pena que. Examples: É melhor que você descanse. Pode ser que ele chegue tarde. Talvez is followed by the subjunctive when it comes before the verb: Talvez ela venha. Expressions of certainty take the indicative: é claro que, é verdade que, é certo que (É verdade que ele chegou). With the same subject, a general statement uses the infinitive: É bom dormir cedo.",
+      "examples": [
+        {
+          "pt": "É melhor que você descanse um pouco.",
+          "en": "It is better that you rest a bit."
+        },
+        {
+          "pt": "Talvez eles cheguem tarde.",
+          "en": "Maybe they will arrive late."
+        },
+        {
+          "pt": "É verdade que ele chegou cedo.",
+          "en": "It is true that he arrived early."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-018@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-018@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: É importante que você ___ a lição. (fazer)",
+            "answer": "faça",
+            "alternatives": ["faça", "faz", "fez"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Talvez ela ___ hoje. (vir)",
+            "answer": "venha",
+            "alternatives": ["venha", "vem", "veio"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: É verdade que ele ___ ontem. (chegar)",
+            "answer": "chegou",
+            "alternatives": ["chegou", "chegue", "chegasse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q04",
+            "format": "typed-blank",
+            "prompt": "É melhor que nós ___ mais cedo. (sair)",
+            "answer": "saiamos",
+            "near_misses": ["saímos", "saíamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q05",
+            "format": "typed-blank",
+            "prompt": "Pode ser que eles ___ a resposta. (saber)",
+            "answer": "saibam",
+            "near_misses": ["sabem", "souberam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q06",
+            "format": "typed-blank",
+            "prompt": "É necessário que o aluno ___ o prazo. (respeitar)",
+            "answer": "respeite",
+            "near_misses": ["respeita", "respeitou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q07",
+            "format": "translation",
+            "prompt": "Translate (possibility): Maybe he will call tomorrow.",
+            "answer": "Talvez ele ligue amanhã.",
+            "alternatives": ["Talvez ele telefone amanhã."],
+            "near_misses": [
+              "Talvez ele liga amanhã.",
+              "Talvez ele ligou amanhã."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q08",
+            "format": "translation",
+            "prompt": "Translate (need): It is necessary that you bring the form.",
+            "answer": "É necessário que você traga o formulário.",
+            "alternatives": [
+              "É preciso que você traga o formulário.",
+              "É necessário que traga o formulário."
+            ],
+            "near_misses": [
+              "É necessário que você traz o formulário.",
+              "É necessário você trazer o formulário."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q09",
+            "format": "translation",
+            "prompt": "Translate (certainty): It is clear that she knows.",
+            "answer": "É claro que ela sabe.",
+            "near_misses": ["É claro que ela saiba.", "É claro que ela sabia."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: É importante que você chega cedo.",
+            "answer": "É importante que você chegue cedo.",
+            "near_misses": [
+              "É importante que você chega cedo.",
+              "É importante que você chegar cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Pode ser que ele está doente.",
+            "answer": "Pode ser que ele esteja doente.",
+            "near_misses": [
+              "Pode ser que ele está doente.",
+              "Pode ser que ele estar doente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb (certainty): É certo que ele venha amanhã.",
+            "answer": "É certo que ele vem amanhã.",
+            "near_misses": [
+              "É certo que ele venha amanhã.",
+              "É certo que ele veio amanhã."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-018@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: É pena que você não ___ ficar. (poder)",
+            "answer": "possa",
+            "alternatives": ["possa", "pode", "pôde"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-018@1:h02",
+            "format": "typed-blank",
+            "prompt": "Talvez nós ___ de táxi. (ir)",
+            "answer": "vamos",
+            "near_misses": ["vimos", "íamos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-018@1:h03",
+            "format": "translation",
+            "prompt": "Translate (opinion): It is good that you are here.",
+            "answer": "É bom que você esteja aqui.",
+            "alternatives": [
+              "É bom que vocês estejam aqui.",
+              "É bom que você esteja aqui hoje."
+            ],
+            "near_misses": [
+              "É bom que você está aqui.",
+              "É bom você esteja aqui."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-019",
+      "title": "Subjunctive after para que, caso, sem que, embora and a fim de que",
+      "explanation": "Some conjunctions always take the subjunctive. Para que and a fim de que mean so that: Explico isso para que você entenda. Caso means in case or if: Caso chova, ficamos em casa. Sem que means without: Ela saiu sem que eu visse. Embora means although: Embora esteja cansado, ele continua. Até que means until a point not yet reached: Espere até que ele chegue. Use a clause with the subjunctive for each, and keep the sentence in the present or future. If both clauses share a subject, use para + infinitive: Estudo para passar.",
+      "examples": [
+        {
+          "pt": "Explico de novo para que você entenda.",
+          "en": "I explain again so that you understand."
+        },
+        {
+          "pt": "Caso chova, a gente fica em casa.",
+          "en": "In case it rains, we stay at home."
+        },
+        {
+          "pt": "Embora esteja cansado, ele continua trabalhando.",
+          "en": "Although he is tired, he keeps working."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-019@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-019@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Falo devagar para que você ___ . (entender)",
+            "answer": "entenda",
+            "alternatives": ["entenda", "entende", "entendeu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Caso ___ , levo o guarda-chuva. (chover)",
+            "answer": "chova",
+            "alternatives": ["chova", "chove", "choveu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela saiu sem que ninguém a ___ . (ver)",
+            "answer": "visse",
+            "alternatives": ["visse", "viu", "vê"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q04",
+            "format": "typed-blank",
+            "prompt": "Explico isso a fim de que todos ___ . (compreender)",
+            "answer": "compreendam",
+            "near_misses": ["compreendem", "compreenderam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q05",
+            "format": "typed-blank",
+            "prompt": "Embora ele ___ cansado, vai ao treino. (estar)",
+            "answer": "esteja",
+            "near_misses": ["está", "estava"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q06",
+            "format": "typed-blank",
+            "prompt": "Fique aqui até que eu ___ . (voltar)",
+            "answer": "volte",
+            "near_misses": ["volto", "voltei"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q07",
+            "format": "translation",
+            "prompt": "Translate (purpose): I send the email so that you know.",
+            "answer": "Mando o e-mail para que você saiba.",
+            "alternatives": [
+              "Envio o e-mail para que você saiba.",
+              "Eu mando o e-mail para que você saiba."
+            ],
+            "near_misses": [
+              "Mando o e-mail para que você sabe.",
+              "Mando o e-mail para você saiba."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q08",
+            "format": "translation",
+            "prompt": "Translate (in case): In case you need help, call me.",
+            "answer": "Caso você precise de ajuda, me ligue.",
+            "alternatives": [
+              "Caso precise de ajuda, me ligue.",
+              "Caso você precise de ajuda, ligue para mim."
+            ],
+            "near_misses": [
+              "Caso você precisa de ajuda, me ligue.",
+              "Caso você precisou de ajuda, me ligue."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q09",
+            "format": "translation",
+            "prompt": "Translate (although): Although it is late, I will stay.",
+            "answer": "Embora seja tarde, eu fico.",
+            "alternatives": [
+              "Embora seja tarde, eu vou ficar.",
+              "Embora seja tarde, vou ficar."
+            ],
+            "near_misses": [
+              "Embora é tarde, eu fico.",
+              "Embora foi tarde, eu fico."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Falo devagar para que você entende.",
+            "answer": "Falo devagar para que você entenda.",
+            "near_misses": [
+              "Falo devagar para que você entende.",
+              "Falo devagar para que você entender."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Caso ele vem, me avise.",
+            "answer": "Caso ele venha, me avise.",
+            "near_misses": [
+              "Caso ele vem, me avise.",
+              "Caso ele vir, me avise."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:q12",
+            "format": "correction",
+            "prompt": "Same subject, use the infinitive: Estudo para que eu passar.",
+            "answer": "Estudo para passar.",
+            "near_misses": [
+              "Estudo para que eu passar.",
+              "Estudo para que eu passe."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-019@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele trabalha para que a família ___ bem. (viver)",
+            "answer": "viva",
+            "alternatives": ["viva", "vive", "viveu"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-019@1:h02",
+            "format": "typed-blank",
+            "prompt": "Embora nós ___ pouco dinheiro, estamos felizes. (ter)",
+            "answer": "tenhamos",
+            "near_misses": ["temos", "tivemos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-019@1:h03",
+            "format": "translation",
+            "prompt": "Translate (until): Wait until she arrives.",
+            "answer": "Espere até que ela chegue.",
+            "alternatives": [
+              "Espere até ela chegar.",
+              "Espere até que ela venha."
+            ],
+            "near_misses": [
+              "Espere até que ela chega.",
+              "Espere até que ela chegou."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-020",
+      "title": "Future subjunctive: quando, se, assim que, enquanto",
+      "explanation": "Use the futuro do subjuntivo for an event that has not happened yet after quando, se, assim que, logo que, enquanto and sempre que. Regular verbs have the same form as the personal infinitive: quando eu falar, quando ele comer, quando nós partirmos. Irregular verbs take the stem of the perfeito: eu fizer (fazer), disser (dizer), trouxer (trazer), puder (poder), quiser (querer), souber (saber), tiver (ter), for (ser/ir), estiver (estar), vir (ver), vier (vir), puser (pôr). Example: Quando você chegar, me ligue. Se eu puder, eu vou. Use the indicative for a habit: Quando chego, tomo café.",
+      "examples": [
+        {
+          "pt": "Quando você chegar, me ligue.",
+          "en": "When you arrive, call me."
+        },
+        {
+          "pt": "Se eu puder, eu vou à festa.",
+          "en": "If I can, I will go to the party."
+        },
+        {
+          "pt": "Assim que eles saírem, eu limpo a casa.",
+          "en": "As soon as they leave, I will clean the house."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-020@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-020@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando eu ___ , te aviso. (saber)",
+            "answer": "souber",
+            "alternatives": ["souber", "sei", "soube"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Se você ___ tempo, venha. (ter)",
+            "answer": "tiver",
+            "alternatives": ["tiver", "tem", "teve"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando nós ___ , jantamos. (chegar)",
+            "answer": "chegarmos",
+            "alternatives": ["chegarmos", "chegamos", "chegaremos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q04",
+            "format": "typed-blank",
+            "prompt": "Se ele ___ , eu vou com ele. (querer)",
+            "answer": "quiser",
+            "near_misses": ["quer", "quis"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q05",
+            "format": "typed-blank",
+            "prompt": "Quando você ___ a Maria, diga olá. (ver)",
+            "answer": "vir",
+            "near_misses": ["vê", "viu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q06",
+            "format": "typed-blank",
+            "prompt": "Assim que ela ___ , eu ligo. (vir)",
+            "answer": "vier",
+            "near_misses": ["vem", "veio"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q07",
+            "format": "translation",
+            "prompt": "Translate (future): When you can, call me.",
+            "answer": "Quando você puder, me ligue.",
+            "alternatives": [
+              "Quando puder, me ligue.",
+              "Quando você puder, ligue para mim."
+            ],
+            "near_misses": [
+              "Quando você pode, me ligue.",
+              "Quando você pôde, me ligue."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q08",
+            "format": "translation",
+            "prompt": "Translate (condition): If it rains, we will stay.",
+            "answer": "Se chover, a gente fica.",
+            "alternatives": [
+              "Se chover, nós ficamos.",
+              "Se chover, a gente vai ficar."
+            ],
+            "near_misses": [
+              "Se chove, a gente fica.",
+              "Se choveu, a gente fica."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q09",
+            "format": "translation",
+            "prompt": "Translate (as soon as): As soon as I finish, I will go.",
+            "answer": "Assim que eu terminar, eu vou.",
+            "alternatives": [
+              "Assim que terminar, eu vou.",
+              "Assim que eu terminar, vou."
+            ],
+            "near_misses": [
+              "Assim que eu termino, eu vou.",
+              "Assim que eu terminei, eu vou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Quando eu faço o trabalho, te ligo (future).",
+            "answer": "Quando eu fizer o trabalho, te ligo.",
+            "near_misses": [
+              "Quando eu faço o trabalho, te ligo.",
+              "Quando eu fazer o trabalho, te ligo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Se você tem tempo amanhã, venha.",
+            "answer": "Se você tiver tempo amanhã, venha.",
+            "near_misses": [
+              "Se você tem tempo amanhã, venha.",
+              "Se você teve tempo amanhã, venha."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Se ele poder, ele vem.",
+            "answer": "Se ele puder, ele vem.",
+            "near_misses": ["Se ele poder, ele vem.", "Se ele pode, ele vem."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-020@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form (habit, indicative): Quando eu ___ cedo, tomo café. (acordar)",
+            "answer": "acordo",
+            "alternatives": ["acordo", "acordar", "acorde"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-020@1:h02",
+            "format": "typed-blank",
+            "prompt": "Enquanto você ___ aqui, eu trabalho. (estar)",
+            "answer": "estiver",
+            "near_misses": ["está", "esteve"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-020@1:h03",
+            "format": "translation",
+            "prompt": "Translate (future): If you say that, she will get angry.",
+            "answer": "Se você disser isso, ela vai ficar brava.",
+            "alternatives": [
+              "Se você falar isso, ela vai ficar brava.",
+              "Se disser isso, ela vai ficar brava."
+            ],
+            "near_misses": [
+              "Se você diz isso, ela vai ficar brava.",
+              "Se você disse isso, ela vai ficar brava."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

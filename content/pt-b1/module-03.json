@@ -1,0 +1,876 @@
+{
+  "module_id": "pt-b1-module-03",
+  "track": "Portuguese B1",
+  "title": "Future, conditional and imperative",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b1-011",
+      "title": "Future: ir + infinitive and the futuro do presente",
+      "explanation": "In everyday Brazilian Portuguese the future is usually ir + infinitive: Vou viajar amanhã. It is used for plans and near events. The futuro do presente (simple future) is more formal or written, and it also states promises and predictions: Viajarei em julho. Form it by adding endings to the infinitive: -ei, -ás, -á, -emos, -ão (falarei, comerá, partiremos, farão). Three verbs change the stem: fazer gives farei, dizer gives direi, trazer gives trarei. Do not use the present for a promise in formal writing; use the simple future.",
+      "examples": [
+        {
+          "pt": "Amanhã eu vou ligar para o médico.",
+          "en": "Tomorrow I am going to call the doctor."
+        },
+        {
+          "pt": "Prometo que farei o possível.",
+          "en": "I promise I will do what I can."
+        },
+        {
+          "pt": "Eles viajarão para o Rio no mês que vem.",
+          "en": "They will travel to Rio next month."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-011@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-011@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the everyday future: Amanhã eu ___ cedo.",
+            "answer": "vou sair",
+            "alternatives": ["vou sair", "saí", "saía"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the simple future: Eu ___ isso amanhã. (fazer)",
+            "answer": "farei",
+            "alternatives": ["farei", "fazerei", "fiz"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the simple future: Nós ___ a verdade. (dizer)",
+            "answer": "diremos",
+            "alternatives": ["diremos", "dizeremos", "dissemos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q04",
+            "format": "typed-blank",
+            "prompt": "Na semana que vem, eles ___ viajar. (ir + infinitivo)",
+            "answer": "vão",
+            "near_misses": ["foram", "iam"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ o livro amanhã. (trazer, futuro simples)",
+            "answer": "trarei",
+            "near_misses": ["trazerei", "trouxe"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q06",
+            "format": "typed-blank",
+            "prompt": "Você ___ um bom médico um dia. (ser, futuro simples)",
+            "answer": "será",
+            "near_misses": ["foi", "era"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q07",
+            "format": "translation",
+            "prompt": "Translate (everyday future): I am going to study tonight.",
+            "answer": "Eu vou estudar hoje à noite.",
+            "alternatives": [
+              "Vou estudar hoje à noite.",
+              "Eu vou estudar esta noite."
+            ],
+            "near_misses": [
+              "Eu estudei hoje à noite.",
+              "Eu estudava hoje à noite."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q08",
+            "format": "translation",
+            "prompt": "Translate (simple future): We will arrive at ten.",
+            "answer": "Nós chegaremos às dez.",
+            "alternatives": ["Chegaremos às dez.", "Nós vamos chegar às dez."],
+            "near_misses": ["Nós chegamos às dez.", "Nós chegávamos às dez."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q09",
+            "format": "translation",
+            "prompt": "Translate (simple future): She will bring the cake.",
+            "answer": "Ela trará o bolo.",
+            "alternatives": ["Ela vai trazer o bolo."],
+            "near_misses": ["Ela trazerá o bolo.", "Ela trouxe o bolo."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Amanhã eu fazerei o jantar.",
+            "answer": "Amanhã eu farei o jantar.",
+            "near_misses": [
+              "Amanhã eu fazerei o jantar.",
+              "Amanhã eu fiz o jantar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Nós dizeremos a verdade.",
+            "answer": "Nós diremos a verdade.",
+            "near_misses": [
+              "Nós dizeremos a verdade.",
+              "Nós dissemos a verdade."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Elas saíremos amanhã.",
+            "answer": "Elas sairão amanhã.",
+            "near_misses": ["Elas saíremos amanhã.", "Elas saíram amanhã."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-011@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the everyday future for a plan: Neste fim de semana, eu ___ ver um filme.",
+            "answer": "vou",
+            "alternatives": ["vou", "vi", "via"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-011@1:h02",
+            "format": "typed-blank",
+            "prompt": "Em breve, nós ___ a resposta. (receber, futuro simples)",
+            "answer": "receberemos",
+            "near_misses": ["recebemos", "recebíamos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-011@1:h03",
+            "format": "translation",
+            "prompt": "Translate (promise): I will call you tomorrow, I promise.",
+            "answer": "Eu te ligo amanhã, prometo.",
+            "alternatives": [
+              "Eu ligarei para você amanhã, prometo.",
+              "Ligo para você amanhã, prometo.",
+              "Eu te ligarei amanhã, prometo."
+            ],
+            "near_misses": [
+              "Eu te liguei amanhã, prometo.",
+              "Eu te ligava amanhã, prometo."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-012",
+      "title": "Futuro do pretérito: hypotheses, advice and the future in the past",
+      "explanation": "The futuro do pretérito (conditional) is formed like the simple future, but with the imperfeito endings -ia, -ias, -ia, -íamos, -iam added to the infinitive: falaria, comeria, partiríamos. The same three verbs change the stem: faria, diria, traria. Use it for a hypothesis (Eu compraria uma casa, se pudesse), for advice (Você deveria descansar), and for the future seen from a past moment (Ele disse que chegaria às oito). In speech, the imperfeito often replaces it in the second case: Ele disse que ia chegar às oito.",
+      "examples": [
+        {
+          "pt": "Se eu ganhasse na loteria, eu viajaria pelo mundo.",
+          "en": "If I won the lottery, I would travel the world."
+        },
+        {
+          "pt": "Você deveria dormir mais cedo.",
+          "en": "You should go to bed earlier."
+        },
+        {
+          "pt": "Ela disse que chegaria às oito.",
+          "en": "She said she would arrive at eight."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-012@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-012@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Eu ___ uma casa nova, se pudesse. (comprar)",
+            "answer": "compraria",
+            "alternatives": ["compraria", "comprarei", "comprei"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nós ___ mais, mas não temos tempo. (viajar)",
+            "answer": "viajaríamos",
+            "alternatives": ["viajaríamos", "viajaremos", "viajamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela disse que ___ cedo. (chegar)",
+            "answer": "chegaria",
+            "alternatives": ["chegaria", "chegará", "chegou"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q04",
+            "format": "typed-blank",
+            "prompt": "Eu ___ isso por você. (fazer, futuro do pretérito)",
+            "answer": "faria",
+            "near_misses": ["farei", "fiz"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ele disse que ___ a verdade. (dizer, futuro do pretérito)",
+            "answer": "diria",
+            "near_misses": ["dirá", "disse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q06",
+            "format": "typed-blank",
+            "prompt": "Você ___ ir ao médico. (dever, conselho)",
+            "answer": "deveria",
+            "near_misses": ["deverá", "devesse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q07",
+            "format": "translation",
+            "prompt": "Translate (hypothesis): I would buy a car.",
+            "answer": "Eu compraria um carro.",
+            "alternatives": ["Compraria um carro."],
+            "near_misses": ["Eu comprei um carro.", "Eu comprarei um carro."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q08",
+            "format": "translation",
+            "prompt": "Translate (advice): You should study more.",
+            "answer": "Você deveria estudar mais.",
+            "alternatives": [
+              "Você devia estudar mais.",
+              "Deveria estudar mais."
+            ],
+            "near_misses": ["Você deverá estudar mais.", "Você estudou mais."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q09",
+            "format": "translation",
+            "prompt": "Translate (future in the past): He said he would bring the book.",
+            "answer": "Ele disse que traria o livro.",
+            "alternatives": ["Ele disse que ia trazer o livro."],
+            "near_misses": [
+              "Ele disse que trouxe o livro.",
+              "Ele disse que trazerá o livro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Eu fazeria o jantar, mas estou cansado.",
+            "answer": "Eu faria o jantar, mas estou cansado.",
+            "near_misses": [
+              "Eu fazeria o jantar, mas estou cansado.",
+              "Eu farei o jantar, mas estou cansado."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Ela disse que chegará cedo (said in the past).",
+            "answer": "Ela disse que chegaria cedo.",
+            "near_misses": [
+              "Ela disse que chegará cedo.",
+              "Ela disse que chegou cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Nós dizeríamos tudo, se soubéssemos.",
+            "answer": "Nós diríamos tudo, se soubéssemos.",
+            "near_misses": [
+              "Nós dizeríamos tudo, se soubéssemos.",
+              "Nós diremos tudo, se soubéssemos."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-012@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best sentence for polite advice:",
+            "answer": "Você deveria tentar de novo.",
+            "alternatives": [
+              "Você deveria tentar de novo.",
+              "Você deverá tentar de novo.",
+              "Você tentou de novo."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-012@1:h02",
+            "format": "typed-blank",
+            "prompt": "Se tivéssemos dinheiro, nós ___ uma casa na praia. (ter, futuro do pretérito)",
+            "answer": "teríamos",
+            "near_misses": ["teremos", "tivemos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-012@1:h03",
+            "format": "translation",
+            "prompt": "Translate (hypothesis): If I were you, I would not go.",
+            "answer": "Se eu fosse você, eu não iria.",
+            "alternatives": [
+              "Se eu fosse você, não iria.",
+              "Se eu fosse você, eu não ia."
+            ],
+            "near_misses": [
+              "Se eu fui você, eu não iria.",
+              "Se eu fosse você, eu não irei."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-013",
+      "title": "Polite requests and suggestions: gostaria, poderia, queria",
+      "explanation": "Portuguese softens requests with the futuro do pretérito and the imperfeito. Gostaria de um café is more polite than Quero um café. Poderia me ajudar? is more polite than Pode me ajudar? Queria saber o preço is the usual polite way to ask. Use gostaria de + noun or infinitive, poderia + infinitive, and você poderia or o senhor poderia for a formal request. To suggest, use que tal + infinitive or noun (Que tal sair?) and e se + imperfeito (E se a gente fosse ao cinema?). Add por favor or obrigado, and avoid the bare imperative with strangers.",
+      "examples": [
+        {
+          "pt": "Gostaria de uma mesa para dois, por favor.",
+          "en": "I would like a table for two, please."
+        },
+        {
+          "pt": "Poderia me dizer onde fica o banheiro?",
+          "en": "Could you tell me where the bathroom is?"
+        },
+        {
+          "pt": "Queria saber a que horas o museu abre.",
+          "en": "I wanted to know what time the museum opens."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-013@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-013@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the most polite request:",
+            "answer": "Poderia me ajudar, por favor?",
+            "alternatives": [
+              "Poderia me ajudar, por favor?",
+              "Me ajude agora.",
+              "Você me ajuda."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the most polite way to order:",
+            "answer": "Gostaria de um café, por favor.",
+            "alternatives": [
+              "Gostaria de um café, por favor.",
+              "Quero um café.",
+              "Dá um café."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the suggestion: ___ ir ao cinema hoje?",
+            "answer": "Que tal",
+            "alternatives": ["Que tal", "Quando", "Porque"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q04",
+            "format": "typed-blank",
+            "prompt": "___ de um copo de água, por favor. (gostar, polido)",
+            "answer": "Gostaria",
+            "near_misses": ["Gosto", "Gostei"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q05",
+            "format": "typed-blank",
+            "prompt": "Você ___ me emprestar a caneta? (poder, polido)",
+            "answer": "poderia",
+            "near_misses": ["pôde", "puder"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ saber se o quarto está disponível. (querer, imperfeito polido)",
+            "answer": "Queria",
+            "near_misses": ["Quis", "Quero"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q07",
+            "format": "translation",
+            "prompt": "Translate (polite request): Could you open the window, please?",
+            "answer": "Poderia abrir a janela, por favor?",
+            "alternatives": [
+              "Você poderia abrir a janela, por favor?",
+              "Podia abrir a janela, por favor?"
+            ],
+            "near_misses": [
+              "Abra a janela.",
+              "Você abriu a janela, por favor?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q08",
+            "format": "translation",
+            "prompt": "Translate (polite wish): I would like to speak with the manager.",
+            "answer": "Gostaria de falar com o gerente.",
+            "alternatives": [
+              "Eu gostaria de falar com o gerente.",
+              "Queria falar com o gerente."
+            ],
+            "near_misses": [
+              "Quero falar com o gerente.",
+              "Gostei de falar com o gerente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q09",
+            "format": "translation",
+            "prompt": "Translate (suggestion): How about going to the beach?",
+            "answer": "Que tal ir à praia?",
+            "alternatives": [
+              "E se a gente fosse à praia?",
+              "Que tal a gente ir à praia?"
+            ],
+            "near_misses": ["Que tal vai à praia?", "Quando ir à praia?"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q10",
+            "format": "correction",
+            "prompt": "Make it polite: Me dê o cardápio.",
+            "answer": "Poderia me dar o cardápio, por favor?",
+            "alternatives": [
+              "Você poderia me dar o cardápio, por favor?",
+              "Poderia me trazer o cardápio, por favor?"
+            ],
+            "near_misses": ["Me dê o cardápio.", "Você me deu o cardápio."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q11",
+            "format": "correction",
+            "prompt": "Make it polite: Quero uma mesa.",
+            "answer": "Gostaria de uma mesa.",
+            "alternatives": ["Eu gostaria de uma mesa.", "Queria uma mesa."],
+            "near_misses": ["Quero uma mesa.", "Eu quis uma mesa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Gostei de um café, por favor.",
+            "answer": "Gostaria de um café, por favor.",
+            "near_misses": [
+              "Gostei de um café, por favor.",
+              "Gosto de um café, por favor."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-013@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the polite way to ask a stranger for the time:",
+            "answer": "O senhor poderia me dizer as horas?",
+            "alternatives": [
+              "O senhor poderia me dizer as horas?",
+              "Diga as horas.",
+              "O senhor disse as horas?"
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-013@1:h02",
+            "format": "typed-blank",
+            "prompt": "E se a gente ___ ao parque hoje? (ir, imperfeito do subjuntivo)",
+            "answer": "fosse",
+            "near_misses": ["foi", "irá"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-013@1:h03",
+            "format": "translation",
+            "prompt": "Translate (polite request): Could I pay by card?",
+            "answer": "Poderia pagar com cartão?",
+            "alternatives": [
+              "Eu poderia pagar com cartão?",
+              "Posso pagar com cartão?",
+              "Poderia pagar no cartão?"
+            ],
+            "near_misses": [
+              "Eu paguei com cartão?",
+              "Posso pagar com cartão ontem?"
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-014",
+      "title": "The imperative: você, tu, nós and the negative",
+      "explanation": "For você, the imperative uses the present subjunctive: Fale mais devagar, Coma, Parta, Faça isso. Negative: Não fale, Não coma. For tu, the affirmative imperative is the ele form of the present (Fala, Come, Parte) and the negative is the subjunctive (Não fales). For nós, use the subjunctive (Falemos, Comamos) or, more commonly, Vamos + infinitive (Vamos falar). Irregular imperatives for você: seja (ser), vá (ir), tenha (ter), venha (vir), faça (fazer), diga (dizer), ponha (pôr), veja (ver), saiba (saber). Add por favor to soften a command.",
+      "examples": [
+        {
+          "pt": "Fale mais devagar, por favor.",
+          "en": "Please speak more slowly."
+        },
+        {
+          "pt": "Não coma isso, está estragado.",
+          "en": "Do not eat that, it has gone off."
+        },
+        {
+          "pt": "Venha cedo e traga um casaco.",
+          "en": "Come early and bring a coat."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-014@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-014@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the você imperative: ___ mais devagar, por favor. (falar)",
+            "answer": "Fale",
+            "alternatives": ["Fale", "Fala", "Falar"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the você imperative: ___ aqui, por favor. (vir)",
+            "answer": "Venha",
+            "alternatives": ["Venha", "Vem", "Vir"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the negative você imperative: Não ___ isso. (fazer)",
+            "answer": "faça",
+            "alternatives": ["faça", "faz", "fazer"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q04",
+            "format": "typed-blank",
+            "prompt": "___ a verdade, por favor. (dizer, você)",
+            "answer": "Diga",
+            "near_misses": ["Dize", "Diz"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q05",
+            "format": "typed-blank",
+            "prompt": "Não ___ tarde, por favor. (chegar, você)",
+            "answer": "chegue",
+            "near_misses": ["chega", "chegar"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ cuidado com o degrau. (ter, você)",
+            "answer": "Tenha",
+            "near_misses": ["Tem", "Ter"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q07",
+            "format": "translation",
+            "prompt": "Translate (você): Please close the door.",
+            "answer": "Feche a porta, por favor.",
+            "alternatives": [
+              "Por favor, feche a porta.",
+              "Feche a porta por favor."
+            ],
+            "near_misses": [
+              "Fecha a porta, por favor.",
+              "Fechar a porta, por favor."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q08",
+            "format": "translation",
+            "prompt": "Translate (negative você): Do not worry.",
+            "answer": "Não se preocupe.",
+            "alternatives": ["Não se preocupe com isso."],
+            "near_misses": ["Não preocupa.", "Não se preocupa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q09",
+            "format": "translation",
+            "prompt": "Translate (nós): Let us go home.",
+            "answer": "Vamos para casa.",
+            "alternatives": ["Vamos embora.", "Vamos pra casa."],
+            "near_misses": ["Vai para casa.", "Ir para casa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q10",
+            "format": "correction",
+            "prompt": "Correct the imperative (você): Fala mais alto, por favor.",
+            "answer": "Fale mais alto, por favor.",
+            "near_misses": [
+              "Fala mais alto, por favor.",
+              "Falar mais alto, por favor."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q11",
+            "format": "correction",
+            "prompt": "Correct the imperative (negative você): Não vai embora.",
+            "answer": "Não vá embora.",
+            "near_misses": ["Não vai embora.", "Não ir embora."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:q12",
+            "format": "correction",
+            "prompt": "Correct the imperative (você): Seja calmo e pôr a mesa.",
+            "answer": "Seja calmo e ponha a mesa.",
+            "near_misses": [
+              "Seja calmo e pôr a mesa.",
+              "Seja calmo e põe a mesa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-014@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the tu imperative (affirmative): ___ aqui! (vir)",
+            "answer": "Vem",
+            "alternatives": ["Vem", "Venha", "Vir"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-014@1:h02",
+            "format": "typed-blank",
+            "prompt": "Por favor, ___ o relatório até amanhã. (enviar, você)",
+            "answer": "envie",
+            "near_misses": ["envia", "enviar"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-014@1:h03",
+            "format": "translation",
+            "prompt": "Translate (negative você): Do not be late.",
+            "answer": "Não se atrase.",
+            "alternatives": ["Não chegue atrasado."],
+            "near_misses": ["Não se atrasa.", "Não atrasar."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-015",
+      "title": "Conjecture: deve ser, será que and the future of probability",
+      "explanation": "Portuguese expresses a guess in several ways. Dever + infinitive: Ele deve estar em casa (He must be at home). Deve ser means it must be: Deve ser o carteiro. For a guess about a past event, use deve ter + participle: Ele deve ter saído. Será que + indicative makes a hesitant question: Será que ele vem? The simple future can express probability in the present: Ele estará em casa agora. Use talvez or pode ser que (+ subjunctive) to show more doubt. Do not use dever alone for a past guess: deve ter is needed.",
+      "examples": [
+        {
+          "pt": "Ele deve estar no trabalho agora.",
+          "en": "He must be at work now."
+        },
+        {
+          "pt": "Será que a loja já abriu?",
+          "en": "I wonder whether the shop has opened yet."
+        },
+        {
+          "pt": "Ela deve ter perdido o ônibus.",
+          "en": "She must have missed the bus."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-015@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-015@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the guess about now: Ele ___ estar em casa agora.",
+            "answer": "deve",
+            "alternatives": ["deve", "dá", "deu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the hesitant question: ___ ele vem à festa?",
+            "answer": "Será que",
+            "alternatives": ["Será que", "Porque", "Quando que"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the guess about a past event: Ela ___ saído cedo.",
+            "answer": "deve ter",
+            "alternatives": ["deve ter", "deve estar", "deveu"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q04",
+            "format": "typed-blank",
+            "prompt": "Alguém bateu à porta. ___ ser o carteiro. (dever)",
+            "answer": "Deve",
+            "near_misses": ["Deveu", "Dever"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q05",
+            "format": "typed-blank",
+            "prompt": "Será que eles já ___ ? (chegar, perfeito)",
+            "answer": "chegaram",
+            "near_misses": ["chegar", "chegarão"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q06",
+            "format": "typed-blank",
+            "prompt": "Ele não atende. Deve ___ dormindo. (estar)",
+            "answer": "estar",
+            "near_misses": ["está", "estando"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q07",
+            "format": "translation",
+            "prompt": "Translate (guess): He must be tired.",
+            "answer": "Ele deve estar cansado.",
+            "alternatives": [
+              "Deve estar cansado.",
+              "Ele deve estar cansado agora."
+            ],
+            "near_misses": ["Ele deve ser cansado.", "Ele deve cansado."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q08",
+            "format": "translation",
+            "prompt": "Translate (wondering): I wonder if she is at home.",
+            "answer": "Será que ela está em casa?",
+            "alternatives": ["Será que ela está em casa agora?"],
+            "near_misses": [
+              "Será que ela estar em casa?",
+              "Será que ela esteve em casa?"
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q09",
+            "format": "translation",
+            "prompt": "Translate (guess about the past): They must have forgotten.",
+            "answer": "Eles devem ter esquecido.",
+            "alternatives": [
+              "Eles devem ter se esquecido.",
+              "Elas devem ter esquecido."
+            ],
+            "near_misses": [
+              "Eles devem esquecer.",
+              "Eles devem têm esquecido."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q10",
+            "format": "correction",
+            "prompt": "Correct the guess: Ela deve tem chegado.",
+            "answer": "Ela deve ter chegado.",
+            "near_misses": ["Ela deve tem chegado.", "Ela deve chegando."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Ele deve estando em casa.",
+            "answer": "Ele deve estar em casa.",
+            "near_misses": [
+              "Ele deve estando em casa.",
+              "Ele deve estado em casa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:q12",
+            "format": "correction",
+            "prompt": "Correct the guess (about the past): Ela deve sair cedo ontem.",
+            "answer": "Ela deve ter saído cedo ontem.",
+            "near_misses": [
+              "Ela deve sair cedo ontem.",
+              "Ela deve saído cedo ontem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-015@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best guess: A luz está acesa. Eles ___ em casa.",
+            "answer": "devem estar",
+            "alternatives": ["devem estar", "devem ter", "dão estar"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-015@1:h02",
+            "format": "typed-blank",
+            "prompt": "Já são dez horas. Será que ele ___ de casa? (sair, perfeito)",
+            "answer": "saiu",
+            "near_misses": ["sair", "saía"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-015@1:h03",
+            "format": "translation",
+            "prompt": "Translate (guess): It must be midnight.",
+            "answer": "Deve ser meia-noite.",
+            "alternatives": ["Deve ser meia noite.", "Já deve ser meia-noite."],
+            "near_misses": ["Deve estar meia-noite.", "Deve ter meia-noite."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

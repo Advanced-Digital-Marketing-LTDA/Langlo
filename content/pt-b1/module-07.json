@@ -1,0 +1,816 @@
+{
+  "module_id": "pt-b1-module-07",
+  "track": "Portuguese B1",
+  "title": "Nouns and description",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b1-031",
+      "title": "Gender and number of nouns: irregular plurals and gender traps",
+      "explanation": "Most nouns add -s for the plural (livro, livros). Nouns ending in -m change to -ns (homem, homens), in -r or -z add -es (mulher, mulheres; luz, luzes), in -s after a stressed vowel add -es (país, países), and in -l replace it with -is (animal, animais; papel, papéis). Nouns in -ão have three plurals: -ões (ação, ações), -ães (pão, pães) or -ãos (mão, mãos). Gender: nouns in -ção, -dade and -agem are feminine (a canção, a cidade, a viagem), while many nouns in -ma are masculine (o problema, o mapa, o dia). Some nouns change meaning: o capital (money) and a capital (city), o guia (guide person) and a guia (guidance).",
+      "examples": [
+        {
+          "pt": "As cidades têm muitos animais e muitos papéis.",
+          "en": "The cities have many animals and many papers."
+        },
+        {
+          "pt": "O problema é que o pão acabou.",
+          "en": "The problem is that the bread ran out."
+        },
+        {
+          "pt": "A viagem foi longa, mas o hotel era bom.",
+          "en": "The trip was long, but the hotel was good."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-031@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-031@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the plural of animal:",
+            "answer": "animais",
+            "alternatives": ["animais", "animales", "animals"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the plural of pão:",
+            "answer": "pães",
+            "alternatives": ["pães", "pãos", "pões"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct article: ___ problema é sério.",
+            "answer": "O",
+            "alternatives": ["O", "A", "Os"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q04",
+            "format": "typed-blank",
+            "prompt": "Plural of homem: muitos ___ .",
+            "answer": "homens",
+            "near_misses": ["homems", "homenes"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q05",
+            "format": "typed-blank",
+            "prompt": "Plural of papel: dois ___ . ",
+            "answer": "papéis",
+            "near_misses": ["papels", "papeis"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q06",
+            "format": "typed-blank",
+            "prompt": "Plural of limão: três ___ . ",
+            "answer": "limões",
+            "near_misses": ["limãos", "limães"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q07",
+            "format": "translation",
+            "prompt": "Translate (plural): The hands are clean.",
+            "answer": "As mãos estão limpas.",
+            "alternatives": ["As mãos são limpas."],
+            "near_misses": ["As mães estão limpas.", "As mãos estão limpos."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q08",
+            "format": "translation",
+            "prompt": "Translate (gender): The city is big.",
+            "answer": "A cidade é grande.",
+            "alternatives": ["A cidade é enorme."],
+            "near_misses": ["O cidade é grande.", "A cidade é grandes."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q09",
+            "format": "translation",
+            "prompt": "Translate (gender): The map is on the table.",
+            "answer": "O mapa está na mesa.",
+            "alternatives": ["O mapa fica na mesa."],
+            "near_misses": ["A mapa está na mesa.", "O mapa é na mesa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q10",
+            "format": "correction",
+            "prompt": "Correct the plural: Eu comprei dois pãos.",
+            "answer": "Eu comprei dois pães.",
+            "near_misses": ["Eu comprei dois pãos.", "Eu comprei dois pões."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q11",
+            "format": "correction",
+            "prompt": "Correct the plural: Os animals são grandes.",
+            "answer": "Os animais são grandes.",
+            "near_misses": [
+              "Os animals são grandes.",
+              "Os animales são grandes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:q12",
+            "format": "correction",
+            "prompt": "Correct the gender: A problema é difícil.",
+            "answer": "O problema é difícil.",
+            "near_misses": ["A problema é difícil.", "As problema é difícil."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-031@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the article: ___ capital do Brasil é Brasília (the city).",
+            "answer": "A",
+            "alternatives": ["A", "O", "Os"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-031@1:h02",
+            "format": "typed-blank",
+            "prompt": "Plural of cidadão: os ___ . ",
+            "answer": "cidadãos",
+            "near_misses": ["cidadões", "cidadães"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-031@1:h03",
+            "format": "translation",
+            "prompt": "Translate (plural): The countries are rich.",
+            "answer": "Os países são ricos.",
+            "near_misses": ["Os paises são ricos.", "Os país são ricos."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-032",
+      "title": "Comparatives and superlatives: mais que, tão quanto, melhor, pior",
+      "explanation": "Compare with mais + adjective + (do) que, menos + adjective + (do) que, and tão + adjective + quanto: Ela é mais alta que eu, Ele é tão rápido quanto você. For quantity use tanto + noun + quanto: Tenho tanto tempo quanto você. Four adjectives have irregular comparatives: bom gives melhor, mau gives pior, grande gives maior, pequeno gives menor. Never say mais melhor. The superlative uses o/a mais + adjective: o mais rápido, a menos cara. The absolute superlative adds -íssimo: lindíssimo, caríssimo, facílimo. After a comparison of quantity with a number, use de: mais de dez pessoas.",
+      "examples": [
+        {
+          "pt": "Este livro é mais interessante que aquele.",
+          "en": "This book is more interesting than that one."
+        },
+        {
+          "pt": "Meu irmão é tão alto quanto eu.",
+          "en": "My brother is as tall as I am."
+        },
+        {
+          "pt": "Hoje o tempo está melhor do que ontem.",
+          "en": "Today the weather is better than yesterday."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-032@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-032@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the comparative of bom:",
+            "answer": "melhor",
+            "alternatives": ["melhor", "mais bom", "mais melhor"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct word: Ela é mais alta ___ eu.",
+            "answer": "do que",
+            "alternatives": ["do que", "quanto", "que de"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the comparative of pequeno:",
+            "answer": "menor",
+            "alternatives": ["menor", "mais pequeno", "mais menor"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q04",
+            "format": "typed-blank",
+            "prompt": "Esta casa é ___ cara que aquela. (mais, comparativo)",
+            "answer": "mais",
+            "near_misses": ["maior", "muito"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q05",
+            "format": "typed-blank",
+            "prompt": "Hoje faz ___ frio quanto ontem. (igualdade)",
+            "answer": "tanto",
+            "near_misses": ["tão", "mais"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q06",
+            "format": "typed-blank",
+            "prompt": "O filme foi ___ do que o livro. (bom, comparativo)",
+            "answer": "melhor",
+            "near_misses": ["mais bom", "bem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q07",
+            "format": "translation",
+            "prompt": "Translate (comparison): She is taller than I am.",
+            "answer": "Ela é mais alta do que eu.",
+            "alternatives": ["Ela é mais alta que eu."],
+            "near_misses": [
+              "Ela é mais alto do que eu.",
+              "Ela é alta mais que eu."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q08",
+            "format": "translation",
+            "prompt": "Translate (equality): He is as strong as you.",
+            "answer": "Ele é tão forte quanto você.",
+            "alternatives": ["Ele é tão forte como você."],
+            "near_misses": [
+              "Ele é tanto forte quanto você.",
+              "Ele é tão forte como de você."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q09",
+            "format": "translation",
+            "prompt": "Translate (superlative): It is the biggest city.",
+            "answer": "É a maior cidade.",
+            "alternatives": ["É a cidade maior."],
+            "near_misses": ["É a mais grande cidade.", "É a maior cidades."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q10",
+            "format": "correction",
+            "prompt": "Correct the comparative: Esta pizza é mais boa que aquela.",
+            "answer": "Esta pizza é melhor que aquela.",
+            "alternatives": ["Esta pizza é melhor do que aquela."],
+            "near_misses": [
+              "Esta pizza é mais boa que aquela.",
+              "Esta pizza é mais melhor que aquela."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q11",
+            "format": "correction",
+            "prompt": "Correct the comparative: Ele é mais pequeno que o irmão.",
+            "answer": "Ele é menor que o irmão.",
+            "alternatives": ["Ele é menor do que o irmão."],
+            "near_misses": [
+              "Ele é mais pequeno que o irmão.",
+              "Ele é mais menor que o irmão."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:q12",
+            "format": "correction",
+            "prompt": "Correct the comparative: Isto é mais melhor.",
+            "answer": "Isto é melhor.",
+            "near_misses": ["Isto é mais melhor.", "Isto é mais bom."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-032@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the superlative: Esta é a ___ casa da rua. (grande)",
+            "answer": "maior",
+            "alternatives": ["maior", "mais grande", "grandíssima"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-032@1:h02",
+            "format": "typed-blank",
+            "prompt": "Esta sopa está ___ . (muito gostosa, absolute -íssima)",
+            "answer": "gostosíssima",
+            "near_misses": ["gostosissima", "gostosíssimo"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-032@1:h03",
+            "format": "translation",
+            "prompt": "Translate (comparison): This is worse than that.",
+            "answer": "Isto é pior do que aquilo.",
+            "alternatives": ["Isto é pior que aquilo."],
+            "near_misses": [
+              "Isto é mais pior do que aquilo.",
+              "Isto é pior de aquilo."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-033",
+      "title": "Possessives and demonstratives: meu, seu, dele/dela, este, esse, aquele",
+      "explanation": "Possessives agree with the thing owned: meu, minha, meus, minhas; nosso, nossa; seu, sua. Seu and sua can mean your, his, her or their, so in speech people use dele, dela, deles, delas for the third person: o carro dele, a casa dela. Brazilian Portuguese often uses an article before possessives in Brazil: o meu livro or just meu livro. Demonstratives show distance: este/esta/isto (near me), esse/essa/isso (near you or already mentioned), aquele/aquela/aquilo (far from both). In speech este is rare, and esse is common for both near and mentioned things. Isto, isso and aquilo are neutral and do not change: O que é isso?",
+      "examples": [
+        {
+          "pt": "Meu carro é novo, mas o carro dela é velho.",
+          "en": "My car is new, but her car is old."
+        },
+        {
+          "pt": "Esse livro é seu?",
+          "en": "Is that book yours?"
+        },
+        {
+          "pt": "Aquela casa lá longe é nossa.",
+          "en": "That house over there is ours."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-033@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-033@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the possessive: Esta é ___ casa. (my)",
+            "answer": "minha",
+            "alternatives": ["minha", "meu", "meus"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the clear form: A casa ___ é grande. (her)",
+            "answer": "dela",
+            "alternatives": ["dela", "sua dela", "dele"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the demonstrative (far from both): ___ prédio é muito alto.",
+            "answer": "Aquele",
+            "alternatives": ["Aquele", "Este", "Esse"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q04",
+            "format": "typed-blank",
+            "prompt": "Estes são ___ livros. (our)",
+            "answer": "nossos",
+            "near_misses": ["nosso", "nossas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q05",
+            "format": "typed-blank",
+            "prompt": "O que é ___ ? (that, neutral, near you)",
+            "answer": "isso",
+            "near_misses": ["isto", "aquilo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q06",
+            "format": "typed-blank",
+            "prompt": "O carro ___ é azul. (his, clear form)",
+            "answer": "dele",
+            "near_misses": ["dela", "deles"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q07",
+            "format": "translation",
+            "prompt": "Translate (possessive): This is my brother.",
+            "answer": "Este é meu irmão.",
+            "alternatives": ["Este é o meu irmão.", "Esse é meu irmão."],
+            "near_misses": ["Este é minha irmão.", "Este é meus irmão."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q08",
+            "format": "translation",
+            "prompt": "Translate (clear third person): Her house is big.",
+            "answer": "A casa dela é grande.",
+            "alternatives": ["Sua casa é grande.", "A casa dela é enorme."],
+            "near_misses": ["A casa seu é grande.", "A casa de ela é grande."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q09",
+            "format": "translation",
+            "prompt": "Translate (demonstrative): What is that over there?",
+            "answer": "O que é aquilo?",
+            "alternatives": ["O que é aquilo ali?"],
+            "near_misses": ["O que é aquele?", "O que é esse?"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q10",
+            "format": "correction",
+            "prompt": "Correct the possessive: Esta é meu casa.",
+            "answer": "Esta é minha casa.",
+            "near_misses": ["Esta é meu casa.", "Esta é meus casa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q11",
+            "format": "correction",
+            "prompt": "Correct the neutral demonstrative: O que é aquele?",
+            "answer": "O que é aquilo?",
+            "near_misses": ["O que é aquele?", "O que é aquela?"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:q12",
+            "format": "correction",
+            "prompt": "Correct the clear form (his): O carro seu é novo, de José.",
+            "answer": "O carro dele é novo.",
+            "alternatives": ["O carro do José é novo."],
+            "near_misses": [
+              "O carro seu é novo, de José.",
+              "O carro dela é novo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-033@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the demonstrative (near me): ___ é o meu telefone.",
+            "answer": "Este",
+            "alternatives": ["Este", "Aquele", "Aquilo"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-033@1:h02",
+            "format": "typed-blank",
+            "prompt": "Nós amamos ___ cidade. (nossa)",
+            "answer": "nossa",
+            "near_misses": ["nosso", "nossas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-033@1:h03",
+            "format": "translation",
+            "prompt": "Translate (demonstrative): These shoes are expensive.",
+            "answer": "Estes sapatos são caros.",
+            "alternatives": [
+              "Esses sapatos são caros.",
+              "Estes sapatos são muito caros."
+            ],
+            "near_misses": [
+              "Estes sapatos são caras.",
+              "Esses sapato são caros."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-034",
+      "title": "Indefinite and negative words: algum, nenhum, alguém, ninguém, nada",
+      "explanation": "Algum and nenhum agree with the noun: algum livro, alguma casa, nenhum problema, nenhuma ideia. Alguém (someone) and ninguém (no one), algo (something) and nada (nothing) are invariable. Portuguese uses double negation: after the verb, a negative word needs não before the verb. Não vi ninguém, Não tenho nada, Não tem nenhum problema. If the negative word comes first, não is dropped: Ninguém veio, Nada aconteceu. Nunca (never) and nem (not even) work the same way: Não saí nunca, Nunca saí. Nada and ninguém do not change for gender or number: Não conheço ninguém.",
+      "examples": [
+        {
+          "pt": "Não vi ninguém na rua.",
+          "en": "I did not see anyone on the street."
+        },
+        {
+          "pt": "Ninguém sabe nada sobre isso.",
+          "en": "Nobody knows anything about this."
+        },
+        {
+          "pt": "Você tem algum problema?",
+          "en": "Do you have any problem?"
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-034@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-034@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the word: Não vi ___ ontem. (no one)",
+            "answer": "ninguém",
+            "alternatives": ["ninguém", "alguém", "nenhum"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the word: Eu não tenho ___ . (nothing)",
+            "answer": "nada",
+            "alternatives": ["nada", "algo", "alguma"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the word: Há ___ aqui? (someone)",
+            "answer": "alguém",
+            "alternatives": ["alguém", "ninguém", "nenhum"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q04",
+            "format": "typed-blank",
+            "prompt": "Não tenho ___ problema. (no, masculine)",
+            "answer": "nenhum",
+            "near_misses": ["nenhuma", "algum"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela não quer ___ ideia. (no, feminine)",
+            "answer": "nenhuma",
+            "near_misses": ["nenhum", "alguma"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q06",
+            "format": "typed-blank",
+            "prompt": "___ veio à festa. (no one, first in the sentence)",
+            "answer": "Ninguém",
+            "near_misses": ["Alguém", "Nenhum"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q07",
+            "format": "translation",
+            "prompt": "Translate (double negation): I do not know anyone.",
+            "answer": "Não conheço ninguém.",
+            "alternatives": ["Eu não conheço ninguém."],
+            "near_misses": ["Conheço ninguém.", "Não conheço alguém."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q08",
+            "format": "translation",
+            "prompt": "Translate (negation first): Nothing happened.",
+            "answer": "Nada aconteceu.",
+            "alternatives": ["Nada ocorreu."],
+            "near_misses": ["Não nada aconteceu.", "Algo aconteceu."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q09",
+            "format": "translation",
+            "prompt": "Translate (double negation): I do not have any questions.",
+            "answer": "Não tenho nenhuma pergunta.",
+            "alternatives": [
+              "Eu não tenho nenhuma pergunta.",
+              "Não tenho pergunta nenhuma."
+            ],
+            "near_misses": [
+              "Tenho nenhuma pergunta.",
+              "Não tenho alguma pergunta."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q10",
+            "format": "correction",
+            "prompt": "Correct the negation: Vi ninguém na rua.",
+            "answer": "Não vi ninguém na rua.",
+            "near_misses": ["Vi ninguém na rua.", "Não vi alguém na rua."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q11",
+            "format": "correction",
+            "prompt": "Correct the agreement: Eu não tenho nenhum ideia.",
+            "answer": "Eu não tenho nenhuma ideia.",
+            "near_misses": [
+              "Eu não tenho nenhum ideia.",
+              "Eu não tenho alguma ideia."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:q12",
+            "format": "correction",
+            "prompt": "Correct the negation: Ninguém não veio.",
+            "answer": "Ninguém veio.",
+            "near_misses": ["Ninguém não veio.", "Alguém não veio."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-034@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the word: Você quer ___ para beber? (something)",
+            "answer": "algo",
+            "alternatives": ["algo", "nada", "ninguém"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-034@1:h02",
+            "format": "typed-blank",
+            "prompt": "Tem ___ cadeiras vazias aqui. (some, feminine plural)",
+            "answer": "algumas",
+            "near_misses": ["algum", "nenhumas"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-034@1:h03",
+            "format": "translation",
+            "prompt": "Translate (affirmative): Someone called you.",
+            "answer": "Alguém ligou para você.",
+            "alternatives": ["Alguém te ligou.", "Alguém telefonou para você."],
+            "near_misses": [
+              "Ninguém ligou para você.",
+              "Alguém não ligou para você."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-035",
+      "title": "Quantifiers and adverbs in -mente: muito, bastante, pouco, tanto",
+      "explanation": "Muito, pouco, bastante, tanto and demais are quantifiers. Before an adjective or adverb they do not change: muito bonita, pouco claro. Before a noun they agree with it: muitos amigos, poucas pessoas, bastante tempo (bastantes in formal writing), tanta água. Demais comes after the word: bonito demais. Bastante means enough and also quite. Adverbs in -mente are made from the feminine singular adjective: rápida gives rapidamente, clara gives claramente, feliz gives felizmente. Accents on the adjective are lost: fácil gives facilmente. When two such adverbs join, only the last takes -mente: lenta e cuidadosamente.",
+      "examples": [
+        {
+          "pt": "Tenho muitos amigos e pouco tempo.",
+          "en": "I have many friends and little time."
+        },
+        {
+          "pt": "Ela fala bastante bem português.",
+          "en": "She speaks Portuguese quite well."
+        },
+        {
+          "pt": "Felizmente, ele chegou rapidamente.",
+          "en": "Fortunately, he arrived quickly."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-035@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-035@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the quantifier: Tenho ___ amigos. (many)",
+            "answer": "muitos",
+            "alternatives": ["muitos", "muito", "muita"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the adverb of fácil:",
+            "answer": "facilmente",
+            "alternatives": ["facilmente", "fácilmente", "facilmento"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the quantifier: Ela bebe ___ água. (a lot of)",
+            "answer": "muita",
+            "alternatives": ["muita", "muito", "muitas"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q04",
+            "format": "typed-blank",
+            "prompt": "Eles têm ___ tempo. (little)",
+            "answer": "pouco",
+            "near_misses": ["poucos", "pouca"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela dirige ___ . (rápido, advérbio)",
+            "answer": "rapidamente",
+            "near_misses": ["rápidamente", "rapidamento"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q06",
+            "format": "typed-blank",
+            "prompt": "Esta pizza está boa ___ . (too much)",
+            "answer": "demais",
+            "near_misses": ["demasiado", "tanto"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q07",
+            "format": "translation",
+            "prompt": "Translate (quantifier): There are many people here.",
+            "answer": "Tem muita gente aqui.",
+            "alternatives": [
+              "Há muita gente aqui.",
+              "Tem muitas pessoas aqui."
+            ],
+            "near_misses": ["Tem muito gente aqui.", "Têm muitas gente aqui."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q08",
+            "format": "translation",
+            "prompt": "Translate (adverb): He speaks clearly.",
+            "answer": "Ele fala claramente.",
+            "alternatives": ["Ele fala com clareza."],
+            "near_misses": ["Ele fala clara.", "Ele fala claro mente."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q09",
+            "format": "translation",
+            "prompt": "Translate (quantifier): She has few friends.",
+            "answer": "Ela tem poucos amigos.",
+            "alternatives": ["Ela tem poucas amigas."],
+            "near_misses": ["Ela tem pouco amigos.", "Ela tem poucas amigos."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q10",
+            "format": "correction",
+            "prompt": "Correct the agreement: Eu tenho muito amigos.",
+            "answer": "Eu tenho muitos amigos.",
+            "near_misses": ["Eu tenho muito amigos.", "Eu tenho muita amigos."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q11",
+            "format": "correction",
+            "prompt": "Correct the adverb: Ele chegou felizmento.",
+            "answer": "Ele chegou felizmente.",
+            "near_misses": [
+              "Ele chegou felizmento.",
+              "Ele chegou felizamente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Ela está muitos cansada.",
+            "answer": "Ela está muito cansada.",
+            "near_misses": [
+              "Ela está muitos cansada.",
+              "Ela está muita cansada."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-035@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct adverb: Ela trabalha ___ . (cuidadosa)",
+            "answer": "cuidadosamente",
+            "alternatives": ["cuidadosamente", "cuidadosa", "cuidadosomente"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-035@1:h02",
+            "format": "typed-blank",
+            "prompt": "Tenho ___ coisas para fazer. (quantas)",
+            "answer": "tantas",
+            "near_misses": ["tanto", "tanta"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-035@1:h03",
+            "format": "translation",
+            "prompt": "Translate (adverb): Unfortunately, the shop is closed.",
+            "answer": "Infelizmente, a loja está fechada.",
+            "alternatives": [
+              "Infelizmente a loja está fechada.",
+              "Infelizmente, a loja está fechada hoje."
+            ],
+            "near_misses": [
+              "Infelizmente, a loja é fechada.",
+              "Infeliz, a loja está fechada."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

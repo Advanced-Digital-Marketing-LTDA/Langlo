@@ -1,0 +1,836 @@
+{
+  "module_id": "pt-b1-module-06",
+  "track": "Portuguese B1",
+  "title": "Core contrasts",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b1-026",
+      "title": "Ser, estar and ficar: identity, state, location and change",
+      "explanation": "Use ser for identity, origin, profession, time and lasting traits: Ela é médica, Somos do Brasil, São duas horas. Use estar for temporary states, feelings and location of people and things that can move: Estou cansado, O livro está na mesa. Use ficar for the location of fixed places (A escola fica na esquina) and for becoming or staying: Ele ficou triste, Fique aqui. Ser also gives the place of an event: A festa é em casa. Some adjectives change meaning: ser chato (to be boring) and estar chato (to be acting annoying).",
+      "examples": [
+        {
+          "pt": "Meu irmão é professor e está cansado hoje.",
+          "en": "My brother is a teacher and is tired today."
+        },
+        {
+          "pt": "O banco fica perto da praça.",
+          "en": "The bank is near the square."
+        },
+        {
+          "pt": "Ela ficou feliz com a notícia.",
+          "en": "She was happy with the news."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-026@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-026@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb: Ela ___ brasileira.",
+            "answer": "é",
+            "alternatives": ["é", "está", "fica"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb: O café ___ na esquina.",
+            "answer": "fica",
+            "alternatives": ["fica", "é", "está sendo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb: Hoje eu ___ muito cansado.",
+            "answer": "estou",
+            "alternatives": ["estou", "sou", "fico"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q04",
+            "format": "typed-blank",
+            "prompt": "Meu pai ___ engenheiro. (ser)",
+            "answer": "é",
+            "near_misses": ["está", "fica"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q05",
+            "format": "typed-blank",
+            "prompt": "Nós ___ em casa agora. (estar)",
+            "answer": "estamos",
+            "near_misses": ["somos", "ficamos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q06",
+            "format": "typed-blank",
+            "prompt": "O hotel ___ longe do centro. (ficar)",
+            "answer": "fica",
+            "near_misses": ["é", "está"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q07",
+            "format": "translation",
+            "prompt": "Translate (identity): He is a doctor.",
+            "answer": "Ele é médico.",
+            "alternatives": ["Ele é doutor.", "Ele é um médico."],
+            "near_misses": ["Ele está médico.", "Ele fica médico."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q08",
+            "format": "translation",
+            "prompt": "Translate (temporary state): I am hungry.",
+            "answer": "Eu estou com fome.",
+            "alternatives": ["Estou com fome.", "Eu tenho fome."],
+            "near_misses": ["Eu sou com fome.", "Eu fico com fome."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q09",
+            "format": "translation",
+            "prompt": "Translate (fixed location): The school is on the corner.",
+            "answer": "A escola fica na esquina.",
+            "near_misses": [
+              "A escola está na esquina.",
+              "A escola é na esquina."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Ela está médica.",
+            "answer": "Ela é médica.",
+            "near_misses": ["Ela está médica.", "Ela fica médica."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: A festa está em casa. (event place)",
+            "answer": "A festa é em casa.",
+            "near_misses": ["A festa está em casa.", "A festa fica em casa."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Eu sou triste hoje.",
+            "answer": "Eu estou triste hoje.",
+            "near_misses": ["Eu sou triste hoje.", "Eu fico triste hoje."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-026@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb (becoming): Ele ___ nervoso antes da prova.",
+            "answer": "ficou",
+            "alternatives": ["ficou", "foi", "esteve"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-026@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ela ___ de bom humor hoje. (estar)",
+            "answer": "está",
+            "near_misses": ["é", "fica"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-026@1:h03",
+            "format": "translation",
+            "prompt": "Translate (change): She got angry.",
+            "answer": "Ela ficou com raiva.",
+            "alternatives": ["Ela ficou brava.", "Ela ficou irritada."],
+            "near_misses": ["Ela foi com raiva.", "Ela esteve com raiva."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-027",
+      "title": "Ter, haver and tem que: possession, existence and obligation",
+      "explanation": "Ter shows possession and, in speech, existence: Eu tenho um carro, Tem um café aqui. Haver is the formal verb of existence and uses the single form há: Há um café aqui. In speech, tem replaces há for existence, and the plural does not change: Tem dois bancos aqui. Use ter que (or ter de) + infinitive for an obligation: Tenho que sair, Temos de pagar. The verb haver is also used in the compound tenses: tinha saído, não tinha visto. In the past, use havia or tinha: Havia muita gente or Tinha muita gente. Do not use the plural of há: Há dois livros, not Hão dois livros.",
+      "examples": [
+        {
+          "pt": "Eu tenho dois irmãos e uma irmã.",
+          "en": "I have two brothers and a sister."
+        },
+        {
+          "pt": "Tem uma farmácia perto daqui.",
+          "en": "There is a pharmacy near here."
+        },
+        {
+          "pt": "Tenho que acordar cedo amanhã.",
+          "en": "I have to wake up early tomorrow."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-027@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-027@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb (possession): Ela ___ um gato.",
+            "answer": "tem",
+            "alternatives": ["tem", "há", "é"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb (existence, formal): ___ muitos livros na biblioteca.",
+            "answer": "Há",
+            "alternatives": ["Há", "Têm", "Hão"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb (obligation): Eu ___ estudar.",
+            "answer": "tenho que",
+            "alternatives": ["tenho que", "tenho", "há de"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q04",
+            "format": "typed-blank",
+            "prompt": "Na rua ___ muitos carros. (existência, fala)",
+            "answer": "tem",
+            "near_misses": ["têm", "tenho"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ontem ___ muita gente na festa. (existência, passado)",
+            "answer": "havia",
+            "near_misses": ["haviam", "houveram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nós ___ chegar cedo. (obrigação)",
+            "answer": "temos que",
+            "near_misses": ["temos", "havemos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q07",
+            "format": "translation",
+            "prompt": "Translate (existence): There is a store here.",
+            "answer": "Tem uma loja aqui.",
+            "alternatives": ["Há uma loja aqui.", "Existe uma loja aqui."],
+            "near_misses": ["Têm uma loja aqui.", "Há uma loja aqui está."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q08",
+            "format": "translation",
+            "prompt": "Translate (obligation): She has to work tomorrow.",
+            "answer": "Ela tem que trabalhar amanhã.",
+            "alternatives": [
+              "Ela tem de trabalhar amanhã.",
+              "Ela precisa trabalhar amanhã."
+            ],
+            "near_misses": [
+              "Ela há que trabalhar amanhã.",
+              "Ela tem trabalhar amanhã."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q09",
+            "format": "translation",
+            "prompt": "Translate (past existence): There were many people.",
+            "answer": "Tinha muita gente.",
+            "alternatives": ["Havia muita gente.", "Tinha muitas pessoas."],
+            "near_misses": ["Tinham muita gente.", "Havia muitas gente."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Hão dois livros na mesa.",
+            "answer": "Há dois livros na mesa.",
+            "alternatives": ["Tem dois livros na mesa."],
+            "near_misses": [
+              "Hão dois livros na mesa.",
+              "Haviam dois livros na mesa."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Têm muitas pessoas aqui.",
+            "answer": "Tem muitas pessoas aqui.",
+            "alternatives": ["Há muitas pessoas aqui."],
+            "near_misses": [
+              "Têm muitas pessoas aqui.",
+              "Temos muitas pessoas aqui."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:q12",
+            "format": "correction",
+            "prompt": "Correct the obligation: Eu tenho estudar hoje.",
+            "answer": "Eu tenho que estudar hoje.",
+            "alternatives": ["Eu tenho de estudar hoje."],
+            "near_misses": [
+              "Eu tenho estudar hoje.",
+              "Eu tenho a estudar hoje."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-027@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence (possession):",
+            "answer": "Ele tem dois filhos pequenos.",
+            "alternatives": [
+              "Ele tem dois filhos pequenos.",
+              "Ele há dois filhos pequenos.",
+              "Ele têm dois filhos pequenos."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-027@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ontem à noite ___ um show no bairro. (haver, passado)",
+            "answer": "houve",
+            "near_misses": ["houveram", "há"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-027@1:h03",
+            "format": "translation",
+            "prompt": "Translate (obligation): We have to pay today.",
+            "answer": "Nós temos que pagar hoje.",
+            "alternatives": [
+              "Temos que pagar hoje.",
+              "Nós temos de pagar hoje."
+            ],
+            "near_misses": ["Nós temos pagar hoje.", "Nós há que pagar hoje."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-028",
+      "title": "Por or para: purpose, cause, route, time and recipient",
+      "explanation": "Para shows purpose, destination, recipient and deadline: Estudo para passar, Vou para o Rio, Este presente é para você, Preciso disso para amanhã. Por shows cause, route, exchange and duration: Obrigado por tudo, Passei pela praça, Paguei dez reais pelo livro, Fiquei por dois dias. Por also marks the agent in the passive: escrito por ela. Para means in order to, and por means because of. Common fixed phrases: por favor, por isso, por exemplo, por causa de, para sempre, para onde. Compare: Estudo por ela (for her sake) and Estudo para ela (for her to receive).",
+      "examples": [
+        {
+          "pt": "Este presente é para você.",
+          "en": "This gift is for you."
+        },
+        {
+          "pt": "Obrigado pela ajuda.",
+          "en": "Thanks for the help."
+        },
+        {
+          "pt": "Passamos pelo centro da cidade.",
+          "en": "We went through the city centre."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-028@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-028@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the word (purpose): Estudo ___ passar na prova.",
+            "answer": "para",
+            "alternatives": ["para", "por", "pelo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the word (cause): Ele chorou ___ causa da notícia.",
+            "answer": "por",
+            "alternatives": ["por", "para", "pela"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the word (recipient): Comprei flores ___ minha mãe.",
+            "answer": "para",
+            "alternatives": ["para", "por", "pela"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q04",
+            "format": "typed-blank",
+            "prompt": "Vamos ___ a praia amanhã. (destination)",
+            "answer": "para",
+            "near_misses": ["por", "pela"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q05",
+            "format": "typed-blank",
+            "prompt": "Obrigado ___ tudo. (gratitude)",
+            "answer": "por",
+            "near_misses": ["para", "pelo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q06",
+            "format": "typed-blank",
+            "prompt": "Preciso do relatório ___ sexta. (deadline)",
+            "answer": "para",
+            "near_misses": ["por", "pela"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q07",
+            "format": "translation",
+            "prompt": "Translate (route): We went through the park.",
+            "answer": "Passamos pelo parque.",
+            "alternatives": [
+              "Nós passamos pelo parque.",
+              "Atravessamos o parque."
+            ],
+            "near_misses": ["Passamos para o parque.", "Passamos no parque."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q08",
+            "format": "translation",
+            "prompt": "Translate (purpose): I work to live.",
+            "answer": "Eu trabalho para viver.",
+            "alternatives": ["Trabalho para viver."],
+            "near_misses": [
+              "Eu trabalho por viver.",
+              "Eu trabalho para vivendo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q09",
+            "format": "translation",
+            "prompt": "Translate (exchange): I paid ten reais for the book.",
+            "answer": "Paguei dez reais pelo livro.",
+            "alternatives": [
+              "Eu paguei dez reais pelo livro.",
+              "Paguei dez reais por esse livro."
+            ],
+            "near_misses": [
+              "Paguei dez reais para o livro.",
+              "Paguei dez reais no livro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q10",
+            "format": "correction",
+            "prompt": "Correct the word: Obrigado para a ajuda.",
+            "answer": "Obrigado pela ajuda.",
+            "alternatives": ["Obrigado por ajuda."],
+            "near_misses": ["Obrigado para a ajuda.", "Obrigado na ajuda."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q11",
+            "format": "correction",
+            "prompt": "Correct the word: Este presente é por você.",
+            "answer": "Este presente é para você.",
+            "alternatives": ["Este presente é pra você."],
+            "near_misses": [
+              "Este presente é por você.",
+              "Este presente é pelo você."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:q12",
+            "format": "correction",
+            "prompt": "Correct the word: Fiquei para dois dias.",
+            "answer": "Fiquei por dois dias.",
+            "alternatives": ["Fiquei dois dias."],
+            "near_misses": ["Fiquei para dois dias.", "Fiquei dois dias por."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-028@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the words (reason): Cheguei atrasado ___ trânsito.",
+            "answer": "por causa do",
+            "alternatives": ["por causa do", "para o", "pelo de"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-028@1:h02",
+            "format": "typed-blank",
+            "prompt": "Paguei o jantar ___ meu amigo. (instead of him, por + o)",
+            "answer": "pelo",
+            "near_misses": ["pela", "para o"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-028@1:h03",
+            "format": "translation",
+            "prompt": "Translate (destination): She is leaving for São Paulo.",
+            "answer": "Ela está indo para São Paulo.",
+            "alternatives": [
+              "Ela vai para São Paulo.",
+              "Ela está partindo para São Paulo."
+            ],
+            "near_misses": [
+              "Ela está indo por São Paulo.",
+              "Ela está indo em São Paulo."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-029",
+      "title": "Contractions: a, de, em, por with articles, and basic crase",
+      "explanation": "Prepositions join with the definite articles. De + o = do, de + a = da; em + o = no, em + a = na; por + o = pelo, por + a = pela; a + o = ao, a + a = à (the crase), a + os = aos, a + as = às. Examples: Vou ao mercado, Vou à praia, Saio do trabalho, Moro na cidade, Passo pelo parque. A + a becomes à only before feminine words with an article. The crase also marks time: às duas horas. Do not use the crase before masculine nouns, before verbs, or before words with no article: Vou a pé, Vou a Roma.",
+      "examples": [
+        {
+          "pt": "Vou ao mercado e depois à padaria.",
+          "en": "I am going to the market and then to the bakery."
+        },
+        {
+          "pt": "Saí do trabalho às seis.",
+          "en": "I left work at six."
+        },
+        {
+          "pt": "Moro na cidade, mas trabalho no campo.",
+          "en": "I live in the city, but I work in the countryside."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-029@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-029@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the contraction: Eu moro ___ cidade. (em + a)",
+            "answer": "na",
+            "alternatives": ["na", "no", "da"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the contraction: Ela vai ___ praia. (a + a)",
+            "answer": "à",
+            "alternatives": ["à", "a", "ao"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the contraction: Saímos ___ escritório. (de + o)",
+            "answer": "do",
+            "alternatives": ["do", "da", "no"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q04",
+            "format": "typed-blank",
+            "prompt": "Ele trabalha ___ banco. (em + o)",
+            "answer": "no",
+            "near_misses": ["na", "do"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eu venho ___ escola. (de + a)",
+            "answer": "da",
+            "near_misses": ["do", "na"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nós passamos ___ ponte. (por + a)",
+            "answer": "pela",
+            "near_misses": ["pelo", "na"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q07",
+            "format": "translation",
+            "prompt": "Translate (contraction): I am going to the market.",
+            "answer": "Vou ao mercado.",
+            "alternatives": ["Eu vou ao mercado.", "Vou para o mercado."],
+            "near_misses": ["Vou a o mercado.", "Vou no mercado."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q08",
+            "format": "translation",
+            "prompt": "Translate (crase): We arrive at the beach at two.",
+            "answer": "Chegamos à praia às duas.",
+            "alternatives": [
+              "Nós chegamos à praia às duas.",
+              "Chegamos à praia às duas horas."
+            ],
+            "near_misses": [
+              "Chegamos a praia a duas.",
+              "Chegamos na praia às duas."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q09",
+            "format": "translation",
+            "prompt": "Translate (contraction): She comes from the office.",
+            "answer": "Ela vem do escritório.",
+            "near_misses": [
+              "Ela vem de o escritório.",
+              "Ela vem no escritório."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q10",
+            "format": "correction",
+            "prompt": "Correct the contraction: Eu moro em a cidade.",
+            "answer": "Eu moro na cidade.",
+            "near_misses": ["Eu moro em a cidade.", "Eu moro da cidade."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q11",
+            "format": "correction",
+            "prompt": "Correct the crase: Vou a praia amanhã.",
+            "answer": "Vou à praia amanhã.",
+            "near_misses": ["Vou a praia amanhã.", "Vou ao praia amanhã."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:q12",
+            "format": "correction",
+            "prompt": "Correct the contraction: Ele saiu de o trabalho cedo.",
+            "answer": "Ele saiu do trabalho cedo.",
+            "near_misses": [
+              "Ele saiu de o trabalho cedo.",
+              "Ele saiu no trabalho cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-029@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence (no crase before a verb):",
+            "answer": "Começou a chover.",
+            "alternatives": [
+              "Começou a chover.",
+              "Começou à chover.",
+              "Começou ao chover."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-029@1:h02",
+            "format": "typed-blank",
+            "prompt": "A reunião começa ___ três horas. (a + as)",
+            "answer": "às",
+            "near_misses": ["as", "à"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-029@1:h03",
+            "format": "translation",
+            "prompt": "Translate (contraction): We live in the country.",
+            "answer": "Nós moramos no campo.",
+            "alternatives": ["Moramos no campo.", "A gente mora no campo."],
+            "near_misses": ["Nós moramos em o campo.", "Nós moramos do campo."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-030",
+      "title": "Frequent verb + preposition patterns",
+      "explanation": "Portuguese verbs often take a fixed preposition before the noun or infinitive. Learn them in pairs: gostar de, precisar de, depender de, lembrar-se de (or lembrar de in speech), esquecer-se de, sonhar com, casar com, ajudar a, aprender a, pensar em, confiar em, acreditar em, insistir em, ir a (or para), chegar a (or em), participar de, responder a. Examples: Gosto de música, Preciso de ajuda, Sonho com o mar, Penso em você. The preposition stays before pronouns and infinitives: Gosto de nadar, Preciso de ajudá-lo. Do not drop it: Gosto de música, not Gosto música.",
+      "examples": [
+        {
+          "pt": "Eu gosto de café e preciso de silêncio.",
+          "en": "I like coffee and I need silence."
+        },
+        {
+          "pt": "Ela sonha com uma casa na praia.",
+          "en": "She dreams of a house on the beach."
+        },
+        {
+          "pt": "Penso em você todos os dias.",
+          "en": "I think of you every day."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-030@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-030@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the preposition: Eu gosto ___ música.",
+            "answer": "de",
+            "alternatives": ["de", "em", "com"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the preposition: Ele sonha ___ viajar.",
+            "answer": "com",
+            "alternatives": ["com", "de", "a"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the preposition: Nós pensamos ___ vocês.",
+            "answer": "em",
+            "alternatives": ["em", "de", "a"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q04",
+            "format": "typed-blank",
+            "prompt": "Eu preciso ___ ajuda. (precisar)",
+            "answer": "de",
+            "near_misses": ["a", "em"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela depende ___ a família. (depender)",
+            "answer": "de",
+            "near_misses": ["em", "com"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q06",
+            "format": "typed-blank",
+            "prompt": "Eles insistem ___ pagar. (insistir)",
+            "answer": "em",
+            "near_misses": ["de", "a"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q07",
+            "format": "translation",
+            "prompt": "Translate (verb + preposition): I need a pen.",
+            "answer": "Eu preciso de uma caneta.",
+            "alternatives": ["Preciso de uma caneta.", "Eu preciso de caneta."],
+            "near_misses": [
+              "Eu preciso uma caneta.",
+              "Eu preciso a uma caneta."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q08",
+            "format": "translation",
+            "prompt": "Translate (verb + preposition): She trusts me.",
+            "answer": "Ela confia em mim.",
+            "alternatives": ["Ela acredita em mim."],
+            "near_misses": ["Ela confia de mim.", "Ela confia mim."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q09",
+            "format": "translation",
+            "prompt": "Translate (verb + preposition): They are learning to swim.",
+            "answer": "Eles estão aprendendo a nadar.",
+            "alternatives": ["Eles aprendem a nadar."],
+            "near_misses": [
+              "Eles estão aprendendo de nadar.",
+              "Eles estão aprendendo nadar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q10",
+            "format": "correction",
+            "prompt": "Correct the preposition: Eu gosto música.",
+            "answer": "Eu gosto de música.",
+            "near_misses": ["Eu gosto música.", "Eu gosto com música."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q11",
+            "format": "correction",
+            "prompt": "Correct the preposition: Ela pensa de você.",
+            "answer": "Ela pensa em você.",
+            "near_misses": ["Ela pensa de você.", "Ela pensa a você."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:q12",
+            "format": "correction",
+            "prompt": "Correct the preposition: Ele depende em você.",
+            "answer": "Ele depende de você.",
+            "near_misses": ["Ele depende em você.", "Ele depende a você."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-030@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence ('I forgot the key'):",
+            "answer": "Eu me esqueci da chave.",
+            "alternatives": [
+              "Eu me esqueci da chave.",
+              "Eu me esqueci na chave.",
+              "Eu me esqueci com chave."
+            ],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-030@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ele ___ minha pergunta. (responder, passado)",
+            "answer": "respondeu à",
+            "near_misses": ["respondeu na", "respondeu de"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-030@1:h03",
+            "format": "translation",
+            "prompt": "Translate (verb + preposition): I am thinking about you.",
+            "answer": "Estou pensando em você.",
+            "alternatives": ["Eu estou pensando em você."],
+            "near_misses": ["Estou pensando de você.", "Estou pensando você."],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

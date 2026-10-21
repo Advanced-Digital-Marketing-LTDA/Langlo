@@ -1,0 +1,845 @@
+{
+  "module_id": "pt-b1-module-01",
+  "track": "Portuguese B1",
+  "title": "Past narration",
+  "instruction_language": "en",
+  "review_status": "approved",
+  "matching": "Typed answers ignore letter case, extra spaces, apostrophe style and final . ! or ? punctuation. Accents and every other character count. Multiple-choice answers must match exactly.",
+  "lessons": [
+    {
+      "skill_id": "pt-b1-001",
+      "title": "Irregular pretérito perfeito: ser/ir, fazer, dar, ter, vir, pôr, dizer, trazer, poder, saber, querer, ver",
+      "explanation": "Use the pretérito perfeito for a completed event. Many frequent verbs change their stem and have no regular endings in the eu and você/ele forms. Ser and ir share one form: fui, foi, fomos, foram. Learn the stems: fiz/fez (fazer), dei/deu (dar), tive/teve (ter), vim/veio (vir), pus/pôs (pôr), disse (dizer), trouxe (trazer), pude/pôde (poder), soube (saber), quis (querer), vi/viu (ver). Poder and pôr take a circumflex in the ele form (pôde, pôs). Do not add regular endings to the old stem: say fiz, not fazi.",
+      "examples": [
+        {
+          "pt": "Ontem eu fui ao médico e ele me disse que estou bem.",
+          "en": "Yesterday I went to the doctor and he told me I am well."
+        },
+        {
+          "pt": "Elas vieram cedo e trouxeram o bolo.",
+          "en": "They came early and brought the cake."
+        },
+        {
+          "pt": "Nós não pudemos ver o jogo, mas soubemos o resultado.",
+          "en": "We could not watch the game, but we found out the result."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-001@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-001@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ontem eu ___ ao mercado. (ir)",
+            "answer": "fui",
+            "alternatives": ["fui", "foi", "ia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nós ___ um bolo ontem. (fazer)",
+            "answer": "fizemos",
+            "alternatives": ["fizemos", "fazemos", "fizeram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Você ___ o filme ontem? (ver)",
+            "answer": "viu",
+            "alternatives": ["viu", "vê", "via"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q04",
+            "format": "typed-blank",
+            "prompt": "Eles ___ para casa muito tarde. (vir)",
+            "answer": "vieram",
+            "near_misses": ["viram", "vinham"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ a verdade para ela. (dizer)",
+            "answer": "disse",
+            "near_misses": ["dizi", "diz"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q06",
+            "format": "typed-blank",
+            "prompt": "Nós ___ presentes às crianças. (dar)",
+            "answer": "demos",
+            "near_misses": ["damos", "dimos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q07",
+            "format": "translation",
+            "prompt": "Translate (one completed event): I had to leave early.",
+            "answer": "Eu tive que sair cedo.",
+            "alternatives": [
+              "Tive que sair cedo.",
+              "Eu tive de sair cedo.",
+              "Tive de sair cedo."
+            ],
+            "near_misses": [
+              "Eu tinha que sair cedo.",
+              "Eu tenho que sair cedo."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q08",
+            "format": "translation",
+            "prompt": "Translate (completed past): She brought the books.",
+            "answer": "Ela trouxe os livros.",
+            "near_misses": ["Ela trazeu os livros.", "Ela trazia os livros."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q09",
+            "format": "translation",
+            "prompt": "Translate (completed past): We could not come yesterday.",
+            "answer": "Nós não pudemos vir ontem.",
+            "alternatives": ["Não pudemos vir ontem."],
+            "near_misses": [
+              "Nós não podemos vir ontem.",
+              "Nós não puderam vir ontem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Ontem eu fazi o jantar.",
+            "answer": "Ontem eu fiz o jantar.",
+            "near_misses": [
+              "Ontem eu fazi o jantar.",
+              "Ontem eu fazia o jantar."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Ele trazeu o livro.",
+            "answer": "Ele trouxe o livro.",
+            "near_misses": ["Ele trazeu o livro.", "Ele trazia o livro."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Nós foi ao cinema ontem.",
+            "answer": "Nós fomos ao cinema ontem.",
+            "near_misses": [
+              "Nós foi ao cinema ontem.",
+              "Nós íamos ao cinema ontem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-001@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele ___ medo do cachorro ontem. (ter)",
+            "answer": "teve",
+            "alternatives": ["teve", "tinha", "tem"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-001@1:h02",
+            "format": "typed-blank",
+            "prompt": "Ele ___ o dinheiro na mesa. (pôr)",
+            "answer": "pôs",
+            "near_misses": ["pos", "poz"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-001@1:h03",
+            "format": "translation",
+            "prompt": "Translate (completed past): They wanted to leave.",
+            "answer": "Eles quiseram sair.",
+            "alternatives": ["Elas quiseram sair."],
+            "near_misses": ["Eles queriam sair.", "Eles quisem sair."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-002",
+      "title": "Pretérito imperfeito: habits, descriptions and the irregular verbs",
+      "explanation": "Use the pretérito imperfeito for habits, descriptions and actions in progress in the past, without saying when they started or ended. Regular endings: -ar verbs take -ava, -avas, -ava, -ávamos, -avam (falava); -er and -ir verbs take -ia, -ias, -ia, -íamos, -iam (comia). The nós form is always accented: falávamos, comíamos, tínhamos. Only four verbs are irregular: ser (era, éramos, eram), ter (tinha, tínhamos), vir (vinha, vínhamos) and pôr (punha, púnhamos). Ir is regular: ia, íamos. The imperfect also makes a request or wish sound polite: eu queria um café.",
+      "examples": [
+        {
+          "pt": "Quando eu era criança, a gente morava perto do mar.",
+          "en": "When I was a child, we lived near the sea."
+        },
+        {
+          "pt": "Meu avô sempre tinha tempo para brincar conosco.",
+          "en": "My grandfather always had time to play with us."
+        },
+        {
+          "pt": "A cidade era pequena e as ruas eram tranquilas.",
+          "en": "The town was small and the streets were quiet."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-002@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-002@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando eu era criança, eu ___ muito. (brincar)",
+            "answer": "brincava",
+            "alternatives": ["brincava", "brinquei", "brincaria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Nós ___ no campo todo verão. (ficar)",
+            "answer": "ficávamos",
+            "alternatives": ["ficávamos", "ficamos", "ficávemos"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele ___ muito dinheiro naquela época. (ter)",
+            "answer": "tinha",
+            "alternatives": ["tinha", "teve", "tem"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q04",
+            "format": "typed-blank",
+            "prompt": "Todos os dias, ela ___ o ônibus às sete. (pegar)",
+            "answer": "pegava",
+            "near_misses": ["pegou", "pegaria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q05",
+            "format": "typed-blank",
+            "prompt": "Naquele tempo, eles ___ na casa da avó. (morar)",
+            "answer": "moravam",
+            "near_misses": ["moraram", "moram"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q06",
+            "format": "typed-blank",
+            "prompt": "Meus avós ___ de bicicleta para o trabalho. (ir)",
+            "answer": "iam",
+            "near_misses": ["foram", "vão"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q07",
+            "format": "translation",
+            "prompt": "Translate (habit in the past): I used to read every night.",
+            "answer": "Eu lia todas as noites.",
+            "alternatives": [
+              "Eu lia toda noite.",
+              "Lia todas as noites.",
+              "Lia toda noite."
+            ],
+            "near_misses": [
+              "Eu li todas as noites.",
+              "Eu leio todas as noites."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q08",
+            "format": "translation",
+            "prompt": "Translate (description in the past): The house was big.",
+            "answer": "A casa era grande.",
+            "near_misses": ["A casa foi grande.", "A casa estava grande."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q09",
+            "format": "translation",
+            "prompt": "Translate (habit in the past): We used to come here.",
+            "answer": "Nós vínhamos aqui.",
+            "alternatives": ["Vínhamos aqui."],
+            "near_misses": ["Nós viemos aqui.", "Nós vimos aqui."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Quando eu era criança, eu brinquei na rua todos os dias.",
+            "answer": "Quando eu era criança, eu brincava na rua todos os dias.",
+            "near_misses": [
+              "Quando eu era criança, eu brinquei na rua todos os dias.",
+              "Quando eu era criança, eu brincaria na rua todos os dias."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Nós tinhamos um cachorro.",
+            "answer": "Nós tínhamos um cachorro.",
+            "near_misses": [
+              "Nós tinhamos um cachorro.",
+              "Nós tivemos um cachorro."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Ela sempre pôs o casaco na cadeira.",
+            "answer": "Ela sempre punha o casaco na cadeira.",
+            "near_misses": [
+              "Ela sempre pôs o casaco na cadeira.",
+              "Ela sempre ponha o casaco na cadeira."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-002@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando ela era jovem, ela ___ muito. (viajar)",
+            "answer": "viajava",
+            "alternatives": ["viajava", "viajou", "viajaria"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-002@1:h02",
+            "format": "typed-blank",
+            "prompt": "Antigamente, nós ___ à escola a pé. (ir)",
+            "answer": "íamos",
+            "near_misses": ["fomos", "vamos"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-002@1:h03",
+            "format": "translation",
+            "prompt": "Translate (description in the past): He was tired.",
+            "answer": "Ele estava cansado.",
+            "near_misses": ["Ele esteve cansado.", "Ele é cansado."],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-003",
+      "title": "Perfeito or imperfeito in a short narrative",
+      "explanation": "In a story, use the imperfeito for the background: the weather, what people were doing, how things were, and habits. Use the perfeito for the events that move the story forward, one after another, or that interrupt the background. Compare: Eu dormia quando o telefone tocou (background, then an interruption). Words that often go with the imperfeito are sempre, todos os dias, enquanto and naquela época. Words that often go with the perfeito are de repente, ontem, então and uma vez. Choose by meaning, not by the word: the same verb can take either form.",
+      "examples": [
+        {
+          "pt": "Chovia muito quando eu saí de casa.",
+          "en": "It was raining a lot when I left home."
+        },
+        {
+          "pt": "Enquanto ela cozinhava, eu arrumei a sala.",
+          "en": "While she cooked, I tidied the living room."
+        },
+        {
+          "pt": "De repente, o cachorro latiu e todos acordaram.",
+          "en": "Suddenly the dog barked and everyone woke up."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-003@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-003@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best verb: Eu ___ TV quando o telefone tocou. (ver)",
+            "answer": "via",
+            "alternatives": ["via", "vi", "veria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the best verb: De repente, a porta ___. (abrir)",
+            "answer": "abriu",
+            "alternatives": ["abriu", "abria", "abrirá"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the best verb: Era uma noite fria e ___ muito. (chover)",
+            "answer": "chovia",
+            "alternatives": ["chovia", "choveu", "chove"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q04",
+            "format": "typed-blank",
+            "prompt": "Eu ___ no parque quando vi um amigo. (correr)",
+            "answer": "corria",
+            "near_misses": ["corri", "corro"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q05",
+            "format": "typed-blank",
+            "prompt": "Ela ___ de casa às oito e foi trabalhar. (sair)",
+            "answer": "saiu",
+            "near_misses": ["saía", "sai"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q06",
+            "format": "typed-blank",
+            "prompt": "Enquanto ele ___, eu preparava o jantar. (dormir)",
+            "answer": "dormia",
+            "near_misses": ["dormiu", "dormiria"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q07",
+            "format": "translation",
+            "prompt": "Translate (background): The sun was shining and the children were happy.",
+            "answer": "O sol brilhava e as crianças estavam felizes.",
+            "near_misses": [
+              "O sol brilhou e as crianças estavam felizes.",
+              "O sol brilhava e as crianças ficaram felizes."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q08",
+            "format": "translation",
+            "prompt": "Translate (events): I woke up and opened the window.",
+            "answer": "Eu acordei e abri a janela.",
+            "alternatives": ["Acordei e abri a janela."],
+            "near_misses": [
+              "Eu acordava e abria a janela.",
+              "Eu acordei e abria a janela."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q09",
+            "format": "translation",
+            "prompt": "Translate (habit and event): Every day I walked, but yesterday I took the bus.",
+            "answer": "Todo dia eu andava, mas ontem eu peguei o ônibus.",
+            "alternatives": [
+              "Todos os dias eu andava, mas ontem eu peguei o ônibus.",
+              "Todo dia eu andava, mas ontem peguei o ônibus.",
+              "Todos os dias eu andava, mas ontem peguei o ônibus."
+            ],
+            "near_misses": [
+              "Todo dia eu andei, mas ontem eu peguei o ônibus.",
+              "Todo dia eu andava, mas ontem eu pegava o ônibus."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Eu dormia quando você ligou, e eu acordava imediatamente.",
+            "answer": "Eu dormia quando você ligou, e eu acordei imediatamente.",
+            "near_misses": [
+              "Eu dormia quando você ligou, e eu acordava imediatamente.",
+              "Eu dormi quando você ligou, e eu acordei imediatamente."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Quando eu era pequeno, eu fui muito tímido.",
+            "answer": "Quando eu era pequeno, eu era muito tímido.",
+            "near_misses": [
+              "Quando eu era pequeno, eu fui muito tímido.",
+              "Quando eu fui pequeno, eu era muito tímido."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: Ontem à noite, enquanto eu lia, o telefone tocava.",
+            "answer": "Ontem à noite, enquanto eu lia, o telefone tocou.",
+            "near_misses": [
+              "Ontem à noite, enquanto eu lia, o telefone tocava.",
+              "Ontem à noite, enquanto eu li, o telefone tocou."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-003@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the best verb: Ele ___ o jornal quando a luz acabou. (ler)",
+            "answer": "lia",
+            "alternatives": ["lia", "leu", "lê"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-003@1:h02",
+            "format": "typed-blank",
+            "prompt": "O garoto ___ a bola e correu para o gol. (pegar)",
+            "answer": "pegou",
+            "near_misses": ["pegava", "pega"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-003@1:h03",
+            "format": "translation",
+            "prompt": "Translate (background and event): She was tired, so she went to bed.",
+            "answer": "Ela estava cansada, então foi dormir.",
+            "alternatives": [
+              "Ela estava cansada, então ela foi dormir.",
+              "Ela estava cansada, por isso foi dormir."
+            ],
+            "near_misses": [
+              "Ela foi cansada, então foi dormir.",
+              "Ela estava cansada, então ia dormir."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-004",
+      "title": "Past participles: regular, irregular and double forms",
+      "explanation": "Regular participles end in -ado for -ar verbs (falado) and -ido for -er and -ir verbs (comido, partido). Learn the frequent irregular ones: feito (fazer), dito (dizer), escrito (escrever), aberto (abrir), visto (ver), posto (pôr), coberto (cobrir), vindo (vir). Used as an adjective or in the passive, the participle agrees with the noun: a porta aberta, as cartas escritas. A few verbs have two participles: the regular one goes with ter or haver (tinha pagado), and the short one goes with ser and estar (foi pago, está aceito). In everyday Brazilian speech, the short form is often used with ter as well.",
+      "examples": [
+        {
+          "pt": "O trabalho já está feito e a porta está aberta.",
+          "en": "The work is already done and the door is open."
+        },
+        {
+          "pt": "Os documentos foram escritos em português.",
+          "en": "The documents were written in Portuguese."
+        },
+        {
+          "pt": "A mesa está posta e a comida está servida.",
+          "en": "The table is set and the food is served."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-004@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-004@1:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of fazer?",
+            "answer": "feito",
+            "alternatives": ["feito", "fazido", "fazendo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of abrir?",
+            "answer": "aberto",
+            "alternatives": ["aberto", "abrido", "abrindo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of falar?",
+            "answer": "falado",
+            "alternatives": ["falado", "falato", "falando"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q04",
+            "format": "typed-blank",
+            "prompt": "What is the participle of escrever?",
+            "answer": "escrito",
+            "near_misses": ["escrevido", "escrevendo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q05",
+            "format": "typed-blank",
+            "prompt": "A janela está ___. (abrir)",
+            "answer": "aberta",
+            "near_misses": ["aberto", "abrida"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q06",
+            "format": "typed-blank",
+            "prompt": "A mesa está ___ para o jantar. (pôr)",
+            "answer": "posta",
+            "near_misses": ["posto", "pôsta"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q07",
+            "format": "translation",
+            "prompt": "Translate: The door is closed.",
+            "answer": "A porta está fechada.",
+            "near_misses": ["A porta é fechada.", "A porta está fechado."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q08",
+            "format": "translation",
+            "prompt": "Translate: The work is done.",
+            "answer": "O trabalho está feito.",
+            "near_misses": ["O trabalho está fazido.", "O trabalho é feito."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q09",
+            "format": "translation",
+            "prompt": "Translate: The windows are open.",
+            "answer": "As janelas estão abertas.",
+            "near_misses": [
+              "As janelas estão abertos.",
+              "As janelas estão abrido."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q10",
+            "format": "correction",
+            "prompt": "Correct the participle: A carta está escrevida.",
+            "answer": "A carta está escrita.",
+            "near_misses": ["A carta está escrevida.", "A carta está escrito."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q11",
+            "format": "correction",
+            "prompt": "Correct the participle: Os livros foram fazidos aqui.",
+            "answer": "Os livros foram feitos aqui.",
+            "near_misses": [
+              "Os livros foram fazidos aqui.",
+              "Os livros foram feito aqui."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:q12",
+            "format": "correction",
+            "prompt": "Correct the participle: A conta foi pagada ontem.",
+            "answer": "A conta foi paga ontem.",
+            "near_misses": [
+              "A conta foi pagada ontem.",
+              "A conta foi pago ontem."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-004@1:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the participle of dizer?",
+            "answer": "dito",
+            "alternatives": ["dito", "dizido", "dizendo"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-004@1:h02",
+            "format": "typed-blank",
+            "prompt": "O problema foi ___ por todos. (ver)",
+            "answer": "visto",
+            "near_misses": ["vido", "vindo"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-004@1:h03",
+            "format": "translation",
+            "prompt": "Translate: The letters are written.",
+            "answer": "As cartas estão escritas.",
+            "near_misses": [
+              "As cartas estão escritos.",
+              "As cartas estão escrevidas."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-005",
+      "title": "Mais-que-perfeito composto: tinha + participle",
+      "explanation": "Use the mais-que-perfeito composto for an event that had already happened before another past moment. Form it with the imperfeito of ter (tinha, tinhas, tinha, tínhamos, tinham) plus the participle: eu tinha saído, nós tínhamos feito. The participle does not change. It often appears with já (already), ainda não (not yet), nunca (never) and antes (before). Compare: Quando cheguei, ela saiu (she left after I arrived) and Quando cheguei, ela já tinha saído (she was already gone). In speech, the simple perfeito or imperfeito often replaces it, but you need it for clear sequences.",
+      "examples": [
+        {
+          "pt": "Quando o filme começou, eu já tinha comprado a pipoca.",
+          "en": "When the film started, I had already bought the popcorn."
+        },
+        {
+          "pt": "Ela me disse que nunca tinha viajado de avião.",
+          "en": "She told me she had never travelled by plane."
+        },
+        {
+          "pt": "Nós tínhamos terminado o trabalho antes do almoço.",
+          "en": "We had finished the work before lunch."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-005@1",
+        "version": 1,
+        "questions": [
+          {
+            "id": "pt-b1-005@1:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Quando cheguei à estação, o trem já ___. (partir)",
+            "answer": "tinha partido",
+            "alternatives": ["tinha partido", "partiu", "partia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Eu não ___ o filme antes, então gostei. (ver)",
+            "answer": "tinha visto",
+            "alternatives": ["tinha visto", "vi", "vejo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela disse que ___ o dinheiro. (perder)",
+            "answer": "tinha perdido",
+            "alternatives": ["tinha perdido", "perdeu", "perdia"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q04",
+            "format": "typed-blank",
+            "prompt": "Quando você ligou, eu já ___ de casa. (sair)",
+            "answer": "tinha saído",
+            "near_misses": ["saí", "tinha saindo"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q05",
+            "format": "typed-blank",
+            "prompt": "Nós ___ a lição antes da aula. (fazer)",
+            "answer": "tínhamos feito",
+            "near_misses": ["temos feito", "tinhamos feito"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q06",
+            "format": "typed-blank",
+            "prompt": "Eles já ___ tudo quando chegamos. (comer)",
+            "answer": "tinham comido",
+            "near_misses": ["comeram", "tinha comido"],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q07",
+            "format": "translation",
+            "prompt": "Translate (earlier event): I had already eaten.",
+            "answer": "Eu já tinha comido.",
+            "alternatives": ["Já tinha comido."],
+            "near_misses": ["Eu já comi.", "Eu já tenho comido."],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q08",
+            "format": "translation",
+            "prompt": "Translate (earlier event): She had not seen him before.",
+            "answer": "Ela não o tinha visto antes.",
+            "alternatives": ["Ela não tinha visto ele antes."],
+            "near_misses": [
+              "Ela não o viu antes.",
+              "Ela não o tinha visto depois."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q09",
+            "format": "translation",
+            "prompt": "Translate (earlier event): We had arrived before them.",
+            "answer": "Nós tínhamos chegado antes deles.",
+            "alternatives": ["Tínhamos chegado antes deles."],
+            "near_misses": [
+              "Nós chegamos antes deles.",
+              "Nós tinhamos chegado antes deles."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q10",
+            "format": "correction",
+            "prompt": "Correct the form: Quando ele chegou, eu já tinha saiu.",
+            "answer": "Quando ele chegou, eu já tinha saído.",
+            "near_misses": [
+              "Quando ele chegou, eu já tinha saiu.",
+              "Quando ele chegou, eu já tinha saio."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Ela tinha escrevido o e-mail antes da reunião.",
+            "answer": "Ela tinha escrito o e-mail antes da reunião.",
+            "near_misses": [
+              "Ela tinha escrevido o e-mail antes da reunião.",
+              "Ela tinha escreveu o e-mail antes da reunião."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:q12",
+            "format": "correction",
+            "prompt": "Correct the tense to show the earlier event: Quando cheguei, ela já saiu.",
+            "answer": "Quando cheguei, ela já tinha saído.",
+            "near_misses": [
+              "Quando cheguei, ela já saiu.",
+              "Quando cheguei, ela já saía."
+            ],
+            "holdout": false
+          },
+          {
+            "id": "pt-b1-005@1:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele disse que já ___ o jantar. (preparar)",
+            "answer": "tinha preparado",
+            "alternatives": ["tinha preparado", "preparou", "preparava"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-005@1:h02",
+            "format": "typed-blank",
+            "prompt": "Quando o filme começou, nós já ___ nossos lugares. (achar)",
+            "answer": "tínhamos achado",
+            "near_misses": ["achamos", "tinhamos achado"],
+            "holdout": true
+          },
+          {
+            "id": "pt-b1-005@1:h03",
+            "format": "translation",
+            "prompt": "Translate (earlier event): They had not called before.",
+            "answer": "Eles não tinham ligado antes.",
+            "alternatives": [
+              "Elas não tinham ligado antes.",
+              "Eles não tinham telefonado antes."
+            ],
+            "near_misses": [
+              "Eles não ligaram antes.",
+              "Eles não tinham ligando antes."
+            ],
+            "holdout": true
+          }
+        ]
+      }
+    }
+  ]
+}

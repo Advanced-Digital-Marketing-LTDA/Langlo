@@ -49,7 +49,9 @@ const practisedText = (
     ? (example.fr ?? '')
     : module.track.startsWith('German')
       ? (example.de ?? '')
-      : example.en;
+      : module.track.startsWith('Portuguese')
+        ? (example.pt ?? '')
+        : example.en;
 const load = (path: string) => JSON.parse(read(path)) as Module;
 const revisedSkills = new Set([
   'de-a1-001',
