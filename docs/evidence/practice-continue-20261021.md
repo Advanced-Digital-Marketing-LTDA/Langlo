@@ -2,8 +2,8 @@
 
 ## Behavior implemented
 
-- Practice progress was always stored in the database; what was lost was the way back. Starting practice now continues the learner's newest unfinished (active or paused) practice session in that language. A new session begins only after the old one is finished.
-- The practice page shows "Continue practice" (never "Start practice") while a practice is unfinished, with the answer count and a confirmed "Start over". Start over finishes every unfinished practice of the language, exactly as Finish session does, and starts a fresh one. A repeated tap keeps the new session open and still finishes any older unfinished one beside it.
+- Practice progress was always stored in the database; what was lost was the way back. Starting practice now continues the learner's newest unfinished (active or paused) practice session in that language. A paused practice is resumed when continued, so lessons opened from the skill map serve questions. A new session begins only after the old one is finished.
+- The practice page shows "Continue practice" (never "Start practice") while a practice is unfinished, with the answer count and a confirmed "Start over". Start over finishes every unfinished practice of the language, exactly as Finish session does, and starts a fresh one. A repeated tap keeps the new session open and still finishes any older unfinished one beside it; replaying a Start over whose session is already finished returns that session and finishes nothing else.
 - The home page links to the unfinished practice of each track. Practising a topic from the skill map also continues it.
 - When an answer or rating cannot reach the server (no action result at all), the typed answer and the page stay, with "Could not reach the server. Your answer was not saved. Try again." A retry reuses the same submission key.
 - No schema or migration change.

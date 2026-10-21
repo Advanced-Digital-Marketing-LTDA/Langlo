@@ -515,6 +515,10 @@ describe('practice sessions', () => {
         submissionKey: randomUUID()
       })
     ).toEqual(first);
+    // Continuing a paused practice resumes it.
+    expect((await practiceSummary(client, learner, first.id)).state).toBe(
+      'active'
+    );
     // Another learner is never handed this session.
     await expect(unfinishedPractice(client, other, 'fr')).resolves.toBeNull();
     expect(await unfinishedPractice(client, learner, 'fr')).toEqual({
@@ -594,6 +598,21 @@ describe('practice sessions', () => {
     expect(
       (await practiceSummary(client, learner, 'stray-practice')).state
     ).toBe('completed');
+    // Replaying a finished Start over does not finish what began since.
+    await finishPractice(client, learner, `practice:${during.submissionKey}`);
+    const since = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await expect(
+      startPracticeOver(client, learner, {
+        language: 'fr',
+        submissionKey: during.submissionKey
+      })
+    ).resolves.toEqual({ id: `practice:${during.submissionKey}` });
+    expect(await unfinishedPractice(client, learner, 'fr')).toMatchObject({
+      id: since.id
+    });
   });
 });
 

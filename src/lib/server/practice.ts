@@ -94,6 +94,11 @@ export async function startPractice(
   try {
     const unfinished = await unfinishedPractice(tx, learner, input.language);
     if (unfinished) {
+      // Continuing a paused practice resumes it, so its lessons serve questions.
+      await tx.execute({
+        sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ? AND state = 'paused'",
+        args: [unfinished.id, learner.userId]
+      });
       await tx.commit();
       return { id: unfinished.id };
     }
@@ -138,6 +143,21 @@ export async function startPracticeOver(
   validateSubmissionKey(input.submissionKey);
   // A repeated tap carries the key of the session it already started: keep it.
   const own = `practice:${input.submissionKey}`;
+  // A replay of a request whose session is already finished is answered with
+  // that session; it must not finish whatever the learner began since.
+  const replayed = await client.execute({
+    sql: "SELECT owner_id, language, mode FROM study_sessions WHERE id = ? AND state = 'completed'",
+    args: [own]
+  });
+  if (replayed.rows[0]) {
+    assertSessionIdentity(
+      replayed.rows[0],
+      learner,
+      input.language,
+      'practice'
+    );
+    return { id: own };
+  }
   for (;;) {
     const unfinished = await unfinishedPractice(
       client,
