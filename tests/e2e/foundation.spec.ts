@@ -1,6 +1,37 @@
 import { expect } from '@playwright/test';
 import { test } from './coverage-fixture';
 
+test('homepage auth controls wrap without overlap when narrow and text is enlarged', async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto('/');
+  const account = page.getByRole('navigation', {
+    name: 'Account',
+    exact: true
+  });
+  // Enlarge the account text: both controls fit at 320px with default text.
+  await account.evaluate((element) => {
+    element.style.fontSize = '2rem';
+  });
+  const signIn = account.getByRole('link', { name: 'Sign in', exact: true });
+  const signUp = account.getByRole('link', { name: 'Sign up', exact: true });
+  await expect(signIn).toBeInViewport();
+  await expect(signUp).toBeInViewport();
+  const first = (await signIn.boundingBox())!;
+  const second = (await signUp.boundingBox())!;
+  expect(second.y).toBeGreaterThanOrEqual(first.y + first.height);
+  for (const bounds of [first, second]) {
+    expect(bounds.x).toBeGreaterThanOrEqual(0);
+    expect(bounds.x + bounds.width).toBeLessThanOrEqual(320);
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth
+    )
+  ).toBe(true);
+});
+
 test('homepage auth controls are visible, touch-sized and keyboard operable', async ({
   page
 }) => {

@@ -804,11 +804,27 @@ async function exploreSkillMap(page: Page) {
     })
   ).toBeVisible();
   await expect(page.getByRole('button', { name: 'List view' })).toBeVisible();
+  // On phones the topic sheet intentionally overlays the map controls.
+  // Dismiss it through the visible control before changing the map view.
+  await page.getByRole('button', { name: 'Close topic details' }).click();
+  await expect(page.getByRole('complementary')).toHaveCount(0);
+  await expect(
+    page
+      .getByRole('region', { name: /FR topic map/u })
+      .getByRole('button', { name: /Synthetic exercise lesson/ })
+  ).toBeFocused();
   await page.getByRole('button', { name: 'List view' }).click();
+  await expect(page.getByRole('button', { name: 'List view' })).toHaveAttribute(
+    'aria-pressed',
+    'true'
+  );
   await expect(
     page.getByRole('list').getByText('Synthetic exercise lesson')
   ).toBeVisible();
   await page.getByRole('button', { name: 'Map', exact: true }).click();
+  await expect(
+    page.getByRole('button', { name: 'Map', exact: true })
+  ).toHaveAttribute('aria-pressed', 'true');
   await manual.click();
   await page.getByRole('link', { name: 'Open lesson' }).click();
   await expect(
