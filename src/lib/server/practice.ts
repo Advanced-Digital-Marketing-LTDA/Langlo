@@ -131,10 +131,36 @@ export async function startPractice(
 }
 
 /**
- * Finish every unfinished practice of the learner in a language and start a
- * fresh one. Finishing is the same as pressing Finish session: answers that
- * were rated or not correct stay in the history, and correct answers not yet
- * rated are dropped.
+ * Close one of the caller's unfinished practices and delete every answer in
+ * it. Unlike finishing, nothing is committed to the review schedule.
+ */
+async function discardPractice(
+  client: Client,
+  learner: LearnerSession,
+  id: string
+): Promise<void> {
+  const tx = await beginWrite(client);
+  try {
+    await tx.execute({
+      sql: 'DELETE FROM attempts WHERE owner_id = ? AND study_session_id = ?',
+      args: [learner.userId, id]
+    });
+    await tx.execute({
+      sql: "UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND mode = 'practice'",
+      args: [id, learner.userId]
+    });
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
+/**
+ * Discard every unfinished practice of the learner in a language, with all of
+ * its answers, and start a fresh one. Continuing is the way to keep answers.
  */
 export async function startPracticeOver(
   client: Client,
@@ -167,7 +193,7 @@ export async function startPracticeOver(
       own
     );
     if (!unfinished) break;
-    await finishPractice(client, learner, unfinished.id);
+    await discardPractice(client, learner, unfinished.id);
   }
   return startPractice(client, learner, input);
 }

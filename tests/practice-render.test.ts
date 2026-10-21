@@ -110,5 +110,6 @@ it('offers only Continue practice, with a confirmed Start over, once a practice 
   expect(html).not.toContain('Start practice');
   expect(html).toMatch(/2\s+answers so far/);
   expect(html).toContain('action="?/startOver"');
-  expect(html).toMatch(/correct answers you have not\s+rated yet are not kept/);
+  expect(html).toMatch(/deletes your answers in the current practice/);
+  expect(html).toContain('This cannot be undone.');
 });

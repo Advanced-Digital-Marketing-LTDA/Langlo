@@ -14,7 +14,7 @@ existing `/app/**` no-store/noindex policy and verified-session ownership guard.
 | `/app/reports`                         | Owner's latest 100 content reports; no content-editing action.                                                                    |
 | `/app/enroll`                          | Enroll in a track (fr A1; de, en A1/A2; pt B1/B2); a second enrollment in a language is a 409.                                    |
 | `/app/settings`                        | Lesson language per enrollment and the learner's IANA timezone (stored only; due times still use UTC).                            |
-| `/app/practice/[language]`             | Continue the unfinished practice of an enrolled language, or start one (idempotent); Start over finishes it and begins a new one. |
+| `/app/practice/[language]`             | Continue the unfinished practice of an enrolled language, or start one (idempotent); Start over discards it and begins a new one. |
 | `/app/session/[id]` and `.../results`  | Pick a topic, resume if paused, finish, read answer counts; foreign IDs return 404.                                               |
 | `/app/decks` and `/app/decks/[id]`     | Create decks, add basic or cloze draft notes, approve notes; `/export` downloads approved notes as Anki text.                     |
 | `/app/review`                          | Due, approved flashcards with a show-answer step and again/hard/good/easy ratings.                                                |

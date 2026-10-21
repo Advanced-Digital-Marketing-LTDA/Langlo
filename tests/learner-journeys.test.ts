@@ -585,7 +585,52 @@ describe('practice sessions', () => {
     });
   });
 
-  it('finishes every unfinished practice on Start over and begins a new one', async () => {
+  it('keeps answers on Continue but deletes every answer on Start over', async () => {
+    await closeSeededPractice();
+    const { id } = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    const answer = (attemptId: string, rating: string) =>
+      client.execute({
+        sql: `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer, grammar_rating) VALUES (?, 'learner-a', ?, 'question-1', 'content-v1', 'fr-articles', 'fr', ?, 'assisted', 'un', ?)`,
+        args: [attemptId, id, `submit-${attemptId}`, rating]
+      });
+    await answer('rated-answer', 'good');
+    await answer('plain-answer', 'again');
+    const count = async (table: string) =>
+      Number(
+        (
+          await client.execute({
+            sql: `SELECT COUNT(*) AS n FROM ${table} WHERE owner_id = ? AND study_session_id = ?`,
+            args: [learner.userId, id]
+          })
+        ).rows[0].n
+      );
+    // Continuing keeps every answer.
+    await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    expect(await count('attempts')).toBe(2);
+    // Start over deletes them and commits nothing to the review schedule.
+    const fresh = randomUUID();
+    await startPracticeOver(client, learner, {
+      language: 'fr',
+      submissionKey: fresh
+    });
+    expect(await count('attempts')).toBe(0);
+    expect(await count('grammar_retention_events')).toBe(0);
+    expect((await practiceSummary(client, learner, id)).state).toBe(
+      'completed'
+    );
+    expect(await unfinishedPractice(client, learner, 'fr')).toEqual({
+      id: `practice:${fresh}`,
+      answered: 0
+    });
+  });
+
+  it('closes every unfinished practice on Start over and begins a new one', async () => {
     await closeSeededPractice();
     const { submissionKey: key } = await loadKey();
     await startPractice(client, learner, {

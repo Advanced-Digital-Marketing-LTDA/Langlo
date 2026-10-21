@@ -3,7 +3,7 @@
 ## Behavior implemented
 
 - Practice progress was always stored in the database; what was lost was the way back. Starting practice now continues the learner's newest unfinished (active or paused) practice session in that language. A paused practice is resumed when continued, so lessons opened from the skill map serve questions. A new session begins only after the old one is finished.
-- The practice page shows "Continue practice" (never "Start practice") while a practice is unfinished, with the answer count and a confirmed "Start over". Start over finishes every unfinished practice of the language, exactly as Finish session does, and starts a fresh one. A repeated tap keeps the new session open and still finishes any older unfinished one beside it; replaying a Start over whose session is already finished returns that session and finishes nothing else.
+- The practice page shows "Continue practice" (never "Start practice") while a practice is unfinished, with the answer count and a confirmed "Start over". Start over deletes every answer in each unfinished practice of the language, closes those sessions without committing anything to the review schedule, and starts a fresh one; Continue is the way to keep answers (Andrew, 2026-10-21). A repeated tap keeps the new session open and still closes any older unfinished one beside it; replaying a Start over whose session is already closed returns that session and discards nothing else.
 - The home page links to the unfinished practice of each track. Practising a topic from the skill map also continues it.
 - When an answer or rating cannot reach the server (no action result at all), the typed answer and the page stay, with "Could not reach the server. Your answer was not saved. Try again." A retry reuses the same submission key.
 - No schema or migration change.
@@ -14,7 +14,7 @@
 - **Browser (local, desktop and mobile profiles):** `tests/e2e/exercises.spec.ts` — the unreachable-server answer test (typed answer kept, retry sends the same submission key and stores one answer), the unreachable-server rating test, and the continue test pass.
 - **Red before the change (recorded):** with `Exercise.svelte` reverted, the answer test failed on desktop: `Error: expect(locator).toContainText(expected) failed — Locator: getByRole('alert') — element(s) not found`; the page had been replaced by the error page.
 - Existing tests that assumed every start creates a new session now finish the fixture's seeded unfinished practice first (`tests/learner-journeys.test.ts`, `tests/progress-routes.test.ts`, `tests/grammar-retention.integration.test.ts`).
-- Start over finishes the practice exactly as Finish session does, so correct answers not yet rated are dropped (`discardUnratedPracticeAnswers`); the page says so.
+- Start over deletes the practice's answers (`discardPractice`), including rated ones; the page says so and that it cannot be undone. Mistake-card drafts made from those answers stay and keep their now-missing source attempt id (the column has no foreign key). `tests/learner-journeys.test.ts` checks Continue keeps both answers and Start over leaves none and no retention events.
 
 ## Checks run locally
 
