@@ -6,9 +6,11 @@ import type {
 } from '@libsql/client';
 import { LibsqlError } from '@libsql/client';
 import { setTimeout as delay } from 'node:timers/promises';
+import { isRemoteClient } from './remote-clients.ts';
 import { span } from './tracing';
 
-// shortcut: remote transactions serialize too; split if throughput proves limiting.
+// Local file and in-memory databases share one connection, so every transaction
+// and write on a client runs one at a time.
 const connectionQueues = new WeakMap<object, Set<() => void>>();
 
 function releaseConnection(client: object, queue: Set<() => void>) {
@@ -151,7 +153,10 @@ function releaseTransaction(
 
 /** Take the connection and start timing how long it is held. */
 async function holdConnection(client: Client, write: boolean) {
-  const release = await acquireConnection(client);
+  const release =
+    !write && isRemoteClient(client)
+      ? () => undefined
+      : await acquireConnection(client);
   let hold: Awaited<ReturnType<typeof holdSpan>>;
   try {
     hold = await holdSpan(write);
