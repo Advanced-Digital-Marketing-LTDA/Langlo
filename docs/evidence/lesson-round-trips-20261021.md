@@ -1,4 +1,4 @@
-# Fewer database calls per practice answer (steps C1 and C2 of the database performance plan)
+# Fewer database calls per practice answer (steps C1, C2 and C3 of the database performance plan)
 
 **Scope:** how many database calls the lesson page makes when it loads and when an answer is saved. What is stored, the questions, the answers' outcomes and the error behavior are unchanged. This records local validation, not a latency result: the effect is checked in GlitchTip after deploy (`POST lesson` time, `db.transaction` `round_trips`).
 
@@ -12,6 +12,8 @@ Each call costs about 127 ms from the Coolify host to Turso. One answer cost 38 
 - C2, saving (`study.ts`, `recordAttemptWrite`): the four independent reads at the start of the transaction (earlier attempt under the submission key, study session, already-answered check, earlier evidence) go in one `tx.batch`; the attempt insert, its evaluation insert and a mistake's rating go in one `tx.batch`; the assessment completion check (a read and a write) is skipped for sessions without an assessment plan, where it cannot change anything. Saving now makes 15 calls instead of 21 (transaction: begin, 11 statements, commit).
 - Error order is unchanged: replay, session, question, version, plan, already answered. The prepared answer is now graded before the insert rather than after it; a corrupt question still fails the transaction and rolls it back.
 
+- C3, indexes (new forward migration `0032_question_and_attempt_lookup_indexes`, schema `questions_content_version_idx` and `attempts_owner_session_question_idx`): Turso's top-queries view (2026-10-21) showed the next-question read at 4.02K rows read per call. Its query plan showed `SCAN q`: `questions` had no index on `content_version_id`, and the `attempts` lookup by owner, session and question had no usable index (the one that matches is partial, on `evidence_kind = 'independent'`, which the query does not state). With the migration the plan is `SEARCH q USING INDEX questions_content_version_idx (content_version_id=?)` and `attempts_owner_session_question_idx` for the answered check and the session's attempt reads. Existing migrations, snapshots and journal entries are untouched (the journal only gains an entry). The migration is applied by the deploy migrate gate, not by hand against production. It creates two indexes, which take a short time to build and add a little to each insert on those tables.
+
 ## Red and green
 
 `tests/lesson-load-round-trips.test.ts` (4 tests). Red on main:
@@ -24,10 +26,14 @@ Each call costs about 127 ms from the Coolify host to Turso. One answer cost 38 
 
 Green after: 4 passed.
 
+`tests/question-lookup-indexes.test.ts` (2 tests) explains the exact statement the next-question read sends. Red without the migration: both fail (`expected false to be true`, no index in the plan). Green with it: 2 passed.
+
+Tests updated for the new migration: `db-migrations.test.ts` and `portuguese-migration.test.ts` list the pending migrations by tag, and the pre-0007 upgrade comparison excludes the two new index names, like the other later indexes.
+
 ## Checks
 
-`npm run check` 0 errors, 0 warnings; `npm run lint`, `prettier --check` on changed files and `npm run build` (adapter-node) clean. Because this changes the answer path, also run (not the full suite): `attempt-evaluation`, `attempt-fallback`, `assessment`, `assessment-routes`, `assessment-feedback`, `learner-routes`, `grammar-retention.integration`, `study-resume`: 200 passed. Deferred to CI: `npm test`, `npm run test:property`, `npm run test:e2e`.
+`npm run check` 0 errors, 0 warnings; `npm run lint`, `prettier --check` on changed files and `npm run build` (adapter-node) clean for C1 and C2; for C3 `check`, eslint and prettier on the changed files, plus `db-migrations`, `db-remote-migrate`, `portuguese-migration`, `content-import-script` (115 passed with the new tests). Because this changes the answer path, also run (not the full suite): `attempt-evaluation`, `attempt-fallback`, `assessment`, `assessment-routes`, `assessment-feedback`, `learner-routes`, `grammar-retention.integration`, `study-resume`: 200 passed. Deferred to CI: `npm test`, `npm run test:property`, `npm run test:e2e`.
 
 ## Not covered here
 
-Remaining per-answer cost: the 4 reads before the transaction (two read the session row), 4 evidence-ledger reads inside it, and the AI fallback call for typed answers that miss the stored ones (not measured). The question-list query that reads about 4,000 rows is a separate fix (an index migration), not in this change.
+Remaining per-answer cost: the 4 reads before the transaction (two read the session row), 4 evidence-ledger reads inside it, and the AI fallback call for typed answers that miss the stored ones (not measured). The login session lookup (419 queries a day, indexed, so it costs the round trip) is not changed; a short-lived session cache would remove most of those.

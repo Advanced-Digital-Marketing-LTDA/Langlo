@@ -338,6 +338,8 @@ export const questions = sqliteTable(
     }).notNull()
   },
   (table) => [
+    // Questions are looked up by the content version they belong to.
+    index('questions_content_version_idx').on(table.contentVersionId),
     uniqueIndex('questions_identity_version_skill_language').on(
       table.id,
       table.contentVersionId,
@@ -503,6 +505,12 @@ export const attempts = sqliteTable(
     createdAt: createdAt()
   },
   (table) => [
+    // A session's attempts are read by owner and session, per question.
+    index('attempts_owner_session_question_idx').on(
+      table.ownerId,
+      table.studySessionId,
+      table.questionId
+    ),
     uniqueIndex('attempts_owner_submission_unique').on(
       table.ownerId,
       table.submissionKey
