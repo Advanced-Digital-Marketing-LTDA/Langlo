@@ -11,7 +11,9 @@ import {
   modulePackage,
   normalize,
   typedAnswers,
-  type Module
+  type Lesson,
+  type Module,
+  type Question
 } from './fixtures/curriculum-module';
 
 // Authored curriculum modules after French A1 module 01 (which keeps its own
@@ -80,6 +82,62 @@ const generations = (module: Module) => {
   }
   return groups;
 };
+const earlierVersion = (module: Module, lesson: Lesson) =>
+  module.lessons.find(
+    (other) =>
+      other.skill_id === lesson.skill_id &&
+      other.version.version === lesson.version.version - 1
+  );
+// Returns whether the question's prompt gained a grammar form hint.
+function assertHintedQuestion(
+  question: Question,
+  before: Question,
+  versionId: string
+) {
+  const number = before.id.split(':')[1];
+  expect(question.id, versionId).toBe(`${versionId}:${number}`);
+  expect([question.change, question.continues], question.id).toEqual([
+    'same',
+    before.id
+  ]);
+  for (const field of [
+    'format',
+    'answer',
+    'alternatives',
+    'near_misses',
+    'holdout'
+  ] as const)
+    expect(question[field], `${question.id} ${field}`).toEqual(before[field]);
+  if (question.prompt === before.prompt) return false;
+  expect(question.holdout, question.id).toBe(true);
+  const stripped = question.prompt.replace(
+    /^(.*?) \(([^()]+)\)(:?)$/u,
+    (_, text: string, __: string, colon: string) => text + colon
+  );
+  expect(stripped, question.id).toBe(before.prompt);
+  return true;
+}
+function assertHintRevision(revision: Lesson, earlier: Lesson) {
+  const id = revision.skill_id;
+  expect(revision.version.id, id).toBe(`${id}@${revision.version.version}`);
+  for (const field of [
+    'title',
+    'explanation',
+    'examples',
+    'references'
+  ] as const)
+    expect(revision[field], `${id} ${field}`).toEqual(earlier[field]);
+  expect(revision.version.translations, `${id} translations`).toEqual(
+    earlier.version.translations
+  );
+  const revised = revision.version.questions;
+  const original = earlier.version.questions;
+  expect(revised.length, id).toBe(original.length);
+  const hinted = revised.filter((question, index) =>
+    assertHintedQuestion(question, original[index], revision.version.id)
+  ).length;
+  expect(hinted, `${id} changes no prompt`).toBeGreaterThan(0);
+}
 const revisedSkills = new Set([
   'de-a1-001',
   'de-a1-010',
@@ -402,68 +460,15 @@ describe.each(files)('%s', (path) => {
   // the colon when the prompt ends with one); nothing else about a question
   // or its lesson may change.
   it('revises a lesson only by naming the grammar form in holdout prompts, and says so for the importer', () => {
-    const hasEarlier = (lesson: Module['lessons'][number]) =>
-      module.lessons.some(
-        (other) =>
-          other.skill_id === lesson.skill_id &&
-          other.version.version === lesson.version.version - 1
-      );
     // A later version with no earlier one beside it is a correction of a
     // version only databases hold; those are the listed legacy skills.
     for (const lesson of module.lessons.filter(
-      (item) => item.version.version > 1 && !hasEarlier(item)
+      (item) => item.version.version > 1 && !earlierVersion(module, item)
     ))
       expect(revisedSkills.has(lesson.skill_id), lesson.version.id).toBe(true);
-    for (const revision of module.lessons.filter(hasEarlier)) {
-      const earlier = module.lessons.find(
-        (other) =>
-          other.skill_id === revision.skill_id &&
-          other.version.version === revision.version.version - 1
-      )!;
-      const id = revision.skill_id;
-      expect(revision.version.id, id).toBe(`${id}@${revision.version.version}`);
-      for (const field of [
-        'title',
-        'explanation',
-        'examples',
-        'references'
-      ] as const)
-        expect(revision[field], `${id} ${field}`).toEqual(earlier[field]);
-      expect(revision.version.translations, `${id} translations`).toEqual(
-        earlier.version.translations
-      );
-      const revised = revision.version.questions;
-      const original = earlier.version.questions;
-      expect(revised.length, id).toBe(original.length);
-      let hinted = 0;
-      for (const [index, question] of revised.entries()) {
-        const before = original[index];
-        const number = before.id.split(':')[1];
-        expect(question.id, id).toBe(`${revision.version.id}:${number}`);
-        expect([question.change, question.continues], question.id).toEqual([
-          'same',
-          before.id
-        ]);
-        for (const field of [
-          'format',
-          'answer',
-          'alternatives',
-          'near_misses',
-          'holdout'
-        ] as const)
-          expect(question[field], `${question.id} ${field}`).toEqual(
-            before[field]
-          );
-        if (question.prompt === before.prompt) continue;
-        hinted += 1;
-        expect(question.holdout, question.id).toBe(true);
-        const stripped = question.prompt.replace(
-          /^(.*?) \(([^()]+)\)(:?)$/u,
-          (_, text: string, __: string, colon: string) => text + colon
-        );
-        expect(stripped, question.id).toBe(before.prompt);
-      }
-      expect(hinted, `${id} changes no prompt`).toBeGreaterThan(0);
+    for (const revision of module.lessons) {
+      const earlier = earlierVersion(module, revision);
+      if (earlier) assertHintRevision(revision, earlier);
     }
   });
 

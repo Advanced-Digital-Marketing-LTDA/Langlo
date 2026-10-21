@@ -26,7 +26,12 @@ export type Lesson = {
   explanation: string;
   examples: { fr?: string; de?: string; pt?: string; en: string }[];
   references: string[];
-  version: { id: string; version: number; questions: Question[] };
+  version: {
+    id: string;
+    version: number;
+    questions: Question[];
+    translations?: Record<string, unknown>;
+  };
 };
 
 export type Module = {
