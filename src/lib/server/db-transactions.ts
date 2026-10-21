@@ -70,15 +70,16 @@ async function holdSpan(write: boolean) {
   });
   const active = await new Promise<{
     setAttribute(key: string, value: number): void;
-  }>((resolve) => {
-    void span(
+  }>((resolve, reject) => {
+    // A span that fails before it starts must fail the caller, not hang it.
+    span(
       'db.transaction',
       (current) => {
         resolve(current);
         return held;
       },
       { write }
-    );
+    ).catch(reject);
   });
   return {
     end: (roundTrips: number) => {

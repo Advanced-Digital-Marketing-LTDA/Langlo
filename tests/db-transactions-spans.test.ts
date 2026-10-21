@@ -9,14 +9,17 @@ type Recorded = {
   error?: unknown;
 };
 const recorded = vi.hoisted<Recorded[]>(() => []);
-const failing = vi.hoisted(() => ({ name: '' }));
+const failing = vi.hoisted(() => ({ name: '', rejects: false }));
 
 vi.mock('@sentry/sveltekit', () => ({
   startSpan: (
     options: { name: string; attributes?: Record<string, unknown> },
     run: (active: { setAttribute: (k: string, v: unknown) => void }) => unknown
   ) => {
-    if (options.name === failing.name) throw new Error('span unavailable');
+    if (options.name === failing.name) {
+      if (failing.rejects) return Promise.reject(new Error('span rejected'));
+      throw new Error('span unavailable');
+    }
     const entry: Recorded = {
       name: options.name,
       attributes: options.attributes,
@@ -50,6 +53,7 @@ let client: Client;
 beforeEach(async () => {
   recorded.length = 0;
   failing.name = '';
+  failing.rejects = false;
   client = createClient({ url: ':memory:' });
   await client.execute('CREATE TABLE probe (id INTEGER PRIMARY KEY)');
 });
@@ -160,6 +164,15 @@ it('fails the queue-wait span with the busy error when the wait times out', asyn
 it('releases the connection when the transaction span cannot start', async () => {
   failing.name = 'db.transaction';
   await expect(beginWrite(client)).rejects.toThrow('span unavailable');
+  failing.name = '';
+  const tx = await beginWrite(client);
+  await tx.commit();
+}, 1000);
+
+it('releases the connection when the transaction span rejects asynchronously', async () => {
+  failing.name = 'db.transaction';
+  failing.rejects = true;
+  await expect(beginWrite(client)).rejects.toThrow('span rejected');
   failing.name = '';
   const tx = await beginWrite(client);
   await tx.commit();

@@ -41,6 +41,23 @@ Green, after the change:
 
 Files run: `tests/db-transactions-spans.test.ts`, `tests/app-database-shared.test.ts`, `tests/app-database.test.ts`, `tests/tracing-spans.test.ts`. `svelte-check` reports 0 errors and 0 warnings; ESLint and Prettier are clean. The full suite, build and browser tests are left to CI.
 
+Codacy follow-up (a span that rejects asynchronously before it starts), against `fb347fb`, before the fix:
+
+```
+ × releases the connection when the transaction span rejects asynchronously 1005ms
+ Error: Test timed out in 1000ms.
+ Unhandled Errors: Error: span rejected
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 passed (11)
+```
+
+After the fix (`holdSpan` rejects when the span promise rejects, so the caller releases the slot):
+
+```
+ Test Files  4 passed (4)
+      Tests  31 passed (31)
+```
+
 ## Reading the traces
 
 In GlitchTip, open the slowest `study.run` traces. A long `db.queue-wait` means requests are stuck behind another transaction; a long `db.transaction` with a high `round_trips` means that transaction spends its time in round trips. Sampling is 25%.
