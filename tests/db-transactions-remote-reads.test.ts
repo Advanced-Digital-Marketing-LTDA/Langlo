@@ -1,8 +1,22 @@
 import { spawnSync } from 'node:child_process';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 
+const spans = vi.hoisted<string[]>(() => []);
 const created = vi.hoisted<Array<{ url: string; client: unknown }>>(() => []);
+
+vi.mock('@sentry/sveltekit', () => ({
+  startSpan: (
+    options: { name: string },
+    run: (active: { setAttribute(): void }) => unknown
+  ) => {
+    spans.push(options.name);
+    return run({ setAttribute: () => undefined });
+  }
+}));
 
 vi.mock('@libsql/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@libsql/client')>();
@@ -61,20 +75,38 @@ async function settles(promise: Promise<unknown>) {
 
 afterEach(() => {
   created.length = 0;
+  spans.length = 0;
 });
 
-it('opens a read transaction beside an open write transaction on a remote database', async () => {
-  const { client } = await openAppDatabase(
-    config('libsql://remote-reads.test')
-  );
+const remoteUrls = [
+  'libsql://remote-reads.test',
+  'http://remote-reads.test',
+  'https://remote-reads.test',
+  'ws://remote-reads.test',
+  'wss://remote-reads.test'
+];
+
+it.each(remoteUrls)(
+  'opens a read transaction beside an open write transaction on %s',
+  async (url) => {
+    const { client } = await openAppDatabase(config(url));
+    const writer = await beginWrite(client);
+    const reading = beginRead(client);
+    expect(await settles(reading)).toBe(true);
+    const reader = await reading;
+    expect(client.transaction).toHaveBeenNthCalledWith(1, 'write');
+    expect(client.transaction).toHaveBeenNthCalledWith(2, 'read');
+    await reader.commit();
+    await writer.commit();
+  }
+);
+
+it('times a remote read as a transaction without recording a queue wait', async () => {
+  const { client } = await openAppDatabase(config('libsql://spans.test'));
   const writer = await beginWrite(client);
-  const reading = beginRead(client);
-  expect(await settles(reading)).toBe(true);
-  const reader = await reading;
-  expect(client.transaction).toHaveBeenNthCalledWith(1, 'write');
-  expect(client.transaction).toHaveBeenNthCalledWith(2, 'read');
-  await reader.commit();
+  await (await beginRead(client)).commit();
   await writer.commit();
+  expect(spans).toEqual(['db.transaction', 'db.transaction']);
 });
 
 it('still queues a second write behind an open write on a remote database', async () => {
@@ -102,14 +134,29 @@ it('does not make a write wait for an open read on a remote database', async () 
   await reader.commit();
 });
 
-it('keeps a read waiting behind a write on a local database', async () => {
-  const { client } = await openAppDatabase(config(':memory:'));
-  const writer = await beginWrite(client);
-  const reading = beginRead(client);
-  expect(await settles(reading)).toBe(false);
-  await writer.commit();
-  await (await reading).commit();
-});
+const localUrl = async (kind: string) => {
+  if (kind === 'memory') return { url: ':memory:' };
+  const dir = await mkdtemp(join(tmpdir(), 'langlo-local-queue-'));
+  return { url: `file:${join(dir, 'probe.db')}`, dir };
+};
+
+it.each(['memory', 'file'])(
+  'keeps a read waiting behind a write on a local %s database',
+  async (kind) => {
+    const { url, dir } = await localUrl(kind);
+    try {
+      const { client } = await openAppDatabase(config(url));
+      const writer = await beginWrite(client);
+      const reading = beginRead(client);
+      expect(await settles(reading)).toBe(false);
+      expect(spans).toContain('db.queue-wait');
+      await writer.commit();
+      await (await reading).commit();
+    } finally {
+      if (dir) await rm(dir, { recursive: true, force: true });
+    }
+  }
+);
 
 it('does not treat a client it did not mark as remote', async () => {
   const { client: remote } = await openAppDatabase(

@@ -37,6 +37,10 @@ Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/runner/work/Langlo/Langl
 
 Reproduced locally with `node scripts/accounts-provision.ts --app --email x@example.test --name X` (same error); main loads fine. The marker now lives in `remote-clients.ts`, which has no imports, and `db-transactions.ts` and `db/app.ts` both import it. The same command now reaches its own argument check (`Provision rejected: ...`). New test `keeps the app database module loadable by plain Node scripts` loads `db/app.ts` under plain Node. With the change: 31 passed across the four test files, `npm run check` 0 errors.
 
+## Review follow-up: more coverage
+
+Codacy asked for tests of the span behavior and of URL classification. `tests/db-transactions-remote-reads.test.ts` now also covers: the read opening beside a write for each of `libsql`, `http`, `https`, `ws` and `wss`; a remote read recording `db.transaction` and no `db.queue-wait`; and a read still waiting behind a write (with a `db.queue-wait` span) on local `:memory:` and `file:` databases. Mutations that make it fail: dropping `ws` from the scheme list, adding `file` to it, removing the read bypass. Result: 12 passed in that file.
+
 ## Not covered here
 
 Remote Turso behavior beyond the dev probe (waits over 2 s, many concurrent streams) is unmeasured. The dev probe showed a read beside an open write sees the snapshot from before the write commits.
