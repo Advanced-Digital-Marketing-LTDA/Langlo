@@ -77,6 +77,6 @@ existing rows while preserving their values.
 
 No TypeSafe credentials or real provider calls were used. The endpoint, Jev
 calibration and billing behavior have not been exercised against a live account.
-No production database was accessed or migrated. The existing PR remains at its
-previous remote head; the historical-feedback fix is local and unpushed. No
-deployment or production publication occurred. Those checks remain pending.
+No production database was accessed or migrated. The implementation and
+historical-feedback fix are published on PR #154; hosted checks and review remain
+separate acceptance gates. No deployment or production publication occurred.
