@@ -94,6 +94,70 @@ existing Jev fixture required its content-version suffix to represent a valid
 current evaluation. Type checking and lint passed. This is focused local evidence;
 full validation and the next hosted checks remain separate.
 
+### Rewardguard follow-up
+
+Reviewed PR #154 at `61c4d291` (7 fail, 9 warn) and the rerun after the
+owner-authorized push of `4d5ac146` (6 fail, 9 warn). Rewardguard's test job was
+skipped because its base configuration sets `run_tests = false`; these reports
+are static/AI review results rather than test executions.
+
+Valid local fixes:
+
+- Unreadable success JSON raises `ProviderError('malformed')`. The evaluator
+  retains an uncertain, evaluated result and does not invent token usage.
+- Failed usage writes retain the returned verdict and log `errorName` (or
+  `unknown` for a non-Error), keeping error messages out of the log.
+- Configuration tests again assert the exact key value, `ConfigError` type,
+  message and variable. Malformed Noul coverage explicitly includes missing,
+  refusal, NaN, negative, non-number, extra-answer and out-of-range cases.
+- Four focused assertions failed before the source changes (34 passed).
+  Afterward, all 65 provider/evaluator/config tests passed. Both Error and
+  non-Error logging paths assert the complete structured log and privacy check.
+
+The intentional expectation changes remain: the TypeSafe endpoint and token
+fields match the linked OpenAPI contract; Jev versions are emitted by the new
+implementation; migration 0033 is the next forward migration and preserves old
+counter rows; grammar policy 2 identifies the changed qualifying-evidence
+source. Historical Decisions feedback is retained without becoming Jev mastery
+evidence. Migration history and Rewardguard configuration were not changed by
+this follow-up.
+
+The old two-question injection predicate has no counterpart in the requested
+single Noul question. Learner instructions stay in structured state, outside the
+rubric, which explicitly rejects requests to change the judgment. Request tests
+verify that separation and wording; they do not prove resistance against a live
+model. Non-Noul/refusal responses remain uncertain as malformed. The console
+spy warning concerns tests that positively assert the captured production log.
+
+The completed matching-rubric and prompt changes were transferred onto the
+existing PR branch without overwriting its prior fixes or unrelated tests.
+Six focused suites passed 184 tests there, with type checking, lint, formatting
+and diff checks passing before push. The remote branch was independently
+verified at `4d5ac146c156bad5e17a93d5dcbdeb79ba101158`.
+
+Source-worktree validation after the approved fixes (Node 24.19.0, npm 11.9.0):
+
+- `npm run check`: zero errors or warnings.
+- `npm run lint` and `npm run format:check`: passed.
+- `npm test -- --reporter=dot --maxWorkers=1`: 104 files, 1,836 tests passed.
+- `npm run test:property -- --reporter=dot --maxWorkers=1`: 6 files, 9 tests passed.
+- `npm run build`: passed.
+- `npm run test:e2e`: 142 desktop/mobile tests passed against the built Node
+  server and synthetic fixtures, without failures, skips or retries.
+- Dependency installation with `--ignore-scripts` was completed earlier in this
+  session; dependencies did not change during this follow-up.
+
+This follow-up publishes the remaining shared feedback-selection helpers,
+stronger malformed-response and error-type assertions, and this triage record.
+The production malformed-error, safe-logging and strict-config behaviors already
+existed on the PR branch and are preserved. The source-worktree results above
+are recorded separately from validation of the publication checkout.
+
+Publication-checkout verification for this follow-up: 252 tests passed across
+eight suites, plus all 7 assessment-feedback tests (259 tests across nine suites).
+Type checking reported zero errors or warnings; lint, changed-file formatting
+and diff checks passed. No tests were removed during transfer to the PR branch.
+
 ## Pending acceptance
 
 No TypeSafe credentials or real provider calls were used. The endpoint, Jev

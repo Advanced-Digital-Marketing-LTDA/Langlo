@@ -232,7 +232,7 @@ describe('running the fallback', () => {
   });
 
   it('keeps an unreadable provider response explicitly uncertain as malformed', async () => {
-    const { usage } = counter();
+    const { usage, recorded } = counter();
     const provider = vi.fn(async () => {
       throw new ProviderError('malformed');
     });
@@ -241,6 +241,7 @@ describe('running the fallback', () => {
       reason: 'malformed',
       evaluated: true
     });
+    expect(recorded).toEqual([]);
   });
 
   it('rethrows an unexpected error for the caller to log', async () => {
@@ -290,29 +291,32 @@ describe('running the fallback', () => {
     expect(recorded).toEqual([{ inputTokens: 120, outputTokens: 12 }]);
   });
 
-  it('keeps the verdict and logs a safe error type when usage recording fails', async () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const usage: FallbackUsage = {
-      reserve: vi.fn(async () => true),
-      record: vi.fn(async () => {
-        throw new Error('disk full');
-      })
-    };
-    const provider = vi.fn(async () => systemOneResponse(0.9));
-    await expect(evaluateFallback(input, provider, usage)).resolves.toEqual({
-      outcome: 'correct',
-      reason: 'answered',
-      evaluated: true
-    });
-    expect(JSON.parse(String(error.mock.calls[0][0]))).toEqual({
-      level: 'error',
-      operation: 'ai-fallback',
-      reason: 'usage-record-failed',
-      errorName: 'Error'
-    });
-    expect(String(error.mock.calls[0][0])).not.toContain('disk full');
-    error.mockRestore();
-  });
+  it.each([Error, TypeError])(
+    'keeps the verdict and logs the thrown error type for %s',
+    async (ErrorType) => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const usage: FallbackUsage = {
+        reserve: vi.fn(async () => true),
+        record: vi.fn(async () => {
+          throw new ErrorType('disk full');
+        })
+      };
+      const provider = vi.fn(async () => systemOneResponse(0.9));
+      await expect(evaluateFallback(input, provider, usage)).resolves.toEqual({
+        outcome: 'correct',
+        reason: 'answered',
+        evaluated: true
+      });
+      expect(JSON.parse(String(error.mock.calls[0][0]))).toEqual({
+        level: 'error',
+        operation: 'ai-fallback',
+        reason: 'usage-record-failed',
+        errorName: ErrorType.name
+      });
+      expect(String(error.mock.calls[0][0])).not.toContain('disk full');
+      error.mockRestore();
+    }
+  );
 
   it('uses a content-free unknown name for non-Error usage failures', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
