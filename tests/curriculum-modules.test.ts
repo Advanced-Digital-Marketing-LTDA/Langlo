@@ -88,13 +88,15 @@ const earlierVersion = (module: Module, lesson: Lesson) =>
       other.skill_id === lesson.skill_id &&
       other.version.version === lesson.version.version - 1
   );
-// Accepted answers that were corrected after their version was imported; the
-// revision carries the corrected list instead of the stored one.
-const correctedAlternatives = new Set([
-  'pt-b1-024@1:q07',
-  'pt-b1-024@1:q09',
-  'pt-b1-033@1:q08',
-  'pt-b1-039@1:q03'
+// Accepted answers that were corrected after their version was imported, by
+// the earlier question's id. The revision carries exactly this list (none for
+// q07) in place of the stored one; the lists decide which answers are graded
+// correct, so they are pinned here and not only required to differ.
+const correctedAlternatives = new Map<string, string[] | undefined>([
+  ['pt-b1-024@1:q07', undefined],
+  ['pt-b1-024@1:q09', ['Lembro-me do nome dela.']],
+  ['pt-b1-033@1:q08', ['A casa dela é bem grande.']],
+  ['pt-b1-039@1:q03', ['foram', 'foi', 'é']]
 ]);
 // Returns whether the question's prompt gained a grammar form hint.
 function assertHintedQuestion(
@@ -115,11 +117,14 @@ function assertHintedQuestion(
     'near_misses',
     'holdout'
   ] as const) {
-    if (field === 'alternatives' && correctedAlternatives.has(before.id))
+    if (field === 'alternatives' && correctedAlternatives.has(before.id)) {
+      expect(question[field], `${question.id} ${field}`).toEqual(
+        correctedAlternatives.get(before.id)
+      );
       expect(question[field], `${question.id} ${field}`).not.toEqual(
         before[field]
       );
-    else
+    } else
       expect(question[field], `${question.id} ${field}`).toEqual(before[field]);
   }
   if (question.prompt === before.prompt) return false;
@@ -150,10 +155,20 @@ function assertHintRevision(revision: Lesson, earlier: Lesson) {
   const hinted = revised.filter((question, index) =>
     assertHintedQuestion(question, original[index], revision.version.id)
   ).length;
+  // A revision either names the grammar form in a holdout prompt or, for the
+  // listed skills, carries every listed answer correction of its skill.
+  const listed = [...correctedAlternatives.keys()].filter((key) =>
+    key.startsWith(`${id}@`)
+  );
   const corrected = original.filter((question) =>
     correctedAlternatives.has(question.id)
-  ).length;
-  expect(hinted + corrected, `${id} changes nothing`).toBeGreaterThan(0);
+  );
+  expect(
+    corrected.map((question) => question.id),
+    id
+  ).toEqual(listed);
+  if (listed.length === 0)
+    expect(hinted, `${id} changes no prompt`).toBeGreaterThan(0);
 }
 // Ids are unique across every version; prompts within each generation,
 // since a revision repeats its earlier version's prompts.
@@ -484,7 +499,7 @@ describe.each(files)('%s', (path) => {
   // answer depends on to a holdout prompt, as a trailing parenthesis (before
   // the colon when the prompt ends with one); nothing else about a question
   // or its lesson may change.
-  it('revises a lesson only by naming the grammar form in holdout prompts, and says so for the importer', () => {
+  it('revises a lesson only by naming the grammar form in holdout prompts or by the listed answer corrections, and says so for the importer', () => {
     // A later version with no earlier one beside it is a correction of a
     // version only databases hold; those are the listed legacy skills.
     for (const lesson of module.lessons.filter(
