@@ -50,9 +50,10 @@ function grammarDueCounts(
   }));
   for (const track of tracks) {
     for (const skill of track.skills) {
+      if (!skill.available) continue;
       const dueAt = skill.retention.dueAt;
-      if (!skill.available || dueAt === null || !Number.isFinite(dueAt))
-        continue;
+      if (dueAt === null) continue;
+      if (!Number.isFinite(dueAt)) continue;
       const index = dayIndex(dueAt, boundaries);
       if (index >= 0) counts[index].grammar += 1;
     }
