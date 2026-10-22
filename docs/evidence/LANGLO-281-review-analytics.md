@@ -35,14 +35,19 @@ Diagnostics contain an error category and validated request correlation ID,
 without exception messages or credential values.
 
 Before the fix, the new sign-out action and rendered-alert regressions failed
-(2 failed, 67 passed). After the fix, the three focused suites passed (70 tests).
+(2 failed, 67 passed). After the fix, the three focused suites passed (71 tests).
 
 The renamed flashcard integration test now freezes the clock and includes a
 card due at 2026-10-23 05:00 UTC: October 22's study day in Sao Paulo and October
 23's study day in UTC. Temporarily forcing the loader to UTC made this test
 fail with counts of 2 today and 2 tomorrow instead of 3 today and 1 tomorrow.
-The mutation was restored before the passing focused run. The test continues
-to check owner isolation, eligibility and unchanged due times.
+The final integration test explicitly runs identical card due times with saved
+Sao Paulo and UTC preferences, asserting those different counts. The SQLite
+analytics test also includes a card and grammar schedule at that boundary.
+Forcing UTC made both Sao Paulo tests fail; the mutation was restored before
+the passing focused run. The integration test continues to check owner
+isolation, eligibility and unchanged due times. The diagnostic spy observes
+the real logger instead of replacing its implementation.
 
 ## Synthetic browser capture
 
@@ -58,7 +63,7 @@ Runtime: Node `24.19.0`, npm `11.9.0`. The clean install used
 - `npm run check` — passed; 0 errors and 0 warnings.
 - `npm run lint` — passed.
 - `npm run format:check` — passed.
-- `npm test` — passed; 105 files and 1,839 tests.
+- `npm test` — passed; 105 files and 1,840 tests.
 - `npm run test:property` — passed; 6 files and 9 tests.
 - `npm run build` — passed.
 - `npm run test:e2e` — 141 passed, 1 failed against the built Node server

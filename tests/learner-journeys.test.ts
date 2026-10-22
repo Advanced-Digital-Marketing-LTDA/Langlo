@@ -208,42 +208,49 @@ async function setReviewAnalyticsDueTimes(
   });
 }
 
-it('counts only eligible owner flashcards using the saved local 04:00 study boundary', async () => {
-  vi.useFakeTimers({ toFake: ['Date'] });
-  vi.setSystemTime(new Date('2026-10-22T12:00:00.000Z'));
-  const timezone = 'America/Sao_Paulo';
-  const now = new Date();
-  await setTimezone(client, learner, timezone);
-  await seedReviewAnalyticsNotes();
-  const dates = await setReviewAnalyticsDueTimes(now, timezone);
-  const before = await client.execute(
-    'SELECT id, due_at FROM native_flashcards ORDER BY id'
-  );
+it.each([
+  { timezone: 'America/Sao_Paulo', today: 3, tomorrow: 1 },
+  { timezone: 'UTC', today: 2, tomorrow: 2 }
+])(
+  'counts only eligible owner flashcards at the saved $timezone 04:00 study boundary',
+  async ({ timezone, today, tomorrow }) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T12:00:00.000Z'));
+    const now = new Date();
+    await setTimezone(client, learner, timezone);
+    await seedReviewAnalyticsNotes();
+    const dates = await setReviewAnalyticsDueTimes(now, 'America/Sao_Paulo');
+    const before = await client.execute(
+      'SELECT id, due_at FROM native_flashcards ORDER BY id'
+    );
 
-  const dashboard = await dashboardLoad(event());
+    const dashboard = await dashboardLoad(event());
 
-  expect(dashboard).toMatchObject({
-    reviewDueByDay: [
-      { date: dates[0], grammar: 0, flashcards: 3, total: 3 },
-      { date: dates[1], grammar: 0, flashcards: 1, total: 1 },
-      ...dates.slice(2).map((date) => ({
-        date,
-        grammar: 0,
-        flashcards: 0,
-        total: 0
-      }))
-    ]
-  });
-  expect(
-    await client.execute('SELECT id, due_at FROM native_flashcards ORDER BY id')
-  ).toEqual(before);
-});
+    expect(dashboard).toMatchObject({
+      reviewDueByDay: [
+        { date: dates[0], grammar: 0, flashcards: today, total: today },
+        { date: dates[1], grammar: 0, flashcards: tomorrow, total: tomorrow },
+        ...dates.slice(2).map((date) => ({
+          date,
+          grammar: 0,
+          flashcards: 0,
+          total: 0
+        }))
+      ]
+    });
+    expect(
+      await client.execute(
+        'SELECT id, due_at FROM native_flashcards ORDER BY id'
+      )
+    ).toEqual(before);
+  }
+);
 
 it('reports a sign-out exception safely and returns a retryable failure', async () => {
   vi.spyOn(authRuntime, 'resolveAuth').mockRejectedValue(
     new Error('synthetic private credential must not be logged')
   );
-  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+  const warn = vi.spyOn(console, 'warn');
 
   expect(await dashboardActions.signOut(event())).toMatchObject({
     status: 503,

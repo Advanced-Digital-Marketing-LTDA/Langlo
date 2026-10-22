@@ -11,6 +11,7 @@ async function seedReviewAnalyticsDatabase(
   const dueCards = [
     ['note-1', boundaries[0].getTime() - 1],
     ['note-2', boundaries[0].getTime()],
+    ['note-boundary', boundaries[1].getTime() - 2 * 60 * 60 * 1000],
     ['note-3', boundaries[2].getTime()]
   ];
   await client.batch([
@@ -51,6 +52,10 @@ it('counts grammar schedules and SQLite flashcards by local study day', async ()
             retention: { dueAt: boundaries[0].getTime() - 1 }
           },
           { available: true, retention: { dueAt: boundaries[0].getTime() } },
+          {
+            available: true,
+            retention: { dueAt: boundaries[1].getTime() - 2 * 60 * 60 * 1000 }
+          },
           { available: true, retention: { dueAt: boundaries[1].getTime() } },
           { available: true, retention: { dueAt: boundaries[7].getTime() } },
           { available: false, retention: { dueAt: boundaries[0].getTime() } },
@@ -66,7 +71,7 @@ it('counts grammar schedules and SQLite flashcards by local study day', async ()
     );
 
     expect(days).toEqual([
-      { date: '2026-10-22', grammar: 2, flashcards: 2, total: 4 },
+      { date: '2026-10-22', grammar: 3, flashcards: 3, total: 6 },
       { date: '2026-10-23', grammar: 1, flashcards: 0, total: 1 },
       { date: '2026-10-24', grammar: 0, flashcards: 1, total: 1 },
       { date: '2026-10-25', grammar: 0, flashcards: 0, total: 0 },
