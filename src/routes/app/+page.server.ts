@@ -7,6 +7,9 @@ import { studyPage } from '../../lib/server/learner-api';
 import { loadProgress } from '../../lib/server/progress';
 import { unfinishedPractice } from '../../lib/server/practice';
 import { loadReviewDueByDay } from '../../lib/server/review-analytics';
+import { safeDiagnostic } from '../../lib/server/diagnostics';
+
+const signOutFailure = 'Sign out is temporarily unavailable. Try again.';
 
 export const load: PageServerLoad = async (event) => {
   // Learner data must be loaded with the session this returns, never with a
@@ -47,21 +50,30 @@ export const load: PageServerLoad = async (event) => {
 
 export const actions: Actions = {
   signOut: async (event) => {
-    const auth = event.locals.config
-      ? await resolveAuth(event.locals.config).catch(() => null)
-      : null;
-    if (!auth) {
-      return fail(503, { message: 'Accounts are not ready yet.' });
+    let response: Response;
+    try {
+      const auth = event.locals.config
+        ? await resolveAuth(event.locals.config)
+        : null;
+      if (!auth) {
+        return fail(503, { message: 'Accounts are not ready yet.' });
+      }
+      response = await auth.api.signOut({
+        headers: event.request.headers,
+        asResponse: true
+      });
+    } catch (error) {
+      console.warn(
+        JSON.stringify(
+          safeDiagnostic('auth', error, event.locals.correlationId)
+        )
+      );
+      return fail(503, { message: signOutFailure });
     }
-    const response = await auth.api
-      .signOut({ headers: event.request.headers, asResponse: true })
-      .catch(() => null);
-    if (!response?.ok) {
+    if (!response.ok) {
       // Report the outage honestly instead of redirecting as if the
       // credential was revoked; the cookie is kept so sign-out can retry.
-      return fail(503, {
-        message: 'Sign out is temporarily unavailable. Try again.'
-      });
+      return fail(503, { message: signOutFailure });
     }
     applyAuthCookies(event, response);
     redirect(303, '/login');

@@ -25,6 +25,25 @@ owner isolation, suspended/rejected cards, the seven-day window, unchanged card
 due times, and available versus unavailable or unscheduled grammar skills. The
 analytics unit test exercises its flashcard query against in-memory SQLite.
 
+## Review follow-up
+
+Caught auth-resolution and sign-out exceptions now emit the existing safe auth
+diagnostic and return a 503 retry message. The dashboard renders action failures
+as an alert beside the sign-out button. Failure paths retain the session cookie;
+successful sign-out still applies the auth response cookies before redirecting.
+Diagnostics contain an error category and validated request correlation ID,
+without exception messages or credential values.
+
+Before the fix, the new sign-out action and rendered-alert regressions failed
+(2 failed, 67 passed). After the fix, the three focused suites passed (70 tests).
+
+The renamed flashcard integration test now freezes the clock and includes a
+card due at 2026-10-23 05:00 UTC: October 22's study day in Sao Paulo and October
+23's study day in UTC. Temporarily forcing the loader to UTC made this test
+fail with counts of 2 today and 2 tomorrow instead of 3 today and 1 tomorrow.
+The mutation was restored before the passing focused run. The test continues
+to check owner isolation, eligibility and unchanged due times.
+
 ## Synthetic browser capture
 
 [Dashboard screenshot](LANGLO-281-review-analytics.png) shows one overdue
@@ -39,15 +58,25 @@ Runtime: Node `24.19.0`, npm `11.9.0`. The clean install used
 - `npm run check` — passed; 0 errors and 0 warnings.
 - `npm run lint` — passed.
 - `npm run format:check` — passed.
-- `npm test` — passed; 105 files and 1,837 tests.
+- `npm test` — passed; 105 files and 1,839 tests.
 - `npm run test:property` — passed; 6 files and 9 tests.
 - `npm run build` — passed.
-- `npm run test:e2e -- --config=<temporary port-4174 config>` — passed; 142
-  desktop/mobile tests against the built Node server with synthetic fixtures.
+- `npm run test:e2e` — 141 passed, 1 failed against the built Node server
+  with synthetic fixtures. The unchanged mobile map fast-exit timer test
+  failed at `tests/e2e/exercises.spec.ts:786` (`mapTimerPending` was true).
+  Desktop map fast-exit and both desktop/mobile sign-out flows passed.
 - `git diff --check` — passed.
 
-The default E2E port 4173 was already occupied, so the browser suite used a
-temporary config on port 4174. The temporary config was removed after the run.
+The follow-up browser run used the default port 4173. The initial implementation
+passed all 142 browser tests using a temporary port-4174 config because 4173 was
+then occupied. The same map timer assertion also failed in the PR workflow on
+the previous commit, while its push workflow passed. The map implementation and
+its browser test remain unchanged in this follow-up.
+
+An isolated recheck using `npm run test:e2e -- tests/e2e/exercises.spec.ts
+--grep 'freshly scrolled map' --repeat-each=2` produced 3 passes and 1 desktop
+failure at the same timer assertion. This confirms the failure is intermittent;
+the browser suite is not recorded as passing for this follow-up.
 
 The clean install reported two moderate npm audit findings; they were not
 investigated or changed in this task.

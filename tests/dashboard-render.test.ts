@@ -65,6 +65,18 @@ it('omits the Continue card when nothing is recommended', async () => {
   expect(html).toContain('Grammar mastery');
 });
 
+it('shows the sign-out failure as an alert with a retry button', async () => {
+  const html = await renderSvelte(page, {
+    data: data([]),
+    form: { message: 'Sign out is temporarily unavailable. Try again.' }
+  });
+  expect(html).toMatch(
+    /role="alert"[^>]*>\s*Sign out is temporarily unavailable\. Try again\./
+  );
+  expect(html).toContain('action="?/signOut"');
+  expect(html).toContain('Sign out</button>');
+});
+
 it('links dashboard topics to their language and selected map topic', async () => {
   const html = await renderSvelte(page, {
     data: data([

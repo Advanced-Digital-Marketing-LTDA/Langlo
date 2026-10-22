@@ -1,8 +1,8 @@
 <script lang="ts">
   import { navigating } from '$app/state';
-  import type { PageData } from './$types';
+  import type { ActionData, PageData } from './$types';
   import TrackCard from '../../lib/components/dashboard/TrackCard.svelte';
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head>
@@ -86,6 +86,7 @@
 {/if}
 
 <form method="POST" action="?/signOut">
+  {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
   <button type="submit">Sign out</button>
 </form>
 

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
@@ -78,7 +78,11 @@ import {
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
-import { load as dashboardLoad } from '../src/routes/app/+page.server';
+import {
+  actions as dashboardActions,
+  load as dashboardLoad
+} from '../src/routes/app/+page.server';
+import * as authRuntime from '../src/lib/server/auth-runtime';
 import { studyDayStart } from '../src/lib/server/study-days';
 
 const learner = testSession('learner-a');
@@ -95,6 +99,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
   close?.();
   await disposeFlashcardFixtures();
 });
@@ -117,6 +123,7 @@ function event(
     params: options.params ?? {},
     url: new URL(url),
     locals: {
+      correlationId: '12345678-1234-4123-8123-123456789abc',
       user: userId ? { id: userId } : null,
       session: userId ? { userId } : null,
       config: Object.hasOwn(options, 'config')
@@ -139,6 +146,7 @@ async function seedReviewAnalyticsNotes() {
   const notes = [
     { id: 'analytics-overdue', owner: learner, deck: 'analytics-deck-a' },
     { id: 'analytics-today', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-boundary', owner: learner, deck: 'analytics-deck-a' },
     { id: 'analytics-tomorrow', owner: learner, deck: 'analytics-deck-a' },
     { id: 'analytics-suspended', owner: learner, deck: 'analytics-deck-a' },
     { id: 'analytics-rejected', owner: learner, deck: 'analytics-deck-a' },
@@ -172,6 +180,7 @@ async function setReviewAnalyticsDueTimes(
   const dueTimes = [
     ['analytics-overdue', today.getTime() - 1],
     ['analytics-today', today.getTime()],
+    ['analytics-boundary', tomorrow.getTime() - 2 * 60 * 60 * 1000],
     ['analytics-tomorrow', tomorrow.getTime()],
     ['analytics-suspended', today.getTime()],
     ['analytics-rejected', today.getTime()],
@@ -199,7 +208,9 @@ async function setReviewAnalyticsDueTimes(
   });
 }
 
-it('loads owner-scoped daily review counts in the saved study timezone', async () => {
+it('counts only eligible owner flashcards using the saved local 04:00 study boundary', async () => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(new Date('2026-10-22T12:00:00.000Z'));
   const timezone = 'America/Sao_Paulo';
   const now = new Date();
   await setTimezone(client, learner, timezone);
@@ -213,7 +224,7 @@ it('loads owner-scoped daily review counts in the saved study timezone', async (
 
   expect(dashboard).toMatchObject({
     reviewDueByDay: [
-      { date: dates[0], grammar: 0, flashcards: 2, total: 2 },
+      { date: dates[0], grammar: 0, flashcards: 3, total: 3 },
       { date: dates[1], grammar: 0, flashcards: 1, total: 1 },
       ...dates.slice(2).map((date) => ({
         date,
@@ -226,6 +237,25 @@ it('loads owner-scoped daily review counts in the saved study timezone', async (
   expect(
     await client.execute('SELECT id, due_at FROM native_flashcards ORDER BY id')
   ).toEqual(before);
+});
+
+it('reports a sign-out exception safely and returns a retryable failure', async () => {
+  vi.spyOn(authRuntime, 'resolveAuth').mockRejectedValue(
+    new Error('synthetic private credential must not be logged')
+  );
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+
+  expect(await dashboardActions.signOut(event())).toMatchObject({
+    status: 503,
+    data: { message: 'Sign out is temporarily unavailable. Try again.' }
+  });
+  expect(warn).toHaveBeenCalledExactlyOnceWith(
+    JSON.stringify({
+      operation: 'auth',
+      kind: 'unexpected',
+      correlationId: '12345678-1234-4123-8123-123456789abc'
+    })
+  );
 });
 
 const enrollFields = {
