@@ -4,12 +4,13 @@
 
 ## Problem
 
-`npm run content:import -- --apply` against the production database stopped with `CONTENT_CONFLICT: version pt-b1-024@1`. The B1 review follow-ups (PR 144) changed the accepted alternatives of four questions across the three skills in place (`pt-b1-024@1:q07` and `q09`, `pt-b1-033@1:q08`, `pt-b1-039@1:q03`). Imported versions are immutable, so the importer refuses a package whose `@1` differs from the stored one.
+`npm run content:import -- --apply`, run by the repository owner against the production database (this branch never touched it), stopped with `CONTENT_CONFLICT: version pt-b1-024@1`. The B1 review follow-ups (PR 144) changed the accepted alternatives of four questions across the three skills in place (`pt-b1-024@1:q07` and `q09`, `pt-b1-033@1:q08`, `pt-b1-039@1:q03`). Imported versions are immutable, so the importer refuses a package whose `@1` differs from the stored one.
 
 ## Change
 
 - `@1` of the three skills is back to its 1.3.0 content, which is identical in 1.2.0 and 1.3.0 for these skills (checked with the importer's version fingerprint).
 - Each skill gains an `@2` with the corrected alternatives, every question `same` and continuing its `@1` question (`docs/content-update.md`). The corrected lists: `pt-b1-024@2:q07` (an accepted alternative removed), `q09`, `pt-b1-033@2:q08`, `pt-b1-039@2:q03`. Lesson text is unchanged.
+- `same` is used because each correction fixes an accepted answer or a wrong option and does not change what the question asks (`docs/content-update.md`: the question keeps its meaning); a learner's earlier answers keep their stored outcome and the question keeps its lineage.
 - The curriculum version stays 1.4.0: nothing past 1.3.0 had been imported, the new B2 skills make it a minor bump, and `same` questions fit it.
 - `tests/curriculum-modules.test.ts` pins the corrected list of each of the four questions (`correctedAlternatives`); a revision must either add a grammar-form hint to a holdout prompt or carry exactly the listed corrections of its skill. `tests/content-import-script.test.ts` counts 55 revised lessons and has a regression test: a package whose `pt-b1-024@1` was edited in place is refused with `CONTENT_CONFLICT version pt-b1-024@1` and writes nothing, and the restored package then imports over the same database.
 
