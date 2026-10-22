@@ -11,7 +11,7 @@
 - Current storage: actual disposable local file-backed libSQL; only synthetic identities and records
 - Current UI: original responsive public foundation shell; private routes deny access before auth is implemented
 - Production/external-write limits: no credentials, live calls, spending, real accounts, SSH, DNS, desktop, deployment or production DB access
-- Public source: Bonobo791/Langlo and PolyForm Shield 1.0.0 selected; license-file implementation, public hygiene and publication remain pending
+- Public source: Bonobo791/Langlo and PolyForm Shield 1.0.0 selected; license file implemented (`LICENSE`, `COMMERCIAL.md`); public hygiene and publication remain pending
 
 ## Compatibility ruling
 
@@ -32,7 +32,7 @@ Exact setup contracts and evidence are expanded in bootstrap-tasks.md. Final loc
 | C05 errors                                  | Verified for this slice      | Safe correlation and allowlisted diagnostics; built invalid-config test evidence T008            |
 | C06 tests                                   | Verified for current rules   | Ordinary examples + meaningful config properties; actual DB tests                                |
 | C07 CI                                      | Pending remote observation   | Read-only pinned workflow, no secrets; no run or branch protection claim                         |
-| C08 public reuse                            | Pending                      | Implement selected license and complete public hygiene review; no publication                    |
+| C08 public reuse                            | Pending                      | Selected license implemented; complete public hygiene review; no publication                     |
 | C09 handoff                                 | In progress                  | README, exact evidence and remaining gates                                                       |
 | M01–M03 public marketing                    | Not applicable in this slice | Minimal public shell only; full metadata policy belongs later design/release                     |
 | A01 boundaries                              | Verified for this slice      | Server-only config/schema and deny-by-default private routes                                     |
