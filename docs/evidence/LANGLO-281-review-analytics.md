@@ -22,7 +22,8 @@ rendered. The new dashboard-loader fixture test returned no `reviewDueByDay`
 data. After implementation, the focused dashboard, loader, and analytics tests
 passed (68 tests). The fixture covers timezone day boundaries, overdue cards,
 owner isolation, suspended/rejected cards, the seven-day window, unchanged card
-due times, and available versus unavailable or unscheduled grammar skills.
+due times, and available versus unavailable or unscheduled grammar skills. The
+analytics unit test exercises its flashcard query against in-memory SQLite.
 
 ## Synthetic browser capture
 
@@ -41,10 +42,12 @@ Runtime: Node `24.19.0`, npm `11.9.0`. The clean install used
 - `npm test` — passed; 105 files and 1,837 tests.
 - `npm run test:property` — passed; 6 files and 9 tests.
 - `npm run build` — passed.
-- `npm run test:e2e` — passed; 142 desktop/mobile tests against the built Node
-  server with synthetic fixtures.
-- Focused dashboard browser capture — passed; 1 test.
+- `npm run test:e2e -- --config=<temporary port-4174 config>` — passed; 142
+  desktop/mobile tests against the built Node server with synthetic fixtures.
 - `git diff --check` — passed.
+
+The default E2E port 4173 was already occupied, so the browser suite used a
+temporary config on port 4174. The temporary config was removed after the run.
 
 The clean install reported two moderate npm audit findings; they were not
 investigated or changed in this task.

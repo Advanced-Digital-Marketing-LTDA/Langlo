@@ -130,19 +130,12 @@ function event(
   } as never;
 }
 
-it('loads owner-scoped daily review counts in the saved study timezone', async () => {
-  const timezone = 'America/Sao_Paulo';
-  const now = new Date();
-  const today = studyDayStart(now, timezone);
-  const tomorrow = studyDayStart(now, timezone, 1);
-  const outside = studyDayStart(now, timezone, 7);
-  await setTimezone(client, learner, timezone);
+async function seedReviewAnalyticsNotes() {
   await createDeck(client, learner, {
     id: 'analytics-deck-a',
     name: 'Analytics'
   });
   await createDeck(client, other, { id: 'analytics-deck-b', name: 'Other' });
-
   const notes = [
     { id: 'analytics-overdue', owner: learner, deck: 'analytics-deck-a' },
     { id: 'analytics-today', owner: learner, deck: 'analytics-deck-a' },
@@ -167,7 +160,16 @@ it('loads owner-scoped daily review counts in the saved study timezone', async (
     sql: 'UPDATE native_flashcards SET suspended = 1 WHERE note_id = ?',
     args: ['analytics-suspended']
   });
-  for (const [id, dueAt] of [
+}
+
+async function setReviewAnalyticsDueTimes(
+  now: Date,
+  timezone: string
+): Promise<string[]> {
+  const today = studyDayStart(now, timezone);
+  const tomorrow = studyDayStart(now, timezone, 1);
+  const outside = studyDayStart(now, timezone, 7);
+  const dueTimes = [
     ['analytics-overdue', today.getTime() - 1],
     ['analytics-today', today.getTime()],
     ['analytics-tomorrow', tomorrow.getTime()],
@@ -175,26 +177,15 @@ it('loads owner-scoped daily review counts in the saved study timezone', async (
     ['analytics-rejected', today.getTime()],
     ['analytics-other-owner', today.getTime()],
     ['analytics-outside', outside.getTime()]
-  ] as const) {
+  ] as const;
+  for (const [id, dueAt] of dueTimes) {
     const owner = id === 'analytics-other-owner' ? other : learner;
     await client.execute({
       sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ? AND owner_id = ?',
       args: [dueAt, id, owner.userId]
     });
   }
-
-  const before = await client.execute(
-    'SELECT id, due_at FROM native_flashcards ORDER BY id'
-  );
-  const dashboard = (await dashboardLoad(event())) as unknown as {
-    reviewDueByDay: {
-      date: string;
-      grammar: number;
-      flashcards: number;
-      total: number;
-    }[];
-  };
-  const dates = Array.from({ length: 7 }, (_, index) => {
+  return Array.from({ length: 7 }, (_, index) => {
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: timezone,
       year: 'numeric',
@@ -206,16 +197,32 @@ it('loads owner-scoped daily review counts in the saved study timezone', async (
     );
     return `${date.year}-${date.month}-${date.day}`;
   });
-  expect(dashboard.reviewDueByDay).toEqual([
-    { date: dates[0], grammar: 0, flashcards: 2, total: 2 },
-    { date: dates[1], grammar: 0, flashcards: 1, total: 1 },
-    ...dates.slice(2).map((date) => ({
-      date,
-      grammar: 0,
-      flashcards: 0,
-      total: 0
-    }))
-  ]);
+}
+
+it('loads owner-scoped daily review counts in the saved study timezone', async () => {
+  const timezone = 'America/Sao_Paulo';
+  const now = new Date();
+  await setTimezone(client, learner, timezone);
+  await seedReviewAnalyticsNotes();
+  const dates = await setReviewAnalyticsDueTimes(now, timezone);
+  const before = await client.execute(
+    'SELECT id, due_at FROM native_flashcards ORDER BY id'
+  );
+
+  const dashboard = await dashboardLoad(event());
+
+  expect(dashboard).toMatchObject({
+    reviewDueByDay: [
+      { date: dates[0], grammar: 0, flashcards: 2, total: 2 },
+      { date: dates[1], grammar: 0, flashcards: 1, total: 1 },
+      ...dates.slice(2).map((date) => ({
+        date,
+        grammar: 0,
+        flashcards: 0,
+        total: 0
+      }))
+    ]
+  });
   expect(
     await client.execute('SELECT id, due_at FROM native_flashcards ORDER BY id')
   ).toEqual(before);
