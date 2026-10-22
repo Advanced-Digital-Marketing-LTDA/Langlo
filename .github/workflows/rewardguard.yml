@@ -24,7 +24,7 @@ jobs:
 
       - uses: actions/setup-node@v7   # for the Claude Code CLI
         with:
-          node-version: 22
+          node-version: 24
 
       - uses: Advanced-Digital-Marketing-LTDA/reward-hacking-checker@v0.1.0
         with:
