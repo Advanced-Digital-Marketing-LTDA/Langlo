@@ -53,10 +53,13 @@ existing rows while preserving their values.
   suite passed 8 files and 192 tests after restoring `errorName`, tightening the
   malformed-response and configuration assertions, and covering untrusted
   accepted answers plus usage recording for ties.
+- Safe-log coverage: the focused fallback/adapter run passed 2 files and 40
+  tests, including non-Error usage failures and a check that their details are
+  not emitted.
 - `npm run check`: passed with zero errors and warnings.
 - `npm run lint` and `npm run format:check`: passed.
 - `drizzle-kit check`: passed.
-- `npm test`: passed, 105 files and 1,844 tests.
+- `npm test`: passed, 105 files and 1,845 tests.
 - `npm run test:property`: passed, 6 files and 9 tests.
 - `npm run build`: passed.
 - `npm run test:e2e`: passed, 142 desktop/mobile tests against the built Node

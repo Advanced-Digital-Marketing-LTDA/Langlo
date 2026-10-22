@@ -272,7 +272,7 @@ describe('running the fallback', () => {
     expect(recorded).toEqual([{ inputTokens: 120, outputTokens: 12 }]);
   });
 
-  it('keeps the verdict and logs loudly when the usage write fails', async () => {
+  it('keeps the verdict and logs a safe error type when usage recording fails', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const usage: FallbackUsage = {
       reserve: vi.fn(async () => true),
@@ -293,6 +293,31 @@ describe('running the fallback', () => {
       errorName: 'Error'
     });
     expect(String(error.mock.calls[0][0])).not.toContain('disk full');
+    error.mockRestore();
+  });
+
+  it('uses a content-free unknown name for non-Error usage failures', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const usage: FallbackUsage = {
+      reserve: vi.fn(async () => true),
+      record: vi.fn(async () => {
+        throw { message: 'disk full' };
+      })
+    };
+    const provider = vi.fn(async () => systemOneResponse(0.9));
+    await expect(evaluateFallback(input, provider, usage)).resolves.toEqual({
+      outcome: 'correct',
+      reason: 'answered',
+      evaluated: true
+    });
+    const log = String(error.mock.calls[0][0]);
+    expect(JSON.parse(log)).toEqual({
+      level: 'error',
+      operation: 'ai-fallback',
+      reason: 'usage-record-failed',
+      errorName: 'unknown'
+    });
+    expect(log).not.toContain('disk full');
     error.mockRestore();
   });
 });
