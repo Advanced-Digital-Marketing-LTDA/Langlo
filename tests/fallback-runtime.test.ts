@@ -18,7 +18,7 @@ describe('fallback runtime wiring', () => {
   it('is on when a key is set', () => {
     const config = {
       typesafeApiKey: 'k'.repeat(24)
-    } as unknown as Parameters<typeof fallbackEvaluator>[1];
+    } satisfies NonNullable<Parameters<typeof fallbackEvaluator>[1]>;
     expect(typeof fallbackEvaluator(client, config)).toBe('function');
   });
 
@@ -26,7 +26,7 @@ describe('fallback runtime wiring', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const config = {
       typesafeApiKeyError: new ConfigError('TYPESAFE_API_KEY')
-    } as unknown as Parameters<typeof fallbackEvaluator>[1];
+    } satisfies NonNullable<Parameters<typeof fallbackEvaluator>[1]>;
     expect(fallbackEvaluator(client, config)).toBeUndefined();
     expect(error).toHaveBeenCalledOnce();
     expect(JSON.parse(String(error.mock.calls[0][0]))).toEqual({

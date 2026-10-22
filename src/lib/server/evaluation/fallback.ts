@@ -190,12 +190,13 @@ export async function evaluateFallback(
     // Keep an already returned verdict if its usage counter write fails.
     try {
       await usage.record(decision.usage);
-    } catch {
+    } catch (error) {
       console.error(
         JSON.stringify({
           level: 'error',
           operation: 'ai-fallback',
-          reason: 'usage-record-failed'
+          reason: 'usage-record-failed',
+          errorName: error instanceof Error ? error.name : 'unknown'
         })
       );
     }

@@ -21,6 +21,7 @@ export function typesafeJev(
       });
     } catch {
       if (signal.aborted) throw signal.reason;
+      // Keep provider details out of logs; callers only need the network failure reason.
       throw new ProviderError('network');
     }
     if (!response.ok) throw new ProviderError(response.status);
@@ -28,6 +29,7 @@ export function typesafeJev(
       return (await response.json()) as unknown;
     } catch {
       if (signal.aborted) throw signal.reason;
+      // The evaluator maps an unreadable success body to malformed and uncertain.
       return null;
     }
   };

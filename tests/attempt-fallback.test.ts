@@ -138,7 +138,7 @@ describe('AI fallback for unmatched typed answers', () => {
     expect(fallback).toHaveBeenCalledOnce();
   });
 
-  it('records an uncertain verdict without adding mastery evidence', async () => {
+  it('records a provider tie for untrusted learner text without mastery evidence', async () => {
     const evidence = await count('skill_evidence');
     const fallback = vi.fn(async (): Promise<FallbackResult> => ({
       outcome: 'uncertain',

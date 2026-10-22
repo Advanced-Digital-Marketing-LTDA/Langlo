@@ -594,9 +594,17 @@ describe('mistake-card editing and rejection', () => {
     try {
       // The prepared verdict is newer, but the Jev verdict is the one the
       // results summary counts, so it also decides draft eligibility.
-      await db.client.execute(
-        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('evaluation-fallback', 'learner-a', 'attempt-a', 'jev-1', 'jev-rubric-1', 'correct', unixepoch() * 1000 - 60000)"
-      );
+      await db.client.execute({
+        sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, unixepoch() * 1000 - 60000)',
+        args: [
+          'evaluation-fallback',
+          'learner-a',
+          'attempt-a',
+          'jev-1',
+          'jev-rubric-1',
+          'correct'
+        ]
+      });
       await expect(
         createMistakeDraft(db.client, learner, {
           attemptId,

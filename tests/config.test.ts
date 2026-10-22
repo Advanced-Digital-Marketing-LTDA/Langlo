@@ -197,18 +197,16 @@ describe('TypeSafe API key', () => {
     BETTER_AUTH_SECRET: 'synthetic-secret-synthetic-secret-0000'
   };
   it('is optional', () => {
-    expect(parseRuntimeConfig(enabled)).not.toHaveProperty('typesafeApiKey');
+    expect(parseRuntimeConfig(enabled).typesafeApiKey).toBeUndefined();
     expect(
-      parseRuntimeConfig({ ...enabled, TYPESAFE_API_KEY: '' })
-    ).not.toHaveProperty('typesafeApiKey');
+      parseRuntimeConfig({ ...enabled, TYPESAFE_API_KEY: '' }).typesafeApiKey
+    ).toBeUndefined();
   });
   it('is kept when set', () => {
     const key = syntheticKey;
     expect(
-      parseRuntimeConfig({ ...enabled, TYPESAFE_API_KEY: key })
-    ).toMatchObject({
-      typesafeApiKey: key
-    });
+      parseRuntimeConfig({ ...enabled, TYPESAFE_API_KEY: key }).typesafeApiKey
+    ).toBe(key);
   });
   it.each([
     ` ${syntheticKey}`,
@@ -221,20 +219,19 @@ describe('TypeSafe API key', () => {
         ...enabled,
         TYPESAFE_API_KEY: value
       });
-      expect(config).toMatchObject({
-        typesafeApiKeyError: {
-          message: 'Invalid TYPESAFE_API_KEY',
-          variable: 'TYPESAFE_API_KEY'
-        }
-      });
-      expect(config).not.toHaveProperty('typesafeApiKey');
+      expect(config.typesafeApiKeyError).toBeInstanceOf(ConfigError);
+      expect(config.typesafeApiKeyError?.message).toBe(
+        'Invalid TYPESAFE_API_KEY'
+      );
+      expect(config.typesafeApiKeyError?.variable).toBe('TYPESAFE_API_KEY');
+      expect(config.typesafeApiKey).toBeUndefined();
       expect(config.dataEnabled).toBe(true);
       expect(JSON.stringify(config)).not.toContain(value);
     }
   );
   it('is not read while data is disabled', () => {
     expect(
-      parseRuntimeConfig({ TYPESAFE_API_KEY: 'short' })
-    ).not.toHaveProperty('typesafeApiKeyError');
+      parseRuntimeConfig({ TYPESAFE_API_KEY: 'short' }).typesafeApiKeyError
+    ).toBeUndefined();
   });
 });

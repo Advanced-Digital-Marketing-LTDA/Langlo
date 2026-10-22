@@ -492,14 +492,36 @@ describe('practice sessions', () => {
   });
 
   it('counts the fallback verdict over the preliminary one written in the same second', async () => {
-    const stamp = 'unixepoch() * 1000 + 120000';
+    const stamp = Date.now() + 120_000;
     await client.batch(
       [
         `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-f', 'learner-a', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-attempt-f', 'assisted', 'un')`,
         // The preliminary row's id sorts after the fallback row's id, so an
         // id tie-break alone would pick the wrong one.
-        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('zzz-prepared', 'learner-a', 'attempt-f', 'prepared-1', 'content-v1', 'uncertain', ${stamp})`,
-        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('aaa-fallback', 'learner-a', 'attempt-f', 'jev-1', 'jev-rubric-1:content-v1', 'correct', ${stamp})`
+        {
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            'zzz-prepared',
+            'learner-a',
+            'attempt-f',
+            'prepared-1',
+            'content-v1',
+            'uncertain',
+            stamp
+          ]
+        },
+        {
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            'aaa-fallback',
+            'learner-a',
+            'attempt-f',
+            'jev-1',
+            'jev-rubric-1:content-v1',
+            'correct',
+            stamp
+          ]
+        }
       ],
       'write'
     );
