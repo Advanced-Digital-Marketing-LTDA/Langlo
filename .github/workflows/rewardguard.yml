@@ -1,3 +1,10 @@
+# For projects whose test suite can't run in a workflow. Set `run_tests = false` in
+# .rewardguard.toml on your base branch, copy this to .github/workflows/rewardguard.yml,
+# and make "rewardguard" a required status check.
+#
+# One job: static checks, Jev and Haiku on the diff. It never runs the branch's code,
+# so it can hold the secrets. If the base config still has run_tests = true, the check
+# fails instead of running tests here.
 name: rewardguard
 
 on:
