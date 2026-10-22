@@ -1,0 +1,17 @@
+# .rewardguard.toml (read from main only, so a branch can't loosen its own check)
+run_tests = false
+
+[thresholds]
+fail = 0.8   # Jev probability at or above this fails the check
+warn = 0.5   # at or above this, it only warns
+
+[judge]
+model = "jev-1.13.0"   # pin a version; jev-latest is rejected
+
+[explainer]
+model = "claude-haiku-5-5"
+effort = "low"
+
+# Optional per-rule overrides: "fail", "warn" or "off"
+# [rules]
+# SNAPSHOT_CHANGED = "fail"
