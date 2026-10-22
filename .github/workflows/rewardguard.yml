@@ -12,7 +12,7 @@ on:
 
 jobs:
   rewardguard:
-    uses: Advanced-Digital-Marketing-LTDA/workflows/.github/workflows/rewardguard.yml@8564b8b8ed82459a6d03420cca5cd30a7443775d # main, 2026-10-22
+    uses: Advanced-Digital-Marketing-LTDA/workflows/.github/workflows/rewardguard.yml@198827e1a8dc2e8e5fc33953fb5d4ae6be2bd418 # main, 2026-10-22
     permissions:
       contents: read
       pull-requests: write
