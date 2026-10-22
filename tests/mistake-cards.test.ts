@@ -47,7 +47,7 @@ const refusalCases = [
   {
     name: 'AI refusal',
     change:
-      "UPDATE evaluations SET evaluator_version = 'decisions-1', outcome = 'uncertain'",
+      "UPDATE evaluations SET evaluator_version = 'decisions-1', rubric_version = 'fallback-rubric-1:content-v1', outcome = 'uncertain'",
     code: 'NOT_ELIGIBLE'
   },
   {
@@ -626,7 +626,7 @@ describe('mistake-card editing and rejection', () => {
           'learner-a',
           'attempt-a',
           'jev-1',
-          'jev-rubric-1',
+          'jev-rubric-1:content-v1',
           'correct'
         ]
       });
@@ -640,6 +640,36 @@ describe('mistake-card editing and rejection', () => {
         await listMistakeCandidates(db.client, learner, 'study-a')
       ).toEqual([]);
       expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+    } finally {
+      db.close();
+    }
+  });
+
+  it('uses a matching historical Decisions verdict for mistake eligibility', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.execute(
+        "UPDATE evaluations SET outcome = 'correct' WHERE attempt_id = 'attempt-a'"
+      );
+      await db.client.batch(
+        [
+          "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-history', 'learner-a', 'attempt-a', 'decisions-1', 'fallback-rubric-1:content-v1', 'incorrect', unixepoch() * 1000 - 120000)",
+          "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-wrong-rubric', 'learner-a', 'attempt-a', 'decisions-1', 'old-rubric:content-v1', 'correct', unixepoch() * 1000 + 120000)"
+        ],
+        'write'
+      );
+
+      expect(
+        (await listMistakeCandidates(db.client, learner, 'study-a')).map(
+          (candidate) => candidate.attemptId
+        )
+      ).toContain(attemptId);
+      await expect(
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'basic'
+        })
+      ).resolves.toMatchObject({ status: 'draft' });
     } finally {
       db.close();
     }

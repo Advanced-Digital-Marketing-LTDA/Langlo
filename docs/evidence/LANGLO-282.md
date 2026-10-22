@@ -79,6 +79,21 @@ existing rows while preserving their values.
   server using synthetic fixtures, with no failed, flaky or skipped tests.
 - Dependencies were installed with pinned npm 11.9.0 and `--ignore-scripts`.
 
+### Rubric-matching follow-up
+
+Practice summaries and mistake-card eligibility now require the exact rubric and
+content-version pair for Jev, historical Decisions and prepared evaluations.
+A later historical row with an unrelated rubric cannot override valid feedback.
+The single correctness question also explicitly ignores learner requests to
+change the judgment and grades the literal answer against the exercise.
+
+The two new matching-rubric regressions failed before the local selector fix.
+After transferring the completed change onto PR head `61c4d291`, six focused
+provider, practice, card, mastery and retention suites passed 184 tests. An
+existing Jev fixture required its content-version suffix to represent a valid
+current evaluation. Type checking and lint passed. This is focused local evidence;
+full validation and the next hosted checks remain separate.
+
 ## Pending acceptance
 
 No TypeSafe credentials or real provider calls were used. The endpoint, Jev

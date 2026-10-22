@@ -491,6 +491,26 @@ describe('practice sessions', () => {
     ).rejects.toMatchObject({ code: 'INVALID_SUBMISSION_KEY' });
   });
 
+  it('uses a matching historical Decisions verdict ahead of prepared feedback', async () => {
+    const before = await practiceSummary(client, learner, 'study-a');
+    await client.batch(
+      [
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-history', 'learner-a', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-history', 'assisted', 'un')",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('prepared-history', 'learner-a', 'attempt-history', 'prepared-1', 'content-v1', 'incorrect', unixepoch() * 1000 + 120000)",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-history', 'learner-a', 'attempt-history', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct', unixepoch() * 1000)",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-wrong-rubric', 'learner-a', 'attempt-history', 'decisions-1', 'old-rubric:content-v1', 'incorrect', unixepoch() * 1000 + 180000)"
+      ],
+      'write'
+    );
+
+    const summary = await practiceSummary(client, learner, 'study-a');
+    expect(summary).toMatchObject({
+      answered: before.answered + 1,
+      correct: before.correct + 1,
+      incorrect: before.incorrect
+    });
+  });
+
   it('counts the fallback verdict over the preliminary one written in the same second', async () => {
     const stamp = Date.now() + 120_000;
     await client.batch(

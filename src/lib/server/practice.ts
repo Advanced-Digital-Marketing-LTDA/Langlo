@@ -4,7 +4,8 @@ import type { LearnerSession } from './learner-session';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
-  HISTORICAL_FALLBACK_EVALUATOR_VERSION
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
 import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
 import { StudyError } from './study-error';
@@ -468,11 +469,21 @@ export async function practiceSummary(
   const attempts = await client.execute({
     sql: `SELECT a.skill_id,
         (SELECT e.outcome FROM evaluations e WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
+          AND CASE e.evaluator_version
+            WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+            WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+            WHEN ? THEN e.rubric_version = a.content_version_id
+            ELSE 1 END
           ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END,
             e.created_at DESC, e.id DESC LIMIT 1) AS outcome
       FROM attempts a WHERE a.study_session_id = ? AND a.owner_id = ?
       ORDER BY a.created_at, a.id`,
     args: [
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+      HISTORICAL_FALLBACK_RUBRIC_VERSION,
+      PREPARED_EVALUATOR_VERSION,
       FALLBACK_EVALUATOR_VERSION,
       HISTORICAL_FALLBACK_EVALUATOR_VERSION,
       PREPARED_EVALUATOR_VERSION,

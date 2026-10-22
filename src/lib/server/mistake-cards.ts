@@ -3,7 +3,9 @@ import type { Client, Row } from '@libsql/client';
 import { createSourceId } from './db/source-id';
 import {
   FALLBACK_EVALUATOR_VERSION,
-  HISTORICAL_FALLBACK_EVALUATOR_VERSION
+  FALLBACK_RUBRIC_VERSION,
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
 import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
 import {
@@ -28,8 +30,24 @@ const clozeNumberPattern = /\{\{c\d+::/u;
 // (see practiceSummary). Card eligibility uses the same rule.
 const evaluationOutcome = `(SELECT e.outcome FROM evaluations e
   WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
+    AND CASE e.evaluator_version
+      WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+      WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+      WHEN ? THEN e.rubric_version = a.content_version_id
+      ELSE 1 END
   ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END,
     e.created_at DESC, e.id DESC LIMIT 1)`;
+
+const evaluationOrderArgs = [
+  FALLBACK_EVALUATOR_VERSION,
+  FALLBACK_RUBRIC_VERSION,
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_RUBRIC_VERSION,
+  PREPARED_EVALUATOR_VERSION,
+  FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+  PREPARED_EVALUATOR_VERSION
+];
 
 type DraftFormat = 'basic' | 'cloze';
 
@@ -105,13 +123,7 @@ async function readMistake(
         ON lt.content_version_id = a.content_version_id
         AND lt.explanation_language = en.explanation_language
       WHERE a.id = ? AND a.owner_id = ?`,
-    args: [
-      FALLBACK_EVALUATOR_VERSION,
-      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
-      PREPARED_EVALUATOR_VERSION,
-      attemptId,
-      learner.userId
-    ]
+    args: [...evaluationOrderArgs, attemptId, learner.userId]
   });
   const row = result.rows[0];
   if (!row) throw new FlashcardError('NOT_FOUND');
@@ -362,13 +374,7 @@ export async function listMistakeCandidates(
         AND v.status <> 'quarantined'
         AND ${evaluationOutcome} = 'incorrect'
       ORDER BY a.created_at, a.id`,
-    args: [
-      studySessionId,
-      learner.userId,
-      FALLBACK_EVALUATOR_VERSION,
-      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
-      PREPARED_EVALUATOR_VERSION
-    ]
+    args: [studySessionId, learner.userId, ...evaluationOrderArgs]
   });
   return result.rows.map(candidateFrom);
 }
