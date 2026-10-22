@@ -28,17 +28,18 @@ monthly cap remain uncertain. The existing 100,000-call UTC-month cap and
 10-second timeout are retained, as are content-free fallback logs.
 
 The evaluator/rubric versions are `jev-1` and `jev-rubric-1`; the grammar policy
-is now `grammar-2` because its recognized fallback source changed. The existing
-`feedbackEvaluation` selector accepts only the current evaluator and exact
-content-version rubric, so historical `decisions-1` rows remain stored but do
-not qualify as current Jev evidence. Practice summaries and mistake-card checks
-still prefer those historical verdicts over preliminary prepared uncertainty;
-the mastery selector remains Jev-only. The mastery and practice/card regressions
-cover those separate policies. The previous separate injection-score question
-is removed because this request asks only whether the answer is correct; state
-remains untrusted data, and a request test ensures learner text stays out of
-question instructions. Existing `decisions` usage counters remain historical
-data.
+is now `grammar-2` because its recognized fallback source changed. The
+`feedbackEvaluation` evidence selector accepts supported Jev or prepared
+evaluations and excludes historical Decisions rows. User-facing assessment and
+practice feedback recognizes a Decisions verdict only with its matching
+historical rubric; practice summaries and mistake-card checks also rank that
+saved verdict ahead of prepared uncertainty. These display and card-selection
+paths do not change current mastery evidence. Regressions cover assessment,
+practice and card feedback plus the mastery exclusion. The previous separate
+injection-score question is removed because this request asks only whether the
+answer is correct; state remains untrusted data, and a request test ensures
+learner text stays out of question instructions. Existing `decisions` usage
+counters remain historical data.
 Forward migration `0033_typesafe_ai_usage` widens the usage API check and copies
 existing rows while preserving their values.
 
@@ -65,10 +66,13 @@ existing rows while preserving their values.
   failures and 39 passes. Afterward, they passed 41/41; invalid JSON now raises
   a typed `malformed` provider error and remains uncertain without exposing body
   details.
+- Before the assessment-feedback fix, its focused suite reported 1 failure and
+  38 passes. After the change, the six assessment, provider, practice, card and
+  mastery suites passed 189/189.
 - `npm run check`: passed with zero errors and warnings.
 - `npm run lint` and `npm run format:check`: passed.
 - `drizzle-kit check`: passed.
-- `npm test`: passed, 105 files and 1,848 tests.
+- `npm test`: passed, 105 files and 1,849 tests.
 - `npm run test:property`: passed, 6 files and 9 tests.
 - `npm run build`: passed.
 - `npm run test:e2e`: passed, 142 desktop/mobile tests against the built Node

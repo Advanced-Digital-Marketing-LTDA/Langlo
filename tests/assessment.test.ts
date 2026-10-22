@@ -1118,6 +1118,37 @@ describe('saved placement plan', () => {
     ).toHaveLength(0);
   });
 
+  it('preserves a historical Decisions verdict in assessment result feedback', async () => {
+    const { id } = await start();
+    await answer(id, 'fr-a1-001@1:q2', '', true);
+    const historical = await answer(id, 'fr-a1-002@1:q1', 'On est ici.');
+    await answer(id, 'fr-a1-003@1:q1', 'es');
+    await client.execute(
+      "UPDATE evaluations SET outcome = 'uncertain' WHERE attempt_id = ?",
+      [historical.id]
+    );
+    await client.execute({
+      sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [
+        'historical-decisions-evaluation',
+        learner.userId,
+        historical.id,
+        'decisions-1',
+        'fallback-rubric-1:fr-a1-002@1',
+        'correct'
+      ]
+    });
+
+    const results = await assessmentResults(client, learner, id);
+    expect(
+      results.items.find((item) => item.attemptId === historical.id)
+    ).toMatchObject({ outcome: 'correct' });
+    expect(results).toMatchObject({
+      counts: { correct: 2, incorrect: 0, uncertain: 1 },
+      foundationGaps: ['fr-a1-001']
+    });
+  });
+
   it('checks quarantine again before a displayed question is submitted', async () => {
     const { id } = await start();
     await getAssessment(client, learner, id);

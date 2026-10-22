@@ -4,6 +4,7 @@ import type { ExerciseFormat } from '../../components/exercises/answer';
 export const FALLBACK_EVALUATOR_VERSION = 'jev-1';
 /** Retained for historical learner feedback; not current mastery evidence. */
 export const HISTORICAL_FALLBACK_EVALUATOR_VERSION = 'decisions-1';
+export const HISTORICAL_FALLBACK_RUBRIC_VERSION = 'fallback-rubric-1';
 /** A settled fallback without a usable verdict does not qualify as evidence. */
 export const FALLBACK_SETTLED_EVALUATOR_VERSION = 'jev-1-no-verdict';
 /** Bump when the rubric text or question changes. */

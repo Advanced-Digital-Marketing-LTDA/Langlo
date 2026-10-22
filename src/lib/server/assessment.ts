@@ -7,7 +7,9 @@ import { assessmentLevels, foundationLevel } from '../levels';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
-  FALLBACK_SETTLED_EVALUATOR_VERSION
+  FALLBACK_SETTLED_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
 import {
   PREPARED_EVALUATOR_VERSION,
@@ -434,7 +436,21 @@ export function feedbackOutcome(
   rows: Row[],
   contentVersionId: string
 ): PreparedOutcome {
-  const outcome = feedbackEvaluation(rows, contentVersionId)?.outcome;
+  const currentFallback = rows.find(
+    (row) =>
+      row.evaluator_version === FALLBACK_EVALUATOR_VERSION &&
+      row.rubric_version === `${FALLBACK_RUBRIC_VERSION}:${contentVersionId}`
+  );
+  const historicalFallback = rows.find(
+    (row) =>
+      row.evaluator_version === HISTORICAL_FALLBACK_EVALUATOR_VERSION &&
+      row.rubric_version ===
+        `${HISTORICAL_FALLBACK_RUBRIC_VERSION}:${contentVersionId}`
+  );
+  const outcome =
+    currentFallback?.outcome ??
+    historicalFallback?.outcome ??
+    feedbackEvaluation(rows, contentVersionId)?.outcome;
   return outcome === 'correct' || outcome === 'incorrect'
     ? outcome
     : 'uncertain';
