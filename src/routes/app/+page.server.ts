@@ -6,6 +6,7 @@ import { requireLearnerPage } from '../../lib/server/learner-session';
 import { studyPage } from '../../lib/server/learner-api';
 import { loadProgress } from '../../lib/server/progress';
 import { unfinishedPractice } from '../../lib/server/practice';
+import { loadReviewDueByDay } from '../../lib/server/review-analytics';
 
 export const load: PageServerLoad = async (event) => {
   // Learner data must be loaded with the session this returns, never with a
@@ -26,9 +27,18 @@ export const load: PageServerLoad = async (event) => {
             );
             if (found) unfinished[track.language] = found;
           }
-          return { ...loaded, unfinished };
+          const reviewDueByDay = await loadReviewDueByDay(
+            client,
+            learner,
+            loaded.tracks
+          );
+          return { ...loaded, unfinished, reviewDueByDay };
         })
-      : { tracks: [], unfinished: {} };
+      : {
+          tracks: [],
+          unfinished: {} as Record<string, { id: string; answered: number }>,
+          reviewDueByDay: null
+        };
   return {
     user: { name: user?.name ?? '', email: user?.email ?? '' },
     ...progress

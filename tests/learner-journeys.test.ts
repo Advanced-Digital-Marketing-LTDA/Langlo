@@ -78,6 +78,8 @@ import {
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import { load as dashboardLoad } from '../src/routes/app/+page.server';
+import { studyDayStart } from '../src/lib/server/study-days';
 
 const learner = testSession('learner-a');
 const other = testSession('learner-b');
@@ -127,6 +129,97 @@ function event(
     )
   } as never;
 }
+
+it('loads owner-scoped daily review counts in the saved study timezone', async () => {
+  const timezone = 'America/Sao_Paulo';
+  const now = new Date();
+  const today = studyDayStart(now, timezone);
+  const tomorrow = studyDayStart(now, timezone, 1);
+  const outside = studyDayStart(now, timezone, 7);
+  await setTimezone(client, learner, timezone);
+  await createDeck(client, learner, {
+    id: 'analytics-deck-a',
+    name: 'Analytics'
+  });
+  await createDeck(client, other, { id: 'analytics-deck-b', name: 'Other' });
+
+  const notes = [
+    { id: 'analytics-overdue', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-today', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-tomorrow', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-suspended', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-rejected', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-other-owner', owner: other, deck: 'analytics-deck-b' },
+    { id: 'analytics-outside', owner: learner, deck: 'analytics-deck-a' }
+  ];
+  for (const [index, note] of notes.entries()) {
+    await createNote(client, note.owner, {
+      id: note.id,
+      sourceId: `langlo:v1:${String(index + 1).padStart(64, '0')}`,
+      deckId: note.deck,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    await approveNote(client, note.owner, note.id);
+  }
+  await rejectNote(client, learner, 'analytics-rejected');
+  await client.execute({
+    sql: 'UPDATE native_flashcards SET suspended = 1 WHERE note_id = ?',
+    args: ['analytics-suspended']
+  });
+  for (const [id, dueAt] of [
+    ['analytics-overdue', today.getTime() - 1],
+    ['analytics-today', today.getTime()],
+    ['analytics-tomorrow', tomorrow.getTime()],
+    ['analytics-suspended', today.getTime()],
+    ['analytics-rejected', today.getTime()],
+    ['analytics-other-owner', today.getTime()],
+    ['analytics-outside', outside.getTime()]
+  ] as const) {
+    const owner = id === 'analytics-other-owner' ? other : learner;
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ? AND owner_id = ?',
+      args: [dueAt, id, owner.userId]
+    });
+  }
+
+  const before = await client.execute(
+    'SELECT id, due_at FROM native_flashcards ORDER BY id'
+  );
+  const dashboard = (await dashboardLoad(event())) as unknown as {
+    reviewDueByDay: {
+      date: string;
+      grammar: number;
+      flashcards: number;
+      total: number;
+    }[];
+  };
+  const dates = Array.from({ length: 7 }, (_, index) => {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(studyDayStart(now, timezone, index));
+    const date = Object.fromEntries(
+      parts.map(({ type, value }) => [type, value])
+    );
+    return `${date.year}-${date.month}-${date.day}`;
+  });
+  expect(dashboard.reviewDueByDay).toEqual([
+    { date: dates[0], grammar: 0, flashcards: 2, total: 2 },
+    { date: dates[1], grammar: 0, flashcards: 1, total: 1 },
+    ...dates.slice(2).map((date) => ({
+      date,
+      grammar: 0,
+      flashcards: 0,
+      total: 0
+    }))
+  ]);
+  expect(
+    await client.execute('SELECT id, due_at FROM native_flashcards ORDER BY id')
+  ).toEqual(before);
+});
 
 const enrollFields = {
   language: 'de',
