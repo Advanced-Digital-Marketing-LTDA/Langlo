@@ -50,12 +50,13 @@ existing rows while preserving their values.
   disposable file-backed fixture databases.
 - Review regression RED: the focused fallback run failed one test and passed 28
   when the usage-write catch omitted the error type. GREEN: the focused review
-  suite passed 8 files and 190 tests after restoring `errorName` and tightening
-  the malformed-response and configuration assertions.
+  suite passed 8 files and 192 tests after restoring `errorName`, tightening the
+  malformed-response and configuration assertions, and covering untrusted
+  accepted answers plus usage recording for ties.
 - `npm run check`: passed with zero errors and warnings.
 - `npm run lint` and `npm run format:check`: passed.
 - `drizzle-kit check`: passed.
-- `npm test`: passed, 105 files and 1,842 tests.
+- `npm test`: passed, 105 files and 1,844 tests.
 - `npm run test:property`: passed, 6 files and 9 tests.
 - `npm run build`: passed.
 - `npm run test:e2e`: passed, 142 desktop/mobile tests against the built Node
