@@ -212,13 +212,14 @@ it.each([
   { timezone: 'America/Sao_Paulo', today: 3, tomorrow: 1 },
   { timezone: 'UTC', today: 2, tomorrow: 2 }
 ])(
-  'groups eligible owner flashcards by the saved $timezone study day',
+  'counts fixed due times with saved $timezone: $today today and $tomorrow tomorrow',
   async ({ timezone, today, tomorrow }) => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T12:00:00.000Z'));
     const now = new Date();
     await setTimezone(client, learner, timezone);
     await seedReviewAnalyticsNotes();
+    // Keep due instants fixed so changing the saved timezone changes grouping.
     const dates = await setReviewAnalyticsDueTimes(now, 'America/Sao_Paulo');
     const before = await client.execute(
       'SELECT id, due_at FROM native_flashcards ORDER BY id'

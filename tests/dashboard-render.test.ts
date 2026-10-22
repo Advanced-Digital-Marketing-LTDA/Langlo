@@ -65,7 +65,7 @@ it('omits the Continue card when nothing is recommended', async () => {
   expect(html).toContain('Grammar mastery');
 });
 
-it('shows the sign-out failure as an alert with a retry button', async () => {
+it('renders the sign-out error message and sign-out form', async () => {
   const html = await renderSvelte(page, {
     data: data([]),
     form: { message: 'Sign out is temporarily unavailable. Try again.' }
