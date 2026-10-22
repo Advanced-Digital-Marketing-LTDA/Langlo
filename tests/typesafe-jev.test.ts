@@ -5,6 +5,7 @@ import {
 } from '../src/lib/server/evaluation/typesafe-jev';
 import {
   ProviderError,
+  readSystemOne,
   type SystemOneRequest
 } from '../src/lib/server/evaluation/fallback';
 
@@ -84,15 +85,19 @@ describe('TypeSafe System One adapter', () => {
     ).rejects.toMatchObject({ name: 'TimeoutError' });
   });
 
-  it('returns null for an unreadable body so it reads as malformed', async () => {
+  it('maps an unreadable success body to an uncertain malformed result', async () => {
     const fetchImpl = vi.fn(
       async () => new Response('not json', { status: 200 })
     );
-    await expect(
-      typesafeJev(key, fetchImpl as typeof fetch)(
-        request,
-        new AbortController().signal
-      )
-    ).resolves.toBeNull();
+    const raw = await typesafeJev(key, fetchImpl as typeof fetch)(
+      request,
+      new AbortController().signal
+    );
+    expect(raw).toBeNull();
+    expect(readSystemOne(raw).result).toEqual({
+      outcome: 'uncertain',
+      reason: 'malformed',
+      evaluated: true
+    });
   });
 });
