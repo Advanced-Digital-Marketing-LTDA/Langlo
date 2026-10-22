@@ -67,7 +67,7 @@ it('renders language navigation and honest progress loading states', async () =>
               sessions: 1,
               independentItems: 2,
               reason: 'Review this topic.',
-              policyVersion: 'grammar-1',
+              policyVersion: 'grammar-2',
               answers: 2,
               practisedSessions: 1,
               lastPractisedAt: null
@@ -84,7 +84,7 @@ it('renders language navigation and honest progress loading states', async () =>
               sessions: 0,
               independentItems: 0,
               reason: 'No evidence.',
-              policyVersion: 'grammar-1',
+              policyVersion: 'grammar-2',
               answers: 0,
               practisedSessions: 0,
               lastPractisedAt: null

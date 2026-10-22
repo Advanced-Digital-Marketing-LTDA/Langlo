@@ -931,7 +931,7 @@ async function expectProgressAndHome(page: Page) {
   await expect(
     page.getByRole('heading', { name: 'Grammar progress', exact: true })
   ).toBeVisible();
-  await expect(page.getByText(/Policy grammar-1/).first()).toBeVisible();
+  await expect(page.getByText(/Policy grammar-2/).first()).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth

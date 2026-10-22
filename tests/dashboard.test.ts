@@ -28,7 +28,7 @@ function skill(
     sessions: 0,
     independentItems: 0,
     reason: `Reason ${skillId}`,
-    policyVersion: 'grammar-1',
+    policyVersion: 'grammar-2',
     retention: {
       state: 'not-assessed',
       dueAt: null,
@@ -51,7 +51,7 @@ function track(
       ? {
           skillId: recommendedId,
           reason,
-          policyVersion: 'grammar-1',
+          policyVersion: 'grammar-2',
           manualSkillIds: [recommendedId]
         }
       : null

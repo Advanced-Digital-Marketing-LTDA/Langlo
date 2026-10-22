@@ -19,7 +19,7 @@ const skill = (skillId: string, status: string, level = 'A1') => ({
   correct: 0,
   incorrect: 0,
   reason: `Reason ${skillId}`,
-  policyVersion: 'grammar-1',
+  policyVersion: 'grammar-2',
   retention: {
     state: 'not-assessed',
     dueAt: null,

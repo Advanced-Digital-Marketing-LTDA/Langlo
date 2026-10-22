@@ -1,0 +1,167 @@
+# LANGLO-282: Jev answer-checking fallback
+
+Date: 2026-10-22. Local implementation and verification only.
+
+## Behavior
+
+Unmatched typed answers use TypeSafe System One with `jev-latest` when
+`TYPESAFE_API_KEY` is configured. Prepared matches, multiple-choice answers and
+replayed submissions remain outside this fallback path. Each request contains
+only the language, exercise format, prompt, accepted answers and learner answer
+as structured state. A single `noul` question asks whether the learner's answer
+fulfills the prompt's intended meaning in the target language. Accepted answers
+are examples rather than an exhaustive list; equivalent grammatical answers are
+allowed; required grammar/forms, spelling and accents are checked; capitalization
+and punctuation are ignored unless the exercise tests them. All exercise state is
+treated as untrusted content, never as instructions.
+
+The endpoint and request/response contract were checked against TypeSafe's
+[System One OpenAPI definition](https://api.typesafe.ai/openapi.json), which
+defines `POST /v1/systemone`, bearer-key authorization, `jev-latest`, named Noul
+answers as yes probabilities, and `usage.input_tokens`/`usage.output_tokens`.
+Its example response uses 120 input and 12 output tokens. This documents the
+contract shape; it does not establish live account access, calibration or billing.
+
+A Noul value above `0.5` is correct, below `0.5` is incorrect, and exactly `0.5`
+is uncertain. Malformed responses, provider failures, timeouts and a reached
+monthly cap remain uncertain. The existing 100,000-call UTC-month cap and
+10-second timeout are retained, as are content-free fallback logs.
+
+The evaluator/rubric versions are `jev-1` and `jev-rubric-1`; the grammar policy
+is now `grammar-2` because its recognized fallback source changed. The
+`feedbackEvaluation` evidence selector accepts supported Jev or prepared
+evaluations and excludes historical Decisions rows. User-facing assessment and
+practice feedback recognizes a Decisions verdict only with its matching
+historical rubric; practice summaries and mistake-card checks also rank that
+saved verdict ahead of prepared uncertainty. These display and card-selection
+paths do not change current mastery evidence. Regressions cover assessment,
+practice and card feedback plus the mastery exclusion. The previous separate
+injection-score question is removed because this request asks only whether the
+answer is correct; state remains untrusted data, and a request test ensures
+learner text stays out of question instructions. Existing `decisions` usage
+counters remain historical data.
+Forward migration `0033_typesafe_ai_usage` widens the usage API check and copies
+existing rows while preserving their values.
+
+## Test evidence
+
+- The initial focused run against the old implementation reported 30 failures
+  and 100 passes across 7 files. Failures identified the old endpoint, payload,
+  parser, configuration key, usage schema, and historical-evaluation policy.
+- The corrected fallback/configuration/history/migration run passed 212 tests
+  across 10 files. TypeSafe HTTP behavior used a fake `fetch`; migrations used
+  disposable file-backed fixture databases.
+- The usage-write regression first reported 1 failure and 28 passes. After
+  restoring `errorName`, the focused suite passed 192 tests across 8 files; it
+  also covered malformed-response and configuration assertions, untrusted
+  accepted answers, and usage recording for ties.
+- Safe-log coverage: the focused fallback/adapter run passed 2 files and 40
+  tests, including non-Error usage failures and a check that their details are
+  not emitted.
+- Before the historical-feedback fix, the focused Vitest run reported 2
+  failures and 76 passes. Afterward, the practice-summary, mistake-card and
+  mastery suites passed 108/108 with historical Decisions priority confined to
+  feedback/card queries.
+- Before the unreadable-body fix, the adapter and evaluator suites reported 2
+  failures and 39 passes. Afterward, they passed 41/41; invalid JSON now raises
+  a typed `malformed` provider error and remains uncertain without exposing body
+  details.
+- Before the assessment-feedback fix, its focused suite reported 1 failure and
+  38 passes. After the change, the six assessment, provider, practice, card and
+  mastery suites passed 189/189.
+- `npm run check`: passed with zero errors and warnings.
+- `npm run lint` and `npm run format:check`: passed.
+- `drizzle-kit check`: passed.
+- `npm test`: passed, 105 files and 1,849 tests.
+- `npm run test:property`: passed, 6 files and 9 tests.
+- `npm run build`: passed.
+- `npm run test:e2e`: passed, 142 desktop/mobile tests against the built Node
+  server using synthetic fixtures, with no failed, flaky or skipped tests.
+- Dependencies were installed with pinned npm 11.9.0 and `--ignore-scripts`.
+
+### Rubric-matching follow-up
+
+Practice summaries and mistake-card eligibility now require the exact rubric and
+content-version pair for Jev, historical Decisions and prepared evaluations.
+A later historical row with an unrelated rubric cannot override valid feedback.
+The single correctness question also explicitly ignores learner requests to
+change the judgment and grades the literal answer against the exercise.
+
+The two new matching-rubric regressions failed before the local selector fix.
+After transferring the completed change onto PR head `61c4d291`, six focused
+provider, practice, card, mastery and retention suites passed 184 tests. An
+existing Jev fixture required its content-version suffix to represent a valid
+current evaluation. Type checking and lint passed. This is focused local evidence;
+full validation and the next hosted checks remain separate.
+
+### Rewardguard follow-up
+
+Reviewed PR #154 at `61c4d291` (7 fail, 9 warn) and the rerun after the
+owner-authorized push of `4d5ac146` (6 fail, 9 warn). Rewardguard's test job was
+skipped because its base configuration sets `run_tests = false`; these reports
+are static/AI review results rather than test executions.
+
+Valid local fixes:
+
+- Unreadable success JSON raises `ProviderError('malformed')`. The evaluator
+  retains an uncertain, evaluated result and does not invent token usage.
+- Failed usage writes retain the returned verdict and log `errorName` (or
+  `unknown` for a non-Error), keeping error messages out of the log.
+- Configuration tests again assert the exact key value, `ConfigError` type,
+  message and variable. Malformed Noul coverage explicitly includes missing,
+  refusal, NaN, negative, non-number, extra-answer and out-of-range cases.
+- Four focused assertions failed before the source changes (34 passed).
+  Afterward, all 65 provider/evaluator/config tests passed. Both Error and
+  non-Error logging paths assert the complete structured log and privacy check.
+
+The intentional expectation changes remain: the TypeSafe endpoint and token
+fields match the linked OpenAPI contract; Jev versions are emitted by the new
+implementation; migration 0033 is the next forward migration and preserves old
+counter rows; grammar policy 2 identifies the changed qualifying-evidence
+source. Historical Decisions feedback is retained without becoming Jev mastery
+evidence. Migration history and Rewardguard configuration were not changed by
+this follow-up.
+
+The old two-question injection predicate has no counterpart in the requested
+single Noul question. Learner instructions stay in structured state, outside the
+rubric, which explicitly rejects requests to change the judgment. Request tests
+verify that separation and wording; they do not prove resistance against a live
+model. Non-Noul/refusal responses remain uncertain as malformed. The console
+spy warning concerns tests that positively assert the captured production log.
+
+The completed matching-rubric and prompt changes were transferred onto the
+existing PR branch without overwriting its prior fixes or unrelated tests.
+Six focused suites passed 184 tests there, with type checking, lint, formatting
+and diff checks passing before push. The remote branch was independently
+verified at `4d5ac146c156bad5e17a93d5dcbdeb79ba101158`.
+
+Source-worktree validation after the approved fixes (Node 24.19.0, npm 11.9.0):
+
+- `npm run check`: zero errors or warnings.
+- `npm run lint` and `npm run format:check`: passed.
+- `npm test -- --reporter=dot --maxWorkers=1`: 104 files, 1,836 tests passed.
+- `npm run test:property -- --reporter=dot --maxWorkers=1`: 6 files, 9 tests passed.
+- `npm run build`: passed.
+- `npm run test:e2e`: 142 desktop/mobile tests passed against the built Node
+  server and synthetic fixtures, without failures, skips or retries.
+- Dependency installation with `--ignore-scripts` was completed earlier in this
+  session; dependencies did not change during this follow-up.
+
+This follow-up publishes the remaining shared feedback-selection helpers,
+stronger malformed-response and error-type assertions, and this triage record.
+The production malformed-error, safe-logging and strict-config behaviors already
+existed on the PR branch and are preserved. The source-worktree results above
+are recorded separately from validation of the publication checkout.
+
+Publication-checkout verification for this follow-up: 252 tests passed across
+eight suites, plus all 7 assessment-feedback tests (259 tests across nine suites).
+Type checking reported zero errors or warnings; lint, changed-file formatting
+and diff checks passed. No tests were removed during transfer to the PR branch.
+
+## Pending acceptance
+
+No TypeSafe credentials or real provider calls were used. The endpoint, Jev
+calibration and billing behavior have not been exercised against a live account.
+No production database was accessed or migrated. The implementation and
+historical-feedback fix are published on PR #154; hosted checks and review remain
+separate acceptance gates. No deployment or production publication occurred.

@@ -491,20 +491,77 @@ describe('practice sessions', () => {
     ).rejects.toMatchObject({ code: 'INVALID_SUBMISSION_KEY' });
   });
 
+  it('uses a matching historical Decisions verdict ahead of prepared feedback', async () => {
+    const before = await practiceSummary(client, learner, 'study-a');
+    await client.batch(
+      [
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-history', 'learner-a', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-history', 'assisted', 'un')",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('prepared-history', 'learner-a', 'attempt-history', 'prepared-1', 'content-v1', 'incorrect', unixepoch() * 1000 + 120000)",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-history', 'learner-a', 'attempt-history', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct', unixepoch() * 1000)",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-wrong-rubric', 'learner-a', 'attempt-history', 'decisions-1', 'old-rubric:content-v1', 'incorrect', unixepoch() * 1000 + 180000)"
+      ],
+      'write'
+    );
+
+    const summary = await practiceSummary(client, learner, 'study-a');
+    expect(summary).toMatchObject({
+      answered: before.answered + 1,
+      correct: before.correct + 1,
+      incorrect: before.incorrect
+    });
+  });
+
   it('counts the fallback verdict over the preliminary one written in the same second', async () => {
-    const stamp = 'unixepoch() * 1000 + 120000';
+    const stamp = Date.now() + 120_000;
     await client.batch(
       [
         `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-f', 'learner-a', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-attempt-f', 'assisted', 'un')`,
         // The preliminary row's id sorts after the fallback row's id, so an
         // id tie-break alone would pick the wrong one.
-        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('zzz-prepared', 'learner-a', 'attempt-f', 'prepared-1', 'content-v1', 'uncertain', ${stamp})`,
-        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('aaa-fallback', 'learner-a', 'attempt-f', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct', ${stamp})`
+        {
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            'zzz-prepared',
+            'learner-a',
+            'attempt-f',
+            'prepared-1',
+            'content-v1',
+            'uncertain',
+            stamp
+          ]
+        },
+        {
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            'aaa-fallback',
+            'learner-a',
+            'attempt-f',
+            'jev-1',
+            'jev-rubric-1:content-v1',
+            'correct',
+            stamp
+          ]
+        }
       ],
       'write'
     );
     const summary = await practiceSummary(client, learner, 'study-a');
     expect(summary).toMatchObject({ answered: 2, correct: 1, uncertain: 0 });
+  });
+
+  it('keeps a historical Decisions verdict in the practice summary', async () => {
+    await client.batch(
+      [
+        "UPDATE evaluations SET evaluator_version = 'prepared-1', rubric_version = 'content-v1', outcome = 'uncertain' WHERE attempt_id = 'attempt-a'",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES ('evaluation-decisions', 'learner-a', 'attempt-a', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct')"
+      ],
+      'write'
+    );
+    expect(await practiceSummary(client, learner, 'study-a')).toMatchObject({
+      answered: 1,
+      correct: 1,
+      uncertain: 0
+    });
   });
 
   it('summarises answers by newest evaluation and finishes only own practice sessions', async () => {

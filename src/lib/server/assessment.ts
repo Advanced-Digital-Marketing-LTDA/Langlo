@@ -7,7 +7,9 @@ import { assessmentLevels, foundationLevel } from '../levels';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
-  FALLBACK_SETTLED_EVALUATOR_VERSION
+  FALLBACK_SETTLED_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
 import {
   PREPARED_EVALUATOR_VERSION,
@@ -417,24 +419,55 @@ export function feedbackEvaluation(
   rows: Row[],
   contentVersionId: string
 ): Row | undefined {
-  const fallback = rows.find(
-    (row) =>
-      row.evaluator_version === FALLBACK_EVALUATOR_VERSION &&
-      row.rubric_version === `${FALLBACK_RUBRIC_VERSION}:${contentVersionId}`
+  return (
+    fallbackEvaluation(
+      rows,
+      contentVersionId,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION
+    ) ?? preparedEvaluation(rows, contentVersionId)
   );
-  const prepared = rows.find(
+}
+
+function fallbackEvaluation(
+  rows: Row[],
+  contentVersionId: string,
+  evaluatorVersion: string,
+  rubricVersion: string
+) {
+  return rows.find(
+    (row) =>
+      row.evaluator_version === evaluatorVersion &&
+      row.rubric_version === `${rubricVersion}:${contentVersionId}`
+  );
+}
+
+function preparedEvaluation(rows: Row[], contentVersionId: string) {
+  return rows.find(
     (row) =>
       row.evaluator_version === PREPARED_EVALUATOR_VERSION &&
       row.rubric_version === contentVersionId
   );
-  return fallback ?? prepared;
 }
 
 export function feedbackOutcome(
   rows: Row[],
   contentVersionId: string
 ): PreparedOutcome {
-  const outcome = feedbackEvaluation(rows, contentVersionId)?.outcome;
+  const outcome =
+    fallbackEvaluation(
+      rows,
+      contentVersionId,
+      FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION
+    )?.outcome ??
+    fallbackEvaluation(
+      rows,
+      contentVersionId,
+      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+      HISTORICAL_FALLBACK_RUBRIC_VERSION
+    )?.outcome ??
+    preparedEvaluation(rows, contentVersionId)?.outcome;
   return outcome === 'correct' || outcome === 'incorrect'
     ? outcome
     : 'uncertain';

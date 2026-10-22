@@ -156,7 +156,7 @@ function retentionForSkill(
   };
 }
 
-/** Separate recall estimates from grammar-1 mastery; no schedule means not assessed. */
+/** Separate recall estimates from grammar mastery; no schedule means not assessed. */
 export async function grammarRetentionFor(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
