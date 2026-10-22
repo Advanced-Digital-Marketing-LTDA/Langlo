@@ -1,20 +1,16 @@
-import {
-  ProviderError,
-  type DecisionRequest,
-  type DecisionsProvider
-} from './fallback';
+import { ProviderError, type SystemOneProvider } from './fallback';
 
-export const DECISIONS_URL = new URL('https://api.openai.com/v1/decisions');
+export const SYSTEM_ONE_URL = new URL('https://api.typesafe.ai/v1/systemone');
 
-/** The OpenAI Decisions API over plain fetch; non-OK statuses and network failures throw ProviderError. */
-export function openAiDecisions(
+/** TypeSafe System One over fetch; transport failures never become verdicts. */
+export function typesafeJev(
   apiKey: string,
   fetchImpl: typeof fetch = fetch
-): DecisionsProvider {
-  return async (request: DecisionRequest, signal: AbortSignal) => {
+): SystemOneProvider {
+  return async (request, signal) => {
     let response: Response;
     try {
-      response = await fetchImpl(DECISIONS_URL, {
+      response = await fetchImpl(SYSTEM_ONE_URL, {
         method: 'POST',
         headers: {
           authorization: `Bearer ${apiKey}`,
@@ -32,7 +28,6 @@ export function openAiDecisions(
       return (await response.json()) as unknown;
     } catch {
       if (signal.aborted) throw signal.reason;
-      // An unreadable body is malformed output, not a transport failure.
       return null;
     }
   };

@@ -125,6 +125,32 @@ it.each([
   ]);
 });
 
+it('does not count a historical OpenAI fallback row under the Jev policy', () => {
+  expect(
+    qualifyingGrammarEvidence([
+      {
+        length: 0,
+        attempt_id: 'historical-openai-answer',
+        created_at: 1,
+        sequence: 1,
+        skill_id: 'skill',
+        question_id: 'version:q1',
+        content_version_id: 'version',
+        study_session_id: 'session',
+        evidence_kind: 'independent',
+        not_sure: 0,
+        mode: 'practice',
+        state: 'active',
+        status: 'pilot-ready',
+        evaluator_version: 'decisions-1',
+        rubric_version: 'fallback-rubric-1:version',
+        evaluation_id: 'historical-openai-evaluation',
+        outcome: 'correct'
+      }
+    ])
+  ).toEqual([]);
+});
+
 describe('versioned grammar policy', () => {
   it('waits for an active write before reading a consistent mastery snapshot', async () => {
     const before = await computeMastery(client, learner, 'fr');
@@ -347,7 +373,7 @@ describe('versioned grammar policy', () => {
     expect(a.find((skill) => skill.skillId === 'fr-a1-001')).toMatchObject({
       correct: 1,
       independentItems: 1,
-      policyVersion: 'grammar-1'
+      policyVersion: 'grammar-2'
     });
     expect(await computeMastery(client, learner, 'fr')).toEqual(a);
     const note = await seedBasicNote(client, learner);
@@ -367,7 +393,7 @@ describe('versioned grammar policy', () => {
         })
       ).rows
     ).toEqual([
-      { attempt_id: first.id, scoring_version: 'grammar-1', contribution: 1 }
+      { attempt_id: first.id, scoring_version: 'grammar-2', contribution: 1 }
     ]);
     await client.execute(
       "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('repeat', 'learner-a', 'enrollment-a', 'fr', 'practice')"

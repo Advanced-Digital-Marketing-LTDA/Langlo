@@ -499,7 +499,7 @@ describe('practice sessions', () => {
         // The preliminary row's id sorts after the fallback row's id, so an
         // id tie-break alone would pick the wrong one.
         `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('zzz-prepared', 'learner-a', 'attempt-f', 'prepared-1', 'content-v1', 'uncertain', ${stamp})`,
-        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('aaa-fallback', 'learner-a', 'attempt-f', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct', ${stamp})`
+        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('aaa-fallback', 'learner-a', 'attempt-f', 'jev-1', 'jev-rubric-1:content-v1', 'correct', ${stamp})`
       ],
       'write'
     );

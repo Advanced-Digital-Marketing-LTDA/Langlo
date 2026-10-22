@@ -19,7 +19,7 @@ const skill = (skillId: string, status: string, overrides = {}) => ({
   correct: 0,
   incorrect: 1,
   reason: `Reason ${skillId}`,
-  policyVersion: 'grammar-1',
+  policyVersion: 'grammar-2',
   ...overrides
 });
 

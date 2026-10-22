@@ -232,6 +232,13 @@
       "when": 1792612829509,
       "tag": "0032_question_and_attempt_lookup_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1792696912684,
+      "tag": "0033_typesafe_ai_usage",
+      "breakpoints": true
     }
   ]
 }

@@ -592,10 +592,10 @@ describe('mistake-card editing and rejection', () => {
   it('keeps the fallback verdict authoritative over a newer prepared one', async () => {
     const { db } = await setup();
     try {
-      // The prepared verdict is newer, but the fallback verdict is the one the
+      // The prepared verdict is newer, but the Jev verdict is the one the
       // results summary counts, so it also decides draft eligibility.
       await db.client.execute(
-        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('evaluation-fallback', 'learner-a', 'attempt-a', 'decisions-1', 'fallback-rubric-1', 'correct', unixepoch() * 1000 - 60000)"
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('evaluation-fallback', 'learner-a', 'attempt-a', 'jev-1', 'jev-rubric-1', 'correct', unixepoch() * 1000 - 60000)"
       );
       await expect(
         createMistakeDraft(db.client, learner, {

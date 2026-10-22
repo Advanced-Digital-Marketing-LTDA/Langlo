@@ -4,7 +4,7 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import { recordAttempt } from '../src/lib/server/study';
 import type { FallbackResult } from '../src/lib/server/evaluation/fallback';
-import { decisionsUsage, usageMonth } from '../src/lib/server/evaluation/usage';
+import { typesafeUsage, usageMonth } from '../src/lib/server/evaluation/usage';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -84,8 +84,8 @@ const prepared = {
 // A fallback that ended without a verdict leaves this marker, never a verdict.
 const noVerdict = {
   owner_id: 'learner-a',
-  evaluator_version: 'decisions-1-no-verdict',
-  rubric_version: 'fallback-rubric-1:fr-a1-002@1',
+  evaluator_version: 'jev-1-no-verdict',
+  rubric_version: 'jev-rubric-1:fr-a1-002@1',
   outcome: 'uncertain'
 };
 
@@ -109,8 +109,8 @@ describe('AI fallback for unmatched typed answers', () => {
       prepared,
       {
         owner_id: 'learner-a',
-        evaluator_version: 'decisions-1',
-        rubric_version: 'fallback-rubric-1:fr-a1-002@1',
+        evaluator_version: 'jev-1',
+        rubric_version: 'jev-rubric-1:fr-a1-002@1',
         outcome: 'correct'
       }
     ]);
@@ -142,7 +142,7 @@ describe('AI fallback for unmatched typed answers', () => {
     const evidence = await count('skill_evidence');
     const fallback = vi.fn(async (): Promise<FallbackResult> => ({
       outcome: 'uncertain',
-      reason: 'injection',
+      reason: 'tie',
       evaluated: true
     }));
     const recorded = await attempt(
@@ -151,12 +151,10 @@ describe('AI fallback for unmatched typed answers', () => {
       fallback
     );
     expect((await evaluationsOf(recorded.id))[1]).toMatchObject({
-      evaluator_version: 'decisions-1',
+      evaluator_version: 'jev-1',
       outcome: 'uncertain'
     });
-    expect(logged()).toEqual([
-      { operation: 'ai-fallback', reason: 'injection' }
-    ]);
+    expect(logged()).toEqual([{ operation: 'ai-fallback', reason: 'tie' }]);
     expect(await count('skill_evidence')).toBe(evidence);
     expect(JSON.stringify(warn.mock.calls)).not.toContain('Ignore the rubric');
   });
@@ -227,13 +225,13 @@ describe('AI fallback for unmatched typed answers', () => {
   });
 });
 
-describe('monthly Decisions usage counter', () => {
+describe('monthly TypeSafe usage counter', () => {
   const usage = (now: number, cap: number) =>
-    decisionsUsage(client, () => now, cap);
+    typesafeUsage(client, () => now, cap);
   const row = async (month: string) =>
     (
       await client.execute({
-        sql: "SELECT calls, input_tokens, output_tokens FROM ai_usage WHERE month = ? AND api = 'decisions'",
+        sql: "SELECT calls, input_tokens, output_tokens FROM ai_usage WHERE month = ? AND api = 'typesafe'",
         args: [month]
       })
     ).rows.map((r) => ({ ...r }))[0];

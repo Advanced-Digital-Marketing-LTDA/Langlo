@@ -182,27 +182,33 @@ describe('runtime configuration', () => {
   });
 });
 
-describe('OpenAI key', () => {
+describe('TypeSafe API key', () => {
   // Built at runtime so no secret-looking literal is committed.
-  const syntheticKey = ['sk', 'synthetic', 'test', 'key', '0'.repeat(12)].join(
-    '-'
-  );
+  const syntheticKey = [
+    'typesafe',
+    'synthetic',
+    'test',
+    'key',
+    '0'.repeat(12)
+  ].join('-');
   const enabled = {
     DATA_ENABLED: 'true',
     DATABASE_URL: 'file:./.fixtures/dev.db',
     BETTER_AUTH_SECRET: 'synthetic-secret-synthetic-secret-0000'
   };
   it('is optional', () => {
-    expect(parseRuntimeConfig(enabled).openAiKey).toBeUndefined();
+    expect(parseRuntimeConfig(enabled)).not.toHaveProperty('typesafeApiKey');
     expect(
-      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: '' }).openAiKey
-    ).toBeUndefined();
+      parseRuntimeConfig({ ...enabled, TYPESAFE_API_KEY: '' })
+    ).not.toHaveProperty('typesafeApiKey');
   });
   it('is kept when set', () => {
     const key = syntheticKey;
     expect(
-      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: key }).openAiKey
-    ).toBe(key);
+      parseRuntimeConfig({ ...enabled, TYPESAFE_API_KEY: key })
+    ).toMatchObject({
+      typesafeApiKey: key
+    });
   });
   it.each([
     ` ${syntheticKey}`,
@@ -211,16 +217,24 @@ describe('OpenAI key', () => {
   ])(
     'keeps the app up and records the error for %j without echoing it',
     (value) => {
-      const config = parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: value });
-      expect(config.openAiKey).toBeUndefined();
-      expect(config.openAiKeyError).toBeInstanceOf(ConfigError);
-      expect(config.openAiKeyError?.message).toBe('Invalid OPENAI_API_KEY');
+      const config = parseRuntimeConfig({
+        ...enabled,
+        TYPESAFE_API_KEY: value
+      });
+      expect(config).toMatchObject({
+        typesafeApiKeyError: {
+          message: 'Invalid TYPESAFE_API_KEY',
+          variable: 'TYPESAFE_API_KEY'
+        }
+      });
+      expect(config).not.toHaveProperty('typesafeApiKey');
       expect(config.dataEnabled).toBe(true);
+      expect(JSON.stringify(config)).not.toContain(value);
     }
   );
   it('is not read while data is disabled', () => {
     expect(
-      parseRuntimeConfig({ OPENAI_API_KEY: 'short' }).openAiKey
-    ).toBeUndefined();
+      parseRuntimeConfig({ TYPESAFE_API_KEY: 'short' })
+    ).not.toHaveProperty('typesafeApiKeyError');
   });
 });
