@@ -24,6 +24,7 @@ Open-source alternatives were researched. No migration to an alternative and no 
 - Repository: `Bonobo791/Langlo`.
 - Selected license: PolyForm Shield 1.0.0, matching the license identified in Bonobo791/Moderaty’s [LICENSE](https://github.com/Bonobo791/Moderaty/blob/main/LICENSE) (blob `f88d3d68982bd77db576b39874b59e251ba74a94`). The license text is at [PolyForm Shield 1.0.0](https://polyformproject.org/licenses/shield/1.0.0).
 - This records the choice only. Langlo still needs a separate license-file and package-metadata implementation, including appropriate notices. No license file was created or publication authorized by T001.
+- Implemented: `LICENSE` (PolyForm Shield 1.0.0) and `COMMERCIAL.md` at the repository root, and `license` set to `SEE LICENSE IN LICENSE` in `package.json`. Publication is still not authorized.
 
 ## Anki profile setup
 
