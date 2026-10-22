@@ -225,6 +225,18 @@ describe('running the fallback', () => {
     });
   });
 
+  it('keeps an unreadable provider response explicitly uncertain as malformed', async () => {
+    const { usage } = counter();
+    const provider = vi.fn(async () => {
+      throw new ProviderError('malformed');
+    });
+    await expect(evaluateFallback(input, provider, usage)).resolves.toEqual({
+      outcome: 'uncertain',
+      reason: 'malformed',
+      evaluated: true
+    });
+  });
+
   it('rethrows an unexpected error for the caller to log', async () => {
     const { usage } = counter();
     const provider = vi.fn(async () => {

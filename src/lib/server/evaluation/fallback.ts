@@ -66,7 +66,7 @@ export type FallbackUsage = {
 };
 
 export class ProviderError extends Error {
-  constructor(readonly status: number | 'network') {
+  constructor(readonly status: number | 'network' | 'malformed') {
     super(`TypeSafe API failed: ${status}`);
     this.name = 'ProviderError';
   }
@@ -184,7 +184,9 @@ export async function evaluateFallback(
     if (error instanceof DOMException && error.name === 'TimeoutError')
       return uncertain('timeout', false);
     if (error instanceof ProviderError)
-      return uncertain('provider-error', false);
+      return error.status === 'malformed'
+        ? uncertain('malformed', true)
+        : uncertain('provider-error', false);
     throw error;
   }
   const decision = readSystemOne(raw);

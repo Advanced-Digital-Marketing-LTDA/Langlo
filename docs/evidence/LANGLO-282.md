@@ -44,29 +44,31 @@ existing rows while preserving their values.
 
 ## Test evidence
 
-- RED: the initial focused regression run failed as expected against the old
-  implementation: 7 files, 30 failing tests and 100 passing tests. Failures
-  identified the old endpoint/payload/parser, configuration key, usage schema,
-  and historical-evaluation policy mismatches.
-- GREEN: focused fallback/configuration/history/migration run passed 10 files and
-  212 tests. TypeSafe HTTP behavior used a fake `fetch`; migrations used
+- The initial focused run against the old implementation reported 30 failures
+  and 100 passes across 7 files. Failures identified the old endpoint, payload,
+  parser, configuration key, usage schema, and historical-evaluation policy.
+- The corrected fallback/configuration/history/migration run passed 212 tests
+  across 10 files. TypeSafe HTTP behavior used a fake `fetch`; migrations used
   disposable file-backed fixture databases.
-- Review regression RED: the focused fallback run failed one test and passed 28
-  when the usage-write catch omitted the error type. GREEN: the focused review
-  suite passed 8 files and 192 tests after restoring `errorName`, tightening the
-  malformed-response and configuration assertions, and covering untrusted
-  accepted answers plus usage recording for ties.
+- The usage-write regression first reported 1 failure and 28 passes. After
+  restoring `errorName`, the focused suite passed 192 tests across 8 files; it
+  also covered malformed-response and configuration assertions, untrusted
+  accepted answers, and usage recording for ties.
 - Safe-log coverage: the focused fallback/adapter run passed 2 files and 40
   tests, including non-Error usage failures and a check that their details are
   not emitted.
-- Review regression RED: the two historical-feedback tests failed against the
-  Jev-only SQL priority (2 failed, 76 passed). GREEN: the practice summary,
-  mistake-card and mastery suites passed 3 files and 108 tests after adding
-  historical Decisions priority only to feedback/card queries.
+- Before the historical-feedback fix, the focused Vitest run reported 2
+  failures and 76 passes. Afterward, the practice-summary, mistake-card and
+  mastery suites passed 108/108 with historical Decisions priority confined to
+  feedback/card queries.
+- Before the unreadable-body fix, the adapter and evaluator suites reported 2
+  failures and 39 passes. Afterward, they passed 41/41; invalid JSON now raises
+  a typed `malformed` provider error and remains uncertain without exposing body
+  details.
 - `npm run check`: passed with zero errors and warnings.
 - `npm run lint` and `npm run format:check`: passed.
 - `drizzle-kit check`: passed.
-- `npm test`: passed, 105 files and 1,847 tests.
+- `npm test`: passed, 105 files and 1,848 tests.
 - `npm run test:property`: passed, 6 files and 9 tests.
 - `npm run build`: passed.
 - `npm run test:e2e`: passed, 142 desktop/mobile tests against the built Node

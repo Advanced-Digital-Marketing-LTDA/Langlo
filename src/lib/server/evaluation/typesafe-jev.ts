@@ -29,8 +29,7 @@ export function typesafeJev(
       return (await response.json()) as unknown;
     } catch {
       if (signal.aborted) throw signal.reason;
-      // The evaluator maps an unreadable success body to malformed and uncertain.
-      return null;
+      throw new ProviderError('malformed');
     }
   };
 }
