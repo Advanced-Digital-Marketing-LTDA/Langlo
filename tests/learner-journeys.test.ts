@@ -212,7 +212,7 @@ it.each([
   { timezone: 'America/Sao_Paulo', today: 3, tomorrow: 1 },
   { timezone: 'UTC', today: 2, tomorrow: 2 }
 ])(
-  'counts only eligible owner flashcards at the saved $timezone 04:00 study boundary',
+  'groups eligible owner flashcards by the saved $timezone study day',
   async ({ timezone, today, tomorrow }) => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-22T12:00:00.000Z'));
