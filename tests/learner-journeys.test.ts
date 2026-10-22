@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
@@ -78,6 +78,12 @@ import {
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import {
+  actions as dashboardActions,
+  load as dashboardLoad
+} from '../src/routes/app/+page.server';
+import * as authRuntime from '../src/lib/server/auth-runtime';
+import { studyDayStart } from '../src/lib/server/study-days';
 
 const learner = testSession('learner-a');
 const other = testSession('learner-b');
@@ -93,6 +99,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
   close?.();
   await disposeFlashcardFixtures();
 });
@@ -115,6 +123,7 @@ function event(
     params: options.params ?? {},
     url: new URL(url),
     locals: {
+      correlationId: '12345678-1234-4123-8123-123456789abc',
       user: userId ? { id: userId } : null,
       session: userId ? { userId } : null,
       config: Object.hasOwn(options, 'config')
@@ -127,6 +136,135 @@ function event(
     )
   } as never;
 }
+
+async function seedReviewAnalyticsNotes() {
+  await createDeck(client, learner, {
+    id: 'analytics-deck-a',
+    name: 'Analytics'
+  });
+  await createDeck(client, other, { id: 'analytics-deck-b', name: 'Other' });
+  const notes = [
+    { id: 'analytics-overdue', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-today', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-boundary', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-tomorrow', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-suspended', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-rejected', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-other-owner', owner: other, deck: 'analytics-deck-b' },
+    { id: 'analytics-outside', owner: learner, deck: 'analytics-deck-a' }
+  ];
+  for (const [index, note] of notes.entries()) {
+    await createNote(client, note.owner, {
+      id: note.id,
+      sourceId: `langlo:v1:${String(index + 1).padStart(64, '0')}`,
+      deckId: note.deck,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    await approveNote(client, note.owner, note.id);
+  }
+  await rejectNote(client, learner, 'analytics-rejected');
+  await client.execute({
+    sql: 'UPDATE native_flashcards SET suspended = 1 WHERE note_id = ?',
+    args: ['analytics-suspended']
+  });
+}
+
+async function setReviewAnalyticsDueTimes(
+  now: Date,
+  timezone: string
+): Promise<string[]> {
+  const today = studyDayStart(now, timezone);
+  const tomorrow = studyDayStart(now, timezone, 1);
+  const outside = studyDayStart(now, timezone, 7);
+  const dueTimes = [
+    ['analytics-overdue', today.getTime() - 1],
+    ['analytics-today', today.getTime()],
+    ['analytics-boundary', tomorrow.getTime() - 2 * 60 * 60 * 1000],
+    ['analytics-tomorrow', tomorrow.getTime()],
+    ['analytics-suspended', today.getTime()],
+    ['analytics-rejected', today.getTime()],
+    ['analytics-other-owner', today.getTime()],
+    ['analytics-outside', outside.getTime()]
+  ] as const;
+  for (const [id, dueAt] of dueTimes) {
+    const owner = id === 'analytics-other-owner' ? other : learner;
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ? AND owner_id = ?',
+      args: [dueAt, id, owner.userId]
+    });
+  }
+  return Array.from({ length: 7 }, (_, index) => {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(studyDayStart(now, timezone, index));
+    const date = Object.fromEntries(
+      parts.map(({ type, value }) => [type, value])
+    );
+    return `${date.year}-${date.month}-${date.day}`;
+  });
+}
+
+it.each([
+  { timezone: 'America/Sao_Paulo', today: 3, tomorrow: 1 },
+  { timezone: 'UTC', today: 2, tomorrow: 2 }
+])(
+  'counts fixed due times with saved $timezone: $today today and $tomorrow tomorrow',
+  async ({ timezone, today, tomorrow }) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T12:00:00.000Z'));
+    const now = new Date();
+    await setTimezone(client, learner, timezone);
+    await seedReviewAnalyticsNotes();
+    // Keep due instants fixed so changing the saved timezone changes grouping.
+    const dates = await setReviewAnalyticsDueTimes(now, 'America/Sao_Paulo');
+    const before = await client.execute(
+      'SELECT id, due_at FROM native_flashcards ORDER BY id'
+    );
+
+    const dashboard = await dashboardLoad(event());
+
+    expect(dashboard).toMatchObject({
+      reviewDueByDay: [
+        { date: dates[0], grammar: 0, flashcards: today, total: today },
+        { date: dates[1], grammar: 0, flashcards: tomorrow, total: tomorrow },
+        ...dates.slice(2).map((date) => ({
+          date,
+          grammar: 0,
+          flashcards: 0,
+          total: 0
+        }))
+      ]
+    });
+    expect(
+      await client.execute(
+        'SELECT id, due_at FROM native_flashcards ORDER BY id'
+      )
+    ).toEqual(before);
+  }
+);
+
+it('reports a sign-out exception safely and returns a retryable failure', async () => {
+  vi.spyOn(authRuntime, 'resolveAuth').mockRejectedValue(
+    new Error('synthetic private credential must not be logged')
+  );
+  const warn = vi.spyOn(console, 'warn');
+
+  expect(await dashboardActions.signOut(event())).toMatchObject({
+    status: 503,
+    data: { message: 'Sign out is temporarily unavailable. Try again.' }
+  });
+  expect(warn).toHaveBeenCalledExactlyOnceWith(
+    JSON.stringify({
+      operation: 'auth',
+      kind: 'unexpected',
+      correlationId: '12345678-1234-4123-8123-123456789abc'
+    })
+  );
+});
 
 const enrollFields = {
   language: 'de',

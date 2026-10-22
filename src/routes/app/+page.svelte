@@ -1,8 +1,8 @@
 <script lang="ts">
   import { navigating } from '$app/state';
-  import type { PageData } from './$types';
+  import type { ActionData, PageData } from './$types';
   import TrackCard from '../../lib/components/dashboard/TrackCard.svelte';
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head>
@@ -54,7 +54,39 @@
   </p>
 {/if}
 
+{#if !navigating.to && data.reviewDueByDay}
+  <section class="panel" aria-labelledby="review-due-title">
+    <h2 id="review-due-title">Reviews due by day</h2>
+    {#if data.reviewDueByDay.every((day) => day.total === 0)}
+      <p>No reviews are due in the next seven study days.</p>
+    {/if}
+    <div class="review-table-scroll">
+      <table aria-label="Grammar and flashcard reviews due each study day">
+        <thead>
+          <tr>
+            <th scope="col">Study day</th>
+            <th scope="col">Grammar reviews</th>
+            <th scope="col">Flashcards</th>
+            <th scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each data.reviewDueByDay as day (day.date)}
+            <tr>
+              <th scope="row"><time datetime={day.date}>{day.date}</time></th>
+              <td>{day.grammar}</td>
+              <td>{day.flashcards}</td>
+              <td>{day.total}</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{/if}
+
 <form method="POST" action="?/signOut">
+  {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
   <button type="submit">Sign out</button>
 </form>
 
@@ -78,6 +110,20 @@
   .note {
     color: #49617a;
     font-size: 0.9rem;
+  }
+  .review-table-scroll {
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  th,
+  td {
+    padding: 0.55rem 0.8rem 0.55rem 0;
+    border-bottom: 1px solid #d9e2ef;
+    white-space: nowrap;
   }
   button {
     min-height: 44px;
