@@ -282,14 +282,14 @@ describe('content import script', () => {
   });
 });
 
-describe('revising already imported lessons', () => {
-  const rowsOf = async (client: ReturnType<typeof createClient>) =>
-    (
-      await client.execute(
-        'SELECT id, content_version_id, prompt, answer, alternatives, lineage_key FROM questions ORDER BY id'
-      )
-    ).rows;
+const rowsOf = async (client: ReturnType<typeof createClient>) =>
+  (
+    await client.execute(
+      'SELECT id, content_version_id, prompt, answer, alternatives, lineage_key FROM questions ORDER BY id'
+    )
+  ).rows;
 
+describe('revising already imported lessons', () => {
   it('adds each revision as a new version that continues the stored one', async () => {
     await migrateFixtureDatabase(target);
     const client = createClient({ url: target.databaseUrl });
@@ -298,7 +298,7 @@ describe('revising already imported lessons', () => {
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
-      expect(revisions).toHaveLength(52);
+      expect(revisions).toHaveLength(55);
       await importContent(client, {
         ...pkg,
         curriculumVersion: '1.2.0',
@@ -363,6 +363,52 @@ describe('revising already imported lessons', () => {
           reset_required: 0
         }
       ]);
+    } finally {
+      client.close();
+    }
+  });
+});
+
+describe('a published version edited in place', () => {
+  it('refuses an in-place edit as a conflict, then imports the restored version', async () => {
+    await migrateFixtureDatabase(target);
+    const client = createClient({ url: target.databaseUrl });
+    try {
+      const pkg = modulesPackage(root);
+      const revisions = pkg.versions.filter((version) =>
+        version.questions.some((question) => question.change)
+      );
+      await importContent(client, {
+        ...pkg,
+        curriculumVersion: '1.2.0',
+        versions: pkg.versions.filter(
+          (version) => !revisions.some((revision) => revision.id === version.id)
+        )
+      });
+      const before = await rowsOf(client);
+
+      // The package as the review follow-up shipped it: the accepted answers
+      // of pt-b1-024@1 changed in place instead of in a new version.
+      const edited = structuredClone(pkg);
+      const question = edited.versions
+        .find((version) => version.id === 'pt-b1-024@1')
+        ?.questions.find((item) => item.id === 'pt-b1-024@1:q09');
+      if (!question) throw new Error('pt-b1-024@1:q09 is not in the package');
+      expect(question.alternatives).toEqual([
+        'Eu lembro do nome dela.',
+        'Lembro-me do nome dela.'
+      ]);
+      question.alternatives = ['Lembro-me do nome dela.'];
+
+      await expect(
+        importContent(client, { ...edited, curriculumVersion: '1.3.0' })
+      ).rejects.toMatchObject({
+        code: 'CONTENT_CONFLICT',
+        detail: 'version pt-b1-024@1'
+      });
+      expect(await rowsOf(client)).toEqual(before);
+      // The package as it is imports cleanly over the same database.
+      await importContent(client, { ...pkg, curriculumVersion: '1.3.0' });
     } finally {
       client.close();
     }
@@ -506,8 +552,8 @@ describe('module package', () => {
     const declared = lessons.flatMap((lesson) =>
       lesson.version.questions.filter((question) => question.change)
     );
-    // 52 revised lessons of 15 questions each.
-    expect(declared).toHaveLength(52 * 15);
+    // 55 revised lessons of 15 questions each.
+    expect(declared).toHaveLength(55 * 15);
     const imported = new Map(
       modulesPackage(root).versions.flatMap((version) =>
         version.questions.map((question) => [question.id, question] as const)
