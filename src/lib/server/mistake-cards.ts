@@ -1,7 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { Client, Row } from '@libsql/client';
 import { createSourceId } from './db/source-id';
-import { FALLBACK_EVALUATOR_VERSION } from './evaluation/fallback';
+import {
+  FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION
+} from './evaluation/fallback';
 import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
 import {
   createNote,
@@ -21,13 +24,11 @@ const clozeBlank = '___';
 const clozeSpanPattern = /\{\{c1::[^{}]+\}\}/gu;
 const clozeNumberPattern = /\{\{c\d+::/u;
 
-// The results page counts each attempt by the AI fallback's verdict, else the
-// prepared verdict, else the newest evaluation (see practiceSummary). Card
-// eligibility uses the same rule so the results list and this service cannot
-// disagree about whether an answer is a confirmed mistake.
+// The results page prefers Jev, historical Decisions, then prepared verdicts
+// (see practiceSummary). Card eligibility uses the same rule.
 const evaluationOutcome = `(SELECT e.outcome FROM evaluations e
   WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
-  ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END,
+  ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END,
     e.created_at DESC, e.id DESC LIMIT 1)`;
 
 type DraftFormat = 'basic' | 'cloze';
@@ -106,6 +107,7 @@ async function readMistake(
       WHERE a.id = ? AND a.owner_id = ?`,
     args: [
       FALLBACK_EVALUATOR_VERSION,
+      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
       PREPARED_EVALUATOR_VERSION,
       attemptId,
       learner.userId
@@ -364,6 +366,7 @@ export async function listMistakeCandidates(
       studySessionId,
       learner.userId,
       FALLBACK_EVALUATOR_VERSION,
+      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
       PREPARED_EVALUATOR_VERSION
     ]
   });

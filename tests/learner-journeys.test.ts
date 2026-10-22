@@ -529,6 +529,21 @@ describe('practice sessions', () => {
     expect(summary).toMatchObject({ answered: 2, correct: 1, uncertain: 0 });
   });
 
+  it('keeps a historical Decisions verdict in the practice summary', async () => {
+    await client.batch(
+      [
+        "UPDATE evaluations SET evaluator_version = 'prepared-1', rubric_version = 'content-v1', outcome = 'uncertain' WHERE attempt_id = 'attempt-a'",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES ('evaluation-decisions', 'learner-a', 'attempt-a', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct')"
+      ],
+      'write'
+    );
+    expect(await practiceSummary(client, learner, 'study-a')).toMatchObject({
+      answered: 1,
+      correct: 1,
+      uncertain: 0
+    });
+  });
+
   it('summarises answers by newest evaluation and finishes only own practice sessions', async () => {
     // attempt-a already has an older "incorrect" evaluation; a newer one says
     // "correct". Two assisted attempts add an uncertain and an unevaluated one.

@@ -257,6 +257,31 @@ describe('mistake-card draft generation', () => {
       db.close();
     }
   });
+
+  it('uses a historical Decisions verdict for mistake-card eligibility', async () => {
+    const { db } = await setup();
+    try {
+      await db.client.batch(
+        [
+          "UPDATE evaluations SET evaluator_version = 'prepared-1', rubric_version = 'content-v1', outcome = 'uncertain' WHERE attempt_id = 'attempt-a'",
+          "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES ('evaluation-decisions', 'learner-a', 'attempt-a', 'decisions-1', 'fallback-rubric-1:content-v1', 'incorrect')"
+        ],
+        'write'
+      );
+
+      expect(
+        await listMistakeCandidates(db.client, learner, 'study-a')
+      ).toHaveLength(1);
+      await expect(
+        createMistakeDraft(db.client, learner, {
+          attemptId,
+          format: 'basic'
+        })
+      ).resolves.toMatchObject({ duplicate: false });
+    } finally {
+      db.close();
+    }
+  });
 });
 
 describe('mistake-card validation and explanation fallbacks', () => {

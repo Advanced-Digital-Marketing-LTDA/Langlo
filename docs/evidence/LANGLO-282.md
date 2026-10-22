@@ -31,11 +31,14 @@ The evaluator/rubric versions are `jev-1` and `jev-rubric-1`; the grammar policy
 is now `grammar-2` because its recognized fallback source changed. The existing
 `feedbackEvaluation` selector accepts only the current evaluator and exact
 content-version rubric, so historical `decisions-1` rows remain stored but do
-not qualify as current Jev evidence. The new mastery regression covers this
-filter. The previous separate injection-score question is removed because this
-request asks only whether the answer is correct; state remains untrusted data,
-and a request test ensures learner text stays out of question instructions.
-Existing `decisions` usage counters remain historical data.
+not qualify as current Jev evidence. Practice summaries and mistake-card checks
+still prefer those historical verdicts over preliminary prepared uncertainty;
+the mastery selector remains Jev-only. The mastery and practice/card regressions
+cover those separate policies. The previous separate injection-score question
+is removed because this request asks only whether the answer is correct; state
+remains untrusted data, and a request test ensures learner text stays out of
+question instructions. Existing `decisions` usage counters remain historical
+data.
 Forward migration `0033_typesafe_ai_usage` widens the usage API check and copies
 existing rows while preserving their values.
 
@@ -56,21 +59,24 @@ existing rows while preserving their values.
 - Safe-log coverage: the focused fallback/adapter run passed 2 files and 40
   tests, including non-Error usage failures and a check that their details are
   not emitted.
+- Review regression RED: the two historical-feedback tests failed against the
+  Jev-only SQL priority (2 failed, 76 passed). GREEN: the practice summary,
+  mistake-card and mastery suites passed 3 files and 108 tests after adding
+  historical Decisions priority only to feedback/card queries.
 - `npm run check`: passed with zero errors and warnings.
 - `npm run lint` and `npm run format:check`: passed.
 - `drizzle-kit check`: passed.
-- `npm test`: passed, 105 files and 1,845 tests.
+- `npm test`: passed, 105 files and 1,847 tests.
 - `npm run test:property`: passed, 6 files and 9 tests.
 - `npm run build`: passed.
 - `npm run test:e2e`: passed, 142 desktop/mobile tests against the built Node
-  server using synthetic fixtures. One earlier run had a single mobile timer
-  assertion failure; the isolated case and a full rerun both passed without a
-  code change.
+  server using synthetic fixtures, with no failed, flaky or skipped tests.
 - Dependencies were installed with pinned npm 11.9.0 and `--ignore-scripts`.
 
 ## Pending acceptance
 
 No TypeSafe credentials or real provider calls were used. The endpoint, Jev
 calibration and billing behavior have not been exercised against a live account.
-No production database was accessed or migrated. The source branch was pushed;
-no deployment or production publication occurred. Those checks remain pending.
+No production database was accessed or migrated. The existing PR remains at its
+previous remote head; the historical-feedback fix is local and unpushed. No
+deployment or production publication occurred. Those checks remain pending.
