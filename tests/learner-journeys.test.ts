@@ -1656,8 +1656,15 @@ describe('grammar practice rating and review actions', () => {
         event({ params: { ...params, skill: 'fr-a1-002' }, fields })
       )
     ).toMatchObject({ status: 404 });
-    expect(await lessonActions.rate(event({ params, fields }))).toEqual({
-      rated: true
+    // q2 was answered, so the rating result carries q1 as the next exercise.
+    expect(await lessonActions.rate(event({ params, fields }))).toMatchObject({
+      rated: true,
+      rating: 'good',
+      exercise: {
+        studySessionId: session.id,
+        notice: null,
+        question: { id: 'fr-a1-001@1:q1' }
+      }
     });
     expect(
       await lessonActions.rate(

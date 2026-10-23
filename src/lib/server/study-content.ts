@@ -149,6 +149,17 @@ export async function nextQuestion(
   skillId: string
 ) {
   const study = await ownSession(client, session, studySessionId);
+  return nextQuestionIn(client, session, studySessionId, skillId, study);
+}
+
+/** `nextQuestion` for a session the caller has already read with `ownSession`. */
+export async function nextQuestionIn(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string,
+  skillId: string,
+  study: SessionRow
+) {
   if (study.state !== 'active') throw new StudyError('SESSION_NOT_ACTIVE');
   if (typeof skillId !== 'string') throw new StudyError('NOT_FOUND');
   if (study.assessmentPlan !== null) {
@@ -301,6 +312,17 @@ export async function getSessionLesson(
   skillId: string
 ) {
   const study = await ownSession(client, session, studySessionId);
+  return sessionLessonIn(client, session, studySessionId, skillId, study);
+}
+
+/** `getSessionLesson` for a session the caller has already read with `ownSession`. */
+export async function sessionLessonIn(
+  client: Client,
+  session: LearnerSession,
+  studySessionId: string,
+  skillId: string,
+  study: SessionRow
+) {
   if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
   return readLesson(client, {
     userId: session.userId,
