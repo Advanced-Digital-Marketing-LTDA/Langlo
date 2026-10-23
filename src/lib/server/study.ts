@@ -836,8 +836,9 @@ function hasCorrectGrammarEvaluation(rows: Row[]) {
 function assertLessonPractice(
   rows: Row[],
   expectedSessionId: string,
-  skillId: string
+  skillId: string | undefined
 ) {
+  if (skillId === undefined) return;
   const row = ownGrammarAttempt(rows, expectedSessionId);
   if (row.skill_id !== skillId) throw new StudyError('NOT_FOUND');
   if (row.mode === 'assessment') throw new StudyError('NOT_FOUND');
@@ -921,8 +922,7 @@ export async function rateGrammarAttempt(
   const tx = await beginWrite(client);
   try {
     const rows = await grammarAttemptRows(tx, learner, attemptId);
-    if (practiceSkillId !== undefined)
-      assertLessonPractice(rows, expectedSessionId, practiceSkillId);
+    assertLessonPractice(rows, expectedSessionId, practiceSkillId);
     const row = assertRateableAttempt(rows, expectedSessionId);
     const duplicate = await persistAttemptRating(tx, learner, row, rating);
     if (duplicate) {
