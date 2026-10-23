@@ -83,9 +83,11 @@ type Day = Awaited<ReturnType<typeof loadReviewAnalytics>>[number];
 function expectedDays(
   now: Date,
   timezone: string,
-  length: number,
-  overrides: Record<number, Partial<Day>>,
-  firstDayOffset = -365
+  {
+    length,
+    firstDayOffset = -365
+  }: { length: number; firstDayOffset?: number },
+  overrides: Record<number, Partial<Day>>
 ): Day[] {
   return Array.from({ length }, (_, index) => ({
     date: localDate(
@@ -126,10 +128,15 @@ it('counts completed reviews by owner and study day across the last 365 days', a
     );
 
     expect(days).toEqual(
-      expectedDays(now, timezone, 366, {
-        0: { flashcardsCompleted: 1, grammarCompleted: 1 },
-        365: { flashcardsCompleted: 2, grammarCompleted: 1 }
-      })
+      expectedDays(
+        now,
+        timezone,
+        { length: 366 },
+        {
+          0: { flashcardsCompleted: 1, grammarCompleted: 1 },
+          365: { flashcardsCompleted: 2, grammarCompleted: 1 }
+        }
+      )
     );
   } finally {
     client.close();
@@ -178,13 +185,12 @@ it('counts current due work from today, including overdue work, by study day', a
       expectedDays(
         now,
         timezone,
-        31,
+        { length: 31, firstDayOffset: 0 },
         {
           0: { flashcardsScheduled: 2, grammarScheduled: 2 },
           1: { flashcardsScheduled: 1, grammarScheduled: 1 },
           30: { flashcardsScheduled: 1, grammarScheduled: 1 }
-        },
-        0
+        }
       )
     );
   } finally {
@@ -217,11 +223,10 @@ it('ends at the farthest due day, capped at 365 study days ahead', async () => {
       expectedDays(
         now,
         timezone,
-        366,
+        { length: 366, firstDayOffset: 0 },
         {
           365: { flashcardsScheduled: 1, grammarScheduled: 1 }
-        },
-        0
+        }
       )
     );
   } finally {

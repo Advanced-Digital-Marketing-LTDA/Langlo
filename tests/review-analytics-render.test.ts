@@ -64,6 +64,8 @@ it('renders the review graph and table with completed and scheduled series', asy
   expect(rowCells(html, '2026-10-21')).toEqual(['1', '2', '3', '—', '—', '—']);
   expect(rowCells(html, '2026-10-22')).toEqual(['0', '0', '0', '3', '4', '7']);
   expect(rowCells(html, '2026-10-23')).toEqual(['—', '—', '—', '1', '0', '1']);
+  // Every series has two points here, so none needs a single-point marker.
+  expect(html.match(/<circle[^>]*class="point"/g)).toBeNull();
 });
 
 it.each([1, 2])(
