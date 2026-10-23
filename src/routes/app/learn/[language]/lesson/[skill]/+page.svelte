@@ -12,9 +12,18 @@
   );
   const recorded = $derived(form !== null && 'recorded' in form);
   // A rating result carries the next exercise, so the page moves on from it
-  // instead of reloading. The next form result, such as the answer to that
-  // exercise, reloads the page from what was stored.
-  const rated = $derived(form !== null && 'rated' in form ? form : null);
+  // instead of reloading. It is kept until the page data loads again, such as
+  // after the answer to that exercise, so a refused answer keeps the exercise
+  // and shows its message.
+  type Rated = Extract<NonNullable<ActionData>, { rated: true }>;
+  let rated = $state<Rated | null>(null);
+  $effect.pre(() => {
+    void data;
+    rated = null;
+  });
+  $effect.pre(() => {
+    if (form?.rated) rated = form;
+  });
   const feedback = $derived(
     rated && data.feedback
       ? { ...data.feedback, rating: rated.rating }

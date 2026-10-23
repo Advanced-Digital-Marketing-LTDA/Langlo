@@ -1286,6 +1286,48 @@ test('rating an answer updates in place and keeps the scroll position', async ({
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 });
 
+test('keeps the rated feedback and next question when the next answer is refused', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const { studySessionId } = await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await expect(feedback).toContainText('Correct');
+  await feedback.getByRole('button', { name: 'Good', exact: true }).click();
+  const rated = page
+    .getByRole('status')
+    .filter({ hasText: /^You rated this good\./ });
+  await expect(rated).toBeVisible();
+  await expect(page.getByText(/^Question 2 of \d+$/)).toBeVisible();
+
+  // Pausing the session elsewhere makes the next answer a handled failure.
+  await withDatabase((client) =>
+    client.execute({
+      sql: "UPDATE study_sessions SET state = 'paused' WHERE id = ?",
+      args: [studySessionId]
+    })
+  );
+  await page
+    .locator('form[action*="?/answer"]')
+    .getByRole('textbox')
+    .fill('suis');
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(rated).toBeVisible();
+  await expect(page.getByText(/^Question 2 of \d+$/)).toBeVisible();
+  await expect(
+    feedback.getByRole('button', { name: 'Good', exact: true })
+  ).toHaveCount(0);
+});
+
 test('keeps the rating buttons when the server cannot be reached and records the rating once on retry', async ({
   page,
   context
