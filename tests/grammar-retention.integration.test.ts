@@ -831,34 +831,8 @@ describe('grammar retention storage and session flow', () => {
 
   it('builds retention from the batched schedule, skill and stored-schedule reads', async () => {
     const reviewedAt = new Date('2026-10-20T12:00:00.000Z');
-    async function storeSchedule(ownerId: string, rating: 'good' | 'again') {
-      const scheduled = scheduleStudyReview({
-        id: `${ownerId}:fr-a1-001`,
-        rating,
-        schedule: await getStudySchedule(client, testSession(ownerId)),
-        stateJson: null,
-        schedulerVersion: null,
-        parametersJson: null,
-        resetRequired: false,
-        expectedRevision: 0,
-        now: reviewedAt,
-        timezone: 'UTC'
-      });
-      await client.execute({
-        sql: `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, scheduler_version, parameters_json)
-          VALUES (?, 'fr', 'fr-a1-001', 'fr-a1-001@1', ?, ?, 1, ?, ?)`,
-        args: [
-          ownerId,
-          scheduled.stateJson,
-          scheduled.dueAt,
-          scheduled.schedulerVersion,
-          scheduled.parametersJson
-        ]
-      });
-      return scheduled.dueAt;
-    }
-    const dueAt = await storeSchedule(learner.userId, 'good');
-    const otherDueAt = await storeSchedule(other.userId, 'again');
+    const dueAt = await storeSchedule(learner.userId, 'good', reviewedAt);
+    const otherDueAt = await storeSchedule(other.userId, 'again', reviewedAt);
     expect(otherDueAt).not.toBe(dueAt);
     await saveStudySchedule(client, learner, {
       desiredRetention: 80,
@@ -910,3 +884,35 @@ describe('grammar retention storage and session flow', () => {
     );
   });
 });
+
+// Store a learner's fr-a1-001 schedule as one review would leave it.
+async function storeSchedule(
+  ownerId: string,
+  rating: 'good' | 'again',
+  reviewedAt: Date
+) {
+  const scheduled = scheduleStudyReview({
+    id: `${ownerId}:fr-a1-001`,
+    rating,
+    schedule: await getStudySchedule(client, testSession(ownerId)),
+    stateJson: null,
+    schedulerVersion: null,
+    parametersJson: null,
+    resetRequired: false,
+    expectedRevision: 0,
+    now: reviewedAt,
+    timezone: 'UTC'
+  });
+  await client.execute({
+    sql: `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, scheduler_version, parameters_json)
+      VALUES (?, 'fr', 'fr-a1-001', 'fr-a1-001@1', ?, ?, 1, ?, ?)`,
+    args: [
+      ownerId,
+      scheduled.stateJson,
+      scheduled.dueAt,
+      scheduled.schedulerVersion,
+      scheduled.parametersJson
+    ]
+  });
+  return scheduled.dueAt;
+}
