@@ -44,6 +44,41 @@ export function createStudyTimer(
   };
 }
 
+type StudyTimer = ReturnType<typeof createStudyTimer>;
+type Listenable = Pick<EventTarget, 'addEventListener' | 'removeEventListener'>;
+
+/**
+ * Drive `timer` from the page: pointer, key and input events are actions while
+ * the page is visible; hiding the tab or leaving the page stops it. Returns the
+ * cleanup, which also stops the timer.
+ */
+export function attachStudyTimer(
+  timer: StudyTimer,
+  view: Listenable,
+  page: Listenable & { readonly visibilityState: DocumentVisibilityState },
+  clock: () => number = Date.now
+): () => void {
+  const activity = () => {
+    if (page.visibilityState === 'visible') timer.activity(clock());
+  };
+  const visibility = () => {
+    if (page.visibilityState === 'visible') timer.activity(clock());
+    else timer.stop(clock());
+  };
+  const leave = () => timer.stop(clock());
+  const events = ['pointerdown', 'keydown', 'input'] as const;
+  for (const name of events) view.addEventListener(name, activity);
+  page.addEventListener('visibilitychange', visibility);
+  view.addEventListener('pagehide', leave);
+  activity();
+  return () => {
+    for (const name of events) view.removeEventListener(name, activity);
+    page.removeEventListener('visibilitychange', visibility);
+    view.removeEventListener('pagehide', leave);
+    leave();
+  };
+}
+
 /** Save a finished segment; keepalive lets the request outlive the page. */
 export async function sendStudySegment(segment: StudySegment): Promise<void> {
   const response = await fetch('/app/api/study-time', {

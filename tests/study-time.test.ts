@@ -167,3 +167,71 @@ it('accepts a segment ending up to a minute after the server clock and rejects o
     client.close();
   }
 });
+
+it('accepts each limit exactly and rejects one millisecond or character past it', async () => {
+  const client = await studyClient('UTC');
+  const day = 24 * 60 * minute;
+  const week = 7 * day;
+  const accepted = [
+    segment('longest', 'grammar', now - day, now),
+    segment('oldest', 'grammar', now - week, now - week + minute),
+    segment('x'.repeat(64), 'flashcards', now - minute, now)
+  ];
+  const rejected = [
+    segment('too-long', 'grammar', now - day - 1, now),
+    segment('too-old', 'grammar', now - week - 1, now - week + minute),
+    segment('x'.repeat(65), 'flashcards', now - minute, now),
+    { id: 'fraction', category: 'grammar', startedAt: now - 1.5, endedAt: now }
+  ];
+  try {
+    for (const body of accepted)
+      await expect(
+        recordStudyTime(client, learner, body, now)
+      ).resolves.toEqual({ saved: true });
+    for (const body of rejected)
+      await expect(recordStudyTime(client, learner, body, now)).rejects.toEqual(
+        new StudyError('INVALID_STUDY_TIME')
+      );
+    expect(
+      (
+        await client.execute(
+          'SELECT count(*) AS total FROM study_time_segments'
+        )
+      ).rows[0].total
+    ).toBe(3);
+  } finally {
+    client.close();
+  }
+});
+
+it('counts overlapping segments of one category once', async () => {
+  const client = await studyClient('UTC');
+  try {
+    // Two lesson tabs: 10 and 5 minutes overlapping by 3, then a flashcard
+    // segment over the same time, which is a different category.
+    await recordStudyTime(
+      client,
+      learner,
+      segment('a', 'grammar', now - 20 * minute, now - 10 * minute),
+      now
+    );
+    await recordStudyTime(
+      client,
+      learner,
+      segment('b', 'grammar', now - 13 * minute, now - 8 * minute),
+      now
+    );
+    await recordStudyTime(
+      client,
+      learner,
+      segment('c', 'flashcards', now - 20 * minute, now - 18 * minute),
+      now
+    );
+
+    expect(await loadStudyTime(client, learner, '2026-10-22', now)).toEqual([
+      { date: '2026-10-22', flashcardsSeconds: 120, grammarSeconds: 720 }
+    ]);
+  } finally {
+    client.close();
+  }
+});

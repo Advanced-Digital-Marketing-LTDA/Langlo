@@ -91,6 +91,36 @@ export async function recordStudyTime(
   return { saved: true };
 }
 
+type Span = { start: number; end: number };
+
+// Overlapping segments of one category (two open tabs, say) count once.
+function mergeSpans(spans: Span[]): Span[] {
+  const merged: Span[] = [];
+  for (const span of [...spans].sort((a, b) => a.start - b.start)) {
+    const last = merged.at(-1);
+    if (last && span.start <= last.end) last.end = Math.max(last.end, span.end);
+    else merged.push({ ...span });
+  }
+  return merged;
+}
+
+// Add a span's seconds to each study day it overlaps.
+function addToDays(
+  span: Span,
+  boundaries: number[],
+  seconds: number[],
+  recorded: boolean[]
+) {
+  for (let index = 0; index < seconds.length; index += 1) {
+    const overlap =
+      Math.min(span.end, boundaries[index + 1]) -
+      Math.max(span.start, boundaries[index]);
+    if (overlap <= 0) continue;
+    seconds[index] += overlap / 1000;
+    recorded[index] = true;
+  }
+}
+
 /**
  * Active study seconds per study day through today, split at study-day
  * boundaries. The range starts at `firstDate` (the review history start) or
@@ -118,18 +148,15 @@ export async function loadStudyTime(
     grammar: Array.from({ length: todayIndex + 1 }, () => 0)
   };
   const recorded = Array.from({ length: todayIndex + 1 }, () => false);
-  for (const row of segments.rows) {
-    const category = String(row.category) as StudyTimeCategory;
-    const start = Math.max(Number(row.started_at), rangeStart);
-    const end = Math.min(Number(row.ended_at), now);
-    for (let index = 0; index <= todayIndex; index += 1) {
-      const overlap =
-        Math.min(end, boundaries[index + 1]) -
-        Math.max(start, boundaries[index]);
-      if (overlap <= 0) continue;
-      seconds[category][index] += overlap / 1000;
-      recorded[index] = true;
-    }
+  for (const category of categories) {
+    const spans = segments.rows
+      .filter((row) => row.category === category)
+      .map((row) => ({
+        start: Math.max(Number(row.started_at), rangeStart),
+        end: Math.min(Number(row.ended_at), now)
+      }));
+    for (const span of mergeSpans(spans))
+      addToDays(span, boundaries, seconds[category], recorded);
   }
   const dates = boundaries
     .slice(0, todayIndex + 1)

@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
+  import { page } from '$app/state';
   import {
+    attachStudyTimer,
     createStudyTimer,
     sendStudySegment,
     type StudyCategory
@@ -8,28 +11,19 @@
 
   let { category }: { category: StudyCategory } = $props();
 
-  onMount(() => {
-    const timer = createStudyTimer(category, (segment) => {
-      void sendStudySegment(segment);
-    });
-    const activity = () => {
-      if (document.visibilityState === 'visible') timer.activity(Date.now());
-    };
-    const visibility = () => {
-      if (document.visibilityState === 'visible') timer.activity(Date.now());
-      else timer.stop(Date.now());
-    };
-    const leave = () => timer.stop(Date.now());
-    const events = ['pointerdown', 'keydown', 'input'] as const;
-    for (const name of events) window.addEventListener(name, activity);
-    document.addEventListener('visibilitychange', visibility);
-    window.addEventListener('pagehide', leave);
-    activity();
-    return () => {
-      for (const name of events) window.removeEventListener(name, activity);
-      document.removeEventListener('visibilitychange', visibility);
-      window.removeEventListener('pagehide', leave);
-      leave();
-    };
-  });
+  // Leaving for the analytics tab saves the last segment after that page's
+  // data has loaded, so refresh it once the save is done.
+  const saved = () => {
+    if (page.url.pathname === '/app/analytics') return invalidateAll();
+  };
+
+  onMount(() =>
+    attachStudyTimer(
+      createStudyTimer(category, (segment) => {
+        void sendStudySegment(segment).then(saved);
+      }),
+      window,
+      document
+    )
+  );
 </script>
