@@ -88,7 +88,7 @@ async function copyMigrations(): Promise<string> {
 const host = 'langlo-pilot-test-owner.aws-eu-west-1.turso.io';
 const safeEnv = {
   DATABASE_URL: `libsql://${host}`,
-  TURSO_AUTH_TOKEN: 'synthetic-token-not-a-secret',
+  TURSO_AUTH_TOKEN_2: 'synthetic-token-not-a-secret',
   LANGLO_MIGRATION_TARGET: 'remote-test'
 };
 
@@ -182,10 +182,10 @@ describe('remote-test target validation', () => {
     ],
     [
       'missing token',
-      { ...safeEnv, TURSO_AUTH_TOKEN: undefined },
+      { ...safeEnv, TURSO_AUTH_TOKEN_2: undefined },
       'TOKEN_MISSING'
     ],
-    ['blank token', { ...safeEnv, TURSO_AUTH_TOKEN: ' ' }, 'TOKEN_MISSING'],
+    ['blank token', { ...safeEnv, TURSO_AUTH_TOKEN_2: ' ' }, 'TOKEN_MISSING'],
     [
       'missing class',
       { ...safeEnv, LANGLO_MIGRATION_TARGET: undefined },

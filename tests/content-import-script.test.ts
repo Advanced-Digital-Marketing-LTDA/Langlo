@@ -236,7 +236,7 @@ describe('content import script', () => {
       ['--apply', '--confirm-host', 'evil.test'],
       {
         DATABASE_URL: 'libsql://evil.test',
-        TURSO_AUTH_TOKEN: 'secret-token'
+        TURSO_AUTH_TOKEN_2: 'secret-token'
       }
     );
     expect(code).toBe(1);
@@ -265,7 +265,7 @@ describe('content import script', () => {
       ['--apply', '--confirm-host', 'langlo-test.turso.io'],
       {
         DATABASE_URL: 'libsql://Langlo-Test.Turso.io/',
-        TURSO_AUTH_TOKEN: ' secret-token '
+        TURSO_AUTH_TOKEN_2: ' secret-token '
       },
       async (url, token) => {
         opened.push({ url, token });
