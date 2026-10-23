@@ -419,6 +419,11 @@ describe('settings', () => {
       relearningPreset: '1h'
     };
     expect(settingsActions).not.toHaveProperty('previewStudySchedule');
+    expect(await getStudySchedule(client, learner)).toEqual({
+      desiredRetention: 90,
+      newCardPreset: '1m+10m',
+      relearningPreset: '10m'
+    });
     expect(await settingsActions.saveStudySchedule(event({ fields }))).toEqual({
       saved: 'Study schedule saved.'
     });
