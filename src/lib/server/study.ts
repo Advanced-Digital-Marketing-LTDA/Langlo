@@ -832,18 +832,19 @@ function hasCorrectGrammarEvaluation(rows: Row[]) {
   );
 }
 
-function assertRateableAttempt(
+/** A lesson page rates only its own skill's practice answers. */
+function assertLessonPractice(
   rows: Row[],
   expectedSessionId: string,
-  practiceSkillId: string | undefined
+  skillId: string
 ) {
   const row = ownGrammarAttempt(rows, expectedSessionId);
-  // A lesson page rates only its own skill's practice answers.
-  if (
-    practiceSkillId !== undefined &&
-    (row.skill_id !== practiceSkillId || row.mode === 'assessment')
-  )
-    throw new StudyError('NOT_FOUND');
+  if (row.skill_id !== skillId) throw new StudyError('NOT_FOUND');
+  if (row.mode === 'assessment') throw new StudyError('NOT_FOUND');
+}
+
+function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
+  const row = ownGrammarAttempt(rows, expectedSessionId);
   if (
     row.status === 'quarantined' ||
     !['active', 'completed'].includes(String(row.state))
@@ -920,7 +921,9 @@ export async function rateGrammarAttempt(
   const tx = await beginWrite(client);
   try {
     const rows = await grammarAttemptRows(tx, learner, attemptId);
-    const row = assertRateableAttempt(rows, expectedSessionId, practiceSkillId);
+    if (practiceSkillId !== undefined)
+      assertLessonPractice(rows, expectedSessionId, practiceSkillId);
+    const row = assertRateableAttempt(rows, expectedSessionId);
     const duplicate = await persistAttemptRating(tx, learner, row, rating);
     if (duplicate) {
       await tx.commit();

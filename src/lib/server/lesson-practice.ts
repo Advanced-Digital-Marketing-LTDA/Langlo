@@ -45,13 +45,11 @@ export async function lessonFor(
     return getLesson(client, learner, page.language, page.skillId);
   const study = await ownSession(client, learner, page.studySessionId);
   if (study.language !== page.language) throw new StudyError('NOT_FOUND');
-  return sessionLessonIn(
-    client,
-    learner,
-    page.studySessionId,
-    page.skillId,
+  return sessionLessonIn(client, learner, {
+    studySessionId: page.studySessionId,
+    skillId: page.skillId,
     study
-  );
+  });
 }
 
 function needsPracticeRating(
@@ -120,7 +118,7 @@ async function exerciseAfter(
       };
     // The session read for the feedback serves the question lookup too.
     return await nextExercise(studySessionId, () =>
-      nextQuestionIn(client, learner, studySessionId, skillId, study)
+      nextQuestionIn(client, learner, { studySessionId, skillId, study })
     );
   } catch (thrown) {
     return describedNotice(studySessionId, thrown);
