@@ -1,6 +1,11 @@
 import { createClient } from '@libsql/client';
 import { expect, it } from 'vitest';
-import { loadStudyTime, recordStudyTime } from '../src/lib/server/study-time';
+import {
+  loadStudySegments,
+  loadStudyTime,
+  recordStudyTime,
+  studyTimeDays
+} from '../src/lib/server/study-time';
 import { StudyError } from '../src/lib/server/study-error';
 import { studyDayStart } from '../src/lib/server/study-days';
 
@@ -230,6 +235,38 @@ it('counts overlapping segments of one category once', async () => {
 
     expect(await loadStudyTime(client, learner, '2026-10-22', now)).toEqual([
       { date: '2026-10-22', flashcardsSeconds: 120, grammarSeconds: 720 }
+    ]);
+  } finally {
+    client.close();
+  }
+});
+
+it("reads the learner's segments in the timezone it is given, not the stored one", async () => {
+  const client = await studyClient('America/Sao_Paulo');
+  try {
+    const insert = (id: string, ownerId: string, start: number, end: number) =>
+      client.execute({
+        sql: 'INSERT INTO study_time_segments VALUES (?, ?, ?, ?, ?)',
+        args: [id, ownerId, 'grammar', start, end]
+      });
+    // Crosses the 04:00 UTC study-day boundary; in America/Sao_Paulo it would
+    // all fall on one day.
+    const today = studyDayStart(new Date(now), 'UTC').getTime();
+    await insert('a', 'learner-a', today - minute, today + minute);
+    await insert('b', 'learner-b', today - minute, today + minute);
+    const yearAgo = studyDayStart(new Date(now), 'UTC', -365).getTime();
+    await insert('c', 'learner-a', yearAgo - 2 * minute, yearAgo - minute);
+
+    const segments = await loadStudySegments(client, learner, 'UTC', now);
+
+    expect(segments.timezone).toBe('UTC');
+    expect(segments.boundaries[365]).toBe(today);
+    expect(segments.rows.map((row) => Number(row.started_at))).toEqual([
+      today - minute
+    ]);
+    expect(studyTimeDays(segments, '2026-10-22')).toEqual([
+      { date: '2026-10-21', flashcardsSeconds: 0, grammarSeconds: 60 },
+      { date: '2026-10-22', flashcardsSeconds: 0, grammarSeconds: 60 }
     ]);
   } finally {
     client.close();

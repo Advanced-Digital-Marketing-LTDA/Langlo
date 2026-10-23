@@ -1,6 +1,10 @@
 import { createClient } from '@libsql/client';
 import { expect, it } from 'vitest';
-import { loadReviewAnalytics } from '../src/lib/server/review-analytics';
+import {
+  loadReviewAnalytics,
+  loadReviewCounts,
+  reviewAnalyticsDays
+} from '../src/lib/server/review-analytics';
 import { studyDayStart } from '../src/lib/server/study-days';
 
 async function analyticsClient() {
@@ -306,6 +310,44 @@ it('shows only today when there are no retained reviews or scheduled work', asyn
         grammarScheduled: 0
       }
     ]);
+  } finally {
+    client.close();
+  }
+});
+
+it('counts reviews in the timezone it is given, not the stored one', async () => {
+  const client = await analyticsClient();
+  try {
+    // 05:00 UTC is today's study day in UTC (from 04:00) but yesterday's in
+    // the stored America/Sao_Paulo (from 07:00 UTC).
+    const reviewedAt = new Date('2026-10-22T05:00:00.000Z').getTime();
+    await addEvent(client, 'grammar_retention_events', 'learner-a', reviewedAt);
+    await addEvent(client, 'grammar_retention_events', 'learner-b', reviewedAt);
+    await addCard(client, {
+      noteId: 'due-tomorrow',
+      dueAt: studyDayStart(now, 'UTC', 1).getTime()
+    });
+
+    const counts = await loadReviewCounts(
+      client,
+      { userId: 'learner-a' },
+      'UTC',
+      now.getTime()
+    );
+
+    expect(counts.timezone).toBe('UTC');
+    expect(counts.boundaries[365]).toEqual(studyDayStart(now, 'UTC', 0));
+    expect(counts.grammarCompleted[365]).toBe(1);
+    expect(counts.grammarCompleted[364]).toBe(0);
+    expect(counts.flashcardsScheduled[366]).toBe(1);
+    expect(reviewAnalyticsDays(counts, [])).toEqual(
+      expectedDays(
+        now,
+        'UTC',
+        { length: 2, firstDayOffset: 0 },
+        { 0: { grammarCompleted: 1 }, 1: { flashcardsScheduled: 1 } }
+      )
+    );
   } finally {
     client.close();
   }
