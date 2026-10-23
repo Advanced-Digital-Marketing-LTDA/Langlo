@@ -304,22 +304,20 @@ type PracticeCount = {
 };
 type PracticeCounts = Map<string, PracticeCount>;
 
-async function loadCatalog(tx: Tx, language: string) {
-  const catalog = await tx.execute({
+function catalogStatement(language: string): InStatement {
+  return {
     sql: `SELECT sk.id, sk.level, l.title AS lesson_title, COALESCE(l.title, sk.id) AS title, v.id AS content_version_id, v.status
         FROM skills sk LEFT JOIN content_versions v ON v.skill_id = sk.id AND v.id = (SELECT v2.id FROM content_versions v2 WHERE v2.skill_id = sk.id ORDER BY v2.status = 'quarantined', v2.version DESC LIMIT 1)
         LEFT JOIN lessons l ON l.content_version_id = v.id WHERE sk.language = ? AND sk.retired_at IS NULL ORDER BY sk.level, sk.id`,
     args: [language]
-  });
-  return catalog.rows;
+  };
 }
 
-async function loadPrerequisites(tx: Tx, language: string) {
-  const prerequisites = await tx.execute({
+function prerequisitesStatement(language: string): InStatement {
+  return {
     sql: 'SELECT p.skill_id, p.prerequisite_id FROM prerequisites p JOIN skills r ON r.id = p.prerequisite_id WHERE p.language = ? AND r.retired_at IS NULL ORDER BY p.skill_id, p.prerequisite_id',
     args: [language]
-  });
-  return prerequisites.rows;
+  };
 }
 
 export type SkillCatalogEntry = {
@@ -377,21 +375,6 @@ function countPracticeAnswers(rows: Row[], carry: Map<string, string>) {
     counts.set(skillId, count);
   }
   return counts;
-}
-
-async function loadQualifyingEvidence(tx: Tx, scope: EvidenceScope) {
-  const source = await span('mastery.load-evidence', async (active) => {
-    const rows = await loadEvidenceRows(tx, scope);
-    active.setAttribute('rows', rows.length);
-    return rows;
-  });
-  const current = await span('mastery.current-content', () =>
-    currentContent(tx, scope.language)
-  );
-  return {
-    evidence: qualifyingGrammarEvidence(source, current),
-    practiceCounts: countPracticeAnswers(source, current.carry)
-  };
 }
 
 /** Sync trusted answer history inside the write transaction that records it. */
@@ -485,22 +468,47 @@ function skillStanding(
   };
 }
 
-/** Compute mastery from trusted answer history without changing learner state. */
-async function computeMastery(
-  tx: Tx,
+/**
+ * The five reads a track's mastery is computed from: the catalog, its
+ * prerequisites, the learner's answer history and the current content.
+ */
+function masteryStatements(
   learner: LearnerSession,
   language: string
-) {
-  const catalog = await span('mastery.catalog', () =>
-    loadCatalog(tx, language)
-  );
-  const prerequisites = await span('mastery.prerequisites', () =>
-    loadPrerequisites(tx, language)
-  );
-  const { evidence, practiceCounts } = await loadQualifyingEvidence(tx, {
-    ownerId: learner.userId,
-    language
-  });
+): InStatement[] {
+  return [
+    catalogStatement(language),
+    prerequisitesStatement(language),
+    evidenceRowsStatement({ ownerId: learner.userId, language }),
+    ...currentContentStatements(language)
+  ];
+}
+
+/** Where the answer history sits among `masteryStatements`. */
+const EVIDENCE_STATEMENT = 2;
+
+/** How many answer history rows the tracks' batched reads returned. */
+function evidenceRowCount(tracks: TrackReads[], read: Row[][]) {
+  let start = 0;
+  let rows = 0;
+  for (const track of tracks) {
+    rows += read[start + EVIDENCE_STATEMENT].length;
+    start += track.mastery.length + track.extra.length;
+  }
+  return rows;
+}
+
+/** Compute mastery from trusted answer history without changing learner state. */
+function masteryOf([
+  catalog,
+  prerequisites,
+  source,
+  questions,
+  retired
+]: Row[][]) {
+  const current = currentContentOf(questions, retired);
+  const evidence = qualifyingGrammarEvidence(source, current);
+  const practiceCounts = countPracticeAnswers(source, current.carry);
   return catalog.map((row) =>
     skillStanding(row, evidence, prerequisites, practiceCounts)
   );
@@ -520,8 +528,9 @@ export async function loadEnrolledCatalog(
     });
     const enrollment = enrolled.rows[0];
     if (!enrollment) throw new StudyError('NOT_FOUND');
-    const catalog = await loadCatalog(tx, language);
-    const prerequisites = await loadPrerequisites(tx, language);
+    const catalog = (await tx.execute(catalogStatement(language))).rows;
+    const prerequisites = (await tx.execute(prerequisitesStatement(language)))
+      .rows;
     const result = {
       language,
       level: String(enrollment.starting_level),
@@ -537,11 +546,78 @@ export async function loadEnrolledCatalog(
   }
 }
 
-/** Read mastery only for languages this learner is enrolled in. */
-export async function loadEnrolledMastery(
+/** Reads a caller adds to each track's mastery reads, and how it reads their rows. */
+export type Alongside<T> = {
+  statements: (language: string) => InStatement[];
+  read: (rows: Row[][]) => T;
+};
+
+const nothingAlongside: Alongside<null> = {
+  statements: () => [],
+  read: () => null
+};
+
+type TrackReads = { mastery: InStatement[]; extra: InStatement[] };
+type EnrolledTrack = TrackReads & { language: string; level: string };
+
+/** The enrolled tracks to read (one, or all), each with its reads. */
+function enrolledTracks(
+  rows: Row[],
+  language: string | null,
+  reads: (language: string) => TrackReads
+): EnrolledTrack[] {
+  if (language !== null && !rows.some((row) => row.language === language))
+    throw new StudyError('NOT_FOUND');
+  return rows
+    .filter((row) => language === null || row.language === language)
+    .map((row) => ({
+      language: String(row.language),
+      level: String(row.starting_level),
+      ...reads(String(row.language))
+    }));
+}
+
+/** Every track's reads in one round trip. */
+async function batchedReads(
+  tx: Pick<Transaction, 'batch'>,
+  tracks: EnrolledTrack[]
+) {
+  const statements = tracks.flatMap((track) => [
+    ...track.mastery,
+    ...track.extra
+  ]);
+  if (statements.length === 0) return [];
+  return span('mastery.reads', async (active) => {
+    const read = (await tx.batch(statements)).map((result) => result.rows);
+    active.setAttribute('statements', statements.length);
+    active.setAttribute('rows', evidenceRowCount(tracks, read));
+    return read;
+  });
+}
+
+/** Each track's share of the batched results, in the order they were sent. */
+function splitReads(tracks: EnrolledTrack[], results: Row[][]) {
+  let offset = 0;
+  return tracks.map((track) => {
+    const mastery = results.slice(offset, offset + track.mastery.length);
+    offset += track.mastery.length;
+    const extra = results.slice(offset, offset + track.extra.length);
+    offset += track.extra.length;
+    return { track, mastery, extra };
+  });
+}
+
+/**
+ * Read mastery only for languages this learner is enrolled in, together with
+ * the caller's own reads for each track. After the enrollments, every track's
+ * reads go in one batch, so the number of round trips does not grow with the
+ * number of tracks.
+ */
+export async function loadEnrolledMasteryWith<T>(
   client: Client,
   learner: LearnerSession,
-  language: string | null = null
+  language: string | null,
+  alongside: Alongside<T>
 ) {
   const tx = await beginRead(client);
   try {
@@ -549,27 +625,44 @@ export async function loadEnrolledMastery(
       sql: 'SELECT language, starting_level FROM enrollments WHERE owner_id = ? ORDER BY language',
       args: [learner.userId]
     });
-    if (
-      language !== null &&
-      !enrolled.rows.some((row) => row.language === language)
-    )
-      throw new StudyError('NOT_FOUND');
-
-    const tracks = await Promise.all(
-      enrolled.rows
-        .filter((row) => language === null || row.language === language)
-        .map(async (row) => ({
-          language: String(row.language),
-          level: String(row.starting_level),
-          skills: await computeMastery(tx, learner, String(row.language))
-        }))
+    const tracks = enrolledTracks(enrolled.rows, language, (trackLanguage) => ({
+      mastery: masteryStatements(learner, trackLanguage),
+      extra: alongside.statements(trackLanguage)
+    }));
+    const results = await batchedReads(tx, tracks);
+    const loaded = splitReads(tracks, results).map(
+      ({ track, mastery, extra }) => ({
+        language: track.language,
+        level: track.level,
+        skills: masteryOf(mastery),
+        alongside: alongside.read(extra)
+      })
     );
     await tx.commit();
-    return tracks;
+    return loaded;
   } catch (error) {
     await tx.rollback().catch(() => undefined);
     throw error;
   } finally {
     tx.close();
   }
+}
+
+/** Read mastery only for languages this learner is enrolled in. */
+export async function loadEnrolledMastery(
+  client: Client,
+  learner: LearnerSession,
+  language: string | null = null
+) {
+  const tracks = await loadEnrolledMasteryWith(
+    client,
+    learner,
+    language,
+    nothingAlongside
+  );
+  return tracks.map(({ language, level, skills }) => ({
+    language,
+    level,
+    skills
+  }));
 }

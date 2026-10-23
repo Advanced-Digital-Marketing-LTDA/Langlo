@@ -10,7 +10,7 @@ import {
   type Grade,
   type FSRSParameters
 } from 'ts-fsrs';
-import type { Client, Row } from '@libsql/client';
+import type { Client, InStatement, Row } from '@libsql/client';
 import { beginWrite, executeWrite } from './db-transactions';
 export { beginRead, beginWrite, executeWrite } from './db-transactions';
 import { studyDayStart } from './study-days';
@@ -139,15 +139,16 @@ function parametersForSchedule(
   });
 }
 
-async function readStudySchedule(
-  client: Pick<Client, 'execute'>,
-  ownerId: string
-): Promise<StudySchedule> {
-  const result = await client.execute({
+/** The read `readStudySchedule` is built from, so a caller can batch it. */
+export function studyScheduleStatement(ownerId: string): InStatement {
+  return {
     sql: 'SELECT desired_retention, new_card_preset, relearning_preset FROM native_flashcard_preferences WHERE owner_id = ?',
     args: [ownerId]
-  });
-  const row = result.rows[0];
+  };
+}
+
+export function studyScheduleOf(rows: Row[]): StudySchedule {
+  const row = rows[0];
   return row
     ? {
         desiredRetention: Number(row.desired_retention),
@@ -155,6 +156,14 @@ async function readStudySchedule(
         relearningPreset: String(row.relearning_preset) as RelearningPreset
       }
     : defaultStudySchedule;
+}
+
+async function readStudySchedule(
+  client: Pick<Client, 'execute'>,
+  ownerId: string
+): Promise<StudySchedule> {
+  const result = await client.execute(studyScheduleStatement(ownerId));
+  return studyScheduleOf(result.rows);
 }
 
 export async function getStudySchedule(

@@ -5,7 +5,9 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import {
   dueGrammarReviews,
-  grammarRetentionFor
+  grammarRetentionFor,
+  grammarRetentionOf,
+  grammarRetentionStatements
 } from '../src/lib/server/grammar-retention';
 import {
   finishPractice,
@@ -826,4 +828,91 @@ describe('grammar retention storage and session flow', () => {
       (await client.execute('SELECT * FROM grammar_retention_events')).rows
     ).toHaveLength(0);
   });
+
+  it('builds retention from the batched schedule, skill and stored-schedule reads', async () => {
+    const reviewedAt = new Date('2026-10-20T12:00:00.000Z');
+    const dueAt = await storeSchedule(learner.userId, 'good', reviewedAt);
+    const otherDueAt = await storeSchedule(other.userId, 'again', reviewedAt);
+    expect(otherDueAt).not.toBe(dueAt);
+    await saveStudySchedule(client, learner, {
+      desiredRetention: 80,
+      newCardPreset: '30m',
+      relearningPreset: '1h'
+    });
+
+    const read = await client.batch(
+      grammarRetentionStatements(learner, 'fr'),
+      'read'
+    );
+    const retention = grammarRetentionOf(
+      read.map((result) => result.rows),
+      reviewedAt.getTime()
+    );
+
+    // Only the learner's own schedule counts, against the learner's target.
+    expect(retention.find((skill) => skill.skillId === 'fr-a1-001')).toEqual({
+      skillId: 'fr-a1-001',
+      title: 'Synthetic fr-a1-001',
+      available: true,
+      retention: {
+        state: 'scheduled',
+        dueAt,
+        lastReviewedAt: null,
+        retrievability: expect.any(Number),
+        target: 0.8
+      }
+    });
+    expect(
+      retention
+        .filter((skill) => skill.skillId !== 'fr-a1-001')
+        .map((skill) => skill.retention)
+    ).toEqual(
+      retention
+        .filter((skill) => skill.skillId !== 'fr-a1-001')
+        .map(() => ({
+          state: 'not-assessed',
+          dueAt: null,
+          lastReviewedAt: null,
+          retrievability: null,
+          target: 0.8
+        }))
+    );
+    expect(retention.map((skill) => skill.skillId)).toEqual(
+      (await grammarRetentionFor(client, learner, 'fr')).map(
+        (skill) => skill.skillId
+      )
+    );
+  });
 });
+
+// Store a learner's fr-a1-001 schedule as one review would leave it.
+async function storeSchedule(
+  ownerId: string,
+  rating: 'good' | 'again',
+  reviewedAt: Date
+) {
+  const scheduled = scheduleStudyReview({
+    id: `${ownerId}:fr-a1-001`,
+    rating,
+    schedule: await getStudySchedule(client, testSession(ownerId)),
+    stateJson: null,
+    schedulerVersion: null,
+    parametersJson: null,
+    resetRequired: false,
+    expectedRevision: 0,
+    now: reviewedAt,
+    timezone: 'UTC'
+  });
+  await client.execute({
+    sql: `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, scheduler_version, parameters_json)
+      VALUES (?, 'fr', 'fr-a1-001', 'fr-a1-001@1', ?, ?, 1, ?, ?)`,
+    args: [
+      ownerId,
+      scheduled.stateJson,
+      scheduled.dueAt,
+      scheduled.schedulerVersion,
+      scheduled.parametersJson
+    ]
+  });
+  return scheduled.dueAt;
+}
