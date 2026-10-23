@@ -62,7 +62,7 @@ it('CLI rejects a production URL, missing explicit target and unknown commands w
   const env = {
     ...process.env,
     DATABASE_URL: 'libsql://production.turso.io',
-    TURSO_AUTH_TOKEN: 'synthetic-secret-do-not-log'
+    TURSO_AUTH_TOKEN_2: 'synthetic-secret-do-not-log'
   };
   for (const args of [
     ['migrate'],
@@ -82,7 +82,7 @@ it('CLI rejects a production URL, missing explicit target and unknown commands w
       failure = error as { code: number; stderr: string };
     }
     expect(failure).toMatchObject({ code: 1 });
-    expect(failure?.stderr).not.toContain(env.TURSO_AUTH_TOKEN);
+    expect(failure?.stderr).not.toContain(env.TURSO_AUTH_TOKEN_2);
     expect(failure?.stderr).not.toContain(env.DATABASE_URL);
   }
 }, 15000);
@@ -117,7 +117,7 @@ it('subprocess timeout reports bounded safe diagnostics without target or ambien
     | undefined;
   try {
     await runFixtureCli('seed', argumentsFor(target), {
-      env: { ...process.env, TURSO_AUTH_TOKEN: 'synthetic-do-not-log' },
+      env: { ...process.env, TURSO_AUTH_TOKEN_2: 'synthetic-do-not-log' },
       nodeArgs: ['--eval', 'setTimeout(() => {}, 60000)'],
       timeout: 50
     });

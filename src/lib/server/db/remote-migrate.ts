@@ -30,7 +30,7 @@ const messages = new Map<RemoteMigrationErrorCode, string>(
     TARGET_INVALID:
       'DATABASE_URL must be a bare libsql://<name>.turso.io URL without credentials, query or path',
     TARGET_PRODUCTION: 'DATABASE_URL names a production database',
-    TOKEN_MISSING: 'TURSO_AUTH_TOKEN is not set in the runtime environment',
+    TOKEN_MISSING: 'TURSO_AUTH_TOKEN_2 is not set in the runtime environment',
     TARGET_CLASS_REQUIRED:
       'set LANGLO_MIGRATION_TARGET=remote-test to confirm the target class',
     JOURNAL_INVALID: 'the migration journal or a migration file is invalid',
@@ -118,7 +118,7 @@ export function parseRemoteTestTarget(
   const hostname = url.hostname.toLowerCase();
   if (productionMarker.test(hostname))
     throw new RemoteMigrationError('TARGET_PRODUCTION');
-  const authToken = env.TURSO_AUTH_TOKEN?.trim();
+  const authToken = env.TURSO_AUTH_TOKEN_2?.trim();
   if (!authToken) throw new RemoteMigrationError('TOKEN_MISSING');
   return { url: `libsql://${hostname}`, host: hostname, authToken };
 }

@@ -70,7 +70,7 @@ describe('runtime configuration', () => {
       parseRuntimeConfig({
         DATA_ENABLED: 'true',
         DATABASE_URL: 'file:./.fixtures/local.db',
-        TURSO_AUTH_TOKEN: 'synthetic-unused-token',
+        TURSO_AUTH_TOKEN_2: 'synthetic-unused-token',
         BETTER_AUTH_SECRET: 'a'.repeat(40)
       }).databaseToken
     ).toBeUndefined();
@@ -82,7 +82,7 @@ describe('runtime configuration', () => {
         APP_ORIGIN: 'https://langlo.app',
         DATA_ENABLED: 'true',
         DATABASE_URL: 'libsql://dedicated.example',
-        TURSO_AUTH_TOKEN: '  synthetic-remote-token\n',
+        TURSO_AUTH_TOKEN_2: '  synthetic-remote-token\n',
         BETTER_AUTH_SECRET: 'b'.repeat(40),
         MAIL_TRANSPORT: 'smtp',
         MAIL_FROM: 'ops@langlo.app',
@@ -106,7 +106,24 @@ describe('runtime configuration', () => {
         DATA_ENABLED: 'true',
         DATABASE_URL: 'libsql://dedicated.example'
       })
-    ).toThrow('Invalid TURSO_AUTH_TOKEN');
+    ).toThrow('Invalid TURSO_AUTH_TOKEN_2');
+  });
+  it('requires the new token name even when the old variable is set', () => {
+    const env = {
+      APP_ENV: 'production',
+      APP_ORIGIN: 'https://langlo.app',
+      DATA_ENABLED: 'true',
+      DATABASE_URL: 'libsql://dedicated.example',
+      BETTER_AUTH_SECRET: 'b'.repeat(40),
+      TURSO_AUTH_TOKEN: 'synthetic-legacy-token'
+    };
+    expect(() => parseRuntimeConfig(env)).toThrow('Invalid TURSO_AUTH_TOKEN_2');
+    expect(
+      parseRuntimeConfig({
+        ...env,
+        TURSO_AUTH_TOKEN_2: 'synthetic-current-token'
+      }).databaseToken
+    ).toBe('synthetic-current-token');
   });
   it('defaults to capture mail outside production', () => {
     expect(
@@ -135,7 +152,7 @@ describe('runtime configuration', () => {
       APP_ORIGIN: 'https://langlo.app',
       DATA_ENABLED: 'true',
       DATABASE_URL: 'libsql://dedicated.example',
-      TURSO_AUTH_TOKEN: 'synthetic-remote-token',
+      TURSO_AUTH_TOKEN_2: 'synthetic-remote-token',
       BETTER_AUTH_SECRET: 'b'.repeat(40)
     };
     expect(parseRuntimeConfig(production).auth?.mailError?.variable).toBe(
@@ -169,7 +186,7 @@ describe('runtime configuration', () => {
       APP_ORIGIN: 'https://langlo.app',
       DATA_ENABLED: 'true',
       DATABASE_URL: 'libsql://dedicated.example',
-      TURSO_AUTH_TOKEN: 'synthetic-remote-token',
+      TURSO_AUTH_TOKEN_2: 'synthetic-remote-token',
       BETTER_AUTH_SECRET: 'b'.repeat(40),
       MAIL_TRANSPORT: 'smtp',
       MAIL_FROM: 'Langlo <ops@langlo.app>',

@@ -8,7 +8,7 @@ export const configVariables = [
   'APP_ORIGIN',
   'DATA_ENABLED',
   'DATABASE_URL',
-  'TURSO_AUTH_TOKEN',
+  'TURSO_AUTH_TOKEN_2',
   'BETTER_AUTH_SECRET',
   'MAIL_TRANSPORT',
   'SMTP_HOST',
@@ -262,8 +262,8 @@ export function parseRuntimeConfig(
         !['', '/'].includes(target.pathname)
       )
         throw new ConfigError('DATABASE_URL');
-      databaseToken = env.TURSO_AUTH_TOKEN?.trim();
-      if (!databaseToken) throw new ConfigError('TURSO_AUTH_TOKEN');
+      databaseToken = env.TURSO_AUTH_TOKEN_2?.trim();
+      if (!databaseToken) throw new ConfigError('TURSO_AUTH_TOKEN_2');
     } else if (
       !/^file:\.\/\.fixtures\/[a-zA-Z0-9_-]+\.db$/u.test(databaseUrl)
     ) {
