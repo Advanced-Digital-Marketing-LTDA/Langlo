@@ -139,3 +139,69 @@ The clean install reported four moderate npm audit findings. They were not
 investigated or changed in this task. Hosted review and release acceptance
 remain separate; nothing was pushed, and no production database or live
 provider was used.
+
+## Data-sized date range correction — 2026-10-23
+
+The one-year limits are caps, not minimum display lengths. This correction
+supersedes the fixed historical start in the preceding extension: the table and
+chart now start at the learner's earliest retained completed review within the
+last 365 study days, or today when no such review exists. They continue through
+the farthest eligible current due day, capped at 365 study days ahead. Days
+between those endpoints remain present, including days with no reviews. With
+no retained history or scheduled work, the range contains only today.
+
+The chart derives today's position from the returned series and avoids repeated
+endpoint date labels in short ranges. Saved-timezone grouping, owner scoping,
+review counts, schedule controls, and schedule-write behavior are unchanged.
+No schema, migration, or dependency files changed.
+
+### Regression evidence
+
+- Before the range fix, the focused run had **7 failed, 49 passed**. Fixtures
+  with no retained history received a year of empty rows: the empty account
+  received 366 rows, the eight-day timezone fixtures received 373 rows, and the
+  month-before/month-after fixtures received 396 instead of 61 rows. The chart
+  also placed today's marker at the final date of a shortened series.
+- The rendering assertion was adjusted to allow Svelte's generated CSS class
+  alongside `today-line`. Separate one-day and two-day rendering regressions
+  then failed as expected (**2 failed, 1 passed**): today's date appeared three
+  times and twice respectively on the SVG axis.
+- After the fixes, all **58 tests across 3 focused files passed**. Coverage
+  includes either event type defining the historical start, owner isolation,
+  exclusion of events older than the cap, zero-count days within the range,
+  one-year due-date caps, empty accounts, saved timezones, and chart markers and
+  labels on shortened ranges.
+
+### Local validation for the correction
+
+Final PR validation was repeated on `c3e8073` after PR #161 merged. Its complete
+row/count assertions and visible single-point chart markers were preserved;
+the focused suites passed all 59 tests after adapting to the shorter range.
+
+Runtime: Node `24.19.0`, npm `11.9.0`. The clean dependency install used
+`npm ci --ignore-scripts --no-audit --no-fund` and changed no dependency or
+lockfile. The system npm launcher targets a container, so validation used the
+cached npm 11.9.0 CLI with temporary npm/npx launchers under `/tmp`.
+
+- `npm run check` — passed; 0 errors and 0 warnings.
+- `npm run lint` — passed.
+- `npm run format:check` — passed.
+- `npm test` — passed; 106 files and 1,857 tests.
+- `npm run test:property` — passed; 6 files and 9 tests.
+- `npm run build` — passed.
+- `npm run test:e2e` — passed; 144 desktop and mobile tests against the built
+  Node server with synthetic fixtures, including both Analytics flows.
+- `git diff --check` — passed.
+
+The initial restricted full-suite run had 29 failures and 1,827 passes, with
+`EPERM` blocking fixture subprocesses and a local socket. The rerun with local
+fixture process/socket permissions passed the entire suite. No test or product
+code was changed to suppress those environment failures.
+
+[Synthetic Analytics screenshot](LANGLO-281-analytics-data-range.png) shows the
+chart and table spanning only the two study days supported by fixture data. It
+was captured during the desktop browser flow; the temporary capture statement
+was removed before committing.
+
+No production data or live provider was used. Hosted checks, deployment, and
+release acceptance remain separate from these local results.

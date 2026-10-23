@@ -46,9 +46,11 @@
   const bottom = 48;
   const innerWidth = chartWidth - left - right;
   const innerHeight = chartHeight - top - bottom;
-  const todayIndex = 365;
   const todayPosition = $derived(
-    Math.max(0, Math.min(todayIndex, data.days.length - 1))
+    Math.max(
+      0,
+      data.days.findIndex((day) => day.flashcardsScheduled !== null)
+    )
   );
   const maxValue = $derived(
     Math.max(
@@ -94,9 +96,10 @@
 <h1>Review analytics</h1>
 <p>
   Completed counts come from recorded reviews. Scheduled counts use current due
-  dates, including overdue work today. History covers the last 365 study days;
-  scheduled dates extend through the farthest current due date, up to 365 days
-  ahead. No future reviews are assumed.
+  dates, including overdue work today. History starts with the earliest recorded
+  review within the last 365 study days; scheduled dates extend through the
+  farthest current due date, up to 365 days ahead. No future reviews are
+  assumed.
 </p>
 
 <section class="panel" aria-labelledby="review-chart-title">
@@ -181,22 +184,26 @@
       <text x={left} y={chartHeight - 12} class="axis-label"
         >{data.days[0]?.date}</text
       >
-      <text
-        x={chartX(todayPosition)}
-        y={chartHeight - 12}
-        text-anchor="middle"
-        class="axis-label"
-      >
-        {data.days[todayPosition]?.date}
-      </text>
-      <text
-        x={chartWidth - right}
-        y={chartHeight - 12}
-        text-anchor="end"
-        class="axis-label"
-      >
-        {data.days.at(-1)?.date}
-      </text>
+      {#if todayPosition > 0 && todayPosition < data.days.length - 1}
+        <text
+          x={chartX(todayPosition)}
+          y={chartHeight - 12}
+          text-anchor="middle"
+          class="axis-label"
+        >
+          {data.days[todayPosition]?.date}
+        </text>
+      {/if}
+      {#if data.days.length > 1}
+        <text
+          x={chartWidth - right}
+          y={chartHeight - 12}
+          text-anchor="end"
+          class="axis-label"
+        >
+          {data.days.at(-1)?.date}
+        </text>
+      {/if}
     </svg>
   </div>
 </section>

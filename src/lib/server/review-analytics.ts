@@ -155,18 +155,26 @@ export async function loadReviewAnalytics(
       scheduledFlashcardCounts(client, learner.userId, boundaries)
     ]);
   const grammarScheduled = scheduledGrammarCounts(tracks, boundaries);
+  const firstCompletedIndex = flashcardsCompleted.findIndex(
+    (count, index) => count > 0 || grammarCompleted[index] > 0
+  );
+  const startIndex =
+    firstCompletedIndex >= 0 ? firstCompletedIndex : todayIndex;
   let endIndex = todayIndex;
   for (let index = todayIndex; index < flashcardsScheduled.length; index += 1) {
     if (flashcardsScheduled[index] || grammarScheduled[index]) endIndex = index;
   }
 
-  return Array.from({ length: endIndex + 1 }, (_, index) => ({
-    date: localDate(boundaries[index], timezone),
-    flashcardsCompleted:
-      index <= todayIndex ? flashcardsCompleted[index] : null,
-    grammarCompleted: index <= todayIndex ? grammarCompleted[index] : null,
-    flashcardsScheduled:
-      index >= todayIndex ? flashcardsScheduled[index] : null,
-    grammarScheduled: index >= todayIndex ? grammarScheduled[index] : null
-  }));
+  return Array.from({ length: endIndex - startIndex + 1 }, (_, offset) => {
+    const index = startIndex + offset;
+    return {
+      date: localDate(boundaries[index], timezone),
+      flashcardsCompleted:
+        index <= todayIndex ? flashcardsCompleted[index] : null,
+      grammarCompleted: index <= todayIndex ? grammarCompleted[index] : null,
+      flashcardsScheduled:
+        index >= todayIndex ? flashcardsScheduled[index] : null,
+      grammarScheduled: index >= todayIndex ? grammarScheduled[index] : null
+    };
+  });
 }

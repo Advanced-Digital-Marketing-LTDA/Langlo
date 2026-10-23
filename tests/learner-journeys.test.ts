@@ -234,8 +234,8 @@ it.each([
 
     // Today, tomorrow, five empty days, and the analytics-outside card on the eighth day.
     const scheduled = [today, tomorrow, 0, 0, 0, 0, 0, 1];
-    expect(analytics.days).toHaveLength(373);
-    expect(analytics.days.slice(365)).toEqual(
+    expect(analytics.days).toHaveLength(8);
+    expect(analytics.days).toEqual(
       dates.map((date, index) => ({
         date,
         flashcardsCompleted: index === 0 ? 0 : null,
