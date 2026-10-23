@@ -1268,6 +1268,11 @@ test('rating an answer updates in place and keeps the scroll position', async ({
   await expect(feedback).toContainText('Correct');
 
   await scrollToBottomAndTag(page);
+  // The rating result carries the next question, so no page data is reloaded.
+  const reloads: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('__data.json')) reloads.push(request.url());
+  });
   await feedback.getByRole('button', { name: 'Good', exact: true }).click();
 
   const rated = page
@@ -1275,6 +1280,8 @@ test('rating an answer updates in place and keeps the scroll position', async ({
     .filter({ hasText: /^You rated this good\./ });
   await expect(rated).toBeFocused();
   await expect(rated).toBeInViewport();
+  await expect(page.getByText(/^Question 2 of \d+$/)).toBeVisible();
+  expect(reloads).toEqual([]);
   expect(await documentTag(page)).toBe('same-document');
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 });
