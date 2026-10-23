@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import StudyTimer from '../../../lib/components/StudyTimer.svelte';
   import type { ActionData, PageData } from './$types';
   let { data, form }: { data: PageData; form: ActionData } = $props();
   let revealed = $state(false);
@@ -16,6 +17,7 @@
   <title>Review · Langlo</title>
   <meta name="robots" content="noindex,nofollow" />
 </svelte:head>
+<StudyTimer category="flashcards" />
 
 <h1>Review</h1>
 {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
