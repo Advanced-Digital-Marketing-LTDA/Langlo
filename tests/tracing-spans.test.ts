@@ -77,7 +77,7 @@ it('span propagates the step error unchanged', async () => {
   ).rejects.toBe(failure);
 });
 
-it('computeMastery traces read phases while answer creation traces ledger sync', async () => {
+it('mastery reads trace one batch while answer creation traces ledger sync', async () => {
   await recordAttempt(client, learner, {
     studySessionId: 'study-a',
     questionId: 'fr-a1-001@1:q1',

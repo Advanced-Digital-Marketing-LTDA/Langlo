@@ -86,17 +86,31 @@ const sent = (calls: Counted, text: string) =>
 
 describe('home and analytics round trips', () => {
   it('loads the home page in few round trips', async () => {
-    const answer = new FormData();
-    for (const [name, value] of Object.entries({
-      studySessionId: 'study-a',
-      submissionKey: 'k1',
-      questionId: 'fr-a1-001@1:q1',
-      answer: 'suis'
-    }))
-      answer.set(name, value);
-    await recordAnswer(raw, learner, answer, 'fr-a1-001');
+    const answer = (studySessionId: string, submissionKey: string) => {
+      const form = new FormData();
+      for (const [name, value] of Object.entries({
+        studySessionId,
+        submissionKey,
+        questionId: 'fr-a1-001@1:q1',
+        answer: 'suis'
+      }))
+        form.set(name, value);
+      return form;
+    };
+    await recordAnswer(raw, learner, answer('study-a', 'k1'), 'fr-a1-001');
     await raw.execute(
-      "INSERT INTO native_flashcard_preferences (owner_id, desired_retention, new_card_preset, relearning_preset) VALUES ('learner-a', 85, '1m+10m', '10m')"
+      "INSERT INTO native_flashcard_preferences (owner_id, desired_retention, new_card_preset, relearning_preset) VALUES ('learner-a', 85, '1m+10m', '10m'), ('learner-b', 95, '1m+10m', '10m')"
+    );
+    // Another learner's newer unfinished practice, answer and retention
+    // target must not reach learner-a's page.
+    await raw.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, created_at) VALUES ('study-b2', 'learner-b', 'enrollment-b', 'fr', 'practice', 4102444800000)"
+    );
+    await recordAnswer(
+      raw,
+      testSession('learner-b'),
+      answer('study-b2', 'k2'),
+      'fr-a1-001'
     );
 
     const { data, calls } = await counted(() => homeLoad(pageEvent('/app')));
@@ -147,6 +161,22 @@ describe('home and analytics round trips', () => {
       },
       now
     );
+    // Another learner's timezone and study time must not reach learner-a's
+    // page: learner-a has no stored timezone, so the days are UTC days.
+    await raw.execute(
+      "INSERT INTO learner_preferences (owner_id, timezone) VALUES ('learner-b', 'Pacific/Kiritimati')"
+    );
+    await recordStudyTime(
+      raw,
+      testSession('learner-b'),
+      {
+        id: 'segment-b',
+        category: 'flashcards',
+        startedAt: now - 90_000,
+        endedAt: now - 30_000
+      },
+      now
+    );
 
     const { data, calls } = await counted(() =>
       analyticsLoad(pageEvent('/app/analytics'))
@@ -155,7 +185,7 @@ describe('home and analytics round trips', () => {
     const days = data.days as { date: string }[];
     expect(days).toEqual([
       {
-        date: days[0].date,
+        date: new Date(now).toISOString().slice(0, 10),
         flashcardsCompleted: 0,
         grammarCompleted: 0,
         flashcardsScheduled: 0,
