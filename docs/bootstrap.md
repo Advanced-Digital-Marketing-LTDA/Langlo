@@ -7,11 +7,11 @@
 - Profile: server application; SvelteKit 3.0.1, Svelte 5.57.2, TypeScript 6.0.3, Vite 8.3.3, Node adapter 6.0.0
 - Runtime/manager: Node 24.19.0 and npm 11.9.0, one exact lockfile
 - Isolation: newly initialized local repository on dev, separate from existing apps; intended origin Bonobo791/Langlo; no remote write
-- Selected eventual providers: dedicated Turso/libSQL with Drizzle, bounded OpenAI fallback, Proton SMTP, Coolify hosting and Netlify-managed DNS; none connected or exercised in this slice
+- Selected eventual providers: dedicated Turso/libSQL with Drizzle, bounded Jev fallback through TypeSafe System One, Proton SMTP, Coolify hosting and Netlify-managed DNS; the AI provider has only local fake-HTTP coverage
 - Current storage: actual disposable local file-backed libSQL; only synthetic identities and records
 - Current UI: original responsive public foundation shell; private routes deny access before auth is implemented
 - Production/external-write limits: no credentials, live calls, spending, real accounts, SSH, DNS, desktop, deployment or production DB access
-- Public source: Bonobo791/Langlo and PolyForm Shield 1.0.0 selected; license-file implementation, public hygiene and publication remain pending
+- Public source: Bonobo791/Langlo and PolyForm Shield 1.0.0 selected; license file implemented (`LICENSE`, `COMMERCIAL.md`); public hygiene and publication remain pending
 
 ## Compatibility ruling
 
@@ -32,7 +32,7 @@ Exact setup contracts and evidence are expanded in bootstrap-tasks.md. Final loc
 | C05 errors                                  | Verified for this slice      | Safe correlation and allowlisted diagnostics; built invalid-config test evidence T008            |
 | C06 tests                                   | Verified for current rules   | Ordinary examples + meaningful config properties; actual DB tests                                |
 | C07 CI                                      | Pending remote observation   | Read-only pinned workflow, no secrets; no run or branch protection claim                         |
-| C08 public reuse                            | Pending                      | Implement selected license and complete public hygiene review; no publication                    |
+| C08 public reuse                            | Pending                      | Selected license implemented; complete public hygiene review; no publication                     |
 | C09 handoff                                 | In progress                  | README, exact evidence and remaining gates                                                       |
 | M01–M03 public marketing                    | Not applicable in this slice | Minimal public shell only; full metadata policy belongs later design/release                     |
 | A01 boundaries                              | Verified for this slice      | Server-only config/schema and deny-by-default private routes                                     |
@@ -41,7 +41,7 @@ Exact setup contracts and evidence are expanded in bootstrap-tasks.md. Final loc
 | A04 ownership                               | Partially verified           | Composite DB relations proven; verified principal and owner-scoped API remain T011               |
 | A05 durable data                            | Verified locally             | Actual clean/upgrade migrations, synthetic fixtures and constraints; real Turso recovery pending |
 | A06 billing                                 | Not applicable               | No paid plan selected                                                                            |
-| A07 integrations                            | Pending                      | OpenAI and SMTP implementation/sandboxes separate; OAuth excluded                                |
+| A07 integrations                            | Pending                      | TypeSafe Jev and SMTP remain unverified against live providers; OAuth excluded                   |
 | A08 jobs                                    | Not applicable now           | No Redis/worker/scheduler selected; future delivery leases do not imply a scheduled service      |
 | A09 uploads                                 | Not applicable               | No learner uploads selected                                                                      |
 | A10 lifecycle                               | Pending T026                 | Export/deletion/retention and notices must match future real storage                             |

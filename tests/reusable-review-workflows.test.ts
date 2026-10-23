@@ -18,6 +18,11 @@ const ossar = readFileSync(
   'utf8'
 );
 
+const rewardguard = readFileSync(
+  new URL('../.github/workflows/rewardguard.yml', import.meta.url),
+  'utf8'
+);
+
 const ossarTools = (/^\s+tools:\s*(.+)$/mu.exec(ossar)?.[1] ?? '')
   .toLowerCase()
   .split(',')
@@ -131,6 +136,18 @@ describe('reusable Claude review gate', () => {
   it('runs only for same-repository pull requests', () => {
     expect(claude).toContain(
       'github.event.pull_request.head.repo.full_name == github.repository'
+    );
+  });
+});
+
+describe('rewardguard caller', () => {
+  it('pins the shared workflow to a full commit SHA', () => {
+    const uses = [...rewardguard.matchAll(/^\s+uses:\s*(\S+)/gmu)].map(
+      (m) => m[1]
+    );
+    expect(uses).toHaveLength(1);
+    expect(uses[0]).toMatch(
+      /^Advanced-Digital-Marketing-LTDA\/workflows\/\.github\/workflows\/rewardguard\.yml@[0-9a-f]{40}$/u
     );
   });
 });

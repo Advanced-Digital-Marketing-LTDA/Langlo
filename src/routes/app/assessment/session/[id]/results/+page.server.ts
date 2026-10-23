@@ -13,7 +13,7 @@ import {
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => {
     const results = await assessmentResults(client, learner, event.params.id, {
-      awaitFallback: Boolean(event.locals.config?.openAiKey)
+      awaitFallback: Boolean(event.locals.config?.typesafeApiKey)
     });
     return {
       results,

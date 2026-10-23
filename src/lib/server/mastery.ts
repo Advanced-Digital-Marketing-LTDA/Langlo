@@ -7,7 +7,7 @@ import { effectiveLineageKey } from './lineage';
 import { span } from './tracing';
 import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 
-export const GRAMMAR_POLICY_VERSION = 'grammar-1';
+export const GRAMMAR_POLICY_VERSION = 'grammar-2';
 export type GrammarStatus = 'unknown' | 'weak' | 'practising' | 'secure';
 
 export function scoreGrammar({

@@ -18,5 +18,5 @@ export const variables = defineEnvVars({
   SMTP_HOST: { schema: (value) => value },
   SMTP_PORT: { schema: (value) => value },
   MAIL_CAPTURE_DIR: { schema: (value) => value },
-  OPENAI_API_KEY: { schema: (value) => value }
+  TYPESAFE_API_KEY: { schema: (value) => value }
 });

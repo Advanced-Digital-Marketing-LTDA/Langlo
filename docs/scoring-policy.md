@@ -1,6 +1,6 @@
-# Grammar evidence policy: grammar-1
+# Grammar evidence policy: grammar-2
 
-Version `grammar-1`, 2026-10-17. Local instructional heuristics, not CEFR
+Version `grammar-2`, 2026-10-22. Local instructional heuristics, not CEFR
 certification or a calibrated prediction of language proficiency.
 
 Only the owner's independent grammar responses with a recognized, certain
@@ -12,10 +12,16 @@ certain answers are considered; unreached questions are not scored. `Not sure`,
 uncertain/unresolved evaluations, assisted responses and quarantined content
 cannot add independent evidence. Evaluator uncertainty does not count toward
 the five-choice stop rule. Prepared evaluator
-`prepared-1` must name the attempt's content version as its rubric; fallback
-`decisions-1` must name `fallback-rubric-1:<contentVersionId>`. Recognized fallback
+`prepared-1` must name the attempt's content version as its rubric; current Jev
+fallback `jev-1` must name `jev-rubric-1:<contentVersionId>`. Jev asks whether the
+answer fulfills the prompt's intended meaning in the target language. Accepted
+answers are examples, equivalent grammatically correct forms are allowed,
+required grammar/forms and spelling/accents are checked, and capitalization or
+punctuation is ignored unless tested by the exercise. Recognized fallback
 supersedes the prepared uncertainty, even when fallback remains uncertain.
-Unknown evaluator/rubric versions are excluded until a reviewed policy update.
+Historical OpenAI Decisions evaluations (`decisions-1`) and prior `grammar-1`
+evidence remain stored but do not qualify under `grammar-2`. Unknown evaluator or
+rubric versions are excluded until a reviewed policy update.
 
 The first response to a logical item is the only candidate. Item identity is
 skill ID plus the question's lineage key. A question's lineage key is stored

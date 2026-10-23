@@ -19,7 +19,7 @@ const skill = (skillId: string, status: string, level = 'A1') => ({
   correct: 0,
   incorrect: 0,
   reason: `Reason ${skillId}`,
-  policyVersion: 'grammar-1',
+  policyVersion: 'grammar-2',
   retention: {
     state: 'not-assessed',
     dueAt: null,
@@ -63,6 +63,18 @@ it('omits the Continue card when nothing is recommended', async () => {
   const html = await renderSvelte(page, { data: data([track(null)]) });
   expect(html).not.toContain('Open lesson');
   expect(html).toContain('Grammar mastery');
+});
+
+it('renders the sign-out error message and sign-out form', async () => {
+  const html = await renderSvelte(page, {
+    data: data([]),
+    form: { message: 'Sign out is temporarily unavailable. Try again.' }
+  });
+  expect(html).toMatch(
+    /role="alert"[^>]*>\s*Sign out is temporarily unavailable\. Try again\./
+  );
+  expect(html).toContain('action="?/signOut"');
+  expect(html).toContain('Sign out</button>');
 });
 
 it('links dashboard topics to their language and selected map topic', async () => {
@@ -134,6 +146,27 @@ it('shows the empty state with a way to start when there are no tracks', async (
   expect(html).toContain('Start with the grammar assessment');
   expect(html).toContain('href="/app/assessment"');
   expect(html).not.toContain('Grammar mastery');
+});
+
+it('keeps the review analytics table off Home', async () => {
+  const html = await renderSvelte(page, {
+    data: {
+      ...data([]),
+      reviewDueByDay: [
+        { date: '2026-10-22', grammar: 2, flashcards: 3, total: 5 }
+      ]
+    }
+  });
+  expect(html).not.toContain('Reviews due by day');
+  expect(html).not.toContain('Review history and scheduled reviews');
+  expect(html).not.toContain('2026-10-22');
+});
+
+it('links Analytics from study navigation and keeps Progress hidden', async () => {
+  const html = await renderSvelte(layout, { children });
+  expect(html).not.toContain('href="/app/progress"');
+  expect(html).toContain('href="/app/map"');
+  expect(html).toContain('href="/app/analytics"');
 });
 
 it('shows a busy skeleton instead of content while navigating', async () => {

@@ -5,7 +5,9 @@
 # Entries for paths that do not exist yet are inert and activate on arrival.
 
 # Verification layer — requires owner review
-/.github/                        @Bonobo791
+# Changes to the CI workflows or the rewardguard config need @Bonobo791's approval
+/.github/          @Bonobo791
+/.rewardguard.toml @Bonobo791
 /AGENTS.md                       @Bonobo791
 /.merge-evidence.yml             @Bonobo791
 /scripts/                        @Bonobo791

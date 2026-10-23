@@ -5,30 +5,31 @@ import {
   type FallbackInput,
   type FallbackResult
 } from './fallback';
-import { openAiDecisions } from './openai-decisions';
-import { decisionsUsage } from './usage';
+import { typesafeJev } from './typesafe-jev';
+import { typesafeUsage } from './usage';
 
 export type FallbackEvaluator = (
   input: FallbackInput
 ) => Promise<FallbackResult>;
 
-/** The configured AI fallback, or undefined when no OpenAI key is set. */
+/** The configured AI fallback, or undefined when no TypeSafe API key is set. */
 export function fallbackEvaluator(
   client: Client,
-  config: Pick<RuntimeConfig, 'openAiKey' | 'openAiKeyError'> | undefined
+  config:
+    Pick<RuntimeConfig, 'typesafeApiKey' | 'typesafeApiKeyError'> | undefined
 ): FallbackEvaluator | undefined {
-  if (config?.openAiKeyError)
+  if (config?.typesafeApiKeyError)
     console.error(
       JSON.stringify({
         level: 'error',
         operation: 'ai-fallback',
         reason: 'invalid-config',
-        variable: config.openAiKeyError.variable
+        variable: config.typesafeApiKeyError.variable
       })
     );
-  const key = config?.openAiKey;
+  const key = config?.typesafeApiKey;
   if (!key) return undefined;
-  const provider = openAiDecisions(key);
-  const usage = decisionsUsage(client);
+  const provider = typesafeJev(key);
+  const usage = typesafeUsage(client);
   return (input) => evaluateFallback(input, provider, usage);
 }

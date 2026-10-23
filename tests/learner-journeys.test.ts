@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
@@ -34,7 +34,6 @@ import {
   getStudySchedule,
   getNote,
   listReviewEvents,
-  previewStudySchedule,
   rejectNote,
   saveStudySchedule,
   setCardSuspended,
@@ -78,6 +77,10 @@ import {
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import { actions as dashboardActions } from '../src/routes/app/+page.server';
+import { load as analyticsLoad } from '../src/routes/app/analytics/+page.server';
+import * as authRuntime from '../src/lib/server/auth-runtime';
+import { studyDayStart } from '../src/lib/server/study-days';
 
 const learner = testSession('learner-a');
 const other = testSession('learner-b');
@@ -93,6 +96,8 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
   close?.();
   await disposeFlashcardFixtures();
 });
@@ -115,6 +120,7 @@ function event(
     params: options.params ?? {},
     url: new URL(url),
     locals: {
+      correlationId: '12345678-1234-4123-8123-123456789abc',
       user: userId ? { id: userId } : null,
       session: userId ? { userId } : null,
       config: Object.hasOwn(options, 'config')
@@ -127,6 +133,143 @@ function event(
     )
   } as never;
 }
+
+async function seedReviewAnalyticsNotes() {
+  await createDeck(client, learner, {
+    id: 'analytics-deck-a',
+    name: 'Analytics'
+  });
+  await createDeck(client, other, { id: 'analytics-deck-b', name: 'Other' });
+  const notes = [
+    { id: 'analytics-overdue', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-today', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-boundary', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-tomorrow', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-suspended', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-rejected', owner: learner, deck: 'analytics-deck-a' },
+    { id: 'analytics-other-owner', owner: other, deck: 'analytics-deck-b' },
+    { id: 'analytics-outside', owner: learner, deck: 'analytics-deck-a' }
+  ];
+  for (const [index, note] of notes.entries()) {
+    await createNote(client, note.owner, {
+      id: note.id,
+      sourceId: `langlo:v1:${String(index + 1).padStart(64, '0')}`,
+      deckId: note.deck,
+      kind: 'basic',
+      content: { front: 'Front', back: 'Back' }
+    });
+    await approveNote(client, note.owner, note.id);
+  }
+  await rejectNote(client, learner, 'analytics-rejected');
+  await client.execute({
+    sql: 'UPDATE native_flashcards SET suspended = 1 WHERE note_id = ?',
+    args: ['analytics-suspended']
+  });
+}
+
+async function setReviewAnalyticsDueTimes(
+  now: Date,
+  timezone: string
+): Promise<string[]> {
+  const today = studyDayStart(now, timezone);
+  const tomorrow = studyDayStart(now, timezone, 1);
+  const outside = studyDayStart(now, timezone, 7);
+  const dueTimes = [
+    ['analytics-overdue', today.getTime() - 1],
+    ['analytics-today', today.getTime()],
+    ['analytics-boundary', tomorrow.getTime() - 2 * 60 * 60 * 1000],
+    ['analytics-tomorrow', tomorrow.getTime()],
+    ['analytics-suspended', today.getTime()],
+    ['analytics-rejected', today.getTime()],
+    ['analytics-other-owner', today.getTime()],
+    ['analytics-outside', outside.getTime()]
+  ] as const;
+  for (const [id, dueAt] of dueTimes) {
+    const owner = id === 'analytics-other-owner' ? other : learner;
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ? AND owner_id = ?',
+      args: [dueAt, id, owner.userId]
+    });
+  }
+  return Array.from({ length: 8 }, (_, index) => {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).formatToParts(studyDayStart(now, timezone, index));
+    const date = Object.fromEntries(
+      parts.map(({ type, value }) => [type, value])
+    );
+    return `${date.year}-${date.month}-${date.day}`;
+  });
+}
+
+it.each([
+  { timezone: 'America/Sao_Paulo', today: 3, tomorrow: 1 },
+  { timezone: 'UTC', today: 2, tomorrow: 2 }
+])(
+  'counts fixed due times with saved $timezone: $today today and $tomorrow tomorrow',
+  async ({ timezone, today, tomorrow }) => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-22T12:00:00.000Z'));
+    const now = new Date();
+    await setTimezone(client, learner, timezone);
+    await seedReviewAnalyticsNotes();
+    // Keep due instants fixed so changing the saved timezone changes grouping.
+    const dates = await setReviewAnalyticsDueTimes(now, 'America/Sao_Paulo');
+    const before = await client.execute(
+      'SELECT id, due_at FROM native_flashcards ORDER BY id'
+    );
+
+    const analytics = (await analyticsLoad(event())) as {
+      days: {
+        date: string;
+        flashcardsCompleted: number | null;
+        grammarCompleted: number | null;
+        flashcardsScheduled: number | null;
+        grammarScheduled: number | null;
+      }[];
+    };
+
+    // Today, tomorrow, five empty days, and the analytics-outside card on the eighth day.
+    const scheduled = [today, tomorrow, 0, 0, 0, 0, 0, 1];
+    expect(analytics.days).toHaveLength(8);
+    expect(analytics.days).toEqual(
+      dates.map((date, index) => ({
+        date,
+        flashcardsCompleted: index === 0 ? 0 : null,
+        grammarCompleted: index === 0 ? 0 : null,
+        flashcardsScheduled: scheduled[index],
+        grammarScheduled: 0
+      }))
+    );
+    expect(
+      await client.execute(
+        'SELECT id, due_at FROM native_flashcards ORDER BY id'
+      )
+    ).toEqual(before);
+  }
+);
+
+it('reports a sign-out exception safely and returns a retryable failure', async () => {
+  vi.spyOn(authRuntime, 'resolveAuth').mockRejectedValue(
+    new Error('synthetic private credential must not be logged')
+  );
+  const warn = vi.spyOn(console, 'warn');
+
+  expect(await dashboardActions.signOut(event())).toMatchObject({
+    status: 503,
+    data: { message: 'Sign out is temporarily unavailable. Try again.' }
+  });
+  expect(warn).toHaveBeenCalledExactlyOnceWith(
+    JSON.stringify({
+      operation: 'auth',
+      kind: 'unexpected',
+      correlationId: '12345678-1234-4123-8123-123456789abc'
+    })
+  );
+});
 
 const enrollFields = {
   language: 'de',
@@ -269,25 +412,13 @@ describe('settings', () => {
     ).toMatchObject({ status: 404 });
   });
 
-  it('previews selected values without saving and saves them through the schedule form', async () => {
+  it('saves selected schedule controls without a simulated preview action', async () => {
     const fields = {
       desiredRetention: '94',
       newCardPreset: '30m',
       relearningPreset: '1h'
     };
-    const preview = await settingsActions.previewStudySchedule(
-      event({ fields })
-    );
-    expect(preview).toMatchObject({
-      preview: {
-        selected: {
-          desiredRetention: 94,
-          newCardPreset: '30m',
-          relearningPreset: '1h'
-        },
-        days: expect.any(Array)
-      }
-    });
+    expect(settingsActions).not.toHaveProperty('previewStudySchedule');
     expect(await getStudySchedule(client, learner)).toEqual({
       desiredRetention: 90,
       newCardPreset: '1m+10m',
@@ -296,16 +427,16 @@ describe('settings', () => {
     expect(await settingsActions.saveStudySchedule(event({ fields }))).toEqual({
       saved: 'Study schedule saved.'
     });
+    expect(await getStudySchedule(client, learner)).toEqual({
+      desiredRetention: 94,
+      newCardPreset: '30m',
+      relearningPreset: '1h'
+    });
     expect(
       await settingsActions.saveStudySchedule(
         event({
           fields: { ...fields, desiredRetention: '98' }
         })
-      )
-    ).toMatchObject({ status: 400 });
-    expect(
-      await settingsActions.previewStudySchedule(
-        event({ fields: { ...fields, desiredRetention: '98' } })
       )
     ).toMatchObject({ status: 400 });
   });
@@ -353,20 +484,77 @@ describe('practice sessions', () => {
     ).rejects.toMatchObject({ code: 'INVALID_SUBMISSION_KEY' });
   });
 
+  it('uses a matching historical Decisions verdict ahead of prepared feedback', async () => {
+    const before = await practiceSummary(client, learner, 'study-a');
+    await client.batch(
+      [
+        "INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-history', 'learner-a', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-history', 'assisted', 'un')",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('prepared-history', 'learner-a', 'attempt-history', 'prepared-1', 'content-v1', 'incorrect', unixepoch() * 1000 + 120000)",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-history', 'learner-a', 'attempt-history', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct', unixepoch() * 1000)",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('decisions-wrong-rubric', 'learner-a', 'attempt-history', 'decisions-1', 'old-rubric:content-v1', 'incorrect', unixepoch() * 1000 + 180000)"
+      ],
+      'write'
+    );
+
+    const summary = await practiceSummary(client, learner, 'study-a');
+    expect(summary).toMatchObject({
+      answered: before.answered + 1,
+      correct: before.correct + 1,
+      incorrect: before.incorrect
+    });
+  });
+
   it('counts the fallback verdict over the preliminary one written in the same second', async () => {
-    const stamp = 'unixepoch() * 1000 + 120000';
+    const stamp = Date.now() + 120_000;
     await client.batch(
       [
         `INSERT INTO attempts (id, owner_id, study_session_id, question_id, content_version_id, skill_id, language, submission_key, evidence_kind, answer) VALUES ('attempt-f', 'learner-a', 'study-a', 'question-1', 'content-v1', 'fr-articles', 'fr', 'submit-attempt-f', 'assisted', 'un')`,
         // The preliminary row's id sorts after the fallback row's id, so an
         // id tie-break alone would pick the wrong one.
-        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('zzz-prepared', 'learner-a', 'attempt-f', 'prepared-1', 'content-v1', 'uncertain', ${stamp})`,
-        `INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES ('aaa-fallback', 'learner-a', 'attempt-f', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct', ${stamp})`
+        {
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            'zzz-prepared',
+            'learner-a',
+            'attempt-f',
+            'prepared-1',
+            'content-v1',
+            'uncertain',
+            stamp
+          ]
+        },
+        {
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            'aaa-fallback',
+            'learner-a',
+            'attempt-f',
+            'jev-1',
+            'jev-rubric-1:content-v1',
+            'correct',
+            stamp
+          ]
+        }
       ],
       'write'
     );
     const summary = await practiceSummary(client, learner, 'study-a');
     expect(summary).toMatchObject({ answered: 2, correct: 1, uncertain: 0 });
+  });
+
+  it('keeps a historical Decisions verdict in the practice summary', async () => {
+    await client.batch(
+      [
+        "UPDATE evaluations SET evaluator_version = 'prepared-1', rubric_version = 'content-v1', outcome = 'uncertain' WHERE attempt_id = 'attempt-a'",
+        "INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome) VALUES ('evaluation-decisions', 'learner-a', 'attempt-a', 'decisions-1', 'fallback-rubric-1:content-v1', 'correct')"
+      ],
+      'write'
+    );
+    expect(await practiceSummary(client, learner, 'study-a')).toMatchObject({
+      answered: 1,
+      correct: 1,
+      uncertain: 0
+    });
   });
 
   it('summarises answers by newest evaluation and finishes only own practice sessions', async () => {
@@ -1222,94 +1410,6 @@ describe('decks, review and Anki export', () => {
     ).toMatchObject([
       { parameters: { request_retention: 0.95, learning_steps: ['30m'] } }
     ]);
-  });
-
-  it('previews the saved and selected schedules for seven stable study days', async () => {
-    const deckId = 'deck-fsrs-preview';
-    await createDeck(client, learner, { id: deckId, name: 'Preview' });
-    for (const [index, status] of [
-      'approved',
-      'approved',
-      'rejected'
-    ].entries()) {
-      const id = `note-fsrs-preview-${index}`;
-      await createNote(client, learner, {
-        id,
-        sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
-        deckId,
-        kind: 'basic',
-        content: { front: 'Front', back: 'Back' }
-      });
-      if (status === 'approved') await approveNote(client, learner, id);
-      if (status === 'rejected') {
-        await approveNote(client, learner, id);
-        await rejectNote(client, learner, id);
-      }
-    }
-    await client.execute({
-      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
-      args: ['card:note-fsrs-preview-1']
-    });
-    const selected = {
-      desiredRetention: 92,
-      newCardPreset: '10m' as const,
-      relearningPreset: '30m' as const
-    };
-    const now = new Date('2026-10-20T09:00:00.000Z');
-    await client.execute({
-      sql: "UPDATE native_flashcards SET due_at = ?, state_json = json_set(state_json, '$.due', ?) WHERE owner_id = ?",
-      args: [now.getTime(), now.toISOString(), learner.userId]
-    });
-    const utcPreview = await previewStudySchedule(
-      client,
-      learner,
-      selected,
-      now
-    );
-    expect(utcPreview.days[0].date).toBe('2026-10-20');
-    await setTimezone(client, learner, 'America/Los_Angeles');
-    const first = await previewStudySchedule(client, learner, selected, now);
-    const second = await previewStudySchedule(client, learner, selected, now);
-    expect(first.days.map(({ saved, selected }) => [saved, selected])).toEqual([
-      [2, 1],
-      [0, 0],
-      [1, 1],
-      [0, 0],
-      [0, 0],
-      [0, 0],
-      [0, 0]
-    ]);
-    expect(first).toEqual(second);
-    expect(first.saved).toMatchObject({
-      desiredRetention: 90,
-      newCardPreset: '1m+10m',
-      relearningPreset: '10m'
-    });
-    expect(first.selected).toEqual(selected);
-    expect(first.days).toHaveLength(7);
-    expect(first.days[0].date).toBe('2026-10-19');
-    expect(first.averagePerDay).toEqual({ saved: 0.4, selected: 0.3 });
-    expect(first.busiestDay).toEqual({
-      saved: { date: '2026-10-19', count: 2 },
-      selected: { date: '2026-10-19', count: 1 }
-    });
-    expect(first.scenario).toContain('Good');
-    await expect(
-      previewStudySchedule(client, learner, selected, new Date(Number.NaN))
-    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
-    await client.execute({
-      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
-      args: ['card:note-fsrs-preview-0']
-    });
-    const noneAvailable = await previewStudySchedule(
-      client,
-      learner,
-      selected,
-      now
-    );
-    expect(
-      noneAvailable.days.every((day) => day.saved === 0 && day.selected === 0)
-    ).toBe(true);
   });
 
   it('searches every status across owned decks and returns tags and deck labels', async () => {

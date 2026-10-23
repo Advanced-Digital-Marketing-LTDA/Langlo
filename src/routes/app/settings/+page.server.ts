@@ -1,9 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import {
-  studyForm,
-  studyFormValue,
-  studyPage
-} from '../../../lib/server/learner-api';
+import { studyForm, studyPage } from '../../../lib/server/learner-api';
 import {
   explanationLanguagesByTrack,
   listEnrollments,
@@ -12,7 +8,6 @@ import {
 import { getTimezone, setTimezone } from '../../../lib/server/preferences';
 import {
   getStudySchedule,
-  previewStudySchedule,
   saveStudySchedule
 } from '../../../lib/server/flashcards';
 
@@ -56,19 +51,6 @@ export const actions: Actions = {
           relearningPreset: form.get('relearningPreset')
         }),
       { saved: 'Study schedule saved.' }
-    );
-  },
-  previewStudySchedule: async (event) => {
-    const form = await event.request.formData();
-    return studyFormValue(
-      event,
-      (client, learner) =>
-        previewStudySchedule(client, learner, {
-          desiredRetention: Number(form.get('desiredRetention')),
-          newCardPreset: form.get('newCardPreset'),
-          relearningPreset: form.get('relearningPreset')
-        }),
-      (preview) => ({ preview })
     );
   }
 };

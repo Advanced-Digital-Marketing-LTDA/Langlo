@@ -298,7 +298,8 @@ describe('disposable libSQL migrations', () => {
           '0029_current_grammar_content',
           '0030_portuguese_grammar_retention',
           '0031_retention_transfers_to_new_versions',
-          '0032_question_and_attempt_lookup_indexes'
+          '0032_question_and_attempt_lookup_indexes',
+          '0033_typesafe_ai_usage'
         ]);
         await migrateFixtureDatabase(target);
         expect(
@@ -1075,6 +1076,56 @@ describe('disposable libSQL migrations', () => {
         );
       } finally {
         close();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
+    }
+  });
+
+  it('adds TypeSafe usage without changing historical Decisions usage', async () => {
+    const target = await fixture();
+    const previous = await prefixThrough(
+      '0032_question_and_attempt_lookup_indexes'
+    );
+    try {
+      await migrateFixtureDatabase(target, previous);
+      const before = await openFixtureDatabase(target);
+      try {
+        await before.client.execute(
+          "INSERT INTO ai_usage (month, api, calls, input_tokens, output_tokens) VALUES ('2026-10', 'decisions', 7, 90, 12)"
+        );
+      } finally {
+        before.close();
+      }
+
+      await migrateFixtureDatabase(target);
+      const after = await openFixtureDatabase(target);
+      try {
+        await after.client.execute(
+          "INSERT INTO ai_usage (month, api, calls, input_tokens, output_tokens) VALUES ('2026-10', 'typesafe', 1, 40, 8)"
+        );
+        expect(
+          (
+            await after.client.execute(
+              'SELECT api, calls, input_tokens, output_tokens FROM ai_usage ORDER BY api'
+            )
+          ).rows
+        ).toEqual([
+          {
+            api: 'decisions',
+            calls: 7,
+            input_tokens: 90,
+            output_tokens: 12
+          },
+          {
+            api: 'typesafe',
+            calls: 1,
+            input_tokens: 40,
+            output_tokens: 8
+          }
+        ]);
+      } finally {
+        after.close();
       }
     } finally {
       await rm(previous, { recursive: true, force: true });

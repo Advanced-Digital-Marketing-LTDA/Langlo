@@ -26,3 +26,9 @@ Language learning app.
 
 See [GlitchTip connection setup](docs/glitchtip.md) to connect Langlo to an
 independently hosted monitoring service.
+
+## License
+
+Langlo is licensed under the [PolyForm Shield License 1.0.0](LICENSE).
+Commercial use is permitted when it complies with that license. For uses not
+permitted by PolyForm Shield, see [commercial licensing](COMMERCIAL.md).

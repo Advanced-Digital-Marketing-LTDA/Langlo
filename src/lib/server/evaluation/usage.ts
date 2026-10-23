@@ -7,10 +7,10 @@ export const usageMonth = (now: number) =>
   new Date(now).toISOString().slice(0, 7);
 
 /**
- * Monthly Decisions API counter. Reserving is one atomic statement, so
+ * Monthly TypeSafe API counter. Reserving is one atomic statement, so
  * concurrent requests cannot overrun the cap.
  */
-export function decisionsUsage(
+export function typesafeUsage(
   client: Client,
   now: () => number = Date.now,
   cap: number = MONTHLY_CALL_CAP
@@ -20,14 +20,14 @@ export function decisionsUsage(
     reserve: async () => {
       month = usageMonth(now());
       const reserved = await executeWrite(client, {
-        sql: "INSERT INTO ai_usage (month, api, calls) VALUES (?, 'decisions', 1) ON CONFLICT (month, api) DO UPDATE SET calls = calls + 1 WHERE calls < ?",
+        sql: "INSERT INTO ai_usage (month, api, calls) VALUES (?, 'typesafe', 1) ON CONFLICT (month, api) DO UPDATE SET calls = calls + 1 WHERE calls < ?",
         args: [month, cap]
       });
       return reserved.rowsAffected === 1;
     },
     record: async ({ inputTokens, outputTokens }) => {
       await executeWrite(client, {
-        sql: "UPDATE ai_usage SET input_tokens = input_tokens + ?, output_tokens = output_tokens + ? WHERE month = ? AND api = 'decisions'",
+        sql: "UPDATE ai_usage SET input_tokens = input_tokens + ?, output_tokens = output_tokens + ? WHERE month = ? AND api = 'typesafe'",
         args: [inputTokens, outputTokens, month]
       });
     }
