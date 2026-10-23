@@ -225,26 +225,25 @@ it.each([
     const analytics = (await analyticsLoad(event())) as {
       days: {
         date: string;
+        flashcardsCompleted: number | null;
+        grammarCompleted: number | null;
         flashcardsScheduled: number | null;
         grammarScheduled: number | null;
       }[];
     };
 
+    // Today, tomorrow, five empty days, and the analytics-outside card on the eighth day.
+    const scheduled = [today, tomorrow, 0, 0, 0, 0, 0, 1];
     expect(analytics.days).toHaveLength(373);
-    expect(analytics.days[365]).toMatchObject({
-      date: dates[0],
-      flashcardsScheduled: today,
-      grammarScheduled: 0
-    });
-    expect(analytics.days[366]).toMatchObject({
-      date: dates[1],
-      flashcardsScheduled: tomorrow,
-      grammarScheduled: 0
-    });
-    expect(analytics.days.at(-1)).toMatchObject({
-      date: dates[7],
-      flashcardsScheduled: 1
-    });
+    expect(analytics.days.slice(365)).toEqual(
+      dates.map((date, index) => ({
+        date,
+        flashcardsCompleted: index === 0 ? 0 : null,
+        grammarCompleted: index === 0 ? 0 : null,
+        flashcardsScheduled: scheduled[index],
+        grammarScheduled: 0
+      }))
+    );
     expect(
       await client.execute(
         'SELECT id, due_at FROM native_flashcards ORDER BY id'

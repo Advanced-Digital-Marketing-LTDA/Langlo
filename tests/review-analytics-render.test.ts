@@ -5,6 +5,15 @@ import { setAppState } from './helpers/app-state-stub';
 const page = 'src/routes/app/analytics/+page.svelte';
 
 beforeEach(() => setAppState({}));
+
+// The text of each cell in the table row for `date`, after the row header.
+function rowCells(html: string, date: string): string[] {
+  const row = html
+    .split('<tr')
+    .find((part) => part.includes(`datetime="${date}"`));
+  if (!row) throw new Error(`no table row for ${date}`);
+  return [...row.matchAll(/<td[^>]*>([^<]*)<\/td>/g)].map((m) => m[1].trim());
+}
 afterAll(closeRenderServer);
 
 it('renders the review graph and table with completed and scheduled series', async () => {
@@ -41,4 +50,8 @@ it('renders the review graph and table with completed and scheduled series', asy
   expect(html).toContain('2025-10-22');
   expect(html).toContain('2026-10-22');
   expect(html).not.toContain('forecast');
+  expect(rowCells(html, '2025-10-22')).toEqual(['1', '2', '3', '—', '—', '—']);
+  expect(rowCells(html, '2026-10-22')).toEqual(['0', '0', '0', '3', '4', '7']);
+  // Scheduled work exists only today, so each scheduled series is one point and needs a marker.
+  expect(html.match(/<circle[^>]*class="point"/g)).toHaveLength(2);
 });

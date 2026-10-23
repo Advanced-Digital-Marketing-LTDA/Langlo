@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type BrowserContext } from '@playwright/test';
 import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
@@ -74,10 +74,7 @@ test.afterAll(async () => {
   await disposeFixtureDatabase(fixtureRoot, dbFile);
 });
 
-test('shows actual review analytics, saves FSRS settings, searches notes, moves notes and suspends cards', async ({
-  context,
-  page
-}) => {
+async function signIn(context: BrowserContext) {
   await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
   const login = await context.request.post(`${base}/login`, {
     form: { email: 'rita@example.test', password },
@@ -88,7 +85,14 @@ test('shows actual review analytics, saves FSRS settings, searches notes, moves 
   const session = await (
     await context.request.get(`${base}/api/auth/get-session`)
   ).json();
-  const learner = { userId: String(session.user.id) };
+  return { userId: String(session.user.id) };
+}
+
+test('saves FSRS settings, searches all note statuses, moves notes and suspends cards', async ({
+  context,
+  page
+}) => {
+  const learner = await signIn(context);
   const client = createClient({ url: `file://${dbFile}` });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
@@ -133,16 +137,6 @@ test('shows actual review analytics, saves FSRS settings, searches notes, moves 
       if (status === 'rejected') await rejectNote(client, learner, id);
     }
 
-    await page.goto(`${base}/app`);
-    await expect(
-      page
-        .getByRole('navigation', { name: 'Study navigation' })
-        .getByRole('link', { name: 'Analytics' })
-    ).toBeVisible();
-    await expect(
-      page.getByRole('table', { name: 'Review history and scheduled reviews' })
-    ).toHaveCount(0);
-
     await page.goto(`${base}/app/settings`);
     const retention = page.locator('input[name="desiredRetention"]');
     await retention.press('End');
@@ -172,28 +166,6 @@ test('shows actual review analytics, saves FSRS settings, searches notes, moves 
       new_card_preset: '30m',
       relearning_preset: '1h'
     });
-
-    await page.goto(`${base}/app/analytics`);
-    await expect(
-      page.getByRole('heading', { name: 'Review analytics' })
-    ).toBeVisible();
-    await expect(
-      page.getByRole('img', {
-        name: 'Actual completed reviews and currently scheduled reviews by study day'
-      })
-    ).toBeVisible();
-    const completedAt = await client.execute(
-      'SELECT reviewed_at FROM native_flashcard_review_events WHERE owner_id = ? AND card_id = ? ORDER BY reviewed_at DESC LIMIT 1',
-      [learner.userId, 'card:note-moved']
-    );
-    const reviewDate = new Intl.DateTimeFormat('en-CA', {
-      timeZone: 'UTC',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    }).format(new Date(Number(completedAt.rows[0].reviewed_at)));
-    const reviewRow = page.getByRole('row', { name: new RegExp(reviewDate) });
-    await expect(reviewRow.locator('td').nth(0)).toHaveText('1');
 
     const movedBefore = await getNote(client, learner, 'note-moved');
     const historyBefore = await listReviewEvents(
@@ -242,6 +214,78 @@ test('shows actual review analytics, saves FSRS settings, searches notes, moves 
       suspendNote.getByRole('button', { name: 'Suspend' })
     ).toBeVisible();
     expect(await countDueCards(client, learner)).toBe(1);
+  } finally {
+    client.close();
+  }
+});
+
+async function reviewOneCard(
+  client: ReturnType<typeof createClient>,
+  learner: { userId: string }
+) {
+  await createDeck(client, learner, {
+    id: 'deck-analytics',
+    name: 'Analytics deck'
+  });
+  await createNote(client, learner, {
+    id: 'note-analytics',
+    sourceId: `langlo:v1:${'5'.repeat(64)}`,
+    deckId: 'deck-analytics',
+    kind: 'basic',
+    content: { front: 'analytics front', back: 'Analytics back' }
+  });
+  await approveNote(client, learner, 'note-analytics');
+  await submitReview(client, learner, {
+    cardId: 'card:note-analytics',
+    submissionId: '10000000-0000-4000-8000-000000000005',
+    expectedRevision: 0,
+    rating: 'good'
+  });
+}
+
+test('shows actual completed reviews on Analytics and keeps them off Home', async ({
+  context,
+  page
+}) => {
+  const learner = await signIn(context);
+  const client = createClient({ url: `file://${dbFile}` });
+  try {
+    await client.execute('PRAGMA foreign_keys = ON');
+    await reviewOneCard(client, learner);
+
+    await page.goto(`${base}/app`);
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Study navigation' })
+        .getByRole('link', { name: 'Analytics' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('table', { name: 'Review history and scheduled reviews' })
+    ).toHaveCount(0);
+
+    await page.goto(`${base}/app/analytics`);
+    await expect(
+      page.getByRole('heading', { name: 'Review analytics' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('img', {
+        name: 'Actual completed reviews and currently scheduled reviews by study day'
+      })
+    ).toBeVisible();
+    // Every review the learner completed on the UTC study day of this card's review.
+    const completed = await client.execute(
+      `SELECT date(reviewed_at / 1000, 'unixepoch') AS day, count(*) AS total
+        FROM native_flashcard_review_events
+        WHERE owner_id = ? AND date(reviewed_at / 1000, 'unixepoch') = (
+          SELECT date(reviewed_at / 1000, 'unixepoch')
+          FROM native_flashcard_review_events WHERE card_id = ?
+        )
+        GROUP BY day`,
+      [learner.userId, 'card:note-analytics']
+    );
+    const { day, total } = completed.rows[0];
+    const reviewRow = page.getByRole('row', { name: new RegExp(String(day)) });
+    await expect(reviewRow.locator('td').nth(0)).toHaveText(String(total));
   } finally {
     client.close();
   }

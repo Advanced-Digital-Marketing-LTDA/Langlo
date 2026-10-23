@@ -19,13 +19,23 @@ async function analyticsClient() {
   return client;
 }
 
+type CardSeed = {
+  noteId: string;
+  dueAt: number;
+  ownerId?: string;
+  status?: string;
+  suspended?: number;
+};
+
 async function addCard(
   client: ReturnType<typeof createClient>,
-  noteId: string,
-  ownerId: string,
-  status: string,
-  dueAt: number,
-  suspended = 0
+  {
+    noteId,
+    dueAt,
+    ownerId = 'learner-a',
+    status = 'approved',
+    suspended = 0
+  }: CardSeed
 ) {
   await client.batch([
     {
@@ -66,63 +76,80 @@ function localDate(date: Date, timezone: string) {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-it('separates completed history from current due work by study day', async () => {
-  const timezone = 'America/Sao_Paulo';
-  const now = new Date('2026-10-22T12:00:00.000Z');
+type Day = Awaited<ReturnType<typeof loadReviewAnalytics>>[number];
+
+// The whole expected window: zero completed reviews up to today, zero scheduled from today on,
+// blank elsewhere, with `overrides` replacing the fields of the listed day indexes.
+function expectedDays(
+  now: Date,
+  timezone: string,
+  length: number,
+  overrides: Record<number, Partial<Day>>
+): Day[] {
+  return Array.from({ length }, (_, index) => ({
+    date: localDate(studyDayStart(now, timezone, index - 365), timezone),
+    flashcardsCompleted: index <= 365 ? 0 : null,
+    grammarCompleted: index <= 365 ? 0 : null,
+    flashcardsScheduled: index >= 365 ? 0 : null,
+    grammarScheduled: index >= 365 ? 0 : null,
+    ...overrides[index]
+  }));
+}
+
+const timezone = 'America/Sao_Paulo';
+const now = new Date('2026-10-22T12:00:00.000Z');
+
+it('counts completed reviews by owner and study day across the last 365 days', async () => {
   const start = studyDayStart(now, timezone, -365).getTime();
+  const client = await analyticsClient();
+  try {
+    const flashcards = 'native_flashcard_review_events';
+    const grammar = 'grammar_retention_events';
+    await addEvent(client, flashcards, 'learner-a', start);
+    await addEvent(client, grammar, 'learner-a', start);
+    await addEvent(client, flashcards, 'learner-a', start - 1);
+    await addEvent(client, grammar, 'learner-a', start - 1);
+    await addEvent(client, flashcards, 'learner-a', now.getTime() - 1000, 2);
+    await addEvent(client, grammar, 'learner-a', now.getTime() - 1000);
+    await addEvent(client, flashcards, 'learner-a', now.getTime() + 1000);
+    await addEvent(client, grammar, 'learner-b', now.getTime() - 1000);
+
+    const days = await loadReviewAnalytics(
+      client,
+      { userId: 'learner-a' },
+      [],
+      now
+    );
+
+    expect(days).toEqual(
+      expectedDays(now, timezone, 366, {
+        0: { flashcardsCompleted: 1, grammarCompleted: 1 },
+        365: { flashcardsCompleted: 2, grammarCompleted: 1 }
+      })
+    );
+  } finally {
+    client.close();
+  }
+});
+
+it('counts current due work from today, including overdue work, by study day', async () => {
   const today = studyDayStart(now, timezone).getTime();
   const tomorrow = studyDayStart(now, timezone, 1).getTime();
   const farDay = studyDayStart(now, timezone, 30).getTime();
   const beyondCap = studyDayStart(now, timezone, 366).getTime();
   const client = await analyticsClient();
   try {
-    await addCard(client, 'overdue', 'learner-a', 'approved', today - 1);
-    await addCard(client, 'due-today', 'learner-a', 'approved', today);
-    await addCard(client, 'due-tomorrow', 'learner-a', 'approved', tomorrow);
-    await addCard(client, 'due-far', 'learner-a', 'approved', farDay);
-    await addCard(client, 'beyond-cap', 'learner-a', 'approved', beyondCap);
-    await addCard(client, 'other-owner', 'learner-b', 'approved', tomorrow);
-    await addCard(client, 'suspended', 'learner-a', 'approved', tomorrow, 1);
-    await addCard(client, 'rejected', 'learner-a', 'rejected', tomorrow);
-    await addEvent(
-      client,
-      'native_flashcard_review_events',
-      'learner-a',
-      start
-    );
-    await addEvent(client, 'grammar_retention_events', 'learner-a', start);
-    await addEvent(
-      client,
-      'native_flashcard_review_events',
-      'learner-a',
-      start - 1
-    );
-    await addEvent(client, 'grammar_retention_events', 'learner-a', start - 1);
-    await addEvent(
-      client,
-      'native_flashcard_review_events',
-      'learner-a',
-      now.getTime() - 1000,
-      2
-    );
-    await addEvent(
-      client,
-      'grammar_retention_events',
-      'learner-a',
-      now.getTime() - 1000
-    );
-    await addEvent(
-      client,
-      'native_flashcard_review_events',
-      'learner-a',
-      now.getTime() + 1000
-    );
-    await addEvent(
-      client,
-      'grammar_retention_events',
-      'learner-b',
-      now.getTime() - 1000
-    );
+    for (const card of [
+      { noteId: 'overdue', dueAt: today - 1 },
+      { noteId: 'due-today', dueAt: today },
+      { noteId: 'due-tomorrow', dueAt: tomorrow },
+      { noteId: 'due-far', dueAt: farDay },
+      { noteId: 'beyond-cap', dueAt: beyondCap },
+      { noteId: 'other-owner', dueAt: tomorrow, ownerId: 'learner-b' },
+      { noteId: 'suspended', dueAt: tomorrow, suspended: 1 },
+      { noteId: 'rejected', dueAt: tomorrow, status: 'rejected' }
+    ])
+      await addCard(client, card);
 
     const days = await loadReviewAnalytics(
       client,
@@ -143,59 +170,25 @@ it('separates completed history from current due work by study day', async () =>
       now
     );
 
-    expect(days).toHaveLength(396);
-    expect(days[0]).toEqual({
-      date: localDate(new Date(start), timezone),
-      flashcardsCompleted: 1,
-      grammarCompleted: 1,
-      flashcardsScheduled: null,
-      grammarScheduled: null
-    });
-    expect(days[365]).toMatchObject({
-      date: localDate(new Date(today), timezone),
-      flashcardsCompleted: 2,
-      grammarCompleted: 1,
-      flashcardsScheduled: 2,
-      grammarScheduled: 2
-    });
-    expect(days[366]).toMatchObject({
-      date: localDate(new Date(tomorrow), timezone),
-      flashcardsCompleted: null,
-      grammarCompleted: null,
-      flashcardsScheduled: 1,
-      grammarScheduled: 1
-    });
-    expect(days.at(-1)).toMatchObject({
-      date: localDate(new Date(farDay), timezone),
-      flashcardsScheduled: 1,
-      grammarScheduled: 1
-    });
+    expect(days).toEqual(
+      expectedDays(now, timezone, 396, {
+        365: { flashcardsScheduled: 2, grammarScheduled: 2 },
+        366: { flashcardsScheduled: 1, grammarScheduled: 1 },
+        395: { flashcardsScheduled: 1, grammarScheduled: 1 }
+      })
+    );
   } finally {
     client.close();
   }
 });
 
 it('ends at the farthest due day, capped at 365 study days ahead', async () => {
-  const timezone = 'America/Sao_Paulo';
-  const now = new Date('2026-10-22T12:00:00.000Z');
   const finalDay = studyDayStart(now, timezone, 365);
   const beyondCap = studyDayStart(now, timezone, 366);
   const client = await analyticsClient();
   try {
-    await addCard(
-      client,
-      'last-day',
-      'learner-a',
-      'approved',
-      finalDay.getTime()
-    );
-    await addCard(
-      client,
-      'too-far',
-      'learner-a',
-      'approved',
-      beyondCap.getTime()
-    );
+    await addCard(client, { noteId: 'last-day', dueAt: finalDay.getTime() });
+    await addCard(client, { noteId: 'too-far', dueAt: beyondCap.getTime() });
     const days = await loadReviewAnalytics(
       client,
       { userId: 'learner-a' },
@@ -210,12 +203,11 @@ it('ends at the farthest due day, capped at 365 study days ahead', async () => {
       now
     );
 
-    expect(days).toHaveLength(731);
-    expect(days.at(-1)).toMatchObject({
-      date: localDate(finalDay, timezone),
-      flashcardsScheduled: 1,
-      grammarScheduled: 1
-    });
+    expect(days).toEqual(
+      expectedDays(now, timezone, 731, {
+        730: { flashcardsScheduled: 1, grammarScheduled: 1 }
+      })
+    );
   } finally {
     client.close();
   }

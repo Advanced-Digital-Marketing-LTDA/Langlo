@@ -76,6 +76,14 @@
       .filter(Boolean)
       .join(' ');
   };
+  // A path with one point draws nothing, so a series with a single value gets a marker.
+  const singlePoint = (key: SeriesKey) => {
+    const points = data.days.flatMap((day, index) => {
+      const value = day[key];
+      return value === null ? [] : [{ index, value }];
+    });
+    return points.length === 1 ? points[0] : null;
+  };
 </script>
 
 <svelte:head>
@@ -159,6 +167,16 @@
           stroke-dasharray={item.scheduled ? '6 4' : undefined}
           vector-effect="non-scaling-stroke"
         />
+        {@const point = singlePoint(item.key)}
+        {#if point}
+          <circle
+            class="point"
+            cx={chartX(point.index)}
+            cy={chartY(point.value)}
+            r="4"
+            fill={item.color}
+          />
+        {/if}
       {/each}
       <text x={left} y={chartHeight - 12} class="axis-label"
         >{data.days[0]?.date}</text

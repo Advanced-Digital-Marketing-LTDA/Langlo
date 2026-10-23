@@ -111,14 +111,14 @@ Good-rating preview action and table were removed, along with the simulator
 helper, so no future ratings or repeated reviews are generated. No schema,
 migration, dependency, or schedule-write behavior changed.
 
-### Test-first evidence
+### Analytics test-first evidence
 
 Before implementation, the focused test run failed as expected: **4 failed, 19
 passed**. Failures were the missing Analytics route/helper and Analytics tab.
 After implementation, the focused route, rendering, timezone, learner-journey,
 and flashcard suites passed: **5 files, 98 tests**.
 
-### Local validation
+### Analytics local validation
 
 Runtime: Node `24.19.0`, npm `11.9.0`. The dependency install used
 `npm ci --ignore-scripts`; it did not change `package-lock.json` or add a
