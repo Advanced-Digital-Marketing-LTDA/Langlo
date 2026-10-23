@@ -76,6 +76,22 @@ async function holdoutQuestionPlan() {
 }
 
 describe('holdout-question lookup', () => {
+  it('creates both indexes as migration 0034 defines them', async () => {
+    const indexes = await client.execute(
+      "SELECT name, sql FROM sqlite_master WHERE type = 'index' AND name IN ('attempts_owner_skill_idx', 'questions_language_holdout_idx') ORDER BY name"
+    );
+    expect(indexes.rows.map((row) => [row.name, row.sql])).toEqual([
+      [
+        'attempts_owner_skill_idx',
+        'CREATE INDEX `attempts_owner_skill_idx` ON `attempts` (`owner_id`,`skill_id`)'
+      ],
+      [
+        'questions_language_holdout_idx',
+        'CREATE INDEX `questions_language_holdout_idx` ON `questions` (`language`,`holdout`)'
+      ]
+    ]);
+  });
+
   it('finds holdout questions of a language through an index', async () => {
     const plan = await holdoutQuestionPlan();
     expect(
