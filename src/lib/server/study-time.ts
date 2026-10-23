@@ -34,6 +34,28 @@ function localDate(date: Date, timezone: string): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
+function isSegmentId(value: unknown): value is string {
+  return typeof value === 'string' && value.length >= 1 && value.length <= 64;
+}
+
+function isCategory(value: unknown): value is StudyTimeCategory {
+  return categories.includes(value as StudyTimeCategory);
+}
+
+function isTimestamp(value: unknown): value is number {
+  return Number.isSafeInteger(value);
+}
+
+// Positive, at most a day long, not in the future and not older than a week.
+function isPlausibleSpan(start: number, end: number, now: number): boolean {
+  return [
+    start < end,
+    end - start <= maxSegmentMs,
+    end <= now + clockSkewMs,
+    start >= now - maxSegmentAgeMs
+  ].every(Boolean);
+}
+
 /** Save one timed stretch for the caller; anything malformed is rejected. */
 export async function recordStudyTime(
   client: Pick<Client, 'execute'>,
@@ -42,28 +64,14 @@ export async function recordStudyTime(
   now = Date.now()
 ): Promise<{ saved: true }> {
   const { id, category, startedAt, endedAt } = body;
-  if (
-    typeof id !== 'string' ||
-    id.length < 1 ||
-    id.length > 64 ||
-    !categories.includes(category as StudyTimeCategory) ||
-    !Number.isSafeInteger(startedAt) ||
-    !Number.isSafeInteger(endedAt)
-  )
-    throw new StudyError('INVALID_STUDY_TIME');
-  const start = startedAt as number;
-  const end = endedAt as number;
-  if (
-    start >= end ||
-    end - start > maxSegmentMs ||
-    end > now + clockSkewMs ||
-    start < now - maxSegmentAgeMs
-  )
-    throw new StudyError('INVALID_STUDY_TIME');
+  const invalid = new StudyError('INVALID_STUDY_TIME');
+  if (!isSegmentId(id) || !isCategory(category)) throw invalid;
+  if (!isTimestamp(startedAt) || !isTimestamp(endedAt)) throw invalid;
+  if (!isPlausibleSpan(startedAt, endedAt, now)) throw invalid;
   await client.execute({
     sql: `INSERT INTO study_time_segments (id, owner_id, category, started_at, ended_at)
       VALUES (?, ?, ?, ?, ?)`,
-    args: [id, learner.userId, category as StudyTimeCategory, start, end]
+    args: [id, learner.userId, category, startedAt, endedAt]
   });
   return { saved: true };
 }
