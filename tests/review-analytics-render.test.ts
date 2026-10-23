@@ -21,7 +21,7 @@ it('renders the review graph and table with completed and scheduled series', asy
     data: {
       days: [
         {
-          date: '2025-10-22',
+          date: '2026-10-21',
           flashcardsCompleted: 1,
           grammarCompleted: 2,
           flashcardsScheduled: null,
@@ -33,6 +33,13 @@ it('renders the review graph and table with completed and scheduled series', asy
           grammarCompleted: 0,
           flashcardsScheduled: 3,
           grammarScheduled: 4
+        },
+        {
+          date: '2026-10-23',
+          flashcardsCompleted: null,
+          grammarCompleted: null,
+          flashcardsScheduled: 1,
+          grammarScheduled: 0
         }
       ]
     }
@@ -47,11 +54,40 @@ it('renders the review graph and table with completed and scheduled series', asy
   expect(html).toContain('Flashcards scheduled');
   expect(html).toContain('Grammar scheduled');
   expect(html).toContain('Review history and scheduled reviews');
-  expect(html).toContain('2025-10-22');
+  expect(html).toContain('2026-10-21');
   expect(html).toContain('2026-10-22');
+  expect(html).toContain('2026-10-23');
+  expect(html).toMatch(
+    /<line[^>]*x1="497"[^>]*x2="497"[^>]*class="today-line\b/
+  );
   expect(html).not.toContain('forecast');
-  expect(rowCells(html, '2025-10-22')).toEqual(['1', '2', '3', '—', '—', '—']);
+  expect(rowCells(html, '2026-10-21')).toEqual(['1', '2', '3', '—', '—', '—']);
   expect(rowCells(html, '2026-10-22')).toEqual(['0', '0', '0', '3', '4', '7']);
-  // Scheduled work exists only today, so each scheduled series is one point and needs a marker.
-  expect(html.match(/<circle[^>]*class="point"/g)).toHaveLength(2);
+  expect(rowCells(html, '2026-10-23')).toEqual(['—', '—', '—', '1', '0', '1']);
 });
+
+it.each([1, 2])(
+  'labels today once in a %i-day range without history',
+  async (length) => {
+    const html = await renderSvelte(page, {
+      data: {
+        days: Array.from({ length }, (_, index) => ({
+          date: index === 0 ? '2026-10-22' : '2026-10-23',
+          flashcardsCompleted: index === 0 ? 0 : null,
+          grammarCompleted: index === 0 ? 0 : null,
+          flashcardsScheduled: 0,
+          grammarScheduled: 0
+        }))
+      }
+    });
+    const svg = html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0] ?? '';
+
+    expect(svg.match(/2026-10-22/g)).toHaveLength(1);
+    expect(svg).toMatch(
+      /<line[^>]*x1="58"[^>]*x2="58"[^>]*class="today-line\b/
+    );
+    expect(svg.match(/<circle[^>]*class="point"/g)).toHaveLength(
+      length === 1 ? 4 : 2
+    );
+  }
+);
