@@ -488,10 +488,7 @@ function masteryStatements(
 const EVIDENCE_STATEMENT = 2;
 
 /** How many answer history rows the tracks' batched reads returned. */
-function evidenceRowCount(
-  tracks: { mastery: InStatement[]; extra: InStatement[] }[],
-  read: Row[][]
-) {
+function evidenceRowCount(tracks: TrackReads[], read: Row[][]) {
   let start = 0;
   let rows = 0;
   for (const track of tracks) {
@@ -560,6 +557,56 @@ const nothingAlongside: Alongside<null> = {
   read: () => null
 };
 
+type TrackReads = { mastery: InStatement[]; extra: InStatement[] };
+type EnrolledTrack = TrackReads & { language: string; level: string };
+
+/** The enrolled tracks to read (one, or all), each with its reads. */
+function enrolledTracks(
+  rows: Row[],
+  language: string | null,
+  reads: (language: string) => TrackReads
+): EnrolledTrack[] {
+  if (language !== null && !rows.some((row) => row.language === language))
+    throw new StudyError('NOT_FOUND');
+  return rows
+    .filter((row) => language === null || row.language === language)
+    .map((row) => ({
+      language: String(row.language),
+      level: String(row.starting_level),
+      ...reads(String(row.language))
+    }));
+}
+
+/** Every track's reads in one round trip. */
+async function batchedReads(
+  tx: Pick<Transaction, 'batch'>,
+  tracks: EnrolledTrack[]
+) {
+  const statements = tracks.flatMap((track) => [
+    ...track.mastery,
+    ...track.extra
+  ]);
+  if (statements.length === 0) return [];
+  return span('mastery.reads', async (active) => {
+    const read = (await tx.batch(statements)).map((result) => result.rows);
+    active.setAttribute('statements', statements.length);
+    active.setAttribute('rows', evidenceRowCount(tracks, read));
+    return read;
+  });
+}
+
+/** Each track's share of the batched results, in the order they were sent. */
+function splitReads(tracks: EnrolledTrack[], results: Row[][]) {
+  let offset = 0;
+  return tracks.map((track) => {
+    const mastery = results.slice(offset, offset + track.mastery.length);
+    offset += track.mastery.length;
+    const extra = results.slice(offset, offset + track.extra.length);
+    offset += track.extra.length;
+    return { track, mastery, extra };
+  });
+}
+
 /**
  * Read mastery only for languages this learner is enrolled in, together with
  * the caller's own reads for each track. After the enrollments, every track's
@@ -578,51 +625,19 @@ export async function loadEnrolledMasteryWith<T>(
       sql: 'SELECT language, starting_level FROM enrollments WHERE owner_id = ? ORDER BY language',
       args: [learner.userId]
     });
-    if (
-      language !== null &&
-      !enrolled.rows.some((row) => row.language === language)
-    )
-      throw new StudyError('NOT_FOUND');
-
-    const tracks = enrolled.rows
-      .filter((row) => language === null || row.language === language)
-      .map((row) => {
-        const trackLanguage = String(row.language);
-        return {
-          language: trackLanguage,
-          level: String(row.starting_level),
-          mastery: masteryStatements(learner, trackLanguage),
-          extra: alongside.statements(trackLanguage)
-        };
-      });
-    const statements = tracks.flatMap((track) => [
-      ...track.mastery,
-      ...track.extra
-    ]);
-    const results =
-      statements.length === 0
-        ? []
-        : await span('mastery.reads', async (active) => {
-            const read = (await tx.batch(statements)).map(
-              (result) => result.rows
-            );
-            active.setAttribute('statements', statements.length);
-            active.setAttribute('rows', evidenceRowCount(tracks, read));
-            return read;
-          });
-    let offset = 0;
-    const loaded = tracks.map((track) => {
-      const mastery = results.slice(offset, offset + track.mastery.length);
-      offset += track.mastery.length;
-      const extra = results.slice(offset, offset + track.extra.length);
-      offset += track.extra.length;
-      return {
+    const tracks = enrolledTracks(enrolled.rows, language, (trackLanguage) => ({
+      mastery: masteryStatements(learner, trackLanguage),
+      extra: alongside.statements(trackLanguage)
+    }));
+    const results = await batchedReads(tx, tracks);
+    const loaded = splitReads(tracks, results).map(
+      ({ track, mastery, extra }) => ({
         language: track.language,
         level: track.level,
         skills: masteryOf(mastery),
         alongside: alongside.read(extra)
-      };
-    });
+      })
+    );
     await tx.commit();
     return loaded;
   } catch (error) {

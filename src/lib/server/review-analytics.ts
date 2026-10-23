@@ -184,6 +184,23 @@ export async function loadReviewAnalytics(
   );
 }
 
+/** The first day with a completed review, or today when there is none. */
+function firstCompletedDay(flashcards: number[], grammar: number[]) {
+  const first = flashcards.findIndex(
+    (count, index) => count > 0 || grammar[index] > 0
+  );
+  return first >= 0 ? first : todayIndex;
+}
+
+/** The last day with a scheduled review, or today when there is none. */
+function lastScheduledDay(flashcards: number[], grammar: number[]) {
+  let last = todayIndex;
+  for (let index = todayIndex; index < flashcards.length; index += 1) {
+    if (flashcards[index] || grammar[index]) last = index;
+  }
+  return last;
+}
+
 /** The analytics days: review history through today, then what is scheduled. */
 export function reviewAnalyticsDays(
   {
@@ -196,15 +213,8 @@ export function reviewAnalyticsDays(
   tracks: GrammarTrack[]
 ): ReviewAnalyticsDay[] {
   const grammarScheduled = scheduledGrammarCounts(tracks, boundaries);
-  const firstCompletedIndex = flashcardsCompleted.findIndex(
-    (count, index) => count > 0 || grammarCompleted[index] > 0
-  );
-  const startIndex =
-    firstCompletedIndex >= 0 ? firstCompletedIndex : todayIndex;
-  let endIndex = todayIndex;
-  for (let index = todayIndex; index < flashcardsScheduled.length; index += 1) {
-    if (flashcardsScheduled[index] || grammarScheduled[index]) endIndex = index;
-  }
+  const startIndex = firstCompletedDay(flashcardsCompleted, grammarCompleted);
+  const endIndex = lastScheduledDay(flashcardsScheduled, grammarScheduled);
 
   return Array.from({ length: endIndex - startIndex + 1 }, (_, offset) => {
     const index = startIndex + offset;
