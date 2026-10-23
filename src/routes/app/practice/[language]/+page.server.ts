@@ -6,7 +6,9 @@ import { requireLearnerApi } from '../../../../lib/server/learner-session';
 import { loadEnrolledMastery } from '../../../../lib/server/mastery';
 import {
   startGrammarReview,
-  startPractice
+  startPractice,
+  startPracticeOver,
+  unfinishedPractice
 } from '../../../../lib/server/practice';
 import { recommendPractice } from '../../../../lib/server/recommendations';
 import { dueGrammarReviews } from '../../../../lib/server/grammar-retention';
@@ -28,6 +30,11 @@ export const load: PageServerLoad = async (event) => {
       return {
         language: track.language,
         submissionKey,
+        unfinished: await unfinishedPractice(
+          client,
+          learner,
+          event.params.language
+        ),
         skills: track.skills,
         recommendations: recommendPractice(track.skills),
         dueReviews,
@@ -40,6 +47,7 @@ export const load: PageServerLoad = async (event) => {
     return {
       language: event.params.language,
       submissionKey,
+      unfinished: null,
       skills: [],
       recommendations: [],
       dueReviews: [],
@@ -49,18 +57,24 @@ export const load: PageServerLoad = async (event) => {
   }
 };
 
-export const actions: Actions = {
-  start: async (event) => {
+/** An action that begins practice and sends the learner to its session. */
+function practiceAction(begin: typeof startPractice): Actions[string] {
+  return async (event) => {
     requireLearnerApi(event);
     const form = await event.request.formData();
     const practice = await studyPage(event, (client, learner) =>
-      startPractice(client, learner, {
+      begin(client, learner, {
         language: event.params.language,
         submissionKey: form.get('submissionKey')
       })
     );
     redirect(303, `/app/session/${encodeURIComponent(practice.id)}`);
-  },
+  };
+}
+
+export const actions: Actions = {
+  start: practiceAction(startPractice),
+  startOver: practiceAction(startPracticeOver),
   review: async (event) => {
     requireLearnerApi(event);
     const form = await event.request.formData();

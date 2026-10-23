@@ -24,6 +24,7 @@ import {
   disposeDisposableFixture
 } from './fixtures/database';
 import { seedStudy } from './fixtures/study';
+import { prefixThrough } from './fixtures/migration-prefix';
 import { seedLegacyPackage } from './fixtures/content-package';
 import { importContent } from '../src/lib/server/content-import';
 import * as schema from '../src/lib/server/db/schema';
@@ -266,29 +267,6 @@ async function expectFailedDraftReviewMigration(target: FixtureTarget) {
 }
 
 describe('disposable libSQL migrations', () => {
-  async function prefixThrough(tag: string) {
-    const directory = await mkdtemp(join(tmpdir(), 'langlo-merge-prefix-'));
-    const journal = JSON.parse(
-      await readFile('drizzle/meta/_journal.json', 'utf8')
-    );
-    const end = journal.entries.findIndex(
-      (entry: { tag: string }) => entry.tag === tag
-    );
-    if (end < 0) throw new Error(`Missing migration ${tag}`);
-    journal.entries = journal.entries.slice(0, end + 1);
-    await mkdir(join(directory, 'meta'));
-    await writeFile(
-      join(directory, 'meta/_journal.json'),
-      JSON.stringify(journal)
-    );
-    for (const entry of journal.entries)
-      await copyFile(
-        `drizzle/${entry.tag}.sql`,
-        join(directory, `${entry.tag}.sql`)
-      );
-    return directory;
-  }
-
   it('accepts the production migration ledger through Portuguese 0026 as an unchanged prefix', async () => {
     const target = await fixture();
     const folder = await prefixThrough('0026_portuguese_tracks');
@@ -318,7 +296,10 @@ describe('disposable libSQL migrations', () => {
           '0027_peaceful_albert_cleary',
           '0028_sturdy_talkback',
           '0029_current_grammar_content',
-          '0030_portuguese_grammar_retention'
+          '0030_portuguese_grammar_retention',
+          '0031_retention_transfers_to_new_versions',
+          '0032_question_and_attempt_lookup_indexes',
+          '0033_typesafe_ai_usage'
         ]);
         await migrateFixtureDatabase(target);
         expect(
@@ -395,7 +376,7 @@ describe('disposable libSQL migrations', () => {
             'SELECT content_version_id, reset_required FROM grammar_retention_schedules'
           )
         ).rows
-      ).toEqual([{ content_version_id: 'content-v2', reset_required: 1 }]);
+      ).toEqual([{ content_version_id: 'content-v2', reset_required: 0 }]);
       await client.execute("DELETE FROM users WHERE id = 'learner-a'");
       expect(
         (await client.execute('SELECT * FROM grammar_retention_schedules')).rows
@@ -505,7 +486,7 @@ describe('disposable libSQL migrations', () => {
     await migrateFixtureDatabase(target, previous);
   }
 
-  it('upgrades grammar reset triggers without changing stored schedules and only resets for the newest published content', async () => {
+  it('upgrades grammar retention triggers without changing stored schedules and only moves schedules to the newest published content', async () => {
     const target = await fixture();
     const previous = await mkdtemp(join(tmpdir(), 'langlo-0029-upgrade-'));
     try {
@@ -535,7 +516,7 @@ describe('disposable libSQL migrations', () => {
             )
           ).rows
         ).toEqual([
-          { content_version_id: 'content-v2', due_at: 0, revision: 4 }
+          { content_version_id: 'content-v2', due_at: 123456, revision: 4 }
         ]);
         await client.execute(
           "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES ('content-backfill', 'fr-articles', 'fr', 3, 'draft')"
@@ -587,7 +568,7 @@ describe('disposable libSQL migrations', () => {
         const contentSql =
           'SELECT id, skill_id, language, version, status, created_at FROM content_versions ORDER BY id';
         const objectsSql =
-          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT LIKE 'grammar_retention_%' AND name NOT IN ('sqlite_autoindex_lessons_1', 'sqlite_autoindex_grammar_retention_events_1', 'sqlite_autoindex_grammar_retention_schedules_1', 'attempts_session_question_independent', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'sqlite_autoindex_native_flashcard_preferences_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_owner_cursor', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update', 'enrollments_supported_track_insert', 'enrollments_supported_track_update', 'enrollments_portuguese_explanation_insert', 'enrollments_portuguese_explanation_update') ORDER BY name";
+          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT LIKE 'grammar_retention_%' AND name NOT IN ('sqlite_autoindex_lessons_1', 'sqlite_autoindex_grammar_retention_events_1', 'sqlite_autoindex_grammar_retention_schedules_1', 'attempts_session_question_independent', 'attempts_owner_session_question_idx', 'questions_content_version_idx', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'sqlite_autoindex_native_flashcard_preferences_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_owner_cursor', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update', 'enrollments_supported_track_insert', 'enrollments_supported_track_update', 'enrollments_portuguese_explanation_insert', 'enrollments_portuguese_explanation_update') ORDER BY name";
         const content = (await client.execute(contentSql)).rows;
         const attempts = (
           await client.execute(
@@ -1095,6 +1076,56 @@ describe('disposable libSQL migrations', () => {
         );
       } finally {
         close();
+      }
+    } finally {
+      await rm(previous, { recursive: true, force: true });
+    }
+  });
+
+  it('adds TypeSafe usage without changing historical Decisions usage', async () => {
+    const target = await fixture();
+    const previous = await prefixThrough(
+      '0032_question_and_attempt_lookup_indexes'
+    );
+    try {
+      await migrateFixtureDatabase(target, previous);
+      const before = await openFixtureDatabase(target);
+      try {
+        await before.client.execute(
+          "INSERT INTO ai_usage (month, api, calls, input_tokens, output_tokens) VALUES ('2026-10', 'decisions', 7, 90, 12)"
+        );
+      } finally {
+        before.close();
+      }
+
+      await migrateFixtureDatabase(target);
+      const after = await openFixtureDatabase(target);
+      try {
+        await after.client.execute(
+          "INSERT INTO ai_usage (month, api, calls, input_tokens, output_tokens) VALUES ('2026-10', 'typesafe', 1, 40, 8)"
+        );
+        expect(
+          (
+            await after.client.execute(
+              'SELECT api, calls, input_tokens, output_tokens FROM ai_usage ORDER BY api'
+            )
+          ).rows
+        ).toEqual([
+          {
+            api: 'decisions',
+            calls: 7,
+            input_tokens: 90,
+            output_tokens: 12
+          },
+          {
+            api: 'typesafe',
+            calls: 1,
+            input_tokens: 40,
+            output_tokens: 8
+          }
+        ]);
+      } finally {
+        after.close();
       }
     } finally {
       await rm(previous, { recursive: true, force: true });

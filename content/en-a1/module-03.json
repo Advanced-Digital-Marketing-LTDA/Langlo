@@ -505,6 +505,200 @@
       }
     },
     {
+      "skill_id": "en-a1-013",
+      "title": "Subject and object pronouns",
+      "explanation": "Subject pronouns come before the verb: I, you, he, she, it, we, they. Object pronouns come after the verb or a preposition: me, you, him, her, it, us, them. She sees me. I help them. This is for her. After a verb or preposition never use the subject form: not She sees I. Demonstratives such as this and that can also stand alone: This is for her.",
+      "examples": [
+        {
+          "en": "She sees me."
+        },
+        {
+          "en": "I help them."
+        },
+        {
+          "en": "This is for her."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-013@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-013@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'I'?",
+            "answer": "me",
+            "alternatives": ["me", "my", "mine"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q01"
+          },
+          {
+            "id": "en-a1-013@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'he'?",
+            "answer": "him",
+            "alternatives": ["he", "him", "his"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q02"
+          },
+          {
+            "id": "en-a1-013@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'they'?",
+            "answer": "them",
+            "alternatives": ["they", "them", "their"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q03"
+          },
+          {
+            "id": "en-a1-013@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses an object pronoun correctly?",
+            "answer": "She sees me.",
+            "alternatives": ["She sees I.", "She sees me.", "She sees my."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q04"
+          },
+          {
+            "id": "en-a1-013@2:q05",
+            "format": "typed-blank",
+            "prompt": "I know her. She knows ___. (I)",
+            "answer": "me",
+            "near_misses": ["I", "my"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q05"
+          },
+          {
+            "id": "en-a1-013@2:q06",
+            "format": "typed-blank",
+            "prompt": "We help them. They help ___. (we)",
+            "answer": "us",
+            "near_misses": ["we", "our"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q06"
+          },
+          {
+            "id": "en-a1-013@2:q07",
+            "format": "typed-blank",
+            "prompt": "He is my brother. I like ___. (he)",
+            "answer": "him",
+            "near_misses": ["he", "his"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q07"
+          },
+          {
+            "id": "en-a1-013@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: she / see / I",
+            "answer": "She sees me.",
+            "near_misses": ["She sees I.", "She see me."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q08"
+          },
+          {
+            "id": "en-a1-013@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: I / help / they",
+            "answer": "I help them.",
+            "near_misses": ["I help they.", "I helps them."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q09"
+          },
+          {
+            "id": "en-a1-013@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: this / be / for / she",
+            "answer": "This is for her.",
+            "near_misses": ["This is for she.", "This is for hers."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q10"
+          },
+          {
+            "id": "en-a1-013@2:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: He helps I.",
+            "answer": "He helps me.",
+            "near_misses": ["He helps I.", "He helps my."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q11"
+          },
+          {
+            "id": "en-a1-013@2:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: I like they.",
+            "answer": "I like them.",
+            "near_misses": ["I like they.", "I like their."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-013@1:q12"
+          },
+          {
+            "id": "en-a1-013@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun is the object form of 'it'?",
+            "answer": "it",
+            "alternatives": ["it", "its", "them"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-013@1:h01"
+          },
+          {
+            "id": "en-a1-013@2:h02",
+            "format": "typed-blank",
+            "prompt": "They know ___. (you) (object pronoun)",
+            "answer": "you",
+            "near_misses": ["your", "yours"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-013@1:h02"
+          },
+          {
+            "id": "en-a1-013@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a pronoun: we / see / he",
+            "answer": "We see him.",
+            "near_misses": ["We see he.", "We sees him."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-013@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Pronomes de sujeito e de objeto",
+            "explanation": "Os pronomes de sujeito vêm antes do verbo: I, you, he, she, it, we, they. Os pronomes de objeto vêm depois do verbo ou de uma preposição: me, you, him, her, it, us, them. She sees me. I help them. This is for her. Depois de um verbo ou de uma preposição, não use a forma de sujeito: não diga She sees I. Demonstrativos como this e that também podem aparecer sozinhos: This is for her.",
+            "examples": [
+              {
+                "en": "She sees me.",
+                "pt": "Ela me vê."
+              },
+              {
+                "en": "I help them.",
+                "pt": "Eu os ajudo."
+              },
+              {
+                "en": "This is for her.",
+                "pt": "Isto é para ela."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-011",
       "title": "Possessive determiners and possessive pronouns",
       "explanation": "Possessive determiners go before a noun: my, your, his, her, our, their (my bag, her house). Possessive pronouns replace the noun and stand alone: mine, yours, his, hers, ours, theirs (This bag is mine). Do not use my where mine is needed: not This bag is my. Do not use mine before a noun: not This is mine bag.",
@@ -647,6 +841,204 @@
             "answer": "His car is new.",
             "near_misses": ["He car is new.", "Him car is new."],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Determinantes e pronomes possessivos",
+            "explanation": "Os determinantes possessivos vêm antes de um substantivo: my, your, his, her, our, their (my bag, her house). Os pronomes possessivos substituem o substantivo e aparecem sozinhos: mine, yours, his, hers, ours, theirs (This bag is mine). Não use my quando a frase pede mine: não diga This bag is my. Não use mine antes de um substantivo: não diga This is mine bag.",
+            "examples": [
+              {
+                "en": "This is my bag.",
+                "pt": "Esta é a minha bolsa."
+              },
+              {
+                "en": "That bag is mine.",
+                "pt": "Aquela bolsa é minha."
+              },
+              {
+                "en": "Her house is big.",
+                "pt": "A casa dela é grande."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a1-011",
+      "title": "Possessive determiners and possessive pronouns",
+      "explanation": "Possessive determiners go before a noun: my, your, his, her, our, their (my bag, her house). Possessive pronouns replace the noun and stand alone: mine, yours, his, hers, ours, theirs (This bag is mine). Do not use my where mine is needed: not This bag is my. Do not use mine before a noun: not This is mine bag.",
+      "examples": [
+        {
+          "en": "This is my bag."
+        },
+        {
+          "en": "That bag is mine."
+        },
+        {
+          "en": "Her house is big."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-011@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-011@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'belonging to me' before a noun?",
+            "answer": "my",
+            "alternatives": ["my", "mine", "me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q01"
+          },
+          {
+            "id": "en-a1-011@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word replaces 'my bag' when no noun follows?",
+            "answer": "mine",
+            "alternatives": ["my", "mine", "me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q02"
+          },
+          {
+            "id": "en-a1-011@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which possessive means 'belonging to her' before a noun?",
+            "answer": "her",
+            "alternatives": ["she", "her", "hers"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q03"
+          },
+          {
+            "id": "en-a1-011@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses a possessive pronoun correctly?",
+            "answer": "This bag is mine.",
+            "alternatives": [
+              "This bag is my.",
+              "This bag is mine.",
+              "This bag is me."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q04"
+          },
+          {
+            "id": "en-a1-011@2:q05",
+            "format": "typed-blank",
+            "prompt": "This is ___ bag. (I)",
+            "answer": "my",
+            "near_misses": ["me", "mine"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q05"
+          },
+          {
+            "id": "en-a1-011@2:q06",
+            "format": "typed-blank",
+            "prompt": "That bag is ___. (belonging to you)",
+            "answer": "yours",
+            "near_misses": ["your", "you"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q06"
+          },
+          {
+            "id": "en-a1-011@2:q07",
+            "format": "typed-blank",
+            "prompt": "___ house is big. (belonging to them)",
+            "answer": "Their",
+            "near_misses": ["Theirs", "They"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q07"
+          },
+          {
+            "id": "en-a1-011@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: this / be / my / bag",
+            "answer": "This is my bag.",
+            "near_misses": ["This is me bag.", "This is mine bag."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q08"
+          },
+          {
+            "id": "en-a1-011@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: that / bag / be / mine",
+            "answer": "That bag is mine.",
+            "near_misses": ["That bag is my.", "That bag is me."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q09"
+          },
+          {
+            "id": "en-a1-011@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: her / house / be / big",
+            "answer": "Her house is big.",
+            "near_misses": ["She house is big.", "Hers house is big."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q10"
+          },
+          {
+            "id": "en-a1-011@2:q11",
+            "format": "correction",
+            "prompt": "Correct the word: This is yours bag.",
+            "answer": "This is your bag.",
+            "near_misses": ["This is yours bag.", "This is you bag."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q11"
+          },
+          {
+            "id": "en-a1-011@2:q12",
+            "format": "correction",
+            "prompt": "Correct the word: That book is my.",
+            "answer": "That book is mine.",
+            "near_misses": ["That book is my.", "That book is me."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-011@1:q12"
+          },
+          {
+            "id": "en-a1-011@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word means 'belonging to us' before a noun? (possessive determiner)",
+            "answer": "our",
+            "alternatives": ["our", "ours", "us"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-011@1:h01"
+          },
+          {
+            "id": "en-a1-011@2:h02",
+            "format": "typed-blank",
+            "prompt": "The red car is ___. (belonging to us) (possessive pronoun)",
+            "answer": "ours",
+            "near_misses": ["our", "us"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-011@1:h02"
+          },
+          {
+            "id": "en-a1-011@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a possessive: his / car / be / new",
+            "answer": "His car is new.",
+            "near_misses": ["He car is new.", "Him car is new."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-011@1:h03"
           }
         ],
         "translations": {

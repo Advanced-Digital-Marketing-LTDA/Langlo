@@ -178,6 +178,207 @@
       }
     },
     {
+      "skill_id": "en-a1-001",
+      "title": "Short statements: subject and verb",
+      "explanation": "An English statement needs a subject (who or what) and a finite verb (the verb with its tense and agreement). The subject normally comes before the verb: Anna works. In the present simple, add -s to the verb after he, she, it or a singular name: Anna lives in London. After I, you, we, they or a plural noun, use the base verb: We play football. The children sleep.",
+      "examples": [
+        {
+          "en": "Anna works."
+        },
+        {
+          "en": "We play football."
+        },
+        {
+          "en": "The children sleep."
+        }
+      ],
+      "references": ["COE-CV20", "CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-001@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-001@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which is a complete English clause?",
+            "answer": "Anna works.",
+            "alternatives": ["Anna works.", "Works Anna.", "Anna the."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q01"
+          },
+          {
+            "id": "en-a1-001@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which part of a clause tells who or what does the action?",
+            "answer": "the subject",
+            "alternatives": ["the subject", "the verb", "the object"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q02"
+          },
+          {
+            "id": "en-a1-001@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which group of words has a subject and a finite verb?",
+            "answer": "The children play.",
+            "alternatives": [
+              "The children in the garden.",
+              "Playing football.",
+              "The children play."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q03"
+          },
+          {
+            "id": "en-a1-001@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Where does the subject usually stand in an English statement?",
+            "answer": "before the verb",
+            "alternatives": ["before the verb", "after the verb", "at the end"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q04"
+          },
+          {
+            "id": "en-a1-001@2:q05",
+            "format": "typed-blank",
+            "prompt": "Anna ___ in London. (live)",
+            "answer": "lives",
+            "near_misses": ["live", "living"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q05"
+          },
+          {
+            "id": "en-a1-001@2:q06",
+            "format": "typed-blank",
+            "prompt": "We ___ football. (play)",
+            "answer": "play",
+            "near_misses": ["plays", "playing"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q06"
+          },
+          {
+            "id": "en-a1-001@2:q07",
+            "format": "typed-blank",
+            "prompt": "The dog ___ in the garden. (sleep)",
+            "answer": "sleeps",
+            "near_misses": ["sleep", "sleeping"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q07"
+          },
+          {
+            "id": "en-a1-001@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence from the words: Anna / live / in London",
+            "answer": "Anna lives in London.",
+            "near_misses": ["Anna live in London.", "Anna lives London."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q08"
+          },
+          {
+            "id": "en-a1-001@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence from the words: we / play / football",
+            "answer": "We play football.",
+            "near_misses": ["We plays football.", "We football play."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q09"
+          },
+          {
+            "id": "en-a1-001@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence from the words: the children / sleep",
+            "answer": "The children sleep.",
+            "near_misses": ["The children sleeps.", "Sleep the children."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q10"
+          },
+          {
+            "id": "en-a1-001@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: Tom play football.",
+            "answer": "Tom plays football.",
+            "near_misses": ["Tom play football.", "Tom playing football."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q11"
+          },
+          {
+            "id": "en-a1-001@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: The children plays.",
+            "answer": "The children play.",
+            "near_misses": ["The children plays.", "The plays children."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-001@1:q12"
+          },
+          {
+            "id": "en-a1-001@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which group of words is a complete statement?",
+            "answer": "Paul sings.",
+            "alternatives": ["Sings Paul.", "Paul sings.", "Paul the."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-001@1:h01"
+          },
+          {
+            "id": "en-a1-001@2:h02",
+            "format": "typed-blank",
+            "prompt": "My sister ___ tea. (drink) (present simple)",
+            "answer": "drinks",
+            "near_misses": ["drink", "drinking"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-001@1:h02"
+          },
+          {
+            "id": "en-a1-001@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence from the words: my parents / work / in Leeds",
+            "answer": "My parents work in Leeds.",
+            "near_misses": [
+              "My parents works in Leeds.",
+              "My parents work Leeds."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-001@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Frases curtas: sujeito e verbo",
+            "explanation": "Uma frase afirmativa em inglês precisa de um sujeito (quem ou o que) e de um verbo conjugado (com tempo verbal e concordância). Normalmente, o sujeito vem antes do verbo: Anna works. No presente simples, acrescente -s ao verbo depois de he, she, it ou de um nome no singular: Anna lives in London. Depois de I, you, we, they ou de um substantivo no plural, use a forma base do verbo: We play football. The children sleep.",
+            "examples": [
+              {
+                "en": "Anna works.",
+                "pt": "Anna trabalha."
+              },
+              {
+                "en": "We play football.",
+                "pt": "Nós jogamos futebol."
+              },
+              {
+                "en": "The children sleep.",
+                "pt": "As crianças dormem."
+              }
+            ],
+            "references": ["COE-CV20", "CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-024",
       "title": "The verb be: statements, questions and short answers",
       "explanation": "Be has three present forms: I am, he/she/it is, and you/we/they are. In questions, put be before the subject: Are you ready? Is she at home? Short answers repeat be: Yes, I am. No, she isn't. Use the contracted forms (I'm, she's, they're) in speech; both the full and the contracted forms are correct in a statement.",
@@ -525,6 +726,210 @@
       }
     },
     {
+      "skill_id": "en-a1-003",
+      "title": "Present simple for routines and preferences",
+      "explanation": "Use the present simple for routines, facts and preferences: I get up at seven. She likes tea. Add -s to the verb after he, she or it: she works. Add -es after -s, -sh, -ch, -x and -o: he goes, it watches. Have becomes has: he has a dog. Use the base verb after I, you, we and they: They play tennis on Sundays.",
+      "examples": [
+        {
+          "en": "I get up at seven."
+        },
+        {
+          "en": "She likes tea."
+        },
+        {
+          "en": "They play tennis on Sundays."
+        }
+      ],
+      "references": ["CAM-A1-YLE", "COE-CV20"],
+      "version": {
+        "id": "en-a1-003@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-003@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which verb form goes with 'she'? (work)",
+            "answer": "works",
+            "alternatives": ["work", "works", "working"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q01"
+          },
+          {
+            "id": "en-a1-003@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which verb form goes with 'he'? (go)",
+            "answer": "goes",
+            "alternatives": ["go", "goes", "gos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q02"
+          },
+          {
+            "id": "en-a1-003@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb form goes with 'she'? (have)",
+            "answer": "has",
+            "alternatives": ["have", "has", "haves"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q03"
+          },
+          {
+            "id": "en-a1-003@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence describes a routine?",
+            "answer": "I get up at seven.",
+            "alternatives": [
+              "I am getting up at seven.",
+              "I get up at seven.",
+              "I getting up at seven."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q04"
+          },
+          {
+            "id": "en-a1-003@2:q05",
+            "format": "typed-blank",
+            "prompt": "She ___ tea. (like)",
+            "answer": "likes",
+            "near_misses": ["like", "liking"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q05"
+          },
+          {
+            "id": "en-a1-003@2:q06",
+            "format": "typed-blank",
+            "prompt": "He ___ to school by bus. (go)",
+            "answer": "goes",
+            "near_misses": ["go", "gos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q06"
+          },
+          {
+            "id": "en-a1-003@2:q07",
+            "format": "typed-blank",
+            "prompt": "They ___ tennis on Sundays. (play)",
+            "answer": "play",
+            "near_misses": ["plays", "playing"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q07"
+          },
+          {
+            "id": "en-a1-003@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present simple): I / get up / at seven",
+            "answer": "I get up at seven.",
+            "near_misses": ["I gets up at seven.", "I getting up at seven."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q08"
+          },
+          {
+            "id": "en-a1-003@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present simple): she / like / tea",
+            "answer": "She likes tea.",
+            "near_misses": ["She like tea.", "She likes teas."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q09"
+          },
+          {
+            "id": "en-a1-003@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present simple): he / have / a dog",
+            "answer": "He has a dog.",
+            "near_misses": ["He have a dog.", "He haves a dog."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q10"
+          },
+          {
+            "id": "en-a1-003@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He go to school by bus.",
+            "answer": "He goes to school by bus.",
+            "near_misses": [
+              "He go to school by bus.",
+              "He gos to school by bus."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q11"
+          },
+          {
+            "id": "en-a1-003@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: She have a brother.",
+            "answer": "She has a brother.",
+            "near_misses": ["She have a brother.", "She haves a brother."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-003@1:q12"
+          },
+          {
+            "id": "en-a1-003@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which verb form goes with 'it'? (watch) (present simple)",
+            "answer": "watches",
+            "alternatives": ["watch", "watchs", "watches"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-003@1:h01"
+          },
+          {
+            "id": "en-a1-003@2:h02",
+            "format": "typed-blank",
+            "prompt": "Tom ___ the guitar. (play) (present simple)",
+            "answer": "plays",
+            "near_misses": ["play", "playing"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-003@1:h02"
+          },
+          {
+            "id": "en-a1-003@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present simple): we / watch / TV / every evening",
+            "answer": "We watch TV every evening.",
+            "near_misses": [
+              "We watches TV every evening.",
+              "We watching TV every evening."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-003@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Presente simples para rotinas e preferências",
+            "explanation": "Use o presente simples para falar de rotinas, fatos e preferências: I get up at seven. She likes tea. Acrescente -s ao verbo depois de he, she ou it: she works. Acrescente -es depois de -s, -sh, -ch, -x e -o: he goes, it watches. Have muda para has: he has a dog. Depois de I, you, we e they, use a forma base do verbo: They play tennis on Sundays.",
+            "examples": [
+              {
+                "en": "I get up at seven.",
+                "pt": "Eu me levanto às sete."
+              },
+              {
+                "en": "She likes tea.",
+                "pt": "Ela gosta de chá."
+              },
+              {
+                "en": "They play tennis on Sundays.",
+                "pt": "Eles jogam tênis aos domingos."
+              }
+            ],
+            "references": ["CAM-A1-YLE", "COE-CV20"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-004",
       "title": "Present continuous for actions happening now",
       "explanation": "Use am, is or are plus the -ing form of the verb for an action that is happening now: I am reading. She is cooking dinner. They are playing in the garden. Spelling: drop the final -e before -ing (make, making; write, writing) and double a final single consonant after a short vowel (run, running; sit, sitting). Do not leave out be: We are playing, not We playing.",
@@ -676,6 +1081,213 @@
             "alternatives": ["We're eating lunch."],
             "near_misses": ["We eating lunch.", "We is eating lunch."],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Presente contínuo para ações que acontecem agora",
+            "explanation": "Use am, is ou are mais a forma do verbo terminada em -ing para falar de uma ação que está acontecendo agora: I am reading. She is cooking dinner. They are playing in the garden. Na ortografia, retire o -e final antes de acrescentar -ing (make, making; write, writing) e dobre a consoante final quando houver uma vogal curta antes dela (run, running; sit, sitting). Não omita be: We are playing, e não We playing.",
+            "examples": [
+              {
+                "en": "I am reading.",
+                "pt": "Estou lendo."
+              },
+              {
+                "en": "She is cooking dinner.",
+                "pt": "Ela está preparando o jantar."
+              },
+              {
+                "en": "They are playing in the garden.",
+                "pt": "Eles estão brincando no jardim."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a1-004",
+      "title": "Present continuous for actions happening now",
+      "explanation": "Use am, is or are plus the -ing form of the verb for an action that is happening now: I am reading. She is cooking dinner. They are playing in the garden. Spelling: drop the final -e before -ing (make, making; write, writing) and double a final single consonant after a short vowel (run, running; sit, sitting). Do not leave out be: We are playing, not We playing.",
+      "examples": [
+        {
+          "en": "I am reading."
+        },
+        {
+          "en": "She is cooking dinner."
+        },
+        {
+          "en": "They are playing in the garden."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-004@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-004@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence describes an action happening now?",
+            "answer": "She is cooking dinner.",
+            "alternatives": [
+              "She cooks dinner now.",
+              "She is cooking dinner.",
+              "She cooking dinner."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q01"
+          },
+          {
+            "id": "en-a1-004@2:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the -ing form of 'run'?",
+            "answer": "running",
+            "alternatives": ["runing", "running", "runninging"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q02"
+          },
+          {
+            "id": "en-a1-004@2:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the -ing form of 'make'?",
+            "answer": "making",
+            "alternatives": ["makeing", "making", "makking"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q03"
+          },
+          {
+            "id": "en-a1-004@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'they' in the present continuous?",
+            "answer": "are",
+            "alternatives": ["am", "is", "are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q04"
+          },
+          {
+            "id": "en-a1-004@2:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ reading a book. (be)",
+            "answer": "am",
+            "near_misses": ["is", "are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q05"
+          },
+          {
+            "id": "en-a1-004@2:q06",
+            "format": "typed-blank",
+            "prompt": "She is ___ dinner. (cook)",
+            "answer": "cooking",
+            "near_misses": ["cook", "cooks"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q06"
+          },
+          {
+            "id": "en-a1-004@2:q07",
+            "format": "typed-blank",
+            "prompt": "They are ___ in the garden. (play)",
+            "answer": "playing",
+            "near_misses": ["play", "plays"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q07"
+          },
+          {
+            "id": "en-a1-004@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present continuous): I / read / a book",
+            "answer": "I am reading a book.",
+            "alternatives": ["I'm reading a book."],
+            "near_misses": ["I reading a book.", "I is reading a book."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q08"
+          },
+          {
+            "id": "en-a1-004@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present continuous): she / cook / dinner",
+            "answer": "She is cooking dinner.",
+            "alternatives": ["She's cooking dinner."],
+            "near_misses": ["She cooking dinner.", "She is cook dinner."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q09"
+          },
+          {
+            "id": "en-a1-004@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present continuous): they / play / in the garden",
+            "answer": "They are playing in the garden.",
+            "alternatives": ["They're playing in the garden."],
+            "near_misses": [
+              "They playing in the garden.",
+              "They is playing in the garden."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q10"
+          },
+          {
+            "id": "en-a1-004@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He is run now.",
+            "answer": "He is running now.",
+            "alternatives": ["He's running now."],
+            "near_misses": ["He is run now.", "He is runing now."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q11"
+          },
+          {
+            "id": "en-a1-004@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: We playing football.",
+            "answer": "We are playing football.",
+            "alternatives": ["We're playing football."],
+            "near_misses": ["We playing football.", "We is playing football."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-004@1:q12"
+          },
+          {
+            "id": "en-a1-004@2:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the -ing form of 'write'?",
+            "answer": "writing",
+            "alternatives": ["writeing", "writing", "writting"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-004@1:h01"
+          },
+          {
+            "id": "en-a1-004@2:h02",
+            "format": "typed-blank",
+            "prompt": "He is ___ the car. (wash) (present continuous)",
+            "answer": "washing",
+            "near_misses": ["wash", "washes"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-004@1:h02"
+          },
+          {
+            "id": "en-a1-004@2:h03",
+            "format": "translation",
+            "prompt": "Write the sentence (use the present continuous): we / eat / lunch",
+            "answer": "We are eating lunch.",
+            "alternatives": ["We're eating lunch."],
+            "near_misses": ["We eating lunch.", "We is eating lunch."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-004@1:h03"
           }
         ],
         "translations": {

@@ -338,6 +338,8 @@ export const questions = sqliteTable(
     }).notNull()
   },
   (table) => [
+    // Questions are looked up by the content version they belong to.
+    index('questions_content_version_idx').on(table.contentVersionId),
     uniqueIndex('questions_identity_version_skill_language').on(
       table.id,
       table.contentVersionId,
@@ -503,6 +505,12 @@ export const attempts = sqliteTable(
     createdAt: createdAt()
   },
   (table) => [
+    // A session's attempts are read by owner and session, per question.
+    index('attempts_owner_session_question_idx').on(
+      table.ownerId,
+      table.studySessionId,
+      table.questionId
+    ),
     uniqueIndex('attempts_owner_submission_unique').on(
       table.ownerId,
       table.submissionKey
@@ -1241,7 +1249,7 @@ export const aiUsage = sqliteTable(
   'ai_usage',
   {
     month: text('month').notNull(),
-    api: text('api', { enum: ['decisions'] }).notNull(),
+    api: text('api', { enum: ['decisions', 'typesafe'] }).notNull(),
     calls: integer('calls').notNull().default(0),
     inputTokens: integer('input_tokens').notNull().default(0),
     outputTokens: integer('output_tokens').notNull().default(0)
@@ -1252,7 +1260,7 @@ export const aiUsage = sqliteTable(
       'ai_usage_month',
       sql`length(${table.month}) = 7 AND ${table.month} GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]'`
     ),
-    check('ai_usage_api', sql`${table.api} IN ('decisions')`),
+    check('ai_usage_api', sql`${table.api} IN ('decisions', 'typesafe')`),
     check(
       'ai_usage_counts',
       sql`${table.calls} >= 0 AND ${table.inputTokens} >= 0 AND ${table.outputTokens} >= 0`

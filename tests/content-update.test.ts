@@ -809,3 +809,88 @@ describe('the impact report', () => {
     ]);
   });
 });
+
+describe('grammar retention schedules after a revision', () => {
+  const learner = testSession('learner-a');
+
+  async function scheduleOnFirstVersion() {
+    await client.execute({
+      sql: "INSERT OR IGNORE INTO users (id, email, email_verified, created_at, updated_at) VALUES (?, 'a@example.test', 1, 0, 0)",
+      args: [learner.userId]
+    });
+    await client.execute({
+      sql: `INSERT INTO grammar_retention_schedules
+        (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, reset_required, scheduler_version, parameters_json)
+        VALUES (?, 'fr', 'fr-a1-001', 'fr-a1-001@1', '{}', 5000, 3, 0, 'v1', '{}')`,
+      args: [learner.userId]
+    });
+  }
+
+  const schedule = async () =>
+    (
+      await client.execute(
+        "SELECT content_version_id, due_at, reset_required FROM grammar_retention_schedules WHERE skill_id = 'fr-a1-001'"
+      )
+    ).rows.map((row) => ({ ...row }));
+
+  it('keeps the schedule on the published version when a quarantined version is skipped', async () => {
+    await scheduleOnFirstVersion();
+    const quarantined = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      question('fr-a1-001@2:q2', { change: 'changed' })
+    ]);
+    quarantined.versions[0].review = 'quarantined';
+    await importContent(client, quarantined);
+    expect(await schedule()).toEqual([
+      { content_version_id: 'fr-a1-001@1', due_at: 5000, reset_required: 0 }
+    ]);
+    const third = update('0.2.1', [
+      same('fr-a1-001@3:q1', 'fr-a1-001@2:q1'),
+      same('fr-a1-001@3:q2', 'fr-a1-001@2:q2')
+    ]);
+    third.versions[0].id = 'fr-a1-001@3';
+    third.versions[0].version = 3;
+    await importContent(client, third);
+    expect(await schedule()).toEqual([
+      { content_version_id: 'fr-a1-001@3', due_at: 5000, reset_required: 0 }
+    ]);
+  });
+
+  it.each([
+    [
+      '0.1.1',
+      'only its wording fixed',
+      [
+        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+        same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+      ]
+    ],
+    [
+      '0.2.0',
+      'a question that changes meaning',
+      [
+        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+        question('fr-a1-001@2:q2', { change: 'changed' })
+      ]
+    ],
+    ['0.2.0', 'a question removed', [same('fr-a1-001@2:q1', 'fr-a1-001@1:q1')]],
+    [
+      '0.2.0',
+      'a question added',
+      [
+        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+        same('fr-a1-001@2:q2', 'fr-a1-001@1:q2'),
+        question('fr-a1-001@2:q3', { change: 'new' })
+      ]
+    ]
+  ])(
+    'transfers the schedule unchanged to a version (%s) with %s',
+    async (curriculum, _, questions) => {
+      await scheduleOnFirstVersion();
+      await importContent(client, update(curriculum, questions));
+      expect(await schedule()).toEqual([
+        { content_version_id: 'fr-a1-001@2', due_at: 5000, reset_required: 0 }
+      ]);
+    }
+  );
+});

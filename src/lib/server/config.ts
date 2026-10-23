@@ -17,7 +17,7 @@ export const configVariables = [
   'PROTON_SMTP_TOKEN',
   'MAIL_CAPTURE_DIR',
   'APP_BUILD_SHA',
-  'OPENAI_API_KEY'
+  'TYPESAFE_API_KEY'
 ] as const;
 
 export type ConfigVariable = (typeof configVariables)[number];
@@ -87,10 +87,10 @@ export interface RuntimeConfig {
   databaseToken?: string;
   revision: string;
   auth?: AuthRuntimeConfig;
-  /** OpenAI key for the AI grading fallback; unset leaves unmatched answers uncertain. */
-  openAiKey?: string;
-  /** Set when OPENAI_API_KEY is present but unusable; the app keeps serving and the fallback stays off. */
-  openAiKeyError?: ConfigError;
+  /** TypeSafe key for the AI grading fallback; unset leaves unmatched answers uncertain. */
+  typesafeApiKey?: string;
+  /** Set when TYPESAFE_API_KEY is unusable; the app keeps serving and the fallback stays off. */
+  typesafeApiKeyError?: ConfigError;
 }
 
 /** Validate private runtime metadata without connecting to a provider; retain credentials only for selected remote libSQL. */
@@ -184,27 +184,28 @@ function parseAuthConfig(
   }
 }
 
-/** An optional OpenAI key: unset is allowed, but a set value must be a usable key. */
-function parseOpenAiKey(
+/** An optional TypeSafe key: unset is allowed, but a set value must be usable. */
+function parseTypesafeApiKey(
   env: Record<string, string | undefined>
 ): string | undefined {
-  const raw = env.OPENAI_API_KEY;
+  const raw = env.TYPESAFE_API_KEY;
   if (raw === undefined || raw === '') return undefined;
   const key = raw.trim();
   if (key !== raw || !/^[\x21-\x7e]{20,}$/u.test(key))
-    throw new ConfigError('OPENAI_API_KEY');
+    throw new ConfigError('TYPESAFE_API_KEY');
   return key;
 }
 
 /** A bad optional key disables only the AI fallback, and the error is kept for the caller to log. */
-function openAiKeyConfig(
+function typesafeApiKeyConfig(
   env: Record<string, string | undefined>
-): Pick<RuntimeConfig, 'openAiKey' | 'openAiKeyError'> {
+): Pick<RuntimeConfig, 'typesafeApiKey' | 'typesafeApiKeyError'> {
   try {
-    return { openAiKey: parseOpenAiKey(env) };
+    const key = parseTypesafeApiKey(env);
+    return key ? { typesafeApiKey: key } : {};
   } catch (error) {
     if (!(error instanceof ConfigError)) throw error;
-    return { openAiKeyError: error };
+    return { typesafeApiKeyError: error };
   }
 }
 
@@ -283,6 +284,6 @@ export function parseRuntimeConfig(
     databaseToken,
     revision,
     auth: dataEnabled ? parseAuthConfig(env, environment) : undefined,
-    ...(dataEnabled ? openAiKeyConfig(env) : {})
+    ...(dataEnabled ? typesafeApiKeyConfig(env) : {})
   };
 }

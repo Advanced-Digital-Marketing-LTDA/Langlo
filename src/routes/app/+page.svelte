@@ -1,8 +1,8 @@
 <script lang="ts">
   import { navigating } from '$app/state';
-  import type { PageData } from './$types';
+  import type { ActionData, PageData } from './$types';
   import TrackCard from '../../lib/components/dashboard/TrackCard.svelte';
-  let { data }: { data: PageData } = $props();
+  let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head>
@@ -35,6 +35,16 @@
 {:else}
   {#each data.tracks as track (track.language)}
     <TrackCard {track} />
+    {#if data.unfinished[track.language]}
+      {@const unfinished = data.unfinished[track.language]}
+      <p class="note">
+        <a href={`/app/session/${encodeURIComponent(unfinished.id)}`}
+          >Continue practice</a
+        >
+        · {unfinished.answered}
+        {unfinished.answered === 1 ? 'answer' : 'answers'} so far
+      </p>
+    {/if}
   {/each}
   <p class="note">
     Grammar evidence is separate from flashcard recall.
@@ -45,6 +55,7 @@
 {/if}
 
 <form method="POST" action="?/signOut">
+  {#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
   <button type="submit">Sign out</button>
 </form>
 

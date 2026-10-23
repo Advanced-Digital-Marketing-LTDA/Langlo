@@ -10,9 +10,8 @@ import {
   requireLearnerPage
 } from '../../../../../../lib/server/learner-session';
 import {
-  exerciseFor,
   lessonFor,
-  practiceFeedback,
+  practiceFor,
   ratePracticeAnswer,
   recordAnswer,
   reportLessonIssue
@@ -30,6 +29,19 @@ function lessonFailure(thrown: unknown, language: string, returnTo: string) {
     if (described) error(described.status, described.message);
   }
   throw thrown;
+}
+
+/**
+ * Both reads finish before the page fails, so one failure never hides the
+ * other: an outage outranks a missing lesson and is not shown as a 404.
+ */
+function mostSevereFailure(results: PromiseSettledResult<unknown>[]) {
+  const reasons = results.flatMap((result) =>
+    result.status === 'rejected' ? [result.reason] : []
+  );
+  return (
+    reasons.find((reason) => !(reason instanceof StudyError)) ?? reasons[0]
+  );
 }
 
 /** Run with the app database, which is always closed afterwards. */
@@ -54,19 +66,35 @@ export const load: PageServerLoad = async (event) => {
   const studySessionId = event.url.searchParams.get('session');
   const returnTo = normalizeMapReturnTo(event.url.searchParams.get('returnTo'));
   try {
-    return await withDatabase(event.locals.config, async (client) => ({
-      language,
-      returnTo,
-      unavailable: false as const,
-      reportSubmissionKey: randomUUID(),
-      lesson: await lessonFor(client, learner, {
+    return await withDatabase(event.locals.config, async (client) => {
+      // The lesson and the practice state are independent reads: one round
+      // trip each is the cost, so they overlap instead of queueing.
+      const settled = await Promise.allSettled([
+        lessonFor(client, learner, {
+          language,
+          skillId: skill,
+          studySessionId
+        }),
+        practiceFor(client, learner, studySessionId, skill)
+      ]);
+      const [lessonRead, practiceRead] = settled;
+      if (
+        lessonRead.status === 'rejected' ||
+        practiceRead.status === 'rejected'
+      )
+        throw mostSevereFailure(settled);
+      const lesson = lessonRead.value;
+      const practice = practiceRead.value;
+      return {
         language,
-        skillId: skill,
-        studySessionId
-      }),
-      exercise: await exerciseFor(client, learner, studySessionId, skill),
-      feedback: await practiceFeedback(client, learner, studySessionId, skill)
-    }));
+        returnTo,
+        unavailable: false as const,
+        reportSubmissionKey: randomUUID(),
+        lesson,
+        exercise: practice.exercise,
+        feedback: practice.feedback
+      };
+    });
   } catch (thrown) {
     return lessonFailure(thrown, language, returnTo);
   }

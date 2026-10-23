@@ -3,11 +3,13 @@ import { z } from 'zod';
 import type { LearnerSession } from './learner-session';
 import {
   FALLBACK_EVALUATOR_VERSION,
-  FALLBACK_RUBRIC_VERSION
+  FALLBACK_RUBRIC_VERSION,
+  HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
 import { PREPARED_EVALUATOR_VERSION } from './evaluation/prepared';
 import { StudyError } from './study-error';
-import { beginWrite, executeWrite } from './flashcards';
+import { beginWrite } from './flashcards';
 import {
   commitGrammarSessionReviews,
   dueGrammarReviews,
@@ -54,9 +56,34 @@ function assertSessionIdentity(
 }
 
 /**
- * Start a practice session in an enrolled track. The submission key makes the
- * start idempotent: a repeated tap returns the same session. The insert
- * names the caller's own enrollment, so an unenrolled language inserts nothing.
+ * The learner's newest unfinished (active or paused) practice session in a
+ * language, with how many answers it holds, leaving out `exceptId`. Review
+ * sessions are not included.
+ */
+export async function unfinishedPractice(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string,
+  exceptId = ''
+): Promise<{ id: string; answered: number } | null> {
+  const found = await client.execute({
+    sql: `SELECT s.id,
+        (SELECT COUNT(*) FROM attempts a WHERE a.owner_id = s.owner_id AND a.study_session_id = s.id) AS answered
+      FROM study_sessions s
+      WHERE s.owner_id = ? AND s.language = ? AND s.mode = 'practice' AND s.state IN ('active', 'paused') AND s.id <> ?
+      ORDER BY s.created_at DESC, s.rowid DESC LIMIT 1`,
+    args: [learner.userId, language, exceptId]
+  });
+  const row = found.rows[0];
+  return row ? { id: String(row.id), answered: Number(row.answered) } : null;
+}
+
+/**
+ * Start a practice session in an enrolled track, or continue the learner's
+ * unfinished one: a new session begins only after the old one is finished.
+ * The submission key makes the start idempotent: a repeated tap returns the
+ * same session. The insert names the caller's own enrollment, so an unenrolled
+ * language inserts nothing.
  */
 export async function startPractice(
   client: Client,
@@ -65,20 +92,122 @@ export async function startPractice(
 ): Promise<{ id: string }> {
   validateSubmissionKey(input.submissionKey);
   const id = `practice:${input.submissionKey}`;
-  await executeWrite(client, {
-    sql: `INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, grammar_retention_policy_version)
+  const tx = await beginWrite(client);
+  try {
+    const unfinished = await unfinishedPractice(tx, learner, input.language);
+    if (unfinished) {
+      // Continuing a paused practice resumes it, so its lessons serve questions.
+      await tx.execute({
+        sql: "UPDATE study_sessions SET state = 'active', paused_at = NULL WHERE id = ? AND owner_id = ? AND state = 'paused'",
+        args: [unfinished.id, learner.userId]
+      });
+      await tx.commit();
+      return { id: unfinished.id };
+    }
+    await tx.execute({
+      sql: `INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode, grammar_retention_policy_version)
       SELECT ?, e.owner_id, e.id, e.language, 'practice', ? FROM enrollments e
       WHERE e.owner_id = ? AND e.language = ? ON CONFLICT (id) DO NOTHING`,
-    args: [id, GRAMMAR_RETENTION_POLICY_VERSION, learner.userId, input.language]
+      args: [
+        id,
+        GRAMMAR_RETENTION_POLICY_VERSION,
+        learner.userId,
+        input.language
+      ]
+    });
+    const saved = await tx.execute({
+      sql: 'SELECT owner_id, language, mode FROM study_sessions WHERE id = ?',
+      args: [id]
+    });
+    const row = saved.rows[0];
+    if (!row) throw new StudyError('NOT_FOUND');
+    assertSessionIdentity(row, learner, input.language, 'practice');
+    await tx.commit();
+    return { id };
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
+/**
+ * Close one of the caller's unfinished practices and delete every answer in
+ * it. Unlike finishing, nothing is committed to the review schedule.
+ */
+export async function discardPractice(
+  client: Client,
+  learner: LearnerSession,
+  id: string
+): Promise<void> {
+  const tx = await beginWrite(client);
+  try {
+    // Another tab may have finished it since it was chosen; a finished
+    // practice keeps its answers and its committed review schedule.
+    const open = await tx.execute({
+      sql: "SELECT 1 FROM study_sessions WHERE id = ? AND owner_id = ? AND mode = 'practice' AND state IN ('active', 'paused')",
+      args: [id, learner.userId]
+    });
+    if (!open.rows[0]) {
+      await tx.commit();
+      return;
+    }
+    await tx.execute({
+      sql: 'DELETE FROM attempts WHERE owner_id = ? AND study_session_id = ?',
+      args: [learner.userId, id]
+    });
+    await tx.execute({
+      sql: "UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND mode = 'practice'",
+      args: [id, learner.userId]
+    });
+    await tx.commit();
+  } catch (error) {
+    await tx.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    tx.close();
+  }
+}
+
+/**
+ * Discard every unfinished practice of the learner in a language, with all of
+ * its answers, and start a fresh one. Continuing is the way to keep answers.
+ */
+export async function startPracticeOver(
+  client: Client,
+  learner: LearnerSession,
+  input: { language: string; submissionKey: unknown }
+): Promise<{ id: string }> {
+  validateSubmissionKey(input.submissionKey);
+  // A repeated tap carries the key of the session it already started: keep it.
+  const own = `practice:${input.submissionKey}`;
+  // A replay of a request whose session is already finished is answered with
+  // that session; it must not finish whatever the learner began since.
+  const replayed = await client.execute({
+    sql: "SELECT owner_id, language, mode FROM study_sessions WHERE id = ? AND state = 'completed'",
+    args: [own]
   });
-  const saved = await client.execute({
-    sql: 'SELECT owner_id, language, mode FROM study_sessions WHERE id = ?',
-    args: [id]
-  });
-  const row = saved.rows[0];
-  if (!row) throw new StudyError('NOT_FOUND');
-  assertSessionIdentity(row, learner, input.language, 'practice');
-  return { id };
+  if (replayed.rows[0]) {
+    assertSessionIdentity(
+      replayed.rows[0],
+      learner,
+      input.language,
+      'practice'
+    );
+    return { id: own };
+  }
+  for (;;) {
+    const unfinished = await unfinishedPractice(
+      client,
+      learner,
+      input.language,
+      own
+    );
+    if (!unfinished) break;
+    await discardPractice(client, learner, unfinished.id);
+  }
+  return startPractice(client, learner, input);
 }
 
 async function grammarReviewQuestions(
@@ -324,8 +453,8 @@ export async function finishPractice(
 
 /**
  * What a practice session has covered so far. Each attempt counts once, by
- * its verdict: the AI fallback's, else the prepared one, else the newest
- * evaluation. An attempt not yet evaluated counts as pending.
+ * its verdict: Jev, historical Decisions, prepared, then newest evaluation.
+ * An attempt not yet evaluated counts as pending.
  */
 export async function practiceSummary(
   client: Client,
@@ -340,12 +469,23 @@ export async function practiceSummary(
   const attempts = await client.execute({
     sql: `SELECT a.skill_id,
         (SELECT e.outcome FROM evaluations e WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
-          ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 ELSE 2 END,
+          AND CASE e.evaluator_version
+            WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+            WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+            WHEN ? THEN e.rubric_version = a.content_version_id
+            ELSE 1 END
+          ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END,
             e.created_at DESC, e.id DESC LIMIT 1) AS outcome
       FROM attempts a WHERE a.study_session_id = ? AND a.owner_id = ?
       ORDER BY a.created_at, a.id`,
     args: [
       FALLBACK_EVALUATOR_VERSION,
+      FALLBACK_RUBRIC_VERSION,
+      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
+      HISTORICAL_FALLBACK_RUBRIC_VERSION,
+      PREPARED_EVALUATOR_VERSION,
+      FALLBACK_EVALUATOR_VERSION,
+      HISTORICAL_FALLBACK_EVALUATOR_VERSION,
       PREPARED_EVALUATOR_VERSION,
       id,
       learner.userId

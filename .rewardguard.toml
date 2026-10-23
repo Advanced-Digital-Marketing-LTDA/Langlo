@@ -1,0 +1,15 @@
+# .rewardguard.toml (read from main only, so a branch can't loosen its own check)
+run_tests = false
+
+# Severity is fixed by rewardguard: below 0.60 no output, 0.60-0.79 warn, 0.80 or higher fail
+
+[judge]
+model = "jev-1.13.0"   # pin a version; jev-latest is rejected
+
+[explainer]
+model = "claude-haiku-5-5"
+effort = "low"
+
+# Optional: turn a rule off
+# [rules]
+# SNAPSHOT_CHANGED = "off"

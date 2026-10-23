@@ -1,0 +1,2 @@
+CREATE INDEX `attempts_owner_session_question_idx` ON `attempts` (`owner_id`,`study_session_id`,`question_id`);--> statement-breakpoint
+CREATE INDEX `questions_content_version_idx` ON `questions` (`content_version_id`);

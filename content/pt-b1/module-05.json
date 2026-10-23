@@ -180,6 +180,209 @@
       }
     },
     {
+      "skill_id": "pt-b1-021",
+      "title": "Forms of address: você, tu, a gente and o senhor/a senhora",
+      "explanation": "Você takes the same verb form as ele/ela (você fala, você come) and is the neutral word for 'you' across most of Brazil. Tu is used in parts of the country, in some regions with the ele form (tu fala) and in others with the standard tu form (tu falas). Learn to recognise it, and use você unless you live where tu is normal. A gente means 'we' in speech and takes the ele form: A gente vai ao cinema. Nós is more formal. O senhor and a senhora are formal and polite, with the ele form: O senhor quer um café? Vocês is the plural of você and tu, with the eles form.",
+      "examples": [
+        {
+          "pt": "Você mora perto daqui?",
+          "en": "Do you live near here?"
+        },
+        {
+          "pt": "A gente vai ao cinema hoje.",
+          "en": "We are going to the cinema today."
+        },
+        {
+          "pt": "A senhora quer um café?",
+          "en": "Would you like a coffee, madam?"
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-021@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-021@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb form: Você ___ português muito bem. (falar)",
+            "answer": "fala",
+            "alternatives": ["falo", "fala", "falamos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q01"
+          },
+          {
+            "id": "pt-b1-021@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb form: A gente ___ ao cinema hoje. (ir)",
+            "answer": "vai",
+            "alternatives": ["vamos", "vão", "vai"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q02"
+          },
+          {
+            "id": "pt-b1-021@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb form: O senhor ___ um café? (querer)",
+            "answer": "quer",
+            "alternatives": ["quer", "quero", "queremos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q03"
+          },
+          {
+            "id": "pt-b1-021@2:q04",
+            "format": "typed-blank",
+            "prompt": "Vocês ___ a conta, por favor? (pagar)",
+            "answer": "pagam",
+            "near_misses": ["paga", "pagamos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q04"
+          },
+          {
+            "id": "pt-b1-021@2:q05",
+            "format": "typed-blank",
+            "prompt": "A gente ___ muito aqui. (comer)",
+            "answer": "come",
+            "near_misses": ["comemos", "comem"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q05"
+          },
+          {
+            "id": "pt-b1-021@2:q06",
+            "format": "typed-blank",
+            "prompt": "A senhora ___ de açúcar? (precisar)",
+            "answer": "precisa",
+            "near_misses": ["preciso", "precisam"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q06"
+          },
+          {
+            "id": "pt-b1-021@2:q07",
+            "format": "translation",
+            "prompt": "Translate (informal we): We live in São Paulo.",
+            "answer": "A gente mora em São Paulo.",
+            "near_misses": [
+              "A gente moramos em São Paulo.",
+              "A gente moram em São Paulo."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q07"
+          },
+          {
+            "id": "pt-b1-021@2:q08",
+            "format": "translation",
+            "prompt": "Translate (polite): Sir, would you like to sit?",
+            "answer": "O senhor quer se sentar?",
+            "alternatives": [
+              "O senhor gostaria de se sentar?",
+              "O senhor quer sentar?"
+            ],
+            "near_misses": [
+              "O senhor quero se sentar?",
+              "O senhor querem se sentar?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q08"
+          },
+          {
+            "id": "pt-b1-021@2:q09",
+            "format": "translation",
+            "prompt": "Translate (plural you): Are you (all) coming tomorrow?",
+            "answer": "Vocês vêm amanhã?",
+            "alternatives": ["Vocês virão amanhã?", "Vocês vão vir amanhã?"],
+            "near_misses": ["Vocês vem amanhã?", "Vocês vimos amanhã?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q09"
+          },
+          {
+            "id": "pt-b1-021@2:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: A gente vamos ao parque.",
+            "answer": "A gente vai ao parque.",
+            "near_misses": [
+              "A gente vamos ao parque.",
+              "A gente vão ao parque."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q10"
+          },
+          {
+            "id": "pt-b1-021@2:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Você falas muito rápido.",
+            "answer": "Você fala muito rápido.",
+            "near_misses": [
+              "Você falas muito rápido.",
+              "Você falo muito rápido."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q11"
+          },
+          {
+            "id": "pt-b1-021@2:q12",
+            "format": "correction",
+            "prompt": "Correct the verb: O senhor queremos um café?",
+            "answer": "O senhor quer um café?",
+            "near_misses": [
+              "O senhor queremos um café?",
+              "O senhor quero um café?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-021@1:q12"
+          },
+          {
+            "id": "pt-b1-021@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the form for 'we' in speech: Hoje ___ cedo para casa.",
+            "answer": "a gente volta",
+            "alternatives": [
+              "a gente volta",
+              "a gente voltamos",
+              "a gente voltam"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-021@1:h01"
+          },
+          {
+            "id": "pt-b1-021@2:h02",
+            "format": "typed-blank",
+            "prompt": "Vocês ___ de onde? (ser) (presente do indicativo)",
+            "answer": "são",
+            "near_misses": ["é", "somos"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-021@1:h02"
+          },
+          {
+            "id": "pt-b1-021@2:h03",
+            "format": "translation",
+            "prompt": "Translate (informal we): We want to eat now.",
+            "answer": "A gente quer comer agora.",
+            "near_misses": [
+              "A gente queremos comer agora.",
+              "A gente querem comer agora."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-021@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "pt-b1-022",
       "title": "Direct object pronouns: o, a, os, as and Brazilian ele/ela",
       "explanation": "The direct object pronouns are o, a, os, as (him/it, her/it, them). They replace the noun that receives the verb: Vi o filme becomes Vi-o or, in formal writing, Eu o vi. Brazilian speech very often uses ele or ela as the object instead: Eu vi ele. Both are understood, but o/a is the correct written form. When the verb ends in -r, -s or -z, the pronoun becomes lo/la and the verb loses its final letter: fazer + o gives fazê-lo, and comprar + a gives comprá-la. After a nasal ending (-am, -em, -ão), the pronoun is no/na: Comeram-no. Me, te, nos are also direct objects: Ela me viu.",
@@ -507,6 +710,205 @@
       }
     },
     {
+      "skill_id": "pt-b1-023",
+      "title": "Indirect object pronouns: me, te, lhe, nos, lhes",
+      "explanation": "The indirect object pronouns are me, te, lhe, nos, lhes (to me, to you, to him/her/you, to us, to them). They replace a + person: Dei o livro a ela becomes Dei-lhe o livro. In writing, lhe is formal and correct for você too. In everyday Brazilian speech, people use te for você, and for the third person they use para ele/ela or a ele/ela: Dei o livro para ela. A gente also uses para + pronoun: Disse para eles. Me and te are shared with the direct object: Ela me deu um presente. Nos is us: Ele nos contou a história.",
+      "examples": [
+        {
+          "pt": "Ela me deu um presente.",
+          "en": "She gave me a present."
+        },
+        {
+          "pt": "Eu te mando uma mensagem hoje.",
+          "en": "I will send you a message today."
+        },
+        {
+          "pt": "Dei o livro para ela.",
+          "en": "I gave her the book."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-023@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-023@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Ela ___ deu um presente. (to me)",
+            "answer": "me",
+            "alternatives": ["me", "lhe", "nos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q01"
+          },
+          {
+            "id": "pt-b1-023@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Eu ___ mando uma mensagem. (to you, everyday speech)",
+            "answer": "te",
+            "alternatives": ["lhes", "te", "o"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q02"
+          },
+          {
+            "id": "pt-b1-023@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Ele ___ contou a história. (to us)",
+            "answer": "nos",
+            "alternatives": ["me", "lhes", "nos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q03"
+          },
+          {
+            "id": "pt-b1-023@2:q04",
+            "format": "typed-blank",
+            "prompt": "Dei o presente a ela. Dei-___ o presente. (written form)",
+            "answer": "lhe",
+            "near_misses": ["a", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q04"
+          },
+          {
+            "id": "pt-b1-023@2:q05",
+            "format": "typed-blank",
+            "prompt": "Escrevi uma carta a eles. Escrevi-___ uma carta. (written form)",
+            "answer": "lhes",
+            "near_misses": ["os", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q05"
+          },
+          {
+            "id": "pt-b1-023@2:q06",
+            "format": "typed-blank",
+            "prompt": "Ele ___ contou o segredo. (to me)",
+            "answer": "me",
+            "near_misses": ["te", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q06"
+          },
+          {
+            "id": "pt-b1-023@2:q07",
+            "format": "translation",
+            "prompt": "Translate (everyday speech): I told her the truth.",
+            "answer": "Eu disse a verdade para ela.",
+            "near_misses": [
+              "Eu disse a verdade ela.",
+              "Eu lhe a verdade disse."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q07"
+          },
+          {
+            "id": "pt-b1-023@2:q08",
+            "format": "translation",
+            "prompt": "Translate (everyday speech): She sent me a photo.",
+            "answer": "Ela me mandou uma foto.",
+            "alternatives": [
+              "Ela mandou uma foto para mim.",
+              "Ela me enviou uma foto."
+            ],
+            "near_misses": [
+              "Ela mandou eu uma foto.",
+              "Ela me mandou a uma foto."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q08"
+          },
+          {
+            "id": "pt-b1-023@2:q09",
+            "format": "translation",
+            "prompt": "Translate (written form): I gave them the keys.",
+            "answer": "Dei-lhes as chaves.",
+            "alternatives": ["Eu lhes dei as chaves."],
+            "near_misses": ["Dei-os as chaves.", "Dei-se as chaves."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q09"
+          },
+          {
+            "id": "pt-b1-023@2:q10",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Ela mandou eu um presente.",
+            "answer": "Ela me mandou um presente.",
+            "alternatives": ["Ela mandou um presente para mim."],
+            "near_misses": [
+              "Ela mandou eu um presente.",
+              "Ela mandou mim um presente."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q10"
+          },
+          {
+            "id": "pt-b1-023@2:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun (formal): Dei-o o livro. (to him)",
+            "answer": "Dei-lhe o livro.",
+            "near_misses": ["Dei-o o livro.", "Dei-se o livro."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q11"
+          },
+          {
+            "id": "pt-b1-023@2:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Ele te contou a história a nós.",
+            "answer": "Ele nos contou a história.",
+            "near_misses": [
+              "Ele te contou a história a nós.",
+              "Ele lhe contou a história a nós."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-023@1:q12"
+          },
+          {
+            "id": "pt-b1-023@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence (written form, 'I asked them for help'):",
+            "answer": "Pedi-lhes ajuda.",
+            "alternatives": [
+              "Pedi-os ajuda.",
+              "Pedi-nos ajuda.",
+              "Pedi-lhes ajuda."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-023@1:h01"
+          },
+          {
+            "id": "pt-b1-023@2:h02",
+            "format": "typed-blank",
+            "prompt": "A professora ___ a lição. (explicar, to us, everyday speech) (pretérito perfeito)",
+            "answer": "nos explicou",
+            "near_misses": ["me explicou", "lhes explicou"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-023@1:h02"
+          },
+          {
+            "id": "pt-b1-023@2:h03",
+            "format": "translation",
+            "prompt": "Translate (everyday speech): I will call you tomorrow.",
+            "answer": "Eu te ligo amanhã.",
+            "alternatives": ["Eu ligo para você amanhã.", "Te ligo amanhã."],
+            "near_misses": ["Eu ligo te amanhã.", "Eu lhes ligo amanhã."],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-023@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "pt-b1-024",
       "title": "Reflexive, reciprocal and pronominal verbs: lavar-se, encontrar-se, esquecer-se",
       "explanation": "Reflexive verbs show that the subject acts on itself: me lavo, te lavas, se lava, nos lavamos, se lavam. The pronouns are me, te, se, nos, se. Reciprocal verbs show an action between people: Eles se abraçaram, Nós nos vemos amanhã. Pronominal verbs always take the pronoun, even if the action is not on oneself: queixar-se, arrepender-se, esquecer-se, lembrar-se, sentar-se. Colloquial Brazilian drops the pronoun with some verbs: Eu esqueci (not Eu me esqueci), but Eu me lembro and Eu me sento keep it. In Brazil the pronoun comes before the verb: Eu me levanto cedo.",
@@ -682,6 +1084,207 @@
       }
     },
     {
+      "skill_id": "pt-b1-024",
+      "title": "Reflexive, reciprocal and pronominal verbs: lavar-se, encontrar-se, esquecer-se",
+      "explanation": "Reflexive verbs show that the subject acts on itself: me lavo, te lavas, se lava, nos lavamos, se lavam. The pronouns are me, te, se, nos, se. Reciprocal verbs show an action between people: Eles se abraçaram, Nós nos vemos amanhã. Pronominal verbs always take the pronoun, even if the action is not on oneself: queixar-se, arrepender-se, esquecer-se, lembrar-se, sentar-se. Colloquial Brazilian drops the pronoun with some verbs: Eu esqueci (not Eu me esqueci), but Eu me lembro and Eu me sento keep it. In Brazil the pronoun comes before the verb: Eu me levanto cedo.",
+      "examples": [
+        {
+          "pt": "Eu me levanto às seis todos os dias.",
+          "en": "I get up at six every day."
+        },
+        {
+          "pt": "Eles se abraçaram na estação.",
+          "en": "They hugged at the station."
+        },
+        {
+          "pt": "Ela se arrependeu da decisão.",
+          "en": "She regretted the decision."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-024@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-024@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Eu ___ levanto cedo.",
+            "answer": "me",
+            "alternatives": ["te", "me", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q01"
+          },
+          {
+            "id": "pt-b1-024@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Ela ___ lembra do meu nome.",
+            "answer": "se",
+            "alternatives": ["me", "nos", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q02"
+          },
+          {
+            "id": "pt-b1-024@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the pronoun: Nós ___ vemos amanhã.",
+            "answer": "nos",
+            "alternatives": ["nos", "se", "me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q03"
+          },
+          {
+            "id": "pt-b1-024@2:q04",
+            "format": "typed-blank",
+            "prompt": "Os alunos ___ sentaram na frente. (se, reflexivo)",
+            "answer": "se",
+            "near_misses": ["lhes", "os"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q04"
+          },
+          {
+            "id": "pt-b1-024@2:q05",
+            "format": "typed-blank",
+            "prompt": "Eu ___ arrependo disso. (arrepender-se)",
+            "answer": "me",
+            "near_misses": ["te", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q05"
+          },
+          {
+            "id": "pt-b1-024@2:q06",
+            "format": "typed-blank",
+            "prompt": "Vocês ___ encontram no parque? (encontrar-se)",
+            "answer": "se",
+            "near_misses": ["me", "nos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q06"
+          },
+          {
+            "id": "pt-b1-024@2:q07",
+            "format": "translation",
+            "prompt": "Translate (reflexive): She gets up early.",
+            "answer": "Ela se levanta cedo.",
+            "near_misses": ["Ela levanta se cedo.", "Ela me levanta cedo."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q07"
+          },
+          {
+            "id": "pt-b1-024@2:q08",
+            "format": "translation",
+            "prompt": "Translate (reciprocal): We see each other on Fridays.",
+            "answer": "Nós nos vemos às sextas.",
+            "alternatives": [
+              "A gente se vê às sextas.",
+              "Nós nos vemos às sextas-feiras."
+            ],
+            "near_misses": [
+              "Nós se vemos às sextas.",
+              "Nós vemos às sextas nos."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q08"
+          },
+          {
+            "id": "pt-b1-024@2:q09",
+            "format": "translation",
+            "prompt": "Translate (pronominal): I remember her name.",
+            "answer": "Eu me lembro do nome dela.",
+            "alternatives": ["Lembro-me do nome dela."],
+            "near_misses": [
+              "Eu lembro-me do nome dela.",
+              "Eu me lembro o nome dela."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q09"
+          },
+          {
+            "id": "pt-b1-024@2:q10",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Eu se levanto às seis.",
+            "answer": "Eu me levanto às seis.",
+            "near_misses": ["Eu se levanto às seis.", "Eu te levanto às seis."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q10"
+          },
+          {
+            "id": "pt-b1-024@2:q11",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Eles me abraçaram na estação (they hugged each other).",
+            "answer": "Eles se abraçaram na estação.",
+            "near_misses": [
+              "Eles me abraçaram na estação.",
+              "Eles nos abraçaram na estação."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q11"
+          },
+          {
+            "id": "pt-b1-024@2:q12",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Nós se encontramos ontem.",
+            "answer": "Nós nos encontramos ontem.",
+            "near_misses": [
+              "Nós se encontramos ontem.",
+              "Nós me encontramos ontem."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-024@1:q12"
+          },
+          {
+            "id": "pt-b1-024@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence (informal, 'Do you remember his name?'):",
+            "answer": "Você se lembra do nome dele?",
+            "alternatives": [
+              "Você se lembra do nome dele?",
+              "Você me lembra do nome dele?",
+              "Você nos lembra do nome dele?"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-024@1:h01"
+          },
+          {
+            "id": "pt-b1-024@2:h02",
+            "format": "typed-blank",
+            "prompt": "A gente ___ na festa. (ver-se, presente)",
+            "answer": "se vê",
+            "near_misses": ["me vê", "nos vê"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-024@1:h02"
+          },
+          {
+            "id": "pt-b1-024@2:h03",
+            "format": "translation",
+            "prompt": "Translate (reflexive): I wash myself before eating.",
+            "answer": "Eu me lavo antes de comer.",
+            "alternatives": ["Lavo-me antes de comer."],
+            "near_misses": [
+              "Eu lavo me antes de comer.",
+              "Eu se lavo antes de comer."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-024@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "pt-b1-025",
       "title": "Pronoun placement: Brazilian proclisis and formal ênclise",
       "explanation": "In speech and everyday writing, Brazilians put the pronoun before the verb: Me liga, Eu te vi, Ela me disse. With an auxiliary, the pronoun usually goes before the main verb or before the auxiliary: Vou te ligar, Estou te esperando, Não vou me atrasar. Negative words and some adverbs attract the pronoun even in formal Portuguese: Não me diga, Ainda se lembra. Formal writing puts it after the verb with a hyphen (ênclise): Disse-lhe, Diga-me. Never start a formal sentence with an unstressed pronoun: write Diga-me, not Me diga. In speech, Me dá is normal.",
@@ -839,6 +1442,198 @@
             "alternatives": ["Ela deu isso para mim."],
             "near_misses": ["Ela deu me isso.", "Ela me isso deu."],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b1-025",
+      "title": "Pronoun placement: Brazilian proclisis and formal ênclise",
+      "explanation": "In speech and everyday writing, Brazilians put the pronoun before the verb: Me liga, Eu te vi, Ela me disse. With an auxiliary, the pronoun usually goes before the main verb or before the auxiliary: Vou te ligar, Estou te esperando, Não vou me atrasar. Negative words and some adverbs attract the pronoun even in formal Portuguese: Não me diga, Ainda se lembra. Formal writing puts it after the verb with a hyphen (ênclise): Disse-lhe, Diga-me. Never start a formal sentence with an unstressed pronoun: write Diga-me, not Me diga. In speech, Me dá is normal.",
+      "examples": [
+        {
+          "pt": "Me liga mais tarde, por favor.",
+          "en": "Call me later, please."
+        },
+        {
+          "pt": "Vou te mandar a foto agora.",
+          "en": "I will send you the photo now."
+        },
+        {
+          "pt": "Não me diga que perdeu.",
+          "en": "Do not tell me you lost it."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-025@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b1-025@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the everyday order: ___ amanhã. (call me)",
+            "answer": "Me liga",
+            "alternatives": ["Liga-me", "Ligar me", "Me liga"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q01"
+          },
+          {
+            "id": "pt-b1-025@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the everyday order: Eu ___ vi ontem. (saw you)",
+            "answer": "te",
+            "alternatives": ["te", "lhe", "tu"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q02"
+          },
+          {
+            "id": "pt-b1-025@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the formal order (start of a sentence): ___ a hora, por favor. (tell me)",
+            "answer": "Diga-me",
+            "alternatives": ["Me diga", "Diga-me", "Diga me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q03"
+          },
+          {
+            "id": "pt-b1-025@2:q04",
+            "format": "typed-blank",
+            "prompt": "Não ___ diga isso! (me)",
+            "answer": "me",
+            "near_misses": ["lhe", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q04"
+          },
+          {
+            "id": "pt-b1-025@2:q05",
+            "format": "typed-blank",
+            "prompt": "Estou ___ esperando há uma hora. (te)",
+            "answer": "te",
+            "near_misses": ["se", "tu"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q05"
+          },
+          {
+            "id": "pt-b1-025@2:q06",
+            "format": "typed-blank",
+            "prompt": "Disse-___ a verdade. (to him, written)",
+            "answer": "lhe",
+            "near_misses": ["me", "o"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q06"
+          },
+          {
+            "id": "pt-b1-025@2:q07",
+            "format": "translation",
+            "prompt": "Translate (everyday speech): I am going to tell you tomorrow.",
+            "answer": "Vou te contar amanhã.",
+            "alternatives": ["Eu vou te contar amanhã.", "Amanhã eu te conto."],
+            "near_misses": [
+              "Vou contar-te amanhã.",
+              "Vou amanhã te contar amanhã."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q07"
+          },
+          {
+            "id": "pt-b1-025@2:q08",
+            "format": "translation",
+            "prompt": "Translate (negative): Do not call me.",
+            "answer": "Não me ligue.",
+            "alternatives": ["Não me telefone."],
+            "near_misses": ["Ligue-me não.", "Não ligue me."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q08"
+          },
+          {
+            "id": "pt-b1-025@2:q09",
+            "format": "translation",
+            "prompt": "Translate (formal, written): He told me the truth.",
+            "answer": "Disse-me a verdade.",
+            "near_misses": ["Me disse a verdade.", "Disse a mim verdade."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q09"
+          },
+          {
+            "id": "pt-b1-025@2:q10",
+            "format": "correction",
+            "prompt": "Correct the formal start: Me dê o livro, por favor.",
+            "answer": "Dê-me o livro, por favor.",
+            "near_misses": [
+              "Me dê o livro, por favor.",
+              "Dê me o livro, por favor."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q10"
+          },
+          {
+            "id": "pt-b1-025@2:q11",
+            "format": "correction",
+            "prompt": "Correct the negative: Não diga-me isso.",
+            "answer": "Não me diga isso.",
+            "near_misses": ["Não diga-me isso.", "Não diga me isso."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q11"
+          },
+          {
+            "id": "pt-b1-025@2:q12",
+            "format": "correction",
+            "prompt": "Correct the order: Eu vou ligar te amanhã.",
+            "answer": "Eu vou te ligar amanhã.",
+            "near_misses": [
+              "Eu vou ligar te amanhã.",
+              "Eu te vou ligar amanhã."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-025@1:q12"
+          },
+          {
+            "id": "pt-b1-025@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the everyday sentence ('She called me yesterday'):",
+            "answer": "Ela me ligou ontem.",
+            "alternatives": [
+              "Ela ligou me ontem.",
+              "Ela me ligou ontem.",
+              "Ela lhes ligou ontem."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-025@1:h01"
+          },
+          {
+            "id": "pt-b1-025@2:h02",
+            "format": "typed-blank",
+            "prompt": "Eu ___ a foto agora. (mandar, para você, everyday speech) (presente do indicativo)",
+            "answer": "te mando",
+            "near_misses": ["mando te", "lhes mando"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-025@1:h02"
+          },
+          {
+            "id": "pt-b1-025@2:h03",
+            "format": "translation",
+            "prompt": "Translate (everyday speech): She gave it to me.",
+            "answer": "Ela me deu isso.",
+            "alternatives": ["Ela deu isso para mim."],
+            "near_misses": ["Ela deu me isso.", "Ela me isso deu."],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-025@1:h03"
           }
         ]
       }

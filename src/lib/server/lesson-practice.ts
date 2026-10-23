@@ -65,13 +65,45 @@ export async function exerciseFor(
   skillId: string
 ) {
   if (!studySessionId) return null;
+  return exerciseAfter(
+    client,
+    learner,
+    studySessionId,
+    skillId,
+    practiceFeedback(client, learner, studySessionId, skillId)
+  );
+}
+
+/**
+ * The practice half of the lesson page in one pass: the next exercise and the
+ * feedback on the last answer, which the exercise depends on, so the feedback
+ * is read once and shared instead of being read again for the page.
+ */
+export async function practiceFor(
+  client: Client,
+  learner: LearnerSession,
+  studySessionId: string | null,
+  skillId: string
+) {
+  const feedback = practiceFeedback(client, learner, studySessionId, skillId);
+  const [exercise, answered] = await Promise.all([
+    studySessionId
+      ? exerciseAfter(client, learner, studySessionId, skillId, feedback)
+      : null,
+    feedback
+  ]);
+  return { exercise, feedback: answered };
+}
+
+async function exerciseAfter(
+  client: Client,
+  learner: LearnerSession,
+  studySessionId: string,
+  skillId: string,
+  pendingFeedback: ReturnType<typeof practiceFeedback>
+) {
   try {
-    const feedback = await practiceFeedback(
-      client,
-      learner,
-      studySessionId,
-      skillId
-    );
+    const feedback = await pendingFeedback;
     if (needsPracticeRating(feedback))
       return {
         studySessionId,

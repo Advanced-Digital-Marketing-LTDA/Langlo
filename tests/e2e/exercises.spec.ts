@@ -7,6 +7,7 @@ import {
   type BrowserContext,
   type Locator,
   type Page,
+  type Route,
   type TestInfo
 } from '@playwright/test';
 import { test } from './coverage-fixture';
@@ -930,7 +931,7 @@ async function expectProgressAndHome(page: Page) {
   await expect(
     page.getByRole('heading', { name: 'Grammar progress', exact: true })
   ).toBeVisible();
-  await expect(page.getByText(/Policy grammar-1/).first()).toBeVisible();
+  await expect(page.getByText(/Policy grammar-2/).first()).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth
@@ -1083,6 +1084,81 @@ test('waits for a saved answer before refreshing to the detected app version', a
   expect(session.user.id).toBe(userId);
 });
 
+test('keeps the typed answer when the server cannot be reached and records it once on retry', async ({
+  page,
+  context
+}) => {
+  const userId = await signIn(page, context);
+  const studySessionId = `unreachable-session-${randomUUID()}`;
+  await seedSession(userId, studySessionId);
+  await page.goto(
+    `${base}/app/learn/fr/lesson/fr-a1-001?session=${studySessionId}`
+  );
+  const answer = page.getByRole('radio', { name: 'suis', exact: true });
+  await answer.check();
+  await expect(
+    page.getByRole('button', { name: 'Submit answer', exact: true })
+  ).toBeEnabled();
+  const offline = (route: Route) =>
+    route.request().method() === 'POST' ? route.abort() : route.continue();
+  const submissionKeys: (string | null)[] = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && request.url().includes('?/answer'))
+      submissionKeys.push(
+        new URLSearchParams(request.postData() ?? '').get('submissionKey')
+      );
+  });
+  await page.route('**/app/learn/fr/lesson/fr-a1-001?/answer**', offline);
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(page.getByRole('alert')).toContainText(
+    'Could not confirm the server received your answer.'
+  );
+  await expect(answer).toBeChecked();
+  await expect(page.getByText('Page unavailable')).toHaveCount(0);
+  expect(await storedAnswers(userId, studySessionId)).toHaveLength(0);
+
+  await page.unroute('**/app/learn/fr/lesson/fr-a1-001?/answer**', offline);
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(
+    page.getByText('Question 2 of 4', { exact: true })
+  ).toBeVisible();
+  expect(await storedAnswers(userId, studySessionId)).toEqual([
+    expect.objectContaining({ question_id: 'fr-a1-001@1:q1', answer: 'suis' })
+  ]);
+  // The retry is the same submission, not a new one.
+  expect(submissionKeys).toHaveLength(2);
+  expect(submissionKeys[0]).toBeTruthy();
+  expect(submissionKeys[1]).toBe(submissionKeys[0]);
+});
+
+test('continues the unfinished practice from the practice page', async ({
+  page,
+  context
+}) => {
+  const userId = await signIn(page, context);
+  const studySessionId = `continue-session-${randomUUID()}`;
+  await seedSession(userId, studySessionId);
+  await page.goto(`${base}/app/practice/fr`);
+  await expect(
+    page.getByRole('button', { name: 'Start practice', exact: true })
+  ).toHaveCount(0);
+  await page
+    .getByRole('button', { name: 'Continue practice', exact: true })
+    .click();
+  await expect(page).toHaveURL(`${base}/app/session/${studySessionId}`);
+  const sessions = await withDatabase((client) =>
+    client.execute({
+      sql: "SELECT COUNT(*) AS n FROM study_sessions WHERE owner_id = ? AND id LIKE 'practice:%'",
+      args: [userId]
+    })
+  );
+  expect(Number(sessions.rows[0].n)).toBe(0);
+});
+
 test('releases the refresh block when a dirty exercise is destroyed', async ({
   page,
   context
@@ -1201,6 +1277,46 @@ test('rating an answer updates in place and keeps the scroll position', async ({
   await expect(rated).toBeInViewport();
   expect(await documentTag(page)).toBe('same-document');
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
+
+test('keeps the rating buttons when the server cannot be reached and records the rating once on retry', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const { userId, studySessionId } = await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await expect(feedback).toContainText('Correct');
+  const good = feedback.getByRole('button', { name: 'Good', exact: true });
+  await expect(good).toBeEnabled();
+  const offline = (route: Route) =>
+    route.request().method() === 'POST' ? route.abort() : route.continue();
+  await page.route('**/app/learn/fr/lesson/fr-a1-001?/rate**', offline);
+  await good.click();
+  await expect(feedback.getByRole('alert')).toContainText(
+    'Could not confirm the server received your rating.'
+  );
+  await expect(good).toBeEnabled();
+  await expect(page.getByText('Page unavailable')).toHaveCount(0);
+  const ratings = () =>
+    withDatabase((client) =>
+      client.execute({
+        sql: 'SELECT grammar_rating FROM attempts WHERE owner_id = ? AND study_session_id = ?',
+        args: [userId, studySessionId]
+      })
+    );
+  expect((await ratings()).rows).toEqual([{ grammar_rating: null }]);
+
+  await page.unroute('**/app/learn/fr/lesson/fr-a1-001?/rate**', offline);
+  await good.click();
+  await expect(
+    page.getByRole('status').filter({ hasText: /^You rated this good\./ })
+  ).toBeVisible();
+  expect((await ratings()).rows).toEqual([{ grammar_rating: 'good' }]);
 });
 
 test('an answer leaves focus on the feedback heading in view', async ({
