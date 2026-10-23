@@ -46,6 +46,22 @@ function isTimestamp(value: unknown): value is number {
   return Number.isSafeInteger(value);
 }
 
+type SegmentBody = {
+  id: string;
+  category: StudyTimeCategory;
+  startedAt: number;
+  endedAt: number;
+};
+
+function isSegmentBody(body: Record<string, unknown>): body is SegmentBody {
+  return [
+    isSegmentId(body.id),
+    isCategory(body.category),
+    isTimestamp(body.startedAt),
+    isTimestamp(body.endedAt)
+  ].every(Boolean);
+}
+
 // Positive, at most a day long, not in the future and not older than a week.
 function isPlausibleSpan(start: number, end: number, now: number): boolean {
   return [
@@ -63,11 +79,10 @@ export async function recordStudyTime(
   body: Record<string, unknown>,
   now = Date.now()
 ): Promise<{ saved: true }> {
+  if (!isSegmentBody(body)) throw new StudyError('INVALID_STUDY_TIME');
   const { id, category, startedAt, endedAt } = body;
-  const invalid = new StudyError('INVALID_STUDY_TIME');
-  if (!isSegmentId(id) || !isCategory(category)) throw invalid;
-  if (!isTimestamp(startedAt) || !isTimestamp(endedAt)) throw invalid;
-  if (!isPlausibleSpan(startedAt, endedAt, now)) throw invalid;
+  if (!isPlausibleSpan(startedAt, endedAt, now))
+    throw new StudyError('INVALID_STUDY_TIME');
   await client.execute({
     sql: `INSERT INTO study_time_segments (id, owner_id, category, started_at, ended_at)
       VALUES (?, ?, ?, ?, ?)`,
