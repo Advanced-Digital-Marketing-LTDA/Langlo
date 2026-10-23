@@ -1,11 +1,17 @@
 import type { Client } from '@libsql/client';
 import type { LearnerSession } from './learner-session';
 import { listEnrollments } from './enrollment';
-import { loadEnrolledCatalog, loadEnrolledMastery } from './mastery';
+import {
+  loadEnrolledCatalog,
+  loadEnrolledMastery,
+  loadEnrolledMasteryWith
+} from './mastery';
 import { recommendTopics } from './recommendations';
 import { StudyError } from './study-error';
 import {
   grammarRetentionFor,
+  grammarRetentionOf,
+  grammarRetentionStatements,
   type GrammarRetention
 } from './grammar-retention';
 
@@ -118,10 +124,15 @@ export async function loadProgress(
   learner: LearnerSession,
   language: string | null = null
 ) {
-  const enrolled = await loadEnrolledMastery(client, learner, language);
-  const tracks: TrackProgress[] = await Promise.all(
-    enrolled.map(async ({ language, level, skills }) => {
-      const retention = await grammarRetentionFor(client, learner, language);
+  const now = Date.now();
+  // The retention reads go in the same batch as the mastery reads.
+  const enrolled = await loadEnrolledMasteryWith(client, learner, language, {
+    statements: (trackLanguage) =>
+      grammarRetentionStatements(learner, trackLanguage),
+    read: (rows) => grammarRetentionOf(rows, now)
+  });
+  const tracks: TrackProgress[] = enrolled.map(
+    ({ language, level, skills, alongside: retention }) => {
       const retained = new Map(
         retention.map((skill) => [skill.skillId, skill.retention])
       );
@@ -141,7 +152,7 @@ export async function loadProgress(
         skills: progressSkills,
         recommendation: recommendTopics(progressSkills)
       };
-    })
+    }
   );
   return { tracks };
 }

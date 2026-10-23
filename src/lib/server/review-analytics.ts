@@ -125,14 +125,21 @@ async function completedReviewCounts(
   return counts;
 }
 
-export async function loadReviewAnalytics(
+export type ReviewCounts = {
+  timezone: string;
+  boundaries: Date[];
+  flashcardsCompleted: number[];
+  grammarCompleted: number[];
+  flashcardsScheduled: number[];
+};
+
+/** The stored review counts the analytics days are built from. */
+export async function loadReviewCounts(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
-  tracks: GrammarTrack[],
-  nowInput: Date | number = Date.now()
-): Promise<ReviewAnalyticsDay[]> {
-  const now = nowInput instanceof Date ? nowInput.getTime() : nowInput;
-  const timezone = (await getTimezone(client, learner)) ?? 'UTC';
+  timezone: string,
+  now: number
+): Promise<ReviewCounts> {
   const boundaries = studyDayBoundaries(new Date(now), timezone);
   const [flashcardsCompleted, grammarCompleted, flashcardsScheduled] =
     await Promise.all([
@@ -154,16 +161,60 @@ export async function loadReviewAnalytics(
       ),
       scheduledFlashcardCounts(client, learner.userId, boundaries)
     ]);
-  const grammarScheduled = scheduledGrammarCounts(tracks, boundaries);
-  const firstCompletedIndex = flashcardsCompleted.findIndex(
-    (count, index) => count > 0 || grammarCompleted[index] > 0
+  return {
+    timezone,
+    boundaries,
+    flashcardsCompleted,
+    grammarCompleted,
+    flashcardsScheduled
+  };
+}
+
+export async function loadReviewAnalytics(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  tracks: GrammarTrack[],
+  nowInput: Date | number = Date.now()
+): Promise<ReviewAnalyticsDay[]> {
+  const now = nowInput instanceof Date ? nowInput.getTime() : nowInput;
+  const timezone = (await getTimezone(client, learner)) ?? 'UTC';
+  return reviewAnalyticsDays(
+    await loadReviewCounts(client, learner, timezone, now),
+    tracks
   );
-  const startIndex =
-    firstCompletedIndex >= 0 ? firstCompletedIndex : todayIndex;
-  let endIndex = todayIndex;
-  for (let index = todayIndex; index < flashcardsScheduled.length; index += 1) {
-    if (flashcardsScheduled[index] || grammarScheduled[index]) endIndex = index;
+}
+
+/** The first day with a completed review, or today when there is none. */
+function firstCompletedDay(flashcards: number[], grammar: number[]) {
+  const first = flashcards.findIndex(
+    (count, index) => count > 0 || grammar[index] > 0
+  );
+  return first >= 0 ? first : todayIndex;
+}
+
+/** The last day with a scheduled review, or today when there is none. */
+function lastScheduledDay(flashcards: number[], grammar: number[]) {
+  let last = todayIndex;
+  for (let index = todayIndex; index < flashcards.length; index += 1) {
+    if (flashcards[index] || grammar[index]) last = index;
   }
+  return last;
+}
+
+/** The analytics days: review history through today, then what is scheduled. */
+export function reviewAnalyticsDays(
+  {
+    timezone,
+    boundaries,
+    flashcardsCompleted,
+    grammarCompleted,
+    flashcardsScheduled
+  }: ReviewCounts,
+  tracks: GrammarTrack[]
+): ReviewAnalyticsDay[] {
+  const grammarScheduled = scheduledGrammarCounts(tracks, boundaries);
+  const startIndex = firstCompletedDay(flashcardsCompleted, grammarCompleted);
+  const endIndex = lastScheduledDay(flashcardsScheduled, grammarScheduled);
 
   return Array.from({ length: endIndex - startIndex + 1 }, (_, offset) => {
     const index = startIndex + offset;

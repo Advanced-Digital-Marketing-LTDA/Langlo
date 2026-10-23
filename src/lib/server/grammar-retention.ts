@@ -1,8 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import type { Client, Row } from '@libsql/client';
+import type { Client, InStatement, Row } from '@libsql/client';
 import {
   getStudySchedule,
   scheduleStudyReview,
+  studyScheduleOf,
+  studyScheduleStatement,
   studyRetrievability,
   type LearnerSession
 } from './flashcards';
@@ -63,11 +65,8 @@ export function aggregateGrammarRatings(
   return result;
 }
 
-async function currentSkills(
-  client: Pick<Client, 'execute'>,
-  language: string
-) {
-  const result = await client.execute({
+function currentSkillsStatement(language: string): InStatement {
+  return {
     sql: `SELECT sk.id AS skill_id, v.id AS content_version_id,
         COALESCE(l.title, sk.id) AS title, v.status AS content_status,
         l.content_version_id IS NOT NULL AS has_lesson,
@@ -84,8 +83,7 @@ async function currentSkills(
       WHERE sk.language = ? AND sk.retired_at IS NULL
       ORDER BY sk.level, sk.id`,
     args: [language]
-  });
-  return result.rows;
+  };
 }
 
 function retentionState(
@@ -156,38 +154,61 @@ function retentionForSkill(
   };
 }
 
-/** Separate recall estimates from grammar mastery; no schedule means not assessed. */
-export async function grammarRetentionFor(
-  client: Pick<Client, 'execute'>,
+type SkillRetention = {
+  skillId: string;
+  title: string;
+  available: boolean;
+  retention: GrammarRetention;
+};
+
+/**
+ * The three reads `grammarRetentionFor` is built from, so a caller can batch
+ * them: the study schedule, the current skills and the stored schedules.
+ */
+export function grammarRetentionStatements(
   learner: LearnerSession,
-  language: string,
-  now = Date.now()
-): Promise<
-  {
-    skillId: string;
-    title: string;
-    available: boolean;
-    retention: GrammarRetention;
-  }[]
-> {
-  const [schedule, skills, stored] = await Promise.all([
-    getStudySchedule(client, learner),
-    currentSkills(client, language),
-    client.execute({
+  language: string
+): InStatement[] {
+  return [
+    studyScheduleStatement(learner.userId),
+    currentSkillsStatement(language),
+    {
       sql: `SELECT g.skill_id, g.content_version_id, g.state_json, g.due_at,
           g.reset_required, g.scheduler_version, g.parameters_json,
           (SELECT MAX(e.reviewed_at) FROM grammar_retention_events e
             WHERE e.owner_id = g.owner_id AND e.language = g.language AND e.skill_id = g.skill_id) AS last_reviewed_at
         FROM grammar_retention_schedules g WHERE g.owner_id = ? AND g.language = ?`,
       args: [learner.userId, language]
-    })
-  ]);
-  const schedules = new Map(
-    stored.rows.map((row) => [String(row.skill_id), row])
-  );
-  const target = schedule.desiredRetention / 100;
+    }
+  ];
+}
+
+export function grammarRetentionOf(
+  [schedule, skills, stored]: Row[][],
+  now: number
+): SkillRetention[] {
+  const schedules = new Map(stored.map((row) => [String(row.skill_id), row]));
+  const target = studyScheduleOf(schedule).desiredRetention / 100;
   return skills.map((skill) =>
     retentionForSkill(skill, schedules.get(String(skill.skill_id)), target, now)
+  );
+}
+
+/** Separate recall estimates from grammar mastery; no schedule means not assessed. */
+export async function grammarRetentionFor(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string,
+  now = Date.now()
+): Promise<SkillRetention[]> {
+  const results = await Promise.all(
+    grammarRetentionStatements(learner, language).map((statement) =>
+      client.execute(statement)
+    )
+  );
+  return grammarRetentionOf(
+    results.map((result) => result.rows),
+    now
   );
 }
 
