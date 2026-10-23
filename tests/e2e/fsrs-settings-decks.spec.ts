@@ -1,4 +1,4 @@
-import { expect } from '@playwright/test';
+import { expect, type BrowserContext } from '@playwright/test';
 import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
@@ -14,6 +14,7 @@ import {
   submitReview
 } from '../../src/lib/server/flashcards';
 import { countDueCards } from '../../src/lib/server/flashcard-views';
+import { studyDayStart } from '../../src/lib/server/study-days';
 import {
   createFixtureDatabase,
   disposeFixtureDatabase,
@@ -74,10 +75,7 @@ test.afterAll(async () => {
   await disposeFixtureDatabase(fixtureRoot, dbFile);
 });
 
-test('saves and previews FSRS settings, searches all note statuses, moves notes and suspends cards', async ({
-  context,
-  page
-}) => {
+async function signIn(context: BrowserContext) {
   await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
   const login = await context.request.post(`${base}/login`, {
     form: { email: 'rita@example.test', password },
@@ -88,7 +86,14 @@ test('saves and previews FSRS settings, searches all note statuses, moves notes 
   const session = await (
     await context.request.get(`${base}/api/auth/get-session`)
   ).json();
-  const learner = { userId: String(session.user.id) };
+  return { userId: String(session.user.id) };
+}
+
+test('saves FSRS settings, searches all note statuses, moves notes and suspends cards', async ({
+  context,
+  page
+}) => {
+  const learner = await signIn(context);
   const client = createClient({ url: `file://${dbFile}` });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
@@ -140,13 +145,7 @@ test('saves and previews FSRS settings, searches all note statuses, moves notes 
     await expect(retention).toHaveValue('96');
     await page.locator('select[name="newCardPreset"]').selectOption('30m');
     await page.locator('select[name="relearningPreset"]').selectOption('1h');
-    await page.getByRole('button', { name: 'Preview' }).click();
-    await expect(
-      page.getByRole('heading', { name: 'Seven-day preview' })
-    ).toBeVisible();
-    await expect(
-      page.getByText(/assumes Good on every simulated review/u)
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Preview' })).toHaveCount(0);
     expect(
       (
         await client.execute(
@@ -216,6 +215,84 @@ test('saves and previews FSRS settings, searches all note statuses, moves notes 
       suspendNote.getByRole('button', { name: 'Suspend' })
     ).toBeVisible();
     expect(await countDueCards(client, learner)).toBe(1);
+  } finally {
+    client.close();
+  }
+});
+
+async function reviewOneCard(
+  client: ReturnType<typeof createClient>,
+  learner: { userId: string }
+) {
+  await createDeck(client, learner, {
+    id: 'deck-analytics',
+    name: 'Analytics deck'
+  });
+  await createNote(client, learner, {
+    id: 'note-analytics',
+    sourceId: `langlo:v1:${'5'.repeat(64)}`,
+    deckId: 'deck-analytics',
+    kind: 'basic',
+    content: { front: 'analytics front', back: 'Analytics back' }
+  });
+  await approveNote(client, learner, 'note-analytics');
+  await submitReview(client, learner, {
+    cardId: 'card:note-analytics',
+    submissionId: '10000000-0000-4000-8000-000000000005',
+    expectedRevision: 0,
+    rating: 'good'
+  });
+}
+
+test('shows actual completed reviews on Analytics and keeps them off Home', async ({
+  context,
+  page
+}) => {
+  const learner = await signIn(context);
+  const client = createClient({ url: `file://${dbFile}` });
+  try {
+    await client.execute('PRAGMA foreign_keys = ON');
+    await reviewOneCard(client, learner);
+
+    await page.goto(`${base}/app`);
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Study navigation' })
+        .getByRole('link', { name: 'Analytics' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('table', { name: 'Review history and scheduled reviews' })
+    ).toHaveCount(0);
+
+    await page.goto(`${base}/app/analytics`);
+    await expect(
+      page.getByRole('heading', { name: 'Review analytics' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('img', {
+        name: 'Actual completed reviews and currently scheduled reviews by study day'
+      })
+    ).toBeVisible();
+    // Every review the learner completed in the UTC study day (from 04:00) of this card's review.
+    const reviewed = await client.execute(
+      'SELECT reviewed_at FROM native_flashcard_review_events WHERE card_id = ?',
+      ['card:note-analytics']
+    );
+    const reviewedAt = new Date(Number(reviewed.rows[0].reviewed_at));
+    const dayStart = studyDayStart(reviewedAt, 'UTC');
+    const completed = await client.execute(
+      'SELECT count(*) AS total FROM native_flashcard_review_events WHERE owner_id = ? AND reviewed_at >= ? AND reviewed_at < ?',
+      [
+        learner.userId,
+        dayStart.getTime(),
+        studyDayStart(reviewedAt, 'UTC', 1).getTime()
+      ]
+    );
+    const day = dayStart.toISOString().slice(0, 10);
+    const reviewRow = page.getByRole('row', { name: new RegExp(day) });
+    await expect(reviewRow.locator('td').nth(0)).toHaveText(
+      String(completed.rows[0].total)
+    );
   } finally {
     client.close();
   }

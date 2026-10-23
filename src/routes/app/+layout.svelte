@@ -12,6 +12,7 @@
     { href: '/app/assessment', label: 'Assessment' },
     { href: '/app/review', label: 'Review' },
     { href: '/app/decks', label: 'Decks' },
+    { href: '/app/analytics', label: 'Analytics' },
     { href: '/app/settings', label: 'Settings' },
     { href: '/app/reports', label: 'Reports' }
   ] as const;

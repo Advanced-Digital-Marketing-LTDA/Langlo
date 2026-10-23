@@ -90,3 +90,52 @@ investigated or changed in this task.
 
 Hosted PR checks and release acceptance are tracked separately from these local
 results. No production database or live provider was used.
+
+## Analytics history and schedule extension — 2026-10-22
+
+This follow-up replaces the seven-day dashboard placement described above.
+Review analytics now lives at `/app/analytics`; the Home page no longer renders
+the review table. The SVG line graph and retained table show four distinct
+series: completed flashcard reviews, completed grammar reviews, currently
+scheduled flashcards, and currently scheduled grammar reviews.
+
+Completed counts come from the learner's persisted review events, from 365
+study days ago through today. Scheduled counts use only current saved due dates.
+Overdue work is grouped into today, and future rows end on the farthest eligible
+due day, capped at 365 study days ahead. The saved 04:00 timezone boundary is
+used for both the date range and grouping. Historical scheduled cells and future
+completion cells are left blank because those values are not current facts.
+
+The Settings page retains the schedule and timezone controls. Its simulated
+Good-rating preview action and table were removed, along with the simulator
+helper, so no future ratings or repeated reviews are generated. No schema,
+migration, dependency, or schedule-write behavior changed.
+
+### Analytics test-first evidence
+
+Before implementation, the focused test run failed as expected: **4 failed, 19
+passed**. Failures were the missing Analytics route/helper and Analytics tab.
+After implementation, the focused route, rendering, timezone, learner-journey,
+and flashcard suites passed: **5 files, 98 tests**.
+
+### Analytics local validation
+
+Runtime: Node `24.19.0`, npm `11.9.0`. The dependency install used
+`npm ci --ignore-scripts`; it did not change `package-lock.json` or add a
+dependency.
+
+- `npm run check` — passed; 0 errors and 0 warnings.
+- `npm run lint` — passed.
+- `npm run format:check` — passed.
+- `npm test` — passed; 106 files and 1,851 tests.
+- `npm run test:property` — passed; 6 files and 9 tests.
+- `npm run build` — passed.
+- `npm run test:e2e` — passed; 142 desktop and mobile tests against the built
+  Node server with synthetic fixtures. The Analytics graph/table, navigation,
+  Settings controls, and saved schedule were verified in both device projects.
+- `git diff --check` — passed.
+
+The clean install reported four moderate npm audit findings. They were not
+investigated or changed in this task. Hosted review and release acceptance
+remain separate; nothing was pushed, and no production database or live
+provider was used.

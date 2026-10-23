@@ -3,17 +3,21 @@ import { getTimezone } from './preferences';
 import type { LearnerSession } from './learner-session';
 import { studyDayStart } from './study-days';
 
-export type ReviewDueDay = {
+export type ReviewAnalyticsDay = {
   date: string;
-  grammar: number;
-  flashcards: number;
-  total: number;
+  flashcardsCompleted: number | null;
+  grammarCompleted: number | null;
+  flashcardsScheduled: number | null;
+  grammarScheduled: number | null;
 };
 
-type DueCounts = Pick<ReviewDueDay, 'grammar' | 'flashcards'>;
 type GrammarTrack = {
   skills: { available: boolean; retention: { dueAt: number | null } }[];
 };
+
+const firstDayOffset = -365;
+const todayIndex = 365;
+const endOffset = 366;
 
 function localDate(date: Date, timezone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -29,97 +33,140 @@ function localDate(date: Date, timezone: string): string {
 }
 
 function dayIndex(timestamp: number, boundaries: Date[]): number {
-  return boundaries
-    .slice(1)
-    .findIndex((boundary) => timestamp < boundary.getTime());
+  if (
+    timestamp < boundaries[0].getTime() ||
+    timestamp >= boundaries.at(-1)!.getTime()
+  )
+    return -1;
+  let low = 1;
+  let high = boundaries.length - 1;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    if (timestamp < boundaries[middle].getTime()) high = middle;
+    else low = middle + 1;
+  }
+  return low - 1;
 }
 
 function studyDayBoundaries(now: Date, timezone: string): Date[] {
-  return Array.from({ length: 8 }, (_, index) =>
-    studyDayStart(now, timezone, index)
+  return Array.from({ length: endOffset - firstDayOffset + 1 }, (_, index) =>
+    studyDayStart(now, timezone, index + firstDayOffset)
   );
 }
 
-function grammarDueCounts(
+function scheduledGrammarCounts(
   tracks: GrammarTrack[],
   boundaries: Date[]
-): DueCounts[] {
-  const counts = Array.from({ length: 7 }, () => ({
-    grammar: 0,
-    flashcards: 0
-  }));
+): number[] {
+  const counts = Array.from({ length: boundaries.length - 1 }, () => 0);
+  const today = boundaries[todayIndex].getTime();
   for (const track of tracks) {
     for (const skill of track.skills) {
       if (!skill.available) continue;
       const dueAt = skill.retention.dueAt;
-      if (dueAt === null) continue;
-      if (!Number.isFinite(dueAt)) continue;
-      const index = dayIndex(dueAt, boundaries);
-      if (index >= 0) counts[index].grammar += 1;
+      if (dueAt === null || !Number.isFinite(dueAt)) continue;
+      const index = dueAt < today ? todayIndex : dayIndex(dueAt, boundaries);
+      if (index >= todayIndex) counts[index] += 1;
     }
   }
   return counts;
 }
 
-function flashcardDueSql(boundaries: Date[]): string {
-  const cases = boundaries
-    .slice(1)
-    .map((_, index) => `WHEN c.due_at < ? THEN ${index}`)
-    .join(' ');
-  return `SELECT CASE ${cases} ELSE NULL END AS day, count(*) AS total
-    FROM native_flashcards c
-    JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
-    WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at < ?
-    GROUP BY day`;
-}
-
-async function flashcardDueCounts(
+async function scheduledFlashcardCounts(
   client: Pick<Client, 'execute'>,
   userId: string,
   boundaries: Date[]
 ): Promise<number[]> {
+  const thresholds = boundaries.slice(todayIndex + 1);
+  const cases = thresholds
+    .map((_, index) => `WHEN c.due_at < ? THEN ${todayIndex + index}`)
+    .join(' ');
   const dueCards = await client.execute({
-    sql: flashcardDueSql(boundaries),
+    sql: `SELECT CASE ${cases} ELSE NULL END AS day, count(*) AS total
+      FROM native_flashcards c
+      JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
+      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at < ?
+      GROUP BY day`,
     args: [
-      ...boundaries.slice(1).map((boundary) => boundary.getTime()),
+      ...thresholds.map((boundary) => boundary.getTime()),
       userId,
-      boundaries[7].getTime()
+      boundaries.at(-1)!.getTime()
     ]
   });
-  const counts = Array.from({ length: 7 }, () => 0);
+  const counts = Array.from({ length: boundaries.length - 1 }, () => 0);
   for (const row of dueCards.rows) {
+    if (row.day === null) continue;
     const index = Number(row.day);
-    if (index >= 0 && index < counts.length) counts[index] = Number(row.total);
+    if (index >= todayIndex && index < counts.length)
+      counts[index] = Number(row.total);
   }
   return counts;
 }
 
-function reviewDueDays(
-  counts: DueCounts[],
-  boundaries: Date[],
-  timezone: string
-): ReviewDueDay[] {
-  return counts.map((count, index) => ({
-    date: localDate(boundaries[index], timezone),
-    ...count,
-    total: count.grammar + count.flashcards
-  }));
+async function completedReviewCounts(
+  client: Pick<Client, 'execute'>,
+  table: 'native_flashcard_review_events' | 'grammar_retention_events',
+  userId: string,
+  start: number,
+  now: number,
+  boundaries: Date[]
+): Promise<number[]> {
+  const events = await client.execute({
+    sql: `SELECT reviewed_at, count(*) AS total FROM ${table}
+      WHERE owner_id = ? AND reviewed_at >= ? AND reviewed_at <= ?
+      GROUP BY reviewed_at`,
+    args: [userId, start, now]
+  });
+  const counts = Array.from({ length: boundaries.length - 1 }, () => 0);
+  for (const row of events.rows) {
+    const index = dayIndex(Number(row.reviewed_at), boundaries);
+    if (index >= 0 && index <= todayIndex) counts[index] += Number(row.total);
+  }
+  return counts;
 }
 
-export async function loadReviewDueByDay(
+export async function loadReviewAnalytics(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
   tracks: GrammarTrack[],
-  now = new Date()
-): Promise<ReviewDueDay[]> {
+  nowInput: Date | number = Date.now()
+): Promise<ReviewAnalyticsDay[]> {
+  const now = nowInput instanceof Date ? nowInput.getTime() : nowInput;
   const timezone = (await getTimezone(client, learner)) ?? 'UTC';
-  const boundaries = studyDayBoundaries(now, timezone);
-  const counts = grammarDueCounts(tracks, boundaries);
-  const flashcards = await flashcardDueCounts(
-    client,
-    learner.userId,
-    boundaries
-  );
-  counts.forEach((count, index) => (count.flashcards = flashcards[index]));
-  return reviewDueDays(counts, boundaries, timezone);
+  const boundaries = studyDayBoundaries(new Date(now), timezone);
+  const [flashcardsCompleted, grammarCompleted, flashcardsScheduled] =
+    await Promise.all([
+      completedReviewCounts(
+        client,
+        'native_flashcard_review_events',
+        learner.userId,
+        boundaries[0].getTime(),
+        now,
+        boundaries
+      ),
+      completedReviewCounts(
+        client,
+        'grammar_retention_events',
+        learner.userId,
+        boundaries[0].getTime(),
+        now,
+        boundaries
+      ),
+      scheduledFlashcardCounts(client, learner.userId, boundaries)
+    ]);
+  const grammarScheduled = scheduledGrammarCounts(tracks, boundaries);
+  let endIndex = todayIndex;
+  for (let index = todayIndex; index < flashcardsScheduled.length; index += 1) {
+    if (flashcardsScheduled[index] || grammarScheduled[index]) endIndex = index;
+  }
+
+  return Array.from({ length: endIndex + 1 }, (_, index) => ({
+    date: localDate(boundaries[index], timezone),
+    flashcardsCompleted:
+      index <= todayIndex ? flashcardsCompleted[index] : null,
+    grammarCompleted: index <= todayIndex ? grammarCompleted[index] : null,
+    flashcardsScheduled:
+      index >= todayIndex ? flashcardsScheduled[index] : null,
+    grammarScheduled: index >= todayIndex ? grammarScheduled[index] : null
+  }));
 }
