@@ -143,3 +143,27 @@ it('rejects malformed study time without saving it', async () => {
     client.close();
   }
 });
+
+it('accepts a segment ending up to a minute after the server clock and rejects one later', async () => {
+  const client = await studyClient('UTC');
+  try {
+    await expect(
+      recordStudyTime(
+        client,
+        learner,
+        segment('a', 'grammar', now - minute, now + minute),
+        now
+      )
+    ).resolves.toEqual({ saved: true });
+    await expect(
+      recordStudyTime(
+        client,
+        learner,
+        segment('b', 'grammar', now - minute, now + minute + 1),
+        now
+      )
+    ).rejects.toEqual(new StudyError('INVALID_STUDY_TIME'));
+  } finally {
+    client.close();
+  }
+});

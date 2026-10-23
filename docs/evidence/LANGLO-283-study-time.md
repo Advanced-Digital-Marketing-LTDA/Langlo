@@ -19,9 +19,10 @@ assessments). Within one page load, gaps of up to a minute between actions
 count. A longer gap stops the timer at the last action, the pause counts as 0,
 and the next action starts a new segment. Hiding the tab, leaving or reloading
 the page ends the segment. Each segment is saved once to
-`POST /app/api/study-time` for the signed-in learner; malformed, future, longer
-than 24 hours or older than 7 days segments are rejected with 400 and not
-stored.
+`POST /app/api/study-time` for the signed-in learner. Malformed segments, and
+segments ending more than 60 seconds after the server clock (browser clocks can
+run slightly ahead), longer than 24 hours or starting more than 7 days ago, are
+rejected with 400 and not stored. Andrew approved these three limits.
 
 ## Data
 
@@ -32,7 +33,7 @@ No earlier migration, snapshot or journal entry changed.
 ## Checks run
 
 - New tests: `tests/study-timer.test.ts`, `tests/study-time.test.ts`,
-  `tests/study-time-render.test.ts` (11 passed). They cover the 60-second idle
+  `tests/study-time-render.test.ts` (12 passed). They cover the 60-second idle
   stop, hidden tab and page exit, the 04:00 boundary split, timezone and UTC
   default, owner isolation, validation and "No Data" rendering.
 - Owner-approved test additions: migration `0035_dapper_nehzno` was appended
@@ -41,7 +42,7 @@ No earlier migration, snapshot or journal entry changed.
   legacy-upgrade exclusion list, and `studyTime: []` was added to the page data
   in `tests/review-analytics-render.test.ts`. The expected migration lists and
   the exclusion list were extended for 0035; no check was removed. These
-  suites and the new ones pass (44 tests).
+  suites and the new ones pass (45 tests).
 - The existing analytics loader cases in `tests/learner-journeys.test.ts`
   (unchanged) pass against a fully migrated database.
 - Type check, lint and formatting pass on the changed files.
