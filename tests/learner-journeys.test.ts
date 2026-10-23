@@ -1656,8 +1656,24 @@ describe('grammar practice rating and review actions', () => {
         event({ params: { ...params, skill: 'fr-a1-002' }, fields })
       )
     ).toMatchObject({ status: 404 });
+    // The rating result now also carries the next exercise (q2 was
+    // answered, so q1), which lets the page move on without a reload.
     expect(await lessonActions.rate(event({ params, fields }))).toEqual({
-      rated: true
+      rated: true,
+      rating: 'good',
+      exercise: {
+        studySessionId: session.id,
+        submissionKey: expect.any(String),
+        notice: null,
+        question: {
+          id: 'fr-a1-001@1:q1',
+          format: 'multiple-choice',
+          prompt: 'Je ___ étudiant.',
+          alternatives: ['suis', 'es', 'est']
+        },
+        answered: 1,
+        total: 2
+      }
     });
     expect(
       await lessonActions.rate(

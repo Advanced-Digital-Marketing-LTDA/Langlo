@@ -13,7 +13,11 @@ import {
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
 import { beginWrite, executeWrite, type LearnerSession } from './flashcards';
-import { syncEvidenceLedger } from './mastery';
+import {
+  seedLineageKeys,
+  syncEvidenceLedger,
+  syncLineageEvidence
+} from './mastery';
 import {
   commitGrammarSessionReviews,
   GRAMMAR_RETENTION_POLICY_VERSION,
@@ -792,10 +796,11 @@ async function grammarAttemptRows(
     sql: `SELECT a.id AS attempt_id, a.owner_id, a.study_session_id,
           a.skill_id, a.language, a.question_id, a.content_version_id,
           a.evidence_kind, a.received_help, a.not_sure, a.grammar_rating,
-          s.mode, s.state, s.grammar_retention_policy_version, v.status,
+          s.mode, s.state, s.grammar_retention_policy_version, v.status, aq.lineage_key,
           e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
         FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
         JOIN content_versions v ON v.id = a.content_version_id
+        LEFT JOIN questions aq ON aq.id = a.question_id
         LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
         WHERE a.id = ? AND a.owner_id = ? ORDER BY e.created_at, e.id`,
     args: [attemptId, learner.userId]
@@ -825,6 +830,18 @@ function hasCorrectGrammarEvaluation(rows: Row[]) {
     feedbackEvaluation(rows, String(rows[0].content_version_id))?.outcome ===
     'correct'
   );
+}
+
+/** A lesson page rates only its own skill's practice answers. */
+function assertLessonPractice(
+  rows: Row[],
+  expectedSessionId: string,
+  skillId: string | undefined
+) {
+  if (skillId === undefined) return;
+  const row = ownGrammarAttempt(rows, expectedSessionId);
+  if (row.skill_id !== skillId) throw new StudyError('NOT_FOUND');
+  if (row.mode === 'assessment') throw new StudyError('NOT_FOUND');
 }
 
 function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
@@ -892,14 +909,20 @@ async function finalizeAssessment(
 export async function rateGrammarAttempt(
   client: Client,
   learner: LearnerSession,
-  input: { attemptId: string; rating: GrammarRating; expectedSessionId: string }
+  input: {
+    attemptId: string;
+    rating: GrammarRating;
+    expectedSessionId: string;
+    practiceSkillId?: string;
+  }
 ) {
-  const { attemptId, rating, expectedSessionId } = input;
+  const { attemptId, rating, expectedSessionId, practiceSkillId } = input;
   if (!['hard', 'good', 'easy'].includes(rating))
     throw new StudyError('INVALID_GRAMMAR_RATING');
   const tx = await beginWrite(client);
   try {
     const rows = await grammarAttemptRows(tx, learner, attemptId);
+    assertLessonPractice(rows, expectedSessionId, practiceSkillId);
     const row = assertRateableAttempt(rows, expectedSessionId);
     const duplicate = await persistAttemptRating(tx, learner, row, rating);
     if (duplicate) {
@@ -911,11 +934,12 @@ export async function rateGrammarAttempt(
       await tx.commit();
       return { duplicate: false, completed };
     }
-    await syncEvidenceLedger(tx, {
-      ownerId: learner.userId,
-      language: String(row.language),
-      attemptIds: [attemptId]
-    });
+    // The attempt rows were just read, so its lineages need no second read.
+    await syncLineageEvidence(
+      tx,
+      { ownerId: learner.userId, language: String(row.language) },
+      seedLineageKeys(rows)
+    );
     await tx.commit();
     return { duplicate: false, completed: false };
   } catch (error) {
