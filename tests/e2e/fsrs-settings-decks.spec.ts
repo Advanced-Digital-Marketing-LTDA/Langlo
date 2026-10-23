@@ -14,6 +14,7 @@ import {
   submitReview
 } from '../../src/lib/server/flashcards';
 import { countDueCards } from '../../src/lib/server/flashcard-views';
+import { studyDayStart } from '../../src/lib/server/study-days';
 import {
   createFixtureDatabase,
   disposeFixtureDatabase,
@@ -272,20 +273,26 @@ test('shows actual completed reviews on Analytics and keeps them off Home', asyn
         name: 'Actual completed reviews and currently scheduled reviews by study day'
       })
     ).toBeVisible();
-    // Every review the learner completed on the UTC study day of this card's review.
-    const completed = await client.execute(
-      `SELECT date(reviewed_at / 1000, 'unixepoch') AS day, count(*) AS total
-        FROM native_flashcard_review_events
-        WHERE owner_id = ? AND date(reviewed_at / 1000, 'unixepoch') = (
-          SELECT date(reviewed_at / 1000, 'unixepoch')
-          FROM native_flashcard_review_events WHERE card_id = ?
-        )
-        GROUP BY day`,
-      [learner.userId, 'card:note-analytics']
+    // Every review the learner completed in the UTC study day (from 04:00) of this card's review.
+    const reviewed = await client.execute(
+      'SELECT reviewed_at FROM native_flashcard_review_events WHERE card_id = ?',
+      ['card:note-analytics']
     );
-    const { day, total } = completed.rows[0];
-    const reviewRow = page.getByRole('row', { name: new RegExp(String(day)) });
-    await expect(reviewRow.locator('td').nth(0)).toHaveText(String(total));
+    const reviewedAt = new Date(Number(reviewed.rows[0].reviewed_at));
+    const dayStart = studyDayStart(reviewedAt, 'UTC');
+    const completed = await client.execute(
+      'SELECT count(*) AS total FROM native_flashcard_review_events WHERE owner_id = ? AND reviewed_at >= ? AND reviewed_at < ?',
+      [
+        learner.userId,
+        dayStart.getTime(),
+        studyDayStart(reviewedAt, 'UTC', 1).getTime()
+      ]
+    );
+    const day = dayStart.toISOString().slice(0, 10);
+    const reviewRow = page.getByRole('row', { name: new RegExp(day) });
+    await expect(reviewRow.locator('td').nth(0)).toHaveText(
+      String(completed.rows[0].total)
+    );
   } finally {
     client.close();
   }
