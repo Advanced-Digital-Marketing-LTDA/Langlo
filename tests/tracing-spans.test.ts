@@ -112,6 +112,9 @@ it('computeMastery traces read phases while answer creation traces ledger sync',
   const everyone = await loadEvidenceRows(client, { language: 'fr' });
   expect(stored.length).toBeGreaterThan(0);
   expect(everyone.length).toBeGreaterThan(stored.length);
+  // One track: the five mastery reads (catalog, prerequisites, answer history,
+  // current questions, retired skills) and the three retention reads (study
+  // schedule, current skills, stored schedules) in the one batch.
   expect(recorded.find((entry) => entry.name === 'mastery.reads')?.set).toEqual(
     { statements: 8, rows: stored.length }
   );
