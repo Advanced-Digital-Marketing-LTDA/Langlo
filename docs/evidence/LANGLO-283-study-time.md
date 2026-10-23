@@ -39,10 +39,11 @@ No earlier migration, snapshot or journal entry changed.
   to the pending-migration lists in `tests/db-migrations.test.ts` and
   `tests/portuguese-migration.test.ts`, its index names were added to the
   legacy-upgrade exclusion list, and `studyTime: []` was added to the page data
-  in `tests/review-analytics-render.test.ts`. No assertions changed. These
+  in `tests/review-analytics-render.test.ts`. The expected migration lists and
+  the exclusion list were extended for 0035; no check was removed. These
   suites and the new ones pass (44 tests).
-- The analytics loader journeys in `tests/learner-journeys.test.ts` pass
-  against a fully migrated database.
+- The existing analytics loader cases in `tests/learner-journeys.test.ts`
+  (unchanged) pass against a fully migrated database.
 - Type check, lint and formatting pass on the changed files.
 - The full suite was not run locally; CI runs it.
 

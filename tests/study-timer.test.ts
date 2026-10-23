@@ -62,7 +62,7 @@ it('ends the segment at the last action when the page is left after a long pause
   ]);
 });
 
-it('stops while the tab is hidden and starts a new segment when it is visible again', () => {
+it('ends the running segment on stop, ignores a repeated stop, and starts a new segment on the next activity', () => {
   const { timer: clock, sent } = timer();
   clock.activity(0);
   clock.stop(10_000);
