@@ -102,12 +102,9 @@ it('computeMastery traces read phases while answer creation traces ledger sync',
   expect(skills.find((skill) => skill.skillId === 'fr-a1-001')).toMatchObject({
     correct: 1
   });
-  expect(recorded.map((entry) => entry.name)).toEqual([
-    'mastery.catalog',
-    'mastery.prerequisites',
-    'mastery.load-evidence',
-    'mastery.current-content'
-  ]);
+  // The catalog, prerequisites, answer history and current content are read
+  // in one batch, with the retention reads.
+  expect(recorded.map((entry) => entry.name)).toEqual(['mastery.reads']);
   const stored = await loadEvidenceRows(client, {
     ownerId: learner.userId,
     language: 'fr'
@@ -115,9 +112,9 @@ it('computeMastery traces read phases while answer creation traces ledger sync',
   const everyone = await loadEvidenceRows(client, { language: 'fr' });
   expect(stored.length).toBeGreaterThan(0);
   expect(everyone.length).toBeGreaterThan(stored.length);
-  expect(
-    recorded.find((entry) => entry.name === 'mastery.load-evidence')?.set
-  ).toEqual({ rows: stored.length });
+  expect(recorded.find((entry) => entry.name === 'mastery.reads')?.set).toEqual(
+    { statements: 8, rows: stored.length }
+  );
   recorded.length = 0;
   await recordAttempt(client, learner, {
     studySessionId: 'study-a',

@@ -125,14 +125,21 @@ async function completedReviewCounts(
   return counts;
 }
 
-export async function loadReviewAnalytics(
+export type ReviewCounts = {
+  timezone: string;
+  boundaries: Date[];
+  flashcardsCompleted: number[];
+  grammarCompleted: number[];
+  flashcardsScheduled: number[];
+};
+
+/** The stored review counts the analytics days are built from. */
+export async function loadReviewCounts(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
-  tracks: GrammarTrack[],
-  nowInput: Date | number = Date.now()
-): Promise<ReviewAnalyticsDay[]> {
-  const now = nowInput instanceof Date ? nowInput.getTime() : nowInput;
-  const timezone = (await getTimezone(client, learner)) ?? 'UTC';
+  timezone: string,
+  now: number
+): Promise<ReviewCounts> {
   const boundaries = studyDayBoundaries(new Date(now), timezone);
   const [flashcardsCompleted, grammarCompleted, flashcardsScheduled] =
     await Promise.all([
@@ -154,6 +161,40 @@ export async function loadReviewAnalytics(
       ),
       scheduledFlashcardCounts(client, learner.userId, boundaries)
     ]);
+  return {
+    timezone,
+    boundaries,
+    flashcardsCompleted,
+    grammarCompleted,
+    flashcardsScheduled
+  };
+}
+
+export async function loadReviewAnalytics(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  tracks: GrammarTrack[],
+  nowInput: Date | number = Date.now()
+): Promise<ReviewAnalyticsDay[]> {
+  const now = nowInput instanceof Date ? nowInput.getTime() : nowInput;
+  const timezone = (await getTimezone(client, learner)) ?? 'UTC';
+  return reviewAnalyticsDays(
+    await loadReviewCounts(client, learner, timezone, now),
+    tracks
+  );
+}
+
+/** The analytics days: review history through today, then what is scheduled. */
+export function reviewAnalyticsDays(
+  {
+    timezone,
+    boundaries,
+    flashcardsCompleted,
+    grammarCompleted,
+    flashcardsScheduled
+  }: ReviewCounts,
+  tracks: GrammarTrack[]
+): ReviewAnalyticsDay[] {
   const grammarScheduled = scheduledGrammarCounts(tracks, boundaries);
   const firstCompletedIndex = flashcardsCompleted.findIndex(
     (count, index) => count > 0 || grammarCompleted[index] > 0

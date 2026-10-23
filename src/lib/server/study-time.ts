@@ -1,4 +1,4 @@
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import { getTimezone } from './preferences';
 import type { LearnerSession } from './learner-session';
 import { StudyError } from './study-error';
@@ -134,22 +134,49 @@ export async function loadStudyTime(
 ): Promise<StudyTimeDay[]> {
   const now = nowInput instanceof Date ? nowInput.getTime() : nowInput;
   const timezone = (await getTimezone(client, learner)) ?? 'UTC';
+  return studyTimeDays(
+    await loadStudySegments(client, learner, timezone, now),
+    firstDate
+  );
+}
+
+export type StudySegments = {
+  timezone: string;
+  now: number;
+  boundaries: number[];
+  rows: Row[];
+};
+
+/** The stored study-time segments that overlap the last 365 study days. */
+export async function loadStudySegments(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  timezone: string,
+  now: number
+): Promise<StudySegments> {
   const boundaries = Array.from({ length: todayIndex + 2 }, (_, index) =>
     studyDayStart(new Date(now), timezone, index + firstDayOffset).getTime()
   );
-  const rangeStart = boundaries[0];
   const segments = await client.execute({
     sql: `SELECT category, started_at, ended_at FROM study_time_segments
       WHERE owner_id = ? AND started_at < ? AND ended_at > ?`,
-    args: [learner.userId, now, rangeStart]
+    args: [learner.userId, now, boundaries[0]]
   });
+  return { timezone, now, boundaries, rows: segments.rows };
+}
+
+export function studyTimeDays(
+  { timezone, now, boundaries, rows }: StudySegments,
+  firstDate: string
+): StudyTimeDay[] {
+  const rangeStart = boundaries[0];
   const seconds = {
     flashcards: Array.from({ length: todayIndex + 1 }, () => 0),
     grammar: Array.from({ length: todayIndex + 1 }, () => 0)
   };
   const recorded = Array.from({ length: todayIndex + 1 }, () => false);
   for (const category of categories) {
-    const spans = segments.rows
+    const spans = rows
       .filter((row) => row.category === category)
       .map((row) => ({
         start: Math.max(Number(row.started_at), rangeStart),

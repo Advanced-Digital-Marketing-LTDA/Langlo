@@ -19,16 +19,18 @@ export const load: PageServerLoad = async (event) => {
     event.locals.config?.dataEnabled && event.locals.config.databaseUrl
       ? await studyPage(event, async (client, learner) => {
           const loaded = await loadProgress(client, learner);
+          // Each track's check is independent, so they run at once.
+          const found = await Promise.all(
+            loaded.tracks.map((track) =>
+              unfinishedPractice(client, learner, track.language)
+            )
+          );
           const unfinished: Record<string, { id: string; answered: number }> =
             {};
-          for (const track of loaded.tracks) {
-            const found = await unfinishedPractice(
-              client,
-              learner,
-              track.language
-            );
-            if (found) unfinished[track.language] = found;
-          }
+          loaded.tracks.forEach((track, index) => {
+            const practice = found[index];
+            if (practice) unfinished[track.language] = practice;
+          });
           return { ...loaded, unfinished };
         })
       : {
