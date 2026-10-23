@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Client, Row } from '@libsql/client';
+import type { Client, InStatement, Row, Transaction } from '@libsql/client';
 import { beginRead, type LearnerSession } from './flashcards';
 import { feedbackEvaluation } from './assessment';
 import { StudyError } from './study-error';
@@ -176,19 +176,26 @@ export function qualifyingGrammarEvidence(
  * The lineage keys each skill's current version holds (its newest version that
  * is not quarantined), and which retired skills carry their answers over.
  */
-export async function currentContent(
-  tx: Pick<Client, 'execute'>,
-  language: string
-): Promise<CurrentContent> {
-  const questions = await tx.execute({
-    sql: `SELECT q.skill_id, q.id, q.content_version_id, q.lineage_key
+/** The two reads `currentContent` is built from, so a caller can batch them. */
+function currentContentStatements(language: string): InStatement[] {
+  return [
+    {
+      sql: `SELECT q.skill_id, q.id, q.content_version_id, q.lineage_key
       FROM questions q JOIN content_versions v ON v.id = q.content_version_id
       WHERE q.language = ? AND v.status <> 'quarantined'
         AND v.version = (SELECT MAX(v2.version) FROM content_versions v2 WHERE v2.skill_id = q.skill_id AND v2.status <> 'quarantined')`,
-    args: [language]
-  });
+      args: [language]
+    },
+    {
+      sql: 'SELECT id, replaced_by FROM skills WHERE language = ? AND retired_at IS NOT NULL AND carry_progress = 1 AND replaced_by IS NOT NULL',
+      args: [language]
+    }
+  ];
+}
+
+function currentContentOf(questions: Row[], retired: Row[]): CurrentContent {
   const keys = new Map<string, Set<string>>();
-  for (const row of questions.rows) {
+  for (const row of questions) {
     const skill = String(row.skill_id);
     const set = keys.get(skill) ?? new Set<string>();
     set.add(
@@ -200,16 +207,21 @@ export async function currentContent(
     );
     keys.set(skill, set);
   }
-  const retired = await tx.execute({
-    sql: 'SELECT id, replaced_by FROM skills WHERE language = ? AND retired_at IS NOT NULL AND carry_progress = 1 AND replaced_by IS NOT NULL',
-    args: [language]
-  });
   return {
     keys,
-    carry: new Map(
-      retired.rows.map((r) => [String(r.id), String(r.replaced_by)])
-    )
+    carry: new Map(retired.map((r) => [String(r.id), String(r.replaced_by)]))
   };
+}
+
+export async function currentContent(
+  tx: Pick<Client, 'execute'>,
+  language: string
+): Promise<CurrentContent> {
+  const [questions, retired] = currentContentStatements(language);
+  return currentContentOf(
+    (await tx.execute(questions)).rows,
+    (await tx.execute(retired)).rows
+  );
 }
 
 type EvidenceFilter = {
@@ -257,14 +269,9 @@ function evidenceWhere(filter: EvidenceFilter) {
 }
 
 /** The stored attempts and evaluations the evidence rules read, oldest first. */
-export async function loadEvidenceRows(
-  tx: Pick<Client, 'execute'>,
-  filter: EvidenceFilter
-) {
-  if (filter.attemptIds?.length === 0 || filter.lineageKeys?.length === 0)
-    return [];
+function evidenceRowsStatement(filter: EvidenceFilter): InStatement {
   const { where, args } = evidenceWhere(filter);
-  const result = await tx.execute({
+  return {
     sql: `SELECT a.id AS attempt_id, a.owner_id, a.rowid AS sequence, a.created_at, a.question_id, a.content_version_id, a.skill_id, a.study_session_id, a.evidence_kind, a.not_sure, a.grammar_rating,
         s.mode, s.state, s.grammar_retention_policy_version, v.status, aq.lineage_key, e.id AS evaluation_id, e.evaluator_version, e.rubric_version, e.outcome
         FROM attempts a JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
@@ -273,11 +280,21 @@ export async function loadEvidenceRows(
         LEFT JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
         ${where} ORDER BY a.created_at, a.rowid, e.created_at, e.id`,
     args
-  });
+  };
+}
+
+export async function loadEvidenceRows(
+  tx: Pick<Client, 'execute'>,
+  filter: EvidenceFilter
+) {
+  if (filter.attemptIds?.length === 0 || filter.lineageKeys?.length === 0)
+    return [];
+  const result = await tx.execute(evidenceRowsStatement(filter));
   return result.rows;
 }
 
 type Tx = Pick<Client, 'execute'>;
+type LedgerTx = Pick<Transaction, 'execute' | 'batch'>;
 type Evidence = ReturnType<typeof qualifyingGrammarEvidence>;
 type EvidenceScope = { ownerId: string; language: string };
 type PracticeCount = {
@@ -379,13 +396,17 @@ async function loadQualifyingEvidence(tx: Tx, scope: EvidenceScope) {
 
 /** Sync trusted answer history inside the write transaction that records it. */
 export async function syncEvidenceLedger(
-  tx: Tx,
+  tx: LedgerTx,
   scope: EvidenceScope & { attemptIds?: string[]; studySessionId?: string }
 ) {
-  const { ownerId, language } = scope;
   const seeds = await loadEvidenceRows(tx, scope);
   if (seeds.length === 0) return;
-  const lineageKeys = [
+  await syncLineageEvidence(tx, scope, seedLineageKeys(seeds));
+}
+
+/** The lineages of the given attempt rows, each once. */
+export function seedLineageKeys(seeds: Row[]) {
+  return [
     ...new Set(
       seeds.map((row) =>
         effectiveLineageKey({
@@ -396,14 +417,26 @@ export async function syncEvidenceLedger(
       )
     )
   ];
-  const history = await loadEvidenceRows(tx, {
-    ownerId,
-    language,
-    lineageKeys
-  });
+}
+
+/**
+ * Sync the ledger for the history of the given lineages. The history and the
+ * current content are independent reads, so they share one round trip.
+ */
+export async function syncLineageEvidence(
+  tx: LedgerTx,
+  scope: EvidenceScope,
+  lineageKeys: string[]
+) {
+  const { ownerId, language } = scope;
+  if (lineageKeys.length === 0) return;
+  const [history, questions, retired] = await tx.batch([
+    evidenceRowsStatement({ ownerId, language, lineageKeys }),
+    ...currentContentStatements(language)
+  ]);
   const evidence = qualifyingGrammarEvidence(
-    history,
-    await currentContent(tx, language)
+    history.rows,
+    currentContentOf(questions.rows, retired.rows)
   );
   await span(
     'mastery.sync-evidence',
