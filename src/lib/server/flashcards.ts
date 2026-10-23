@@ -11,7 +11,6 @@ import {
   type FSRSParameters
 } from 'ts-fsrs';
 import type { Client, Row } from '@libsql/client';
-import { setImmediate as yieldLoop } from 'node:timers/promises';
 import { beginWrite, executeWrite } from './db-transactions';
 export { beginRead, beginWrite, executeWrite } from './db-transactions';
 import { studyDayStart } from './study-days';
@@ -87,8 +86,6 @@ const defaultStudySchedule: StudySchedule = {
   newCardPreset: '1m+10m',
   relearningPreset: '10m'
 };
-const previewCardLimit = 500;
-const previewReviewLimit = 4096;
 const newCardSteps = {
   '10m': ['10m'],
   '1m+10m': ['1m', '10m'],
@@ -188,162 +185,6 @@ export async function saveStudySchedule(
     ]
   });
   return schedule;
-}
-
-function localDate(date: Date, timezone: string): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timezone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).formatToParts(date);
-  const values = Object.fromEntries(
-    parts.map(({ type, value }) => [type, value])
-  );
-  return `${values.year}-${values.month}-${values.day}`;
-}
-
-async function simulateGoodReviews(
-  rows: Row[],
-  schedule: StudySchedule,
-  now: Date,
-  boundaries: Date[],
-  timezone: string
-): Promise<{ counts: number[]; skipped: number; limited: boolean }> {
-  const counts = Array.from({ length: 7 }, () => 0);
-  const end = boundaries[7].getTime();
-  let reviews = 0;
-  let skipped = 0;
-  let limited = false;
-  for (const row of rows) {
-    const cardId = String(row.id);
-    const cardCounts = Array.from({ length: 7 }, () => 0);
-    try {
-      const base = readCardScheduler(
-        row.scheduler_version,
-        String(row.parameters_json)
-      ).parameters;
-      const scheduler = deterministicScheduler(
-        parametersForSchedule(schedule, base)
-      );
-      let state = decodeCard(String(row.state_json));
-      let dueAt = Number(row.due_at);
-      while (dueAt < end) {
-        const reviewedAt = Math.max(now.getTime(), dueAt);
-        cardCounts[previewDay(boundaries, reviewedAt)] += 1;
-        const reviewTime = new Date(reviewedAt);
-        const updated = scheduler.next(
-          cardWithId(state, cardId),
-          reviewTime,
-          Rating.Good
-        ).card;
-        state = scheduledCard(updated, reviewTime, timezone);
-        dueAt = state.due.getTime();
-        if (dueAt <= reviewedAt) dueAt = reviewedAt + 60_000;
-        if (++reviews % 64 === 0) await yieldLoop();
-        if (reviews >= previewReviewLimit) {
-          limited = true;
-          break;
-        }
-      }
-    } catch (error) {
-      if (!(error instanceof FlashcardError)) throw error;
-      skipped += 1;
-      continue;
-    }
-    for (let index = 0; index < 7; index += 1)
-      counts[index] += cardCounts[index];
-    if (limited) break;
-  }
-  return { counts, skipped, limited };
-}
-
-function previewDay(boundaries: Date[], reviewedAt: number): number {
-  for (let index = 0; index < 7; index += 1) {
-    if (reviewedAt < boundaries[index + 1].getTime()) return index;
-  }
-  return 6;
-}
-
-export async function previewStudySchedule(
-  client: Client,
-  session: LearnerSession,
-  selectedInput: unknown,
-  nowInput: Date | number = Date.now()
-) {
-  const selected = validateStudySchedule(selectedInput);
-  const saved = await readStudySchedule(client, session.userId);
-  const zone = await client.execute({
-    sql: 'SELECT timezone FROM learner_preferences WHERE owner_id = ?',
-    args: [session.userId]
-  });
-  const timezone = zone.rows[0] ? String(zone.rows[0].timezone) : 'UTC';
-  const now = nowInput instanceof Date ? nowInput : new Date(nowInput);
-  if (Number.isNaN(now.getTime()))
-    throw new FlashcardError('INVALID_STUDY_SCHEDULE');
-  const boundaries = Array.from({ length: 8 }, (_, index) =>
-    studyDayStart(now, timezone, index)
-  );
-  const cards = await client.execute({
-    sql: `SELECT c.id, c.state_json, c.due_at, c.scheduler_version, c.parameters_json
-      FROM native_flashcards c
-      JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
-      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at < ?
-      ORDER BY c.due_at, c.id LIMIT ?`,
-    args: [session.userId, boundaries[7].getTime(), previewCardLimit + 1]
-  });
-  const capped = cards.rows.length > previewCardLimit;
-  const rows = cards.rows.slice(0, previewCardLimit);
-  const savedResult = await simulateGoodReviews(
-    rows,
-    saved,
-    now,
-    boundaries,
-    timezone
-  );
-  const selectedResult = await simulateGoodReviews(
-    rows,
-    selected,
-    now,
-    boundaries,
-    timezone
-  );
-  const days = savedResult.counts.map((count, index) => ({
-    date: localDate(boundaries[index], timezone),
-    saved: count,
-    selected: selectedResult.counts[index]
-  }));
-  const busiest = (key: 'saved' | 'selected') => {
-    const day = days.reduce(
-      (largest, current) => (current[key] > largest[key] ? current : largest),
-      days[0]
-    );
-    return { date: day.date, count: day[key] };
-  };
-  const average = (key: 'saved' | 'selected') =>
-    Math.round((days.reduce((sum, day) => sum + day[key], 0) / 7) * 10) / 10;
-  const skipped = Math.max(savedResult.skipped, selectedResult.skipped);
-  return {
-    saved,
-    selected,
-    days,
-    averagePerDay: { saved: average('saved'), selected: average('selected') },
-    busiestDay: { saved: busiest('saved'), selected: busiest('selected') },
-    scenario: [
-      'Illustrative scenario: assumes Good on every simulated review.',
-      capped
-        ? `Shows the earliest ${previewCardLimit} eligible cards due in these seven days.`
-        : '',
-      savedResult.limited || selectedResult.limited
-        ? `Limits work to ${previewReviewLimit} simulated reviews per schedule.`
-        : '',
-      skipped
-        ? `Skips ${skipped} unreadable ${skipped === 1 ? 'card' : 'cards'}.`
-        : ''
-    ]
-      .filter(Boolean)
-      .join(' ')
-  };
 }
 
 function isFiniteNumber(value: unknown): value is number {

@@ -6,7 +6,6 @@ import { requireLearnerPage } from '../../lib/server/learner-session';
 import { studyPage } from '../../lib/server/learner-api';
 import { loadProgress } from '../../lib/server/progress';
 import { unfinishedPractice } from '../../lib/server/practice';
-import { loadReviewDueByDay } from '../../lib/server/review-analytics';
 import { safeDiagnostic } from '../../lib/server/diagnostics';
 
 const signOutFailure = 'Sign out is temporarily unavailable. Try again.';
@@ -30,17 +29,11 @@ export const load: PageServerLoad = async (event) => {
             );
             if (found) unfinished[track.language] = found;
           }
-          const reviewDueByDay = await loadReviewDueByDay(
-            client,
-            learner,
-            loaded.tracks
-          );
-          return { ...loaded, unfinished, reviewDueByDay };
+          return { ...loaded, unfinished };
         })
       : {
           tracks: [],
-          unfinished: {} as Record<string, { id: string; answered: number }>,
-          reviewDueByDay: null
+          unfinished: {} as Record<string, { id: string; answered: number }>
         };
   return {
     user: { name: user?.name ?? '', email: user?.email ?? '' },

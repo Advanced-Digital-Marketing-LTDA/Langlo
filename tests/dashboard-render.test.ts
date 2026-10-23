@@ -148,44 +148,25 @@ it('shows the empty state with a way to start when there are no tracks', async (
   expect(html).not.toContain('Grammar mastery');
 });
 
-it('shows daily grammar and flashcard review counts without grammar tracks', async () => {
+it('keeps the review analytics table off Home', async () => {
   const html = await renderSvelte(page, {
     data: {
       ...data([]),
       reviewDueByDay: [
-        { date: '2026-10-22', grammar: 2, flashcards: 3, total: 5 },
-        { date: '2026-10-23', grammar: 0, flashcards: 0, total: 0 }
+        { date: '2026-10-22', grammar: 2, flashcards: 3, total: 5 }
       ]
     }
   });
-  expect(html).toContain('Reviews due by day');
-  expect(html).toContain('Grammar reviews');
-  expect(html).toContain('Flashcards');
-  expect(html).toContain('2026-10-22');
-  expect(html).toMatch(/2\s*<\/td>/);
-  expect(html).toMatch(/3\s*<\/td>/);
-  expect(html).toMatch(/5\s*<\/td>/);
+  expect(html).not.toContain('Reviews due by day');
+  expect(html).not.toContain('Review history and scheduled reviews');
+  expect(html).not.toContain('2026-10-22');
 });
 
-it('explains when there are no reviews due in the displayed study days', async () => {
-  const html = await renderSvelte(page, {
-    data: {
-      ...data([]),
-      reviewDueByDay: Array.from({ length: 7 }, (_, index) => ({
-        date: `2026-10-${String(22 + index).padStart(2, '0')}`,
-        grammar: 0,
-        flashcards: 0,
-        total: 0
-      }))
-    }
-  });
-  expect(html).toContain('No reviews are due in the next seven study days.');
-});
-
-it('removes Progress from study navigation', async () => {
+it('links Analytics from study navigation and keeps Progress hidden', async () => {
   const html = await renderSvelte(layout, { children });
   expect(html).not.toContain('href="/app/progress"');
   expect(html).toContain('href="/app/map"');
+  expect(html).toContain('href="/app/analytics"');
 });
 
 it('shows a busy skeleton instead of content while navigating', async () => {

@@ -9,7 +9,6 @@ import {
   createNote,
   getNote,
   listReviewEvents,
-  previewStudySchedule,
   submitReview
 } from '../src/lib/server/flashcards';
 import {
@@ -177,13 +176,6 @@ describe('native flashcard persistence feasibility', () => {
         unavailableCount: 1,
         cards: [{ id: good.cardId, intervals: { good: expect.any(String) } }]
       });
-      const preview = await previewStudySchedule(db.client, learner, {
-        desiredRetention: 90,
-        newCardPreset: '1m+10m',
-        relearningPreset: '10m'
-      });
-      expect(preview.scenario).toContain('1 unreadable card');
-      expect(preview.days.some((day) => day.saved > 0)).toBe(true);
     } finally {
       db.close();
     }
@@ -223,54 +215,6 @@ describe('native flashcard persistence feasibility', () => {
         due.cards.some((card) => card.id === 'card:note-many-bad-20')
       ).toBe(true);
       expect(due.unavailableCount).toBe(20);
-    } finally {
-      db.close();
-    }
-  });
-
-  it('discloses when the seven-day preview caps its eligible cards', async () => {
-    const target = await fixture();
-    const learner = testSession('learner-a');
-    const db = await openFixtureDatabase(target);
-    try {
-      await seedBasicNote(db.client, learner);
-      await approveNote(
-        db.client,
-        learner,
-        'note-10000000-0000-4000-8000-000000000002'
-      );
-      const original = db.client.execute.bind(db.client);
-      const card = await original({
-        sql: 'SELECT id, state_json, due_at, scheduler_version, parameters_json FROM native_flashcards WHERE owner_id = ?',
-        args: [learner.userId]
-      });
-      const execute = vi
-        .spyOn(db.client, 'execute')
-        .mockImplementation((statement) => {
-          if (
-            String(
-              (statement as unknown as { sql?: string }).sql ?? statement
-            ).includes('FROM native_flashcards c')
-          )
-            return Promise.resolve({
-              ...card,
-              rows: Array.from({ length: 501 }, () => card.rows[0])
-            });
-          return original(statement);
-        });
-      const preview = await previewStudySchedule(db.client, learner, {
-        desiredRetention: 90,
-        newCardPreset: '1m+10m',
-        relearningPreset: '10m'
-      });
-      expect(preview.scenario).toContain('500');
-      expect(
-        execute.mock.calls.find(([statement]) =>
-          String(
-            (statement as unknown as { sql?: string }).sql ?? statement
-          ).includes('FROM native_flashcards c')
-        )?.[0]
-      ).toMatchObject({ sql: expect.stringContaining('c.due_at < ?') });
     } finally {
       db.close();
     }

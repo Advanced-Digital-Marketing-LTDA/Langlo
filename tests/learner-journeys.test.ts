@@ -34,7 +34,6 @@ import {
   getStudySchedule,
   getNote,
   listReviewEvents,
-  previewStudySchedule,
   rejectNote,
   saveStudySchedule,
   setCardSuspended,
@@ -78,10 +77,8 @@ import {
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
 import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
-import {
-  actions as dashboardActions,
-  load as dashboardLoad
-} from '../src/routes/app/+page.server';
+import { actions as dashboardActions } from '../src/routes/app/+page.server';
+import { load as analyticsLoad } from '../src/routes/app/analytics/+page.server';
 import * as authRuntime from '../src/lib/server/auth-runtime';
 import { studyDayStart } from '../src/lib/server/study-days';
 
@@ -194,7 +191,7 @@ async function setReviewAnalyticsDueTimes(
       args: [dueAt, id, owner.userId]
     });
   }
-  return Array.from({ length: 7 }, (_, index) => {
+  return Array.from({ length: 8 }, (_, index) => {
     const parts = new Intl.DateTimeFormat('en-CA', {
       timeZone: timezone,
       year: 'numeric',
@@ -225,19 +222,28 @@ it.each([
       'SELECT id, due_at FROM native_flashcards ORDER BY id'
     );
 
-    const dashboard = await dashboardLoad(event());
+    const analytics = (await analyticsLoad(event())) as {
+      days: {
+        date: string;
+        flashcardsScheduled: number | null;
+        grammarScheduled: number | null;
+      }[];
+    };
 
-    expect(dashboard).toMatchObject({
-      reviewDueByDay: [
-        { date: dates[0], grammar: 0, flashcards: today, total: today },
-        { date: dates[1], grammar: 0, flashcards: tomorrow, total: tomorrow },
-        ...dates.slice(2).map((date) => ({
-          date,
-          grammar: 0,
-          flashcards: 0,
-          total: 0
-        }))
-      ]
+    expect(analytics.days).toHaveLength(373);
+    expect(analytics.days[365]).toMatchObject({
+      date: dates[0],
+      flashcardsScheduled: today,
+      grammarScheduled: 0
+    });
+    expect(analytics.days[366]).toMatchObject({
+      date: dates[1],
+      flashcardsScheduled: tomorrow,
+      grammarScheduled: 0
+    });
+    expect(analytics.days.at(-1)).toMatchObject({
+      date: dates[7],
+      flashcardsScheduled: 1
     });
     expect(
       await client.execute(
@@ -407,43 +413,26 @@ describe('settings', () => {
     ).toMatchObject({ status: 404 });
   });
 
-  it('previews selected values without saving and saves them through the schedule form', async () => {
+  it('saves selected schedule controls without a simulated preview action', async () => {
     const fields = {
       desiredRetention: '94',
       newCardPreset: '30m',
       relearningPreset: '1h'
     };
-    const preview = await settingsActions.previewStudySchedule(
-      event({ fields })
-    );
-    expect(preview).toMatchObject({
-      preview: {
-        selected: {
-          desiredRetention: 94,
-          newCardPreset: '30m',
-          relearningPreset: '1h'
-        },
-        days: expect.any(Array)
-      }
-    });
-    expect(await getStudySchedule(client, learner)).toEqual({
-      desiredRetention: 90,
-      newCardPreset: '1m+10m',
-      relearningPreset: '10m'
-    });
+    expect(settingsActions).not.toHaveProperty('previewStudySchedule');
     expect(await settingsActions.saveStudySchedule(event({ fields }))).toEqual({
       saved: 'Study schedule saved.'
+    });
+    expect(await getStudySchedule(client, learner)).toEqual({
+      desiredRetention: 94,
+      newCardPreset: '30m',
+      relearningPreset: '1h'
     });
     expect(
       await settingsActions.saveStudySchedule(
         event({
           fields: { ...fields, desiredRetention: '98' }
         })
-      )
-    ).toMatchObject({ status: 400 });
-    expect(
-      await settingsActions.previewStudySchedule(
-        event({ fields: { ...fields, desiredRetention: '98' } })
       )
     ).toMatchObject({ status: 400 });
   });
@@ -1417,94 +1406,6 @@ describe('decks, review and Anki export', () => {
     ).toMatchObject([
       { parameters: { request_retention: 0.95, learning_steps: ['30m'] } }
     ]);
-  });
-
-  it('previews the saved and selected schedules for seven stable study days', async () => {
-    const deckId = 'deck-fsrs-preview';
-    await createDeck(client, learner, { id: deckId, name: 'Preview' });
-    for (const [index, status] of [
-      'approved',
-      'approved',
-      'rejected'
-    ].entries()) {
-      const id = `note-fsrs-preview-${index}`;
-      await createNote(client, learner, {
-        id,
-        sourceId: `langlo:v1:${String(index + 1).repeat(64)}`,
-        deckId,
-        kind: 'basic',
-        content: { front: 'Front', back: 'Back' }
-      });
-      if (status === 'approved') await approveNote(client, learner, id);
-      if (status === 'rejected') {
-        await approveNote(client, learner, id);
-        await rejectNote(client, learner, id);
-      }
-    }
-    await client.execute({
-      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
-      args: ['card:note-fsrs-preview-1']
-    });
-    const selected = {
-      desiredRetention: 92,
-      newCardPreset: '10m' as const,
-      relearningPreset: '30m' as const
-    };
-    const now = new Date('2026-10-20T09:00:00.000Z');
-    await client.execute({
-      sql: "UPDATE native_flashcards SET due_at = ?, state_json = json_set(state_json, '$.due', ?) WHERE owner_id = ?",
-      args: [now.getTime(), now.toISOString(), learner.userId]
-    });
-    const utcPreview = await previewStudySchedule(
-      client,
-      learner,
-      selected,
-      now
-    );
-    expect(utcPreview.days[0].date).toBe('2026-10-20');
-    await setTimezone(client, learner, 'America/Los_Angeles');
-    const first = await previewStudySchedule(client, learner, selected, now);
-    const second = await previewStudySchedule(client, learner, selected, now);
-    expect(first.days.map(({ saved, selected }) => [saved, selected])).toEqual([
-      [2, 1],
-      [0, 0],
-      [1, 1],
-      [0, 0],
-      [0, 0],
-      [0, 0],
-      [0, 0]
-    ]);
-    expect(first).toEqual(second);
-    expect(first.saved).toMatchObject({
-      desiredRetention: 90,
-      newCardPreset: '1m+10m',
-      relearningPreset: '10m'
-    });
-    expect(first.selected).toEqual(selected);
-    expect(first.days).toHaveLength(7);
-    expect(first.days[0].date).toBe('2026-10-19');
-    expect(first.averagePerDay).toEqual({ saved: 0.4, selected: 0.3 });
-    expect(first.busiestDay).toEqual({
-      saved: { date: '2026-10-19', count: 2 },
-      selected: { date: '2026-10-19', count: 1 }
-    });
-    expect(first.scenario).toContain('Good');
-    await expect(
-      previewStudySchedule(client, learner, selected, new Date(Number.NaN))
-    ).rejects.toMatchObject({ code: 'INVALID_STUDY_SCHEDULE' });
-    await client.execute({
-      sql: 'UPDATE native_flashcards SET suspended = 1 WHERE id = ?',
-      args: ['card:note-fsrs-preview-0']
-    });
-    const noneAvailable = await previewStudySchedule(
-      client,
-      learner,
-      selected,
-      now
-    );
-    expect(
-      noneAvailable.days.every((day) => day.saved === 0 && day.selected === 0)
-    ).toBe(true);
   });
 
   it('searches every status across owned decks and returns tags and deck labels', async () => {

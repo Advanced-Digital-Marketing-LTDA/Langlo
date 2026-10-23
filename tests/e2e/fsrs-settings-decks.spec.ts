@@ -74,7 +74,7 @@ test.afterAll(async () => {
   await disposeFixtureDatabase(fixtureRoot, dbFile);
 });
 
-test('saves and previews FSRS settings, searches all note statuses, moves notes and suspends cards', async ({
+test('shows actual review analytics, saves FSRS settings, searches notes, moves notes and suspends cards', async ({
   context,
   page
 }) => {
@@ -133,6 +133,16 @@ test('saves and previews FSRS settings, searches all note statuses, moves notes 
       if (status === 'rejected') await rejectNote(client, learner, id);
     }
 
+    await page.goto(`${base}/app`);
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Study navigation' })
+        .getByRole('link', { name: 'Analytics' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('table', { name: 'Review history and scheduled reviews' })
+    ).toHaveCount(0);
+
     await page.goto(`${base}/app/settings`);
     const retention = page.locator('input[name="desiredRetention"]');
     await retention.press('End');
@@ -140,13 +150,7 @@ test('saves and previews FSRS settings, searches all note statuses, moves notes 
     await expect(retention).toHaveValue('96');
     await page.locator('select[name="newCardPreset"]').selectOption('30m');
     await page.locator('select[name="relearningPreset"]').selectOption('1h');
-    await page.getByRole('button', { name: 'Preview' }).click();
-    await expect(
-      page.getByRole('heading', { name: 'Seven-day preview' })
-    ).toBeVisible();
-    await expect(
-      page.getByText(/assumes Good on every simulated review/u)
-    ).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Preview' })).toHaveCount(0);
     expect(
       (
         await client.execute(
@@ -168,6 +172,28 @@ test('saves and previews FSRS settings, searches all note statuses, moves notes 
       new_card_preset: '30m',
       relearning_preset: '1h'
     });
+
+    await page.goto(`${base}/app/analytics`);
+    await expect(
+      page.getByRole('heading', { name: 'Review analytics' })
+    ).toBeVisible();
+    await expect(
+      page.getByRole('img', {
+        name: 'Actual completed reviews and currently scheduled reviews by study day'
+      })
+    ).toBeVisible();
+    const completedAt = await client.execute(
+      'SELECT reviewed_at FROM native_flashcard_review_events WHERE owner_id = ? AND card_id = ? ORDER BY reviewed_at DESC LIMIT 1',
+      [learner.userId, 'card:note-moved']
+    );
+    const reviewDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    }).format(new Date(Number(completedAt.rows[0].reviewed_at)));
+    const reviewRow = page.getByRole('row', { name: new RegExp(reviewDate) });
+    await expect(reviewRow.locator('td').nth(0)).toHaveText('1');
 
     const movedBefore = await getNote(client, learner, 'note-moved');
     const historyBefore = await listReviewEvents(
