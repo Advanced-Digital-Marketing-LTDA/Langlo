@@ -340,6 +340,8 @@ export const questions = sqliteTable(
   (table) => [
     // Questions are looked up by the content version they belong to.
     index('questions_content_version_idx').on(table.contentVersionId),
+    // An assessment picks its holdout questions by language.
+    index('questions_language_holdout_idx').on(table.language, table.holdout),
     uniqueIndex('questions_identity_version_skill_language').on(
       table.id,
       table.contentVersionId,
@@ -511,6 +513,8 @@ export const attempts = sqliteTable(
       table.studySessionId,
       table.questionId
     ),
+    // An assessment checks a learner's earlier answers per skill.
+    index('attempts_owner_skill_idx').on(table.ownerId, table.skillId),
     uniqueIndex('attempts_owner_submission_unique').on(
       table.ownerId,
       table.submissionKey
