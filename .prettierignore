@@ -4,7 +4,6 @@ build
 package-lock.json
 playwright-report
 test-results
-BOOTSTRAP-LICENSE
 # Preserve the user-created root README; detailed setup docs remain format-checked.
 README.md
 .devin/
