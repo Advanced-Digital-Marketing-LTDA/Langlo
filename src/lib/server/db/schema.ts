@@ -1334,3 +1334,31 @@ export const contentChanges = sqliteTable(
     )
   ]
 );
+
+// Active study time measured in the browser on the review, lesson and
+// assessment pages: one row per stretch the timer ran without a long pause.
+export const studyTimeSegments = sqliteTable(
+  'study_time_segments',
+  {
+    id: text('id').notNull(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    category: text('category', { enum: ['flashcards', 'grammar'] }).notNull(),
+    startedAt: integer('started_at').notNull(),
+    endedAt: integer('ended_at').notNull(),
+    createdAt: createdAt()
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerId, table.id] }),
+    index('study_time_segments_owner_start').on(table.ownerId, table.startedAt),
+    check(
+      'study_time_segments_category',
+      sql`${table.category} IN ('flashcards', 'grammar')`
+    ),
+    check(
+      'study_time_segments_span',
+      sql`${table.startedAt} < ${table.endedAt}`
+    )
+  ]
+);

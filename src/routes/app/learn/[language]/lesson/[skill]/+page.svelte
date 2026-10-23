@@ -6,6 +6,7 @@
   import { hydration } from '../../../../../../lib/hydration.svelte';
   import Exercise from '../../../../../../lib/components/exercises/Exercise.svelte';
   import ContentReportForm from '../../../../../../lib/components/ContentReportForm.svelte';
+  import StudyTimer from '../../../../../../lib/components/StudyTimer.svelte';
   let { data, form }: { data: PageData; form: ActionData } = $props();
   const failure = $derived(
     form && 'message' in form ? form.message : undefined
@@ -80,6 +81,7 @@
   <title>{data.lesson ? data.lesson.title : 'Lesson'} · Langlo</title>
   <meta name="robots" content="noindex,nofollow" />
 </svelte:head>
+<StudyTimer category="grammar" />
 
 <p><a href={data.returnTo}>Back to skill map</a></p>
 {#if data.unavailable}

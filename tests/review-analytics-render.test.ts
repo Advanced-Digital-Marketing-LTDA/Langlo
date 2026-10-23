@@ -19,6 +19,7 @@ afterAll(closeRenderServer);
 it('renders the review graph and table with completed and scheduled series', async () => {
   const html = await renderSvelte(page, {
     data: {
+      studyTime: [],
       days: [
         {
           date: '2026-10-21',
@@ -73,6 +74,7 @@ it.each([1, 2])(
   async (length) => {
     const html = await renderSvelte(page, {
       data: {
+        studyTime: [],
         days: Array.from({ length }, (_, index) => ({
           date: index === 0 ? '2026-10-22' : '2026-10-23',
           flashcardsCompleted: index === 0 ? 0 : null,

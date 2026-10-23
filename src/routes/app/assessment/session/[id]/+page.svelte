@@ -1,10 +1,12 @@
 <script lang="ts">
   import type { PageData, ActionData } from './$types';
   import Exercise from '../../../../../lib/components/exercises/Exercise.svelte';
+  import StudyTimer from '../../../../../lib/components/StudyTimer.svelte';
   let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
 
 <svelte:head><title>Grammar assessment · Langlo</title></svelte:head>
+<StudyTimer category="grammar" />
 <h1>Grammar assessment</h1>
 <p>
   Results and feedback appear after completion. This sample includes {Object.entries(
