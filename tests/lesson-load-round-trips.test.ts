@@ -219,6 +219,49 @@ describe('lesson page load round trips', () => {
     ).toBe(false);
   });
 
+  it.each([
+    ['correct', 'suis', 1],
+    ['incorrect', 'es', 0]
+  ])(
+    'records the ledger row for a %s answer with the ledger reads batched',
+    async (_, answer, contribution) => {
+      const counted: Counted = { sqls: [], peak: 0, together: [] };
+      const form = new FormData();
+      for (const [name, value] of Object.entries({
+        studySessionId: 'study-a',
+        submissionKey: 'k1',
+        questionId: 'fr-a1-001@1:q1',
+        answer
+      }))
+        form.set(name, value);
+
+      await recordAnswer(
+        counting(raw, counted),
+        testSession('learner-a'),
+        form,
+        'fr-a1-001'
+      );
+
+      const evidence = await raw.execute(
+        `SELECT e.skill_id, e.contribution FROM skill_evidence e
+          JOIN attempts a ON a.id = e.attempt_id WHERE a.submission_key = 'k1'`
+      );
+      expect(evidence.rows.map((row) => ({ ...row }))).toEqual([
+        { skill_id: 'fr-a1-001', contribution }
+      ]);
+      // The lineage history and the current content go in one batch, so
+      // neither content read is sent on its own.
+      expect(
+        counted.sqls.filter(
+          (sql) =>
+            sql.includes(
+              'SELECT q.skill_id, q.id, q.content_version_id, q.lineage_key'
+            ) || sql.includes('FROM skills WHERE language = ? AND retired_at')
+        )
+      ).toEqual([]);
+    }
+  );
+
   it('overlaps the lesson reads with the practice reads', async () => {
     const { counted } = await loadCounted();
     // A lesson-only read and a practice-only read are in flight together, not
