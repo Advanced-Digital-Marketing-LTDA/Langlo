@@ -21,7 +21,7 @@ Sentry.init({
     env.APP_BUILD_SHA && env.APP_BUILD_SHA !== 'unknown'
       ? env.APP_BUILD_SHA
       : undefined,
-  tracesSampleRate: 0.25,
+  tracesSampleRate: 1,
   traceLifecycle: 'static',
   integrations: (integrations) => [
     ...integrations.flatMap((integration) => {
