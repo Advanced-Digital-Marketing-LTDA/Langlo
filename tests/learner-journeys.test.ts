@@ -1819,6 +1819,52 @@ describe('grammar practice rating and review actions', () => {
     ).rejects.toMatchObject({ status: 401 });
   });
 
+  it('continues the unfinished review from the Review tab and links its lessons back', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    // Clicking a review button again continues the unfinished review.
+    await expect(
+      reviewTabActions.grammar(
+        event({
+          fields: { ...fields, submissionKey: randomUUID(), due: 'today' }
+        })
+      )
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(reviewId)}`
+    });
+    // Its lessons lead back to it; a practice session's lessons do not.
+    const lessonIn = (sessionId: string) =>
+      lessonLoad(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          query: `/learn/fr/lesson/fr-a1-001?session=${encodeURIComponent(sessionId)}`
+        })
+      );
+    expect(await lessonIn(reviewId)).toMatchObject({
+      reviewSessionId: reviewId
+    });
+    expect(await lessonIn(session.id)).toMatchObject({
+      reviewSessionId: null
+    });
+  });
+
   it('starts overdue grammar from the Review tab and shows when the next topic is due', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(Date.UTC(2026, 9, 24, 12));
@@ -1868,31 +1914,6 @@ describe('grammar practice rating and review actions', () => {
       await sessionLoad(event({ params: { id: reviewId } }))
     ).toMatchObject({
       skills: [{ skillId: 'fr-a1-001', available: true, answered: false }]
-    });
-    // Clicking a review button again continues the unfinished review.
-    await expect(
-      reviewTabActions.grammar(
-        event({
-          fields: { ...fields, submissionKey: randomUUID(), due: 'today' }
-        })
-      )
-    ).rejects.toMatchObject({
-      status: 303,
-      location: `/app/session/${encodeURIComponent(reviewId)}`
-    });
-    // Its lessons lead back to it; a practice session's lessons do not.
-    const lessonIn = (sessionId: string) =>
-      lessonLoad(
-        event({
-          params: { language: 'fr', skill: 'fr-a1-001' },
-          query: `/learn/fr/lesson/fr-a1-001?session=${encodeURIComponent(sessionId)}`
-        })
-      );
-    expect(await lessonIn(reviewId)).toMatchObject({
-      reviewSessionId: reviewId
-    });
-    expect(await lessonIn(session.id)).toMatchObject({
-      reviewSessionId: null
     });
   });
 
