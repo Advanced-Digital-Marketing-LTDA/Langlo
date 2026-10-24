@@ -230,6 +230,13 @@ function openAiApiKeyConfig(
   }
 }
 
+function optionalKeyConfig(
+  env: Record<string, string | undefined>
+): ReturnType<typeof typesafeApiKeyConfig> &
+  ReturnType<typeof openAiApiKeyConfig> {
+  return { ...typesafeApiKeyConfig(env), ...openAiApiKeyConfig(env) };
+}
+
 export function parseRuntimeConfig(
   env: Record<string, string | undefined>
 ): RuntimeConfig {
@@ -305,7 +312,6 @@ export function parseRuntimeConfig(
     databaseToken,
     revision,
     auth: dataEnabled ? parseAuthConfig(env, environment) : undefined,
-    ...(dataEnabled ? typesafeApiKeyConfig(env) : {}),
-    ...(dataEnabled ? openAiApiKeyConfig(env) : {})
+    ...(dataEnabled ? optionalKeyConfig(env) : {})
   };
 }
