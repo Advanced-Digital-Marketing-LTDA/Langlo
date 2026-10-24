@@ -213,6 +213,12 @@ const isCorrection = (skillId: string, version: number) =>
   revisedSkills.has(skillId) && version === 2;
 const isLaterRevision = (skillId: string, version: number) =>
   revisedSkills.has(skillId) && version > 2;
+const splitLaterRevisions = <T extends { skillId: string; version: number }>(
+  versions: T[]
+) => ({
+  later: versions.filter((v) => isLaterRevision(v.skillId, v.version)),
+  kept: versions.filter((v) => !isLaterRevision(v.skillId, v.version))
+});
 const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .flatMap((dir) =>
@@ -588,12 +594,8 @@ describe.each(files)('%s', (path) => {
         );
         // A listed skill's later versions (wording revisions that continue the
         // correction) are not part of what the database held before.
-        const later = historical.versions.filter((version) =>
-          isLaterRevision(version.skillId, version.version)
-        );
-        historical.versions = historical.versions.filter(
-          (version) => !later.includes(version)
-        );
+        const { later, kept } = splitLaterRevisions(historical.versions);
+        historical.versions = kept;
         const revised = historical.versions.filter((version) =>
           revisedSkills.has(version.skillId)
         );
@@ -622,19 +624,16 @@ describe.each(files)('%s', (path) => {
           '1.1.0'
         );
         // A correction follows the historical version, so it declares itself.
-        for (const version of corrected.versions)
-          if (isCorrection(version.skillId, version.version))
-            for (const question of version.questions) question.change = 'new';
-        const result = await importContent(db.client, corrected);
-        // Each historical correction is imported, then the later revisions.
         const corrections = corrected.versions.filter((version) =>
           isCorrection(version.skillId, version.version)
         );
+        for (const version of corrections)
+          for (const question of version.questions) question.change = 'new';
+        const result = await importContent(db.client, corrected);
+        // Each historical correction is imported, then the later revisions.
         expect(corrections).toHaveLength(revised.length);
         expect(result.versions).toBe(corrections.length + later.length);
-        expect(result.questions).toBe(
-          corrections.length * 15 + later.length * 15
-        );
+        expect(result.questions).toBe((corrections.length + later.length) * 15);
         expect(
           (
             await db.client.execute(

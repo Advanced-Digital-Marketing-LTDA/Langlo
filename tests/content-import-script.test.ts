@@ -74,6 +74,9 @@ const lessons = modules.flatMap((module) => module.lessons);
 const revisedLessons = lessons.filter((lesson) =>
   lesson.version.questions.some((question) => question.change)
 );
+const revisedWithPt = revisedLessons.filter(
+  (lesson) => lesson.version.translations?.pt
+);
 const authoredTranslations = lessons.filter(
   (lesson) => lesson.version.translations?.pt
 );
@@ -305,9 +308,14 @@ describe('revision totals', () => {
     );
     expect(clarifiedPrompts.size).toBe(27);
     expect(revisedLessons).toHaveLength(55 + clarifiedPrompts.size);
+    expect(revisedLessons).toHaveLength(82);
+    // The import package declares exactly the revisions the raw JSON holds.
     expect(
-      revisedLessons.filter((lesson) => lesson.version.translations?.pt)
-    ).toHaveLength(25 + english.length);
+      modulesPackage(root).versions.filter((version) =>
+        version.questions.some((question) => question.change)
+      )
+    ).toHaveLength(revisedLessons.length);
+    expect(revisedWithPt).toHaveLength(25 + english.length);
   });
 });
 
@@ -320,9 +328,6 @@ describe('revising already imported lessons', () => {
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
-      // The raw module JSON holds 82 revision lessons.
-      expect(revisedLessons).toHaveLength(82);
-      expect(revisions).toHaveLength(revisedLessons.length);
       await importContent(client, {
         ...pkg,
         curriculumVersion: '1.2.0',
@@ -361,11 +366,7 @@ describe('revising already imported lessons', () => {
         "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.3.0' GROUP BY kind ORDER BY kind"
       );
       expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
-        [
-          'lesson-translation-added',
-          revisedLessons.filter((lesson) => lesson.version.translations?.pt)
-            .length
-        ],
+        ['lesson-translation-added', revisedWithPt.length],
         ['question-same', revisions.length * 15],
         ['version-added', revisions.length]
       ]);
