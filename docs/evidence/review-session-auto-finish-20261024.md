@@ -9,6 +9,12 @@ Date: 2026-10-24. Requested and approved by Andrew in the project thread.
   it takes no rating (incorrect, Not sure, uncertain). Finishing is the same
   as pressing "Finish session": the topics' schedules update.
 - A correct answer still waiting for its rating does not finish the review.
+- A resent last answer (same submission) also finishes the review, so a try
+  that stopped before finishing heals itself.
+- Opening the session page of a review whose topics are all reviewed, such
+  as one answered before this change, finishes it and goes to its results.
+- After a wrong answer on the last topic the review is finished, so the
+  assisted retry ("Try this question again") is no longer offered for it.
 - "Continue Review Session" then leads to the session page, which sends a
   finished review to its results.
 - The session page's "All topics are answered. Finish the session…" message

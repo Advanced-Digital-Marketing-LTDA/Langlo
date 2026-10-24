@@ -2105,6 +2105,49 @@ describe('grammar practice rating and review actions', () => {
     );
   });
 
+  it('finishes an already answered review when its page opens', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    const planned = await client.execute({
+      sql: `SELECT json_extract(grammar_retention_plan, '$.questions[0].questionId') AS id
+        FROM study_sessions WHERE id = ?`,
+      args: [reviewId]
+    });
+    // Answered before reviews finished by themselves, so it is still open.
+    await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId: String(planned.rows[0]?.id),
+      submissionKey: randomUUID(),
+      answer: 'est',
+      evidenceKind: 'independent'
+    });
+    await expect(
+      sessionLoad(event({ params: { id: reviewId } }))
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(reviewId)}/results`
+    });
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'completed'
+    );
+  });
+
   it('finishes the review when the last topic is rated', async () => {
     const session = await startPractice(client, learner, {
       language: 'fr',
@@ -2160,6 +2203,11 @@ describe('grammar practice rating and review actions', () => {
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
+    // Finishing commits the rated review, so the topic gets a new due date.
+    const schedule = await client.execute(
+      "SELECT due_at FROM grammar_retention_schedules WHERE skill_id = 'fr-a1-001'"
+    );
+    expect(Number(schedule.rows[0]?.due_at)).toBeGreaterThan(0);
   });
 
   it('starts overdue grammar from the Review tab and shows when the next topic is due', async () => {

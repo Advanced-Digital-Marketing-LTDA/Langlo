@@ -22,6 +22,12 @@ export const load: PageServerLoad = (event) =>
         ? grammarReviewPlan(client, learner, summary.id)
         : Promise.resolve(null)
     ]);
+    // A review whose topics are all reviewed is finished, such as one answered
+    // before reviews finished by themselves, so it goes to its results.
+    if (reviewPlan?.every((skill) => skill.reviewed)) {
+      await finishPractice(client, learner, summary.id);
+      redirect(303, practiceResultsPath(summary.id));
+    }
     return {
       summary,
       skills: reviewPlan
