@@ -347,3 +347,49 @@ Repository-wide formatting still reports only the pre-existing ignored
 The other metric-only refactors and analyzer false-positive adjudication from
 triage remain separate from these correctness fixes. Hosted gates, production
 database behavior, and deployment remain unverified.
+
+## RewardGuard migration and limit follow-up (2026-10-24)
+
+The Compose and example-environment settings now explain that the 11 MiB
+adapter ceiling accommodates 10 MiB files plus multipart overhead. The existing
+hook still limits ordinary routes to 512 KiB, and the parser still enforces
+the 10 MiB per-file cap. No limit value or runtime implementation changed in
+this follow-up.
+
+The legacy-schema comparison excludes objects added after its starting
+migration. A cross-reference now points to `tests/library-migrations.test.ts`,
+which independently checks the Library additions using literal expectations:
+
+- A disposable database through 0036 has no Library indexes or triggers and
+  reports exactly 0037 and 0038 pending, in that order.
+- Upgrading creates `library_documents_owner_created` on `(owner_id,
+created_at)`, the documents primary-key index on `(id)`, and the usage
+  primary-key index on `(day, owner_id)`.
+- All three indexes have the expected owning table and uniqueness. No Library
+  triggers are created.
+- Running migration again preserves the same object names, tables, and SQL
+  definitions.
+
+To verify the regression detects a bad definition, the RED run deliberately
+reversed `(owner_id, created_at)` in the disposable fixture after migration.
+That temporary fixture-only mutation was removed before the GREEN run. No
+migration SQL, journal entry, or snapshot was modified.
+
+```text
+npm test -- tests/library-migrations.test.ts
+FAIL creates the Library indexes on upgrade and preserves their definitions on rerun
+Expected: ['owner_id', 'created_at']
+Received: ['created_at', 'owner_id']
+Test Files  1 failed (1)
+Tests  1 failed (1)
+
+npm test -- tests/library-migrations.test.ts tests/db-migrations.test.ts tests/portuguese-migration.test.ts
+Test Files  3 passed (3)
+Tests  31 passed (31)
+```
+
+The full unit suite then passed 126 files and 1,992 tests. Type checking found
+0 errors and 0 warnings, lint and build passed, and the separate property run passed all
+9 tests. Changed supported files pass Prettier. No new browser run was needed
+for this test/comment-only follow-up; the preceding 169-pass/1-failure result
+and unresolved map timer assertion remain the latest browser evidence.
