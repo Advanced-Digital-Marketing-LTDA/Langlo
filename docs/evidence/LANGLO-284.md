@@ -490,6 +490,10 @@ original bytes are now stored with the document.
 - Rendering is client-side: pdfjs-dist 6.4.299 (canvas plus text layer), docx-preview
   0.4.1 (links removed) and epubjs 0.3.93 (sandboxed frame, scripts off).
   epubjs was last released in 2023; this is recorded as an accepted risk.
+  epubjs depends on @xmldom/xmldom 0.7.13, which the dependency-review check
+  rejects for high-severity advisories; `package.json` overrides it to 0.9.12 (the
+  version `officeparser` already uses), so one copy is installed. The EPUB
+  browser tests pass with the override.
 - Selecting a word (click) or phrase (drag, or press-and-hold on touch) opens a
   lookup panel near the selection on desktop and a bottom bar on narrow or touch
   screens. One call returns a translation and an explanation; a separate button
