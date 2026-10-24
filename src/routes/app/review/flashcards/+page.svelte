@@ -44,7 +44,7 @@
     {/if}
     <form
       method="POST"
-      action="?/rate"
+      action={`?language=${encodeURIComponent(data.language)}&due=${data.due}&/rate`}
       use:enhance={() =>
         async ({ update }) => {
           revealed = false;

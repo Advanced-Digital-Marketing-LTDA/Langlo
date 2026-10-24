@@ -43,6 +43,7 @@ export const load: PageServerLoad = (event) =>
       ...(await listDueCards(client, learner, now, 20, scope)),
       total: await countDueCards(client, learner, now, scope),
       language: reviewLanguageParam(scope.language),
+      due: scope.bucket,
       submissionKey: randomUUID()
     };
   });

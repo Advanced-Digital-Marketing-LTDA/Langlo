@@ -20,7 +20,9 @@ Due today with a count and its own button.
   ready topics of that part of the day, at most five.
 - The flashcard reviewer moved unchanged to `/app/review/flashcards`. It takes
   `language` and `due=overdue|today` from the Review tab's buttons and has a
-  "Back to review" link.
+  "Back to review" link. Its rating form and the Review tab's grammar form post
+  to URLs that keep `language` (and `due`), because SvelteKit 3 reloads the
+  page at the form's action URL after a submission.
 - A card's language is its deck's language. For decks made before decks had a
   language, it is the card's source content language. Cards with neither
   appear under an "Unassigned" option, shown only when such cards are due.
@@ -61,6 +63,10 @@ language`, `listDecks` returned no `language`, and the reviewer and Review
   `native-flashcards`, `native-flashcards-content`, `auth`,
   `learner-owner-scope`, `learner-owner-scope.pbt`, `learner-routes`,
   `mistake-card-routes`).
+- `tests/e2e/review-ratings.spec.ts` (desktop and mobile) failed in CI after
+  rating the first card: the page reloaded without `language`/`due` and showed
+  "Page unavailable". Reproduced locally, then passed after the form actions
+  kept the query.
 - `svelte-check`, ESLint and Prettier pass on changed files.
 - Not run here: the full suite and the e2e specs (`review-ratings`,
   `fsrs-settings-decks`, `owner-routes`), which CI runs.

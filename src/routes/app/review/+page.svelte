@@ -73,7 +73,10 @@
             <h3>{part.title}</h3>
             <p>{count(part.topics.length, 'topic', 'topics')}</p>
             {#if part.topics.some((topic) => topic.ready)}
-              <form method="POST" action="?/grammar">
+              <form
+                method="POST"
+                action={`?language=${encodeURIComponent(data.language)}&/grammar`}
+              >
                 <input type="hidden" name="language" value={data.language} />
                 <input type="hidden" name="due" value={part.due} />
                 <input
