@@ -20,6 +20,7 @@ import {
   createDisposableFixture,
   disposeDisposableFixture
 } from './fixtures/database';
+import { clarifiedPrompts } from './fixtures/clarified-prompts';
 
 // The import script against a real, disposable local database. Expected
 // counts come from the raw module JSON, not from the code under test.
@@ -54,6 +55,10 @@ type RawLesson = {
 };
 type RawModule = { lessons: RawLesson[] };
 const root = process.cwd();
+// Reworded English prompts: their revisions repeat the Portuguese translation.
+const englishClarified = [...clarifiedPrompts.keys()].filter((id) =>
+  id.startsWith('en-')
+).length;
 const modules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .flatMap((dir) =>
@@ -298,8 +303,8 @@ describe('revising already imported lessons', () => {
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
-      // 55 earlier revisions plus 27 reworded assessment prompts.
-      expect(revisions).toHaveLength(82);
+      // 55 earlier revisions plus one per reworded assessment prompt.
+      expect(revisions).toHaveLength(55 + clarifiedPrompts.size);
       await importContent(client, {
         ...pkg,
         curriculumVersion: '1.2.0',
@@ -338,8 +343,7 @@ describe('revising already imported lessons', () => {
         "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.3.0' GROUP BY kind ORDER BY kind"
       );
       expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
-        // 25 earlier plus 19 English revisions of the 27 reworded prompts.
-        ['lesson-translation-added', 44],
+        ['lesson-translation-added', 25 + englishClarified],
         ['question-same', revisions.length * 15],
         ['version-added', revisions.length]
       ]);
@@ -477,8 +481,9 @@ describe('module package', () => {
     const authored = lessons.filter(
       (lesson) => lesson.version.translations?.pt
     );
-    // 45 first versions plus the 44 English revisions that repeat their translation.
-    expect(authored).toHaveLength(89);
+    // 45 first versions plus the English revisions that repeat their translation:
+    // 25 earlier ones and one per reworded English assessment prompt.
+    expect(authored).toHaveLength(70 + englishClarified);
 
     const importedById = new Map(
       modulesPackage(root).versions.map((version) => [version.id, version])
@@ -554,8 +559,8 @@ describe('module package', () => {
     const declared = lessons.flatMap((lesson) =>
       lesson.version.questions.filter((question) => question.change)
     );
-    // 82 revised lessons of 15 questions each.
-    expect(declared).toHaveLength(82 * 15);
+    // 55 earlier revisions plus one per reworded prompt, 15 questions each.
+    expect(declared).toHaveLength((55 + clarifiedPrompts.size) * 15);
     const imported = new Map(
       modulesPackage(root).versions.flatMap((version) =>
         version.questions.map((question) => [question.id, question] as const)

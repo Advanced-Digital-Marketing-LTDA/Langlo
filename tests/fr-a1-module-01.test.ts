@@ -21,7 +21,13 @@ import {
 
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
-const module = JSON.parse(read('content/fr-a1/module-01.json')) as Module;
+const full = JSON.parse(read('content/fr-a1/module-01.json')) as Module;
+// The four approved skills as first authored; a later wording revision of a
+// skill sits beside its first version and is checked in its own test below.
+const module: Module = {
+  ...full,
+  lessons: full.lessons.filter((lesson) => lesson.version.version === 1)
+};
 const graph = JSON.parse(read('content/prerequisites.json')) as {
   nodes: { skill_id: string; prerequisites: string[] }[];
 };
@@ -31,18 +37,6 @@ const catalog = new Map(
     .map((row) => [row[0], row])
 );
 const questions = module.lessons.flatMap((lesson) => lesson.version.questions);
-// A skill with a wording revision keeps its earlier version beside it so that a
-// database holding that version can take the revision; learners are taught and
-// assessed on the newest version only.
-const current = module.lessons.filter(
-  (lesson) =>
-    !module.lessons.some(
-      (other) =>
-        other.skill_id === lesson.skill_id &&
-        other.version.version > lesson.version.version
-    )
-);
-const currentQuestions = current.flatMap((lesson) => lesson.version.questions);
 
 const modulePackage = (review: string, version?: string) =>
   sharedModulePackage(root, module, review, version);
@@ -51,7 +45,7 @@ describe('French A1 module 01', () => {
   it('covers the four approved skills in prerequisite order', () => {
     expect(module.track).toBe('French A1');
     expect(module.instruction_language).toBe('en');
-    const ids = current.map((lesson) => lesson.skill_id);
+    const ids = module.lessons.map((lesson) => lesson.skill_id);
     expect(ids).toEqual(['fr-a1-001', 'fr-a1-002', 'fr-a1-003', 'fr-a1-004']);
     const lifecycle = columnIndex('lifecycle_status');
     let edges = 0;
@@ -70,7 +64,7 @@ describe('French A1 module 01', () => {
 
   it('gives every lesson an English explanation, examples and catalog references', () => {
     const sources = columnIndex('source_ids');
-    for (const lesson of current) {
+    for (const lesson of module.lessons) {
       expect(lesson.title.trim()).not.toBe('');
       expect(lesson.explanation.length).toBeGreaterThan(80);
       expect(lesson.examples.length).toBeGreaterThanOrEqual(3);
@@ -87,15 +81,15 @@ describe('French A1 module 01', () => {
         expect(allowed).toContain(reference);
       }
       expect(lesson.version).toMatchObject({
-        id: `${lesson.skill_id}@${lesson.version.version}`,
-        version: lesson.version.version
+        id: `${lesson.skill_id}@1`,
+        version: 1
       });
     }
   });
 
   it('has exactly twelve practice items and three holdouts per skill, in all four formats', () => {
-    expect(currentQuestions.length).toBe(60);
-    for (const q of currentQuestions) {
+    expect(questions.length).toBe(60);
+    for (const q of questions) {
       expect(typeof q.holdout, q.id).toBe('boolean');
       expect(formats, q.id).toContain(q.format);
       if (q.format === 'translation')
@@ -103,7 +97,7 @@ describe('French A1 module 01', () => {
           /^Translate \(use the simple present\): /u
         );
     }
-    for (const lesson of current) {
+    for (const lesson of module.lessons) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
       const holdouts = items.filter((q) => q.holdout);
@@ -145,7 +139,7 @@ describe('French A1 module 01', () => {
           false
         );
     }
-    assertUniqueQuestions(currentQuestions);
+    assertUniqueQuestions(questions);
   });
 
   it('data consistency: typed answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
@@ -256,9 +250,8 @@ describe('French A1 module 01 import', () => {
   it("imports with the approved bundle's skills and prerequisites into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)", async () => {
     const before = await count('questions');
     const result = await importContent(db.client, modulePackage('approved'));
-    // Four first versions plus the revision of fr-a1-001 (15 questions).
-    expect(result.versions).toBe(5);
-    expect(result.questions).toBe(75);
+    expect(result.versions).toBe(4);
+    expect(result.questions).toBe(60);
     const stored = await db.client.execute(
       'SELECT id, format FROM questions ORDER BY id'
     );
@@ -273,8 +266,8 @@ describe('French A1 module 01 import', () => {
       "SELECT holdout, COUNT(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' GROUP BY holdout ORDER BY holdout"
     );
     expect(classifications.rows).toEqual([
-      { holdout: 0, n: 60 },
-      { holdout: 1, n: 15 }
+      { holdout: 0, n: 48 },
+      { holdout: 1, n: 12 }
     ]);
     expect((await count('questions')) - before).toBe(questions.length);
     const tables = [
@@ -312,7 +305,7 @@ describe('French A1 module 01 import', () => {
     );
     expect([result.skills, result.versions, result.questions]).toEqual([
       0,
-      5,
+      4,
       questions.length
     ]);
     expect((await count('questions')) - before).toBe(questions.length);
@@ -322,5 +315,49 @@ describe('French A1 module 01 import', () => {
     const versions = imports.rows.map((row) => String(row.curriculum_version));
     expect(versions).toContain(bundle.curriculumVersion);
     expect(versions).toContain(newer);
+  });
+});
+
+describe('French A1 module 01 revision', () => {
+  it('revises fr-a1-001 once, changing only the prompt of one holdout', () => {
+    const revisions = full.lessons.filter(
+      (lesson) => lesson.version.version > 1
+    );
+    expect(revisions.map((lesson) => lesson.version.id)).toEqual([
+      'fr-a1-001@2'
+    ]);
+    const [revision] = revisions;
+    const first = module.lessons[0];
+    expect(first.version.id).toBe('fr-a1-001@1');
+    expect(revision.version.questions).toHaveLength(15);
+    for (const [index, question] of revision.version.questions.entries()) {
+      const before = first.version.questions[index];
+      expect(question.id).toBe(before.id.replace('@1:', '@2:'));
+      expect([question.change, question.continues]).toEqual([
+        'same',
+        before.id
+      ]);
+      expect({
+        ...question,
+        id: '',
+        prompt: '',
+        change: '',
+        continues: ''
+      }).toEqual({
+        ...before,
+        id: '',
+        prompt: '',
+        change: '',
+        continues: ''
+      });
+    }
+    const reworded = revision.version.questions.filter(
+      (question, index) =>
+        question.prompt !== first.version.questions[index].prompt
+    );
+    expect(reworded.map((question) => question.id)).toEqual([
+      'fr-a1-001@2:h01'
+    ]);
+    expect(reworded[0].prompt).toBe('La boulangerie ___ tôt. (fermer)');
   });
 });
