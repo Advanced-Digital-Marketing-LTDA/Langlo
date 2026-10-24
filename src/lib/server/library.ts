@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import type { Client } from '@libsql/client';
 import { containsTerm, splitSentences } from '../library-text';
 import { createSourceId } from './db/source-id';
-import { createNote, type LearnerSession } from './flashcards';
+import { createNote, executeWrite, type LearnerSession } from './flashcards';
 import { StudyError } from './study-error';
 
 export const LIBRARY_LANGUAGES = ['fr', 'de', 'en', 'pt'] as const;
@@ -42,12 +42,9 @@ function documentTitle(name: string): string {
 
 function normalizeDocumentText(value: string): string {
   const content = value.replace(/\r\n?/gu, '\n').trim();
-  if (
-    !content ||
-    content.length > maxTextLength ||
-    content.includes('\0') ||
-    !/[\p{L}\p{N}]/u.test(content)
-  )
+  if (content.length > maxTextLength)
+    throw new StudyError('LIBRARY_CONTENT_TOO_LARGE');
+  if (!content || content.includes('\0') || !/[\p{L}\p{N}]/u.test(content))
     throw new StudyError('INVALID_LIBRARY_DOCUMENT');
   return content;
 }
@@ -87,10 +84,10 @@ function extractOfficeText(buffer: ArrayBuffer, extension: string) {
       clearTimeout(timeout);
       reject(new StudyError('INVALID_LIBRARY_DOCUMENT'));
     });
-    worker.once('exit', (code) => {
+    worker.once('exit', () => {
       activeParsers -= 1;
       clearTimeout(timeout);
-      if (code !== 0) reject(new StudyError('INVALID_LIBRARY_DOCUMENT'));
+      reject(new StudyError('INVALID_LIBRARY_DOCUMENT'));
     });
   });
 }
@@ -164,7 +161,7 @@ export async function createLibraryDocument(
     throw new StudyError('INVALID_LIBRARY_LANGUAGE');
   const content = normalizeDocumentText(input.content);
   const sentenceCount = splitSentences(content).length;
-  await client.execute({
+  await executeWrite(client, {
     sql: 'INSERT INTO library_documents (id, owner_id, title, language, content, sentence_count) VALUES (?, ?, ?, ?, ?, ?)',
     args: [
       input.id,
@@ -216,7 +213,7 @@ export async function renameLibraryDocument(
   title: unknown
 ) {
   if (!validTitle(title)) throw new StudyError('INVALID_LIBRARY_TITLE');
-  const result = await client.execute({
+  const result = await executeWrite(client, {
     sql: 'UPDATE library_documents SET title = ? WHERE id = ? AND owner_id = ?',
     args: [title.trim(), id, learner.userId]
   });
@@ -237,7 +234,7 @@ export async function updateLibraryProgress(
     Number(progressIndex) > document.sentenceCount
   )
     throw new StudyError('INVALID_LIBRARY_PROGRESS');
-  const result = await client.execute({
+  const result = await executeWrite(client, {
     sql: 'UPDATE library_documents SET progress_index = ? WHERE id = ? AND owner_id = ?',
     args: [Number(progressIndex), id, learner.userId]
   });
@@ -249,7 +246,7 @@ export async function deleteLibraryDocument(
   learner: LearnerSession,
   id: string
 ) {
-  const result = await client.execute({
+  const result = await executeWrite(client, {
     sql: 'DELETE FROM library_documents WHERE id = ? AND owner_id = ?',
     args: [id, learner.userId]
   });

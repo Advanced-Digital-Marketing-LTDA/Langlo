@@ -10,7 +10,12 @@ import {
   saveLibraryVocabulary,
   updateLibraryProgress
 } from '../src/lib/server/library';
-import { getNote, createDeck, updateNote } from '../src/lib/server/flashcards';
+import {
+  beginWrite,
+  getNote,
+  createDeck,
+  updateNote
+} from '../src/lib/server/flashcards';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   disposeFlashcardFixtures,
@@ -34,6 +39,59 @@ afterEach(async () => {
 });
 
 describe('Library documents', () => {
+  it.each(['create', 'rename', 'progress', 'delete'] as const)(
+    'queues a Library %s behind an open transaction',
+    async (operation) => {
+      const document = {
+        id: 'queued-document',
+        title: 'Original',
+        language: 'fr' as const,
+        content: 'Bonjour.'
+      };
+      if (operation !== 'create')
+        await createLibraryDocument(client, ownerA, document);
+      const holder = await beginWrite(client);
+      const operations = {
+        create: () => createLibraryDocument(client, ownerA, document),
+        rename: () =>
+          renameLibraryDocument(client, ownerA, document.id, 'Renamed'),
+        progress: () => updateLibraryProgress(client, ownerA, document.id, 1),
+        delete: () => deleteLibraryDocument(client, ownerA, document.id)
+      };
+      let finished = false;
+      const write = operations[operation]().then(
+        () => {
+          finished = true;
+          return null;
+        },
+        (error: unknown) => {
+          finished = true;
+          return error;
+        }
+      );
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        expect(finished).toBe(false);
+      } finally {
+        await holder.commit();
+        holder.close();
+      }
+      expect(await write).toBeNull();
+      if (operation === 'delete') {
+        await expect(
+          getLibraryDocument(client, ownerA, document.id)
+        ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      } else {
+        expect(
+          await getLibraryDocument(client, ownerA, document.id)
+        ).toMatchObject({
+          title: operation === 'rename' ? 'Renamed' : 'Original',
+          progressIndex: operation === 'progress' ? 1 : 0
+        });
+      }
+    }
+  );
+
   async function vocabularyFixture() {
     await createLibraryDocument(client, ownerA, {
       id: 'vocabulary-document',

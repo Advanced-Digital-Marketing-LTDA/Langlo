@@ -77,6 +77,119 @@ async function call(handler: Handler, e: never) {
 }
 
 describe('Library API', () => {
+  it.each([
+    { action: 'invalid', sentenceIndex: 0 },
+    { action: 'translate', sentenceIndex: -1 },
+    { action: 'translate', sentenceIndex: 1 },
+    { action: 'translate', sentenceIndex: 0.5 },
+    { action: 'lookup', sentenceIndex: 0, term: '' },
+    { action: 'lookup', sentenceIndex: 0, term: 'absent' },
+    { action: 'lookup', sentenceIndex: 0, term: 'x'.repeat(257) }
+  ])('rejects invalid study input before spending quota: %j', async (body) => {
+    await createLibraryDocument(client, testSession('learner-a'), {
+      id: 'library-a',
+      title: 'French text',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    expect(
+      await call(
+        studyRoute.POST as Handler,
+        event(
+          'POST',
+          'learner-a',
+          '/app/api/library/library-a/study',
+          body,
+          'synthetic-openai-test-key'
+        )
+      )
+    ).toMatchObject({ status: 400 });
+    expect(
+      (await client.execute('SELECT * FROM library_ai_usage')).rows
+    ).toEqual([]);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('does not reserve quota when the AI key is unavailable', async () => {
+    await createLibraryDocument(client, testSession('learner-a'), {
+      id: 'library-a',
+      title: 'French text',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    expect(
+      await call(
+        studyRoute.POST as Handler,
+        event('POST', 'learner-a', '/app/api/library/library-a/study', {
+          action: 'translate',
+          sentenceIndex: 0
+        })
+      )
+    ).toMatchObject({ status: 503 });
+    expect(
+      (await client.execute('SELECT * FROM library_ai_usage')).rows
+    ).toEqual([]);
+  });
+
+  it('keeps progress and deletion owner-scoped and persists valid changes', async () => {
+    await createLibraryDocument(client, testSession('learner-a'), {
+      id: 'library-a',
+      title: 'French text',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    expect(
+      await call(
+        documentRoute.PATCH as Handler,
+        event('PATCH', 'learner-a', '/app/api/library/library-a', {
+          progressIndex: 2
+        })
+      )
+    ).toMatchObject({ status: 400 });
+    expect(
+      await call(
+        documentRoute.PATCH as Handler,
+        event('PATCH', 'learner-b', '/app/api/library/library-a', {
+          progressIndex: 1
+        })
+      )
+    ).toMatchObject({ status: 404 });
+    expect(
+      await call(
+        documentRoute.DELETE as Handler,
+        event('DELETE', 'learner-b', '/app/api/library/library-a')
+      )
+    ).toMatchObject({ status: 404 });
+    expect(
+      await call(
+        documentRoute.PATCH as Handler,
+        event('PATCH', 'learner-a', '/app/api/library/library-a', {
+          progressIndex: 1
+        })
+      )
+    ).toMatchObject({ status: 200, body: { saved: true } });
+    expect(
+      await call(
+        documentRoute.GET as Handler,
+        event('GET', 'learner-a', '/app/api/library/library-a')
+      )
+    ).toMatchObject({ status: 200, body: { document: { progressIndex: 1 } } });
+    expect(
+      await call(
+        documentRoute.DELETE as Handler,
+        event('DELETE', 'learner-a', '/app/api/library/library-a')
+      )
+    ).toMatchObject({ status: 200, body: { deleted: true } });
+    expect(
+      await call(
+        documentRoute.GET as Handler,
+        event('GET', 'learner-a', '/app/api/library/library-a')
+      )
+    ).toMatchObject({ status: 404 });
+  });
+
   it('lists and reads only the signed-in learner’s documents', async () => {
     await createLibraryDocument(client, testSession('learner-a'), {
       id: 'library-a',

@@ -268,3 +268,82 @@ responses; it contains no learner data or live provider output.
 
 No CI result, hosted acceptance, production database validation, or deployment
 is claimed here.
+
+## PR review fixes (2026-10-24)
+
+After triage of PR #177 at `b4ae0d4`, three confirmed defects were fixed:
+
+- Document creation, rename, progress updates, and deletion now use the existing
+  `executeWrite` connection queue. Four disposable-database regressions hold an
+  open transaction, verify the operation waits, then verify its persisted result
+  after the transaction commits.
+- Every worker exit rejects a still-pending parse promise, including a clean
+  exit without a result. An earlier result has already settled the promise, so
+  normal message-then-termination behavior is preserved. Tests cover exit codes
+  0 and 1 without a message, worker errors, timeouts, and reuse of both parser
+  slots after failure.
+- TXT content above 1,000,000 normalized characters now produces
+  `LIBRARY_CONTENT_TOO_LARGE`, matching office-document extraction and its HTTP
+  413 mapping. Tests cover the exact and over-limit text/upload boundaries.
+
+Additional API regressions cover invalid study actions, indices and terms,
+unavailable AI configuration without quota consumption, and owner-scoped
+PATCH/DELETE persistence and errors. These tests use disposable databases and
+synthetic inputs. No live AI provider was called.
+
+Observed RED before the service fixes:
+
+```text
+npm test -- tests/library.test.ts tests/library-documents.test.ts tests/library-parser-concurrency.test.ts
+FAIL queues a Library create behind an open transaction
+FAIL queues a Library rename behind an open transaction
+FAIL queues a Library progress behind an open transaction
+FAIL queues a Library delete behind an open transaction
+AssertionError: expected true to be false
+FAIL rejects worker exit 0 without a result
+AssertionError: expected undefined to match object { code: 'INVALID_LIBRARY_DOCUMENT' }
+FAIL accepts the text ceiling and reports oversized TXT as too much content
+Expected: LIBRARY_CONTENT_TOO_LARGE
+Received: INVALID_LIBRARY_DOCUMENT
+Test Files  3 failed (3)
+Tests  6 failed | 22 passed (28)
+```
+
+The same three files passed all 28 tests after the service fixes. Final local
+validation used Node 24.19.0 and npm 11.9.0:
+
+```text
+npm ci --ignore-scripts --offline (npm_config_cache=/tmp/langlo-npm-cache)
+added 593 packages
+npm run check
+svelte-check found 0 errors and 0 warnings
+npm run lint
+exit 0
+npm test
+Test Files  125 passed (125)
+Tests  1991 passed (1991)
+npm run test:property
+Test Files  6 passed (6)
+Tests  9 passed (9)
+npm test -- tests/library-parser-concurrency.test.ts
+Test Files  1 passed (1)
+Tests  5 passed (5)
+npm run build
+Using @sveltejs/adapter-node
+done
+npm run test:e2e
+1 failed, 169 passed (2.3m)
+```
+
+The final parser-only run followed strengthening the worker-error regression
+to verify both slots become reusable. The remaining browser failure is the
+previously reported map timer assertion in `tests/e2e/exercises.spec.ts:787`,
+this time on desktop: `mapTimerPending` was true after leaving the map. All
+Library browser cases passed. This run does not establish a clean E2E suite,
+and neither the map implementation nor its assertion was changed.
+
+Repository-wide formatting still reports only the pre-existing ignored
+`.claude/settings.local.json`; changed supported files pass Prettier.
+The other metric-only refactors and analyzer false-positive adjudication from
+triage remain separate from these correctness fixes. Hosted gates, production
+database behavior, and deployment remain unverified.

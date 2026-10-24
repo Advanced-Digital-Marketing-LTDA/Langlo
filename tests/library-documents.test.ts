@@ -4,6 +4,30 @@ import { parseLibraryDocument } from '../src/lib/server/library';
 import { StudyError } from '../src/lib/server/study-error';
 
 describe('Library document uploads', () => {
+  it('accepts a 10 MiB upload and rejects a larger file', async () => {
+    const bytes = 10 * 1024 * 1024;
+    const file = new File(['Bonjour.', ' '.repeat(bytes - 8)], 'limit.txt');
+    expect(file.size).toBe(bytes);
+    await expect(parseLibraryDocument(file, 'fr')).resolves.toMatchObject({
+      content: 'Bonjour.'
+    });
+    await expect(
+      parseLibraryDocument(
+        new File([new Uint8Array(bytes + 1)], 'large.txt'),
+        'fr'
+      )
+    ).rejects.toMatchObject({ code: 'LIBRARY_FILE_TOO_LARGE' });
+  });
+
+  it('accepts the text ceiling and reports oversized TXT as too much content', async () => {
+    await expect(
+      parseLibraryDocument(new File(['a'.repeat(1_000_000)], 'limit.txt'), 'en')
+    ).resolves.toMatchObject({ content: expect.stringMatching(/^a+$/u) });
+    await expect(
+      parseLibraryDocument(new File(['a'.repeat(1_000_001)], 'large.txt'), 'en')
+    ).rejects.toMatchObject({ code: 'LIBRARY_CONTENT_TOO_LARGE' });
+  });
+
   it.each(['text.pdf', 'scanned.pdf'])(
     'rejects %s disguised as TXT',
     async (name) => {
