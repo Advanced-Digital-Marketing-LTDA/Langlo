@@ -10,6 +10,8 @@ import {
 } from '../src/lib/server/enrollment';
 import { getTimezone, setTimezone } from '../src/lib/server/preferences';
 import { pauseStudySession, recordAttempt } from '../src/lib/server/study';
+import { recordAnswer } from '../src/lib/server/lesson-practice';
+import type { FallbackResult } from '../src/lib/server/evaluation/fallback';
 import {
   discardPractice,
   finishPractice,
@@ -2030,6 +2032,68 @@ describe('grammar practice rating and review actions', () => {
       reviewSessionId: reviewId,
       feedback: { answer: 'Wrong.' }
     });
+  });
+
+  it('waits for an answer still being graded in another tab', async () => {
+    const { reviewId, questions } = await reviewOfTwoTopics();
+    // The second topic's typed answer waits on the AI grader.
+    let grade: (result: FallbackResult) => void = () => undefined;
+    const graded = new Promise<FallbackResult>((resolve) => (grade = resolve));
+    const form = new FormData();
+    for (const [key, value] of Object.entries({
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-002'],
+      submissionKey: randomUUID(),
+      answer: 'Wrong.'
+    }))
+      form.set(key, value);
+    const pending = recordAnswer(
+      client,
+      learner,
+      form,
+      'fr-a1-002',
+      () => graded
+    );
+    await vi.waitFor(async () => {
+      const rows = await client.execute({
+        sql: 'SELECT 1 FROM attempts WHERE study_session_id = ? AND skill_id = ?',
+        args: [reviewId, 'fr-a1-002']
+      });
+      expect(rows.rows).toHaveLength(1);
+    });
+    // Meanwhile the first topic is answered and rated in another tab.
+    const correct: Record<string, string> = {
+      'fr-a1-001@1:q1': 'suis',
+      'fr-a1-001@1:q2': 'es'
+    };
+    const attempt = await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-001'],
+      submissionKey: randomUUID(),
+      answer: correct[questions['fr-a1-001']] ?? '',
+      evidenceKind: 'independent'
+    });
+    expect(
+      await lessonActions.rate(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          fields: {
+            attemptId: attempt.id,
+            studySessionId: reviewId,
+            rating: 'good'
+          }
+        })
+      )
+    ).toMatchObject({ rated: true });
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'active'
+    );
+    // Once the grader answers, the review finishes.
+    grade({ outcome: 'incorrect', reason: 'answered', evaluated: true });
+    await expect(pending).resolves.toMatchObject({ recorded: true });
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'completed'
+    );
   });
 
   it('never finishes a practice session on its own', async () => {

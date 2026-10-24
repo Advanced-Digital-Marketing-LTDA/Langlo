@@ -23,6 +23,26 @@ Date: 2026-10-24. Requested and approved by Andrew in the project thread.
   in `tests/review-session-topics.test.ts` now checks the topic list a review
   still shows, and that the removed message is gone.
 
+## Answers still being graded (two tabs)
+
+Andrew asked for this fix too:
+
+- A grammar review now writes the "graded, no verdict" marker when the AI
+  grader gives no verdict or is not configured, as assessments already did.
+  Practice sessions and assessments are unchanged.
+- A review topic whose uncertain typed answer has neither an AI verdict nor
+  that marker is still being graded, so it is not reviewed and the review
+  stays open.
+- The "every topic reviewed" check and the finish now run in one write
+  transaction.
+- Limit: if writing the marker itself fails, or a review was answered this
+  way before this change, that review does not finish by itself; Finish
+  session still finishes it.
+- Test: "waits for an answer still being graded in another tab" failed before
+  the change (the review finished while the other answer was being graded)
+  and passes now. Without the marker, four existing review cases fail, so
+  they cover it.
+
 ## Assisted retries removed
 
 Andrew asked to remove assisted retries altogether, for practice sessions and

@@ -604,7 +604,14 @@ async function settleFallback(
   attempt: FallbackAttempt,
   retentionAssessmentOnly = false
 ) {
-  if (retentionAssessmentOnly && !isRetentionAssessment(attempt)) return;
+  // A grammar review also needs the marker: it finishes by itself only once
+  // none of its answers is still waiting on the grader.
+  if (
+    retentionAssessmentOnly &&
+    !isRetentionAssessment(attempt) &&
+    attempt.mode !== 'mixed-review'
+  )
+    return;
   const tx = await beginWrite(client);
   try {
     await tx.execute({
