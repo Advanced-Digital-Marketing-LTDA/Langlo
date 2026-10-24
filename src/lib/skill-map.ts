@@ -190,3 +190,40 @@ export function layoutSkillMap(skills: SkillMapSkill[]) {
     positions
   };
 }
+
+type StudyListSkill = SkillMapSkill & { practisedSessions: number };
+
+const studyPriority: Record<GrammarStatus, number> = {
+  weak: 0,
+  practising: 1,
+  unknown: 2,
+  secure: 3
+};
+
+/** Rank available topics: weakest and least practised first, foundations ahead of the topics that need them. */
+export function rankStudyList<T extends StudyListSkill>(skills: T[]) {
+  const ranked = skills
+    .filter((skill) => skill.available)
+    .sort(
+      (a, b) =>
+        studyPriority[a.status] - studyPriority[b.status] ||
+        a.practisedSessions - b.practisedSessions ||
+        a.skillId.localeCompare(b.skillId)
+    );
+  const rank = new Map(ranked.map((skill, index) => [skill.skillId, index]));
+  const byId = new Map(ranked.map((skill) => [skill.skillId, skill]));
+  const visited = new Set<string>();
+  const ordered: { skill: T; foundationFor: T | null }[] = [];
+  const place = (skill: T, foundationFor: T | null) => {
+    if (visited.has(skill.skillId)) return;
+    visited.add(skill.skillId);
+    const unfinished = skill.prerequisites
+      .map((id) => byId.get(id))
+      .filter((item): item is T => !!item && item.status !== 'secure')
+      .sort((a, b) => rank.get(a.skillId)! - rank.get(b.skillId)!);
+    for (const prerequisite of unfinished) place(prerequisite, skill);
+    ordered.push({ skill, foundationFor });
+  };
+  for (const skill of ranked) place(skill, null);
+  return ordered;
+}
