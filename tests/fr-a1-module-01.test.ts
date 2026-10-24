@@ -256,8 +256,9 @@ describe('French A1 module 01 import', () => {
   it("imports with the approved bundle's skills and prerequisites into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)", async () => {
     const before = await count('questions');
     const result = await importContent(db.client, modulePackage('approved'));
-    expect(result.versions).toBe(module.lessons.length);
-    expect(result.questions).toBe(questions.length);
+    // Four first versions plus the revision of fr-a1-001 (15 questions).
+    expect(result.versions).toBe(5);
+    expect(result.questions).toBe(75);
     const stored = await db.client.execute(
       'SELECT id, format FROM questions ORDER BY id'
     );
@@ -311,7 +312,7 @@ describe('French A1 module 01 import', () => {
     );
     expect([result.skills, result.versions, result.questions]).toEqual([
       0,
-      module.lessons.length,
+      5,
       questions.length
     ]);
     expect((await count('questions')) - before).toBe(questions.length);

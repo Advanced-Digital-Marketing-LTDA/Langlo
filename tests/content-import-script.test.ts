@@ -298,6 +298,7 @@ describe('revising already imported lessons', () => {
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
+      // 55 earlier revisions plus 27 reworded assessment prompts.
       expect(revisions).toHaveLength(82);
       await importContent(client, {
         ...pkg,
@@ -337,6 +338,7 @@ describe('revising already imported lessons', () => {
         "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.3.0' GROUP BY kind ORDER BY kind"
       );
       expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
+        // 25 earlier plus 19 English revisions of the 27 reworded prompts.
         ['lesson-translation-added', 44],
         ['question-same', revisions.length * 15],
         ['version-added', revisions.length]
