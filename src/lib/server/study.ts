@@ -598,20 +598,22 @@ function isRetentionAssessment(attempt: FallbackAttempt) {
   );
 }
 
+/**
+ * Whether grading that ends without a verdict is recorded for every answer:
+ * retention assessments and grammar reviews wait on it. Other practice
+ * answers stay unmarked.
+ */
+function marksGradingDone(attempt: FallbackAttempt) {
+  return isRetentionAssessment(attempt) || attempt.mode === 'mixed-review';
+}
+
 async function settleFallback(
   client: Client,
   session: LearnerSession,
   attempt: FallbackAttempt,
   retentionAssessmentOnly = false
 ) {
-  // A grammar review also needs the marker: it finishes by itself only once
-  // none of its answers is still waiting on the grader.
-  if (
-    retentionAssessmentOnly &&
-    !isRetentionAssessment(attempt) &&
-    attempt.mode !== 'mixed-review'
-  )
-    return;
+  if (retentionAssessmentOnly && !marksGradingDone(attempt)) return;
   const tx = await beginWrite(client);
   try {
     await tx.execute({

@@ -196,6 +196,23 @@ describe('AI fallback for unmatched typed answers', () => {
     expect(error).toHaveBeenCalledOnce();
   });
 
+  it.each([
+    ['mixed-review', true],
+    ['practice', false]
+  ])(
+    'leaves the no-verdict marker only for grammar reviews (%s)',
+    async (mode, marked) => {
+      await client.execute({
+        sql: 'UPDATE study_sessions SET mode = ? WHERE id = ?',
+        args: [mode, 'study-a']
+      });
+      const unavailable = await attempt('fr-a1-002@1:q1', 'Nous voilà ici.');
+      expect(await evaluationsOf(unavailable.id)).toEqual(
+        marked ? [prepared, noVerdict] : [prepared]
+      );
+    }
+  );
+
   it('logs when no fallback is configured', async () => {
     const recorded = await attempt('fr-a1-002@1:q1', 'Nous voilà ici.');
     expect(await evaluationsOf(recorded.id)).toEqual([prepared]);
