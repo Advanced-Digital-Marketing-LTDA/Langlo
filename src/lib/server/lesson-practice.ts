@@ -185,8 +185,10 @@ export async function ratePracticeAnswer(
     practiceSkillId: skillId
   });
   // A grammar review finishes by itself once its last topic is rated.
-  if (mode === 'mixed-review')
-    await finishReviewedGrammarReview(client, learner, studySessionId);
+  await finishReviewedGrammarReview(client, learner, {
+    id: studySessionId,
+    mode
+  });
   return {
     rated: true as const,
     rating: rated,
@@ -289,8 +291,10 @@ export async function recordAnswer(
     { fallback }
   );
   // A grammar review finishes by itself once its last topic is reviewed.
-  if (study.mode === 'mixed-review')
-    await finishReviewedGrammarReview(client, learner, studySessionId);
+  await finishReviewedGrammarReview(client, learner, {
+    id: studySessionId,
+    mode: study.mode
+  });
   return { recorded: true as const, duplicate: attempt.duplicate };
 }
 

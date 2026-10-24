@@ -485,12 +485,17 @@ export async function finishPractice(
   }
 }
 
-/** Finish a grammar review once every one of its topics is reviewed. */
+/**
+ * Finish a grammar review once every one of its topics is reviewed. Sessions
+ * of other modes are left as they are.
+ */
 export async function finishReviewedGrammarReview(
   client: Client,
   learner: LearnerSession,
-  id: string
+  session: { id: string; mode: string }
 ): Promise<void> {
+  if (session.mode !== 'mixed-review') return;
+  const id = session.id;
   const plan = await grammarReviewPlan(client, learner, id);
   if (plan.every((topic) => topic.reviewed))
     await finishPractice(client, learner, id);
