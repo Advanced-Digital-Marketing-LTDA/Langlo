@@ -4,6 +4,67 @@ import { watchSelection, watchSwipe } from './interaction';
 import { markSavedTerms } from './marks';
 import type { ReaderOptions, ReaderRenderer } from './types';
 
+type EpubRendition = ReturnType<ReturnType<typeof ePub>['renderTo']>;
+
+type EpubLocation = {
+  atStart: boolean;
+  atEnd: boolean;
+  start: {
+    cfi: string;
+    index: number;
+    displayed: { page: number; total: number };
+  };
+};
+
+/** Where the reader stands, from an epub.js relocation. */
+function positionOf(location: EpubLocation, sections: number) {
+  const { index, displayed } = location.start;
+  const fraction = location.atEnd
+    ? 1
+    : Math.min(
+        (index + (displayed.page - 1) / Math.max(displayed.total, 1)) /
+          sections,
+        1
+      );
+  return {
+    location: location.start.cfi,
+    fraction,
+    label: `${Math.round(fraction * 100)}% read`,
+    canPrev: !location.atStart,
+    canNext: !location.atEnd
+  };
+}
+
+/** Wire saved-word marks, selection, swiping and arrow keys into one section. */
+function attachToSection(
+  contents: Contents,
+  rendition: EpubRendition,
+  options: ReaderOptions,
+  terms: string[]
+): (() => void)[] {
+  const doc = contents.document;
+  markSavedTerms(doc.body, terms);
+  doc.addEventListener('keyup', (event) => {
+    if (event.key === 'ArrowRight') void rendition.next();
+    if (event.key === 'ArrowLeft') void rendition.prev();
+  });
+  return [
+    watchSelection({
+      root: doc.body,
+      language: options.language,
+      frame: (doc.defaultView?.frameElement as HTMLElement | null) ?? undefined,
+      onSelect: options.onSelect,
+      onError: options.onError
+    }),
+    watchSwipe(
+      doc,
+      doc,
+      (direction) =>
+        void (direction === 'next' ? rendition.next() : rendition.prev())
+    )
+  ];
+}
+
 /** Flipping the pages of an EPUB in its own layout, inside a sandboxed frame. */
 export async function mountEpubReader(
   options: ReaderOptions,
@@ -30,63 +91,15 @@ export async function mountEpubReader(
   const stops: (() => void)[] = [];
 
   rendition.hooks.content.register((contents: Contents) => {
-    const doc = contents.document;
-    const body = doc.body;
-    markSavedTerms(body, terms);
-    stops.push(
-      watchSelection({
-        root: body,
-        language: options.language,
-        frame:
-          (doc.defaultView?.frameElement as HTMLElement | null) ?? undefined,
-        onSelect: options.onSelect,
-        onError: options.onError
-      }),
-      watchSwipe(
-        doc,
-        doc,
-        (direction) =>
-          void (direction === 'next' ? rendition.next() : rendition.prev())
-      )
-    );
-    doc.addEventListener('keyup', (event) => {
-      if (event.key === 'ArrowRight') void rendition.next();
-      if (event.key === 'ArrowLeft') void rendition.prev();
-    });
+    stops.push(...attachToSection(contents, rendition, options, terms));
   });
-
-  rendition.on(
-    'relocated',
-    (location: {
-      atStart: boolean;
-      atEnd: boolean;
-      start: {
-        cfi: string;
-        index: number;
-        displayed: { page: number; total: number };
-      };
-    }) => {
-      const sections = Math.max(
-        (book.spine as unknown as { length: number }).length,
-        1
-      );
-      const { index, displayed } = location.start;
-      const fraction = location.atEnd
-        ? 1
-        : Math.min(
-            (index + (displayed.page - 1) / Math.max(displayed.total, 1)) /
-              sections,
-            1
-          );
-      options.onPosition({
-        location: location.start.cfi,
-        fraction,
-        label: `${Math.round(fraction * 100)}% read`,
-        canPrev: !location.atStart,
-        canNext: !location.atEnd
-      });
-    }
-  );
+  rendition.on('relocated', (location: EpubLocation) => {
+    const sections = Math.max(
+      (book.spine as unknown as { length: number }).length,
+      1
+    );
+    options.onPosition(positionOf(location, sections));
+  });
 
   await rendition.display(
     options.location?.startsWith('epubcfi(') ? options.location : undefined

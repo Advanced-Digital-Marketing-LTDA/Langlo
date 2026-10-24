@@ -31,6 +31,65 @@ function selectWordAtCaret(doc: Document, language: string): boolean {
   return false;
 }
 
+type SelectionRead = { selection: ReaderSelection } | { error: string } | null;
+
+/** The non-empty selection inside `root`, with its text. */
+function selectedRange(win: Window, root: HTMLElement) {
+  const selection = win.getSelection();
+  if (!selection || selection.isCollapsed || !selection.rangeCount) return null;
+  const range = selection.getRangeAt(0);
+  const text = selection.toString();
+  if (!root.contains(range.commonAncestorContainer) || !text.trim())
+    return null;
+  return { range, text };
+}
+
+/** `range`'s rectangle in viewport coordinates, shifted by its iframe. */
+function viewportRect(range: Range, frame?: HTMLElement) {
+  const frameBox = frame?.getBoundingClientRect();
+  const box = range.getBoundingClientRect();
+  const dx = frameBox?.left ?? 0;
+  const dy = frameBox?.top ?? 0;
+  return {
+    top: box.top + dy,
+    bottom: box.bottom + dy,
+    left: box.left + dx,
+    right: box.right + dx
+  };
+}
+
+/** The phrase selected inside `root` with its sentence context, or an error. */
+function readSelection(
+  win: Window,
+  root: HTMLElement,
+  language: string,
+  frame?: HTMLElement
+): SelectionRead {
+  const picked = selectedRange(win, root);
+  if (!picked) return null;
+  const { range, text } = picked;
+  const before = root.ownerDocument.createRange();
+  before.selectNodeContents(root);
+  before.setEnd(range.startContainer, range.startOffset);
+  const page = collapseWhitespace(root.innerText);
+  const located = locateSelection(
+    page,
+    text,
+    collapseWhitespace(before.toString()).length
+  );
+  const snapped = located && snapToWords(page, located.start, located.end);
+  if (!snapped) return { error: 'Select a word or phrase in the text.' };
+  if (snapped.text.length > maxTermLength)
+    return { error: 'Select a shorter word or phrase.' };
+  return {
+    selection: {
+      term: snapped.text,
+      ...sentenceContext(page, snapped.start, snapped.end, language),
+      rect: viewportRect(range, frame)
+    }
+  };
+}
+
 /**
  * Report the word or phrase the learner selects inside `root`: a click or a
  * drag with the mouse, or a press-and-hold selection with touch. `frame` is
@@ -54,43 +113,10 @@ export function watchSelection(options: {
   let timer: ReturnType<typeof setTimeout> | undefined;
 
   const read = () => {
-    const selection = win.getSelection();
-    if (!selection || selection.isCollapsed || !selection.rangeCount) return;
-    const range = selection.getRangeAt(0);
-    const root = rootOf();
-    if (!root.contains(range.commonAncestorContainer)) return;
-    const selected = selection.toString();
-    if (!selected.trim()) return;
-    const before = doc.createRange();
-    before.selectNodeContents(root);
-    before.setEnd(range.startContainer, range.startOffset);
-    const page = collapseWhitespace(root.innerText);
-    const located = locateSelection(
-      page,
-      selected,
-      collapseWhitespace(before.toString()).length
-    );
-    const snapped = located && snapToWords(page, located.start, located.end);
-    if (!snapped) {
-      options.onError('Select a word or phrase in the text.');
-      return;
-    }
-    if (snapped.text.length > maxTermLength) {
-      options.onError('Select a shorter word or phrase.');
-      return;
-    }
-    const frameBox = frame?.getBoundingClientRect();
-    const box = range.getBoundingClientRect();
-    options.onSelect({
-      term: snapped.text,
-      ...sentenceContext(page, snapped.start, snapped.end, language),
-      rect: {
-        top: box.top + (frameBox?.top ?? 0),
-        bottom: box.bottom + (frameBox?.top ?? 0),
-        left: box.left + (frameBox?.left ?? 0),
-        right: box.right + (frameBox?.left ?? 0)
-      }
-    });
+    const result = readSelection(win, rootOf(), language, frame);
+    if (!result) return;
+    if ('error' in result) options.onError(result.error);
+    else options.onSelect(result.selection);
   };
 
   const onPointerDown = (event: PointerEvent) => {
