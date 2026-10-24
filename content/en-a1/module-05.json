@@ -417,6 +417,226 @@
       }
     },
     {
+      "skill_id": "en-a1-017",
+      "title": "Short instructions and imperatives",
+      "explanation": "An imperative gives an instruction and uses the base verb with no subject: Open your books. Listen to the teacher. For a negative instruction put Don't (or Do not) before the base verb: Don't talk in class. Add please to be polite: Open the door, please. The verb never takes -s or -ing in an imperative.",
+      "examples": [
+        {
+          "en": "Open your books."
+        },
+        {
+          "en": "Don't talk, please."
+        },
+        {
+          "en": "Listen to the teacher."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-017@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "en-a1-017@3:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a positive instruction?",
+            "answer": "Open the door.",
+            "alternatives": [
+              "Open the door.",
+              "Opens the door.",
+              "Opening the door."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q01"
+          },
+          {
+            "id": "en-a1-017@3:q02",
+            "format": "multiple-choice",
+            "prompt": "How do you make a negative instruction?",
+            "answer": "Don't + base verb",
+            "alternatives": [
+              "Don't + base verb",
+              "Not + base verb",
+              "Doesn't + base verb"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q02"
+          },
+          {
+            "id": "en-a1-017@3:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word makes an instruction more polite?",
+            "answer": "please",
+            "alternatives": ["please", "now", "always"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q03"
+          },
+          {
+            "id": "en-a1-017@3:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct negative instruction?",
+            "answer": "Don't talk, please.",
+            "alternatives": [
+              "Don't talking, please.",
+              "Don't talk, please.",
+              "Not talk, please."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q04"
+          },
+          {
+            "id": "en-a1-017@3:q05",
+            "format": "typed-blank",
+            "prompt": "___ the door, please. (open)",
+            "answer": "Open",
+            "near_misses": ["Opens", "Opening"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q05"
+          },
+          {
+            "id": "en-a1-017@3:q06",
+            "format": "typed-blank",
+            "prompt": "___ talk in class. (negative)",
+            "answer": "Don't",
+            "alternatives": ["Do not"],
+            "near_misses": ["Not", "Doesn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q06"
+          },
+          {
+            "id": "en-a1-017@3:q07",
+            "format": "typed-blank",
+            "prompt": "Listen ___ the teacher. (preposition)",
+            "answer": "to",
+            "near_misses": ["at", "for"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q07"
+          },
+          {
+            "id": "en-a1-017@3:q08",
+            "format": "translation",
+            "prompt": "Write the instruction: open / your books",
+            "answer": "Open your books.",
+            "near_misses": ["Opens your books.", "Open you books."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q08"
+          },
+          {
+            "id": "en-a1-017@3:q09",
+            "format": "translation",
+            "prompt": "Write the instruction: negative: talk / in class",
+            "answer": "Don't talk in class.",
+            "alternatives": ["Do not talk in class."],
+            "near_misses": ["Not talk in class.", "Don't talking in class."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q09"
+          },
+          {
+            "id": "en-a1-017@3:q10",
+            "format": "translation",
+            "prompt": "Write the instruction: listen / to the teacher / please",
+            "answer": "Listen to the teacher, please.",
+            "near_misses": [
+              "Listens to the teacher, please.",
+              "Listen at the teacher, please."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q10"
+          },
+          {
+            "id": "en-a1-017@3:q11",
+            "format": "correction",
+            "prompt": "Correct the instruction: Opens your book.",
+            "answer": "Open your book.",
+            "near_misses": ["Opens your book.", "Opening your book."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q11"
+          },
+          {
+            "id": "en-a1-017@3:q12",
+            "format": "correction",
+            "prompt": "Correct the instruction: Not talk, please.",
+            "answer": "Don't talk, please.",
+            "alternatives": ["Do not talk, please."],
+            "near_misses": ["Not talk, please.", "Doesn't talk, please."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-017@2:q12"
+          },
+          {
+            "id": "en-a1-017@3:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence tells someone to close the window? (imperative)",
+            "answer": "Close the window.",
+            "alternatives": [
+              "Closes the window.",
+              "Close the window.",
+              "Closing the window."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-017@2:h01"
+          },
+          {
+            "id": "en-a1-017@3:h02",
+            "format": "typed-blank",
+            "prompt": "Please ___ your name. (write) (imperative)",
+            "answer": "write",
+            "near_misses": ["writes", "writing"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-017@2:h02"
+          },
+          {
+            "id": "en-a1-017@3:h03",
+            "format": "translation",
+            "prompt": "Write a negative instruction: run / in the school",
+            "answer": "Don't run in the school.",
+            "alternatives": ["Do not run in the school."],
+            "near_misses": [
+              "Not run in the school.",
+              "Don't running in the school."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-017@2:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Instruções curtas e imperativos",
+            "explanation": "O imperativo dá uma instrução e usa a forma base do verbo, sem sujeito: Open your books. Listen to the teacher. Para dar uma instrução negativa, coloque Don't (ou Do not) antes da forma base: Don't talk in class. Acrescente please para ser mais gentil: Open the door, please. No imperativo, o verbo nunca recebe -s nem -ing.",
+            "examples": [
+              {
+                "en": "Open your books.",
+                "pt": "Abram os livros."
+              },
+              {
+                "en": "Don't talk, please.",
+                "pt": "Não conversem, por favor."
+              },
+              {
+                "en": "Listen to the teacher.",
+                "pt": "Ouçam o professor."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-018",
       "title": "Joining ideas with and, but and or",
       "explanation": "And adds one idea to another: I like tea and coffee. But contrasts two ideas: I like tea, but I don't like coffee. Or offers a choice: Do you want tea or coffee? Put a comma before but when it joins two clauses. These connectors join words, phrases or clauses of the same kind.",
@@ -586,6 +806,231 @@
               "He is small, or he is strong."
             ],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Ligando ideias com and, but e or",
+            "explanation": "And acrescenta uma ideia a outra: I like tea and coffee. But contrasta duas ideias: I like tea, but I don't like coffee. Or oferece uma escolha: Do you want tea or coffee? Coloque uma vírgula antes de but quando ele ligar duas orações. Esses conectores unem palavras, expressões ou orações do mesmo tipo.",
+            "examples": [
+              {
+                "en": "I like tea and coffee.",
+                "pt": "Gosto de chá e café."
+              },
+              {
+                "en": "I like tea, but I don't like coffee.",
+                "pt": "Gosto de chá, mas não gosto de café."
+              },
+              {
+                "en": "Do you want tea or coffee?",
+                "pt": "Você quer chá ou café?"
+              }
+            ],
+            "references": ["CAM-A1-YLE", "COE-CV20"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a1-018",
+      "title": "Joining ideas with and, but and or",
+      "explanation": "And adds one idea to another: I like tea and coffee. But contrasts two ideas: I like tea, but I don't like coffee. Or offers a choice: Do you want tea or coffee? Put a comma before but when it joins two clauses. These connectors join words, phrases or clauses of the same kind.",
+      "examples": [
+        {
+          "en": "I like tea and coffee."
+        },
+        {
+          "en": "I like tea, but I don't like coffee."
+        },
+        {
+          "en": "Do you want tea or coffee?"
+        }
+      ],
+      "references": ["CAM-A1-YLE", "COE-CV20"],
+      "version": {
+        "id": "en-a1-018@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-018@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word adds one idea to another?",
+            "answer": "and",
+            "alternatives": ["and", "but", "or"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q01"
+          },
+          {
+            "id": "en-a1-018@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word contrasts two ideas?",
+            "answer": "but",
+            "alternatives": ["and", "but", "or"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q02"
+          },
+          {
+            "id": "en-a1-018@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word offers a choice?",
+            "answer": "or",
+            "alternatives": ["and", "but", "or"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q03"
+          },
+          {
+            "id": "en-a1-018@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'but' correctly?",
+            "answer": "I like tea, but I don't like coffee.",
+            "alternatives": [
+              "I like tea but, I don't like coffee.",
+              "I like tea, but I don't like coffee.",
+              "I like tea, but not I like coffee."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q04"
+          },
+          {
+            "id": "en-a1-018@2:q05",
+            "format": "typed-blank",
+            "prompt": "I like tea ___ coffee. (add)",
+            "answer": "and",
+            "near_misses": ["but", "or"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q05"
+          },
+          {
+            "id": "en-a1-018@2:q06",
+            "format": "typed-blank",
+            "prompt": "I like tea, ___ I don't like coffee. (contrast)",
+            "answer": "but",
+            "near_misses": ["and", "so"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q06"
+          },
+          {
+            "id": "en-a1-018@2:q07",
+            "format": "typed-blank",
+            "prompt": "Do you want tea ___ coffee? (choice)",
+            "answer": "or",
+            "near_misses": ["and", "but"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q07"
+          },
+          {
+            "id": "en-a1-018@2:q08",
+            "format": "translation",
+            "prompt": "Join the ideas: I like tea / I like coffee (add)",
+            "answer": "I like tea and coffee.",
+            "alternatives": ["I like tea, and I like coffee."],
+            "near_misses": ["I like tea but coffee.", "I like tea or coffee."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q08"
+          },
+          {
+            "id": "en-a1-018@2:q09",
+            "format": "translation",
+            "prompt": "Join the ideas: I like tea / I don't like coffee (contrast)",
+            "answer": "I like tea, but I don't like coffee.",
+            "alternatives": ["I like tea but I don't like coffee."],
+            "near_misses": [
+              "I like tea, or I don't like coffee.",
+              "I like tea but, I don't like coffee."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q09"
+          },
+          {
+            "id": "en-a1-018@2:q10",
+            "format": "translation",
+            "prompt": "Join the ideas: Do you want tea / Do you want coffee (choice)",
+            "answer": "Do you want tea or coffee?",
+            "near_misses": [
+              "Do you want tea and coffee?",
+              "Do you want tea but coffee?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q10"
+          },
+          {
+            "id": "en-a1-018@2:q11",
+            "format": "correction",
+            "prompt": "Correct the connector (contrast): She is tired, and she works.",
+            "answer": "She is tired, but she works.",
+            "alternatives": ["She is tired but she works."],
+            "near_misses": [
+              "She is tired, and she works.",
+              "She is tired, or she works."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q11"
+          },
+          {
+            "id": "en-a1-018@2:q12",
+            "format": "correction",
+            "prompt": "Correct the connector (choice): Is the bag red but green?",
+            "answer": "Is the bag red or green?",
+            "near_misses": [
+              "Is the bag red but green?",
+              "Is the bag red and green?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-018@1:q12"
+          },
+          {
+            "id": "en-a1-018@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence joins two sports with 'and'?",
+            "answer": "She plays tennis and football.",
+            "alternatives": [
+              "She plays tennis but football.",
+              "She plays tennis and football.",
+              "She plays tennis, football and."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-018@1:h01"
+          },
+          {
+            "id": "en-a1-018@2:h02",
+            "format": "translation",
+            "prompt": "Join the ideas: I like cats / I don't like dogs (contrast)",
+            "answer": "I like cats, but I don't like dogs.",
+            "alternatives": ["I like cats but I don't like dogs."],
+            "near_misses": [
+              "I like cats, and I don't like dogs.",
+              "I like cats, or I don't like dogs."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-018@1:h02"
+          },
+          {
+            "id": "en-a1-018@2:h03",
+            "format": "correction",
+            "prompt": "Correct the connector (contrast): He is small, and he is strong.",
+            "answer": "He is small, but he is strong.",
+            "alternatives": ["He is small but he is strong."],
+            "near_misses": [
+              "He is small, and he is strong.",
+              "He is small, or he is strong."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-018@1:h03"
           }
         ],
         "translations": {

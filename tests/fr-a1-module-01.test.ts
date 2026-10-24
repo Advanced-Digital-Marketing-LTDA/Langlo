@@ -31,6 +31,18 @@ const catalog = new Map(
     .map((row) => [row[0], row])
 );
 const questions = module.lessons.flatMap((lesson) => lesson.version.questions);
+// A skill with a wording revision keeps its earlier version beside it so that a
+// database holding that version can take the revision; learners are taught and
+// assessed on the newest version only.
+const current = module.lessons.filter(
+  (lesson) =>
+    !module.lessons.some(
+      (other) =>
+        other.skill_id === lesson.skill_id &&
+        other.version.version > lesson.version.version
+    )
+);
+const currentQuestions = current.flatMap((lesson) => lesson.version.questions);
 
 const modulePackage = (review: string, version?: string) =>
   sharedModulePackage(root, module, review, version);
@@ -39,7 +51,7 @@ describe('French A1 module 01', () => {
   it('covers the four approved skills in prerequisite order', () => {
     expect(module.track).toBe('French A1');
     expect(module.instruction_language).toBe('en');
-    const ids = module.lessons.map((lesson) => lesson.skill_id);
+    const ids = current.map((lesson) => lesson.skill_id);
     expect(ids).toEqual(['fr-a1-001', 'fr-a1-002', 'fr-a1-003', 'fr-a1-004']);
     const lifecycle = columnIndex('lifecycle_status');
     let edges = 0;
@@ -58,7 +70,7 @@ describe('French A1 module 01', () => {
 
   it('gives every lesson an English explanation, examples and catalog references', () => {
     const sources = columnIndex('source_ids');
-    for (const lesson of module.lessons) {
+    for (const lesson of current) {
       expect(lesson.title.trim()).not.toBe('');
       expect(lesson.explanation.length).toBeGreaterThan(80);
       expect(lesson.examples.length).toBeGreaterThanOrEqual(3);
@@ -75,15 +87,15 @@ describe('French A1 module 01', () => {
         expect(allowed).toContain(reference);
       }
       expect(lesson.version).toMatchObject({
-        id: `${lesson.skill_id}@1`,
-        version: 1
+        id: `${lesson.skill_id}@${lesson.version.version}`,
+        version: lesson.version.version
       });
     }
   });
 
   it('has exactly twelve practice items and three holdouts per skill, in all four formats', () => {
-    expect(questions.length).toBe(60);
-    for (const q of questions) {
+    expect(currentQuestions.length).toBe(60);
+    for (const q of currentQuestions) {
       expect(typeof q.holdout, q.id).toBe('boolean');
       expect(formats, q.id).toContain(q.format);
       if (q.format === 'translation')
@@ -91,7 +103,7 @@ describe('French A1 module 01', () => {
           /^Translate \(use the simple present\): /u
         );
     }
-    for (const lesson of module.lessons) {
+    for (const lesson of current) {
       const items = lesson.version.questions;
       const practice = items.filter((q) => !q.holdout);
       const holdouts = items.filter((q) => q.holdout);
@@ -133,7 +145,7 @@ describe('French A1 module 01', () => {
           false
         );
     }
-    assertUniqueQuestions(questions);
+    assertUniqueQuestions(currentQuestions);
   });
 
   it('data consistency: typed answers, alternatives and near misses agree with the local rule, and multiple-choice options are sound', () => {
@@ -244,8 +256,8 @@ describe('French A1 module 01 import', () => {
   it("imports with the approved bundle's skills and prerequisites into a fresh database once a review is recorded (ids, formats and counts only: the questions table stores no prompt or answer)", async () => {
     const before = await count('questions');
     const result = await importContent(db.client, modulePackage('approved'));
-    expect(result.versions).toBe(4);
-    expect(result.questions).toBe(60);
+    expect(result.versions).toBe(module.lessons.length);
+    expect(result.questions).toBe(questions.length);
     const stored = await db.client.execute(
       'SELECT id, format FROM questions ORDER BY id'
     );
@@ -260,8 +272,8 @@ describe('French A1 module 01 import', () => {
       "SELECT holdout, COUNT(*) AS n FROM questions WHERE id LIKE 'fr-a1-%' GROUP BY holdout ORDER BY holdout"
     );
     expect(classifications.rows).toEqual([
-      { holdout: 0, n: 48 },
-      { holdout: 1, n: 12 }
+      { holdout: 0, n: 60 },
+      { holdout: 1, n: 15 }
     ]);
     expect((await count('questions')) - before).toBe(questions.length);
     const tables = [
@@ -299,7 +311,7 @@ describe('French A1 module 01 import', () => {
     );
     expect([result.skills, result.versions, result.questions]).toEqual([
       0,
-      4,
+      module.lessons.length,
       questions.length
     ]);
     expect((await count('questions')) - before).toBe(questions.length);

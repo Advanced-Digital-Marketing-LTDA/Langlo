@@ -552,6 +552,209 @@
       }
     },
     {
+      "skill_id": "en-a1-024",
+      "title": "The verb be: statements, questions and short answers",
+      "explanation": "Be has three present forms: I am, he/she/it is, and you/we/they are. In questions, put be before the subject: Are you ready? Is she at home? Short answers repeat be: Yes, I am. No, she isn't. Use the contracted forms (I'm, she's, they're) in speech; both the full and the contracted forms are correct in a statement.",
+      "examples": [
+        {
+          "en": "I am a student."
+        },
+        {
+          "en": "She is at home."
+        },
+        {
+          "en": "Are you ready?"
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-024@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-024@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'I'?",
+            "answer": "am",
+            "alternatives": ["am", "is", "are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q01"
+          },
+          {
+            "id": "en-a1-024@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'she'?",
+            "answer": "is",
+            "alternatives": ["am", "is", "are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q02"
+          },
+          {
+            "id": "en-a1-024@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form of be goes with 'they'?",
+            "answer": "are",
+            "alternatives": ["am", "is", "are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q03"
+          },
+          {
+            "id": "en-a1-024@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which is the correct short answer to 'Are you a student?' (yes)",
+            "answer": "Yes, I am.",
+            "alternatives": ["Yes, I am.", "Yes, I do.", "Yes, I'm."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q04"
+          },
+          {
+            "id": "en-a1-024@2:q05",
+            "format": "typed-blank",
+            "prompt": "She ___ at home. (be)",
+            "answer": "is",
+            "alternatives": ["'s"],
+            "near_misses": ["are", "am"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q05"
+          },
+          {
+            "id": "en-a1-024@2:q06",
+            "format": "typed-blank",
+            "prompt": "We ___ students. (be)",
+            "answer": "are",
+            "near_misses": ["is", "am"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q06"
+          },
+          {
+            "id": "en-a1-024@2:q07",
+            "format": "typed-blank",
+            "prompt": "___ you ready? (be)",
+            "answer": "Are",
+            "near_misses": ["Is", "Am"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q07"
+          },
+          {
+            "id": "en-a1-024@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence (use be): I / a student",
+            "answer": "I am a student.",
+            "alternatives": ["I'm a student."],
+            "near_misses": ["I is a student.", "I are a student."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q08"
+          },
+          {
+            "id": "en-a1-024@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence (use be): they / at school",
+            "answer": "They are at school.",
+            "alternatives": ["They're at school."],
+            "near_misses": ["They is at school.", "They am at school."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q09"
+          },
+          {
+            "id": "en-a1-024@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence (use be): ask: you / ready",
+            "answer": "Are you ready?",
+            "near_misses": ["You are ready?", "Is you ready?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q10"
+          },
+          {
+            "id": "en-a1-024@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She are at home.",
+            "answer": "She is at home.",
+            "alternatives": ["She's at home."],
+            "near_misses": ["She are at home.", "She am at home."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q11"
+          },
+          {
+            "id": "en-a1-024@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Is you a student?",
+            "answer": "Are you a student?",
+            "near_misses": ["Is you a student?", "Am you a student?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-024@1:q12"
+          },
+          {
+            "id": "en-a1-024@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which short answer is correct to 'Is she at home?' (no)",
+            "answer": "No, she isn't.",
+            "alternatives": [
+              "No, she isn't.",
+              "No, she doesn't.",
+              "No, she amn't."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-024@1:h01"
+          },
+          {
+            "id": "en-a1-024@2:h02",
+            "format": "translation",
+            "prompt": "Write the question (use be): he / at work",
+            "answer": "Is he at work?",
+            "near_misses": ["He is at work?", "Are he at work?"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-024@1:h02"
+          },
+          {
+            "id": "en-a1-024@2:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: We is happy.",
+            "answer": "We are happy.",
+            "alternatives": ["We're happy."],
+            "near_misses": ["We is happy.", "We am happy."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-024@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "O verbo be: afirmações, perguntas e respostas curtas",
+            "explanation": "O verbo be tem três formas no presente: I am, he/she/it is e you/we/they are. Em perguntas, coloque be antes do sujeito: Are you ready? Is she at home? Nas respostas curtas, repita be: Yes, I am. No, she isn't. Na fala, use as formas contraídas (I'm, she's, they're); em uma afirmação, tanto a forma completa quanto a contraída estão corretas.",
+            "examples": [
+              {
+                "en": "I am a student.",
+                "pt": "Eu sou estudante."
+              },
+              {
+                "en": "She is at home.",
+                "pt": "Ela está em casa."
+              },
+              {
+                "en": "Are you ready?",
+                "pt": "Você está pronto(a)?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-003",
       "title": "Present simple for routines and preferences",
       "explanation": "Use the present simple for routines, facts and preferences: I get up at seven. She likes tea. Add -s to the verb after he, she or it: she works. Add -es after -s, -sh, -ch, -x and -o: he goes, it watches. Have becomes has: he has a dog. Use the base verb after I, you, we and they: They play tennis on Sundays.",

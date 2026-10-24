@@ -1547,6 +1547,230 @@
           }
         }
       }
+    },
+    {
+      "skill_id": "en-a1-008",
+      "title": "Negative statements with be and do",
+      "explanation": "With be, add not after the verb: I am not tired. He isn't at home. They aren't here. With other verbs in the present simple, use don't (do not) or doesn't (does not) before the base verb: They don't live here. She doesn't like coffee. The main verb does not take -s after doesn't. Both the full and the contracted forms are correct.",
+      "examples": [
+        {
+          "en": "I am not tired."
+        },
+        {
+          "en": "She doesn't like coffee."
+        },
+        {
+          "en": "They don't live here."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-008@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "en-a1-008@3:q01",
+            "format": "multiple-choice",
+            "prompt": "Which negative goes with 'she' in the present simple?",
+            "answer": "doesn't",
+            "alternatives": ["don't", "doesn't", "isn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q01"
+          },
+          {
+            "id": "en-a1-008@3:q02",
+            "format": "multiple-choice",
+            "prompt": "Which negative goes with 'they' in the present simple?",
+            "answer": "don't",
+            "alternatives": ["don't", "doesn't", "isn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q02"
+          },
+          {
+            "id": "en-a1-008@3:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct negative with be?",
+            "answer": "He isn't at home.",
+            "alternatives": [
+              "He doesn't at home.",
+              "He isn't at home.",
+              "He not is at home."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q03"
+          },
+          {
+            "id": "en-a1-008@3:q04",
+            "format": "multiple-choice",
+            "prompt": "Which form of the verb follows 'doesn't'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -s form", "the -ing form"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q04"
+          },
+          {
+            "id": "en-a1-008@3:q05",
+            "format": "typed-blank",
+            "prompt": "She ___ like coffee. (negative)",
+            "answer": "doesn't",
+            "alternatives": ["does not"],
+            "near_misses": ["don't", "isn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q05"
+          },
+          {
+            "id": "en-a1-008@3:q06",
+            "format": "typed-blank",
+            "prompt": "They ___ live here. (negative)",
+            "answer": "don't",
+            "alternatives": ["do not"],
+            "near_misses": ["doesn't", "aren't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q06"
+          },
+          {
+            "id": "en-a1-008@3:q07",
+            "format": "typed-blank",
+            "prompt": "I ___ tired. (negative be)",
+            "answer": "am not",
+            "alternatives": ["'m not"],
+            "near_misses": ["isn't", "don't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q07"
+          },
+          {
+            "id": "en-a1-008@3:q08",
+            "format": "translation",
+            "prompt": "Write the negative sentence: she / like / coffee",
+            "answer": "She doesn't like coffee.",
+            "alternatives": ["She does not like coffee."],
+            "near_misses": [
+              "She don't like coffee.",
+              "She doesn't likes coffee."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q08"
+          },
+          {
+            "id": "en-a1-008@3:q09",
+            "format": "translation",
+            "prompt": "Write the negative sentence: they / live / here",
+            "answer": "They don't live here.",
+            "alternatives": ["They do not live here."],
+            "near_misses": [
+              "They doesn't live here.",
+              "They don't lives here."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q09"
+          },
+          {
+            "id": "en-a1-008@3:q10",
+            "format": "translation",
+            "prompt": "Write the negative sentence: he / at home",
+            "answer": "He isn't at home.",
+            "alternatives": ["He is not at home.", "He's not at home."],
+            "near_misses": ["He doesn't at home.", "He not is at home."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q10"
+          },
+          {
+            "id": "en-a1-008@3:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He don't work here.",
+            "answer": "He doesn't work here.",
+            "alternatives": ["He does not work here."],
+            "near_misses": ["He don't work here.", "He doesn't works here."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q11"
+          },
+          {
+            "id": "en-a1-008@3:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: We doesn't play tennis.",
+            "answer": "We don't play tennis.",
+            "alternatives": ["We do not play tennis."],
+            "near_misses": [
+              "We doesn't play tennis.",
+              "We don't plays tennis."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-008@2:q12"
+          },
+          {
+            "id": "en-a1-008@3:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a correct negative with do?",
+            "answer": "I don't like tea.",
+            "alternatives": [
+              "I doesn't like tea.",
+              "I don't like tea.",
+              "I not like tea."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-008@2:h01"
+          },
+          {
+            "id": "en-a1-008@3:h02",
+            "format": "translation",
+            "prompt": "Write the negative sentence: we / be / at school",
+            "answer": "We aren't at school.",
+            "alternatives": ["We are not at school.", "We're not at school."],
+            "near_misses": ["We don't at school.", "We isn't at school."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-008@2:h02"
+          },
+          {
+            "id": "en-a1-008@3:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: Anna don't speak French. (present simple)",
+            "answer": "Anna doesn't speak French.",
+            "alternatives": ["Anna does not speak French."],
+            "near_misses": [
+              "Anna don't speak French.",
+              "Anna doesn't speaks French."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-008@2:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Frases negativas com be e do",
+            "explanation": "Com be, coloque not depois do verbo: I am not tired. He isn't at home. They aren't here. Com outros verbos no presente simples, use don't (do not) ou doesn't (does not) antes da forma base do verbo: They don't live here. She doesn't like coffee. Depois de doesn't, o verbo principal não recebe -s. Tanto as formas completas quanto as contraídas estão corretas.",
+            "examples": [
+              {
+                "en": "I am not tired.",
+                "pt": "Não estou cansado(a)."
+              },
+              {
+                "en": "She doesn't like coffee.",
+                "pt": "Ela não gosta de café."
+              },
+              {
+                "en": "They don't live here.",
+                "pt": "Eles não moram aqui."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
     }
   ]
 }

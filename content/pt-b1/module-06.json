@@ -721,6 +721,211 @@
       }
     },
     {
+      "skill_id": "pt-b1-027",
+      "title": "Ter, haver and tem que: possession, existence and obligation",
+      "explanation": "Ter shows possession and, in speech, existence: Eu tenho um carro, Tem um café aqui. Haver is the formal verb of existence and uses the single form há: Há um café aqui. In speech, tem replaces há for existence, and the plural does not change: Tem dois bancos aqui. Use ter que (or ter de) + infinitive for an obligation: Tenho que sair, Temos de pagar. Ter is the usual auxiliary of the compound tenses (tinha saído, não tinha visto); haver is the formal alternative (havia saído). In the past, use havia or tinha: Havia muita gente or Tinha muita gente. Do not use the plural of há: Há dois livros, not Hão dois livros.",
+      "examples": [
+        {
+          "pt": "Eu tenho dois irmãos e uma irmã.",
+          "en": "I have two brothers and a sister."
+        },
+        {
+          "pt": "Tem uma farmácia perto daqui.",
+          "en": "There is a pharmacy near here."
+        },
+        {
+          "pt": "Tenho que acordar cedo amanhã.",
+          "en": "I have to wake up early tomorrow."
+        }
+      ],
+      "references": ["COE-CV20", "CAMOES-REF-PLE"],
+      "version": {
+        "id": "pt-b1-027@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "pt-b1-027@3:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb (possession): Ela ___ um gato.",
+            "answer": "tem",
+            "alternatives": ["há", "tem", "é"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q01"
+          },
+          {
+            "id": "pt-b1-027@3:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb (existence, formal): ___ muitos livros na biblioteca.",
+            "answer": "Há",
+            "alternatives": ["Têm", "Hão", "Há"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q02"
+          },
+          {
+            "id": "pt-b1-027@3:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the verb (obligation): Eu ___ estudar.",
+            "answer": "tenho que",
+            "alternatives": ["tenho que", "tenho", "há de"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q03"
+          },
+          {
+            "id": "pt-b1-027@3:q04",
+            "format": "typed-blank",
+            "prompt": "Na rua ___ muitos carros. (existência, fala)",
+            "answer": "tem",
+            "near_misses": ["têm", "tenho"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q04"
+          },
+          {
+            "id": "pt-b1-027@3:q05",
+            "format": "typed-blank",
+            "prompt": "Ontem ___ muita gente na festa. (existência, passado)",
+            "answer": "havia",
+            "near_misses": ["haviam", "houveram"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q05"
+          },
+          {
+            "id": "pt-b1-027@3:q06",
+            "format": "typed-blank",
+            "prompt": "Nós ___ chegar cedo. (obrigação)",
+            "answer": "temos que",
+            "near_misses": ["temos", "havemos"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q06"
+          },
+          {
+            "id": "pt-b1-027@3:q07",
+            "format": "translation",
+            "prompt": "Translate (existence): There is a store here.",
+            "answer": "Tem uma loja aqui.",
+            "alternatives": ["Há uma loja aqui.", "Existe uma loja aqui."],
+            "near_misses": ["Têm uma loja aqui.", "Há uma loja aqui está."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q07"
+          },
+          {
+            "id": "pt-b1-027@3:q08",
+            "format": "translation",
+            "prompt": "Translate (obligation): She has to work tomorrow.",
+            "answer": "Ela tem que trabalhar amanhã.",
+            "alternatives": [
+              "Ela tem de trabalhar amanhã.",
+              "Ela precisa trabalhar amanhã."
+            ],
+            "near_misses": [
+              "Ela há que trabalhar amanhã.",
+              "Ela tem trabalhar amanhã."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q08"
+          },
+          {
+            "id": "pt-b1-027@3:q09",
+            "format": "translation",
+            "prompt": "Translate (past existence): There were many people.",
+            "answer": "Tinha muita gente.",
+            "alternatives": ["Havia muita gente.", "Tinha muitas pessoas."],
+            "near_misses": ["Tinham muita gente.", "Havia muitas gente."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q09"
+          },
+          {
+            "id": "pt-b1-027@3:q10",
+            "format": "correction",
+            "prompt": "Correct the verb: Hão dois livros na mesa.",
+            "answer": "Há dois livros na mesa.",
+            "alternatives": ["Tem dois livros na mesa."],
+            "near_misses": [
+              "Hão dois livros na mesa.",
+              "Haviam dois livros na mesa."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q10"
+          },
+          {
+            "id": "pt-b1-027@3:q11",
+            "format": "correction",
+            "prompt": "Correct the verb: Têm muitas pessoas aqui.",
+            "answer": "Tem muitas pessoas aqui.",
+            "alternatives": ["Há muitas pessoas aqui."],
+            "near_misses": [
+              "Têm muitas pessoas aqui.",
+              "Temos muitas pessoas aqui."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q11"
+          },
+          {
+            "id": "pt-b1-027@3:q12",
+            "format": "correction",
+            "prompt": "Correct the obligation: Eu tenho estudar hoje.",
+            "answer": "Eu tenho que estudar hoje.",
+            "alternatives": ["Eu tenho de estudar hoje."],
+            "near_misses": [
+              "Eu tenho estudar hoje.",
+              "Eu tenho a estudar hoje."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b1-027@2:q12"
+          },
+          {
+            "id": "pt-b1-027@3:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the sentence: 'He has two small children'.",
+            "answer": "Ele tem dois filhos pequenos.",
+            "alternatives": [
+              "Ele tem dois filhos pequenos.",
+              "Ele há dois filhos pequenos.",
+              "Ele têm dois filhos pequenos."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-027@2:h01"
+          },
+          {
+            "id": "pt-b1-027@3:h02",
+            "format": "typed-blank",
+            "prompt": "Ontem à noite ___ um show no bairro. (haver, passado) (pretérito perfeito)",
+            "answer": "houve",
+            "near_misses": ["houveram", "há"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-027@2:h02"
+          },
+          {
+            "id": "pt-b1-027@3:h03",
+            "format": "translation",
+            "prompt": "Translate (obligation): We have to pay today.",
+            "answer": "Nós temos que pagar hoje.",
+            "alternatives": [
+              "Temos que pagar hoje.",
+              "Nós temos de pagar hoje."
+            ],
+            "near_misses": ["Nós temos pagar hoje.", "Nós há que pagar hoje."],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b1-027@2:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "pt-b1-028",
       "title": "Por or para: purpose, cause, route, time and recipient",
       "explanation": "Para shows purpose, destination, recipient and deadline: Estudo para passar, Vou para o Rio, Este presente é para você, Preciso disso para amanhã. Por shows cause, route, exchange and duration: Obrigado por tudo, Passei pela praça, Paguei dez reais pelo livro, Fiquei por dois dias. Por also marks the agent in the passive: escrito por ela. Para means in order to, and por means because of. Common fixed phrases: por favor, por isso, por exemplo, por causa de, para sempre, para onde. Compare: Estudo por ela (for her sake) and Estudo para ela (for her to receive).",

@@ -208,6 +208,237 @@
       }
     },
     {
+      "skill_id": "en-a1-021",
+      "title": "There is and there are",
+      "explanation": "Use there is to say that one thing exists or to describe a non-count noun, and there are for plural nouns: There is a book on the table. There is some milk. There are two chairs in the room. Questions put the verb first: Is there a bank near here? Are there any chairs? Short answers: Yes, there is. No, there aren't. Negatives: There isn't any milk. There aren't any chairs.",
+      "examples": [
+        {
+          "en": "There is a book on the table."
+        },
+        {
+          "en": "There are two chairs in the room."
+        },
+        {
+          "en": "Is there a bank near here?"
+        }
+      ],
+      "references": ["BC-A1-A2"],
+      "version": {
+        "id": "en-a1-021@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-021@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which form is used with a singular noun?",
+            "answer": "There is",
+            "alternatives": ["There is", "There are", "They is"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q01"
+          },
+          {
+            "id": "en-a1-021@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which form is used with a plural noun?",
+            "answer": "There are",
+            "alternatives": ["There is", "There are", "They are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q02"
+          },
+          {
+            "id": "en-a1-021@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which question is correct?",
+            "answer": "Is there a bank near here?",
+            "alternatives": [
+              "Are there a bank near here?",
+              "Is there a bank near here?",
+              "Does there a bank near here?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q03"
+          },
+          {
+            "id": "en-a1-021@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which is the correct short answer to 'Are there any chairs?' (yes)",
+            "answer": "Yes, there are.",
+            "alternatives": [
+              "Yes, there are.",
+              "Yes, there is.",
+              "Yes, they are."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q04"
+          },
+          {
+            "id": "en-a1-021@2:q05",
+            "format": "typed-blank",
+            "prompt": "___ a book on the table. (singular)",
+            "answer": "There is",
+            "alternatives": ["There's"],
+            "near_misses": ["There are", "Is there"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q05"
+          },
+          {
+            "id": "en-a1-021@2:q06",
+            "format": "typed-blank",
+            "prompt": "___ two chairs in the room. (plural)",
+            "answer": "There are",
+            "near_misses": ["There is", "Are there"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q06"
+          },
+          {
+            "id": "en-a1-021@2:q07",
+            "format": "typed-blank",
+            "prompt": "There ___ any milk. (negative)",
+            "answer": "isn't",
+            "alternatives": ["is not"],
+            "near_misses": ["aren't", "don't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q07"
+          },
+          {
+            "id": "en-a1-021@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with there is or there are: a book / on the table",
+            "answer": "There is a book on the table.",
+            "alternatives": ["There's a book on the table."],
+            "near_misses": [
+              "There are a book on the table.",
+              "It is a book on the table."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q08"
+          },
+          {
+            "id": "en-a1-021@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with there is or there are: two chairs / in the room",
+            "answer": "There are two chairs in the room.",
+            "near_misses": [
+              "There is two chairs in the room.",
+              "There are two chair in the room."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q09"
+          },
+          {
+            "id": "en-a1-021@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with there is or there are: ask: a bank / near here",
+            "answer": "Is there a bank near here?",
+            "near_misses": [
+              "Are there a bank near here?",
+              "There is a bank near here?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q10"
+          },
+          {
+            "id": "en-a1-021@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: There is two chairs in the kitchen.",
+            "answer": "There are two chairs in the kitchen.",
+            "near_misses": [
+              "There is two chairs in the kitchen.",
+              "There are two chair in the kitchen."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q11"
+          },
+          {
+            "id": "en-a1-021@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: There are a cat in the garden.",
+            "answer": "There is a cat in the garden.",
+            "alternatives": ["There's a cat in the garden."],
+            "near_misses": [
+              "There are a cat in the garden.",
+              "It is a cat in the garden."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-021@1:q12"
+          },
+          {
+            "id": "en-a1-021@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which is the correct short answer to 'Is there a shop here?' (no)",
+            "answer": "No, there isn't.",
+            "alternatives": [
+              "No, there isn't.",
+              "No, there aren't.",
+              "No, it isn't."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-021@1:h01"
+          },
+          {
+            "id": "en-a1-021@2:h02",
+            "format": "translation",
+            "prompt": "Write the question with there is/are: any apples / in the bag",
+            "answer": "Are there any apples in the bag?",
+            "near_misses": [
+              "Is there any apples in the bag?",
+              "There are any apples in the bag?"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-021@1:h02"
+          },
+          {
+            "id": "en-a1-021@2:h03",
+            "format": "correction",
+            "prompt": "Correct the question: Is there two books here?",
+            "answer": "Are there two books here?",
+            "near_misses": [
+              "Is there two books here?",
+              "Are there two book here?"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-021@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "There is e there are",
+            "explanation": "Use there is para dizer que uma coisa existe ou para falar de um substantivo incontável; use there are com substantivos no plural: There is a book on the table. There is some milk. There are two chairs in the room. Nas perguntas, coloque o verbo primeiro: Is there a bank near here? Are there any chairs? Respostas curtas: Yes, there is. No, there aren't. Negativas: There isn't any milk. There aren't any chairs.",
+            "examples": [
+              {
+                "en": "There is a book on the table.",
+                "pt": "Há um livro sobre a mesa."
+              },
+              {
+                "en": "There are two chairs in the room.",
+                "pt": "Há duas cadeiras no quarto."
+              },
+              {
+                "en": "Is there a bank near here?",
+                "pt": "Há um banco aqui perto?"
+              }
+            ],
+            "references": ["BC-A1-A2"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-022",
       "title": "Want to + infinitive",
       "explanation": "Use want to plus the base verb to say what you wish to do: I want to learn English. She wants to go home. Add -s to want after he, she and it. Questions and negatives use do or does: Do you want to play tennis? She doesn't want to stay. After doesn't and don't the verb want has no -s. Do not leave out to, and do not use -ing: not I want learn or I want to learning.",
