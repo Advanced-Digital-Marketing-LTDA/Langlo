@@ -39,6 +39,14 @@ Sentry.init({
   ]
 });
 
+const declaresOversizedBody = (
+  contentLength: string | null,
+  maxBytes: number
+): boolean => {
+  if (!contentLength) return false;
+  return /^\d+$/u.test(contentLength) && Number(contentLength) > maxBytes;
+};
+
 const appHandle: Handle = async ({ event, resolve }) => {
   const correlationId = randomUUID();
   event.locals.correlationId = correlationId;
@@ -59,11 +67,7 @@ const appHandle: Handle = async ({ event, resolve }) => {
     path === '/app/library' &&
     event.url.searchParams.has('/upload');
   const maxBodyBytes = uploadAction ? 11 * 1024 * 1024 : MAX_REQUEST_BODY_BYTES;
-  if (
-    contentLength &&
-    /^\d+$/u.test(contentLength) &&
-    Number(contentLength) > maxBodyBytes
-  ) {
+  if (declaresOversizedBody(contentLength, maxBodyBytes)) {
     return Response.json(
       { message: 'This request is too large.', correlationId },
       { status: 413, headers }
