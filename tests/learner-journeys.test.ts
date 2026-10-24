@@ -2054,6 +2054,57 @@ describe('grammar practice rating and review actions', () => {
     );
   });
 
+  it('finishes the review when its last answer is sent again', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    const planned = await client.execute({
+      sql: `SELECT json_extract(grammar_retention_plan, '$.questions[0].questionId') AS id
+        FROM study_sessions WHERE id = ?`,
+      args: [reviewId]
+    });
+    const answer = {
+      studySessionId: reviewId,
+      questionId: String(planned.rows[0]?.id),
+      submissionKey: randomUUID(),
+      answer: 'est'
+    };
+    // The first try saved the answer but stopped before finishing the review.
+    await recordAttempt(client, learner, {
+      ...answer,
+      evidenceKind: 'independent'
+    });
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'active'
+    );
+    expect(
+      await lessonActions.answer(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          fields: answer
+        })
+      )
+    ).toMatchObject({ recorded: true, duplicate: true });
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'completed'
+    );
+  });
+
   it('finishes the review when the last topic is rated', async () => {
     const session = await startPractice(client, learner, {
       language: 'fr',

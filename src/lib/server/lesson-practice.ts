@@ -229,8 +229,9 @@ async function repeatedAnswer(
   client: Client,
   learner: LearnerSession,
   form: FormData,
-  studySessionId: string
+  session: { id: string; mode: string }
 ) {
+  const studySessionId = session.id;
   const raw = form.get('intent') === 'unsure' ? '' : form.get('answer');
   if (typeof raw !== 'string') return null;
   const replay = await findReplay(client, learner, {
@@ -241,7 +242,11 @@ async function repeatedAnswer(
     answer: form.get('intent') === 'unsure' ? '' : normalizeAnswer(raw),
     notSure: form.get('intent') === 'unsure'
   });
-  return replay && { recorded: true as const, duplicate: replay.duplicate };
+  if (!replay) return null;
+  // A retried last answer still finishes its review, even if the first try
+  // stopped before it could.
+  await finishReviewedGrammarReview(client, learner, session);
+  return { recorded: true as const, duplicate: replay.duplicate };
 }
 
 /** Record the answer to the question the session is currently on. */
@@ -258,7 +263,8 @@ export async function recordAnswer(
   const studySessionId = field(form, 'studySessionId');
   const study = await ownSession(client, learner, studySessionId);
   if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
-  const repeated = await repeatedAnswer(client, learner, form, studySessionId);
+  const session = { id: studySessionId, mode: study.mode };
+  const repeated = await repeatedAnswer(client, learner, form, session);
   if (repeated) return repeated;
   const retry = field(form, 'retryAttemptId');
   const question = retry
@@ -267,7 +273,7 @@ export async function recordAnswer(
   if (!question || question.id !== field(form, 'questionId')) {
     // A concurrent request may have recorded this very submission after the
     // first lookup; it is a retry then, not a stale question.
-    const raced = await repeatedAnswer(client, learner, form, studySessionId);
+    const raced = await repeatedAnswer(client, learner, form, session);
     if (raced) return raced;
     throw new StudyError('STALE_QUESTION');
   }
@@ -291,10 +297,7 @@ export async function recordAnswer(
     { fallback }
   );
   // A grammar review finishes by itself once its last topic is reviewed.
-  await finishReviewedGrammarReview(client, learner, {
-    id: studySessionId,
-    mode: study.mode
-  });
+  await finishReviewedGrammarReview(client, learner, session);
   return { recorded: true as const, duplicate: attempt.duplicate };
 }
 
