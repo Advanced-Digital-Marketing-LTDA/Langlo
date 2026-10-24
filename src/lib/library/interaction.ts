@@ -144,6 +144,10 @@ export function watchSelection(options: SelectionOptions): () => void {
   const onPointerDown = (event: PointerEvent) => {
     pointer = event.pointerType;
   };
+  // Shift with the arrow keys extends a selection like a press-and-hold does.
+  const onKeyDown = (event: KeyboardEvent) => {
+    if (event.shiftKey) pointer = 'keyboard';
+  };
   const onMouseUp = (event: MouseEvent) => {
     if (!isMouseClick(event, pointer)) return;
     if (!rootOf().contains(event.target as Node)) return;
@@ -159,11 +163,13 @@ export function watchSelection(options: SelectionOptions): () => void {
   };
 
   doc.addEventListener('pointerdown', onPointerDown);
+  doc.addEventListener('keydown', onKeyDown);
   doc.addEventListener('mouseup', onMouseUp);
   doc.addEventListener('selectionchange', onSelectionChange);
   return () => {
     clearTimeout(timer);
     doc.removeEventListener('pointerdown', onPointerDown);
+    doc.removeEventListener('keydown', onKeyDown);
     doc.removeEventListener('mouseup', onMouseUp);
     doc.removeEventListener('selectionchange', onSelectionChange);
   };

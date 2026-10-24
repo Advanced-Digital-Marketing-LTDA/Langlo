@@ -3,6 +3,7 @@ import { Worker } from 'node:worker_threads';
 import { resolve } from 'node:path';
 import type { Client } from '@libsql/client';
 import {
+  collapseWhitespace,
   containsTerm,
   libraryMaxFileBytes,
   splitSentences
@@ -408,7 +409,8 @@ function filledText(value: unknown, limit: number): value is string {
 function libraryTerm(value: unknown, content: string): string {
   if (!filledText(value, 256)) throw new StudyError('INVALID_LIBRARY_TERM');
   const term = value.trim();
-  if (!containsTerm(content, term))
+  // The reader collapses runs of whitespace, so a phrase can span a line break.
+  if (!containsTerm(collapseWhitespace(content), term))
     throw new StudyError('INVALID_LIBRARY_TERM');
   return term;
 }

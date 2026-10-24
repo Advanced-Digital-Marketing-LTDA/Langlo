@@ -162,6 +162,29 @@ describe('Library documents', () => {
     }
   );
 
+  it('saves a phrase that spans a line break in the stored text', async () => {
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-line-break',
+      title: 'Words',
+      language: 'en',
+      content: 'The river\nbank is steep.'
+    });
+    await createDeck(client, ownerA, {
+      id: 'deck-en',
+      name: 'English',
+      language: 'en'
+    });
+    const note = await saveLibraryVocabulary(client, ownerA, {
+      documentId: 'library-line-break',
+      deckId: 'deck-en',
+      term: 'river bank',
+      definition: 'a slope beside water'
+    });
+    expect(await getNote(client, ownerA, note.id)).toMatchObject({
+      content: { front: 'river bank' }
+    });
+  });
+
   it('accepts a definition at the advertised length limit', async () => {
     const input = await vocabularyFixture();
     const note = await saveLibraryVocabulary(client, ownerA, {

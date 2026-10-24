@@ -45,6 +45,25 @@
     }
   }
 
+  // One save at a time, so an older place cannot overwrite a newer one.
+  let saving = false;
+  let queuedSave: ReaderPosition | null = null;
+  async function sendPosition(next: ReaderPosition) {
+    if (saving) {
+      queuedSave = next;
+      return;
+    }
+    saving = true;
+    try {
+      await savePosition(next);
+    } finally {
+      saving = false;
+    }
+    const waiting = queuedSave;
+    queuedSave = null;
+    if (waiting) await sendPosition(waiting);
+  }
+
   function onPosition(next: ReaderPosition) {
     position = next;
     selection = null;
@@ -57,17 +76,17 @@
     pendingSave = next;
     saveTimer = setTimeout(() => {
       pendingSave = null;
-      void savePosition(next);
+      void sendPosition(next);
     }, 500);
   }
 
   // Leaving the page must not lose the last page turned.
   function flushPosition() {
     clearTimeout(saveTimer);
-    if (!pendingSave) return;
-    const next = pendingSave;
+    const next = pendingSave ?? queuedSave;
     pendingSave = null;
-    void savePosition(next, true);
+    queuedSave = null;
+    if (next) void savePosition(next, true);
   }
   beforeNavigate(flushPosition);
 
@@ -142,6 +161,9 @@
   function onKeydown(event: KeyboardEvent) {
     const target = event.target as HTMLElement;
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return;
+    // Modified arrows move or extend a text selection.
+    if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)
+      return;
     if (event.key === 'ArrowRight') flip('next');
     if (event.key === 'ArrowLeft') flip('prev');
   }

@@ -413,6 +413,59 @@ test('selects a phrase by dragging and keeps buttons disabled while a request ru
   await expect(page.locator('.text-page mark')).toHaveText('river bank');
 });
 
+test('extending a selection with the keyboard updates the lookup and does not turn the page', async ({
+  page
+}) => {
+  const paragraph = 'The river bank is steep and the path is long here.';
+  await uploadText(
+    page,
+    'en',
+    Array.from({ length: 120 }, () => paragraph).join('\n')
+  );
+  const pages = page.getByText(/^Page \d+ of \d+$/u);
+  await expect(pages).toHaveText('Page 1 of 4');
+  await clickWord(page, 'The');
+  await expect(panel(page).locator('.term')).toHaveText('The');
+  for (let i = 0; i < 3; i += 1) await page.keyboard.press('Shift+ArrowRight');
+  await expect(panel(page).locator('.term')).toHaveText('The river');
+  await expect(pages).toHaveText('Page 1 of 4');
+  await page.keyboard.press('ArrowRight');
+  await expect(pages).toHaveText('Page 2 of 4');
+});
+
+test('saves reading positions one at a time and in order', async ({ page }) => {
+  const paragraph = 'La maison est grande et la famille est heureuse ici.';
+  await uploadText(
+    page,
+    'fr',
+    Array.from({ length: 120 }, () => paragraph).join('\n')
+  );
+  const bodies: string[] = [];
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/app/api/library/*', async (route) => {
+    if (route.request().method() !== 'PATCH') return route.fallback();
+    bodies.push(route.request().postData() ?? '');
+    if (bodies.length === 1) await gate;
+    await route.fallback();
+  });
+  const pages = page.getByText(/^Page \d+ of \d+$/u);
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(pages).toHaveText('Page 2 of 4');
+  await expect.poll(() => bodies.length).toBe(1);
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(pages).toHaveText('Page 3 of 4');
+  await page.waitForTimeout(900);
+  expect(bodies).toHaveLength(1);
+  release();
+  await expect.poll(() => bodies.length).toBe(2);
+  expect(JSON.parse(bodies[0]).location).toBe('page:2');
+  expect(JSON.parse(bodies[1]).location).toBe('page:3');
+  await page.unroute('**/app/api/library/*');
+});
+
 test('drops a lookup reply that arrives after another word is selected', async ({
   page
 }) => {
