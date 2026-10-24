@@ -7,6 +7,7 @@ export function splitSentences(text: string): string[] {
 
 function termPattern(term: string, flags: string) {
   const escaped = term.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+  // nosemgrep: the term is escaped above and the pattern has no nested quantifiers.
   return new RegExp(
     `(^|[^\\p{L}\\p{N}])(${escaped})(?=$|[^\\p{L}\\p{N}])`,
     flags
