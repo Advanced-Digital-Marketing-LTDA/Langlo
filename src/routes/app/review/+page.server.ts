@@ -28,6 +28,52 @@ function timeOfDay(timestamp: number | null, timezone: string) {
   }).format(timestamp);
 }
 
+type DueGroup = Awaited<ReturnType<typeof flashcardDueGroups>>[number];
+type DueTopic = { dueAt: number; ready: boolean };
+
+/** The switcher's choices and the chosen one; an unknown choice is not found. */
+function chosenLanguage(
+  enrolled: string[],
+  groups: DueGroup[],
+  requested: string | null
+) {
+  const languages = groups.some((group) => group.language === null)
+    ? [...enrolled, UNASSIGNED_LANGUAGE]
+    : enrolled;
+  if (requested !== null && !languages.includes(requested))
+    throw new StudyError('NOT_FOUND');
+  return { languages, language: requested ?? languages[0] ?? null };
+}
+
+/** The chosen language's card counts; no group means nothing is due today. */
+function flashcardSummary(
+  groups: DueGroup[],
+  language: string,
+  timezone: string
+) {
+  const group = groups.find(
+    (item) => reviewLanguageParam(item.language) === language
+  ) ?? { overdue: 0, todayReady: 0, todayLater: 0, nextDueAt: null };
+  return {
+    overdue: group.overdue,
+    today: group.todayReady + group.todayLater,
+    todayReady: group.todayReady,
+    nextDueAt: timeOfDay(group.nextDueAt, timezone)
+  };
+}
+
+function grammarSummary(
+  grammar: { overdue: DueTopic[]; today: DueTopic[] },
+  timezone: string
+) {
+  const later = grammar.today.find((topic) => !topic.ready);
+  return {
+    overdue: grammar.overdue,
+    today: grammar.today,
+    nextDueAt: later ? timeOfDay(later.dueAt, timezone) : null
+  };
+}
+
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => {
     const now = Date.now();
@@ -36,39 +82,22 @@ export const load: PageServerLoad = (event) =>
       listEnrollments(client, learner),
       flashcardDueGroups(client, learner, day, now)
     ]);
-    const unassigned = groups.find((group) => group.language === null);
-    const languages: string[] = enrollments.map((item) => item.language);
-    if (unassigned) languages.push(UNASSIGNED_LANGUAGE);
-    const requested = event.url.searchParams.get('language');
-    if (requested !== null && !languages.includes(requested))
-      throw new StudyError('NOT_FOUND');
-    const language = requested ?? languages[0] ?? null;
+    const { languages, language } = chosenLanguage(
+      enrollments.map((item) => item.language),
+      groups,
+      event.url.searchParams.get('language')
+    );
     if (language === null) return { languages, language, submissionKey: '' };
-    // A language with no card due before the day ends has no group.
-    const flashcards = groups.find(
-      (group) => reviewLanguageParam(group.language) === language
-    ) ?? { overdue: 0, todayReady: 0, todayLater: 0, nextDueAt: null };
     const grammar =
       language === UNASSIGNED_LANGUAGE
         ? null
         : await grammarDueToday(client, learner, language, { ...day, now });
-    const laterToday = (items: { dueAt: number; ready: boolean }[]) =>
-      items.find((item) => !item.ready)?.dueAt ?? null;
     return {
       languages,
       language,
       submissionKey: randomUUID(),
-      flashcards: {
-        overdue: flashcards.overdue,
-        today: flashcards.todayReady + flashcards.todayLater,
-        todayReady: flashcards.todayReady,
-        nextDueAt: timeOfDay(flashcards.nextDueAt, day.timezone)
-      },
-      grammar: grammar && {
-        overdue: grammar.overdue,
-        today: grammar.today,
-        nextDueAt: timeOfDay(laterToday(grammar.today), day.timezone)
-      }
+      flashcards: flashcardSummary(groups, language, day.timezone),
+      grammar: grammar && grammarSummary(grammar, day.timezone)
     };
   });
 
