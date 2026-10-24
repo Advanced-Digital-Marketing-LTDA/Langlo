@@ -4,6 +4,8 @@ import type { LearnerSession } from './learner-session';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
+  FALLBACK_SETTLED_EVALUATOR_VERSION,
+  FALLBACK_TIMEOUT_MS,
   HISTORICAL_FALLBACK_EVALUATOR_VERSION,
   HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
@@ -385,7 +387,7 @@ function assertGrammarPlan(rows: Row[]) {
 }
 
 export async function grammarReviewPlan(
-  client: Client,
+  client: Pick<Client, 'execute'>,
   learner: LearnerSession,
   id: string
 ) {
@@ -396,14 +398,26 @@ export async function grammarReviewPlan(
           AND a.study_session_id = s.id AND a.question_id = json_extract(p.value, '$.questionId')) AS answered,
         EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
           AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
-          AND NOT (${awaitingRatingSql})) AS reviewed
+          AND NOT (${awaitingRatingSql} AND ${rateableSql}))
+        AND NOT EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
+          AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
+          AND ${awaitingRatingSql} AND ${rateableSql})
+        AND NOT EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
+          AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
+          AND ${beingGradedSql}) AS reviewed
       FROM study_sessions s JOIN json_each(s.grammar_retention_plan, '$.questions') p
       JOIN skills sk ON sk.id = json_extract(p.value, '$.skillId') AND sk.language = s.language
       LEFT JOIN content_versions v ON v.id = json_extract(p.value, '$.contentVersionId')
       LEFT JOIN lessons l ON l.content_version_id = v.id
       WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'mixed-review'
       ORDER BY CAST(p.key AS INTEGER)`,
-    args: [...awaitingRatingArgs, id, learner.userId]
+    args: [
+      ...awaitingRatingArgs,
+      ...awaitingRatingArgs,
+      ...beingGradedArgs(),
+      id,
+      learner.userId
+    ]
   });
   if (!found.rows.length) throw new StudyError('NOT_FOUND');
   assertGrammarPlan(found.rows);
@@ -411,7 +425,8 @@ export async function grammarReviewPlan(
     skillId: String(row.skill_id),
     title: String(row.title),
     answered: Boolean(row.answered),
-    // Answered with nothing left to do, so the topic leaves the review's list.
+    // Answered with no answer still waiting for its rating, so the topic
+    // leaves the review's list.
     reviewed: Boolean(row.reviewed)
   }));
 }
@@ -431,6 +446,30 @@ const awaitingRatingSql = `attempts.grammar_rating IS NULL AND EXISTS (
       AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
         AND p.evaluator_version = ? AND p.rubric_version = attempts.content_version_id AND p.outcome = 'correct'))
   )`;
+/**
+ * A typed answer the AI grader has neither judged nor given up on yet. It may
+ * still turn out correct and need a rating, so its topic is not reviewed.
+ * Only a recent answer can still be in flight: the grader gives up after
+ * FALLBACK_TIMEOUT_MS, and answers from before reviews wrote the marker have
+ * none, so older ones count as settled.
+ */
+const beingGradedSql = `attempts.not_sure = 0 AND EXISTS (
+    SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
+      AND p.evaluator_version = ? AND p.rubric_version = attempts.content_version_id AND p.outcome = 'uncertain'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
+      AND f.evaluator_version IN (?, ?)
+  ) AND attempts.created_at > ?`;
+const GRADING_WINDOW_MS = 6 * FALLBACK_TIMEOUT_MS;
+const beingGradedArgs = () => [
+  PREPARED_EVALUATOR_VERSION,
+  FALLBACK_EVALUATOR_VERSION,
+  FALLBACK_SETTLED_EVALUATOR_VERSION,
+  Date.now() - GRADING_WINDOW_MS
+];
+
+/** Helped and Not sure answers never take a difficulty rating. */
+const rateableSql = 'attempts.received_help = 0 AND attempts.not_sure = 0';
 const awaitingRatingArgs = [
   GRAMMAR_RETENTION_POLICY_VERSION,
   FALLBACK_EVALUATOR_VERSION,
@@ -458,24 +497,19 @@ export async function finishPractice(
   learner: LearnerSession,
   id: string
 ): Promise<void> {
+  await inWrite(client, (tx) => completePractice(tx, learner, id));
+}
+
+type WriteTransaction = Awaited<ReturnType<typeof beginWrite>>;
+
+/** Run one write transaction, rolled back if it fails. */
+async function inWrite(
+  client: Client,
+  run: (tx: WriteTransaction) => Promise<void>
+) {
   const tx = await beginWrite(client);
   try {
-    const found = await tx.execute({
-      sql: "SELECT state, language FROM study_sessions WHERE id = ? AND owner_id = ? AND mode IN ('practice', 'mixed-review')",
-      args: [id, learner.userId]
-    });
-    const session = found.rows[0];
-    if (!session) throw new StudyError('NOT_FOUND');
-    if (session.state === 'completed') {
-      await tx.commit();
-      return;
-    }
-    await discardUnratedPracticeAnswers(tx, learner, id);
-    await tx.execute({
-      sql: "UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND mode IN ('practice', 'mixed-review')",
-      args: [id, learner.userId]
-    });
-    await commitGrammarSessionReviews(tx, learner, id);
+    await run(tx);
     await tx.commit();
   } catch (error) {
     await tx.rollback().catch(() => undefined);
@@ -483,6 +517,45 @@ export async function finishPractice(
   } finally {
     tx.close();
   }
+}
+
+async function completePractice(
+  tx: WriteTransaction,
+  learner: LearnerSession,
+  id: string
+) {
+  const found = await tx.execute({
+    sql: "SELECT state, language FROM study_sessions WHERE id = ? AND owner_id = ? AND mode IN ('practice', 'mixed-review')",
+    args: [id, learner.userId]
+  });
+  const session = found.rows[0];
+  if (!session) throw new StudyError('NOT_FOUND');
+  if (session.state === 'completed') return;
+  await discardUnratedPracticeAnswers(tx, learner, id);
+  await tx.execute({
+    sql: "UPDATE study_sessions SET state = 'completed', paused_at = NULL WHERE id = ? AND owner_id = ? AND mode IN ('practice', 'mixed-review')",
+    args: [id, learner.userId]
+  });
+  await commitGrammarSessionReviews(tx, learner, id);
+}
+
+/**
+ * Finish a grammar review once every one of its topics is reviewed. Sessions
+ * of other modes are left as they are.
+ */
+export async function finishReviewedGrammarReview(
+  client: Client,
+  learner: LearnerSession,
+  session: { id: string; mode: string }
+): Promise<void> {
+  if (session.mode !== 'mixed-review') return;
+  const id = session.id;
+  // The check and the finish share one write, so no answer lands between them.
+  await inWrite(client, async (tx) => {
+    const plan = await grammarReviewPlan(tx, learner, id);
+    if (plan.every((topic) => topic.reviewed))
+      await completePractice(tx, learner, id);
+  });
 }
 
 /**

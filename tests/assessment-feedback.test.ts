@@ -26,7 +26,7 @@ beforeEach(async () => {
   );
 });
 
-describe('practice feedback and assisted retries', () => {
+describe('practice feedback', () => {
   beforeEach(async () => {
     await client.execute(
       "UPDATE study_sessions SET mode = 'practice' WHERE id = 'study-a'"
@@ -34,7 +34,7 @@ describe('practice feedback and assisted retries', () => {
     await importContent(client, approvedPackage());
   });
 
-  it('shows recorded feedback on reload and marks a retry assisted despite forged input', async () => {
+  it('shows recorded feedback on reload and offers no assisted retry', async () => {
     const first = await recordAttempt(client, learner, {
       studySessionId: 'study-a',
       questionId: 'fr-a1-001@1:q1',
@@ -56,25 +56,27 @@ describe('practice feedback and assisted retries', () => {
       expectedAnswer: 'suis',
       evidenceKind: 'independent'
     });
+    expect(feedback).not.toHaveProperty('retryQuestion');
+    // A retry form from an older page is refused and records nothing.
     const form = new FormData();
     for (const [key, value] of Object.entries({
       studySessionId: 'study-a',
       questionId: 'fr-a1-001@1:q1',
       submissionKey: 'retry-1',
       retryAttemptId: first.id,
-      evidenceKind: 'independent',
       answer: 'suis'
     }))
       form.set(key, value);
-    expect(
-      await recordAnswer(client, learner, form, 'fr-a1-001')
-    ).toMatchObject({ recorded: true });
+    await expect(
+      recordAnswer(client, learner, form, 'fr-a1-001')
+    ).rejects.toMatchObject({ code: 'STALE_QUESTION' });
     expect(
       await practiceFeedback(client, learner, 'study-a', 'fr-a1-001')
-    ).toMatchObject({ outcome: 'correct', evidenceKind: 'assisted' });
-    expect(
-      await recordAnswer(client, learner, form, 'fr-a1-001')
-    ).toMatchObject({ duplicate: true });
+    ).toMatchObject({
+      attemptId: first.id,
+      outcome: 'incorrect',
+      evidenceKind: 'independent'
+    });
   });
 
   it('cannot regain independent status by opening a new session', async () => {

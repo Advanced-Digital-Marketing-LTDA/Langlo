@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { fail } from '@sveltejs/kit';
-import type { Client, Row, Value } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import {
   checkAnswer,
   checkAnswerText,
@@ -10,7 +10,6 @@ import type { FallbackEvaluator } from './evaluation/runtime';
 import { describeLearnerError } from './learner-api';
 import type { LearnerSession } from './learner-session';
 import {
-  getAttempt,
   findReplay,
   getLesson,
   nextQuestion,
@@ -27,7 +26,7 @@ import {
 import { feedbackOutcome } from './assessment';
 import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 import { reportContentForm } from './content-reports';
-import type { ExerciseQuestion } from '../components/exercises/answer';
+import { finishReviewedGrammarReview } from './practice';
 
 // The practice half of the lesson page: serving the session's next exercise
 // and recording the answer to it.
@@ -177,11 +176,16 @@ export async function ratePracticeAnswer(
   const rated = rating as 'hard' | 'good' | 'easy';
   // The skill, session and practice-mode checks run on the attempt rows the
   // rating transaction reads anyway.
-  await rateGrammarAttempt(client, learner, {
+  const { mode } = await rateGrammarAttempt(client, learner, {
     attemptId,
     rating: rated,
     expectedSessionId: studySessionId,
     practiceSkillId: skillId
+  });
+  // A grammar review finishes by itself once its last topic is rated.
+  await finishReviewedGrammarReview(client, learner, {
+    id: studySessionId,
+    mode
   });
   return {
     rated: true as const,
@@ -223,19 +227,24 @@ async function repeatedAnswer(
   client: Client,
   learner: LearnerSession,
   form: FormData,
-  studySessionId: string
+  session: { id: string; mode: string }
 ) {
+  const studySessionId = session.id;
   const raw = form.get('intent') === 'unsure' ? '' : form.get('answer');
   if (typeof raw !== 'string') return null;
   const replay = await findReplay(client, learner, {
     studySessionId,
     questionId: field(form, 'questionId'),
     submissionKey: field(form, 'submissionKey'),
-    evidenceKind: form.has('retryAttemptId') ? 'assisted' : 'independent',
+    evidenceKind: 'independent',
     answer: form.get('intent') === 'unsure' ? '' : normalizeAnswer(raw),
     notSure: form.get('intent') === 'unsure'
   });
-  return replay && { recorded: true as const, duplicate: replay.duplicate };
+  if (!replay) return null;
+  // A retried last answer still finishes its review, even if the first try
+  // stopped before it could.
+  await finishReviewedGrammarReview(client, learner, session);
+  return { recorded: true as const, duplicate: replay.duplicate };
 }
 
 /** Record the answer to the question the session is currently on. */
@@ -252,16 +261,21 @@ export async function recordAnswer(
   const studySessionId = field(form, 'studySessionId');
   const study = await ownSession(client, learner, studySessionId);
   if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
-  const repeated = await repeatedAnswer(client, learner, form, studySessionId);
+  // Assisted retries are gone; a retry form from an older page is out of date.
+  if (form.has('retryAttemptId')) throw new StudyError('STALE_QUESTION');
+  const session = { id: studySessionId, mode: study.mode };
+  const repeated = await repeatedAnswer(client, learner, form, session);
   if (repeated) return repeated;
-  const retry = field(form, 'retryAttemptId');
-  const question = retry
-    ? await retryQuestion(client, learner, studySessionId, skillId, retry)
-    : (await nextQuestion(client, learner, studySessionId, skillId)).question;
+  const { question } = await nextQuestion(
+    client,
+    learner,
+    studySessionId,
+    skillId
+  );
   if (!question || question.id !== field(form, 'questionId')) {
     // A concurrent request may have recorded this very submission after the
     // first lookup; it is a retry then, not a stale question.
-    const raced = await repeatedAnswer(client, learner, form, studySessionId);
+    const raced = await repeatedAnswer(client, learner, form, session);
     if (raced) return raced;
     throw new StudyError('STALE_QUESTION');
   }
@@ -278,51 +292,15 @@ export async function recordAnswer(
       studySessionId,
       questionId: question.id,
       submissionKey: field(form, 'submissionKey'),
-      evidenceKind: retry ? 'assisted' : 'independent',
+      evidenceKind: 'independent',
       answer: notSure ? '' : checked.ok ? checked.answer : '',
       notSure
     },
     { fallback }
   );
+  // A grammar review finishes by itself once its last topic is reviewed.
+  await finishReviewedGrammarReview(client, learner, session);
   return { recorded: true as const, duplicate: attempt.duplicate };
-}
-
-async function retryQuestion(
-  client: Client,
-  learner: LearnerSession,
-  sessionId: string,
-  skillId: string,
-  attemptId: string
-): Promise<ExerciseQuestion> {
-  const prior = await getAttempt(client, learner, attemptId);
-  if (prior.studySessionId !== sessionId || prior.skillId !== skillId)
-    throw new StudyError('NOT_FOUND');
-  const found = await client.execute({
-    sql: 'SELECT id, format, prompt, alternatives FROM questions WHERE id = ? AND holdout = 0',
-    args: [prior.questionId]
-  });
-  const row = found.rows[0];
-  if (!row) throw new StudyError('CONTENT_UNAVAILABLE');
-  return exerciseQuestion({
-    id: row.id,
-    format: row.format,
-    prompt: row.prompt,
-    alternatives: row.alternatives
-  });
-}
-
-function exerciseQuestion(
-  row: Record<'id' | 'format' | 'prompt' | 'alternatives', Value>
-): ExerciseQuestion {
-  return {
-    id: String(row.id),
-    format: row.format as ExerciseQuestion['format'],
-    prompt: String(row.prompt),
-    alternatives:
-      row.format === 'multiple-choice' && row.alternatives !== null
-        ? JSON.parse(String(row.alternatives))
-        : undefined
-  };
 }
 
 /** Practice feedback is persisted history, so a reload cannot erase or upgrade it. */
@@ -385,10 +363,8 @@ async function feedbackIn(
   skillId: string,
   study: SessionRow
 ) {
-  // The question columns are the assisted retry, which is the same question.
   const found = await client.execute({
-    sql: `SELECT a.*, q.answer AS expected_answer, q.format AS retry_format, q.prompt AS retry_prompt,
-        q.alternatives AS retry_alternatives, v.status FROM attempts a
+    sql: `SELECT a.*, q.answer AS expected_answer, v.status FROM attempts a
       JOIN questions q ON q.id = a.question_id JOIN content_versions v ON v.id = a.content_version_id
       WHERE a.owner_id = ? AND a.study_session_id = ? AND a.skill_id = ? AND q.holdout = 0
       ORDER BY a.created_at DESC, a.rowid DESC LIMIT 1`,
@@ -400,21 +376,9 @@ async function feedbackIn(
     sql: 'SELECT * FROM evaluations WHERE owner_id = ? AND attempt_id = ?',
     args: [learner.userId, row.id]
   });
-  return {
-    ...practiceFeedbackFields(
-      row,
-      evaluations.rows,
-      study.grammarRetentionPolicyVersion
-    ),
-    retryQuestion:
-      study.state === 'active'
-        ? exerciseQuestion({
-            id: row.question_id,
-            format: row.retry_format,
-            prompt: row.retry_prompt,
-            alternatives: row.retry_alternatives
-          })
-        : null,
-    submissionKey: randomUUID()
-  };
+  return practiceFeedbackFields(
+    row,
+    evaluations.rows,
+    study.grammarRetentionPolicyVersion
+  );
 }

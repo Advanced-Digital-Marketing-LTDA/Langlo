@@ -1,36 +1,42 @@
 import { afterAll, expect, it } from 'vitest';
 import { closeRenderServer, renderSvelte } from './helpers/render-svelte';
 
-// A grammar review's session page lists only the topics still to review, and
-// says so once every topic is answered.
+// A grammar review's session page lists the topics still to review, each
+// linking to its lesson within the review. The review finishes by itself once
+// every topic is reviewed, so the page never asks the learner to finish it.
 
 afterAll(closeRenderServer);
 
 const page = 'src/routes/app/session/[id]/+page.svelte';
+const reviewId = 'grammar-review:b0000000-0000-4000-8000-000000000002';
 
-const data = (mode: string) => ({
-  summary: {
-    id: 'grammar-review:b0000000-0000-4000-8000-000000000002',
-    language: 'fr',
-    mode,
-    state: 'active',
-    answered: 1
-  },
-  skills: [],
-  recommendedSkillId: null
-});
-
-it('tells the learner to finish a review once every topic is answered', async () => {
-  const review = await renderSvelte(page, {
-    data: data('mixed-review'),
+it('lists the topics still to review, each linking into the review', async () => {
+  const html = await renderSvelte(page, {
+    data: {
+      summary: {
+        id: reviewId,
+        language: 'fr',
+        mode: 'mixed-review',
+        state: 'active',
+        answered: 1
+      },
+      skills: [
+        {
+          skillId: 'fr-a1-002',
+          title: 'Nous sommes',
+          available: true,
+          answered: false,
+          reviewed: false
+        }
+      ],
+      recommendedSkillId: null
+    },
     form: null
   });
-  expect(review).toMatch(/All topics are answered\.\s+Finish the session/u);
-  expect(review).not.toContain('No lessons are published');
-  const practice = await renderSvelte(page, {
-    data: data('practice'),
-    form: null
-  });
-  expect(practice).toContain('No lessons are published in this track yet.');
-  expect(practice).not.toContain('All topics are answered.');
+  expect(html).toContain('Choose a topic');
+  expect(html).toContain(
+    `href="/app/learn/fr/lesson/fr-a1-002?session=${encodeURIComponent(reviewId)}"`
+  );
+  expect(html).not.toContain('All topics are answered.');
+  expect(html).not.toContain('No lessons are published');
 });

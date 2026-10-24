@@ -259,22 +259,6 @@
           submissionKey={feedback.reportSubmissionKey}
           actionUrl={lessonActionUrl('report')}
         />
-        {#if feedback.retryQuestion}
-          <details>
-            <summary>Try this question again (assisted)</summary>
-            <Exercise
-              question={feedback.retryQuestion}
-              language={data.language}
-              studySessionId={exercise.studySessionId}
-              submissionKey={feedback.submissionKey}
-              retryAttemptId={feedback.attemptId}
-              actionUrl={lessonActionUrl('answer')}
-              onanswered={focusFeedback}
-              submitLabel="Submit assisted retry"
-              {failure}
-            />
-          </details>
-        {/if}
       </section>
     {/if}
     {#if exercise.notice}

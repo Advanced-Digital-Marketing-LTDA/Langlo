@@ -598,13 +598,22 @@ function isRetentionAssessment(attempt: FallbackAttempt) {
   );
 }
 
+/**
+ * Whether grading that ends without a verdict is recorded for every answer:
+ * retention assessments and grammar reviews wait on it. Other practice
+ * answers stay unmarked.
+ */
+function marksGradingDone(attempt: FallbackAttempt) {
+  return isRetentionAssessment(attempt) || attempt.mode === 'mixed-review';
+}
+
 async function settleFallback(
   client: Client,
   session: LearnerSession,
   attempt: FallbackAttempt,
   retentionAssessmentOnly = false
 ) {
-  if (retentionAssessmentOnly && !isRetentionAssessment(attempt)) return;
+  if (retentionAssessmentOnly && !marksGradingDone(attempt)) return;
   const tx = await beginWrite(client);
   try {
     await tx.execute({
@@ -927,12 +936,16 @@ export async function rateGrammarAttempt(
     const duplicate = await persistAttemptRating(tx, learner, row, rating);
     if (duplicate) {
       await tx.commit();
-      return { duplicate: true, completed: row.state === 'completed' };
+      return {
+        duplicate: true,
+        completed: row.state === 'completed',
+        mode: String(row.mode)
+      };
     }
     if (row.mode === 'assessment') {
       const completed = await finalizeAssessment(tx, learner, row);
       await tx.commit();
-      return { duplicate: false, completed };
+      return { duplicate: false, completed, mode: String(row.mode) };
     }
     // The attempt rows were just read, so its lineages need no second read.
     await syncLineageEvidence(
@@ -941,7 +954,7 @@ export async function rateGrammarAttempt(
       seedLineageKeys(rows)
     );
     await tx.commit();
-    return { duplicate: false, completed: false };
+    return { duplicate: false, completed: false, mode: String(row.mode) };
   } catch (error) {
     await tx.rollback().catch(() => undefined);
     throw error;
