@@ -72,7 +72,11 @@ describe('practice feedback', () => {
     ).rejects.toMatchObject({ code: 'STALE_QUESTION' });
     expect(
       await practiceFeedback(client, learner, 'study-a', 'fr-a1-001')
-    ).toMatchObject({ attemptId: first.id, outcome: 'incorrect' });
+    ).toMatchObject({
+      attemptId: first.id,
+      outcome: 'incorrect',
+      evidenceKind: 'independent'
+    });
   });
 
   it('cannot regain independent status by opening a new session', async () => {

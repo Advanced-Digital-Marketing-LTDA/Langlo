@@ -340,6 +340,8 @@ describe('lesson rating round trips', () => {
       },
       exercise: { question: { id: 'fr-a1-001@1:q2' } }
     });
+    // Assisted retries are removed, so the feedback offers none.
+    expect(data.feedback).not.toHaveProperty('retryQuestion');
     expect(counted.sqls.length).toBeLessThanOrEqual(RELOAD_BUDGET);
   });
 

@@ -864,6 +864,16 @@ async function exerciseReport(page: Page, userId: string) {
   await expect(
     feedback.getByText('Try this question again (assisted)')
   ).toHaveCount(0);
+  // An empty answer shows one alert with its own id, now that the feedback
+  // holds no second exercise form.
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const ids = await page
+    .getByRole('alert')
+    .evaluateAll((nodes) => nodes.map((node) => node.id));
+  expect(ids).toHaveLength(1);
+  expect(ids[0]).not.toBe('');
   await feedback.getByText('Report a content issue', { exact: true }).click();
   await feedback
     .getByRole('button', { name: 'Send report', exact: true })
