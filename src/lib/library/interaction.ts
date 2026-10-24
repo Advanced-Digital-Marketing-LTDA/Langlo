@@ -14,21 +14,20 @@ function selectWordAtCaret(doc: Document, language: string): boolean {
   const node = selection?.anchorNode;
   if (!selection || node?.nodeType !== 3) return false;
   const caret = selection.anchorOffset;
-  const text = (node as Text).data;
-  for (const part of new Intl.Segmenter(language, {
-    granularity: 'word'
-  }).segment(text)) {
-    const end = part.index + part.segment.length;
-    if (part.isWordLike && caret >= part.index && caret <= end) {
-      const range = doc.createRange();
-      range.setStart(node, part.index);
-      range.setEnd(node, end);
-      selection.removeAllRanges();
-      selection.addRange(range);
-      return true;
-    }
-  }
-  return false;
+  const words = new Intl.Segmenter(language, { granularity: 'word' });
+  const part = Array.from(words.segment((node as Text).data)).find(
+    (item) =>
+      item.isWordLike &&
+      caret >= item.index &&
+      caret <= item.index + item.segment.length
+  );
+  if (!part) return false;
+  const range = doc.createRange();
+  range.setStart(node, part.index);
+  range.setEnd(node, part.index + part.segment.length);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  return true;
 }
 
 type SelectionRead = { selection: ReaderSelection } | { error: string } | null;
@@ -36,12 +35,12 @@ type SelectionRead = { selection: ReaderSelection } | { error: string } | null;
 /** The non-empty selection inside `root`, with its text. */
 function selectedRange(win: Window, root: HTMLElement) {
   const selection = win.getSelection();
-  if (!selection || selection.isCollapsed || !selection.rangeCount) return null;
+  if (!selection?.rangeCount) return null;
+  if (selection.isCollapsed) return null;
   const range = selection.getRangeAt(0);
+  if (!root.contains(range.commonAncestorContainer)) return null;
   const text = selection.toString();
-  if (!root.contains(range.commonAncestorContainer) || !text.trim())
-    return null;
-  return { range, text };
+  return text.trim() ? { range, text } : null;
 }
 
 /** `range`'s rectangle in viewport coordinates, shifted by its iframe. */
@@ -90,19 +89,41 @@ function readSelection(
   };
 }
 
-/**
- * Report the word or phrase the learner selects inside `root`: a click or a
- * drag with the mouse, or a press-and-hold selection with touch. `frame` is
- * the iframe element when `root` lives in one.
- */
-export function watchSelection(options: {
+type SelectionOptions = {
   /** The element holding the page being read; a function when it changes. */
   root: HTMLElement | (() => HTMLElement);
   language: string;
   frame?: HTMLElement;
   onSelect: (selection: ReaderSelection) => void;
   onError: (message: string) => void;
-}): () => void {
+};
+
+/** Pass a read result to the matching callback. */
+function deliver(
+  result: SelectionRead,
+  { onSelect, onError }: Pick<SelectionOptions, 'onSelect' | 'onError'>
+) {
+  if (!result) return;
+  if ('error' in result) onError(result.error);
+  else onSelect(result.selection);
+}
+
+/** A primary-button click made with a mouse rather than touch or a pen. */
+const isMouseClick = (event: MouseEvent, pointer: string) =>
+  event.button === 0 && pointer === 'mouse';
+
+/** After a click, select the word under the caret unless text is dragged. */
+function settleMouseSelection(win: Window, doc: Document, language: string) {
+  const collapsed = win.getSelection()?.isCollapsed;
+  return !collapsed || selectWordAtCaret(doc, language);
+}
+
+/**
+ * Report the word or phrase the learner selects inside `root`: a click or a
+ * drag with the mouse, or a press-and-hold selection with touch. `frame` is
+ * the iframe element when `root` lives in one.
+ */
+export function watchSelection(options: SelectionOptions): () => void {
   const { language, frame } = options;
   const rootOf = () =>
     typeof options.root === 'function' ? options.root() : options.root;
@@ -112,24 +133,18 @@ export function watchSelection(options: {
   let pointer = 'mouse';
   let timer: ReturnType<typeof setTimeout> | undefined;
 
-  const read = () => {
-    const result = readSelection(win, rootOf(), language, frame);
-    if (!result) return;
-    if ('error' in result) options.onError(result.error);
-    else options.onSelect(result.selection);
-  };
+  const read = () =>
+    deliver(readSelection(win, rootOf(), language, frame), options);
 
   const onPointerDown = (event: PointerEvent) => {
     pointer = event.pointerType;
   };
   const onMouseUp = (event: MouseEvent) => {
-    if (event.button !== 0 || pointer !== 'mouse') return;
+    if (!isMouseClick(event, pointer)) return;
     if (!rootOf().contains(event.target as Node)) return;
     // Wait a tick so the browser has settled the selection after the click.
     setTimeout(() => {
-      const selection = win.getSelection();
-      if (selection?.isCollapsed && !selectWordAtCaret(doc, language)) return;
-      read();
+      if (settleMouseSelection(win, doc, language)) read();
     });
   };
   const onSelectionChange = () => {
