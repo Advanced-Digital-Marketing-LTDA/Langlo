@@ -9,9 +9,11 @@ type Status = 'unknown' | 'weak' | 'practising' | 'secure';
 const skill = (
   skillId: string,
   status: Status,
-  practisedSessions = 0,
-  prerequisites: string[] = [],
-  available = true
+  {
+    practisedSessions = 0,
+    prerequisites = [] as string[],
+    available = true
+  } = {}
 ) => ({
   skillId,
   title: `Title ${skillId}`,
@@ -38,13 +40,17 @@ it('orders weak, practising, unknown, then secure topics', () => {
 
 it('puts the least practised topic first within a state, then sorts by id', () => {
   expect(
-    ids([skill('a', 'weak', 3), skill('c', 'weak', 1), skill('b', 'weak', 1)])
+    ids([
+      skill('a', 'weak', { practisedSessions: 3 }),
+      skill('c', 'weak', { practisedSessions: 1 }),
+      skill('b', 'weak', { practisedSessions: 1 })
+    ])
   ).toEqual(['b', 'c', 'a']);
 });
 
 it('moves an unfinished foundation ahead of the topic that needs it', () => {
   const ranked = rankStudyList([
-    skill('topic', 'weak', 0, ['base']),
+    skill('topic', 'weak', { prerequisites: ['base'] }),
     skill('other', 'practising'),
     skill('base', 'unknown')
   ]);
@@ -60,22 +66,27 @@ it('moves an unfinished foundation ahead of the topic that needs it', () => {
 it('leaves secure foundations in place and drops unavailable topics', () => {
   expect(
     ids([
-      skill('topic', 'weak', 0, ['base']),
+      skill('topic', 'weak', { prerequisites: ['base'] }),
       skill('base', 'secure'),
-      skill('hidden', 'weak', 0, [], false)
+      skill('hidden', 'weak', { available: false })
     ])
   ).toEqual(['topic', 'base']);
 });
 
 it('stops at a prerequisite cycle instead of looping', () => {
   expect(
-    ids([skill('a', 'weak', 0, ['b']), skill('b', 'weak', 0, ['a'])])
+    ids([
+      skill('a', 'weak', { prerequisites: ['b'] }),
+      skill('b', 'weak', { prerequisites: ['a'] })
+    ])
   ).toEqual(['b', 'a']);
 });
 
 it('renders the first ten topics with practise forms and a View more button', async () => {
   const skills = Array.from({ length: 12 }, (_, index) =>
-    skill(`s${String(index).padStart(2, '0')}`, 'weak', index)
+    skill(`s${String(index).padStart(2, '0')}`, 'weak', {
+      practisedSessions: index
+    })
   );
   const html = await renderSvelte('src/lib/components/StudyList.svelte', {
     skills,
@@ -95,7 +106,10 @@ it('renders the first ten topics with practise forms and a View more button', as
 
 it('shows a foundation reason and hides View more when everything fits', async () => {
   const html = await renderSvelte('src/lib/components/StudyList.svelte', {
-    skills: [skill('topic', 'weak', 0, ['base']), skill('base', 'unknown')],
+    skills: [
+      skill('topic', 'weak', { prerequisites: ['base'] }),
+      skill('base', 'unknown')
+    ],
     language: 'fr',
     submissionKey: 'key-1',
     returnTo: '/app/map'
