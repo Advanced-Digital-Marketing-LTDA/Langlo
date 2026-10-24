@@ -212,8 +212,8 @@ export async function grammarRetentionFor(
   );
 }
 
-/** The bounded, manually selectable set of due skills for a track. */
-export async function dueGrammarReviews(
+/** Every due skill of a track, oldest due first. */
+export async function allDueGrammarReviews(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
   language: string,
@@ -229,12 +229,60 @@ export async function dueGrammarReviews(
         (a.retention.dueAt ?? now) - (b.retention.dueAt ?? now) ||
         a.skillId.localeCompare(b.skillId)
     )
-    .slice(0, 5)
     .map(({ skillId, title, retention }) => ({
       skillId,
       title,
       dueAt: retention.dueAt
     }));
+}
+
+/** The bounded, manually selectable set of due skills for a track. */
+export async function dueGrammarReviews(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string,
+  now = Date.now()
+) {
+  return (await allDueGrammarReviews(client, learner, language, now)).slice(
+    0,
+    5
+  );
+}
+
+/**
+ * Every available grammar skill of a track that falls due before the study
+ * day (`start` to `end`) ends: overdue ones fell due before it started,
+ * today's ones since.
+ * `ready` marks the skills a review session can include now.
+ */
+export async function grammarDueToday(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string,
+  { start, end, now }: { start: number; end: number; now: number }
+) {
+  const due = (await grammarRetentionFor(client, learner, language, now))
+    .filter(
+      (skill): skill is SkillRetention & { retention: { dueAt: number } } =>
+        skill.available &&
+        skill.retention.dueAt !== null &&
+        skill.retention.dueAt < end
+    )
+    .sort(
+      (a, b) =>
+        a.retention.dueAt - b.retention.dueAt ||
+        a.skillId.localeCompare(b.skillId)
+    )
+    .map(({ skillId, title, retention }) => ({
+      skillId,
+      title,
+      dueAt: retention.dueAt,
+      ready: retention.dueAt <= now
+    }));
+  return {
+    overdue: due.filter((skill) => skill.dueAt < start),
+    today: due.filter((skill) => skill.dueAt >= start)
+  };
 }
 
 function groupedAttempts(rows: Row[]) {

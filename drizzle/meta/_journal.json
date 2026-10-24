@@ -253,6 +253,13 @@
       "when": 1792783320503,
       "tag": "0035_dapper_nehzno",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "6",
+      "when": 1792852203606,
+      "tag": "0036_deck_language",
+      "breakpoints": true
     }
   ]
 }

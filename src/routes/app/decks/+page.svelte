@@ -1,5 +1,6 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
+  import { languageNames } from '../../../lib/languageNames';
   import type { ActionData, PageData } from './$types';
   let { data, form }: { data: PageData; form: ActionData } = $props();
 </script>
@@ -66,10 +67,25 @@
 {:else}
   <p>You have no decks yet.</p>
 {/if}
-<form method="POST" action="?/createDeck" use:enhance>
-  <label>Deck name <input name="name" required maxlength="160" /></label>
-  <button type="submit">Create deck</button>
-</form>
+{#if data.languages.length}
+  <form method="POST" action="?/createDeck" use:enhance>
+    <label>Deck name <input name="name" required maxlength="160" /></label>
+    <label
+      >Language <select name="language" required>
+        <option value="" selected disabled>Choose a language</option>
+        {#each data.languages as language (language)}
+          <option value={language}>{languageNames[language] ?? language}</option
+          >
+        {/each}
+      </select></label
+    >
+    <button type="submit">Create deck</button>
+  </form>
+{:else}
+  <p>
+    <a href="/app/settings">Choose a language</a> before creating a deck.
+  </p>
+{/if}
 <p>
   <a href="/app/review">Review due cards</a> · <a href="/app">Back to home</a>
 </p>

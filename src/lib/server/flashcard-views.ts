@@ -7,11 +7,103 @@ import {
   FlashcardError,
   getStudySchedule,
   ratingIntervalsForStoredCard,
+  type DeckLanguage,
   type LearnerSession,
   noteSourceFrom
 } from './flashcards';
+import { getTimezone } from './preferences';
+import { studyDayStart } from './study-days';
 
 type Query = Pick<Client, 'execute'>;
+/** The learner's current 04:00-to-04:00 study day, as epoch milliseconds. */
+export type StudyDayWindow = { start: number; end: number };
+export type DueBucket = 'overdue' | 'today';
+
+/** The caller's current study day in their saved timezone, UTC when unset. */
+export async function currentStudyDay(
+  client: Query,
+  learner: LearnerSession,
+  now: number = Date.now()
+): Promise<StudyDayWindow & { timezone: string }> {
+  const timezone = (await getTimezone(client, learner)) ?? 'UTC';
+  return {
+    timezone,
+    start: studyDayStart(now, timezone).getTime(),
+    end: studyDayStart(now, timezone, 1).getTime()
+  };
+}
+/**
+ * Due cards of one language and one part of the study day: overdue cards
+ * fell due before the day started, today's cards fell due since. A null
+ * language means cards whose deck and source have no language.
+ */
+export type DueScope = {
+  language: DeckLanguage | null;
+  bucket: DueBucket;
+  day: StudyDayWindow;
+};
+export type FlashcardDueGroup = {
+  language: DeckLanguage | null;
+  overdue: number;
+  todayReady: number;
+  todayLater: number;
+  nextDueAt: number | null;
+};
+
+// A card belongs to its deck's language; decks made before decks had one use
+// the card's source content language.
+const cardLanguage = 'COALESCE(d.language, v.language)';
+const cardLanguageJoins = `JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
+      LEFT JOIN content_versions v ON v.id = n.source_content_version_id`;
+
+function dueScopeFilter(scope: DueScope | undefined) {
+  if (!scope) return { sql: '', args: [] };
+  const language =
+    scope.language === null
+      ? { sql: `AND ${cardLanguage} IS NULL`, args: [] }
+      : { sql: `AND ${cardLanguage} = ?`, args: [scope.language] };
+  const bucket =
+    scope.bucket === 'overdue'
+      ? { sql: 'AND c.due_at < ?', args: [scope.day.start] }
+      : { sql: 'AND c.due_at >= ?', args: [scope.day.start] };
+  return {
+    sql: `${language.sql} ${bucket.sql}`,
+    args: [...language.args, ...bucket.args]
+  };
+}
+
+/**
+ * Per language, the approved, unsuspended cards that are overdue, due today
+ * and reviewable now, or due later today, with the next later due time.
+ */
+export async function flashcardDueGroups(
+  client: Query,
+  learner: LearnerSession,
+  day: StudyDayWindow,
+  now: number = Date.now()
+): Promise<FlashcardDueGroup[]> {
+  const result = await client.execute({
+    sql: `SELECT ${cardLanguage} AS language,
+        sum(c.due_at < ?) AS overdue,
+        sum(c.due_at >= ? AND c.due_at <= ?) AS today_ready,
+        sum(c.due_at > ?) AS today_later,
+        min(CASE WHEN c.due_at > ? THEN c.due_at END) AS next_due_at
+      FROM native_flashcards c
+      JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
+      ${cardLanguageJoins}
+      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at < ?
+      GROUP BY 1 ORDER BY 1`,
+    args: [day.start, day.start, now, now, now, learner.userId, day.end]
+  });
+  return result.rows.map((row) => ({
+    language:
+      row.language === null ? null : (String(row.language) as DeckLanguage),
+    overdue: Number(row.overdue),
+    todayReady: Number(row.today_ready),
+    todayLater: Number(row.today_later),
+    nextDueAt: row.next_due_at === null ? null : Number(row.next_due_at)
+  }));
+}
 const searchResultLimit = 50;
 const searchScanLimit = 1000;
 export type NoteKind = 'basic' | 'cloze';
@@ -175,13 +267,17 @@ export async function searchNotes(
 export async function countDueCards(
   client: Query,
   learner: LearnerSession,
-  now: number = Date.now()
+  now: number = Date.now(),
+  scope?: DueScope
 ): Promise<number> {
+  const filter = dueScopeFilter(scope);
   const result = await client.execute({
     sql: `SELECT count(*) AS total FROM native_flashcards c
       JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
-      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at <= ?`,
-    args: [learner.userId, now]
+      ${scope ? cardLanguageJoins : ''}
+      WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at <= ?
+        ${filter.sql}`,
+    args: [learner.userId, now, ...filter.args]
   });
   return Number(result.rows[0].total);
 }
@@ -215,9 +311,11 @@ export async function listDueCards(
   client: Client,
   learner: LearnerSession,
   now: number = Date.now(),
-  limit = 20
+  limit = 20,
+  scope?: DueScope
 ) {
   if (limit <= 0) return { cards: [], unavailableCount: 0 };
+  const filter = dueScopeFilter(scope);
   const schedule = await getStudySchedule(client, learner);
   const reviewedAt = new Date(now);
   const cards: {
@@ -240,13 +338,15 @@ export async function listDueCards(
         n.kind, n.content_json, n.explanation, d.name AS deck_name
       FROM native_flashcards c
       JOIN native_flashcard_notes n ON n.id = c.note_id AND n.owner_id = c.owner_id
-      JOIN native_flashcard_decks d ON d.id = n.deck_id AND d.owner_id = n.owner_id
+      ${cardLanguageJoins}
       WHERE c.owner_id = ? AND c.suspended = 0 AND n.status = 'approved' AND c.due_at <= ?
+        ${filter.sql}
         ${cursor ? 'AND (c.due_at > ? OR (c.due_at = ? AND c.id > ?))' : ''}
       ORDER BY c.due_at, c.id LIMIT ?`,
       args: [
         learner.userId,
         now,
+        ...filter.args,
         ...(cursor ? [cursor.dueAt, cursor.dueAt, cursor.id] : []),
         batchSize
       ]

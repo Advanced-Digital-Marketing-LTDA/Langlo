@@ -3,8 +3,14 @@ import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { formResult, studyPage } from '../../../lib/server/learner-api';
 import { requireLearnerApi } from '../../../lib/server/learner-session';
-import { createDeck, listDecks } from '../../../lib/server/flashcards';
+import {
+  createDeck,
+  FlashcardError,
+  listDecks,
+  type DeckLanguage
+} from '../../../lib/server/flashcards';
 import { searchNotes } from '../../../lib/server/flashcard-views';
+import { listEnrollments } from '../../../lib/server/enrollment';
 
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => {
@@ -19,6 +25,9 @@ export const load: PageServerLoad = (event) =>
       : { results: [], nextCursor: null };
     return {
       decks: await listDecks(client, learner),
+      languages: (await listEnrollments(client, learner)).map(
+        (enrollment) => enrollment.language
+      ),
       query,
       ...search
     };
@@ -31,12 +40,17 @@ export const actions: Actions = {
     const id = `deck:${randomUUID()}`;
     const failed = await formResult(
       () =>
-        studyPage(event, (client) =>
-          createDeck(client, learner, {
+        studyPage(event, async (client) => {
+          const language = String(form.get('language') ?? '');
+          const enrolled = await listEnrollments(client, learner);
+          if (!enrolled.some((item) => item.language === language))
+            throw new FlashcardError('INVALID_DECK_LANGUAGE');
+          await createDeck(client, learner, {
             id,
-            name: String(form.get('name') ?? '')
-          })
-        ),
+            name: String(form.get('name') ?? ''),
+            language: language as DeckLanguage
+          });
+        }),
       null
     );
     if (failed) return failed;

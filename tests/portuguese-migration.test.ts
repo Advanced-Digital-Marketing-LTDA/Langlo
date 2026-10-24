@@ -354,7 +354,8 @@ describe('migration 0026 Portuguese tracks', () => {
         '0032_question_and_attempt_lookup_indexes',
         '0033_typesafe_ai_usage',
         '0034_holdout_question_lookup_indexes',
-        '0035_dapper_nehzno'
+        '0035_dapper_nehzno',
+        '0036_deck_language'
       ]);
       const result = await applyRemoteTestPlan(client, migrations, {
         host,

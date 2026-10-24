@@ -4,11 +4,8 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client/sqlite3';
-import {
-  approveNote,
-  createDeck,
-  createNote
-} from '../../src/lib/server/flashcards';
+import { approveNote, createNote } from '../../src/lib/server/flashcards';
+import { createDeck } from '../fixtures/french-deck';
 import {
   createFixtureDatabase,
   disposeFixtureDatabase,
@@ -110,7 +107,7 @@ test('reveals each answer and stores every rating', async ({
       });
     }
 
-    await page.goto(`${base}/app/review`);
+    await page.goto(`${base}/app/review/flashcards?language=fr&due=overdue`);
     const shown = page.locator('p > strong').first();
     let previous = '';
     for (const rating of ratings) {

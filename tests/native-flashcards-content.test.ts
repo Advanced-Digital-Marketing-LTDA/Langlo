@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   disposeFlashcardFixtures,
   fixture,

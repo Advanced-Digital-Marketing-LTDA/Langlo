@@ -12,7 +12,7 @@ import { StudyError } from './study-error';
 import { beginWrite } from './flashcards';
 import {
   commitGrammarSessionReviews,
-  dueGrammarReviews,
+  allDueGrammarReviews,
   GRAMMAR_RETENTION_POLICY_VERSION
 } from './grammar-retention';
 
@@ -289,7 +289,9 @@ async function assertDueGrammarSelection(
   selection: { language: string; skillIds: string[] },
   now: number
 ) {
-  const due = await dueGrammarReviews(tx, learner, selection.language, now);
+  // Any due skill may be chosen, so the Review tab can start today's topics
+  // while older ones are still overdue; the session still takes at most five.
+  const due = await allDueGrammarReviews(tx, learner, selection.language, now);
   const dueIds = new Set(due.map((item) => item.skillId));
   if (!selection.skillIds.every((id) => dueIds.has(id)))
     throw new StudyError('STALE_GRAMMAR_REVIEW');
