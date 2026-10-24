@@ -92,38 +92,49 @@ function extractOfficeText(buffer: ArrayBuffer, extension: string) {
   });
 }
 
-export async function parseLibraryDocument(
-  file: File,
-  language: unknown
-): Promise<ParsedLibraryDocument> {
+function libraryLanguage(language: unknown): LibraryLanguage {
   if (
     typeof language !== 'string' ||
     !LIBRARY_LANGUAGES.includes(language as LibraryLanguage)
   )
     throw new StudyError('INVALID_LIBRARY_LANGUAGE');
-  if (file.size > maxFileBytes) throw new StudyError('LIBRARY_FILE_TOO_LARGE');
+  return language as LibraryLanguage;
+}
 
+function libraryFileExtension(file: File): string {
+  if (file.size > maxFileBytes) throw new StudyError('LIBRARY_FILE_TOO_LARGE');
   const extension = file.name.split('.').at(-1)?.toLowerCase() ?? '';
   if (!fileTypes.has(extension)) throw new StudyError('INVALID_LIBRARY_FILE');
-  const title = documentTitle(file.name);
+  return extension;
+}
 
-  let content: string;
+async function readDocumentText(file: File, extension: string) {
   try {
     const buffer = await file.arrayBuffer();
-    content =
+    const content =
       extension === 'txt'
         ? new TextDecoder('utf-8', { fatal: true }).decode(buffer)
         : await extractOfficeText(buffer, extension);
     if (extension === 'txt' && /^\s*%PDF-/u.test(content))
       throw new StudyError('INVALID_LIBRARY_DOCUMENT');
+    return content;
   } catch (error) {
     if (error instanceof StudyError) throw error;
     throw new StudyError('INVALID_LIBRARY_DOCUMENT');
   }
+}
 
+export async function parseLibraryDocument(
+  file: File,
+  language: unknown
+): Promise<ParsedLibraryDocument> {
+  const documentLanguage = libraryLanguage(language);
+  const extension = libraryFileExtension(file);
+  const title = documentTitle(file.name);
+  const content = await readDocumentText(file, extension);
   return {
     title,
-    language: language as LibraryLanguage,
+    language: documentLanguage,
     content: normalizeDocumentText(content)
   };
 }
@@ -296,6 +307,108 @@ export async function libraryTargetLanguage(
     : 'en';
 }
 
+type VocabularyEntry = { deckId: string; term: string; definition: string };
+
+function filledText(value: unknown, limit: number): value is string {
+  return (
+    typeof value === 'string' &&
+    Boolean(value.trim()) &&
+    value.length <= limit &&
+    !value.includes('\0')
+  );
+}
+
+function libraryTerm(value: unknown, content: string): string {
+  if (!filledText(value, 256)) throw new StudyError('INVALID_LIBRARY_TERM');
+  const term = value.trim();
+  if (!containsTerm(content, term))
+    throw new StudyError('INVALID_LIBRARY_TERM');
+  return term;
+}
+
+function libraryDefinition(value: unknown): string {
+  if (!filledText(value, 4096))
+    throw new StudyError('INVALID_LIBRARY_DEFINITION');
+  return value.trim();
+}
+
+async function assertDeckMatches(
+  client: Client,
+  learner: LearnerSession,
+  deckId: string,
+  language: LibraryLanguage
+) {
+  const deck = await client.execute({
+    sql: 'SELECT language FROM native_flashcard_decks WHERE id = ? AND owner_id = ?',
+    args: [deckId, learner.userId]
+  });
+  if (!deck.rows[0]) throw new StudyError('NOT_FOUND');
+  if (deck.rows[0].language !== language)
+    throw new StudyError('INVALID_LIBRARY_DECK');
+}
+
+function vocabularySourceId(
+  learner: LearnerSession,
+  language: LibraryLanguage,
+  entry: VocabularyEntry
+) {
+  return createSourceId({
+    ownerId: learner.userId,
+    language,
+    skillId: 'library-vocabulary',
+    canonicalMistake: createHash('sha256')
+      .update(
+        JSON.stringify([
+          entry.deckId,
+          entry.term.toLocaleLowerCase(),
+          entry.definition.toLocaleLowerCase()
+        ])
+      )
+      .digest('hex')
+  });
+}
+
+const sameText = (actual: string | undefined, expected: string) =>
+  actual?.trim().toLocaleLowerCase() === expected.toLocaleLowerCase();
+
+function vocabularyRowChanged(
+  row: Record<string, unknown>,
+  entry: VocabularyEntry
+): boolean {
+  const content = JSON.parse(String(row.content_json)) as {
+    front?: string;
+    back?: string;
+  };
+  const tags = JSON.parse(String(row.tags_json)) as string[];
+  if (row.deck_id !== entry.deckId || row.kind !== 'basic') return true;
+  if (
+    !sameText(content.front, entry.term) ||
+    !sameText(content.back, entry.definition)
+  )
+    return true;
+  return !tags.includes('library-vocabulary');
+}
+
+async function findExistingVocabulary(
+  client: Client,
+  learner: LearnerSession,
+  sourceId: string,
+  entry: VocabularyEntry
+) {
+  const result = await client.execute({
+    sql: 'SELECT id, status, deck_id, kind, content_json, tags_json FROM native_flashcard_notes WHERE owner_id = ? AND source_id = ?',
+    args: [learner.userId, sourceId]
+  });
+  const row = result.rows[0];
+  if (!row) return null;
+  if (vocabularyRowChanged(row, entry))
+    throw new StudyError('LIBRARY_VOCABULARY_CHANGED');
+  return { id: String(row.id), status: String(row.status) };
+}
+
+const isConstraintError = (error: unknown) =>
+  (error as { code?: string }).code?.startsWith('SQLITE_CONSTRAINT');
+
 export async function saveLibraryVocabulary(
   client: Client,
   learner: LearnerSession,
@@ -307,72 +420,18 @@ export async function saveLibraryVocabulary(
   }
 ) {
   const document = await getLibraryDocument(client, learner, input.documentId);
-  if (
-    typeof input.term !== 'string' ||
-    !input.term.trim() ||
-    input.term.length > 256 ||
-    input.term.includes('\0')
-  )
-    throw new StudyError('INVALID_LIBRARY_TERM');
-  const term = input.term.trim();
-  if (!containsTerm(document.content, term))
-    throw new StudyError('INVALID_LIBRARY_TERM');
-  if (
-    typeof input.definition !== 'string' ||
-    !input.definition.trim() ||
-    input.definition.length > 4096 ||
-    input.definition.includes('\0')
-  )
-    throw new StudyError('INVALID_LIBRARY_DEFINITION');
-  const deck = await client.execute({
-    sql: 'SELECT language FROM native_flashcard_decks WHERE id = ? AND owner_id = ?',
-    args: [input.deckId, learner.userId]
-  });
-  if (!deck.rows[0]) throw new StudyError('NOT_FOUND');
-  if (deck.rows[0].language !== document.language)
-    throw new StudyError('INVALID_LIBRARY_DECK');
+  const term = libraryTerm(input.term, document.content);
+  const definition = libraryDefinition(input.definition);
+  await assertDeckMatches(client, learner, input.deckId, document.language);
 
-  const definition = input.definition.trim();
-  const sourceId = createSourceId({
-    ownerId: learner.userId,
-    language: document.language,
-    skillId: 'library-vocabulary',
-    canonicalMistake: createHash('sha256')
-      .update(
-        JSON.stringify([
-          input.deckId,
-          term.toLocaleLowerCase(),
-          definition.toLocaleLowerCase()
-        ])
-      )
-      .digest('hex')
-  });
-  const findExisting = async () => {
-    const result = await client.execute({
-      sql: 'SELECT id, status, deck_id, kind, content_json, tags_json FROM native_flashcard_notes WHERE owner_id = ? AND source_id = ?',
-      args: [learner.userId, sourceId]
-    });
-    const row = result.rows[0];
-    if (row) {
-      const content = JSON.parse(String(row.content_json)) as {
-        front?: string;
-        back?: string;
-      };
-      const tags = JSON.parse(String(row.tags_json)) as string[];
-      if (
-        row.deck_id !== input.deckId ||
-        row.kind !== 'basic' ||
-        content.front?.trim().toLocaleLowerCase() !==
-          term.toLocaleLowerCase() ||
-        content.back?.trim().toLocaleLowerCase() !==
-          definition.toLocaleLowerCase() ||
-        !tags.includes('library-vocabulary')
-      )
-        throw new StudyError('LIBRARY_VOCABULARY_CHANGED');
-    }
-    return row ? { id: String(row.id), status: String(row.status) } : null;
-  };
-  const existing = await findExisting();
+  const entry = { deckId: input.deckId, term, definition };
+  const sourceId = vocabularySourceId(learner, document.language, entry);
+  const existing = await findExistingVocabulary(
+    client,
+    learner,
+    sourceId,
+    entry
+  );
   if (existing) return existing;
 
   try {
@@ -385,8 +444,13 @@ export async function saveLibraryVocabulary(
       tags: ['library-vocabulary']
     });
   } catch (error) {
-    if ((error as { code?: string }).code?.startsWith('SQLITE_CONSTRAINT')) {
-      const winner = await findExisting();
+    if (isConstraintError(error)) {
+      const winner = await findExistingVocabulary(
+        client,
+        learner,
+        sourceId,
+        entry
+      );
       if (winner) return winner;
     }
     throw error;

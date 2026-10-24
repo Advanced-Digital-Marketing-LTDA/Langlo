@@ -100,12 +100,7 @@ function responseText(value: unknown): string | undefined {
   return text.join('\n').trim() || undefined;
 }
 
-export async function requestLibraryAi(
-  apiKey: string | undefined,
-  input: LibraryAiInput
-): Promise<string> {
-  if (!apiKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
-  validateLibraryAiInput(input);
+function libraryAiPrompt(input: LibraryAiInput) {
   const sourceLanguage = languageNames[input.language];
   const targetLanguage =
     input.targetLanguage === 'pt' ? 'Portuguese' : 'English';
@@ -119,6 +114,23 @@ export async function requestLibraryAi(
     nextSentence: input.nextSentence,
     ...(input.action === 'lookup' ? { term: input.term } : {})
   };
+  return { instructions, context };
+}
+
+function libraryAiResult(value: unknown): string {
+  const result = responseText(value);
+  if (!result || result.length > 2000)
+    throw new Error('OpenAI response was empty or too long');
+  return result;
+}
+
+export async function requestLibraryAi(
+  apiKey: string | undefined,
+  input: LibraryAiInput
+): Promise<string> {
+  if (!apiKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+  validateLibraryAiInput(input);
+  const { instructions, context } = libraryAiPrompt(input);
 
   try {
     const response = await fetch('https://api.openai.com/v1/responses', {
@@ -138,10 +150,7 @@ export async function requestLibraryAi(
       signal: AbortSignal.timeout(15_000)
     });
     if (!response.ok) throw new Error('OpenAI request failed');
-    const result = responseText(await response.json());
-    if (!result || result.length > 2000)
-      throw new Error('OpenAI response was empty or too long');
-    return result;
+    return libraryAiResult(await response.json());
   } catch {
     throw new StudyError('LIBRARY_AI_UNAVAILABLE');
   }
