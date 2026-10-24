@@ -146,9 +146,59 @@ test('shows the size error on the Library page when a file is too large', async 
   });
   await page.getByRole('button', { name: 'Upload document' }).click();
   await expect(page.getByRole('alert')).toHaveText(
-    'Choose a file smaller than 10 MB.'
+    'Choose a file of 10 MB or smaller.'
   );
   await expect(page).toHaveURL(`${base}/app/library`);
+});
+
+test('clears the size error when a new file is chosen', async ({ page }) => {
+  await page.goto(`${base}/app/library`);
+  await page.getByLabel('Document language').selectOption('fr');
+  await page.getByLabel('File', { exact: true }).setInputFiles({
+    name: 'huge.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.alloc(12 * 1024 * 1024, 'a')
+  });
+  await page.getByRole('button', { name: 'Upload document' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Choose a file of 10 MB or smaller.'
+  );
+  await page.getByLabel('File', { exact: true }).setInputFiles({
+    name: 'petit.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('Bonjour.')
+  });
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
+test('shows a rename error after an oversized upload', async ({ page }) => {
+  await page.goto(`${base}/app/library`);
+  await page.getByLabel('Document language').selectOption('fr');
+  await page.getByLabel('File', { exact: true }).setInputFiles({
+    name: 'petit.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('Bonjour.')
+  });
+  await page.getByRole('button', { name: 'Upload document' }).click();
+  await expect(page).toHaveURL(/\/app\/library\/library-/u);
+  await page.goto(`${base}/app/library`);
+  await page.getByLabel('Document language').selectOption('fr');
+  await page.getByLabel('File', { exact: true }).setInputFiles({
+    name: 'huge.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.alloc(12 * 1024 * 1024, 'a')
+  });
+  await page.getByRole('button', { name: 'Upload document' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Choose a file of 10 MB or smaller.'
+  );
+  await page.getByLabel('Rename').first().fill('   ');
+  await page.getByRole('button', { name: 'Save title' }).first().click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Use a title of up to 160 characters.'
+  );
+  await page.getByRole('button', { name: 'Delete document' }).first().click();
+  await expect(page.getByText('No documents yet.')).toBeVisible();
 });
 
 for (const sample of [

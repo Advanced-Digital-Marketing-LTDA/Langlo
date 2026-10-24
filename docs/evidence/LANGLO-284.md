@@ -440,3 +440,34 @@ The prior map timer failure did not recur in this run; its implementation and
 assertion were not changed. Changed supported files pass Prettier, while the
 repository-wide format check still flags only the pre-existing ignored local
 `.claude/settings.local.json`.
+
+## Upload limit follow-up (2026-10-24)
+
+The earlier sections describe a 10 MiB file limit and a 1,000,000-character
+content ceiling. Both were changed on request:
+
+- The file limit is 10 MB (10,000,000 bytes) and is checked in the browser
+  before upload and again on the server (`LIBRARY_FILE_TOO_LARGE`, HTTP 413).
+  The shared message is "Choose a file of 10 MB or smaller." and a file of
+  exactly 10,000,000 bytes is accepted.
+- There is no limit on extracted text length, so the parser worker no longer
+  returns `LIBRARY_CONTENT_TOO_LARGE`. Only the file size is bounded; the
+  adversarial review and RewardGuard flag the missing text bound and remain
+  open by decision.
+- An oversized file shows its message on the Library page without leaving it.
+  The message clears when another file is chosen or a rename or delete is
+  submitted, so those forms can show their own errors.
+
+Observed results are recorded below.
+
+Red then green, observed 2026-10-24 (only the new and edited tests were run;
+the full suite is left to CI):
+
+- `tests/library-routes.test.ts` "answers an oversized file with a 413 that
+  accepts exactly 10 MB" failed against the previous message ("Choose a file
+  smaller than 10 MB.") and passes with the shared message. Together with
+  `tests/library-documents.test.ts`: 26 passed.
+- `tests/e2e/library.spec.ts` size-error, clears-on-file-change and
+  rename-error-after-oversize cases: 6 passed (desktop and mobile) against a
+  fresh build. The first run failed on the old message because the browser
+  tests use the built app.

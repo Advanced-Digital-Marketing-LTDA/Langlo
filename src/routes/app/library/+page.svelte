@@ -1,7 +1,10 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { languageNames } from '../../../lib/languageNames';
-  import { libraryMaxFileBytes } from '../../../lib/library-text';
+  import {
+    libraryFileTooLargeMessage,
+    libraryMaxFileBytes
+  } from '../../../lib/library-text';
   import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -32,7 +35,7 @@
     use:enhance={({ formData, cancel }) => {
       const file = formData.get('file');
       if (file instanceof File && file.size > libraryMaxFileBytes) {
-        fileError = 'Choose a file smaller than 10 MB.';
+        fileError = libraryFileTooLargeMessage;
         cancel();
         return;
       }
@@ -50,7 +53,13 @@
     </label>
     <label>
       File
-      <input type="file" name="file" accept=".txt,.pdf,.docx,.epub" required />
+      <input
+        type="file"
+        name="file"
+        accept=".txt,.pdf,.docx,.epub"
+        required
+        onchange={() => (fileError = '')}
+      />
     </label>
     <p>TXT, text-based PDF, DOCX, or EPUB. Maximum file size: 10 MB.</p>
     <button type="submit">Upload document</button>
@@ -76,7 +85,13 @@
               document.sentenceCount
             )}% ({document.progressIndex} of {document.sentenceCount} sentences)
           </p>
-          <form method="POST" action="?/rename" use:enhance>
+          <form
+            method="POST"
+            action="?/rename"
+            use:enhance={() => {
+              fileError = '';
+            }}
+          >
             <input type="hidden" name="documentId" value={document.id} />
             <label>
               Rename
@@ -89,7 +104,13 @@
             </label>
             <button type="submit">Save title</button>
           </form>
-          <form method="POST" action="?/delete" use:enhance>
+          <form
+            method="POST"
+            action="?/delete"
+            use:enhance={() => {
+              fileError = '';
+            }}
+          >
             <input type="hidden" name="documentId" value={document.id} />
             <button type="submit">Delete document</button>
           </form>

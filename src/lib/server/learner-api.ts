@@ -13,6 +13,7 @@ import {
   requireLearnerPage,
   type LearnerSession
 } from './learner-session';
+import { libraryFileTooLargeMessage } from '../library-text';
 import { StudyError } from './study';
 import { span } from './tracing';
 
@@ -110,7 +111,7 @@ const messageForCode: Record<string, string> = {
   INVALID_LIBRARY_DEFINITION: 'Enter a definition of up to 4096 characters.',
   INVALID_LIBRARY_PROGRESS: 'Choose a sentence in this document.',
   INVALID_LIBRARY_ACTION: 'Choose translation or vocabulary lookup.',
-  LIBRARY_FILE_TOO_LARGE: 'Choose a file smaller than 10 MB.',
+  LIBRARY_FILE_TOO_LARGE: libraryFileTooLargeMessage,
   LIBRARY_PARSE_TIMEOUT:
     'This document could not be read within the supported limits.',
   LIBRARY_AI_UNAVAILABLE:
