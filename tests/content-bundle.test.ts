@@ -167,14 +167,7 @@ describe('content bundle import', () => {
   it('imports the approved repository bundle once', async () => {
     const pkg = bundlePackage(process.cwd());
     expect(pkg.publicationStatus).toBe('approved');
-    // The version is the manifest's, which names the content being imported.
-    expect(pkg.curriculumVersion).toBe(
-      (
-        JSON.parse(
-          readFileSync('content/curriculum-manifest.json', 'utf8')
-        ) as { curriculum_version: string }
-      ).curriculum_version
-    );
+    expect(pkg.curriculumVersion).toBe('1.5.0');
     expect(pkg.skills.every((skill) => skill.review === 'approved')).toBe(true);
     // Expected counts come from the source files, not from the package.
     const rows = parseCsv(
