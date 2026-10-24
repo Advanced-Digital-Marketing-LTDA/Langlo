@@ -79,6 +79,13 @@ const clarifiedLessons = lessons.filter((lesson) =>
 const clarifiedIds = new Set(
   clarifiedLessons.map((lesson) => lesson.version.id)
 );
+const earlierPackage = () => {
+  const full = modulesPackage(root);
+  return {
+    ...full,
+    versions: full.versions.filter((version) => !clarifiedIds.has(version.id))
+  };
+};
 const earlierLessons = lessons.filter(
   (lesson) => !clarifiedIds.has(lesson.version.id)
 );
@@ -308,13 +315,7 @@ describe('revising already imported lessons', () => {
     await migrateFixtureDatabase(target);
     const client = createClient({ url: target.databaseUrl });
     try {
-      const full = modulesPackage(root);
-      const pkg = {
-        ...full,
-        versions: full.versions.filter(
-          (version) => !clarifiedIds.has(version.id)
-        )
-      };
+      const pkg = earlierPackage();
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
@@ -398,11 +399,8 @@ describe('reworded assessment prompts', () => {
     try {
       const full = modulesPackage(root);
       await importContent(client, {
-        ...full,
-        curriculumVersion: '1.4.0',
-        versions: full.versions.filter(
-          (version) => !clarifiedIds.has(version.id)
-        )
+        ...earlierPackage(),
+        curriculumVersion: '1.4.0'
       });
       const result = await importContent(client, full);
       expect(full.curriculumVersion).toBe('1.5.0');
