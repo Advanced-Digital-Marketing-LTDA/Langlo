@@ -13,6 +13,7 @@ import {
 import * as library from '../src/routes/app/api/library/+server';
 import * as documentRoute from '../src/routes/app/api/library/[id]/+server';
 import * as studyRoute from '../src/routes/app/api/library/[id]/study/+server';
+import * as fileRoute from '../src/routes/app/api/library/[id]/file/+server';
 import * as vocabularyRoute from '../src/routes/app/api/library/[id]/vocabulary/+server';
 
 type Handler = (event: never) => Promise<Response>;
@@ -104,7 +105,7 @@ describe('Library API', () => {
         'POST',
         'learner-a',
         '/app/api/library/library-a/study',
-        { action: 'lookup', sentenceIndex: 0, term: 'Bonjour' },
+        { action: 'lookup', term: 'Bonjour', sentence: 'Bonjour.' },
         'synthetic-openai-test-key'
       )
     );
@@ -124,13 +125,19 @@ describe('Library API', () => {
   });
 
   it.each([
-    { action: 'invalid', sentenceIndex: 0 },
-    { action: 'translate', sentenceIndex: -1 },
-    { action: 'translate', sentenceIndex: 1 },
-    { action: 'translate', sentenceIndex: 0.5 },
-    { action: 'lookup', sentenceIndex: 0, term: '' },
-    { action: 'lookup', sentenceIndex: 0, term: 'absent' },
-    { action: 'lookup', sentenceIndex: 0, term: 'x'.repeat(257) }
+    { action: 'invalid', sentence: 'Bonjour.' },
+    { action: 'translate' },
+    { action: 'translate', sentence: '   ' },
+    { action: 'translate', sentence: 42 },
+    { action: 'translate', sentence: 'x'.repeat(2001) },
+    {
+      action: 'translate',
+      sentence: 'Bonjour.',
+      previousSentence: 'x'.repeat(2001)
+    },
+    { action: 'lookup', sentence: 'Bonjour.', term: '' },
+    { action: 'lookup', sentence: 'Bonjour.', term: 'absent' },
+    { action: 'lookup', sentence: 'Bonjour.', term: 'x'.repeat(257) }
   ])('rejects invalid study input before spending quota: %j', async (body) => {
     await createLibraryDocument(client, testSession('learner-a'), {
       id: 'library-a',
@@ -170,7 +177,7 @@ describe('Library API', () => {
         studyRoute.POST as Handler,
         event('POST', 'learner-a', '/app/api/library/library-a/study', {
           action: 'translate',
-          sentenceIndex: 0
+          sentence: 'Bonjour.'
         })
       )
     ).toMatchObject({ status: 503 });
@@ -190,7 +197,17 @@ describe('Library API', () => {
       await call(
         documentRoute.PATCH as Handler,
         event('PATCH', 'learner-a', '/app/api/library/library-a', {
-          progressIndex: 2
+          location: 'page:1',
+          fraction: 1.5
+        })
+      )
+    ).toMatchObject({ status: 400 });
+    expect(
+      await call(
+        documentRoute.PATCH as Handler,
+        event('PATCH', 'learner-a', '/app/api/library/library-a', {
+          location: '',
+          fraction: 0.5
         })
       )
     ).toMatchObject({ status: 400 });
@@ -198,7 +215,8 @@ describe('Library API', () => {
       await call(
         documentRoute.PATCH as Handler,
         event('PATCH', 'learner-b', '/app/api/library/library-a', {
-          progressIndex: 1
+          location: 'page:1',
+          fraction: 1
         })
       )
     ).toMatchObject({ status: 404 });
@@ -212,7 +230,8 @@ describe('Library API', () => {
       await call(
         documentRoute.PATCH as Handler,
         event('PATCH', 'learner-a', '/app/api/library/library-a', {
-          progressIndex: 1
+          location: 'page:1',
+          fraction: 1
         })
       )
     ).toMatchObject({ status: 200, body: { saved: true } });
@@ -221,7 +240,10 @@ describe('Library API', () => {
         documentRoute.GET as Handler,
         event('GET', 'learner-a', '/app/api/library/library-a')
       )
-    ).toMatchObject({ status: 200, body: { document: { progressIndex: 1 } } });
+    ).toMatchObject({
+      status: 200,
+      body: { document: { progressIndex: 1, progressLocation: 'page:1' } }
+    });
     expect(
       await call(
         documentRoute.DELETE as Handler,
@@ -275,7 +297,15 @@ describe('Library API', () => {
           status: 'completed',
           output: [
             {
-              content: [{ type: 'output_text', text: 'financial institution' }]
+              content: [
+                {
+                  type: 'output_text',
+                  text: JSON.stringify({
+                    translation: 'banco',
+                    explanation: 'a financial institution'
+                  })
+                }
+              ]
             }
           ]
         }),
@@ -290,13 +320,19 @@ describe('Library API', () => {
         'POST',
         'learner-a',
         '/app/api/library/library-a/study',
-        { action: 'lookup', sentenceIndex: 1, term: 'bank' },
+        {
+          action: 'lookup',
+          term: 'bank',
+          previousSentence: 'First context sentence.',
+          sentence: 'The bank approved my loan.',
+          nextSentence: 'I signed the form.'
+        },
         'synthetic-openai-test-key'
       )
     );
     expect(result).toMatchObject({
       status: 200,
-      body: { result: 'financial institution' }
+      body: { translation: 'banco', explanation: 'a financial institution' }
     });
     const sent = String((fetch.mock.calls[0][1] as RequestInit).body);
     expect(sent).toContain('The bank approved my loan.');
@@ -326,7 +362,7 @@ describe('Library API', () => {
           'POST',
           'learner-a',
           '/app/api/library/library-a/study',
-          { action: 'translate', sentenceIndex: 0 },
+          { action: 'translate', sentence: 'Bonjour.' },
           'synthetic-openai-test-key'
         )
       )
@@ -373,6 +409,55 @@ describe('Library API', () => {
         })
       )
     ).toMatchObject({ status: 404 });
+  });
+
+  it('serves the stored original file only to its owner', async () => {
+    const bytes = new Uint8Array([37, 80, 68, 70, 45, 49]);
+    await createLibraryDocument(client, testSession('learner-a'), {
+      id: 'library-a',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.',
+      original: { format: 'pdf', bytes }
+    });
+    await createLibraryDocument(client, testSession('learner-a'), {
+      id: 'library-text',
+      title: 'Text only',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    const response = await fileRoute.GET(
+      event('GET', 'learner-a', '/app/api/library/library-a/file') as never
+    );
+    expect(response.status).toBe(200);
+    expect(response.headers.get('content-type')).toBe(
+      'application/octet-stream'
+    );
+    expect(response.headers.get('content-security-policy')).toBe('sandbox');
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(bytes);
+    expect(
+      await call(
+        fileRoute.GET as Handler,
+        event('GET', 'learner-b', '/app/api/library/library-a/file')
+      )
+    ).toMatchObject({ status: 404 });
+    const textOnly = event(
+      'GET',
+      'learner-a',
+      '/app/api/library/library-text/file'
+    );
+    (textOnly as { params: { id: string } }).params.id = 'library-text';
+    expect(await call(fileRoute.GET as Handler, textOnly)).toMatchObject({
+      status: 404
+    });
+    expect(
+      await call(
+        documentRoute.GET as Handler,
+        event('GET', 'learner-a', '/app/api/library/library-a')
+      )
+    ).toMatchObject({
+      body: { document: { originalFormat: 'pdf' } }
+    });
   });
 });
 

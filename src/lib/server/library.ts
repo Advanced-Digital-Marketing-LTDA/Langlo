@@ -8,7 +8,12 @@ import {
   splitSentences
 } from '../library-text';
 import { createSourceId } from './db/source-id';
-import { createNote, executeWrite, type LearnerSession } from './flashcards';
+import {
+  beginWrite,
+  createNote,
+  executeWrite,
+  type LearnerSession
+} from './flashcards';
 import { StudyError } from './study-error';
 
 export const LIBRARY_LANGUAGES = ['fr', 'de', 'en', 'pt'] as const;
@@ -18,10 +23,13 @@ const fileTypes = new Set(['txt', 'pdf', 'docx', 'epub']);
 let activeParsers = 0;
 const maxActiveParsers = 2;
 
+export type LibraryOriginalFormat = 'pdf' | 'docx' | 'epub';
+
 export type ParsedLibraryDocument = {
   title: string;
   language: LibraryLanguage;
   content: string;
+  original?: { format: LibraryOriginalFormat; bytes: Uint8Array };
 };
 
 export type LibraryDocument = {
@@ -31,6 +39,8 @@ export type LibraryDocument = {
   content: string;
   sentenceCount: number;
   progressIndex: number;
+  progressLocation: string | null;
+  originalFormat: LibraryOriginalFormat | null;
   createdAt: number;
 };
 
@@ -117,9 +127,9 @@ async function decodeDocument(buffer: ArrayBuffer, extension: string) {
   return content;
 }
 
-async function readDocumentText(file: File, extension: string) {
+async function readDocumentText(buffer: ArrayBuffer, extension: string) {
   try {
-    return await decodeDocument(await file.arrayBuffer(), extension);
+    return await decodeDocument(buffer, extension);
   } catch (error) {
     if (error instanceof StudyError) throw error;
     throw new StudyError('INVALID_LIBRARY_DOCUMENT');
@@ -133,11 +143,21 @@ export async function parseLibraryDocument(
   const documentLanguage = libraryLanguage(language);
   const extension = libraryFileExtension(file);
   const title = documentTitle(file.name);
-  const content = await readDocumentText(file, extension);
+  const buffer = await file.arrayBuffer();
+  const original =
+    extension === 'txt'
+      ? undefined
+      : {
+          format: extension as LibraryOriginalFormat,
+          bytes: new Uint8Array(buffer.slice(0))
+        };
+  // The parser worker takes ownership of the buffer, so it gets its own copy.
+  const content = await readDocumentText(buffer, extension);
   return {
     title,
     language: documentLanguage,
-    content: normalizeDocumentText(content)
+    content: normalizeDocumentText(content),
+    ...(original ? { original } : {})
   };
 }
 
@@ -158,6 +178,12 @@ function documentFromRow(row: Record<string, unknown>): LibraryDocument {
     content: String(row.content),
     sentenceCount: Number(row.sentence_count),
     progressIndex: Number(row.progress_index),
+    progressLocation:
+      row.progress_location === null ? null : String(row.progress_location),
+    originalFormat:
+      row.original_format === null
+        ? null
+        : (String(row.original_format) as LibraryOriginalFormat),
     createdAt: Number(row.created_at)
   };
 }
@@ -174,17 +200,31 @@ export async function createLibraryDocument(
     throw new StudyError('INVALID_LIBRARY_LANGUAGE');
   const content = normalizeDocumentText(input.content);
   const sentenceCount = splitSentences(content).length;
-  await executeWrite(client, {
-    sql: 'INSERT INTO library_documents (id, owner_id, title, language, content, sentence_count) VALUES (?, ?, ?, ?, ?, ?)',
-    args: [
-      input.id,
-      learner.userId,
-      input.title.trim(),
-      input.language,
-      content,
-      sentenceCount
-    ]
-  });
+  const transaction = await beginWrite(client);
+  try {
+    await transaction.execute({
+      sql: 'INSERT INTO library_documents (id, owner_id, title, language, content, sentence_count) VALUES (?, ?, ?, ?, ?, ?)',
+      args: [
+        input.id,
+        learner.userId,
+        input.title.trim(),
+        input.language,
+        content,
+        sentenceCount
+      ]
+    });
+    if (input.original)
+      await transaction.execute({
+        sql: 'INSERT INTO library_document_files (document_id, format, data) VALUES (?, ?, ?)',
+        args: [input.id, input.original.format, input.original.bytes]
+      });
+    await transaction.commit();
+  } catch (error) {
+    await transaction.rollback().catch(() => undefined);
+    throw error;
+  } finally {
+    transaction.close();
+  }
 }
 
 export async function listLibraryDocuments(
@@ -211,12 +251,30 @@ export async function getLibraryDocument(
   id: string
 ) {
   const result = await client.execute({
-    sql: 'SELECT id, title, language, content, sentence_count, progress_index, created_at FROM library_documents WHERE id = ? AND owner_id = ?',
+    sql: 'SELECT id, title, language, content, sentence_count, progress_index, progress_location, (SELECT format FROM library_document_files WHERE document_id = library_documents.id) AS original_format, created_at FROM library_documents WHERE id = ? AND owner_id = ?',
     args: [id, learner.userId]
   });
   const row = result.rows[0];
   if (!row) throw new StudyError('NOT_FOUND');
   return documentFromRow(row);
+}
+
+export async function getLibraryDocumentFile(
+  client: Client,
+  learner: LearnerSession,
+  id: string
+) {
+  const result = await client.execute({
+    sql: 'SELECT f.format, f.data FROM library_document_files f JOIN library_documents d ON d.id = f.document_id WHERE d.id = ? AND d.owner_id = ?',
+    args: [id, learner.userId]
+  });
+  const row = result.rows[0];
+  if (!row || !(row.data instanceof ArrayBuffer))
+    throw new StudyError('NOT_FOUND');
+  return {
+    format: String(row.format) as LibraryOriginalFormat,
+    bytes: new Uint8Array(row.data)
+  };
 }
 
 export async function renameLibraryDocument(
@@ -237,19 +295,23 @@ export async function updateLibraryProgress(
   client: Client,
   learner: LearnerSession,
   id: string,
-  progressIndex: unknown
+  location: unknown,
+  fraction: unknown
 ) {
-  const document = await getLibraryDocument(client, learner, id);
   if (
-    typeof progressIndex !== 'number' ||
-    !Number.isInteger(progressIndex) ||
-    Number(progressIndex) < 0 ||
-    Number(progressIndex) > document.sentenceCount
+    typeof location !== 'string' ||
+    !location ||
+    location.length > 512 ||
+    location.includes('\0') ||
+    typeof fraction !== 'number' ||
+    !Number.isFinite(fraction) ||
+    fraction < 0 ||
+    fraction > 1
   )
     throw new StudyError('INVALID_LIBRARY_PROGRESS');
   const result = await executeWrite(client, {
-    sql: 'UPDATE library_documents SET progress_index = ? WHERE id = ? AND owner_id = ?',
-    args: [Number(progressIndex), id, learner.userId]
+    sql: 'UPDATE library_documents SET progress_location = ?, progress_index = CAST(? * sentence_count AS INTEGER) WHERE id = ? AND owner_id = ?',
+    args: [location, fraction, id, learner.userId]
   });
   if (result.rowsAffected !== 1) throw new StudyError('NOT_FOUND');
 }

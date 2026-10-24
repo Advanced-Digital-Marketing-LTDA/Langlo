@@ -109,7 +109,7 @@ const messageForCode: Record<string, string> = {
     'This vocabulary card was edited or moved. Manage the existing card in Decks.',
   INVALID_LIBRARY_TERM: 'Choose a word or phrase from the document.',
   INVALID_LIBRARY_DEFINITION: 'Enter a definition of up to 4096 characters.',
-  INVALID_LIBRARY_PROGRESS: 'Choose a sentence in this document.',
+  INVALID_LIBRARY_PROGRESS: 'Choose a place in this document.',
   INVALID_LIBRARY_ACTION: 'Choose translation or vocabulary lookup.',
   LIBRARY_FILE_TOO_LARGE: libraryFileTooLargeMessage,
   LIBRARY_PARSE_TIMEOUT:
@@ -157,6 +157,16 @@ export async function learnerApi(
   run: (client: Client, learner: LearnerSession) => Promise<unknown>,
   status = 200
 ): Promise<Response> {
+  return learnerResponse(event, async (client, learner) =>
+    json(await run(client, learner), { status })
+  );
+}
+
+/** Like learnerApi, for a handler that builds its own response (a file). */
+export async function learnerResponse(
+  event: LearnerEvent,
+  run: (client: Client, learner: LearnerSession) => Promise<Response>
+): Promise<Response> {
   const learner = requireLearnerApi(event);
   const config = event.locals.config;
   if (!config?.dataEnabled || !config.databaseUrl)
@@ -165,9 +175,7 @@ export async function learnerApi(
     openAppDatabase(config)
   );
   try {
-    return json(await span('study.run', () => run(client, learner)), {
-      status
-    });
+    return await span('study.run', () => run(client, learner));
   } catch (error_) {
     if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
       const described = describeLearnerError(error_.code);

@@ -4,6 +4,7 @@ import {
   createLibraryDocument,
   deleteLibraryDocument,
   getLibraryDocument,
+  getLibraryDocumentFile,
   listLibraryDocuments,
   listLibraryVocabulary,
   renameLibraryDocument,
@@ -55,7 +56,8 @@ describe('Library documents', () => {
         create: () => createLibraryDocument(client, ownerA, document),
         rename: () =>
           renameLibraryDocument(client, ownerA, document.id, 'Renamed'),
-        progress: () => updateLibraryProgress(client, ownerA, document.id, 1),
+        progress: () =>
+          updateLibraryProgress(client, ownerA, document.id, 'page:1', 1),
         delete: () => deleteLibraryDocument(client, ownerA, document.id)
       };
       let finished = false;
@@ -188,7 +190,7 @@ describe('Library documents', () => {
     ).rejects.toThrow('NOT_FOUND');
 
     await expect(
-      updateLibraryProgress(client, ownerB, document.id, 1)
+      updateLibraryProgress(client, ownerB, document.id, 'page:1', 0.5)
     ).rejects.toThrow('NOT_FOUND');
     await expect(
       renameLibraryDocument(client, ownerB, document.id, 'Stolen')
@@ -218,7 +220,7 @@ describe('Library documents', () => {
     );
     expect(await listLibraryVocabulary(client, ownerB, 'fr')).toEqual([]);
 
-    await updateLibraryProgress(client, ownerA, document.id, 1);
+    await updateLibraryProgress(client, ownerA, document.id, 'page:1', 0.5);
     await renameLibraryDocument(client, ownerA, document.id, 'Le livre');
     expect(await getLibraryDocument(client, ownerA, document.id)).toMatchObject(
       {
@@ -243,5 +245,66 @@ describe('Library documents', () => {
     expect(
       (await client.execute('SELECT id FROM library_documents')).rows
     ).toEqual([]);
+  });
+
+  it('stores the original file with the document and removes it with the document', async () => {
+    const bytes = new Uint8Array([1, 2, 3, 250]);
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-original',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.',
+      original: { format: 'epub', bytes }
+    });
+    expect(
+      await getLibraryDocument(client, ownerA, 'library-original')
+    ).toMatchObject({ originalFormat: 'epub', progressLocation: null });
+    expect(
+      await getLibraryDocumentFile(client, ownerA, 'library-original')
+    ).toEqual({ format: 'epub', bytes });
+    await expect(
+      getLibraryDocumentFile(client, ownerB, 'library-original')
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await deleteLibraryDocument(client, ownerA, 'library-original');
+    expect(
+      (await client.execute('SELECT * FROM library_document_files')).rows
+    ).toEqual([]);
+  });
+
+  it('does not keep a document whose original file cannot be stored', async () => {
+    await expect(
+      createLibraryDocument(client, ownerA, {
+        id: 'library-empty-original',
+        title: 'Book',
+        language: 'fr',
+        content: 'Bonjour.',
+        original: { format: 'pdf', bytes: new Uint8Array() }
+      })
+    ).rejects.toThrow();
+    expect(await listLibraryDocuments(client, ownerA)).toEqual([]);
+  });
+
+  it.each([
+    ['', 0.5],
+    ['page:1', -0.1],
+    ['page:1', 1.1],
+    ['page:1', Number.NaN],
+    ['x'.repeat(513), 0.5]
+  ])('rejects the position %j at %j', async (location, fraction) => {
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-position',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    await expect(
+      updateLibraryProgress(
+        client,
+        ownerA,
+        'library-position',
+        location,
+        fraction
+      )
+    ).rejects.toMatchObject({ code: 'INVALID_LIBRARY_PROGRESS' });
   });
 });

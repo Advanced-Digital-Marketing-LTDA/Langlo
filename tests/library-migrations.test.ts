@@ -30,7 +30,8 @@ it('creates the Library indexes on upgrade and preserves their definitions on re
     );
     expect(state.pending.map((migration) => migration.tag)).toEqual([
       '0037_light_drax',
-      '0038_demonic_garia'
+      '0038_demonic_garia',
+      '0039_medical_maria_hill'
     ]);
 
     await migrateFixtureDatabase(target);

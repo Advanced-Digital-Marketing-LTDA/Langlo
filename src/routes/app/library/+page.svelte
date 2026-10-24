@@ -83,7 +83,7 @@
             Progress: {progress(
               document.progressIndex,
               document.sentenceCount
-            )}% ({document.progressIndex} of {document.sentenceCount} sentences)
+            )}%
           </p>
           <form
             method="POST"

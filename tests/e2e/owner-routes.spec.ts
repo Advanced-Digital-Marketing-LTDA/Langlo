@@ -175,6 +175,7 @@ test('guessed cross-owner IDs answer 404 and write nothing', async () => {
   const before = await withDatabase((client) => privateState(client));
   for (const path of [
     '/app/api/library/library-bob',
+    '/app/api/library/library-bob/file',
     '/app/api/notes/note-bob',
     '/app/api/cards/card:note-bob/reviews',
     '/app/api/study-sessions/study-bob',
@@ -185,7 +186,7 @@ test('guessed cross-owner IDs answer 404 and write nothing', async () => {
     expect(await response.text()).not.toContain(bobId);
   }
   const writes: Array<[string, unknown]> = [
-    ['/app/api/library/library-bob', { progressIndex: 1 }],
+    ['/app/api/library/library-bob', { location: 'page:1', fraction: 0.5 }],
     ['/app/api/notes/note-bob/approve', { ownerId: bobId }],
     [
       '/app/api/cards/card:note-bob/reviews',
