@@ -252,3 +252,30 @@ describe('TypeSafe API key', () => {
     ).toBeUndefined();
   });
 });
+
+describe('OpenAI API key', () => {
+  const key = ['openai', 'synthetic', 'test', '0'.repeat(12)].join('-');
+  const enabled = {
+    DATA_ENABLED: 'true',
+    DATABASE_URL: 'file:./.fixtures/dev.db',
+    BETTER_AUTH_SECRET: 'synthetic-secret-synthetic-secret-0000'
+  };
+
+  it('is optional and kept only in private runtime config', () => {
+    expect(parseRuntimeConfig(enabled).openAiApiKey).toBeUndefined();
+    expect(
+      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: key }).openAiApiKey
+    ).toBe(key);
+    expect(
+      parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: key })
+    ).not.toHaveProperty('publicOpenAiApiKey');
+  });
+
+  it('disables Library AI for malformed values without echoing the value', () => {
+    const value = ` ${key}`;
+    const config = parseRuntimeConfig({ ...enabled, OPENAI_API_KEY: value });
+    expect(config.openAiApiKey).toBeUndefined();
+    expect(config.openAiApiKeyError?.variable).toBe('OPENAI_API_KEY');
+    expect(JSON.stringify(config)).not.toContain(value);
+  });
+});

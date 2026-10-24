@@ -26,6 +26,9 @@ services:
       MAIL_TRANSPORT: ${MAIL_TRANSPORT:-capture}
       MAIL_FROM: ${MAIL_FROM:-}
       PROTON_SMTP_TOKEN: ${PROTON_SMTP_TOKEN:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       SMTP_HOST: ${SMTP_HOST:-smtp.protonmail.ch}
       SMTP_PORT: ${SMTP_PORT:-587}
-      BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-524288}
+      # 11 MiB admits 10 MiB Library files plus multipart overhead.
+      # The app caps other routes at 512 KiB and individual files at 10 MiB.
+      BODY_SIZE_LIMIT: ${BODY_SIZE_LIMIT:-11534336}

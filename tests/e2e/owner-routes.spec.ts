@@ -4,6 +4,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { createClient, type Client } from '@libsql/client/sqlite3';
 import { approveNote, createNote } from '../../src/lib/server/flashcards';
+import { createLibraryDocument } from '../../src/lib/server/library';
 import { createDeck } from '../fixtures/french-deck';
 import { importContent } from '../../src/lib/server/content-import';
 import { privateState } from '../fixtures/owner-scope';
@@ -120,6 +121,12 @@ test.beforeAll(async () => {
     );
     await importContent(client, approvedPackage());
     const learner = { userId: bobId };
+    await createLibraryDocument(client, learner, {
+      id: 'library-bob',
+      title: 'Bob’s private book',
+      language: 'fr',
+      content: 'Bonjour Bob.'
+    });
     await createDeck(client, learner, { id: 'deck-bob', name: 'Bob FR' });
     await createNote(client, learner, {
       id: 'note-bob',
@@ -167,6 +174,7 @@ test('a signed-in learner reads only their own private rows', async () => {
 test('guessed cross-owner IDs answer 404 and write nothing', async () => {
   const before = await withDatabase((client) => privateState(client));
   for (const path of [
+    '/app/api/library/library-bob',
     '/app/api/notes/note-bob',
     '/app/api/cards/card:note-bob/reviews',
     '/app/api/study-sessions/study-bob',
@@ -177,6 +185,7 @@ test('guessed cross-owner IDs answer 404 and write nothing', async () => {
     expect(await response.text()).not.toContain(bobId);
   }
   const writes: Array<[string, unknown]> = [
+    ['/app/api/library/library-bob', { progressIndex: 1 }],
     ['/app/api/notes/note-bob/approve', { ownerId: bobId }],
     [
       '/app/api/cards/card:note-bob/reviews',
@@ -200,10 +209,25 @@ test('guessed cross-owner IDs answer 404 and write nothing', async () => {
     ]
   ];
   for (const [path, body] of writes) {
-    const response = await alice.post(path, json(body));
+    const response = path.includes('/api/library/')
+      ? await alice.patch(path, json(body))
+      : await alice.post(path, json(body));
     expect(response.status(), path).toBe(404);
   }
   expect(await withDatabase((client) => privateState(client))).toEqual(before);
+  expect(
+    (
+      await withDatabase((client) =>
+        client.execute(
+          'SELECT progress_index FROM library_documents WHERE id = ?',
+          ['library-bob']
+        )
+      )
+    ).rows
+  ).toEqual([{ progress_index: 0 }]);
+  expect(await (await alice.get('/app/api/library')).json()).toEqual({
+    documents: []
+  });
 });
 
 test('the owner can review their card through the same route', async () => {
