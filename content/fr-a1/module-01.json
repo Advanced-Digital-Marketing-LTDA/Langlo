@@ -172,6 +172,201 @@
       }
     },
     {
+      "skill_id": "fr-a1-001",
+      "title": "Short statements: a subject and a verb",
+      "explanation": "A basic French statement starts with a subject (a name, a noun such as le train, or a pronoun) followed by a conjugated verb: Marie travaille. The verb must be a conjugated form, not the dictionary form (the infinitive): say Le bus arrive, not Le bus arriver. Extra information, such as a place or a time, usually comes after the verb.",
+      "examples": [
+        {
+          "fr": "Marie travaille.",
+          "en": "Marie works."
+        },
+        {
+          "fr": "Le train arrive à midi.",
+          "en": "The train arrives at noon."
+        },
+        {
+          "fr": "Paul mange une pomme.",
+          "en": "Paul is eating an apple."
+        }
+      ],
+      "references": ["COE-CV20", "FEI-INV"],
+      "version": {
+        "id": "fr-a1-001@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "fr-a1-001@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a complete French statement?",
+            "answer": "Marie travaille.",
+            "alternatives": [
+              "Marie travaille.",
+              "Marie travailler.",
+              "Travaille Marie."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q01"
+          },
+          {
+            "id": "fr-a1-001@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence for 'The train is arriving.'",
+            "answer": "Le train arrive.",
+            "alternatives": [
+              "Le arrive train.",
+              "Le train arrive.",
+              "Le train arriver."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q02"
+          },
+          {
+            "id": "fr-a1-001@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word is the verb in 'Paul mange une pomme.'?",
+            "answer": "mange",
+            "alternatives": ["pomme", "Paul", "mange"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q03"
+          },
+          {
+            "id": "fr-a1-001@2:q04",
+            "format": "typed-blank",
+            "prompt": "Le chat ___. (dort / dormir)",
+            "answer": "dort",
+            "near_misses": ["dormir"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q04"
+          },
+          {
+            "id": "fr-a1-001@2:q05",
+            "format": "typed-blank",
+            "prompt": "Ma sœur ___ à Lille. (habiter / habite)",
+            "answer": "habite",
+            "near_misses": ["habiter"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q05"
+          },
+          {
+            "id": "fr-a1-001@2:q06",
+            "format": "typed-blank",
+            "prompt": "Le magasin ___ à neuf heures. (ouvre / ouvrir)",
+            "answer": "ouvre",
+            "near_misses": ["ouvrir"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q06"
+          },
+          {
+            "id": "fr-a1-001@2:q07",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Paul is working.",
+            "answer": "Paul travaille.",
+            "near_misses": ["Paul travailler.", "Paul est travaille."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q07"
+          },
+          {
+            "id": "fr-a1-001@2:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The baby is crying.",
+            "answer": "Le bébé pleure.",
+            "near_misses": [
+              "Le bébé pleurer.",
+              "Le bébé est pleure.",
+              "Le bebe pleure."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q08"
+          },
+          {
+            "id": "fr-a1-001@2:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Anna speaks Italian.",
+            "answer": "Anna parle italien.",
+            "alternatives": ["Anna parle l'italien."],
+            "near_misses": ["Anna parler italien.", "Parle Anna italien."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q09"
+          },
+          {
+            "id": "fr-a1-001@2:q10",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Le train arriver.",
+            "answer": "Le train arrive.",
+            "near_misses": ["Le train arriver."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q10"
+          },
+          {
+            "id": "fr-a1-001@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Travaille Marc à Nice.",
+            "answer": "Marc travaille à Nice.",
+            "near_misses": ["Travaille Marc à Nice.", "Marc travaille a Nice."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q11"
+          },
+          {
+            "id": "fr-a1-001@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Le professeur parler anglais.",
+            "answer": "Le professeur parle anglais.",
+            "alternatives": ["Le professeur parle l'anglais."],
+            "near_misses": ["Le professeur parler anglais."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-001@1:q12"
+          },
+          {
+            "id": "fr-a1-001@2:h01",
+            "format": "typed-blank",
+            "prompt": "La boulangerie ___ tôt. (fermer)",
+            "answer": "ferme",
+            "near_misses": ["fermer"],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-001@1:h01"
+          },
+          {
+            "id": "fr-a1-001@2:h02",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): The bus is passing.",
+            "answer": "Le bus passe.",
+            "alternatives": ["L'autobus passe."],
+            "near_misses": ["Le bus passer.", "Le passe bus."],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-001@1:h02"
+          },
+          {
+            "id": "fr-a1-001@2:h03",
+            "format": "multiple-choice",
+            "prompt": "Pick the sentence with a subject and a conjugated verb.",
+            "answer": "Mon frère chante.",
+            "alternatives": [
+              "Mon frère chante.",
+              "Mon frère chanter.",
+              "Chanter mon frère."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-001@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "fr-a1-002",
       "title": "Subject pronouns",
       "explanation": "French subject pronouns are je (I), tu (you, one person you know well), il (he), elle (she), on (we, informal, or people in general), nous (we), vous (you, polite or more than one person), ils (they, men or a mixed group) and elles (they, women only). Je becomes j' before a vowel or a silent h: j'aime, j'habite. A group with at least one man takes ils.",

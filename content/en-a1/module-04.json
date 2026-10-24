@@ -191,6 +191,220 @@
       }
     },
     {
+      "skill_id": "en-a1-012",
+      "title": "Some and any with count and non-count nouns",
+      "explanation": "Use some in positive statements and any in negative statements and questions. Both work with plural count nouns (apples) and non-count nouns (water, milk, bread): I have some apples. I don't have any milk. Do you have any bread? Non-count nouns have no plural and no a/an: not a milk. Some can also appear in offers, but at this level keep to the basic rule.",
+      "examples": [
+        {
+          "en": "I have some apples."
+        },
+        {
+          "en": "I don't have any milk."
+        },
+        {
+          "en": "Do you have any bread?"
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-012@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-012@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which word is normally used in positive statements?",
+            "answer": "some",
+            "alternatives": ["some", "any", "no"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q01"
+          },
+          {
+            "id": "en-a1-012@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which word is normally used in negative statements?",
+            "answer": "any",
+            "alternatives": ["some", "any", "no"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q02"
+          },
+          {
+            "id": "en-a1-012@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'any' correctly?",
+            "answer": "I don't have any milk.",
+            "alternatives": [
+              "I don't have some milk.",
+              "I don't have any milk.",
+              "I don't have a milk."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q03"
+          },
+          {
+            "id": "en-a1-012@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which noun is a non-count noun?",
+            "answer": "water",
+            "alternatives": ["water", "apple", "book"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q04"
+          },
+          {
+            "id": "en-a1-012@2:q05",
+            "format": "typed-blank",
+            "prompt": "I have ___ apples. (positive)",
+            "answer": "some",
+            "near_misses": ["any", "a"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q05"
+          },
+          {
+            "id": "en-a1-012@2:q06",
+            "format": "typed-blank",
+            "prompt": "Do you have ___ milk? (question)",
+            "answer": "any",
+            "near_misses": ["some", "an"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q06"
+          },
+          {
+            "id": "en-a1-012@2:q07",
+            "format": "typed-blank",
+            "prompt": "She doesn't have ___ friends here. (negative)",
+            "answer": "any",
+            "near_misses": ["some", "a"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q07"
+          },
+          {
+            "id": "en-a1-012@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: I / have / apples",
+            "answer": "I have some apples.",
+            "near_misses": ["I have any apples.", "I have a apples."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q08"
+          },
+          {
+            "id": "en-a1-012@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: I / not have / milk",
+            "answer": "I don't have any milk.",
+            "alternatives": ["I do not have any milk."],
+            "near_misses": ["I don't have some milk.", "I not have any milk."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q09"
+          },
+          {
+            "id": "en-a1-012@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: ask: you / have / bread",
+            "answer": "Do you have any bread?",
+            "near_misses": ["Do you have some bread?", "You have any bread?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q10"
+          },
+          {
+            "id": "en-a1-012@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: I don't have some money.",
+            "answer": "I don't have any money.",
+            "alternatives": ["I do not have any money."],
+            "near_misses": [
+              "I don't have some money.",
+              "I don't have a money."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q11"
+          },
+          {
+            "id": "en-a1-012@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Do you have some friends here?",
+            "answer": "Do you have any friends here?",
+            "near_misses": [
+              "Do you have some friends here?",
+              "Do you has any friends here?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-012@1:q12"
+          },
+          {
+            "id": "en-a1-012@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which positive sentence uses some/any correctly?",
+            "answer": "She buys some bread.",
+            "alternatives": [
+              "She buys any bread.",
+              "She buys some bread.",
+              "She buys a bread."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-012@1:h01"
+          },
+          {
+            "id": "en-a1-012@2:h02",
+            "format": "translation",
+            "prompt": "Write the sentence with some or any: she / not have / tea",
+            "answer": "She doesn't have any tea.",
+            "alternatives": ["She does not have any tea."],
+            "near_misses": [
+              "She doesn't have some tea.",
+              "She don't have any tea."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-012@1:h02"
+          },
+          {
+            "id": "en-a1-012@2:h03",
+            "format": "correction",
+            "prompt": "Correct the sentence: He has any apples.",
+            "answer": "He has some apples.",
+            "near_misses": ["He has any apples.", "He has a apples."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-012@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Some e any com substantivos contáveis e incontáveis",
+            "explanation": "Use some em frases afirmativas e any em frases negativas e perguntas. Os dois podem ser usados com substantivos contáveis no plural (apples) e incontáveis (water, milk, bread): I have some apples. I don't have any milk. Do you have any bread? Substantivos incontáveis não têm plural e não usam a/an: não diga a milk. Some também pode aparecer em ofertas, mas, neste nível, fique com a regra básica.",
+            "examples": [
+              {
+                "en": "I have some apples.",
+                "pt": "Tenho algumas maçãs."
+              },
+              {
+                "en": "I don't have any milk.",
+                "pt": "Não tenho leite."
+              },
+              {
+                "en": "Do you have any bread?",
+                "pt": "Você tem pão?"
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-014",
       "title": "Describing with adjectives and comparatives",
       "explanation": "Adjectives describe people and things and stand after be or before a noun: My brother is tall. Make the comparative with -er for short adjectives: tall, taller; old, older; big, bigger (double the final consonant); happy, happier (y becomes i). Use more for longer adjectives: more interesting. Good is irregular: good, better. Use than to compare: This bag is bigger than that bag.",
@@ -561,6 +775,219 @@
             "holdout": true,
             "change": "same",
             "continues": "en-a1-014@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Adjetivos e comparativos",
+            "explanation": "Adjetivos descrevem pessoas e coisas e aparecem depois de be ou antes de um substantivo: My brother is tall. Forme o comparativo com -er para adjetivos curtos: tall, taller; old, older; big, bigger (dobre a consoante final); happy, happier (y vira i). Use more com adjetivos mais longos: more interesting. Good é irregular: good, better. Use than para comparar: This bag is bigger than that bag.",
+            "examples": [
+              {
+                "en": "My brother is tall.",
+                "pt": "Meu irmão é alto."
+              },
+              {
+                "en": "This bag is bigger than that bag.",
+                "pt": "Esta bolsa é maior do que aquela."
+              },
+              {
+                "en": "She is happier today.",
+                "pt": "Ela está mais feliz hoje."
+              }
+            ],
+            "references": ["CAM-A1-YLE", "BC-A1-A2"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a1-014",
+      "title": "Describing with adjectives and comparatives",
+      "explanation": "Adjectives describe people and things and stand after be or before a noun: My brother is tall. Make the comparative with -er for short adjectives: tall, taller; old, older; big, bigger (double the final consonant); happy, happier (y becomes i). Use more for longer adjectives: more interesting. Good is irregular: good, better. Use than to compare: This bag is bigger than that bag.",
+      "examples": [
+        {
+          "en": "My brother is tall."
+        },
+        {
+          "en": "This bag is bigger than that bag."
+        },
+        {
+          "en": "She is happier today."
+        }
+      ],
+      "references": ["CAM-A1-YLE", "BC-A1-A2"],
+      "version": {
+        "id": "en-a1-014@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "en-a1-014@3:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'tall'?",
+            "answer": "taller",
+            "alternatives": ["taller", "more tall", "tallest"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q01"
+          },
+          {
+            "id": "en-a1-014@3:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'big'?",
+            "answer": "bigger",
+            "alternatives": ["biger", "bigger", "more big"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q02"
+          },
+          {
+            "id": "en-a1-014@3:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'happy'?",
+            "answer": "happier",
+            "alternatives": ["happyer", "happier", "more happy"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q03"
+          },
+          {
+            "id": "en-a1-014@3:q04",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'interesting'?",
+            "answer": "more interesting",
+            "alternatives": [
+              "more interesting",
+              "interestinger",
+              "most interesting"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q04"
+          },
+          {
+            "id": "en-a1-014@3:q05",
+            "format": "typed-blank",
+            "prompt": "My brother is ___ than me. (tall)",
+            "answer": "taller",
+            "near_misses": ["tall", "tallest"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q05"
+          },
+          {
+            "id": "en-a1-014@3:q06",
+            "format": "typed-blank",
+            "prompt": "This bag is ___ than that bag. (big)",
+            "answer": "bigger",
+            "near_misses": ["big", "biggest"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q06"
+          },
+          {
+            "id": "en-a1-014@3:q07",
+            "format": "typed-blank",
+            "prompt": "Tom is ___ than Anna. (old)",
+            "answer": "older",
+            "near_misses": ["old", "more old"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q07"
+          },
+          {
+            "id": "en-a1-014@3:q08",
+            "format": "translation",
+            "prompt": "Write the sentence: my brother / be / tall",
+            "answer": "My brother is tall.",
+            "near_misses": ["My brother tall.", "My brother are tall."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q08"
+          },
+          {
+            "id": "en-a1-014@3:q09",
+            "format": "translation",
+            "prompt": "Write the sentence: this bag / be / big / than / that bag",
+            "answer": "This bag is bigger than that bag.",
+            "near_misses": [
+              "This bag is more big than that bag.",
+              "This bag is bigger then that bag."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q09"
+          },
+          {
+            "id": "en-a1-014@3:q10",
+            "format": "translation",
+            "prompt": "Write the sentence: she / be / happy / than / yesterday",
+            "answer": "She is happier than yesterday.",
+            "near_misses": [
+              "She is more happy than yesterday.",
+              "She is happyer than yesterday."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q10"
+          },
+          {
+            "id": "en-a1-014@3:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: Tom is more tall than Anna.",
+            "answer": "Tom is taller than Anna.",
+            "near_misses": [
+              "Tom is more tall than Anna.",
+              "Tom is tallest than Anna."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q11"
+          },
+          {
+            "id": "en-a1-014@3:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: This book is more good than that book.",
+            "answer": "This book is better than that book.",
+            "near_misses": [
+              "This book is more good than that book.",
+              "This book is gooder than that book."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-014@2:q12"
+          },
+          {
+            "id": "en-a1-014@3:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the comparative of 'good'?",
+            "answer": "better",
+            "alternatives": ["better", "gooder", "more good"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-014@2:h01"
+          },
+          {
+            "id": "en-a1-014@3:h02",
+            "format": "typed-blank",
+            "prompt": "My sister is ___ than me. (young) (comparative)",
+            "answer": "younger",
+            "near_misses": ["young", "youngest"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-014@2:h02"
+          },
+          {
+            "id": "en-a1-014@3:h03",
+            "format": "translation",
+            "prompt": "Write the comparative sentence: this film / be / interesting / than / that film",
+            "answer": "This film is more interesting than that film.",
+            "near_misses": [
+              "This film is interestinger than that film.",
+              "This film is most interesting than that film."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-014@2:h03"
           }
         ],
         "translations": {

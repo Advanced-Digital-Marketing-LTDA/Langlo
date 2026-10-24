@@ -341,6 +341,200 @@
       }
     },
     {
+      "skill_id": "en-a1-010",
+      "title": "Articles a, an, the and demonstratives",
+      "explanation": "Use a before a consonant sound (a book) and an before a vowel sound (an apple, an hour). Use a or an when you mention something for the first time and the when it is already known: I have a book. The book is new. This and that point to one thing (near and far); these and those point to several: This book is new. Those shoes are old. The demonstrative agrees in number with the noun.",
+      "examples": [
+        {
+          "en": "I have an apple."
+        },
+        {
+          "en": "This book is new."
+        },
+        {
+          "en": "Those shoes are old."
+        }
+      ],
+      "references": ["CAM-A1-YLE"],
+      "version": {
+        "id": "en-a1-010@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a1-010@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which article goes before 'apple' when you mention it for the first time?",
+            "answer": "an",
+            "alternatives": ["a", "an", "the"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q01"
+          },
+          {
+            "id": "en-a1-010@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which article goes before 'book' when you mention it for the first time?",
+            "answer": "a",
+            "alternatives": ["a", "an", "the"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q02"
+          },
+          {
+            "id": "en-a1-010@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which word points to one thing near you?",
+            "answer": "this",
+            "alternatives": ["this", "that", "these"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q03"
+          },
+          {
+            "id": "en-a1-010@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which word points to several things far from you?",
+            "answer": "those",
+            "alternatives": ["these", "those", "that"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q04"
+          },
+          {
+            "id": "en-a1-010@2:q05",
+            "format": "typed-blank",
+            "prompt": "She has ___ umbrella. (a/an)",
+            "answer": "an",
+            "near_misses": ["a", "the"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q05"
+          },
+          {
+            "id": "en-a1-010@2:q06",
+            "format": "typed-blank",
+            "prompt": "I have a book. ___ book is new. (the)",
+            "answer": "The",
+            "near_misses": ["A", "An"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q06"
+          },
+          {
+            "id": "en-a1-010@2:q07",
+            "format": "typed-blank",
+            "prompt": "___ shoes are old. (these, near)",
+            "answer": "These",
+            "near_misses": ["This", "Those"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q07"
+          },
+          {
+            "id": "en-a1-010@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence: I / have / apple",
+            "answer": "I have an apple.",
+            "near_misses": ["I have a apple.", "I have the apple."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q08"
+          },
+          {
+            "id": "en-a1-010@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence: this / book / be / new",
+            "answer": "This book is new.",
+            "near_misses": ["This book are new.", "These book is new."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q09"
+          },
+          {
+            "id": "en-a1-010@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence: those / shoes / be / old",
+            "answer": "Those shoes are old.",
+            "near_misses": ["Those shoes is old.", "That shoes are old."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q10"
+          },
+          {
+            "id": "en-a1-010@2:q11",
+            "format": "correction",
+            "prompt": "Correct the article: She has a umbrella.",
+            "answer": "She has an umbrella.",
+            "near_misses": ["She has a umbrella.", "She has the umbrella."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q11"
+          },
+          {
+            "id": "en-a1-010@2:q12",
+            "format": "correction",
+            "prompt": "Correct the word: These book is new.",
+            "answer": "This book is new.",
+            "near_misses": ["These book is new.", "This books is new."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a1-010@1:q12"
+          },
+          {
+            "id": "en-a1-010@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which word points to one thing far from you?",
+            "answer": "that",
+            "alternatives": ["this", "that", "those"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-010@1:h01"
+          },
+          {
+            "id": "en-a1-010@2:h02",
+            "format": "translation",
+            "prompt": "Write the sentence (add a/an): I / see / egg",
+            "answer": "I see an egg.",
+            "near_misses": ["I see a egg.", "I see the egg."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-010@1:h02"
+          },
+          {
+            "id": "en-a1-010@2:h03",
+            "format": "correction",
+            "prompt": "Correct the article: He has a eraser.",
+            "answer": "He has an eraser.",
+            "near_misses": ["He has a eraser.", "He has the eraser."],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a1-010@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Artigos a, an e the; demonstrativos",
+            "explanation": "Use a antes de um som de consoante (a book) e an antes de um som de vogal (an apple, an hour). Use a ou an ao mencionar algo pela primeira vez e the quando a coisa já é conhecida: I have a book. The book is new. This e that apontam para uma coisa (perto e longe); these e those apontam para várias: This book is new. Those shoes are old. O demonstrativo concorda com o substantivo em número.",
+            "examples": [
+              {
+                "en": "I have an apple.",
+                "pt": "Tenho uma maçã."
+              },
+              {
+                "en": "This book is new.",
+                "pt": "Este livro é novo."
+              },
+              {
+                "en": "Those shoes are old.",
+                "pt": "Aqueles sapatos são velhos."
+              }
+            ],
+            "references": ["CAM-A1-YLE"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a1-013",
       "title": "Subject and object pronouns",
       "explanation": "Subject pronouns come before the verb: I, you, he, she, it, we, they. Object pronouns come after the verb or a preposition: me, you, him, her, it, us, them. She sees me. I help them. This is for her. After a verb or preposition never use the subject form: not She sees I. Demonstratives such as this and that can also stand alone: This is for her.",

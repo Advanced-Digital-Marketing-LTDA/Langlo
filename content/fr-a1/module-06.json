@@ -498,6 +498,196 @@
       }
     },
     {
+      "skill_id": "fr-a1-023",
+      "title": "Reflexive verbs for daily routine",
+      "explanation": "Reflexive verbs have a pronoun before the verb that refers back to the subject: me (je), te (tu), se (il, elle, on, ils, elles), nous, vous. Me, te and se become m', t' and s' before a vowel or a silent h: je m'appelle. Frequent verbs: se lever (to get up), se coucher (to go to bed), se réveiller (to wake up), s'appeler (to be called). Se lever has a spelling change: je me lève, tu te lèves, il se lève, nous nous levons, vous vous levez, ils se lèvent.",
+      "examples": [
+        {
+          "fr": "Je m'appelle Marie.",
+          "en": "My name is Marie."
+        },
+        {
+          "fr": "Il se lève à sept heures.",
+          "en": "He gets up at seven o'clock."
+        },
+        {
+          "fr": "Elles se réveillent tôt.",
+          "en": "They wake up early."
+        }
+      ],
+      "references": ["FEI-INV"],
+      "version": {
+        "id": "fr-a1-023@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "fr-a1-023@3:q01",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun goes with 'je' in a reflexive verb?",
+            "answer": "me",
+            "alternatives": ["se", "me", "nous"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q01"
+          },
+          {
+            "id": "fr-a1-023@3:q02",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'My name is Paul.'?",
+            "answer": "Je m'appelle Paul.",
+            "alternatives": [
+              "Je appelle Paul.",
+              "Je m'appelle Paul.",
+              "Je me appelle Paul."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q02"
+          },
+          {
+            "id": "fr-a1-023@3:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence means 'He gets up.'?",
+            "answer": "Il se lève.",
+            "alternatives": ["Il lève se.", "Il se lève.", "Il me lève."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q03"
+          },
+          {
+            "id": "fr-a1-023@3:q04",
+            "format": "multiple-choice",
+            "prompt": "Which pronoun goes with 'nous'?",
+            "answer": "nous",
+            "alternatives": ["se", "nous", "vous"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q04"
+          },
+          {
+            "id": "fr-a1-023@3:q05",
+            "format": "typed-blank",
+            "prompt": "Tu ___ couches tard. (se coucher)",
+            "answer": "te",
+            "near_misses": ["me", "se"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q05"
+          },
+          {
+            "id": "fr-a1-023@3:q06",
+            "format": "typed-blank",
+            "prompt": "Elle ___ réveille à six heures. (se réveiller)",
+            "answer": "se",
+            "near_misses": ["te", "me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q06"
+          },
+          {
+            "id": "fr-a1-023@3:q07",
+            "format": "typed-blank",
+            "prompt": "Vous vous ___ à huit heures. (se lever)",
+            "answer": "levez",
+            "near_misses": ["levons", "lèvez"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q07"
+          },
+          {
+            "id": "fr-a1-023@3:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): I get up at seven o'clock.",
+            "answer": "Je me lève à sept heures.",
+            "near_misses": [
+              "Je lève à sept heures.",
+              "Je me levé à sept heures."
+            ],
+            "holdout": false,
+            "alternatives": ["Je me lève à 7 heures."],
+            "change": "same",
+            "continues": "fr-a1-023@2:q08"
+          },
+          {
+            "id": "fr-a1-023@3:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): We go to bed late.",
+            "answer": "Nous nous couchons tard.",
+            "near_misses": ["Nous couchons tard.", "Nous se couchons tard."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q09"
+          },
+          {
+            "id": "fr-a1-023@3:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): They (boys) wake up early.",
+            "answer": "Ils se réveillent tôt.",
+            "near_misses": ["Ils réveillent tôt.", "Ils se réveille tôt."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q10"
+          },
+          {
+            "id": "fr-a1-023@3:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Je couche à dix heures.",
+            "answer": "Je me couche à dix heures.",
+            "near_misses": [
+              "Je couche à dix heures.",
+              "Je se couche à dix heures."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q11"
+          },
+          {
+            "id": "fr-a1-023@3:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the subject): Elle me lève à sept heures.",
+            "answer": "Elle se lève à sept heures.",
+            "near_misses": [
+              "Elle me lève à sept heures.",
+              "Elle s'lève à sept heures."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-023@2:q12"
+          },
+          {
+            "id": "fr-a1-023@3:h01",
+            "format": "multiple-choice",
+            "prompt": "Which reflexive pronoun goes with 'vous'?",
+            "answer": "vous",
+            "alternatives": ["se", "vous", "nous"],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-023@2:h01"
+          },
+          {
+            "id": "fr-a1-023@3:h02",
+            "format": "typed-blank",
+            "prompt": "Nous nous ___ à six heures. (se réveiller)",
+            "answer": "réveillons",
+            "near_misses": ["réveillez", "reveillons"],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-023@2:h02"
+          },
+          {
+            "id": "fr-a1-023@3:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She gets up early.",
+            "answer": "Elle se lève tôt.",
+            "near_misses": ["Elle lève tôt.", "Elle se levé tôt."],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-023@2:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "fr-a1-024",
       "title": "There is and there are: il y a",
       "explanation": "Il y a means there is or there are, and it does not change for singular or plural: Il y a un livre sur la table, Il y a des fleurs dans le jardin. It is followed by an article and a noun, often with a place. To ask, use intonation or est-ce que: Est-ce qu'il y a un restaurant ici ? After a negative the article becomes de or d': Il n'y a pas de lait. Do not use il est for this meaning.",

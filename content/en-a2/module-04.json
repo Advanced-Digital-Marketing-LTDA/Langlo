@@ -206,6 +206,235 @@
       }
     },
     {
+      "skill_id": "en-a2-013",
+      "title": "Identifying relative clauses with who, which and that",
+      "explanation": "A relative clause says which person or thing you mean. Use who for people, which for things and that for either: The woman who lives next door is a nurse. This is the book which I bought. The man that called is my uncle. The relative word replaces the noun, so do not add another pronoun: not The book which I bought it.",
+      "examples": [
+        {
+          "en": "The woman who lives next door is a nurse."
+        },
+        {
+          "en": "This is the book which I bought."
+        },
+        {
+          "en": "The man that called is my uncle."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "COE-CV20"],
+      "version": {
+        "id": "en-a2-013@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-013@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which relative word is used for people?",
+            "answer": "who",
+            "alternatives": ["who", "which", "where"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q01"
+          },
+          {
+            "id": "en-a2-013@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which relative word is used for things?",
+            "answer": "which",
+            "alternatives": ["which", "who", "whose"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q02"
+          },
+          {
+            "id": "en-a2-013@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "The woman who lives next door is a nurse.",
+            "alternatives": [
+              "The woman who lives next door is a nurse.",
+              "The woman which lives next door is a nurse.",
+              "The woman who she lives next door is a nurse."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q03"
+          },
+          {
+            "id": "en-a2-013@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which relative word can be used for both people and things?",
+            "answer": "that",
+            "alternatives": ["that", "what", "where"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q04"
+          },
+          {
+            "id": "en-a2-013@2:q05",
+            "format": "typed-blank",
+            "prompt": "The woman ___ lives next door is a nurse.",
+            "answer": "who",
+            "near_misses": ["which", "what"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q05"
+          },
+          {
+            "id": "en-a2-013@2:q06",
+            "format": "typed-blank",
+            "prompt": "This is the book ___ I bought.",
+            "answer": "which",
+            "near_misses": ["who", "where"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q06"
+          },
+          {
+            "id": "en-a2-013@2:q07",
+            "format": "typed-blank",
+            "prompt": "The man ___ called is my uncle.",
+            "answer": "that",
+            "near_misses": ["what", "whose"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q07"
+          },
+          {
+            "id": "en-a2-013@2:q08",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: the woman / lives next door / is a nurse (who)",
+            "answer": "The woman who lives next door is a nurse.",
+            "near_misses": [
+              "The woman who she lives next door is a nurse.",
+              "The woman which lives next door is a nurse."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q08"
+          },
+          {
+            "id": "en-a2-013@2:q09",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: this is the book / I bought it (which)",
+            "answer": "This is the book which I bought.",
+            "near_misses": [
+              "This is the book which I bought it.",
+              "This is the book who I bought."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q09"
+          },
+          {
+            "id": "en-a2-013@2:q10",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: the man / called me / is my uncle (that)",
+            "answer": "The man that called me is my uncle.",
+            "near_misses": [
+              "The man what called me is my uncle.",
+              "The man that he called me is my uncle."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q10"
+          },
+          {
+            "id": "en-a2-013@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: The film who we saw was long.",
+            "answer": "The film which we saw was long.",
+            "alternatives": ["The film that we saw was long."],
+            "near_misses": [
+              "The film who we saw was long.",
+              "The film which we saw it was long."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q11"
+          },
+          {
+            "id": "en-a2-013@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: The girl which sits behind me is kind.",
+            "answer": "The girl who sits behind me is kind.",
+            "alternatives": ["The girl that sits behind me is kind."],
+            "near_misses": [
+              "The girl which sits behind me is kind.",
+              "The girl who she sits behind me is kind."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-013@1:q12"
+          },
+          {
+            "id": "en-a2-013@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses the right relative word for a thing?",
+            "answer": "I lost the umbrella which my mother gave me.",
+            "alternatives": [
+              "I lost the umbrella who my mother gave me.",
+              "I lost the umbrella which my mother gave me.",
+              "I lost the umbrella what my mother gave me."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-013@1:h01"
+          },
+          {
+            "id": "en-a2-013@2:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: The teacher which teaches us French is from Lyon.",
+            "answer": "The teacher who teaches us French is from Lyon.",
+            "alternatives": [
+              "The teacher that teaches us French is from Lyon."
+            ],
+            "near_misses": [
+              "The teacher which teaches us French is from Lyon.",
+              "The teacher who he teaches us French is from Lyon."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-013@1:h02"
+          },
+          {
+            "id": "en-a2-013@2:h03",
+            "format": "translation",
+            "prompt": "Join the ideas with a relative word: the phone / I bought / is new (that)",
+            "answer": "The phone that I bought is new.",
+            "alternatives": ["The phone which I bought is new."],
+            "near_misses": [
+              "The phone that I bought it is new.",
+              "The phone who I bought is new."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-013@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Orações relativas com who, which e that",
+            "explanation": "Uma oração relativa indica de qual pessoa ou coisa você está falando. Use who para pessoas, which para coisas e that para ambos: The woman who lives next door is a nurse. This is the book which I bought. The man that called is my uncle. A palavra relativa substitui o substantivo, então não acrescente outro pronome: não diga The book which I bought it.",
+            "examples": [
+              {
+                "en": "The woman who lives next door is a nurse.",
+                "pt": "A mulher que mora ao lado é enfermeira."
+              },
+              {
+                "en": "This is the book which I bought.",
+                "pt": "Este é o livro que comprei."
+              },
+              {
+                "en": "The man that called is my uncle.",
+                "pt": "O homem que ligou é meu tio."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "COE-CV20"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a2-014",
       "title": "Connectors for cause, time and result",
       "explanation": "Connectors link short clauses. Use because for a reason: I stayed home because I was ill. Use so for a result: I was ill, so I stayed home. Use when, before and after for time: Call me when you arrive. Wash your hands before you eat. Because answers why; so gives the result. Do not use both because and so in one sentence.",
@@ -377,6 +606,233 @@
               "She was hungry, so because she made a sandwich."
             ],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Conectores de causa, tempo e resultado",
+            "explanation": "Conectores unem orações curtas. Use because para apresentar um motivo: I stayed home because I was ill. Use so para apresentar um resultado: I was ill, so I stayed home. Use when, before e after para falar de tempo: Call me when you arrive. Wash your hands before you eat. Because responde à pergunta por quê; so apresenta o resultado. Não use because e so na mesma frase.",
+            "examples": [
+              {
+                "en": "I stayed home because I was ill.",
+                "pt": "Fiquei em casa porque estava doente."
+              },
+              {
+                "en": "I was ill, so I stayed home.",
+                "pt": "Eu estava doente, então fiquei em casa."
+              },
+              {
+                "en": "Call me when you arrive.",
+                "pt": "Ligue para mim quando chegar."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "COE-CV20"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a2-014",
+      "title": "Connectors for cause, time and result",
+      "explanation": "Connectors link short clauses. Use because for a reason: I stayed home because I was ill. Use so for a result: I was ill, so I stayed home. Use when, before and after for time: Call me when you arrive. Wash your hands before you eat. Because answers why; so gives the result. Do not use both because and so in one sentence.",
+      "examples": [
+        {
+          "en": "I stayed home because I was ill."
+        },
+        {
+          "en": "I was ill, so I stayed home."
+        },
+        {
+          "en": "Call me when you arrive."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "COE-CV20"],
+      "version": {
+        "id": "en-a2-014@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-014@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which connector gives a reason?",
+            "answer": "because",
+            "alternatives": ["because", "so", "but"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q01"
+          },
+          {
+            "id": "en-a2-014@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which connector gives a result?",
+            "answer": "so",
+            "alternatives": ["so", "because", "when"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q02"
+          },
+          {
+            "id": "en-a2-014@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence about washing hands is correct?",
+            "answer": "Wash your hands before you eat.",
+            "alternatives": [
+              "Wash your hands before you eat.",
+              "Wash your hands before eat.",
+              "Wash your hands before you eating."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q03"
+          },
+          {
+            "id": "en-a2-014@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence gives the reason first?",
+            "answer": "Because I was ill, I stayed home.",
+            "alternatives": [
+              "Because I was ill, I stayed home.",
+              "I stayed home so I was ill.",
+              "I was ill because I stayed home."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q04"
+          },
+          {
+            "id": "en-a2-014@2:q05",
+            "format": "typed-blank",
+            "prompt": "I stayed home ___ I was ill.",
+            "answer": "because",
+            "near_misses": ["so", "but"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q05"
+          },
+          {
+            "id": "en-a2-014@2:q06",
+            "format": "typed-blank",
+            "prompt": "I was ill, ___ I stayed home.",
+            "answer": "so",
+            "near_misses": ["because", "when"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q06"
+          },
+          {
+            "id": "en-a2-014@2:q07",
+            "format": "typed-blank",
+            "prompt": "Call me ___ you arrive.",
+            "answer": "when",
+            "near_misses": ["so", "because"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q07"
+          },
+          {
+            "id": "en-a2-014@2:q08",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: I stayed home / I was ill (because)",
+            "answer": "I stayed home because I was ill.",
+            "near_misses": [
+              "I stayed home so I was ill.",
+              "I stayed home because was ill."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q08"
+          },
+          {
+            "id": "en-a2-014@2:q09",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: I was ill / I stayed home (so)",
+            "answer": "I was ill, so I stayed home.",
+            "alternatives": ["I was ill so I stayed home."],
+            "near_misses": [
+              "I was ill, because I stayed home.",
+              "I was ill so because I stayed home."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q09"
+          },
+          {
+            "id": "en-a2-014@2:q10",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: call me / you arrive (when)",
+            "answer": "Call me when you arrive.",
+            "near_misses": [
+              "Call me when you arriving.",
+              "Call me because you arrive."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q10"
+          },
+          {
+            "id": "en-a2-014@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: I was tired, because I went to bed early.",
+            "answer": "I was tired, so I went to bed early.",
+            "alternatives": ["I was tired so I went to bed early."],
+            "near_misses": [
+              "I was tired, because I went to bed early.",
+              "I was tired, so because I went to bed early."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q11"
+          },
+          {
+            "id": "en-a2-014@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: We left after it start to rain.",
+            "answer": "We left after it started to rain.",
+            "near_misses": [
+              "We left after it start to rain.",
+              "We left after it starts rain."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-014@1:q12"
+          },
+          {
+            "id": "en-a2-014@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence gives a result?",
+            "answer": "It was cold, so we wore coats.",
+            "alternatives": [
+              "It was cold, so we wore coats.",
+              "It was cold because we wore coats.",
+              "It was cold, because we wear coats."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-014@1:h01"
+          },
+          {
+            "id": "en-a2-014@2:h02",
+            "format": "typed-blank",
+            "prompt": "Brush your teeth ___ you go to bed. (earlier than)",
+            "answer": "before",
+            "near_misses": ["so", "because"],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-014@1:h02"
+          },
+          {
+            "id": "en-a2-014@2:h03",
+            "format": "translation",
+            "prompt": "Join the ideas with a connector: she was hungry / she made a sandwich (so)",
+            "answer": "She was hungry, so she made a sandwich.",
+            "alternatives": ["She was hungry so she made a sandwich."],
+            "near_misses": [
+              "She was hungry because she made a sandwich.",
+              "She was hungry, so because she made a sandwich."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-014@1:h03"
           }
         ],
         "translations": {

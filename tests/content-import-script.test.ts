@@ -20,6 +20,7 @@ import {
   createDisposableFixture,
   disposeDisposableFixture
 } from './fixtures/database';
+import { clarifiedPrompts } from './fixtures/clarified-prompts';
 
 // The import script against a real, disposable local database. Expected
 // counts come from the raw module JSON, not from the code under test.
@@ -68,6 +69,26 @@ const modules = readdirSync(join(root, 'content'), { withFileTypes: true })
   );
 const lessons = modules.flatMap((module) => module.lessons);
 // A revised lesson sits beside the version it revises, so lessons outnumber skills.
+// Lessons that carry a reworded assessment prompt (see clarified-prompts.json)
+// are checked in their own test; the totals asserted elsewhere are the earlier ones.
+const clarifiedLessons = lessons.filter((lesson) =>
+  lesson.version.questions.some(
+    (question) => question.continues && clarifiedPrompts.has(question.continues)
+  )
+);
+const clarifiedIds = new Set(
+  clarifiedLessons.map((lesson) => lesson.version.id)
+);
+const earlierPackage = () => {
+  const full = modulesPackage(root);
+  return {
+    ...full,
+    versions: full.versions.filter((version) => !clarifiedIds.has(version.id))
+  };
+};
+const earlierLessons = lessons.filter(
+  (lesson) => !clarifiedIds.has(lesson.version.id)
+);
 const skills = new Set(lessons.map((lesson) => lesson.skill_id)).size;
 const questions = lessons.reduce((n, l) => n + l.version.questions.length, 0);
 const latestMigrationTag = (
@@ -294,7 +315,7 @@ describe('revising already imported lessons', () => {
     await migrateFixtureDatabase(target);
     const client = createClient({ url: target.databaseUrl });
     try {
-      const pkg = modulesPackage(root);
+      const pkg = earlierPackage();
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
@@ -363,6 +384,47 @@ describe('revising already imported lessons', () => {
           reset_required: 0
         }
       ]);
+    } finally {
+      client.close();
+    }
+  });
+});
+
+describe('reworded assessment prompts', () => {
+  it('adds 27 lesson versions on top of the earlier content', async () => {
+    expect(clarifiedPrompts.size).toBe(27);
+    expect(clarifiedLessons).toHaveLength(27);
+    await migrateFixtureDatabase(target);
+    const client = createClient({ url: target.databaseUrl });
+    try {
+      const full = modulesPackage(root);
+      await importContent(client, {
+        ...earlierPackage(),
+        curriculumVersion: '1.4.0'
+      });
+      const result = await importContent(client, full);
+      expect(full.curriculumVersion).toBe('1.5.0');
+      expect(result.versions).toBe(27);
+      expect(result.questions).toBe(27 * 15);
+      const changes = await client.execute(
+        "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.5.0' GROUP BY kind ORDER BY kind"
+      );
+      // 19 of the 27 skills are English and repeat their Portuguese translation.
+      expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
+        ['lesson-translation-added', 19],
+        ['question-same', 27 * 15],
+        ['version-added', 27]
+      ]);
+      const stored = new Map(
+        (await rowsOf(client)).map((row) => [String(row.id), row])
+      );
+      for (const [earlierId, prompt] of clarifiedPrompts) {
+        const revised = [...stored.values()].find(
+          (row) => row.lineage_key && row.prompt === prompt
+        );
+        expect(revised, earlierId).toBeDefined();
+        expect(stored.get(earlierId)?.prompt, earlierId).not.toBe(prompt);
+      }
     } finally {
       client.close();
     }
@@ -472,7 +534,7 @@ describe('module package', () => {
   });
 
   it('passes every authored Portuguese translation through the import package', () => {
-    const authored = lessons.filter(
+    const authored = earlierLessons.filter(
       (lesson) => lesson.version.translations?.pt
     );
     // 45 first versions plus the 25 English revisions that repeat their translation.
@@ -549,7 +611,7 @@ describe('module package', () => {
   });
 
   it('passes the change declarations of revised questions through the import package', () => {
-    const declared = lessons.flatMap((lesson) =>
+    const declared = earlierLessons.flatMap((lesson) =>
       lesson.version.questions.filter((question) => question.change)
     );
     // 55 revised lessons of 15 questions each.

@@ -178,6 +178,207 @@
       }
     },
     {
+      "skill_id": "pt-b2-026",
+      "title": "Formal clitic placement: ênclise, próclise and auxiliaries",
+      "explanation": "The formal written norm places the pronoun by rule. A clause may not begin with an unstressed pronoun, so the pronoun follows the verb with a hyphen (ênclise): disse-me a verdade, diga-me, explicou-lhe a lição. After a negative, a conjunction or relative such as que and quando, certain adverbs (já, sempre, nunca) and indefinite pronouns (todos, ninguém), the pronoun goes before the verb (próclise): não me disse, que o viu, já o vi, todos a conhecem. With ter or haver plus a participle the pronoun attaches to the auxiliary and never to the participle: tenho-o visto, não o tinha visto. Do not hyphenate after a participle (tenho visto-o is wrong) and do not start a clause with me, te or lhe.",
+      "examples": [
+        {
+          "pt": "Disse-me a verdade.",
+          "en": "He told me the truth."
+        },
+        {
+          "pt": "Não me disse a verdade.",
+          "en": "He did not tell me the truth."
+        },
+        {
+          "pt": "Tenho-o visto.",
+          "en": "I have seen him."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-026@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b2-026@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence (formal norm): He told me the truth.",
+            "answer": "Disse-me a verdade.",
+            "alternatives": [
+              "Disse-me a verdade.",
+              "Me disse a verdade.",
+              "Disse me a verdade."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q01"
+          },
+          {
+            "id": "pt-b2-026@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence (formal norm): He did not tell me the truth.",
+            "answer": "Não me disse a verdade.",
+            "alternatives": [
+              "Não disse-me a verdade.",
+              "Não me disse a verdade.",
+              "Disse-me não a verdade."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q02"
+          },
+          {
+            "id": "pt-b2-026@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence (formal norm): He said that he saw him yesterday.",
+            "answer": "Ele disse que o viu ontem.",
+            "alternatives": [
+              "Ele disse que viu-o ontem.",
+              "Ele disse que viu o ontem.",
+              "Ele disse que o viu ontem."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q03"
+          },
+          {
+            "id": "pt-b2-026@2:q04",
+            "format": "typed-blank",
+            "prompt": "___ a verdade. (dizer + me, início da frase)",
+            "answer": "Disse-me",
+            "near_misses": ["Me disse", "Disse me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q04"
+          },
+          {
+            "id": "pt-b2-026@2:q05",
+            "format": "typed-blank",
+            "prompt": "Não ___ a verdade. (dizer + me)",
+            "answer": "me disse",
+            "near_misses": ["disse-me", "disse me"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q05"
+          },
+          {
+            "id": "pt-b2-026@2:q06",
+            "format": "typed-blank",
+            "prompt": "___ visto. (ter + o) (norma formal)",
+            "answer": "Tenho-o",
+            "near_misses": ["O tenho", "Tenho o"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q06"
+          },
+          {
+            "id": "pt-b2-026@2:q07",
+            "format": "translation",
+            "prompt": "Translate (formal): He told me the truth.",
+            "answer": "Disse-me a verdade.",
+            "alternatives": ["Ele disse-me a verdade."],
+            "near_misses": ["Me disse a verdade.", "Disse me a verdade."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q07"
+          },
+          {
+            "id": "pt-b2-026@2:q08",
+            "format": "translation",
+            "prompt": "Translate (formal): He did not tell me the truth.",
+            "answer": "Não me disse a verdade.",
+            "alternatives": ["Ele não me disse a verdade."],
+            "near_misses": [
+              "Não disse-me a verdade.",
+              "Disse-me não a verdade."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q08"
+          },
+          {
+            "id": "pt-b2-026@2:q09",
+            "format": "translation",
+            "prompt": "Translate (formal): I have seen him.",
+            "answer": "Tenho-o visto.",
+            "alternatives": ["Eu tenho-o visto."],
+            "near_misses": ["Tenho visto-o.", "O tenho visto."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q09"
+          },
+          {
+            "id": "pt-b2-026@2:q10",
+            "format": "correction",
+            "prompt": "Correct to the formal norm: Me disse a verdade.",
+            "answer": "Disse-me a verdade.",
+            "near_misses": ["Me disse a verdade.", "Disse me a verdade."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q10"
+          },
+          {
+            "id": "pt-b2-026@2:q11",
+            "format": "correction",
+            "prompt": "Correct to the formal norm: Ele disse que viu-o ontem.",
+            "answer": "Ele disse que o viu ontem.",
+            "near_misses": [
+              "Ele disse que viu-o ontem.",
+              "Ele disse que viu o ontem."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q11"
+          },
+          {
+            "id": "pt-b2-026@2:q12",
+            "format": "correction",
+            "prompt": "Correct to the formal norm: Tenho visto-o.",
+            "answer": "Tenho-o visto.",
+            "near_misses": ["Tenho visto-o.", "O tenho visto."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-026@1:q12"
+          },
+          {
+            "id": "pt-b2-026@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct sentence (formal norm): I never wrote to him. (colocação do pronome)",
+            "answer": "Nunca lhe escrevi.",
+            "alternatives": [
+              "Nunca escrevi-lhe.",
+              "Escrevi-lhe nunca.",
+              "Nunca lhe escrevi."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-026@1:h01"
+          },
+          {
+            "id": "pt-b2-026@2:h02",
+            "format": "typed-blank",
+            "prompt": "___ a lição. (explicar + lhe, ele, pretérito perfeito, início da frase) (colocação do pronome)",
+            "answer": "Explicou-lhe",
+            "near_misses": ["Lhe explicou", "Explicou lhe"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-026@1:h02"
+          },
+          {
+            "id": "pt-b2-026@2:h03",
+            "format": "translation",
+            "prompt": "Translate (formal): Nobody knows him. (colocação do pronome)",
+            "answer": "Ninguém o conhece.",
+            "near_misses": ["Ninguém conhece-o.", "Ninguém conhece o."],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-026@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "pt-b2-027",
       "title": "Mesóclise: the pronoun inside the future and the conditional",
       "explanation": "In the futuro do presente and the futuro do pretérito, the formal norm does not allow the pronoun after the verb, so a clause that begins with the verb puts the pronoun inside it: dar-lhe-ei, dir-te-ia, enviá-lo-emos. The infinitive stays whole and the future or conditional ending follows it, with a hyphen on each side of the pronoun. Verbs ending in -r lose the r before o, a, os and as (enviar plus o gives enviá-lo). The same attractors that call for próclise still apply: não lhe darei, nunca te diria. Do not write the pronoun after a future verb (darei-lhe is wrong in formal writing) or before it at the start of a clause (lhe darei is wrong).",
@@ -491,6 +692,186 @@
             "answer": "Ela não no-las deu.",
             "near_misses": ["Ela não nos as deu.", "Ela não deu-nos-as."],
             "holdout": true
+          }
+        ]
+      }
+    },
+    {
+      "skill_id": "pt-b2-028",
+      "title": "Combined pronouns and the forms -lo, -la, -no, -na",
+      "explanation": "Two object pronouns can fuse. Me plus o gives mo, me plus a gives ma, me plus os gives mos, me plus as gives mas; te gives to, ta, tos, tas; lhe gives lho, lha, lhos, lhas; nos plus o gives no-lo; vos plus o gives vo-lo. The first pronoun is the indirect object and the second the direct object: ele não mo deu, mostrei-lhas. The direct object o, a, os and as also changes after the verb: after r, s or z the ending drops and the pronoun becomes -lo, -la, -los, -las (fazê-lo, lê-lo); after a nasal sound it becomes -no, -na, -nos, -nas (compraram-na). Do not leave the verb ending in front of -lo (fazer-o is wrong).",
+      "examples": [
+        {
+          "pt": "Ele não mo deu.",
+          "en": "He did not give it to me."
+        },
+        {
+          "pt": "Mostrei-lhas.",
+          "en": "I showed them to him."
+        },
+        {
+          "pt": "Fazê-lo é difícil.",
+          "en": "Doing it is hard."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-028@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b2-028@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ele deu o livro a mim. Ele ___ deu. (me + o)",
+            "answer": "mo",
+            "alternatives": ["me o", "lho", "mo"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q01"
+          },
+          {
+            "id": "pt-b2-028@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Entreguei o recado a ele. Entreguei-___ . (lhe + o)",
+            "answer": "lho",
+            "alternatives": ["lho", "lhe o", "mo"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q02"
+          },
+          {
+            "id": "pt-b2-028@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Ela deu as flores a mim. Ela ___ deu. (me + as)",
+            "answer": "mas",
+            "alternatives": ["mos", "mas", "ma"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q03"
+          },
+          {
+            "id": "pt-b2-028@2:q04",
+            "format": "typed-blank",
+            "prompt": "Mostrei as fotos a ele. Mostrei-___ . (lhe + as)",
+            "answer": "lhas",
+            "near_misses": ["lho", "lhes"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q04"
+          },
+          {
+            "id": "pt-b2-028@2:q05",
+            "format": "typed-blank",
+            "prompt": "Para fazer o dever: ___ (fazer + o)",
+            "answer": "fazê-lo",
+            "near_misses": ["fazer-o", "fazelo"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q05"
+          },
+          {
+            "id": "pt-b2-028@2:q06",
+            "format": "typed-blank",
+            "prompt": "Eles compraram a casa. Compraram-___ . (a, depois de som nasal)",
+            "answer": "na",
+            "near_misses": ["a", "la"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q06"
+          },
+          {
+            "id": "pt-b2-028@2:q07",
+            "format": "translation",
+            "prompt": "Translate (formal): He did not give it to me. (the book)",
+            "answer": "Ele não mo deu.",
+            "near_misses": ["Ele não me o deu.", "Ele não deu-mo."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q07"
+          },
+          {
+            "id": "pt-b2-028@2:q08",
+            "format": "translation",
+            "prompt": "Translate (formal): I showed them to him. (the photos)",
+            "answer": "Mostrei-lhas.",
+            "alternatives": ["Eu mostrei-lhas."],
+            "near_misses": ["Mostrei-lhes as.", "Mostrei-las-lhe."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q08"
+          },
+          {
+            "id": "pt-b2-028@2:q09",
+            "format": "translation",
+            "prompt": "Translate (formal): Doing it is hard. (o)",
+            "answer": "Fazê-lo é difícil.",
+            "near_misses": ["Fazer-o é difícil.", "Fazelo é difícil."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q09"
+          },
+          {
+            "id": "pt-b2-028@2:q10",
+            "format": "correction",
+            "prompt": "Correct the pronoun: Ele me o deu.",
+            "answer": "Ele mo deu.",
+            "near_misses": ["Ele me o deu.", "Ele lho deu."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q10"
+          },
+          {
+            "id": "pt-b2-028@2:q11",
+            "format": "correction",
+            "prompt": "Correct the form: Vou fazer-o amanhã.",
+            "answer": "Vou fazê-lo amanhã.",
+            "near_misses": ["Vou fazer-o amanhã.", "Vou fazelo amanhã."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q11"
+          },
+          {
+            "id": "pt-b2-028@2:q12",
+            "format": "correction",
+            "prompt": "Correct the form: Eles compraram-a ontem.",
+            "answer": "Eles compraram-na ontem.",
+            "near_misses": [
+              "Eles compraram-a ontem.",
+              "Eles compraram-la ontem."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-028@1:q12"
+          },
+          {
+            "id": "pt-b2-028@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct form: Entreguei os livros a ele. Entreguei-___ . (lhe + os) (pronomes combinados)",
+            "answer": "lhos",
+            "alternatives": ["lho", "lhos", "lhes"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-028@1:h01"
+          },
+          {
+            "id": "pt-b2-028@2:h02",
+            "format": "typed-blank",
+            "prompt": "Write 'to read it' (ler + o): ___ (pronomes combinados)",
+            "answer": "lê-lo",
+            "near_misses": ["ler-o", "lelo"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-028@1:h02"
+          },
+          {
+            "id": "pt-b2-028@2:h03",
+            "format": "translation",
+            "prompt": "Translate (formal): She did not give them to us. (the keys) (pronomes combinados)",
+            "answer": "Ela não no-las deu.",
+            "near_misses": ["Ela não nos as deu.", "Ela não deu-nos-as."],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-028@1:h03"
           }
         ]
       }

@@ -198,6 +198,227 @@
       }
     },
     {
+      "skill_id": "en-a2-009",
+      "title": "Should for advice and need to for necessity",
+      "explanation": "Use should plus the base verb to give simple advice: You should see a doctor. The negative is shouldn't (should not): You shouldn't eat so much sugar. Should is the same for every subject and has no to. Use need to for something necessary: I need to buy a ticket. Need to changes for he, she and it (she needs to leave) and uses don't or doesn't in negatives.",
+      "examples": [
+        {
+          "en": "You should see a doctor."
+        },
+        {
+          "en": "You shouldn't eat so much sugar."
+        },
+        {
+          "en": "I need to buy a ticket."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-009@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-009@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence gives advice?",
+            "answer": "You should see a doctor.",
+            "alternatives": [
+              "You should see a doctor.",
+              "You should to see a doctor.",
+              "You shoulds see a doctor."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q01"
+          },
+          {
+            "id": "en-a2-009@2:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the negative short form of 'should'?",
+            "answer": "shouldn't",
+            "alternatives": ["shouldn't", "don't should", "not should"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q02"
+          },
+          {
+            "id": "en-a2-009@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which form goes with 'she' to say something is necessary?",
+            "answer": "needs to",
+            "alternatives": ["needs to", "need to", "should to"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q03"
+          },
+          {
+            "id": "en-a2-009@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows 'should'?",
+            "answer": "the base verb",
+            "alternatives": [
+              "the base verb",
+              "to + base verb",
+              "the -ing form"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q04"
+          },
+          {
+            "id": "en-a2-009@2:q05",
+            "format": "typed-blank",
+            "prompt": "You ___ see a doctor. (advice)",
+            "answer": "should",
+            "near_misses": ["must to", "are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q05"
+          },
+          {
+            "id": "en-a2-009@2:q06",
+            "format": "typed-blank",
+            "prompt": "You ___ eat so much sugar. (advice against, short form)",
+            "answer": "shouldn't",
+            "alternatives": ["should not"],
+            "near_misses": ["don't should", "can't to"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q06"
+          },
+          {
+            "id": "en-a2-009@2:q07",
+            "format": "typed-blank",
+            "prompt": "I ___ to buy a ticket. (necessity)",
+            "answer": "need",
+            "near_misses": ["needs", "should"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q07"
+          },
+          {
+            "id": "en-a2-009@2:q08",
+            "format": "translation",
+            "prompt": "Write the advice with should or shouldn't: you / see / a doctor",
+            "answer": "You should see a doctor.",
+            "near_misses": [
+              "You should to see a doctor.",
+              "You should sees a doctor."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q08"
+          },
+          {
+            "id": "en-a2-009@2:q09",
+            "format": "translation",
+            "prompt": "Write the advice with should or shouldn't: negative: you / eat / so much sugar",
+            "answer": "You shouldn't eat so much sugar.",
+            "alternatives": ["You should not eat so much sugar."],
+            "near_misses": [
+              "You shouldn't to eat so much sugar.",
+              "You don't should eat so much sugar."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q09"
+          },
+          {
+            "id": "en-a2-009@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with need to: I / need to / buy / a ticket",
+            "answer": "I need to buy a ticket.",
+            "near_misses": ["I need buy a ticket.", "I needs to buy a ticket."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q10"
+          },
+          {
+            "id": "en-a2-009@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She should to rest.",
+            "answer": "She should rest.",
+            "near_misses": ["She should to rest.", "She shoulds rest."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q11"
+          },
+          {
+            "id": "en-a2-009@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: He need to leave now.",
+            "answer": "He needs to leave now.",
+            "near_misses": ["He need to leave now.", "He needs leave now."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-009@1:q12"
+          },
+          {
+            "id": "en-a2-009@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is polite advice for a tired friend?",
+            "answer": "You should go to bed early.",
+            "alternatives": [
+              "You should go to bed early.",
+              "You should going to bed early.",
+              "You should to go to bed early."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-009@1:h01"
+          },
+          {
+            "id": "en-a2-009@2:h02",
+            "format": "correction",
+            "prompt": "Correct the question: Does she needs to take the bus?",
+            "answer": "Does she need to take the bus?",
+            "near_misses": [
+              "Does she needs to take the bus?",
+              "Does she need take the bus?"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-009@1:h02"
+          },
+          {
+            "id": "en-a2-009@2:h03",
+            "format": "translation",
+            "prompt": "Write negative advice with should: we / stay / up late",
+            "answer": "We shouldn't stay up late.",
+            "alternatives": ["We should not stay up late."],
+            "near_misses": [
+              "We shouldn't to stay up late.",
+              "We don't should stay up late."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-009@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Should para conselhos e need to para necessidade",
+            "explanation": "Use should mais a forma base do verbo para dar um conselho simples: You should see a doctor. A negativa é shouldn't (should not): You shouldn't eat so much sugar. Should não muda conforme o sujeito e não é seguido por to. Use need to para algo necessário: I need to buy a ticket. Need to muda depois de he, she e it (she needs to leave) e usa don't ou doesn't nas negativas.",
+            "examples": [
+              {
+                "en": "You should see a doctor.",
+                "pt": "Você deveria consultar um médico."
+              },
+              {
+                "en": "You shouldn't eat so much sugar.",
+                "pt": "Você não deveria comer tanto açúcar."
+              },
+              {
+                "en": "I need to buy a ticket.",
+                "pt": "Preciso comprar uma passagem."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a2-010",
       "title": "To-infinitive after common verbs",
       "explanation": "After some frequent verbs the next verb takes to plus the base form: want to, need to, decide to, hope to, plan to, learn to, would like to. Examples: I want to learn English. She decided to move. We hope to see you soon. These verbs do not take -ing. Do not drop to, and do not put a past or -s form after it: not I want to learns.",
@@ -584,6 +805,227 @@
             "holdout": true,
             "change": "same",
             "continues": "en-a2-010@1:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Infinitivo com to depois de verbos comuns",
+            "explanation": "Depois de alguns verbos frequentes, o próximo verbo aparece com to mais a forma base: want to, need to, decide to, hope to, plan to, learn to, would like to. Exemplos: I want to learn English. She decided to move. We hope to see you soon. Esses verbos não são seguidos por -ing. Não omita to nem coloque depois dele uma forma no passado ou com -s: não diga I want to learns.",
+            "examples": [
+              {
+                "en": "I want to learn English.",
+                "pt": "Quero aprender inglês."
+              },
+              {
+                "en": "She decided to move.",
+                "pt": "Ela decidiu se mudar."
+              },
+              {
+                "en": "We hope to see you soon.",
+                "pt": "Esperamos ver você em breve."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "BC-A1-A2"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a2-010",
+      "title": "To-infinitive after common verbs",
+      "explanation": "After some frequent verbs the next verb takes to plus the base form: want to, need to, decide to, hope to, plan to, learn to, would like to. Examples: I want to learn English. She decided to move. We hope to see you soon. These verbs do not take -ing. Do not drop to, and do not put a past or -s form after it: not I want to learns.",
+      "examples": [
+        {
+          "en": "I want to learn English."
+        },
+        {
+          "en": "She decided to move."
+        },
+        {
+          "en": "We hope to see you soon."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "BC-A1-A2"],
+      "version": {
+        "id": "en-a2-010@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "en-a2-010@3:q01",
+            "format": "multiple-choice",
+            "prompt": "Which verb pattern is correct?",
+            "answer": "I want to learn English.",
+            "alternatives": [
+              "I want to learn English.",
+              "I want learn English.",
+              "I want learning English."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q01"
+          },
+          {
+            "id": "en-a2-010@3:q02",
+            "format": "multiple-choice",
+            "prompt": "Which verb is followed by a to-infinitive?",
+            "answer": "decide",
+            "alternatives": ["decide", "enjoy", "finish"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q02"
+          },
+          {
+            "id": "en-a2-010@3:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb form comes after 'to'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -ing form", "the past form"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q03"
+          },
+          {
+            "id": "en-a2-010@3:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence expresses a hope?",
+            "answer": "We hope to see you soon.",
+            "alternatives": [
+              "We hope see you soon.",
+              "We hope to see you soon.",
+              "We hope seeing you soon."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q04"
+          },
+          {
+            "id": "en-a2-010@3:q05",
+            "format": "typed-blank",
+            "prompt": "I want ___ learn English.",
+            "answer": "to",
+            "near_misses": ["for", "at"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q05"
+          },
+          {
+            "id": "en-a2-010@3:q06",
+            "format": "typed-blank",
+            "prompt": "She decided to ___. (move)",
+            "answer": "move",
+            "near_misses": ["moving", "moved"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q06"
+          },
+          {
+            "id": "en-a2-010@3:q07",
+            "format": "typed-blank",
+            "prompt": "We hope to ___ you soon. (see)",
+            "answer": "see",
+            "near_misses": ["saw", "seeing"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q07"
+          },
+          {
+            "id": "en-a2-010@3:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: I / want / learn / English",
+            "answer": "I want to learn English.",
+            "near_misses": [
+              "I want learn English.",
+              "I want to learning English."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q08"
+          },
+          {
+            "id": "en-a2-010@3:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: she / decide / move (past)",
+            "answer": "She decided to move.",
+            "near_misses": ["She decided moving.", "She decided to moved."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q09"
+          },
+          {
+            "id": "en-a2-010@3:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: we / hope / see / you soon",
+            "answer": "We hope to see you soon.",
+            "near_misses": [
+              "We hope seeing you soon.",
+              "We hope to saw you soon."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q10"
+          },
+          {
+            "id": "en-a2-010@3:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: They plan visit Rome.",
+            "answer": "They plan to visit Rome.",
+            "near_misses": [
+              "They plan visit Rome.",
+              "They plan to visiting Rome."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q11"
+          },
+          {
+            "id": "en-a2-010@3:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: He wants to goes home.",
+            "answer": "He wants to go home.",
+            "near_misses": ["He wants to goes home.", "He wants go home."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-010@2:q12"
+          },
+          {
+            "id": "en-a2-010@3:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'would like' correctly?",
+            "answer": "I would like to book a table.",
+            "alternatives": [
+              "I would like to book a table.",
+              "I would like book a table.",
+              "I would like booking a table."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-010@2:h01"
+          },
+          {
+            "id": "en-a2-010@3:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: My brother is learning drive. (to-infinitive)",
+            "answer": "My brother is learning to drive.",
+            "near_misses": [
+              "My brother is learning drive.",
+              "My brother is learning driving."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-010@2:h02"
+          },
+          {
+            "id": "en-a2-010@3:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a to-infinitive: they / need / leave / early",
+            "answer": "They need to leave early.",
+            "near_misses": [
+              "They need leave early.",
+              "They need to leaving early."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-010@2:h03"
           }
         ],
         "translations": {
