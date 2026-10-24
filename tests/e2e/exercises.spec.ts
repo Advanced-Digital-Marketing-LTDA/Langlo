@@ -1222,6 +1222,32 @@ test('keeps refresh blocked while the next answer is being typed', async ({
   );
 });
 
+test('refuses a retry form from an older page and records nothing', async ({
+  page,
+  context
+}) => {
+  const { userId, studySessionId } = await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  // A page from before retries were removed could still send this field.
+  await page
+    .locator('form:has(input[name="questionId"])')
+    .first()
+    .evaluate((form) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'retryAttemptId';
+      input.value = 'attempt-from-an-older-page';
+      form.append(input);
+    });
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(page.getByRole('alert')).toContainText(
+    'This question is out of date. Reload to continue.'
+  );
+  expect(await storedAnswers(userId, studySessionId)).toHaveLength(0);
+});
+
 /** A short viewport, so the practice page scrolls and a reload is visible. */
 async function startScrollScenario(page: Page, context: BrowserContext) {
   const userId = await signIn(page, context);
