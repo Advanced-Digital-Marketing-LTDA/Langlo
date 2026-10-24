@@ -2,7 +2,11 @@ import { createHash, randomUUID } from 'node:crypto';
 import { Worker } from 'node:worker_threads';
 import { resolve } from 'node:path';
 import type { Client } from '@libsql/client';
-import { containsTerm, splitSentences } from '../library-text';
+import {
+  containsTerm,
+  libraryMaxFileBytes,
+  splitSentences
+} from '../library-text';
 import { createSourceId } from './db/source-id';
 import { createNote, executeWrite, type LearnerSession } from './flashcards';
 import { StudyError } from './study-error';
@@ -10,8 +14,6 @@ import { StudyError } from './study-error';
 export const LIBRARY_LANGUAGES = ['fr', 'de', 'en', 'pt'] as const;
 export type LibraryLanguage = (typeof LIBRARY_LANGUAGES)[number];
 
-const maxFileBytes = 10 * 1024 * 1024;
-const maxTextLength = 1_000_000;
 const fileTypes = new Set(['txt', 'pdf', 'docx', 'epub']);
 let activeParsers = 0;
 const maxActiveParsers = 2;
@@ -42,8 +44,6 @@ function documentTitle(name: string): string {
 
 function normalizeDocumentText(value: string): string {
   const content = value.replace(/\r\n?/gu, '\n').trim();
-  if (content.length > maxTextLength)
-    throw new StudyError('LIBRARY_CONTENT_TOO_LARGE');
   if (!content || content.includes('\0') || !/[\p{L}\p{N}]/u.test(content))
     throw new StudyError('INVALID_LIBRARY_DOCUMENT');
   return content;
@@ -102,7 +102,8 @@ function libraryLanguage(language: unknown): LibraryLanguage {
 }
 
 function libraryFileExtension(file: File): string {
-  if (file.size > maxFileBytes) throw new StudyError('LIBRARY_FILE_TOO_LARGE');
+  if (file.size > libraryMaxFileBytes)
+    throw new StudyError('LIBRARY_FILE_TOO_LARGE');
   const extension = file.name.split('.').at(-1)?.toLowerCase() ?? '';
   if (!fileTypes.has(extension)) throw new StudyError('INVALID_LIBRARY_FILE');
   return extension;

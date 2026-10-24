@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Client } from '@libsql/client';
 import type { RuntimeConfig } from '../src/lib/server/config';
+import { describeLearnerError } from '../src/lib/server/learner-api';
 import { createLibraryDocument } from '../src/lib/server/library';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { createDeck, getNote } from '../src/lib/server/flashcards';
@@ -372,5 +373,14 @@ describe('Library API', () => {
         })
       )
     ).toMatchObject({ status: 404 });
+  });
+});
+
+describe('Library upload size message', () => {
+  it('maps LIBRARY_FILE_TOO_LARGE to a 413 with the 10 MB message', () => {
+    expect(describeLearnerError('LIBRARY_FILE_TOO_LARGE')).toEqual({
+      status: 413,
+      message: 'Choose a file of 10 MB or smaller.'
+    });
   });
 });

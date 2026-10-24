@@ -1,3 +1,6 @@
+export const libraryMaxFileBytes = 10_000_000;
+export const libraryFileTooLargeMessage = `Choose a file of ${libraryMaxFileBytes / 1_000_000} MB or smaller.`;
+
 export function splitSentences(text: string): string[] {
   return Array.from(
     new Intl.Segmenter(undefined, { granularity: 'sentence' }).segment(text),
