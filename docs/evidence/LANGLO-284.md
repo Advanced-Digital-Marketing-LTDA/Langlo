@@ -393,3 +393,50 @@ The full unit suite then passed 126 files and 1,992 tests. Type checking found
 9 tests. Changed supported files pass Prettier. No new browser run was needed
 for this test/comment-only follow-up; the preceding 169-pass/1-failure result
 and unresolved map timer assertion remain the latest browser evidence.
+
+## Reject incomplete AI responses (2026-10-24)
+
+The response parser now requires `status: 'completed'` before extracting any
+text. Incomplete, failed, or missing-status payloads use the existing
+`LIBRARY_AI_UNAVAILABLE` error, so partial text is not returned as a successful
+translation or vocabulary definition. The provider budget remains 300 output
+tokens, with no retry or fallback. The API regression confirms the failed
+provider attempt consumes exactly one quota reservation.
+
+Before the fix, six new regressions failed against `9a8ba17`: token-limited
+translation and lookup, content-filtered output, failed output, missing status,
+and the API returning HTTP 200 with partial text instead of HTTP 503. Successful
+mock responses now include the actual completed status in their fixtures.
+
+```text
+npm test -- tests/library-ai.test.ts tests/library-routes.test.ts
+FAIL rejects token-limited partial translate output without retrying
+FAIL rejects token-limited partial lookup output without retrying
+FAIL rejects content-filtered responses even when they contain text
+FAIL rejects failed responses even when they contain text
+FAIL rejects missing completion status responses even when they contain text
+AssertionError: promise resolved partial text instead of rejecting
+FAIL returns unavailable instead of partial AI text and counts the provider attempt once
+Expected status: 503
+Received status: 200
+Test Files  2 failed (2)
+Tests  6 failed | 16 passed (22)
+
+After the completion-status guard:
+Test Files  2 passed (2)
+Tests  22 passed (22)
+
+npm test
+Test Files  126 passed (126)
+Tests  1998 passed (1998)
+```
+
+Type checking reports 0 errors and 0 warnings, and lint passes. All provider
+responses in these tests are synthetic; no live OpenAI request was made.
+
+The separate property suite passed all 9 tests, the build passed, and the full
+desktop/mobile browser run passed all 170 tests (0 failures, skips, or retries).
+The prior map timer failure did not recur in this run; its implementation and
+assertion were not changed. Changed supported files pass Prettier, while the
+repository-wide format check still flags only the pre-existing ignored local
+`.claude/settings.local.json`.

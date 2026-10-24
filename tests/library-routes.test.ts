@@ -77,6 +77,51 @@ async function call(handler: Handler, e: never) {
 }
 
 describe('Library API', () => {
+  it('returns unavailable instead of partial AI text and counts the provider attempt once', async () => {
+    await createLibraryDocument(client, testSession('learner-a'), {
+      id: 'library-a',
+      title: 'French text',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    const fetch = vi.fn().mockResolvedValue(
+      Response.json({
+        status: 'incomplete',
+        incomplete_details: { reason: 'max_output_tokens' },
+        output: [
+          {
+            type: 'message',
+            content: [{ type: 'output_text', text: 'partial unfinished text' }]
+          }
+        ]
+      })
+    );
+    vi.stubGlobal('fetch', fetch);
+    const result = await call(
+      studyRoute.POST as Handler,
+      event(
+        'POST',
+        'learner-a',
+        '/app/api/library/library-a/study',
+        { action: 'lookup', sentenceIndex: 0, term: 'Bonjour' },
+        'synthetic-openai-test-key'
+      )
+    );
+    expect(result).toMatchObject({ status: 503 });
+    expect(JSON.stringify(result.body)).not.toContain(
+      'partial unfinished text'
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(
+      (
+        await client.execute({
+          sql: 'SELECT calls FROM library_ai_usage WHERE owner_id = ?',
+          args: ['learner-a']
+        })
+      ).rows
+    ).toEqual([{ calls: 1 }]);
+  });
+
   it.each([
     { action: 'invalid', sentenceIndex: 0 },
     { action: 'translate', sentenceIndex: -1 },
@@ -226,6 +271,7 @@ describe('Library API', () => {
     const fetch = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
+          status: 'completed',
           output: [
             {
               content: [{ type: 'output_text', text: 'financial institution' }]

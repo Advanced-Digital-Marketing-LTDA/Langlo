@@ -79,6 +79,7 @@ export async function reserveLibraryAiCall(
 
 function responseText(value: unknown): string | undefined {
   if (typeof value !== 'object' || value === null) return undefined;
+  if ((value as { status?: unknown }).status !== 'completed') return undefined;
   const output = (value as { output?: unknown }).output;
   if (!Array.isArray(output)) return undefined;
   const text = output.flatMap((item) => {

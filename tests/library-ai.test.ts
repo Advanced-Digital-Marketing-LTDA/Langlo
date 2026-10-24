@@ -8,6 +8,7 @@ describe('Library AI', () => {
     const fetch = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
+          status: 'completed',
           output: [
             {
               type: 'message',
@@ -43,10 +44,82 @@ describe('Library AI', () => {
     expect(body).toMatchObject({
       model: 'gpt-6-luna',
       reasoning: { effort: 'low' },
-      store: false
+      store: false,
+      max_output_tokens: 300
     });
     expect(JSON.stringify(body)).toContain('The river bank is nearby.');
     expect(JSON.stringify(body)).not.toContain('full-document-secret');
+  });
+
+  it.each(['translate', 'lookup'] as const)(
+    'rejects token-limited partial %s output without retrying',
+    async (action) => {
+      const fetch = vi.fn().mockResolvedValue(
+        Response.json({
+          status: 'incomplete',
+          incomplete_details: { reason: 'max_output_tokens' },
+          output: [
+            {
+              type: 'message',
+              content: [
+                { type: 'output_text', text: 'partial unfinished text' }
+              ]
+            }
+          ]
+        })
+      );
+      vi.stubGlobal('fetch', fetch);
+      await expect(
+        requestLibraryAi('synthetic-openai-test-key', {
+          action,
+          language: 'fr',
+          targetLanguage: 'en',
+          sentence: 'Bonjour.',
+          previousSentence: '',
+          nextSentence: '',
+          ...(action === 'lookup' ? { term: 'Bonjour' } : {})
+        })
+      ).rejects.toMatchObject({ code: 'LIBRARY_AI_UNAVAILABLE' });
+      expect(fetch).toHaveBeenCalledTimes(1);
+    }
+  );
+
+  it.each([
+    {
+      name: 'content-filtered',
+      status: 'incomplete',
+      incomplete_details: { reason: 'content_filter' }
+    },
+    { name: 'failed', status: 'failed' },
+    { name: 'missing completion status' }
+  ])('rejects $name responses even when they contain text', async (state) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        Response.json({
+          ...state,
+          output: [
+            {
+              type: 'message',
+              content: [
+                { type: 'output_text', text: 'plausible but unusable text' }
+              ]
+            }
+          ]
+        })
+      )
+    );
+    await expect(
+      requestLibraryAi('synthetic-openai-test-key', {
+        action: 'lookup',
+        language: 'fr',
+        targetLanguage: 'en',
+        sentence: 'Bonjour.',
+        previousSentence: '',
+        nextSentence: '',
+        term: 'Bonjour'
+      })
+    ).rejects.toMatchObject({ code: 'LIBRARY_AI_UNAVAILABLE' });
   });
 
   it('fails clearly when the key or provider is unavailable without fallback', async () => {
