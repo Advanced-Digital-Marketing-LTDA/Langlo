@@ -508,6 +508,186 @@
       }
     },
     {
+      "skill_id": "fr-a1-027",
+      "title": "Professions and nationalities: masculine and feminine",
+      "explanation": "After être, a profession or nationality usually has no article: Il est médecin, Elle est française. Many words add -e for the feminine: étudiant, étudiante; français, française; allemand, allemande; américain, américaine. Words in -ien double the n: italien, italienne. Words in -ier become -ière: infirmier, infirmière; boulanger, boulangère. Some end in -eur and change: acteur, actrice. Words already ending in -e do not change: journaliste, dentiste. Nationality adjectives are written with a lowercase letter.",
+      "examples": [
+        {
+          "fr": "Elle est étudiante.",
+          "en": "She is a student."
+        },
+        {
+          "fr": "Il est français.",
+          "en": "He is French."
+        },
+        {
+          "fr": "Marie est italienne.",
+          "en": "Marie is Italian."
+        }
+      ],
+      "references": ["FEI-INV", "DELF-A1-ADULT"],
+      "version": {
+        "id": "fr-a1-027@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "fr-a1-027@2:q01",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'étudiant'?",
+            "answer": "étudiante",
+            "alternatives": ["étudiant", "étudiante", "étudiantes"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q01"
+          },
+          {
+            "id": "fr-a1-027@2:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'italien'?",
+            "answer": "italienne",
+            "alternatives": ["italiene", "italienne", "italiène"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q02"
+          },
+          {
+            "id": "fr-a1-027@2:q03",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'infirmier'?",
+            "answer": "infirmière",
+            "alternatives": ["infirmiere", "infirmière", "infirmiére"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q03"
+          },
+          {
+            "id": "fr-a1-027@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence correctly says she is French?",
+            "answer": "Elle est française.",
+            "alternatives": [
+              "Elle est français.",
+              "Elle est française.",
+              "Elle est francaise."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q04"
+          },
+          {
+            "id": "fr-a1-027@2:q05",
+            "format": "typed-blank",
+            "prompt": "Marie est ___. (allemand)",
+            "answer": "allemande",
+            "near_misses": ["allemand", "allemandes"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q05"
+          },
+          {
+            "id": "fr-a1-027@2:q06",
+            "format": "typed-blank",
+            "prompt": "Elle est ___. (journaliste)",
+            "answer": "journaliste",
+            "near_misses": ["journalistes", "journalisté"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q06"
+          },
+          {
+            "id": "fr-a1-027@2:q07",
+            "format": "typed-blank",
+            "prompt": "Paul est ___. (américain)",
+            "answer": "américain",
+            "near_misses": ["américaine", "americain"],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q07"
+          },
+          {
+            "id": "fr-a1-027@2:q08",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She is a nurse.",
+            "answer": "Elle est infirmière.",
+            "near_misses": ["Elle est infirmier.", "Elle est une infirmière."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q08"
+          },
+          {
+            "id": "fr-a1-027@2:q09",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): He is Spanish.",
+            "answer": "Il est espagnol.",
+            "near_misses": ["Il est espagnole.", "Il est espagnols."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q09"
+          },
+          {
+            "id": "fr-a1-027@2:q10",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): Marie is English.",
+            "answer": "Marie est anglaise.",
+            "near_misses": ["Marie est anglais.", "Marie est anglaisse."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q10"
+          },
+          {
+            "id": "fr-a1-027@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the person): Elle est étudiant.",
+            "answer": "Elle est étudiante.",
+            "near_misses": ["Elle est étudiant.", "Elle est étudiants."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q11"
+          },
+          {
+            "id": "fr-a1-027@2:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence (keep the person): Marie est italien.",
+            "answer": "Marie est italienne.",
+            "near_misses": ["Marie est italien.", "Marie est italiene."],
+            "holdout": false,
+            "change": "same",
+            "continues": "fr-a1-027@1:q12"
+          },
+          {
+            "id": "fr-a1-027@2:h01",
+            "format": "multiple-choice",
+            "prompt": "What is the feminine of 'espagnol'?",
+            "answer": "espagnole",
+            "alternatives": ["espagnol", "espagnole", "espagnolle"],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-027@1:h01"
+          },
+          {
+            "id": "fr-a1-027@2:h02",
+            "format": "typed-blank",
+            "prompt": "Elle est ___. (acteur, feminine)",
+            "answer": "actrice",
+            "near_misses": ["acteure", "acteuse"],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-027@1:h02"
+          },
+          {
+            "id": "fr-a1-027@2:h03",
+            "format": "translation",
+            "prompt": "Translate (use the simple present): She is a baker.",
+            "answer": "Elle est boulangère.",
+            "near_misses": ["Elle est boulanger.", "Elle est boulangere."],
+            "holdout": true,
+            "change": "same",
+            "continues": "fr-a1-027@1:h03"
+          }
+        ]
+      }
+    },
+    {
       "skill_id": "fr-a1-028",
       "title": "Action in progress: être en train de + infinitive",
       "explanation": "To stress that an action is happening right now, use the present of être, then en train de, then an infinitive: Je suis en train de chanter. De becomes d' before a vowel or a silent h: Elle est en train d'écouter. The infinitive does not change. The simple present can also express an action in progress, but être en train de makes it clear that it is happening at this moment.",

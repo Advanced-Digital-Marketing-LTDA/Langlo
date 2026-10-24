@@ -21,7 +21,13 @@ import {
 
 const root = process.cwd();
 const read = (path: string) => readFileSync(join(root, path), 'utf8');
-const module = JSON.parse(read('content/fr-a1/module-01.json')) as Module;
+const full = JSON.parse(read('content/fr-a1/module-01.json')) as Module;
+// The four approved skills as first authored; a later wording revision of a
+// skill sits beside its first version and is checked in its own test below.
+const module: Module = {
+  ...full,
+  lessons: full.lessons.filter((lesson) => lesson.version.version === 1)
+};
 const graph = JSON.parse(read('content/prerequisites.json')) as {
   nodes: { skill_id: string; prerequisites: string[] }[];
 };
@@ -309,5 +315,49 @@ describe('French A1 module 01 import', () => {
     const versions = imports.rows.map((row) => String(row.curriculum_version));
     expect(versions).toContain(bundle.curriculumVersion);
     expect(versions).toContain(newer);
+  });
+});
+
+describe('French A1 module 01 revision', () => {
+  it('revises fr-a1-001 once, changing only the prompt of one holdout', () => {
+    const revisions = full.lessons.filter(
+      (lesson) => lesson.version.version > 1
+    );
+    expect(revisions.map((lesson) => lesson.version.id)).toEqual([
+      'fr-a1-001@2'
+    ]);
+    const [revision] = revisions;
+    const first = module.lessons[0];
+    expect(first.version.id).toBe('fr-a1-001@1');
+    expect(revision.version.questions).toHaveLength(15);
+    for (const [index, question] of revision.version.questions.entries()) {
+      const before = first.version.questions[index];
+      expect(question.id).toBe(before.id.replace('@1:', '@2:'));
+      expect([question.change, question.continues]).toEqual([
+        'same',
+        before.id
+      ]);
+      expect({
+        ...question,
+        id: '',
+        prompt: '',
+        change: '',
+        continues: ''
+      }).toEqual({
+        ...before,
+        id: '',
+        prompt: '',
+        change: '',
+        continues: ''
+      });
+    }
+    const reworded = revision.version.questions.filter(
+      (question, index) =>
+        question.prompt !== first.version.questions[index].prompt
+    );
+    expect(reworded.map((question) => question.id)).toEqual([
+      'fr-a1-001@2:h01'
+    ]);
+    expect(reworded[0].prompt).toBe('La boulangerie ___ tôt. (fermer)');
   });
 });

@@ -425,6 +425,230 @@
       }
     },
     {
+      "skill_id": "en-a2-005",
+      "title": "Will for predictions, offers and promises",
+      "explanation": "Use will plus the base verb for simple predictions, quick offers and promises: It will be sunny tomorrow. I'll carry your bag. I won't be late. The short form is 'll and the negative is won't (will not). Will is the same for every subject and is never followed by to or by an -s form. Questions put will first: Will you help me?",
+      "examples": [
+        {
+          "en": "It will be sunny tomorrow."
+        },
+        {
+          "en": "I'll carry your bag."
+        },
+        {
+          "en": "I won't be late."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-005@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "en-a2-005@3:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is an offer made at the moment of speaking?",
+            "answer": "I'll carry your bag.",
+            "alternatives": [
+              "I'll carry your bag.",
+              "I carry your bag.",
+              "I'm carrying your bag."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q01"
+          },
+          {
+            "id": "en-a2-005@3:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the negative short form of 'will'?",
+            "answer": "won't",
+            "alternatives": ["won't", "willn't", "don't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q02"
+          },
+          {
+            "id": "en-a2-005@3:q03",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows 'will'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -s form", "to + base verb"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q03"
+          },
+          {
+            "id": "en-a2-005@3:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a prediction?",
+            "answer": "It will be sunny tomorrow.",
+            "alternatives": [
+              "It will sunny tomorrow.",
+              "It will be sunny tomorrow.",
+              "It wills be sunny tomorrow."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q04"
+          },
+          {
+            "id": "en-a2-005@3:q05",
+            "format": "typed-blank",
+            "prompt": "It ___ be sunny tomorrow.",
+            "answer": "will",
+            "near_misses": ["is", "does"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q05"
+          },
+          {
+            "id": "en-a2-005@3:q06",
+            "format": "typed-blank",
+            "prompt": "I ___ be late. (promise, negative short form)",
+            "answer": "won't",
+            "alternatives": ["will not"],
+            "near_misses": ["don't", "willn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q06"
+          },
+          {
+            "id": "en-a2-005@3:q07",
+            "format": "typed-blank",
+            "prompt": "___ you help me? (request, use will)",
+            "answer": "Will",
+            "near_misses": ["Do", "Are"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q07"
+          },
+          {
+            "id": "en-a2-005@3:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with will: it / be sunny / tomorrow",
+            "answer": "It will be sunny tomorrow.",
+            "alternatives": ["It'll be sunny tomorrow."],
+            "near_misses": [
+              "It will sunny tomorrow.",
+              "It wills be sunny tomorrow."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q08"
+          },
+          {
+            "id": "en-a2-005@3:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with will: I / carry / your bag (offer)",
+            "answer": "I'll carry your bag.",
+            "alternatives": ["I will carry your bag."],
+            "near_misses": [
+              "I'll to carry your bag.",
+              "I'll carries your bag."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q09"
+          },
+          {
+            "id": "en-a2-005@3:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with will: negative promise: I / be late",
+            "answer": "I won't be late.",
+            "alternatives": ["I will not be late."],
+            "near_misses": ["I willn't be late.", "I won't to be late."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q10"
+          },
+          {
+            "id": "en-a2-005@3:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She will goes home.",
+            "answer": "She will go home.",
+            "near_misses": ["She will goes home.", "She will to go home."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q11"
+          },
+          {
+            "id": "en-a2-005@3:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: I will to help you.",
+            "answer": "I will help you.",
+            "alternatives": ["I'll help you."],
+            "near_misses": ["I will to help you.", "I will helping you."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-005@2:q12"
+          },
+          {
+            "id": "en-a2-005@3:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a promise? (will future)",
+            "answer": "I'll call you tonight.",
+            "alternatives": [
+              "I'll call you tonight.",
+              "I call you tonight.",
+              "I'll calling you tonight."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-005@2:h01"
+          },
+          {
+            "id": "en-a2-005@3:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: They will to win the game. (will future)",
+            "answer": "They will win the game.",
+            "alternatives": ["They'll win the game."],
+            "near_misses": [
+              "They will to win the game.",
+              "They will winning the game."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-005@2:h02"
+          },
+          {
+            "id": "en-a2-005@3:h03",
+            "format": "translation",
+            "prompt": "Write the question with will: you / open / the window",
+            "answer": "Will you open the window?",
+            "near_misses": [
+              "Will you to open the window?",
+              "Do you will open the window?"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-005@2:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Will para previsões, ofertas e promessas",
+            "explanation": "Use will mais a forma base do verbo para previsões simples, ofertas feitas na hora e promessas: It will be sunny tomorrow. I'll carry your bag. I won't be late. A forma contraída de will é 'll, e a negativa é won't (will not). Will não muda conforme o sujeito e nunca é seguido por to nem por uma forma do verbo com -s. Nas perguntas, coloque will primeiro: Will you help me?",
+            "examples": [
+              {
+                "en": "It will be sunny tomorrow.",
+                "pt": "Vai fazer sol amanhã."
+              },
+              {
+                "en": "I'll carry your bag.",
+                "pt": "Vou carregar sua bolsa."
+              },
+              {
+                "en": "I won't be late.",
+                "pt": "Não vou me atrasar."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
+      }
+    },
+    {
       "skill_id": "en-a2-006",
       "title": "Present continuous for arranged plans",
       "explanation": "Use am, is or are plus the -ing form for a fixed arrangement in the near future, usually with a future time: I'm meeting Anna on Friday. We're flying to Rome next week. Add a time expression so the sentence is clearly about the future. Questions put be first: Are you working tomorrow? Use going to for general intentions and the present continuous for a plan that already has a time or place.",
@@ -1034,6 +1258,233 @@
               "We couldn't to hear the music."
             ],
             "holdout": true
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Could para habilidade passada e pedidos educados",
+            "explanation": "Use could mais a forma base do verbo para falar de uma habilidade geral no passado: I could swim when I was five. A negativa é couldn't (could not). Could não muda conforme o sujeito. Could também deixa pedidos mais educados: Could you open the window, please? Could I sit here? Para uma única conquista em um momento específico do passado, use was able to ou managed to, e não could.",
+            "examples": [
+              {
+                "en": "I could swim when I was five.",
+                "pt": "Eu sabia nadar quando tinha cinco anos."
+              },
+              {
+                "en": "Could you open the window, please?",
+                "pt": "Você poderia abrir a janela, por favor?"
+              },
+              {
+                "en": "She couldn't find her keys.",
+                "pt": "Ela não conseguiu encontrar as chaves."
+              }
+            ],
+            "references": ["CAM-A2-KEY"]
+          }
+        }
+      }
+    },
+    {
+      "skill_id": "en-a2-007",
+      "title": "Could for past ability and polite requests",
+      "explanation": "Use could plus the base verb for general ability in the past: I could swim when I was five. The negative is couldn't (could not). Could is the same for every subject. Could also makes requests more polite: Could you open the window, please? Could I sit here? For one single past achievement use was able to or managed to, not could.",
+      "examples": [
+        {
+          "en": "I could swim when I was five."
+        },
+        {
+          "en": "Could you open the window, please?"
+        },
+        {
+          "en": "She couldn't find her keys."
+        }
+      ],
+      "references": ["CAM-A2-KEY"],
+      "version": {
+        "id": "en-a2-007@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "en-a2-007@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence talks about past ability?",
+            "answer": "I could swim when I was five.",
+            "alternatives": [
+              "I could swim when I was five.",
+              "I can swim when I was five.",
+              "I could swam when I was five."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q01"
+          },
+          {
+            "id": "en-a2-007@2:q02",
+            "format": "multiple-choice",
+            "prompt": "What is the negative short form of 'could'?",
+            "answer": "couldn't",
+            "alternatives": ["couldn't", "cannot", "don't could"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q02"
+          },
+          {
+            "id": "en-a2-007@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which request is more polite?",
+            "answer": "Could you open the window, please?",
+            "alternatives": [
+              "Open the window.",
+              "Could you open the window, please?",
+              "You open the window?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q03"
+          },
+          {
+            "id": "en-a2-007@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows 'could'?",
+            "answer": "the base verb",
+            "alternatives": ["the base verb", "the -ing form", "the past form"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q04"
+          },
+          {
+            "id": "en-a2-007@2:q05",
+            "format": "typed-blank",
+            "prompt": "I ___ swim when I was five.",
+            "answer": "could",
+            "near_misses": ["can", "am"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q05"
+          },
+          {
+            "id": "en-a2-007@2:q06",
+            "format": "typed-blank",
+            "prompt": "She ___ find her keys last night. (negative short form)",
+            "answer": "couldn't",
+            "alternatives": ["could not"],
+            "near_misses": ["can't", "doesn't"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q06"
+          },
+          {
+            "id": "en-a2-007@2:q07",
+            "format": "typed-blank",
+            "prompt": "___ I sit here, please? (polite request, use could)",
+            "answer": "Could",
+            "near_misses": ["Do", "Am"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q07"
+          },
+          {
+            "id": "en-a2-007@2:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with could: I / swim / when I was five",
+            "answer": "I could swim when I was five.",
+            "near_misses": [
+              "I could to swim when I was five.",
+              "I could swam when I was five."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q08"
+          },
+          {
+            "id": "en-a2-007@2:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with could: polite request: you / open / the window / please",
+            "answer": "Could you open the window, please?",
+            "near_misses": [
+              "Could you opened the window, please?",
+              "Do you could open the window, please?"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q09"
+          },
+          {
+            "id": "en-a2-007@2:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with could: negative: she / find / her keys",
+            "answer": "She couldn't find her keys.",
+            "alternatives": ["She could not find her keys."],
+            "near_misses": [
+              "She couldn't found her keys.",
+              "She not could find her keys."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q10"
+          },
+          {
+            "id": "en-a2-007@2:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: He could played the piano.",
+            "answer": "He could play the piano.",
+            "near_misses": [
+              "He could played the piano.",
+              "He could plays the piano."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q11"
+          },
+          {
+            "id": "en-a2-007@2:q12",
+            "format": "correction",
+            "prompt": "Correct the question: Could you to help me?",
+            "answer": "Could you help me?",
+            "near_misses": ["Could you to help me?", "Could you helping me?"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-007@1:q12"
+          },
+          {
+            "id": "en-a2-007@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is a polite question?",
+            "answer": "Could I borrow your pen?",
+            "alternatives": [
+              "Could I borrow your pen?",
+              "Could I borrowing your pen?",
+              "I could borrow your pen?"
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-007@1:h01"
+          },
+          {
+            "id": "en-a2-007@2:h02",
+            "format": "correction",
+            "prompt": "Correct the sentence: My grandfather could to speak three languages.",
+            "answer": "My grandfather could speak three languages.",
+            "near_misses": [
+              "My grandfather could to speak three languages.",
+              "My grandfather could speaks three languages."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-007@1:h02"
+          },
+          {
+            "id": "en-a2-007@2:h03",
+            "format": "translation",
+            "prompt": "Write the negative sentence with could: we / hear / the music",
+            "answer": "We couldn't hear the music.",
+            "alternatives": ["We could not hear the music."],
+            "near_misses": [
+              "We couldn't heard the music.",
+              "We couldn't to hear the music."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-007@1:h03"
           }
         ],
         "translations": {
