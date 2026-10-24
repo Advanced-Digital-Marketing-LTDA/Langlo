@@ -77,10 +77,11 @@ advisories were not changed.
 
 ## Pending acceptance
 
-No live OpenAI request, CI run, hosted check, production database, deployment,
-or remote publication was performed. The AI provider path is unit-tested with
-mocked fetch only. Local browser results use synthetic fixtures and do not
-establish production behavior.
+No live OpenAI request, production database validation, or deployment was
+performed. The branch and PR are published; CI and hosted acceptance results
+have not been verified here. The AI provider path is unit-tested with mocked
+fetch only. Local browser results use synthetic fixtures and do not establish
+production behavior.
 
 ## Review remediation
 
