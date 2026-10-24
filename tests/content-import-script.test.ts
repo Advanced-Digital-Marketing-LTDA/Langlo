@@ -69,13 +69,18 @@ const modules = readdirSync(join(root, 'content'), { withFileTypes: true })
   );
 const lessons = modules.flatMap((module) => module.lessons);
 // A revised lesson sits beside the version it revises, so lessons outnumber skills.
-// Revision lessons declare every question as a change; those with an authored
-// Portuguese translation repeat it as a new lesson translation.
-const revisedLessons = lessons.filter((lesson) =>
-  lesson.version.questions.some((question) => question.change)
+// Lessons that carry a reworded assessment prompt (see clarified-prompts.json)
+// are checked in their own test; the totals asserted elsewhere are the earlier ones.
+const clarifiedLessons = lessons.filter((lesson) =>
+  lesson.version.questions.some(
+    (question) => question.continues && clarifiedPrompts.has(question.continues)
+  )
 );
-const revisedWithPt = revisedLessons.filter(
-  (lesson) => lesson.version.translations?.pt
+const clarifiedIds = new Set(
+  clarifiedLessons.map((lesson) => lesson.version.id)
+);
+const earlierLessons = lessons.filter(
+  (lesson) => !clarifiedIds.has(lesson.version.id)
 );
 const skills = new Set(lessons.map((lesson) => lesson.skill_id)).size;
 const questions = lessons.reduce((n, l) => n + l.version.questions.length, 0);
@@ -298,39 +303,22 @@ const rowsOf = async (client: ReturnType<typeof createClient>) =>
     )
   ).rows;
 
-describe('revision totals', () => {
-  it('are the 55 earlier revisions plus one per reworded prompt', () => {
-    const english = [...clarifiedPrompts.keys()].filter((id) =>
-      id.startsWith('en-')
-    );
-    expect(clarifiedPrompts.size).toBe(27);
-    expect(revisedLessons).toHaveLength(55 + clarifiedPrompts.size);
-    expect(revisedLessons).toHaveLength(82);
-    // The import package declares exactly the revisions the raw JSON holds.
-    expect(
-      modulesPackage(root).versions.filter((version) =>
-        version.questions.some((question) => question.change)
-      )
-    ).toHaveLength(revisedLessons.length);
-    expect(revisedWithPt).toHaveLength(25 + english.length);
-    // The pinned literals used in the tests below, checked against the raw JSON.
-    expect(revisedWithPt).toHaveLength(44);
-    expect(lessons.filter((l) => l.version.translations?.pt)).toHaveLength(89);
-    expect(
-      revisedLessons.reduce((n, l) => n + l.version.questions.length, 0)
-    ).toBe(82 * 15);
-  });
-});
-
 describe('revising already imported lessons', () => {
   it('adds each revision as a new version that continues the stored one', async () => {
     await migrateFixtureDatabase(target);
     const client = createClient({ url: target.databaseUrl });
     try {
-      const pkg = modulesPackage(root);
+      const full = modulesPackage(root);
+      const pkg = {
+        ...full,
+        versions: full.versions.filter(
+          (version) => !clarifiedIds.has(version.id)
+        )
+      };
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
+      expect(revisions).toHaveLength(55);
       await importContent(client, {
         ...pkg,
         curriculumVersion: '1.2.0',
@@ -369,7 +357,7 @@ describe('revising already imported lessons', () => {
         "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.3.0' GROUP BY kind ORDER BY kind"
       );
       expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
-        ['lesson-translation-added', 44],
+        ['lesson-translation-added', 25],
         ['question-same', revisions.length * 15],
         ['version-added', revisions.length]
       ]);
@@ -395,6 +383,50 @@ describe('revising already imported lessons', () => {
           reset_required: 0
         }
       ]);
+    } finally {
+      client.close();
+    }
+  });
+});
+
+describe('reworded assessment prompts', () => {
+  it('adds 27 lesson versions on top of the earlier content', async () => {
+    expect(clarifiedPrompts.size).toBe(27);
+    expect(clarifiedLessons).toHaveLength(27);
+    await migrateFixtureDatabase(target);
+    const client = createClient({ url: target.databaseUrl });
+    try {
+      const full = modulesPackage(root);
+      await importContent(client, {
+        ...full,
+        curriculumVersion: '1.4.0',
+        versions: full.versions.filter(
+          (version) => !clarifiedIds.has(version.id)
+        )
+      });
+      const result = await importContent(client, full);
+      expect(full.curriculumVersion).toBe('1.5.0');
+      expect(result.versions).toBe(27);
+      expect(result.questions).toBe(27 * 15);
+      const changes = await client.execute(
+        "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.5.0' GROUP BY kind ORDER BY kind"
+      );
+      // 19 of the 27 skills are English and repeat their Portuguese translation.
+      expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
+        ['lesson-translation-added', 19],
+        ['question-same', 27 * 15],
+        ['version-added', 27]
+      ]);
+      const stored = new Map(
+        (await rowsOf(client)).map((row) => [String(row.id), row])
+      );
+      for (const [earlierId, prompt] of clarifiedPrompts) {
+        const revised = [...stored.values()].find(
+          (row) => row.lineage_key && row.prompt === prompt
+        );
+        expect(revised, earlierId).toBeDefined();
+        expect(stored.get(earlierId)?.prompt, earlierId).not.toBe(prompt);
+      }
     } finally {
       client.close();
     }
@@ -504,11 +536,11 @@ describe('module package', () => {
   });
 
   it('passes every authored Portuguese translation through the import package', () => {
-    const authored = lessons.filter(
+    const authored = earlierLessons.filter(
       (lesson) => lesson.version.translations?.pt
     );
-    // 45 first versions plus 44 English revisions that repeat their translation.
-    expect(authored).toHaveLength(89);
+    // 45 first versions plus the 25 English revisions that repeat their translation.
+    expect(authored).toHaveLength(70);
 
     const importedById = new Map(
       modulesPackage(root).versions.map((version) => [version.id, version])
@@ -581,11 +613,11 @@ describe('module package', () => {
   });
 
   it('passes the change declarations of revised questions through the import package', () => {
-    const declared = lessons.flatMap((lesson) =>
+    const declared = earlierLessons.flatMap((lesson) =>
       lesson.version.questions.filter((question) => question.change)
     );
-    // 82 revision lessons of 15 questions each.
-    expect(declared).toHaveLength(82 * 15);
+    // 55 revised lessons of 15 questions each.
+    expect(declared).toHaveLength(55 * 15);
     const imported = new Map(
       modulesPackage(root).versions.flatMap((version) =>
         version.questions.map((question) => [question.id, question] as const)
