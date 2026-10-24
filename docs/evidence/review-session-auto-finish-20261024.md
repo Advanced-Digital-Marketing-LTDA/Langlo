@@ -11,6 +11,8 @@ Date: 2026-10-24. Requested and approved by Andrew in the project thread.
 - A correct answer still waiting for its rating does not finish the review,
   even when a later assisted retry on the same question needs no rating: a
   topic counts as reviewed only when none of its answers waits for a rating.
+- A correct assisted retry takes no rating, so it does not hold its topic
+  open: only unassisted answers that are not Not sure can wait for a rating.
 - A resent last answer (same submission) also finishes the review, so a try
   that stopped before finishing heals itself.
 - Opening the session page of a review whose topics are all reviewed, such

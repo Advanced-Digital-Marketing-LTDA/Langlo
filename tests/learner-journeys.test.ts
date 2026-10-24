@@ -2218,6 +2218,48 @@ describe('grammar practice rating and review actions', () => {
     );
   });
 
+  it('finishes the review over a correct assisted retry, which takes no rating', async () => {
+    const { reviewId, questions } = await reviewOfTwoTopics();
+    const correct: Record<string, string> = {
+      'fr-a1-001@1:q1': 'suis',
+      'fr-a1-001@1:q2': 'es'
+    };
+    await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-001'],
+      submissionKey: randomUUID(),
+      answer: 'Wrong.',
+      evidenceKind: 'independent'
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-001'],
+      submissionKey: randomUUID(),
+      answer: correct[questions['fr-a1-001']] ?? '',
+      evidenceKind: 'assisted'
+    });
+    expect(await listedTopics(reviewId)).toEqual({
+      session: ['fr-a1-002'],
+      reviewTab: ['fr-a1-002']
+    });
+    expect(
+      await lessonActions.answer(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-002' },
+          fields: {
+            studySessionId: reviewId,
+            questionId: questions['fr-a1-002'],
+            submissionKey: randomUUID(),
+            answer: 'Wrong.'
+          }
+        })
+      )
+    ).toMatchObject({ recorded: true });
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'completed'
+    );
+  });
+
   it('finishes the review when the last topic is rated', async () => {
     const session = await startPractice(client, learner, {
       language: 'fr',

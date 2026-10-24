@@ -396,10 +396,10 @@ export async function grammarReviewPlan(
           AND a.study_session_id = s.id AND a.question_id = json_extract(p.value, '$.questionId')) AS answered,
         EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
           AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
-          AND NOT (${awaitingRatingSql}))
+          AND NOT (${awaitingRatingSql} AND ${rateableSql}))
         AND NOT EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
           AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
-          AND ${awaitingRatingSql}) AS reviewed
+          AND ${awaitingRatingSql} AND ${rateableSql}) AS reviewed
       FROM study_sessions s JOIN json_each(s.grammar_retention_plan, '$.questions') p
       JOIN skills sk ON sk.id = json_extract(p.value, '$.skillId') AND sk.language = s.language
       LEFT JOIN content_versions v ON v.id = json_extract(p.value, '$.contentVersionId')
@@ -435,6 +435,8 @@ const awaitingRatingSql = `attempts.grammar_rating IS NULL AND EXISTS (
       AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
         AND p.evaluator_version = ? AND p.rubric_version = attempts.content_version_id AND p.outcome = 'correct'))
   )`;
+/** Helped and Not sure answers never take a difficulty rating. */
+const rateableSql = 'attempts.received_help = 0 AND attempts.not_sure = 0';
 const awaitingRatingArgs = [
   GRAMMAR_RETENTION_POLICY_VERSION,
   FALLBACK_EVALUATOR_VERSION,
