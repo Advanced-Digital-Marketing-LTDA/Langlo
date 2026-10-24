@@ -77,24 +77,26 @@ export async function reserveLibraryAiCall(
   }
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+/** The text of one content part, or nothing when it is not an output_text string. */
+function outputText(part: unknown): string[] {
+  if (!isRecord(part) || part.type !== 'output_text') return [];
+  return typeof part.text === 'string' ? [part.text] : [];
+}
+
+/** The output_text strings of one output item. */
+function outputTextParts(item: unknown): string[] {
+  if (!isRecord(item) || !Array.isArray(item.content)) return [];
+  return item.content.flatMap(outputText);
+}
+
 function responseText(value: unknown): string | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
-  if ((value as { status?: unknown }).status !== 'completed') return undefined;
-  const output = (value as { output?: unknown }).output;
-  if (!Array.isArray(output)) return undefined;
-  const text = output.flatMap((item) => {
-    if (typeof item !== 'object' || item === null) return [];
-    const content = (item as { content?: unknown }).content;
-    if (!Array.isArray(content)) return [];
-    return content.flatMap((part) =>
-      typeof part === 'object' &&
-      part !== null &&
-      (part as { type?: unknown }).type === 'output_text' &&
-      typeof (part as { text?: unknown }).text === 'string'
-        ? [(part as { text: string }).text]
-        : []
-    );
-  });
+  if (!isRecord(value)) return undefined;
+  if (value.status !== 'completed') return undefined;
+  if (!Array.isArray(value.output)) return undefined;
+  const text = value.output.flatMap(outputTextParts);
   return text.join('\n').trim() || undefined;
 }
 
