@@ -43,7 +43,7 @@
     "docx-preview": "0.4.1",
     "drizzle-orm": "0.45.3",
     "epubjs": "0.3.93",
-    "nodemailer": "10.0.13",
+    "nodemailer": "10.1.4",
     "officeparser": "8.2.0",
     "pdfjs-dist": "6.4.299",
     "ts-fsrs": "5.4.2"
@@ -90,6 +90,6 @@
     "typescript-eslint": "8.71.1",
     "vite": "8.3.3",
     "vitest": "5.0.5",
-    "zod": "^4.1.8"
+    "zod": "^4.6.6"
   }
 }
