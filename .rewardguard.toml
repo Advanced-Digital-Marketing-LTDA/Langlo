@@ -13,3 +13,12 @@ effort = "low"
 # Optional: turn a rule off
 # [rules]
 # SNAPSHOT_CHANGED = "off"
+
+[content]
+enabled = true
+
+# Existing repository contracts; evidence remains scoped to its actual target/revision.
+[content.context]
+B = ["CONTEXT.md"]
+I = ["docs/routes.md"]
+P = ["docs/content-maintenance.md", "docs/curriculum-import-contract.md", "docs/scoring-policy.md"]
