@@ -101,9 +101,10 @@ async function seedLegacyReviewHistory(
   const { client, close } = await openFixtureDatabase(target);
   try {
     const owner = { userId: 'learner-a' };
-    await createDeck(client, owner, {
-      id: 'deck-langlo10',
-      name: 'French'
+    // Legacy schemas have no deck language, so seed the deck directly.
+    await client.execute({
+      sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?)',
+      args: ['deck-langlo10', owner.userId, 'French']
     });
     const notes = await Promise.all(
       ['draft', 'rejected', 'rejected-reviewed', 'approved-reviewed'].map(
@@ -203,9 +204,10 @@ async function seedDraftWithReviewHistory(
   const { client, close } = await openFixtureDatabase(target);
   try {
     const owner = { userId: 'learner-a' };
-    await createDeck(client, owner, {
-      id: 'deck-langlo10-gate',
-      name: 'French'
+    // Legacy schemas have no deck language, so seed the deck directly.
+    await client.execute({
+      sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?)',
+      args: ['deck-langlo10-gate', owner.userId, 'French']
     });
     const note = await createLegacyNote(client, owner, {
       id: 'note-langlo10-draft-history',
@@ -301,7 +303,8 @@ describe('disposable libSQL migrations', () => {
           '0032_question_and_attempt_lookup_indexes',
           '0033_typesafe_ai_usage',
           '0034_holdout_question_lookup_indexes',
-          '0035_dapper_nehzno'
+          '0035_dapper_nehzno',
+          '0036_deck_language'
         ]);
         await migrateFixtureDatabase(target);
         expect(

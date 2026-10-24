@@ -290,7 +290,11 @@ describe('mistake-card pages', () => {
     const { db, target } = await setup();
     try {
       const deckId = 'deck-page-cloze';
-      await createDeck(db.client, learner, { id: deckId, name: 'Cloze' });
+      await createDeck(db.client, learner, {
+        language: 'fr',
+        id: deckId,
+        name: 'Cloze'
+      });
       expect(
         await deckActions.addNote(
           formEvent({

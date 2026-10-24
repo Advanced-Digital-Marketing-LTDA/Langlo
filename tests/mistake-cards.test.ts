@@ -9,6 +9,7 @@ import {
 import {
   approveOwnNote,
   countDueCards,
+  flashcardDueGroups,
   listDueCards
 } from '../src/lib/server/flashcard-views';
 import {
@@ -390,7 +391,11 @@ describe('mistake-card validation and explanation fallbacks', () => {
     const { db } = await setup();
     try {
       const deckId = 'deck-validation';
-      await createDeck(db.client, learner, { id: deckId, name: 'Validation' });
+      await createDeck(db.client, learner, {
+        language: 'fr',
+        id: deckId,
+        name: 'Validation'
+      });
       const validContent = { front: 'Bonjour', back: 'Hello' };
 
       await expect(
@@ -442,6 +447,39 @@ describe('mistake-card validation and explanation fallbacks', () => {
           explanation: 'x'.repeat(1001)
         })
       ).rejects.toMatchObject({ code: 'INVALID_EXPLANATION' });
+    } finally {
+      db.close();
+    }
+  });
+});
+
+describe('mistake-card language on the Review tab', () => {
+  it('files a mistake card under its language, also in a deck without one', async () => {
+    const { db } = await setup();
+    try {
+      const draft = await createMistakeDraft(db.client, learner, {
+        attemptId,
+        format: 'basic'
+      });
+      await approveOwnNote(db.client, learner, draft.id);
+      const deck = await db.client.execute({
+        sql: 'SELECT d.id, d.language FROM native_flashcard_decks d JOIN native_flashcard_notes n ON n.deck_id = d.id WHERE n.id = ?',
+        args: [draft.id]
+      });
+      expect(deck.rows[0].language).toBe('fr');
+      const now = Date.now();
+      const day = { start: now - 1000, end: now + 1000 };
+      const languages = async () =>
+        (await flashcardDueGroups(db.client, learner, day, now)).map(
+          (group) => group.language
+        );
+      expect(await languages()).toEqual(['fr']);
+      // A mistake deck made before decks had a language uses the card's source.
+      await db.client.execute({
+        sql: 'UPDATE native_flashcard_decks SET language = NULL WHERE id = ?',
+        args: [deck.rows[0].id]
+      });
+      expect(await languages()).toEqual(['fr']);
     } finally {
       db.close();
     }

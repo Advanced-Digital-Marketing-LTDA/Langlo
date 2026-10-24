@@ -123,7 +123,11 @@ test.beforeAll(async () => {
     );
     await importContent(client, approvedPackage());
     const learner = { userId: bobId };
-    await createDeck(client, learner, { id: 'deck-bob', name: 'Bob FR' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: 'deck-bob',
+      name: 'Bob FR'
+    });
     await createNote(client, learner, {
       id: 'note-bob',
       sourceId: `langlo:v1:${'b'.repeat(64)}`,

@@ -93,7 +93,11 @@ test('reveals each answer and stores every rating', async ({
   const client = createClient({ url: `file://${dbFile}` });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
-    await createDeck(client, learner, { id: 'deck-rita', name: 'Rita FR' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: 'deck-rita',
+      name: 'Rita FR'
+    });
     for (const [index, rating] of ratings.entries()) {
       await createNote(client, learner, {
         id: `note-${rating}`,
@@ -110,7 +114,7 @@ test('reveals each answer and stores every rating', async ({
       });
     }
 
-    await page.goto(`${base}/app/review`);
+    await page.goto(`${base}/app/review/flashcards?language=fr&due=overdue`);
     const shown = page.locator('p > strong').first();
     let previous = '';
     for (const rating of ratings) {

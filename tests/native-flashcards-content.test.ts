@@ -59,15 +59,18 @@ describe('native flashcard content feasibility', () => {
     const supplementaryCharacter = '𐐷';
     try {
       await createDeck(db.client, learner, {
+        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000010',
         name: 'French'
       });
       await createDeck(db.client, learner, {
+        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000020',
         name: supplementaryCharacter.repeat(160)
       });
       await expect(
         createDeck(db.client, learner, {
+          language: 'fr',
           id: 'deck-10000000-0000-4000-8000-000000000021',
           name: supplementaryCharacter.repeat(161)
         })
@@ -142,6 +145,7 @@ describe('native flashcard content feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
+        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000004',
         name: 'French'
       });
@@ -201,6 +205,7 @@ describe('native flashcard content feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
+        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000010',
         name: 'French'
       });
@@ -269,6 +274,7 @@ describe('native flashcard content feasibility', () => {
       const db = await openFixtureDatabase(target);
       try {
         await createDeck(db.client, learner, {
+          language: 'fr',
           id: 'deck-10000000-0000-4000-8000-000000000010',
           name: 'French'
         });
@@ -298,6 +304,7 @@ describe('native flashcard content feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
+        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000013',
         name: 'French'
       });
@@ -323,11 +330,13 @@ describe('native flashcard content feasibility', () => {
     try {
       await expect(
         createDeck(db.client, learner, {
+          language: 'fr',
           id: 'deck-invalid',
           name: null
         } as never)
       ).rejects.toMatchObject({ code: 'INVALID_DECK' });
       await createDeck(db.client, otherLearner, {
+        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000032',
         name: 'Other learner'
       });
@@ -351,6 +360,7 @@ describe('native flashcard content feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
+        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000020',
         name: 'French'
       });

@@ -461,10 +461,14 @@ export function studyRetrievability(
   ).scheduler.get_retrievability(decodeCard(input.stateJson), now, false);
 }
 
+/** The track languages a deck can belong to. */
+export const DECK_LANGUAGES = ['fr', 'de', 'en', 'pt'] as const;
+export type DeckLanguage = (typeof DECK_LANGUAGES)[number];
+
 export async function createDeck(
   client: Client,
   session: LearnerSession,
-  input: { id: string; name: string }
+  input: { id: string; name: string; language: DeckLanguage }
 ) {
   if (
     !isRecord(input) ||
@@ -477,9 +481,11 @@ export async function createDeck(
     exceedsCodePointLimit(input.name, 160)
   )
     throw new FlashcardError('INVALID_DECK');
+  if (!(DECK_LANGUAGES as readonly unknown[]).includes(input.language))
+    throw new FlashcardError('INVALID_DECK_LANGUAGE');
   await executeWrite(client, {
-    sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?)',
-    args: [input.id, session.userId, input.name]
+    sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name, language) VALUES (?, ?, ?, ?)',
+    args: [input.id, session.userId, input.name, input.language]
   });
 }
 
@@ -560,12 +566,14 @@ export async function createNote(
 
 export async function listDecks(client: Client, session: LearnerSession) {
   const result = await client.execute({
-    sql: 'SELECT id, name, created_at FROM native_flashcard_decks WHERE owner_id = ? ORDER BY created_at, id',
+    sql: 'SELECT id, name, language, created_at FROM native_flashcard_decks WHERE owner_id = ? ORDER BY created_at, id',
     args: [session.userId]
   });
   return result.rows.map((row) => ({
     id: String(row.id),
     name: String(row.name),
+    language:
+      row.language === null ? null : (String(row.language) as DeckLanguage),
     createdAt: Number(row.created_at)
   }));
 }

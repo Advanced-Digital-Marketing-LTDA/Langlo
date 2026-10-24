@@ -97,8 +97,13 @@ test('saves FSRS settings, searches all note statuses, moves notes and suspends 
   const client = createClient({ url: `file://${dbFile}` });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
-    await createDeck(client, learner, { id: 'deck-first', name: 'First deck' });
     await createDeck(client, learner, {
+      language: 'fr',
+      id: 'deck-first',
+      name: 'First deck'
+    });
+    await createDeck(client, learner, {
+      language: 'fr',
       id: 'deck-second',
       name: 'Second deck'
     });
@@ -225,6 +230,7 @@ async function reviewOneCard(
   learner: { userId: string }
 ) {
   await createDeck(client, learner, {
+    language: 'fr',
     id: 'deck-analytics',
     name: 'Analytics deck'
   });

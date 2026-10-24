@@ -48,6 +48,7 @@ const statusFor: Record<string, number> = {
 const messageForCode: Record<string, string> = {
   ALREADY_ENROLLED: 'You are already enrolled in this track.',
   INVALID_DECK: 'Give the deck a name of up to 160 characters.',
+  INVALID_DECK_LANGUAGE: 'Choose one of your languages for the deck.',
   INVALID_CONTENT:
     'Fill in both sides of a basic note, or the text of a cloze note (up to 4096 characters each).',
   INVALID_CLOZE:

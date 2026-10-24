@@ -72,6 +72,10 @@ import { GET as exportDeck } from '../src/routes/app/decks/[id]/export/+server';
 import {
   actions as reviewActions,
   load as reviewLoad
+} from '../src/routes/app/review/flashcards/+page.server';
+import {
+  actions as reviewTabActions,
+  load as reviewTabLoad
 } from '../src/routes/app/review/+page.server';
 
 import { importContent } from '../src/lib/server/content-import';
@@ -134,12 +138,21 @@ function event(
   } as never;
 }
 
+/** The flashcard reviewer opened for today's French cards. */
+const todaysCards = () =>
+  event({ query: '/review/flashcards?language=fr&due=today' });
+
 async function seedReviewAnalyticsNotes() {
   await createDeck(client, learner, {
+    language: 'fr',
     id: 'analytics-deck-a',
     name: 'Analytics'
   });
-  await createDeck(client, other, { id: 'analytics-deck-b', name: 'Other' });
+  await createDeck(client, other, {
+    language: 'fr',
+    id: 'analytics-deck-b',
+    name: 'Other'
+  });
   const notes = [
     { id: 'analytics-overdue', owner: learner, deck: 'analytics-deck-a' },
     { id: 'analytics-today', owner: learner, deck: 'analytics-deck-a' },
@@ -900,7 +913,11 @@ describe('decks, review and Anki export', () => {
   const deckId = 'deck-journey';
 
   beforeEach(async () => {
-    await createDeck(client, learner, { id: deckId, name: 'French basics' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: deckId,
+      name: 'French basics'
+    });
   });
 
   it('adds basic and cloze notes as drafts and lists them for the owner only', async () => {
@@ -962,7 +979,7 @@ describe('decks, review and Anki export', () => {
     expect((await listDueCards(client, other)).cards).toEqual([]);
     expect((await listDueCards(client, learner, 0)).cards).toEqual([]);
 
-    const { submissionKey, cards } = (await reviewLoad(event())) as {
+    const { submissionKey, cards } = (await reviewLoad(todaysCards())) as {
       submissionKey: string;
       cards: { scheduleKey: string }[];
     };
@@ -1014,7 +1031,7 @@ describe('decks, review and Anki export', () => {
       noteForm({ kind: 'basic', front: 'Schedule', back: 'Changed' })
     );
     await approveNote(client, learner, draft.id);
-    const page = (await reviewLoad(event())) as {
+    const page = (await reviewLoad(todaysCards())) as {
       cards: { scheduleKey: string }[];
       submissionKey: string;
     };
@@ -1038,7 +1055,7 @@ describe('decks, review and Anki export', () => {
     expect(stale).toMatchObject({ status: 409 });
     expect(await getNote(client, learner, draft.id)).toEqual(before);
     expect(await listReviewEvents(client, learner, draft.cardId)).toEqual([]);
-    const refreshed = (await reviewLoad(event())) as {
+    const refreshed = (await reviewLoad(todaysCards())) as {
       cards: { scheduleKey: string }[];
       submissionKey: string;
     };
@@ -1102,7 +1119,7 @@ describe('decks, review and Anki export', () => {
     ).toHaveLength(2);
     expect(await countDueCards(client, learner)).toBe(3);
     expect(await countDueCards(client, other)).toBe(0);
-    expect(await reviewLoad(event())).toMatchObject({ total: 3 });
+    expect(await reviewLoad(todaysCards())).toMatchObject({ total: 3 });
   });
 
   it('stores the chosen rating for every rating button', async () => {
@@ -1268,9 +1285,88 @@ describe('decks, review and Anki export', () => {
     ).toEqual({ saved: true });
   });
 
+  it('refuses a deck language the learner is not enrolled in', async () => {
+    expect(
+      await decksActions.createDeck(
+        event({ fields: { name: 'German', language: 'de' } })
+      )
+    ).toMatchObject({
+      status: 400,
+      data: { message: 'Choose one of your languages for the deck.' }
+    });
+    expect(
+      await decksActions.createDeck(event({ fields: { name: 'German' } }))
+    ).toMatchObject({ status: 400 });
+    expect(await decksLoad(event())).toMatchObject({ languages: ['fr'] });
+  });
+
+  it('lists due flashcards and grammar per language on the Review tab', async () => {
+    const note = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Today', back: 'x' })
+    );
+    await approveNote(client, learner, note.id);
+    expect(await reviewTabLoad(event())).toMatchObject({
+      languages: ['fr'],
+      language: 'fr',
+      flashcards: { overdue: 0, today: 1, todayReady: 1, nextDueAt: null },
+      grammar: { overdue: [], today: [], nextDueAt: null }
+    });
+    await expect(
+      reviewTabLoad(event({ query: '/review?language=de' }))
+    ).rejects.toMatchObject({ status: 404 });
+    // Nothing is due, so no grammar review can start.
+    expect(
+      await reviewTabActions.grammar(
+        event({
+          fields: {
+            language: 'fr',
+            due: 'today',
+            submissionKey: 'b0000000-0000-4000-8000-000000000009'
+          }
+        })
+      )
+    ).toMatchObject({ status: 409 });
+  });
+
+  it('shows cards without a deck or source language under Unassigned', async () => {
+    const note = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Loose', back: 'x' })
+    );
+    await approveNote(client, learner, note.id);
+    await client.execute({
+      sql: 'UPDATE native_flashcard_decks SET language = NULL WHERE id = ?',
+      args: [deckId]
+    });
+    const page = await reviewTabLoad(
+      event({ query: '/review?language=unassigned' })
+    );
+    expect(page).toMatchObject({
+      languages: ['fr', 'unassigned'],
+      language: 'unassigned',
+      flashcards: { today: 1, todayReady: 1 },
+      grammar: null
+    });
+    expect(
+      await reviewLoad(
+        event({ query: '/review/flashcards?language=unassigned&due=today' })
+      )
+    ).toMatchObject({ total: 1, language: 'unassigned' });
+    await expect(
+      reviewLoad(event({ query: '/review/flashcards?language=fr&due=soon' }))
+    ).rejects.toMatchObject({ status: 404 });
+  });
+
   it('creates a deck through the page and rejects a blank name on the form', async () => {
     await expect(
-      decksActions.createDeck(event({ fields: { name: 'German' } }))
+      decksActions.createDeck(
+        event({ fields: { name: 'German', language: 'fr' } })
+      )
     ).rejects.toMatchObject({ status: 303 });
     const names = (
       await client.execute(
@@ -1279,13 +1375,19 @@ describe('decks, review and Anki export', () => {
     ).rows.map((row) => row.name);
     expect(names).toEqual(['French basics', 'German']);
     expect(
-      await decksActions.createDeck(event({ fields: { name: '   ' } }))
+      await decksActions.createDeck(
+        event({ fields: { name: '   ', language: 'fr' } })
+      )
     ).toMatchObject({ status: 400 });
   });
 
   it('persists validated account-wide study schedule without rescheduling existing cards', async () => {
     const deckId = 'deck-fsrs-settings';
-    await createDeck(client, learner, { id: deckId, name: 'Schedule' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: deckId,
+      name: 'Schedule'
+    });
     await createNote(client, learner, {
       id: 'note-fsrs-settings',
       sourceId: `langlo:v1:${'a'.repeat(64)}`,
@@ -1360,7 +1462,11 @@ describe('decks, review and Anki export', () => {
 
   it('uses newly saved parameters for new cards and the next rating only', async () => {
     const deckId = 'deck-fsrs-deferred';
-    await createDeck(client, learner, { id: deckId, name: 'Deferred' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: deckId,
+      name: 'Deferred'
+    });
     const makeNote = async (id: string) => {
       await createNote(client, learner, {
         id,
@@ -1415,9 +1521,21 @@ describe('decks, review and Anki export', () => {
   it('searches every status across owned decks and returns tags and deck labels', async () => {
     const firstDeck = 'deck-search-first';
     const secondDeck = 'deck-search-second';
-    await createDeck(client, learner, { id: firstDeck, name: 'First' });
-    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
-    await createDeck(client, other, { id: 'deck-search-other', name: 'Other' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: firstDeck,
+      name: 'First'
+    });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: secondDeck,
+      name: 'Second'
+    });
+    await createDeck(client, other, {
+      language: 'fr',
+      id: 'deck-search-other',
+      name: 'Other'
+    });
     for (const [id, deckId, status, tags] of [
       ['note-search-approved', secondDeck, 'approved', 'shared, grammar'],
       ['note-search-draft', firstDeck, 'draft', 'shared'],
@@ -1496,8 +1614,16 @@ describe('decks, review and Anki export', () => {
   it('normalizes tags and moves notes without replacing card identity, schedule, or review events', async () => {
     const firstDeck = 'deck-tags-first';
     const secondDeck = 'deck-tags-second';
-    await createDeck(client, learner, { id: firstDeck, name: 'First' });
-    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: firstDeck,
+      name: 'First'
+    });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: secondDeck,
+      name: 'Second'
+    });
     await createNote(client, learner, {
       id: 'note-tags-move',
       sourceId: `langlo:v1:${'d'.repeat(64)}`,
@@ -1541,7 +1667,11 @@ describe('decks, review and Anki export', () => {
 
   it('suspends and resumes only the learner’s approved cards and removes them from due counts', async () => {
     const deckId = 'deck-suspension';
-    await createDeck(client, learner, { id: deckId, name: 'Suspension' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: deckId,
+      name: 'Suspension'
+    });
     await createNote(client, learner, {
       id: 'note-suspension',
       sourceId: `langlo:v1:${'e'.repeat(64)}`,
@@ -1570,7 +1700,11 @@ describe('decks, review and Anki export', () => {
   });
 
   it('validates suspension forms and rejects cards that are not approved', async () => {
-    await createDeck(client, learner, { id: 'deck-pending', name: 'Pending' });
+    await createDeck(client, learner, {
+      language: 'fr',
+      id: 'deck-pending',
+      name: 'Pending'
+    });
     await createNote(client, learner, {
       id: 'note-pending',
       sourceId: `langlo:v1:${'f'.repeat(64)}`,

@@ -424,6 +424,7 @@ describe('logout, expiry and ownership', () => {
     const sessionA = { userId: ownerId };
     const sessionB = { userId: accountB.userId };
     await createDeck(fixture.client, sessionA, {
+      language: 'fr',
       id: 'deck-a-1',
       name: 'A private deck'
     });

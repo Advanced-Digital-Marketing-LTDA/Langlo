@@ -38,7 +38,11 @@ beforeEach(async () => {
   const target = await fixture();
   ({ client, close } = await openFixtureDatabase(target));
   // Owner B's flashcard history: deck, approved note, reviewed card.
-  await createDeck(client, ownerB, { id: 'deck-b', name: 'Deutsch' });
+  await createDeck(client, ownerB, {
+    language: 'fr',
+    id: 'deck-b',
+    name: 'Deutsch'
+  });
   await createNote(client, ownerB, {
     id: 'note-b',
     sourceId: testSourceId('b'),

@@ -59,7 +59,11 @@ beforeEach(async () => {
   target = await fixture();
   ({ client, close } = await openFixtureDatabase(target));
   const ownerB = testSession('learner-b');
-  await createDeck(client, ownerB, { id: 'deck-b', name: 'Deutsch' });
+  await createDeck(client, ownerB, {
+    language: 'fr',
+    id: 'deck-b',
+    name: 'Deutsch'
+  });
   await createNote(client, ownerB, {
     id: 'note-b',
     sourceId: testSourceId('b'),

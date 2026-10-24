@@ -1,7 +1,7 @@
 import { afterAll, expect, it } from 'vitest';
 import { closeRenderServer, renderSvelte } from './helpers/render-svelte';
 
-const page = 'src/routes/app/review/+page.svelte';
+const page = 'src/routes/app/review/flashcards/+page.svelte';
 const settingsPage = 'src/routes/app/settings/+page.svelte';
 const card = (kind: 'basic' | 'cloze', content: object) => ({
   id: 'card-1',
@@ -16,6 +16,7 @@ const data = (cards: unknown[]) => ({
   cards,
   total: cards.length,
   unavailableCount: 0,
+  language: 'fr',
   submissionKey: 'key'
 });
 
@@ -83,4 +84,43 @@ it('explains that saved timezones set day-based review times', async () => {
     'Your study day starts at 04:00 in your saved timezone.'
   );
   expect(text).toContain('UTC applies until you save one.');
+});
+
+const reviewTab = 'src/routes/app/review/+page.svelte';
+const tabData = {
+  languages: ['fr', 'de', 'unassigned'],
+  language: 'fr',
+  submissionKey: 'key',
+  flashcards: { overdue: 2, today: 3, todayReady: 0, nextDueAt: '16:30' },
+  grammar: {
+    overdue: [{ skillId: 'fr-a1-001', title: 'Être', dueAt: 1, ready: true }],
+    today: [],
+    nextDueAt: null
+  }
+};
+
+it('lets the learner switch language and go to overdue or today reviews', async () => {
+  const html = await renderSvelte(reviewTab, { data: tabData, form: null });
+  expect(html).toMatch(/aria-pressed="true"[^>]*>French</);
+  expect(html).toContain('>German<');
+  expect(html).toContain('>Unassigned<');
+  expect(html).toContain(
+    'href="/app/review/flashcards?language=fr&amp;due=overdue"'
+  );
+  expect(html).toContain('2 cards');
+  expect(html).toContain('3 cards');
+  // Today's cards are not due yet, so there is no button, only the next time.
+  expect(html).not.toContain('due=today');
+  expect(html).toContain('Next card is due at 16:30.');
+  expect(html).toContain('Review overdue grammar');
+  expect(html).not.toContain("Review today's grammar");
+  expect(html).toContain('0 topics');
+});
+
+it('asks for a language when the learner has none', async () => {
+  const html = await renderSvelte(reviewTab, {
+    data: { languages: [], language: null, submissionKey: '' },
+    form: null
+  });
+  expect(html).toContain('You have no enrolled language tracks yet.');
 });
