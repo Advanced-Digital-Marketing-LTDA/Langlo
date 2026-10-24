@@ -42,7 +42,6 @@ const statusFor: Record<string, number> = {
   STALE_GRAMMAR_REVIEW: 409,
   REPORT_LIMIT: 429,
   LIBRARY_FILE_TOO_LARGE: 413,
-  LIBRARY_CONTENT_TOO_LARGE: 413,
   LIBRARY_PARSE_TIMEOUT: 422,
   LIBRARY_AI_UNAVAILABLE: 503,
   LIBRARY_AI_LIMIT: 429,
@@ -111,9 +110,7 @@ const messageForCode: Record<string, string> = {
   INVALID_LIBRARY_DEFINITION: 'Enter a definition of up to 4096 characters.',
   INVALID_LIBRARY_PROGRESS: 'Choose a sentence in this document.',
   INVALID_LIBRARY_ACTION: 'Choose translation or vocabulary lookup.',
-  LIBRARY_FILE_TOO_LARGE: 'Choose a file smaller than 10 MiB.',
-  LIBRARY_CONTENT_TOO_LARGE:
-    'This document has too much text to add to the Library.',
+  LIBRARY_FILE_TOO_LARGE: 'Choose a file smaller than 10 MB.',
   LIBRARY_PARSE_TIMEOUT:
     'This document could not be read within the supported limits.',
   LIBRARY_AI_UNAVAILABLE:

@@ -1,10 +1,12 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import { languageNames } from '../../../lib/languageNames';
+  import { libraryMaxFileBytes } from '../../../lib/library-text';
   import type { ActionData, PageData } from './$types';
 
   let { data, form }: { data: PageData; form: ActionData } = $props();
   const languages = Object.entries(languageNames);
+  let fileError = $state('');
   const progress = (index: number, count: number) =>
     Math.round((index / count) * 100);
 </script>
@@ -16,7 +18,10 @@
 
 <h1>Library</h1>
 <p>Upload a document, read it sentence by sentence, and save useful words.</p>
-{#if form?.message}<p class="error-box" role="alert">{form.message}</p>{/if}
+{#if fileError}<p class="error-box" role="alert">{fileError}</p>
+{:else if form?.message}<p class="error-box" role="alert">
+    {form.message}
+  </p>{/if}
 
 <section aria-labelledby="upload-heading">
   <h2 id="upload-heading">Add a document</h2>
@@ -24,7 +29,15 @@
     method="POST"
     action="?/upload"
     enctype="multipart/form-data"
-    use:enhance
+    use:enhance={({ formData, cancel }) => {
+      const file = formData.get('file');
+      if (file instanceof File && file.size > libraryMaxFileBytes) {
+        fileError = 'Choose a file smaller than 10 MB.';
+        cancel();
+        return;
+      }
+      fileError = '';
+    }}
   >
     <label>
       Document language
@@ -39,7 +52,7 @@
       File
       <input type="file" name="file" accept=".txt,.pdf,.docx,.epub" required />
     </label>
-    <p>TXT, text-based PDF, DOCX, or EPUB. Maximum file size: 10 MiB.</p>
+    <p>TXT, text-based PDF, DOCX, or EPUB. Maximum file size: 10 MB.</p>
     <button type="submit">Upload document</button>
   </form>
 </section>

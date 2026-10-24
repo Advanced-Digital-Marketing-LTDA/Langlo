@@ -1,3 +1,5 @@
+export const libraryMaxFileBytes = 10_000_000;
+
 export function splitSentences(text: string): string[] {
   return Array.from(
     new Intl.Segmenter(undefined, { granularity: 'sentence' }).segment(text),

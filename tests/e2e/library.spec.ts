@@ -134,6 +134,23 @@ test('uploads, reads, resumes, renames and deletes a private document', async ({
   await expect(page.getByText('No documents yet.')).toBeVisible();
 });
 
+test('shows the size error on the Library page when a file is too large', async ({
+  page
+}) => {
+  await page.goto(`${base}/app/library`);
+  await page.getByLabel('Document language').selectOption('fr');
+  await page.getByLabel('File', { exact: true }).setInputFiles({
+    name: 'huge.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.alloc(12 * 1024 * 1024, 'a')
+  });
+  await page.getByRole('button', { name: 'Upload document' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Choose a file smaller than 10 MB.'
+  );
+  await expect(page).toHaveURL(`${base}/app/library`);
+});
+
 for (const sample of [
   {
     language: 'fr',
