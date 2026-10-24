@@ -2096,6 +2096,51 @@ describe('grammar practice rating and review actions', () => {
     );
   });
 
+  it('does not wait for an older answer that never got a no-verdict marker', async () => {
+    const { reviewId, questions } = await reviewOfTwoTopics();
+    // Before reviews wrote the marker, an ungraded typed answer left only its
+    // prepared evaluation behind, however long ago its request finished.
+    const old = await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-002'],
+      submissionKey: randomUUID(),
+      answer: 'Wrong.',
+      evidenceKind: 'independent'
+    });
+    await client.execute({
+      sql: "DELETE FROM evaluations WHERE attempt_id = ? AND evaluator_version = 'jev-1-no-verdict'",
+      args: [old.id]
+    });
+    await client.execute({
+      sql: 'UPDATE attempts SET created_at = created_at - 3600000 WHERE id = ?',
+      args: [old.id]
+    });
+    const correct: Record<string, string> = {
+      'fr-a1-001@1:q1': 'suis',
+      'fr-a1-001@1:q2': 'es'
+    };
+    const first = await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-001'],
+      submissionKey: randomUUID(),
+      answer: correct[questions['fr-a1-001']] ?? '',
+      evidenceKind: 'independent'
+    });
+    await lessonActions.rate(
+      event({
+        params: { language: 'fr', skill: 'fr-a1-001' },
+        fields: {
+          attemptId: first.id,
+          studySessionId: reviewId,
+          rating: 'good'
+        }
+      })
+    );
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'completed'
+    );
+  });
+
   it('never finishes a practice session on its own', async () => {
     const session = await startPractice(client, learner, {
       language: 'fr',

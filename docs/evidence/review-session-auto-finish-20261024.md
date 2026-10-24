@@ -35,13 +35,18 @@ Andrew asked for this fix too:
   stays open.
 - The "every topic reviewed" check and the finish now run in one write
   transaction.
-- Limit: if writing the marker itself fails, or a review was answered this
-  way before this change, that review does not finish by itself; Finish
-  session still finishes it.
+- Only a recent answer counts as being graded (the grader gives up after
+  10 seconds; the window is 60 seconds). Answers from before this change have
+  no marker, so older ones count as settled and do not hold a review open.
+- Limit: if writing the marker itself fails within that minute, the review
+  does not finish by itself until the window passes; Finish session still
+  finishes it.
 - Test: "waits for an answer still being graded in another tab" failed before
   the change (the review finished while the other answer was being graded)
   and passes now. Without the marker, four existing review cases fail, so
-  they cover it.
+  they cover it. "does not wait for an older answer that never got a
+  no-verdict marker" failed before the window and passes now.
+  `tests/attempt-fallback.test.ts` checks the marker per session mode.
 
 ## Assisted retries removed
 

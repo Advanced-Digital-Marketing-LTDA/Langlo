@@ -5,6 +5,7 @@ import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
   FALLBACK_SETTLED_EVALUATOR_VERSION,
+  FALLBACK_TIMEOUT_MS,
   HISTORICAL_FALLBACK_EVALUATOR_VERSION,
   HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
@@ -413,7 +414,7 @@ export async function grammarReviewPlan(
     args: [
       ...awaitingRatingArgs,
       ...awaitingRatingArgs,
-      ...beingGradedArgs,
+      ...beingGradedArgs(),
       id,
       learner.userId
     ]
@@ -448,6 +449,9 @@ const awaitingRatingSql = `attempts.grammar_rating IS NULL AND EXISTS (
 /**
  * A typed answer the AI grader has neither judged nor given up on yet. It may
  * still turn out correct and need a rating, so its topic is not reviewed.
+ * Only a recent answer can still be in flight: the grader gives up after
+ * FALLBACK_TIMEOUT_MS, and answers from before reviews wrote the marker have
+ * none, so older ones count as settled.
  */
 const beingGradedSql = `attempts.not_sure = 0 AND EXISTS (
     SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
@@ -455,11 +459,13 @@ const beingGradedSql = `attempts.not_sure = 0 AND EXISTS (
   ) AND NOT EXISTS (
     SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
       AND f.evaluator_version IN (?, ?)
-  )`;
-const beingGradedArgs = [
+  ) AND attempts.created_at > ?`;
+const GRADING_WINDOW_MS = 6 * FALLBACK_TIMEOUT_MS;
+const beingGradedArgs = () => [
   PREPARED_EVALUATOR_VERSION,
   FALLBACK_EVALUATOR_VERSION,
-  FALLBACK_SETTLED_EVALUATOR_VERSION
+  FALLBACK_SETTLED_EVALUATOR_VERSION,
+  Date.now() - GRADING_WINDOW_MS
 ];
 
 /** Helped and Not sure answers never take a difficulty rating. */
