@@ -626,8 +626,15 @@ describe.each(files)('%s', (path) => {
           if (isCorrection(version.skillId, version.version))
             for (const question of version.questions) question.change = 'new';
         const result = await importContent(db.client, corrected);
-        expect(result.versions).toBe(revised.length + later.length);
-        expect(result.questions).toBe((revised.length + later.length) * 15);
+        // Each historical correction is imported, then the later revisions.
+        const corrections = corrected.versions.filter((version) =>
+          isCorrection(version.skillId, version.version)
+        );
+        expect(corrections).toHaveLength(revised.length);
+        expect(result.versions).toBe(corrections.length + later.length);
+        expect(result.questions).toBe(
+          corrections.length * 15 + later.length * 15
+        );
         expect(
           (
             await db.client.execute(

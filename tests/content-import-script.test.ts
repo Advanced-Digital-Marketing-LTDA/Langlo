@@ -69,6 +69,14 @@ const modules = readdirSync(join(root, 'content'), { withFileTypes: true })
   );
 const lessons = modules.flatMap((module) => module.lessons);
 // A revised lesson sits beside the version it revises, so lessons outnumber skills.
+// Revision lessons declare every question as a change; those with an authored
+// Portuguese translation repeat it as a new lesson translation.
+const revisedLessons = lessons.filter((lesson) =>
+  lesson.version.questions.some((question) => question.change)
+);
+const authoredTranslations = lessons.filter(
+  (lesson) => lesson.version.translations?.pt
+);
 const skills = new Set(lessons.map((lesson) => lesson.skill_id)).size;
 const questions = lessons.reduce((n, l) => n + l.version.questions.length, 0);
 const latestMigrationTag = (
@@ -291,17 +299,15 @@ const rowsOf = async (client: ReturnType<typeof createClient>) =>
   ).rows;
 
 describe('revision totals', () => {
-  // The literal totals above are 55 earlier revisions plus one per reworded
-  // assessment prompt; 19 of the 27 are English with a Portuguese translation.
-  it('match the pinned list of reworded prompts', () => {
+  it('are the 55 earlier revisions plus one per reworded prompt', () => {
     const english = [...clarifiedPrompts.keys()].filter((id) =>
       id.startsWith('en-')
     );
     expect(clarifiedPrompts.size).toBe(27);
-    expect(english).toHaveLength(19);
-    expect(55 + clarifiedPrompts.size).toBe(82);
-    expect(25 + english.length).toBe(44);
-    expect(45 + 25 + english.length).toBe(89);
+    expect(revisedLessons).toHaveLength(55 + clarifiedPrompts.size);
+    expect(
+      revisedLessons.filter((lesson) => lesson.version.translations?.pt)
+    ).toHaveLength(25 + english.length);
   });
 });
 
@@ -314,8 +320,9 @@ describe('revising already imported lessons', () => {
       const revisions = pkg.versions.filter((version) =>
         version.questions.some((question) => question.change)
       );
-      // 55 earlier revisions plus one per reworded assessment prompt.
-      expect(revisions).toHaveLength(82);
+      // The raw module JSON holds 82 revision lessons.
+      expect(revisedLessons).toHaveLength(82);
+      expect(revisions).toHaveLength(revisedLessons.length);
       await importContent(client, {
         ...pkg,
         curriculumVersion: '1.2.0',
@@ -354,7 +361,11 @@ describe('revising already imported lessons', () => {
         "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.3.0' GROUP BY kind ORDER BY kind"
       );
       expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
-        ['lesson-translation-added', 44],
+        [
+          'lesson-translation-added',
+          revisedLessons.filter((lesson) => lesson.version.translations?.pt)
+            .length
+        ],
         ['question-same', revisions.length * 15],
         ['version-added', revisions.length]
       ]);
@@ -489,11 +500,8 @@ describe('module package', () => {
   });
 
   it('passes every authored Portuguese translation through the import package', () => {
-    const authored = lessons.filter(
-      (lesson) => lesson.version.translations?.pt
-    );
-    // 45 first versions plus the English revisions that repeat their translation:
-    // 25 earlier ones and one per reworded English assessment prompt.
+    const authored = authoredTranslations;
+    // 45 first versions plus 44 English revisions that repeat their translation.
     expect(authored).toHaveLength(89);
 
     const importedById = new Map(
@@ -570,8 +578,8 @@ describe('module package', () => {
     const declared = lessons.flatMap((lesson) =>
       lesson.version.questions.filter((question) => question.change)
     );
-    // 55 earlier revisions plus one per reworded prompt, 15 questions each.
-    expect(declared).toHaveLength(82 * 15);
+    // 82 revision lessons of 15 questions each.
+    expect(declared).toHaveLength(revisedLessons.length * 15);
     const imported = new Map(
       modulesPackage(root).versions.flatMap((version) =>
         version.questions.map((question) => [question.id, question] as const)
