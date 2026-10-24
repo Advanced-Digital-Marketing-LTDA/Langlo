@@ -377,7 +377,7 @@ describe('Library API', () => {
 });
 
 describe('Library upload size message', () => {
-  it('answers an oversized file with a 413 that accepts exactly 10 MB', () => {
+  it('maps LIBRARY_FILE_TOO_LARGE to a 413 with the 10 MB message', () => {
     expect(describeLearnerError('LIBRARY_FILE_TOO_LARGE')).toEqual({
       status: 413,
       message: 'Choose a file of 10 MB or smaller.'
