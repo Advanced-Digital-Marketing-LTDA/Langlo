@@ -19,6 +19,14 @@ returning to the Review tab and clicking again opened a new, empty session.
   difficulty rating, or at once when the answer takes no rating (incorrect,
   Not sure, assisted retry). It links to that review's session page.
 
+- A reviewed topic leaves both lists: the review session page and the Review
+  tab's overdue and due-today lists for that language (Andrew chose "Both
+  lists"). A topic counts as reviewed once its answer needs nothing more, so
+  a correct answer still waiting for its difficulty rating stays listed. When
+  every topic is reviewed, the session page says "All topics are answered.
+  Finish the session to update their schedules." instead of "No lessons are
+  published in this track yet."
+
 Unchanged: Practice-page reviews, the five-topic limit, and how a review is
 finished and rated. No migration.
 
@@ -31,5 +39,12 @@ finished and rated. No migration.
 - Green (this branch): those files plus `tests/lesson-update-notice.test.ts`,
   `tests/lesson-load-round-trips.test.ts`, `tests/learner-routes.test.ts` and
   `tests/review-render.test.ts`: 122 passed.
+- Reviewed topics, red: on the previous branch head (53ee4e0) source, the new
+  journey case "drops a reviewed topic from the review session and the Review
+  tab" and `tests/review-session-topics.test.ts` failed. Green: they pass, with
+  `tests/grammar-retention.integration.test.ts` (its review plan now also
+  reports `reviewed`), `tests/grammar-retention.test.ts`,
+  `tests/practice-render.test.ts`, `tests/review-render.test.ts`,
+  `tests/review-session-continue.test.ts` and `tests/learner-routes.test.ts`.
 - `svelte-check`, ESLint and Prettier pass on changed files.
 - Not run here: the full suite and the e2e specs, which CI runs.

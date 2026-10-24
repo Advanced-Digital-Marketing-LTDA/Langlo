@@ -1865,6 +1865,74 @@ describe('grammar practice rating and review actions', () => {
     });
   });
 
+  it('drops a reviewed topic from the review session and the Review tab', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    const planned = await client.execute({
+      sql: `SELECT json_extract(grammar_retention_plan, '$.questions[0].questionId') AS id
+        FROM study_sessions WHERE id = ?`,
+      args: [reviewId]
+    });
+    const questionId = String(planned.rows[0]?.id);
+    const answers: Record<string, string> = {
+      'fr-a1-001@1:q1': 'suis',
+      'fr-a1-001@1:q2': 'es'
+    };
+    const attempt = await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId,
+      submissionKey: randomUUID(),
+      answer: answers[questionId] ?? '',
+      evidenceKind: 'independent'
+    });
+    const listed = async () => {
+      const sessionPage = (await sessionLoad(
+        event({ params: { id: reviewId } })
+      )) as { skills: { skillId: string }[] };
+      const reviewTab = (await reviewTabLoad(event())) as {
+        grammar: { overdue: { skillId: string }[] };
+      };
+      return {
+        session: sessionPage.skills.map((skill) => skill.skillId),
+        reviewTab: reviewTab.grammar.overdue.map((skill) => skill.skillId)
+      };
+    };
+    // A correct answer still waiting for its rating keeps the topic listed.
+    expect(await listed()).toEqual({
+      session: ['fr-a1-001'],
+      reviewTab: ['fr-a1-001']
+    });
+    expect(
+      await lessonActions.rate(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          fields: {
+            attemptId: attempt.id,
+            studySessionId: reviewId,
+            rating: 'good'
+          }
+        })
+      )
+    ).toMatchObject({ rated: true });
+    expect(await listed()).toEqual({ session: [], reviewTab: [] });
+  });
+
   it('starts overdue grammar from the Review tab and shows when the next topic is due', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(Date.UTC(2026, 9, 24, 12));

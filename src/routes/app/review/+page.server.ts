@@ -10,6 +10,7 @@ import {
 } from '../../../lib/server/flashcard-views';
 import { grammarDueToday } from '../../../lib/server/grammar-retention';
 import {
+  grammarReviewPlan,
   startGrammarReview,
   unfinishedGrammarReview
 } from '../../../lib/server/practice';
@@ -83,6 +84,36 @@ function grammarSummary(
   };
 }
 
+/** Due topics, without those already reviewed in the unfinished review. */
+async function dueGrammar(
+  client: Parameters<typeof grammarReviewPlan>[0],
+  learner: Parameters<typeof grammarReviewPlan>[1],
+  language: string,
+  day: Parameters<typeof grammarDueToday>[3]
+) {
+  const [due, reviewed] = await Promise.all([
+    grammarDueToday(client, learner, language, day),
+    reviewedTopics(client, learner, language)
+  ]);
+  const open = (topics: typeof due.today) =>
+    topics.filter((topic) => !reviewed.has(topic.skillId));
+  return { overdue: open(due.overdue), today: open(due.today) };
+}
+
+/** Topics already reviewed in the unfinished review; they leave the lists. */
+async function reviewedTopics(
+  client: Parameters<typeof grammarReviewPlan>[0],
+  learner: Parameters<typeof grammarReviewPlan>[1],
+  language: string
+) {
+  const unfinished = await unfinishedGrammarReview(client, learner, language);
+  if (!unfinished) return new Set<string>();
+  const plan = await grammarReviewPlan(client, learner, unfinished.id);
+  return new Set(
+    plan.filter((topic) => topic.reviewed).map((topic) => topic.skillId)
+  );
+}
+
 export const load: PageServerLoad = (event) =>
   studyPage(event, async (client, learner) => {
     const now = Date.now();
@@ -100,7 +131,7 @@ export const load: PageServerLoad = (event) =>
     const grammar =
       language === UNASSIGNED_LANGUAGE
         ? null
-        : await grammarDueToday(client, learner, language, { ...day, now });
+        : await dueGrammar(client, learner, language, { ...day, now });
     return {
       languages,
       language,

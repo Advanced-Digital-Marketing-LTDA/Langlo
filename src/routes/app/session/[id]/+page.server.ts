@@ -25,7 +25,10 @@ export const load: PageServerLoad = (event) =>
     return {
       summary,
       skills: reviewPlan
-        ? reviewPlan.map((skill) => ({ ...skill, available: true }))
+        ? reviewPlan
+            // A reviewed topic leaves the list; its schedule updates on finish.
+            .filter((skill) => !skill.reviewed)
+            .map((skill) => ({ ...skill, available: true }))
         : (tracks[0]?.skills ?? []).filter((skill) => skill.available),
       recommendedSkillId: tracks[0]?.recommendation?.skillId ?? null
     };
