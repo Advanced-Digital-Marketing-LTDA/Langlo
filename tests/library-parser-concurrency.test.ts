@@ -1,11 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-const { workers, FakeWorker } = vi.hoisted(() => {
+const { workers, spawn, FakeWorker } = vi.hoisted(() => {
   const workers: { emit: (event: string, value: unknown) => void }[] = [];
+  const spawn = { failNext: false };
   class FakeWorker {
     listeners = new Map<string, ((value: unknown) => void)[]>();
 
     constructor() {
+      if (spawn.failNext) {
+        spawn.failNext = false;
+        throw new Error('synthetic spawn failure');
+      }
       workers.push(this);
     }
 
@@ -25,7 +30,7 @@ const { workers, FakeWorker } = vi.hoisted(() => {
       return Promise.resolve(1);
     }
   }
-  return { workers, FakeWorker };
+  return { workers, spawn, FakeWorker };
 });
 
 vi.mock('node:worker_threads', () => ({ Worker: FakeWorker }));
@@ -35,7 +40,29 @@ import { parseLibraryDocument } from '../src/lib/server/library';
 afterEach(() => {
   vi.useRealTimers();
   workers.length = 0;
+  spawn.failNext = false;
 });
+
+const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+/** Two parses that must both start, which proves both parser slots are free. */
+async function expectBothSlotsFree() {
+  const file = () => new File(['synthetic'], 'book.pdf');
+  const next = [
+    parseLibraryDocument(file(), 'fr'),
+    parseLibraryDocument(file(), 'fr')
+  ];
+  await tick();
+  const started = workers.slice(-2);
+  expect(started).toHaveLength(2);
+  started[0].emit('message', { text: 'Bonjour.' });
+  started[1].emit('message', { text: 'Bonsoir.' });
+  await expect(Promise.all(next)).resolves.toMatchObject([
+    { content: 'Bonjour.' },
+    { content: 'Bonsoir.' }
+  ]);
+  await tick();
+}
 
 describe('Library parser concurrency', () => {
   it.each([0, 1])('rejects worker exit %s without a result', async (code) => {
@@ -124,5 +151,59 @@ describe('Library parser concurrency', () => {
     expect(workers).toHaveLength(3);
     workers[2].emit('message', { text: 'Merci.' });
     await next;
+  });
+
+  it('passes a worker error code through and restores parser capacity', async () => {
+    const parsed = parseLibraryDocument(
+      new File(['synthetic'], 'book.pdf'),
+      'fr'
+    );
+    const rejected = expect(parsed).rejects.toMatchObject({
+      code: 'LIBRARY_CONTENT_TOO_LARGE'
+    });
+    await tick();
+    workers[0].emit('message', { code: 'LIBRARY_CONTENT_TOO_LARGE' });
+    await rejected;
+    await tick();
+    await expectBothSlotsFree();
+  });
+
+  it('rejects a worker message with neither text nor a code', async () => {
+    const parsed = parseLibraryDocument(
+      new File(['synthetic'], 'book.pdf'),
+      'fr'
+    );
+    const rejected = expect(parsed).rejects.toMatchObject({
+      code: 'INVALID_LIBRARY_DOCUMENT'
+    });
+    await tick();
+    workers[0].emit('message', {});
+    await rejected;
+    await tick();
+    await expectBothSlotsFree();
+  });
+
+  it('does not leak a parser slot when the worker cannot start', async () => {
+    spawn.failNext = true;
+    await expect(
+      parseLibraryDocument(new File(['synthetic'], 'book.pdf'), 'fr')
+    ).rejects.toMatchObject({ code: 'INVALID_LIBRARY_DOCUMENT' });
+    expect(workers).toHaveLength(0);
+    await expectBothSlotsFree();
+  });
+
+  it('rejects office text over the content ceiling', async () => {
+    const parsed = parseLibraryDocument(
+      new File(['synthetic'], 'book.pdf'),
+      'fr'
+    );
+    const rejected = expect(parsed).rejects.toMatchObject({
+      code: 'LIBRARY_CONTENT_TOO_LARGE'
+    });
+    await tick();
+    workers[0].emit('message', { text: 'a'.repeat(1_000_001) });
+    await rejected;
+    await tick();
+    await expectBothSlotsFree();
   });
 });
