@@ -13,7 +13,7 @@ Untouched: migrations, schema, UI, grading, scoring, practice (non-holdout) ques
 
 ## Test changes
 
-- `tests/fixtures/clarified-prompts.ts`: the 27 new prompts, pinned word for word, keyed by the earlier question's id.
+- `tests/fixtures/clarified-prompts.json` (read by `clarified-prompts.ts`): the 27 new prompts, pinned word for word, keyed by the earlier question's id.
 - `tests/curriculum-modules.test.ts`: the revision check accepts exactly those rewordings and nothing else; new tests that each pinned prompt is carried by the next version of its skill and that all 27 exist. The legacy-import test accounts for a later revision of a listed skill.
 - `tests/fr-a1-module-01.test.ts`: the existing tests still check the four first versions with their original literals (the file loads only first versions); a new test checks the `fr-a1-001@2` revision on its own.
 - `tests/content-import-script.test.ts`: revision totals are the earlier 55, 70, 25 and 55 x 15 plus the pinned list (27 revisions, 19 of them English with a translation).
