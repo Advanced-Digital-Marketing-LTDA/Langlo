@@ -11,6 +11,7 @@
     { href: '/app/map', label: 'Skill map' },
     { href: '/app/assessment', label: 'Assessment' },
     { href: '/app/review', label: 'Review' },
+    { href: '/app/library', label: 'Library' },
     { href: '/app/decks', label: 'Decks' },
     { href: '/app/analytics', label: 'Analytics' },
     { href: '/app/settings', label: 'Settings' },
