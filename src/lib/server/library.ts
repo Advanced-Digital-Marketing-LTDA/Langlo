@@ -108,16 +108,17 @@ function libraryFileExtension(file: File): string {
   return extension;
 }
 
+async function decodeDocument(buffer: ArrayBuffer, extension: string) {
+  if (extension !== 'txt') return extractOfficeText(buffer, extension);
+  const content = new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+  if (/^\s*%PDF-/u.test(content))
+    throw new StudyError('INVALID_LIBRARY_DOCUMENT');
+  return content;
+}
+
 async function readDocumentText(file: File, extension: string) {
   try {
-    const buffer = await file.arrayBuffer();
-    const content =
-      extension === 'txt'
-        ? new TextDecoder('utf-8', { fatal: true }).decode(buffer)
-        : await extractOfficeText(buffer, extension);
-    if (extension === 'txt' && /^\s*%PDF-/u.test(content))
-      throw new StudyError('INVALID_LIBRARY_DOCUMENT');
-    return content;
+    return await decodeDocument(await file.arrayBuffer(), extension);
   } catch (error) {
     if (error instanceof StudyError) throw error;
     throw new StudyError('INVALID_LIBRARY_DOCUMENT');
