@@ -21,6 +21,8 @@ export type ReaderOptions = {
   container: HTMLElement;
   language: string;
   location: string | null;
+  /** Progress saved before page positions existed, from 0 to 1. */
+  legacyFraction: number;
   savedTerms: string[];
   onPosition: (position: ReaderPosition) => void;
   onSelect: (selection: ReaderSelection) => void;

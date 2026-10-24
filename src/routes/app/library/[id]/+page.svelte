@@ -96,12 +96,21 @@
     ).mountEpubReader(options, bytes);
   }
 
+  // Documents read before page positions saved only a sentence index.
+  function legacyFraction() {
+    const { progressLocation, progressIndex, sentenceCount } = data.document;
+    if (progressLocation || !sentenceCount) return 0;
+    return Math.min(progressIndex / sentenceCount, 1);
+  }
+
   onMount(() => {
+    let disposed = false;
     savedTerms = data.savedTerms;
     mount({
       container: host,
       language: data.document.language,
       location: data.document.progressLocation,
+      legacyFraction: legacyFraction(),
       savedTerms,
       onPosition,
       onSelect: (next) => {
@@ -110,12 +119,16 @@
       },
       onError: (text) => (message = text)
     })
-      .then((mounted) => (renderer = mounted))
+      .then((mounted) => {
+        if (disposed) mounted.destroy();
+        else renderer = mounted;
+      })
       .catch((error: Error) => {
         message = error.message || 'The book could not be opened.';
       })
       .finally(() => (loading = false));
     return () => {
+      disposed = true;
       flushPosition();
       renderer?.destroy();
     };

@@ -4,6 +4,7 @@ import {
   sentenceContext,
   snapToWords
 } from '../library-text';
+import { selectionStartHint } from './occurrence';
 import type { ReaderSelection } from './types';
 
 const maxTermLength = 256;
@@ -74,7 +75,11 @@ function readSelection(
   const located = locateSelection(
     page,
     text,
-    collapseWhitespace(before.toString()).length
+    selectionStartHint(
+      page,
+      collapseWhitespace(before.toString()),
+      collapseWhitespace(text)
+    )
   );
   const snapped = located && snapToWords(page, located.start, located.end);
   if (!snapped) return { error: 'Select a word or phrase in the text.' };

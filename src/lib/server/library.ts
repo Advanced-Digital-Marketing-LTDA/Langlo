@@ -291,6 +291,25 @@ export async function renameLibraryDocument(
   if (result.rowsAffected !== 1) throw new StudyError('NOT_FOUND');
 }
 
+const pagePosition = /^page:[1-9]\d{0,8}$/u;
+
+/** Whether `location` is the kind of place the reader for this format saves. */
+function locationFitsFormat(
+  location: string,
+  format: LibraryOriginalFormat | null
+) {
+  return format === 'epub'
+    ? location.startsWith('epubcfi(')
+    : pagePosition.test(location);
+}
+
+function validProgress(location: unknown, fraction: unknown) {
+  if (typeof location !== 'string' || !location) return null;
+  if (location.length > 512 || location.includes('\0')) return null;
+  if (typeof fraction !== 'number' || !Number.isFinite(fraction)) return null;
+  return fraction >= 0 && fraction <= 1 ? { location, fraction } : null;
+}
+
 export async function updateLibraryProgress(
   client: Client,
   learner: LearnerSession,
@@ -298,20 +317,24 @@ export async function updateLibraryProgress(
   location: unknown,
   fraction: unknown
 ) {
+  const progress = validProgress(location, fraction);
+  if (!progress) throw new StudyError('INVALID_LIBRARY_PROGRESS');
+  const document = await client.execute({
+    sql: 'SELECT (SELECT format FROM library_document_files WHERE document_id = library_documents.id) AS original_format FROM library_documents WHERE id = ? AND owner_id = ?',
+    args: [id, learner.userId]
+  });
+  if (!document.rows.length) throw new StudyError('NOT_FOUND');
+  const format = document.rows[0].original_format;
   if (
-    typeof location !== 'string' ||
-    !location ||
-    location.length > 512 ||
-    location.includes('\0') ||
-    typeof fraction !== 'number' ||
-    !Number.isFinite(fraction) ||
-    fraction < 0 ||
-    fraction > 1
+    !locationFitsFormat(
+      progress.location,
+      format === null ? null : (String(format) as LibraryOriginalFormat)
+    )
   )
     throw new StudyError('INVALID_LIBRARY_PROGRESS');
   const result = await executeWrite(client, {
     sql: 'UPDATE library_documents SET progress_location = ?, progress_index = CAST(? * sentence_count AS INTEGER) WHERE id = ? AND owner_id = ?',
-    args: [location, fraction, id, learner.userId]
+    args: [progress.location, progress.fraction, id, learner.userId]
   });
   if (result.rowsAffected !== 1) throw new StudyError('NOT_FOUND');
 }

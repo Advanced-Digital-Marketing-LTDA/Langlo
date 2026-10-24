@@ -17,6 +17,7 @@ import {
   createDeck,
   updateNote
 } from '../src/lib/server/flashcards';
+import { libraryMaxFileBytes } from '../src/lib/library-text';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   disposeFlashcardFixtures,
@@ -282,6 +283,73 @@ describe('Library documents', () => {
       })
     ).rejects.toThrow();
     expect(await listLibraryDocuments(client, ownerA)).toEqual([]);
+  });
+
+  it('stores an original file of exactly the maximum size but not one byte more', async () => {
+    const original = (size: number) => ({
+      format: 'pdf' as const,
+      bytes: new Uint8Array(size)
+    });
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-max-original',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.',
+      original: original(libraryMaxFileBytes)
+    });
+    await expect(
+      createLibraryDocument(client, ownerA, {
+        id: 'library-over-original',
+        title: 'Book',
+        language: 'fr',
+        content: 'Bonjour.',
+        original: original(libraryMaxFileBytes + 1)
+      })
+    ).rejects.toThrow(/library_document_files_size/u);
+    expect(
+      (await listLibraryDocuments(client, ownerA)).map(({ id }) => id)
+    ).toEqual(['library-max-original']);
+  });
+
+  it.each([
+    ['txt', null, 'epubcfi(/6/4!/4/2)'],
+    ['pdf', 'pdf', 'epubcfi(/6/4!/4/2)'],
+    ['docx', 'docx', 'epubcfi(/6/4!/4/2)'],
+    ['epub', 'epub', 'page:2']
+  ] as const)(
+    'rejects a position of the wrong kind for a %s document',
+    async (_name, format, location) => {
+      await createLibraryDocument(client, ownerA, {
+        id: 'library-kind',
+        title: 'Book',
+        language: 'fr',
+        content: 'Bonjour.',
+        ...(format ? { original: { format, bytes: new Uint8Array([1]) } } : {})
+      });
+      await expect(
+        updateLibraryProgress(client, ownerA, 'library-kind', location, 0.5)
+      ).rejects.toMatchObject({ code: 'INVALID_LIBRARY_PROGRESS' });
+    }
+  );
+
+  it('accepts an EPUB location for an EPUB document', async () => {
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-epub-position',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.',
+      original: { format: 'epub', bytes: new Uint8Array([1]) }
+    });
+    await updateLibraryProgress(
+      client,
+      ownerA,
+      'library-epub-position',
+      'epubcfi(/6/4!/4/2)',
+      0.5
+    );
+    expect(
+      await getLibraryDocument(client, ownerA, 'library-epub-position')
+    ).toMatchObject({ progressLocation: 'epubcfi(/6/4!/4/2)' });
   });
 
   it.each([

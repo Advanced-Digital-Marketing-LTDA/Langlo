@@ -13,9 +13,11 @@ export function mountTextReader(
   const { container } = options;
   const pages = paginateText(content, pageCharacters);
   const saved = /^page:(\d+)$/u.exec(options.location ?? '');
-  let index = saved
-    ? Math.min(Math.max(Number(saved[1]) - 1, 0), pages.length - 1)
-    : 0;
+  const last = Math.max(pages.length - 1, 0);
+  const startIndex = saved
+    ? Number(saved[1]) - 1
+    : Math.floor(options.legacyFraction * pages.length);
+  let index = Math.min(Math.max(startIndex, 0), last);
   let terms = options.savedTerms;
   const view = container.ownerDocument.createElement('div');
   view.className = 'text-page';
@@ -30,7 +32,7 @@ export function mountTextReader(
       })
     );
     markSavedTerms(view, terms);
-    view.scrollTop = 0;
+    container.scrollTop = 0;
     options.onPosition({
       location: `page:${index + 1}`,
       fraction: (index + 1) / pages.length,

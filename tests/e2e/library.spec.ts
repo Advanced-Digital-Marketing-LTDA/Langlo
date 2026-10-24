@@ -413,6 +413,35 @@ test('selects a phrase by dragging and keeps buttons disabled while a request ru
   await expect(page.locator('.text-page mark')).toHaveText('river bank');
 });
 
+test('drops a lookup reply that arrives after another word is selected', async ({
+  page
+}) => {
+  await uploadText(page, 'en', 'The river bank is steep. The path is long.');
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/app/api/library/*/study', async (route) => {
+    await gate;
+    await route.fulfill({ json: lookupResult });
+  });
+  await clickWord(page, 'river');
+  await expect(panel(page).locator('.term')).toHaveText('river');
+  await panel(page)
+    .getByRole('button', { name: 'Translate and explain' })
+    .click();
+  await clickWord(page, 'path');
+  await expect(panel(page).locator('.term')).toHaveText('path');
+  release();
+  await expect(
+    panel(page).getByRole('button', { name: 'Translate and explain' })
+  ).toBeEnabled();
+  await expect(panel(page).getByText(lookupResult.translation)).toHaveCount(0);
+  await expect(
+    panel(page).getByRole('button', { name: 'Save to deck' })
+  ).toBeDisabled();
+});
+
 test('a touch selection opens the lookup bar at the bottom of the screen', async ({
   page
 }) => {

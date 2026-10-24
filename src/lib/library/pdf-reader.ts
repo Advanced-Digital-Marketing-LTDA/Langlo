@@ -25,8 +25,9 @@ export async function mountPdfReader(
   holder.className = 'pdf-holder';
   container.replaceChildren(holder);
   let textLayer: HTMLElement | null = null;
+  let shown = pageNumber;
 
-  const show = async () => {
+  const draw = async () => {
     const token = (drawing += 1);
     const page = await pdf.getPage(pageNumber);
     const natural = page.getViewport({ scale: 1 });
@@ -62,6 +63,7 @@ export async function mountPdfReader(
     }).render();
     if (token !== drawing) return;
     holder.replaceChildren(wrapper);
+    shown = pageNumber;
     textLayer = layer;
     markSavedTerms(layer, terms);
     container.scrollTop = 0;
@@ -72,6 +74,19 @@ export async function mountPdfReader(
       canPrev: pageNumber > 1,
       canNext: pageNumber < pdf.numPages
     });
+  };
+  // A page that fails to draw leaves the previous one on screen and in place.
+  const show = async () => {
+    const token = drawing + 1;
+    try {
+      await draw();
+    } catch (error) {
+      if (token !== drawing) return;
+      pageNumber = shown;
+      options.onError(
+        (error as Error).message || 'That page could not be shown.'
+      );
+    }
   };
   const go = async (to: number) => {
     if (to < 1 || to > pdf.numPages) return;
@@ -88,7 +103,7 @@ export async function mountPdfReader(
   const stopSwipe = watchSwipe(container, doc, (direction) =>
     go(direction === 'next' ? pageNumber + 1 : pageNumber - 1)
   );
-  await show();
+  await draw();
   return {
     next: () => go(pageNumber + 1),
     prev: () => go(pageNumber - 1),

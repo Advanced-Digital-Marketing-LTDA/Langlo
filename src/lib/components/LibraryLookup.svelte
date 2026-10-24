@@ -36,10 +36,10 @@
   });
 
   const base = $derived(`/app/api/library/${encodeURIComponent(documentId)}`);
-  const context = $derived({
-    sentence: selection.sentence,
-    previousSentence: selection.previousSentence,
-    nextSentence: selection.nextSentence
+  const contextOf = (chosen: ReaderSelection) => ({
+    sentence: chosen.sentence,
+    previousSentence: chosen.previousSentence,
+    nextSentence: chosen.nextSentence
   });
   const placement = $derived(
     `--top:${Math.round(selection.rect.bottom + 8)}px;--left:${Math.round(selection.rect.left)}px`
@@ -61,27 +61,35 @@
     return result;
   }
 
-  async function run(work: () => Promise<void>, failure: string) {
+  // A reply that arrives after the learner picked another word is dropped.
+  async function run(
+    work: (chosen: ReaderSelection) => Promise<void>,
+    failure: string
+  ) {
     if (busy) return;
+    const chosen = selection;
     busy = true;
     message = '';
     status = '';
     try {
-      await work();
+      await work(chosen);
     } catch (error) {
-      message = error instanceof TypeError ? failure : (error as Error).message;
+      if (chosen === selection)
+        message =
+          error instanceof TypeError ? failure : (error as Error).message;
     } finally {
       busy = false;
     }
   }
 
   const explain = () =>
-    run(async () => {
+    run(async (chosen) => {
       const result = await post('study', {
         action: 'lookup',
-        term: selection.term,
-        ...context
+        term: chosen.term,
+        ...contextOf(chosen)
       });
+      if (chosen !== selection) return;
       lookup = {
         translation: String(result.translation),
         explanation: String(result.explanation)
@@ -89,24 +97,31 @@
     }, 'The request could not be completed. Check your connection and try again.');
 
   const translateSentence = () =>
-    run(async () => {
-      const result = await post('study', { action: 'translate', ...context });
+    run(async (chosen) => {
+      const result = await post('study', {
+        action: 'translate',
+        ...contextOf(chosen)
+      });
+      if (chosen !== selection) return;
       sentenceTranslation = String(result.result);
     }, 'The request could not be completed. Check your connection and try again.');
 
   const save = () =>
-    run(async () => {
+    run(async (chosen) => {
       if (!lookup) return;
+      const { translation, explanation } = lookup;
       const result = (await post('vocabulary', {
         deckId,
-        term: selection.term,
-        definition: `${lookup.translation} — ${lookup.explanation}`
+        term: chosen.term,
+        definition: `${translation} — ${explanation}`
       })) as { note?: { status?: string } };
       if (result.note?.status === 'rejected') {
-        status = 'This vocabulary card was previously rejected.';
+        if (chosen === selection)
+          status = 'This vocabulary card was previously rejected.';
         return;
       }
-      onSaved(selection.term);
+      onSaved(chosen.term);
+      if (chosen !== selection) return;
       status =
         result.note?.status === 'approved'
           ? 'This vocabulary is already an approved flashcard.'
