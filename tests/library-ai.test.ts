@@ -13,7 +13,13 @@ describe('Library AI', () => {
             {
               type: 'message',
               content: [
-                { type: 'output_text', text: 'a financial institution' }
+                {
+                  type: 'output_text',
+                  text: JSON.stringify({
+                    translation: 'banco',
+                    explanation: 'a financial institution'
+                  })
+                }
               ]
             }
           ]
@@ -33,7 +39,10 @@ describe('Library AI', () => {
         nextSentence: 'The river bank is nearby.',
         term: 'bank'
       })
-    ).resolves.toBe('a financial institution');
+    ).resolves.toEqual({
+      translation: 'banco',
+      explanation: 'a financial institution'
+    });
 
     const request = fetch.mock.calls[0][1] as RequestInit;
     const body = JSON.parse(String(request.body));
@@ -45,7 +54,14 @@ describe('Library AI', () => {
       model: 'gpt-6-luna',
       reasoning: { effort: 'low' },
       store: false,
-      max_output_tokens: 300
+      max_output_tokens: 500,
+      text: {
+        format: {
+          type: 'json_schema',
+          strict: true,
+          schema: { required: ['translation', 'explanation'] }
+        }
+      }
     });
     expect(JSON.stringify(body)).toContain('The river bank is nearby.');
     expect(JSON.stringify(body)).not.toContain('full-document-secret');
@@ -160,5 +176,64 @@ describe('Library AI', () => {
       })
     ).rejects.toMatchObject({ code: 'LIBRARY_CONTEXT_TOO_LARGE' });
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('translates a sentence as plain text without a structured format', async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      Response.json({
+        status: 'completed',
+        output: [
+          {
+            type: 'message',
+            content: [{ type: 'output_text', text: 'I read a book.' }]
+          }
+        ]
+      })
+    );
+    vi.stubGlobal('fetch', fetch);
+    await expect(
+      requestLibraryAi('synthetic-openai-test-key', {
+        action: 'translate',
+        language: 'fr',
+        targetLanguage: 'en',
+        sentence: 'Je lis un livre.',
+        previousSentence: '',
+        nextSentence: ''
+      })
+    ).resolves.toBe('I read a book.');
+    const body = JSON.parse(
+      String((fetch.mock.calls[0][1] as RequestInit).body)
+    );
+    expect(body.max_output_tokens).toBe(300);
+    expect(body.text).toBeUndefined();
+  });
+
+  it.each([
+    ['not JSON', 'banco: a financial institution'],
+    ['missing explanation', JSON.stringify({ translation: 'banco' })],
+    [
+      'blank translation',
+      JSON.stringify({ translation: ' ', explanation: 'x' })
+    ]
+  ])('rejects a lookup that is %s without retrying', async (_name, text) => {
+    const fetch = vi.fn().mockResolvedValue(
+      Response.json({
+        status: 'completed',
+        output: [{ type: 'message', content: [{ type: 'output_text', text }] }]
+      })
+    );
+    vi.stubGlobal('fetch', fetch);
+    await expect(
+      requestLibraryAi('synthetic-openai-test-key', {
+        action: 'lookup',
+        language: 'fr',
+        targetLanguage: 'en',
+        sentence: 'Bonjour.',
+        previousSentence: '',
+        nextSentence: '',
+        term: 'Bonjour'
+      })
+    ).rejects.toMatchObject({ code: 'LIBRARY_AI_UNAVAILABLE' });
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

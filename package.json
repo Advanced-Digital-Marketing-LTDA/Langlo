@@ -40,9 +40,12 @@
     "@libsql/client": "0.18.0",
     "@sentry/sveltekit": "11.8.0",
     "better-auth": "1.7.7",
+    "docx-preview": "0.4.1",
     "drizzle-orm": "0.45.3",
+    "epubjs": "0.3.93",
     "nodemailer": "10.0.13",
     "officeparser": "8.2.0",
+    "pdfjs-dist": "6.4.299",
     "ts-fsrs": "5.4.2"
   },
   "overrides": {
@@ -51,6 +54,9 @@
     },
     "@esbuild-kit/core-utils": {
       "esbuild": "0.25.12"
+    },
+    "epubjs": {
+      "@xmldom/xmldom": "0.9.12"
     }
   },
   "devDependencies": {

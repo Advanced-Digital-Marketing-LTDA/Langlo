@@ -14,11 +14,19 @@ import {
   validateLibraryAiInput,
   type LibraryAiInput
 } from '../../../../../../lib/server/library-ai';
-import {
-  containsTerm,
-  splitSentences
-} from '../../../../../../lib/library-text';
+import { containsTerm } from '../../../../../../lib/library-text';
 import { StudyError } from '../../../../../../lib/server/study-error';
+
+const maxSentenceLength = 2000;
+
+function sentenceText(value: unknown, required: boolean): string {
+  if (typeof value !== 'string' || value.includes('\0'))
+    throw new StudyError('INVALID_LIBRARY_TERM');
+  const text = value.trim();
+  if (text.length > maxSentenceLength || (required && !text))
+    throw new StudyError('INVALID_LIBRARY_TERM');
+  return text;
+}
 
 export const POST: RequestHandler = (event) =>
   learnerApi(event, async (client, learner) => {
@@ -26,21 +34,16 @@ export const POST: RequestHandler = (event) =>
     if (body.action !== 'translate' && body.action !== 'lookup')
       throw new StudyError('INVALID_LIBRARY_ACTION');
     const document = await getLibraryDocument(client, learner, event.params.id);
-    const sentences = splitSentences(document.content);
-    if (
-      !Number.isInteger(body.sentenceIndex) ||
-      Number(body.sentenceIndex) < 0 ||
-      Number(body.sentenceIndex) >= sentences.length
-    )
-      throw new StudyError('INVALID_LIBRARY_PROGRESS');
-    const sentenceIndex = Number(body.sentenceIndex);
-    const term = body.term;
-    const normalizedTerm = typeof term === 'string' ? term.trim() : '';
+    const sentence = sentenceText(body.sentence, true);
+    const previousSentence = sentenceText(body.previousSentence ?? '', false);
+    const nextSentence = sentenceText(body.nextSentence ?? '', false);
+    const normalizedTerm =
+      typeof body.term === 'string' ? body.term.trim() : '';
     if (
       body.action === 'lookup' &&
       (!normalizedTerm ||
         normalizedTerm.length > 256 ||
-        !containsTerm(sentences[sentenceIndex], normalizedTerm))
+        !containsTerm(sentence, normalizedTerm))
     )
       throw new StudyError('INVALID_LIBRARY_TERM');
     const targetLanguage = await libraryTargetLanguage(
@@ -52,9 +55,9 @@ export const POST: RequestHandler = (event) =>
       action: body.action,
       language: document.language as LibraryLanguage,
       targetLanguage,
-      previousSentence: sentences[sentenceIndex - 1] ?? '',
-      sentence: sentences[sentenceIndex],
-      nextSentence: sentences[sentenceIndex + 1] ?? '',
+      previousSentence,
+      sentence,
+      nextSentence,
       ...(body.action === 'lookup' ? { term: normalizedTerm } : {})
     };
     validateLibraryAiInput(input);
@@ -62,7 +65,6 @@ export const POST: RequestHandler = (event) =>
     if (!apiKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
     if (!(await reserveLibraryAiCall(client, learner.userId)))
       throw new StudyError('LIBRARY_AI_LIMIT');
-    return {
-      result: await requestLibraryAi(apiKey, input)
-    };
+    const result = await requestLibraryAi(apiKey, input);
+    return typeof result === 'string' ? { result } : result;
   });

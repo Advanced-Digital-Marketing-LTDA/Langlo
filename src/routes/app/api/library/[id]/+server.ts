@@ -21,7 +21,8 @@ export const PATCH: RequestHandler = (event) =>
       client,
       learner,
       event.params.id,
-      body.progressIndex
+      body.location,
+      body.fraction
     );
     return { saved: true };
   });

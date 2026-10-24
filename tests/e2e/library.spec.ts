@@ -1,4 +1,9 @@
-import { expect, type BrowserContext } from '@playwright/test';
+import {
+  expect,
+  type BrowserContext,
+  type Frame,
+  type Page
+} from '@playwright/test';
 import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
@@ -102,29 +107,159 @@ test.beforeEach(async ({ context }) => {
   authCookies = await context.cookies();
 });
 
-test('uploads, reads, resumes, renames and deletes a private document', async ({
-  page
-}) => {
+const panelName = 'Look up the selection';
+const lookupResult = {
+  translation: 'Synthetic translation',
+  explanation: 'Synthetic explanation of the word.'
+};
+
+async function uploadText(page: Page, language: string, text: string) {
   await page.goto(`${base}/app/library`);
-  await page.getByLabel('Document language').selectOption('fr');
+  await page.getByLabel('Document language').selectOption(language);
   await page.getByLabel('File', { exact: true }).setInputFiles({
-    name: 'bonjour.txt',
+    name: `${language}.txt`,
     mimeType: 'text/plain',
-    buffer: Buffer.from('Bonjour, Marie.\nLa maison est grande.')
+    buffer: Buffer.from(text)
   });
   await page.getByRole('button', { name: 'Upload document' }).click();
   await expect(page).toHaveURL(/\/app\/library\/library-/u);
-  await expect(page.getByText('Bonjour, Marie.')).toBeVisible();
-  await page.getByRole('button', { name: 'Next sentence' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Sentence 2 of 2' })
-  ).toBeVisible();
-  await expect(page.getByText('La maison est grande.')).toBeVisible();
+  await expect(page.locator('.text-page p').first()).toBeVisible();
+}
 
-  await page.getByRole('link', { name: 'Back to Library' }).click();
+async function uploadFixture(page: Page, language: string, name: string) {
+  await page.goto(`${base}/app/library`);
+  await page.getByLabel('Document language').selectOption(language);
+  await page
+    .getByLabel('File', { exact: true })
+    .setInputFiles(`tests/fixtures/library/${name}`);
+  await page.getByRole('button', { name: 'Upload document' }).click();
+  await expect(page).toHaveURL(/\/app\/library\/library-/u);
+}
+
+/** Runs in the page: the viewport rectangle of `text` in the visible text. */
+function visiblePhraseRect(text: string) {
+  const walker = document.createTreeWalker(document.body, 4);
+  const nodes: Text[] = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+  let seen = 0;
+  const spans = nodes
+    .filter((node) => node.parentElement?.checkVisibility())
+    .map((node) => {
+      const span = { node, from: seen };
+      seen += node.data.length;
+      return span;
+    });
+  const from = spans
+    .map(({ node }) => node.data)
+    .join('')
+    .indexOf(text);
+  if (from === -1) return null;
+  const locate = (offset: number) => {
+    const span = spans.find(
+      (item) => offset <= item.from + item.node.data.length
+    );
+    if (!span) throw new Error('offset beyond text');
+    return { node: span.node, offset: offset - span.from };
+  };
+  const start = locate(from);
+  const end = locate(from + text.length);
+  const range = document.createRange();
+  range.setStart(start.node, start.offset);
+  range.setEnd(end.node, end.offset);
+  const { left, right, top, bottom } = range.getBoundingClientRect();
+  return { left, right, top, bottom };
+}
+
+/** The viewport rectangle of `phrase`, which may span highlighted words. */
+async function phraseBox(scope: Page | Frame, phrase: string) {
+  const box = await scope.evaluate(visiblePhraseRect, phrase);
+  if (!box) throw new Error(`"${phrase}" is not on the page`);
+  if (!('frameElement' in scope)) return box;
+  const offset = await (await scope.frameElement()).boundingBox();
+  return {
+    left: box.left + (offset?.x ?? 0),
+    right: box.right + (offset?.x ?? 0),
+    top: box.top + (offset?.y ?? 0),
+    bottom: box.bottom + (offset?.y ?? 0)
+  };
+}
+
+async function clickWord(page: Page, word: string, scope: Page | Frame = page) {
+  const box = await phraseBox(scope, word);
+  await page.mouse.click(
+    (box.left + box.right) / 2,
+    (box.top + box.bottom) / 2
+  );
+}
+
+async function dragPhrase(
+  page: Page,
+  phrase: string,
+  scope: Page | Frame = page
+) {
+  const box = await phraseBox(scope, phrase);
+  const y = (box.top + box.bottom) / 2;
+  await page.mouse.move(box.left + 1, y);
+  await page.mouse.down();
+  await page.mouse.move(box.right - 1, y, { steps: 6 });
+  await page.mouse.up();
+}
+
+const panel = (page: Page) =>
+  page.getByRole('complementary', { name: panelName });
+
+function mockStudy(page: Page) {
+  const requests: Record<string, unknown>[] = [];
+  return page
+    .route('**/app/api/library/*/study', async (route) => {
+      const body = route.request().postDataJSON();
+      requests.push(body);
+      await route.fulfill({
+        json:
+          body.action === 'translate'
+            ? { result: 'Synthetic sentence translation.' }
+            : lookupResult
+      });
+    })
+    .then(() => requests);
+}
+
+test('uploads, flips pages, resumes, renames and deletes a private document', async ({
+  page
+}) => {
+  const paragraph = 'La maison est grande et la famille est heureuse ici.';
+  await uploadText(
+    page,
+    'fr',
+    Array.from({ length: 120 }, () => paragraph).join('\n')
+  );
+  const pages = page.getByText(/^Page \d+ of \d+$/u);
+  await expect(pages).toHaveText('Page 1 of 4');
   await expect(
-    page.getByText('Progress: 50% (1 of 2 sentences)')
-  ).toBeVisible();
+    page.getByRole('button', { name: 'Previous page' })
+  ).toBeDisabled();
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(pages).toHaveText('Page 2 of 4');
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PATCH' && response.status() === 200
+  );
+  await page.keyboard.press('ArrowRight');
+  await expect(pages).toHaveText('Page 3 of 4');
+  await saved;
+  await page.reload();
+  await expect(pages).toHaveText('Page 3 of 4');
+  await page.keyboard.press('ArrowLeft');
+  await expect(pages).toHaveText('Page 2 of 4');
+
+  // Leaving straight after a page turn still saves it.
+  const left = page.waitForResponse(
+    (response) => response.request().method() === 'PATCH'
+  );
+  await page.getByRole('link', { name: 'Back to Library' }).click();
+  expect((await left).status()).toBe(200);
+  await page.reload();
+  await expect(page.getByText('Progress: 50%')).toBeVisible();
   await page.getByLabel('Rename').fill('Bonjour et la maison');
   await page.getByRole('button', { name: 'Save title' }).click();
   await expect(
@@ -132,6 +267,354 @@ test('uploads, reads, resumes, renames and deletes a private document', async ({
   ).toBeVisible();
   await page.getByRole('button', { name: 'Delete document' }).click();
   await expect(page.getByText('No documents yet.')).toBeVisible();
+});
+
+for (const sample of [
+  {
+    language: 'fr',
+    text: 'La maison est grande. Voici une maison.',
+    word: 'maison',
+    sentence: 'La maison est grande.',
+    next: 'Voici une maison.'
+  },
+  {
+    language: 'de',
+    text: 'Das Haus ist groß. Hier steht ein Haus.',
+    word: 'Haus',
+    sentence: 'Das Haus ist groß.',
+    next: 'Hier steht ein Haus.'
+  },
+  {
+    language: 'en',
+    text: 'The bank approved the loan. The bank is open.',
+    word: 'bank',
+    sentence: 'The bank approved the loan.',
+    next: 'The bank is open.'
+  },
+  {
+    language: 'pt',
+    text: 'A casa é grande. Aqui está a casa.',
+    word: 'casa',
+    sentence: 'A casa é grande.',
+    next: 'Aqui está a casa.'
+  }
+]) {
+  test(`clicks a word, translates, saves and highlights it in ${sample.language}`, async ({
+    page,
+    context
+  }) => {
+    const requests = await mockStudy(page);
+    await uploadText(page, sample.language, sample.text);
+    await clickWord(page, sample.word);
+    await expect(panel(page).locator('.term')).toHaveText(sample.word);
+    await panel(page)
+      .getByRole('button', { name: 'Translate and explain' })
+      .click();
+    await expect(panel(page).getByText(lookupResult.translation)).toBeVisible();
+    await expect(panel(page).getByText(lookupResult.explanation)).toBeVisible();
+    expect(requests[0]).toEqual({
+      action: 'lookup',
+      term: sample.word,
+      sentence: sample.sentence,
+      previousSentence: '',
+      nextSentence: sample.next
+    });
+    await panel(page)
+      .getByRole('button', { name: 'Translate sentence' })
+      .click();
+    await expect(
+      panel(page).getByText('Synthetic sentence translation.')
+    ).toBeVisible();
+    expect(requests[1]).toEqual({
+      action: 'translate',
+      sentence: sample.sentence,
+      previousSentence: '',
+      nextSentence: sample.next
+    });
+
+    const save = page.waitForResponse((response) =>
+      response.url().endsWith('/vocabulary')
+    );
+    await panel(page).getByRole('button', { name: 'Save to deck' }).click();
+    const saved = await save;
+    expect(saved.status()).toBe(200);
+    const { note } = await saved.json();
+    const stored = await context.request.get(
+      `${base}/app/api/notes/${note.id}`
+    );
+    expect(await stored.json()).toMatchObject({
+      note: {
+        deckId: `library-deck-${sample.language}`,
+        content: {
+          front: sample.word,
+          back: `${lookupResult.translation} — ${lookupResult.explanation}`
+        }
+      }
+    });
+    await expect(page.locator('.text-page mark').first()).toHaveText(
+      sample.word
+    );
+    await page.reload();
+    await expect(page.locator('.text-page mark').first()).toHaveText(
+      sample.word
+    );
+  });
+}
+
+test('selects a phrase by dragging and keeps buttons disabled while a request runs', async ({
+  page
+}) => {
+  await uploadText(page, 'en', 'The river bank is steep. The path is long.');
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/app/api/library/*/study', async (route) => {
+    await gate;
+    await route.fulfill({ json: lookupResult });
+  });
+  await dragPhrase(page, 'river bank');
+  await expect(panel(page).locator('.term')).toHaveText('river bank');
+  const request = page.waitForRequest((r) => r.url().endsWith('/study'));
+  await panel(page)
+    .getByRole('button', { name: 'Translate and explain' })
+    .click();
+  expect((await request).postDataJSON()).toMatchObject({
+    term: 'river bank',
+    sentence: 'The river bank is steep.',
+    nextSentence: 'The path is long.'
+  });
+  await expect(
+    panel(page).getByRole('button', { name: 'Translate and explain' })
+  ).toBeDisabled();
+  await expect(
+    panel(page).getByRole('button', { name: 'Save to deck' })
+  ).toBeDisabled();
+  release();
+  await expect(panel(page).getByText(lookupResult.translation)).toBeVisible();
+  await expect(
+    panel(page).getByRole('button', { name: 'Save to deck' })
+  ).toBeEnabled();
+
+  let releaseSave!: () => void;
+  const saveGate = new Promise<void>((resolve) => {
+    releaseSave = resolve;
+  });
+  await page.route('**/app/api/library/*/vocabulary', async (route) => {
+    const response = await route.fetch();
+    await saveGate;
+    await route.fulfill({ response });
+  });
+  await panel(page).getByRole('button', { name: 'Save to deck' }).click();
+  await expect(
+    panel(page).getByRole('button', { name: 'Save to deck' })
+  ).toBeDisabled();
+  releaseSave();
+  await expect(page.locator('.text-page mark')).toHaveText('river bank');
+});
+
+test('extending a selection with the keyboard updates the lookup and does not turn the page', async ({
+  page
+}) => {
+  const paragraph = 'The river bank is steep and the path is long here.';
+  await uploadText(
+    page,
+    'en',
+    Array.from({ length: 120 }, () => paragraph).join('\n')
+  );
+  const pages = page.getByText(/^Page \d+ of \d+$/u);
+  await expect(pages).toHaveText('Page 1 of 4');
+  await clickWord(page, 'The');
+  await expect(panel(page).locator('.term')).toHaveText('The');
+  for (let i = 0; i < 3; i += 1) await page.keyboard.press('Shift+ArrowRight');
+  await expect(panel(page).locator('.term')).toHaveText('The river');
+  await expect(pages).toHaveText('Page 1 of 4');
+  await page.keyboard.press('ArrowRight');
+  await expect(pages).toHaveText('Page 2 of 4');
+});
+
+test('saves reading positions one at a time and in order', async ({ page }) => {
+  const paragraph = 'La maison est grande et la famille est heureuse ici.';
+  await uploadText(
+    page,
+    'fr',
+    Array.from({ length: 120 }, () => paragraph).join('\n')
+  );
+  const bodies: string[] = [];
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/app/api/library/*', async (route) => {
+    if (route.request().method() !== 'PATCH') return route.fallback();
+    bodies.push(route.request().postData() ?? '');
+    if (bodies.length === 1) await gate;
+    await route.fallback();
+  });
+  const pages = page.getByText(/^Page \d+ of \d+$/u);
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(pages).toHaveText('Page 2 of 4');
+  await expect.poll(() => bodies.length).toBe(1);
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(pages).toHaveText('Page 3 of 4');
+  await page.waitForTimeout(900);
+  expect(bodies).toHaveLength(1);
+  release();
+  await expect.poll(() => bodies.length).toBe(2);
+  expect(JSON.parse(bodies[0]).location).toBe('page:2');
+  expect(JSON.parse(bodies[1]).location).toBe('page:3');
+  await page.unroute('**/app/api/library/*');
+});
+
+test('the Look up selection button opens the lookup for selected text', async ({
+  page
+}) => {
+  await uploadText(page, 'en', 'The river bank is steep. The path is long.');
+  const lookupButton = page.getByRole('button', { name: 'Look up selection' });
+  await lookupButton.click();
+  await expect(
+    page.getByText('Select a word or phrase in the text first.')
+  ).toBeVisible();
+  await expect(panel(page)).toHaveCount(0);
+  await page.evaluate(() => {
+    const range = document.createRange();
+    range.selectNodeContents(document.querySelector('.text-page p') as Element);
+    const selection = document.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+  await lookupButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(panel(page).locator('.term')).toHaveText(
+    'The river bank is steep. The path is long'
+  );
+  await expect(
+    page.getByText('Select a word or phrase in the text first.')
+  ).toHaveCount(0);
+});
+
+test('drops a lookup reply that arrives after another word is selected', async ({
+  page
+}) => {
+  await uploadText(page, 'en', 'The river bank is steep. The path is long.');
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/app/api/library/*/study', async (route) => {
+    await gate;
+    await route.fulfill({ json: lookupResult });
+  });
+  await clickWord(page, 'river');
+  await expect(panel(page).locator('.term')).toHaveText('river');
+  await panel(page)
+    .getByRole('button', { name: 'Translate and explain' })
+    .click();
+  await clickWord(page, 'path');
+  await expect(panel(page).locator('.term')).toHaveText('path');
+  release();
+  await expect(
+    panel(page).getByRole('button', { name: 'Translate and explain' })
+  ).toBeEnabled();
+  await expect(panel(page).getByText(lookupResult.translation)).toHaveCount(0);
+  await expect(
+    panel(page).getByRole('button', { name: 'Save to deck' })
+  ).toBeDisabled();
+});
+
+test('a touch selection opens the lookup bar at the bottom of the screen', async ({
+  page
+}) => {
+  await uploadText(page, 'fr', 'Le chat dort ici.');
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.evaluate(() => {
+    document.dispatchEvent(
+      new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })
+    );
+    const text = document.querySelector('.text-page p')!.firstChild as Text;
+    const range = document.createRange();
+    range.setStart(text, 3);
+    range.setEnd(text, 7);
+    const selection = getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
+  await expect(panel(page).locator('.term')).toHaveText('chat');
+  const box = (await panel(page).boundingBox())!;
+  expect(box.x).toBe(0);
+  expect(box.width).toBe(390);
+  expect(Math.round(box.y + box.height)).toBe(800);
+});
+
+test('renders a PDF as pages, flips them and looks up a word', async ({
+  page
+}) => {
+  await mockStudy(page);
+  await uploadFixture(page, 'fr', 'three-pages.pdf');
+  const label = page.getByText(/^Page \d+ of \d+$/u);
+  await expect(label).toHaveText('Page 1 of 3');
+  await expect(page.locator('.pdf-page canvas')).toBeVisible();
+  await expect(page.locator('.textLayer')).toContainText('Bonjour le monde');
+  await clickWord(page, 'Bonjour');
+  await expect(panel(page).locator('.term')).toHaveText('Bonjour');
+  await panel(page)
+    .getByRole('button', { name: 'Translate and explain' })
+    .click();
+  await expect(panel(page).getByText(lookupResult.translation)).toBeVisible();
+  const saved = page.waitForResponse(
+    (response) =>
+      response.request().method() === 'PATCH' && response.status() === 200
+  );
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await expect(label).toHaveText('Page 2 of 3');
+  await expect(page.locator('.textLayer')).toContainText(
+    'la maison est grande'
+  );
+  await expect(panel(page)).toHaveCount(0);
+  await saved;
+  await page.reload();
+  await expect(label).toHaveText('Page 2 of 3');
+  await expect(page.locator('.textLayer')).toContainText(
+    'la maison est grande'
+  );
+});
+
+test('renders a Word document as pages and looks up a word', async ({
+  page
+}) => {
+  const requests = await mockStudy(page);
+  await uploadFixture(page, 'fr', 'document.docx');
+  await expect(page.locator('section.docx').first()).toContainText('Bonjour');
+  await expect(page.getByText(/^Page 1 of \d+$/u)).toBeVisible();
+  await clickWord(page, 'Bonjour');
+  await panel(page)
+    .getByRole('button', { name: 'Translate and explain' })
+    .click();
+  await expect(panel(page).getByText(lookupResult.translation)).toBeVisible();
+  expect(requests[0]).toMatchObject({ action: 'lookup', term: 'Bonjour' });
+});
+
+test('renders an EPUB in its own sandboxed frame and looks up a word', async ({
+  page
+}) => {
+  const requests = await mockStudy(page);
+  await uploadFixture(page, 'fr', 'book.epub');
+  const frameElement = page.locator('.epub-holder iframe');
+  await expect(frameElement).toBeVisible();
+  expect(await frameElement.getAttribute('sandbox')).not.toContain(
+    'allow-scripts'
+  );
+  const frame = page.frame({ url: /blob:|about:srcdoc|epub/u }) ?? undefined;
+  const content =
+    frame ?? (await (await frameElement.elementHandle())!.contentFrame())!;
+  await expect(content.locator('body')).toContainText('Bonjour');
+  await expect(page.getByText(/% read$/u)).toBeVisible();
+  await clickWord(page, 'Bonjour', content);
+  await panel(page)
+    .getByRole('button', { name: 'Translate and explain' })
+    .click();
+  await expect(panel(page).getByText(lookupResult.translation)).toBeVisible();
+  expect(requests[0]).toMatchObject({ action: 'lookup', term: 'Bonjour' });
 });
 
 test('shows the size error on the Library page when a file is too large', async ({
@@ -197,182 +680,6 @@ test('shows a rename error after an oversized upload', async ({ page }) => {
   await expect(page.getByRole('alert')).toHaveText(
     'Use a title of up to 160 characters.'
   );
-  await page.getByRole('button', { name: 'Delete document' }).first().click();
-  await expect(page.getByText('No documents yet.')).toBeVisible();
-});
-
-for (const sample of [
-  {
-    language: 'fr',
-    text: 'La maison est grande. Voici une maison.',
-    word: 'maison',
-    definition: 'house'
-  },
-  {
-    language: 'de',
-    text: 'Das Haus ist groß. Hier steht ein Haus.',
-    word: 'Haus',
-    definition: 'house'
-  },
-  {
-    language: 'en',
-    text: 'The bank approved the loan. The bank is open.',
-    word: 'bank',
-    definition: 'financial institution'
-  },
-  {
-    language: 'pt',
-    text: 'A casa é grande. Aqui está a casa.',
-    word: 'casa',
-    definition: 'house'
-  }
-]) {
-  test(`clicks words, translates, saves and resumes in ${sample.language}`, async ({
-    page,
-    context
-  }) => {
-    await page.route('**/app/api/library/*/study', async (route) => {
-      const body = route.request().postDataJSON();
-      await route.fulfill({
-        json: {
-          result:
-            body.action === 'translate'
-              ? 'Synthetic sentence translation.'
-              : sample.definition
-        }
-      });
-    });
-    await page.goto(`${base}/app/library`);
-    await page.getByLabel('Document language').selectOption(sample.language);
-    await page.getByLabel('File', { exact: true }).setInputFiles({
-      name: `${sample.language}.txt`,
-      mimeType: 'text/plain',
-      buffer: Buffer.from(sample.text)
-    });
-    await page.getByRole('button', { name: 'Upload document' }).click();
-    await page.getByRole('button', { name: /Show translation in/ }).click();
-    await expect(
-      page.getByText('Synthetic sentence translation.')
-    ).toBeVisible();
-    await page.getByRole('button', { name: 'Hide translation' }).click();
-    await expect(
-      page.getByText('Synthetic sentence translation.')
-    ).not.toBeVisible();
-    const lookup = page.waitForRequest((request) =>
-      request.url().endsWith('/study')
-    );
-    await page
-      .getByRole('button', { name: `Look up ${sample.word}`, exact: true })
-      .click();
-    expect((await lookup).postDataJSON()).toMatchObject({
-      action: 'lookup',
-      term: sample.word,
-      sentenceIndex: 0
-    });
-    await expect(
-      page.getByText(sample.definition, { exact: true })
-    ).toBeVisible();
-    const save = page.waitForResponse((response) =>
-      response.url().endsWith('/vocabulary')
-    );
-    await page.getByRole('button', { name: 'Save word draft' }).click();
-    const saved = await save;
-    expect(saved.status()).toBe(200);
-    const { note } = await saved.json();
-    const stored = await context.request.get(
-      `${base}/app/api/notes/${note.id}`
-    );
-    expect(await stored.json()).toMatchObject({
-      note: {
-        deckId: `library-deck-${sample.language}`,
-        content: { front: sample.word, back: sample.definition }
-      }
-    });
-    await expect(page.locator('mark')).toHaveText(sample.word);
-    await page.getByRole('button', { name: 'Next sentence' }).click();
-    await page.reload();
-    await expect(
-      page.getByRole('heading', { name: 'Sentence 2 of 2' })
-    ).toBeVisible();
-    await expect(page.locator('mark')).toHaveText(sample.word);
-  });
-}
-
-test('keeps the selected word stable during lookup and save', async ({
-  page
-}) => {
-  await page.goto(`${base}/app/library`);
-  await page.getByLabel('Document language').selectOption('en');
-  await page.getByLabel('File', { exact: true }).setInputFiles({
-    name: 'pending.txt',
-    mimeType: 'text/plain',
-    buffer: Buffer.from('The river bank is steep.')
-  });
-  await page.getByRole('button', { name: 'Upload document' }).click();
-  let releaseLookup!: () => void;
-  const lookupGate = new Promise<void>((resolve) => {
-    releaseLookup = resolve;
-  });
-  await page.route('**/app/api/library/*/study', async (route) => {
-    await lookupGate;
-    await route.fulfill({ json: { result: 'edge of a river' } });
-  });
-  await page
-    .getByLabel('Select a word or phrase from this sentence')
-    .fill('bank');
-  const lookup = page.waitForRequest((request) =>
-    request.url().endsWith('/study')
-  );
-  await page
-    .getByRole('button', { name: 'Look up in context', exact: true })
-    .click();
-  await lookup;
-  await expect(
-    page.getByLabel('Select a word or phrase from this sentence')
-  ).toBeDisabled();
-  releaseLookup();
-  await expect(
-    page.getByText('edge of a river', { exact: true })
-  ).toBeVisible();
-
-  let releaseSave!: () => void;
-  const saveGate = new Promise<void>((resolve) => {
-    releaseSave = resolve;
-  });
-  await page.route('**/app/api/library/*/vocabulary', async (route) => {
-    const response = await route.fetch();
-    await saveGate;
-    await route.fulfill({ response });
-  });
-  const save = page.waitForRequest((request) =>
-    request.url().endsWith('/vocabulary')
-  );
-  await page.getByRole('button', { name: 'Save word draft' }).click();
-  expect((await save).postDataJSON()).toMatchObject({
-    term: 'bank',
-    definition: 'edge of a river'
-  });
-  await expect(
-    page.getByLabel('Select a word or phrase from this sentence')
-  ).toBeDisabled();
-  await expect(page.getByLabel('Save to deck')).toBeDisabled();
-  releaseSave();
-  await expect(page.locator('mark')).toHaveText('bank');
-});
-
-test('renders PDF, DOCX and EPUB uploads in the reader', async ({ page }) => {
-  for (const name of ['text.pdf', 'document.docx', 'book.epub']) {
-    await page.goto(`${base}/app/library`);
-    await page.getByLabel('Document language').selectOption('fr');
-    await page
-      .getByLabel('File', { exact: true })
-      .setInputFiles(`tests/fixtures/library/${name}`);
-    await page.getByRole('button', { name: 'Upload document' }).click();
-    await expect(page).toHaveURL(/\/app\/library\/library-/u);
-    await expect(
-      page.getByRole('button', { name: 'Look up Bonjour', exact: true })
-    ).toBeVisible();
-  }
 });
 
 test('shows clear errors for unsupported and scanned uploads', async ({
@@ -394,71 +701,37 @@ test('shows clear errors for unsupported and scanned uploads', async ({
   await expect(page.getByRole('alert')).toContainText('no readable text');
 });
 
-test('keeps phrase study results when progress saving fails and highlights in another document', async ({
+test('keeps reading and shows an error when the place cannot be saved, and highlights saved phrases in another document', async ({
   page
 }) => {
-  await page.route('**/app/api/library/*/study', async (route) => {
-    await route.fulfill({
-      json: {
-        result:
-          route.request().postDataJSON().action === 'translate'
-            ? 'The little house is large.'
-            : 'little house'
-      }
-    });
-  });
-  await page.goto(`${base}/app/library`);
-  await page.getByLabel('Document language').selectOption('fr');
-  await page.getByLabel('File', { exact: true }).setInputFiles({
-    name: 'phrases.txt',
-    mimeType: 'text/plain',
-    buffer: Buffer.from('La petite maison est grande. Elle est belle.')
-  });
-  await page.getByRole('button', { name: 'Upload document' }).click();
-  await page
-    .getByLabel('Select a word or phrase from this sentence')
-    .fill('petite maison');
-  await page
-    .getByRole('button', { name: 'Look up in context', exact: true })
+  await mockStudy(page);
+  const paragraph = 'La petite maison est grande et belle ici et partout.';
+  await uploadText(
+    page,
+    'fr',
+    Array.from({ length: 80 }, () => paragraph).join('\n')
+  );
+  await dragPhrase(page, 'petite maison');
+  await panel(page)
+    .getByRole('button', { name: 'Translate and explain' })
     .click();
-  await expect(page.getByText('little house', { exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Save word draft' }).click();
-  await expect(page.locator('mark')).toHaveText('petite maison');
-  await page.getByRole('button', { name: /Show translation in/ }).click();
-  await expect(
-    page.getByText('The little house is large.', { exact: true })
-  ).toBeVisible();
+  await panel(page).getByRole('button', { name: 'Save to deck' }).click();
+  await expect(page.locator('.text-page mark').first()).toHaveText(
+    'petite maison'
+  );
   await page.route('**/app/api/library/*', (route) =>
-    route.fulfill({ status: 503, json: { message: 'Synthetic outage' } })
+    route.request().method() === 'PATCH'
+      ? route.fulfill({ status: 503, json: { message: 'Synthetic outage' } })
+      : route.continue()
   );
-  await page.getByRole('button', { name: 'Next sentence' }).click();
+  await page.getByRole('button', { name: 'Next page' }).click();
   await expect(page.getByRole('alert')).toContainText(
-    'Progress could not be saved'
+    'Your place could not be saved'
   );
-  await expect(page.getByText('little house', { exact: true })).toBeVisible();
-  await expect(
-    page.getByText('The little house is large.', { exact: true })
-  ).toBeVisible();
-  await expect(
-    page.getByLabel('Select a word or phrase from this sentence')
-  ).toHaveValue('petite maison');
+  await expect(page.getByText('Page 2 of 3')).toBeVisible();
   await page.unroute('**/app/api/library/*');
-  await page.getByRole('button', { name: 'Next sentence' }).click();
-  await expect(
-    page.getByRole('heading', { name: 'Sentence 2 of 2' })
-  ).toBeVisible();
-  await expect(
-    page.getByText('little house', { exact: true })
-  ).not.toBeVisible();
-  await page.goto(`${base}/app/library`);
-  await page.getByLabel('Document language').selectOption('fr');
-  await page.getByLabel('File', { exact: true }).setInputFiles({
-    name: 'another.txt',
-    mimeType: 'text/plain',
-    buffer: Buffer.from('Voici une petite maison.')
-  });
-  await page.getByRole('button', { name: 'Upload document' }).click();
-  await expect(page.locator('mark')).toHaveText('petite maison');
+  await uploadText(page, 'fr', 'Voici une petite maison.');
+  await expect(page.locator('.text-page mark')).toHaveText('petite maison');
 });
 
 test('returns 413 for chunked JSON and form requests through the real server', async ({

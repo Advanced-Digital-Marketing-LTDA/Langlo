@@ -1,164 +1,186 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
+  import { beforeNavigate } from '$app/navigation';
   import { languageNames } from '../../../../lib/languageNames';
-  import { highlightSavedTerms } from '../../../../lib/library-text';
+  import LibraryLookup from '../../../../lib/components/LibraryLookup.svelte';
+  import { mountTextReader } from '../../../../lib/library/text-reader';
+  import type {
+    ReaderOptions,
+    ReaderPosition,
+    ReaderRenderer,
+    ReaderSelection
+  } from '../../../../lib/library/types';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
-  let sentenceIndex = $state(0);
+  let host: HTMLElement;
+  let renderer: ReaderRenderer | null = null;
+  let position = $state<ReaderPosition | null>(null);
+  let selection = $state<ReaderSelection | null>(null);
   let savedTerms = $state<string[]>([]);
-  let term = $state('');
-  let translation = $state('');
-  let definition = $state('');
   let message = $state('');
-  let status = $state('');
-  let translationVisible = $state(false);
-  let busy = $state(false);
-  let selectedDeck = $state('');
-  $effect(() => {
-    sentenceIndex = data.document.progressIndex;
-    savedTerms = data.savedTerms;
-    selectedDeck = data.decks[0]?.id ?? '';
-  });
-  const sentence = $derived(data.sentences[sentenceIndex] ?? '');
-  const highlighted = $derived(highlightSavedTerms(sentence, savedTerms));
-  const wordSegmenter = $derived(
-    new Intl.Segmenter(data.document.language, { granularity: 'word' })
-  );
+  let loading = $state(true);
+  let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  let firstPosition = true;
 
-  async function moveTo(index: number) {
-    if (busy) return;
-    busy = true;
-    message = '';
-    status = '';
+  let pendingSave: ReaderPosition | null = null;
+
+  async function savePosition(next: ReaderPosition, keepalive = false) {
     try {
       const response = await fetch(
         `/app/api/library/${encodeURIComponent(data.document.id)}`,
         {
           method: 'PATCH',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ progressIndex: index })
-        }
-      );
-      if (!response.ok) {
-        message = 'Progress could not be saved. Try again.';
-        return;
-      }
-      sentenceIndex = index;
-      translation = '';
-      translationVisible = false;
-      definition = '';
-      term = '';
-    } catch {
-      message =
-        'Progress could not be saved. Check your connection and try again.';
-    } finally {
-      busy = false;
-    }
-  }
-
-  async function requestStudy(action: 'translate' | 'lookup') {
-    if (busy) return;
-    message = '';
-    status = '';
-    busy = true;
-    try {
-      const response = await fetch(
-        `/app/api/library/${encodeURIComponent(data.document.id)}/study`,
-        {
-          method: 'POST',
+          keepalive,
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            action,
-            sentenceIndex,
-            ...(action === 'lookup' ? { term } : {})
+            location: next.location,
+            fraction: next.fraction
           })
         }
       );
-      const body = (await response.json()) as {
-        result?: string;
-        message?: string;
-      };
-      if (!response.ok || !body.result) {
-        message = body.message ?? 'The request could not be completed.';
-      } else if (action === 'translate') {
-        translation = body.result;
-        translationVisible = true;
-      } else {
-        definition = body.result;
-      }
+      if (!response.ok) message = 'Your place could not be saved.';
     } catch {
-      message =
-        'The request could not be completed. Check your connection and try again.';
-    } finally {
-      busy = false;
+      message = 'Your place could not be saved. Check your connection.';
     }
   }
 
-  async function saveVocabulary() {
-    if (busy) return;
-    const submittedTerm = term.trim();
-    message = '';
-    status = '';
-    busy = true;
+  // One save at a time, so an older place cannot overwrite a newer one.
+  let saving = false;
+  let queuedSave: ReaderPosition | null = null;
+  async function sendPosition(next: ReaderPosition) {
+    if (saving) {
+      queuedSave = next;
+      return;
+    }
+    saving = true;
     try {
-      const response = await fetch(
-        `/app/api/library/${encodeURIComponent(data.document.id)}/vocabulary`,
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            deckId: selectedDeck,
-            term: submittedTerm,
-            definition
-          })
-        }
-      );
-      const body = (await response.json()) as {
-        message?: string;
-        note?: { status?: string };
-      };
-      if (!response.ok) {
-        message = body.message ?? 'The word could not be saved.';
-      } else if (body.note?.status === 'rejected') {
-        status = 'This vocabulary card was previously rejected.';
-      } else {
-        savedTerms = [...new Set([...savedTerms, submittedTerm])];
-        status =
-          body.note?.status === 'approved'
-            ? 'This vocabulary is already an approved flashcard.'
-            : 'Saved as a native flashcard draft.';
-      }
-    } catch {
-      message =
-        'The word could not be saved. Check your connection and try again.';
+      await savePosition(next);
     } finally {
-      busy = false;
+      saving = false;
     }
+    const waiting = queuedSave;
+    queuedSave = null;
+    if (waiting) await sendPosition(waiting);
   }
 
-  async function showTranslation() {
-    if (translation) translationVisible = true;
-    else await requestStudy('translate');
+  function onPosition(next: ReaderPosition) {
+    position = next;
+    selection = null;
+    // The place the reader opened at is already saved.
+    if (firstPosition) {
+      firstPosition = false;
+      return;
+    }
+    clearTimeout(saveTimer);
+    pendingSave = next;
+    saveTimer = setTimeout(() => {
+      pendingSave = null;
+      void sendPosition(next);
+    }, 500);
   }
 
-  async function lookupWord(word: string) {
-    if (busy) return;
-    term = word;
-    definition = '';
-    await requestStudy('lookup');
+  // Leaving the page must not lose the last page turned.
+  function flushPosition() {
+    clearTimeout(saveTimer);
+    const next = pendingSave ?? queuedSave;
+    pendingSave = null;
+    queuedSave = null;
+    if (next) void savePosition(next, true);
+  }
+  beforeNavigate(flushPosition);
+
+  async function originalBytes() {
+    const response = await fetch(
+      `/app/api/library/${encodeURIComponent(data.document.id)}/file`
+    );
+    if (!response.ok) throw new Error('The book could not be loaded.');
+    return new Uint8Array(await response.arrayBuffer());
+  }
+
+  async function mount(options: ReaderOptions): Promise<ReaderRenderer> {
+    const format = data.document.originalFormat;
+    if (!format) return mountTextReader(options, data.text ?? '');
+    const bytes = await originalBytes();
+    if (format === 'pdf')
+      return (
+        await import('../../../../lib/library/pdf-reader')
+      ).mountPdfReader(options, bytes);
+    if (format === 'docx')
+      return (
+        await import('../../../../lib/library/docx-reader')
+      ).mountDocxReader(options, bytes);
+    return (
+      await import('../../../../lib/library/epub-reader')
+    ).mountEpubReader(options, bytes);
+  }
+
+  // Documents read before page positions saved only a sentence index.
+  function legacyFraction() {
+    const { progressLocation, progressIndex, sentenceCount } = data.document;
+    if (progressLocation || !sentenceCount) return 0;
+    return Math.min(progressIndex / sentenceCount, 1);
+  }
+
+  onMount(() => {
+    let disposed = false;
+    savedTerms = data.savedTerms;
+    mount({
+      container: host,
+      language: data.document.language,
+      location: data.document.progressLocation,
+      legacyFraction: legacyFraction(),
+      savedTerms,
+      onPosition,
+      onSelect: (next) => {
+        message = '';
+        selection = next;
+      },
+      onError: (text) => (message = text)
+    })
+      .then((mounted) => {
+        if (disposed) mounted.destroy();
+        else renderer = mounted;
+      })
+      .catch((error: Error) => {
+        message = error.message || 'The book could not be opened.';
+      })
+      .finally(() => (loading = false));
+    return () => {
+      disposed = true;
+      flushPosition();
+      renderer?.destroy();
+    };
+  });
+
+  function flip(direction: 'next' | 'prev') {
+    selection = null;
+    void (direction === 'next' ? renderer?.next() : renderer?.prev());
+  }
+
+  function lookupSelection() {
+    message = '';
+    if (!renderer?.lookup())
+      message = 'Select a word or phrase in the text first.';
+  }
+
+  function onKeydown(event: KeyboardEvent) {
+    const target = event.target as HTMLElement;
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return;
+    // Modified arrows move or extend a text selection.
+    if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)
+      return;
+    if (event.key === 'ArrowRight') flip('next');
+    if (event.key === 'ArrowLeft') flip('prev');
+  }
+
+  function saved(term: string) {
+    savedTerms = [...new Set([...savedTerms, term])];
+    renderer?.markSaved(savedTerms);
   }
 </script>
 
-{#snippet words(text: string)}
-  {#each Array.from(wordSegmenter.segment(text)) as word (word.index)}
-    {#if word.isWordLike}<button
-        class="word"
-        aria-label={`Look up ${word.segment}`}
-        disabled={busy}
-        onclick={() => lookupWord(word.segment)}>{word.segment}</button
-      >{:else}{word.segment}{/if}
-  {/each}
-{/snippet}
+<svelte:window onkeydown={onKeydown} />
 
 <svelte:head>
   <title>{data.document.title} · Library · Langlo</title>
@@ -170,106 +192,109 @@
 <p>{languageNames[data.document.language] ?? data.document.language}</p>
 
 {#if message}<p class="error-box" role="alert">{message}</p>{/if}
-{#if status}<p role="status">{status}</p>{/if}
 
-{#if sentenceIndex >= data.sentences.length}
-  <section aria-labelledby="complete-heading">
-    <h2 id="complete-heading">Document complete</h2>
-    <p>You reached the end of this document.</p>
-    <button onclick={() => moveTo(0)}>Start again</button>
-  </section>
-{:else}
-  <section aria-labelledby="reader-heading">
-    <h2 id="reader-heading">
-      Sentence {sentenceIndex + 1} of {data.sentences.length}
-    </h2>
-    <p aria-live="polite">
-      {#each highlighted as part, index (`${index}-${part.text}`)}
-        {#if part.saved}<mark>{@render words(part.text)}</mark
-          >{:else}{@render words(part.text)}{/if}
-      {/each}
-    </p>
-    <div>
-      <button
-        onclick={() => moveTo(Math.max(0, sentenceIndex - 1))}
-        disabled={sentenceIndex === 0 || busy}>Previous</button
-      >
-      <button onclick={() => moveTo(sentenceIndex + 1)} disabled={busy}
-        >Next sentence</button
-      >
-    </div>
-  </section>
-
-  <section aria-labelledby="translation-heading">
-    <h2 id="translation-heading">Translation</h2>
-    {#if translation && translationVisible}
-      <p>{translation}</p>
-      <button onclick={() => (translationVisible = false)}
-        >Hide translation</button
-      >
-    {:else}
-      <button onclick={showTranslation} disabled={busy}
-        >Show translation in {data.targetLanguage === 'pt'
-          ? 'Portuguese'
-          : 'English'}</button
-      >
-    {/if}
-  </section>
-
-  <section aria-labelledby="vocabulary-heading">
-    <h2 id="vocabulary-heading">Word or phrase</h2>
-    <label>
-      Select a word or phrase from this sentence
-      <input
-        bind:value={term}
-        maxlength="256"
-        disabled={busy}
-        oninput={() => {
-          definition = '';
-          message = '';
-          status = '';
-        }}
-      />
-    </label>
-    <button
-      onclick={() => requestStudy('lookup')}
-      disabled={busy || !term.trim()}>Look up in context</button
+<section class="reader" class:with-lookup={selection} aria-label="Reader">
+  <div
+    class="window"
+    class:loading
+    bind:this={host}
+    lang={data.document.language}
+  ></div>
+  <div class="pager">
+    <button onclick={() => flip('prev')} disabled={!position?.canPrev}
+      >Previous page</button
     >
-    {#if definition}
-      <p>{definition}</p>
-      {#if data.decks.length}
-        <label>
-          Save to deck
-          <select bind:value={selectedDeck} disabled={busy}>
-            {#each data.decks as deck (deck.id)}
-              <option value={deck.id}>{deck.name}</option>
-            {/each}
-          </select>
-        </label>
-        <button onclick={saveVocabulary} disabled={busy}>Save word draft</button
-        >
-      {:else}
-        <p>
-          Create a {languageNames[data.document.language]} deck on the
-          <a href="/app/decks">Decks page</a> to save words.
-        </p>
-      {/if}
-    {/if}
-  </section>
+    <span aria-live="polite"
+      >{loading ? 'Loading…' : (position?.label ?? '')}</span
+    >
+    <button onclick={() => flip('next')} disabled={!position?.canNext}
+      >Next page</button
+    >
+  </div>
+  <p class="hint">
+    Select a word or phrase to translate and explain it. Click a word, or press
+    and hold on a phone.
+  </p>
+  <p>
+    <button type="button" onclick={lookupSelection} disabled={loading}
+      >Look up selection</button
+    >
+  </p>
+</section>
+
+{#if selection}
+  <LibraryLookup
+    documentId={data.document.id}
+    {selection}
+    decks={data.decks}
+    deckHint={languageNames[data.document.language] ?? data.document.language}
+    onSaved={saved}
+    onClose={() => (selection = null)}
+  />
 {/if}
 
 <style>
-  .word {
-    display: inline;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: inherit;
-    font: inherit;
-    cursor: pointer;
+  .window {
+    height: min(75vh, 60rem);
+    overflow: auto;
+    background: white;
+    border: 1px solid #b9c6d6;
+    border-radius: 0.5rem;
+    position: relative;
   }
-  .word:hover,
-  .word:focus-visible {
-    text-decoration: underline;
+  .window.loading {
+    opacity: 0.5;
+  }
+  /* The lookup bar covers the bottom of the screen on a phone. */
+  @media (max-width: 700px), (pointer: coarse) {
+    .reader.with-lookup {
+      padding-bottom: 16rem;
+    }
+  }
+  .pager {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.75rem 0;
+  }
+  .hint {
+    color: #49617a;
+    font-size: 0.9rem;
+  }
+  .window :global(.text-page) {
+    max-width: 42rem;
+    margin: 0 auto;
+    padding: 1.5rem;
+    font-size: 1.15rem;
+    line-height: 1.75;
+  }
+  .window :global(.pdf-holder) {
+    display: flex;
+    justify-content: center;
+  }
+  .window :global(.pdf-page) {
+    position: relative;
+  }
+  .window :global(.pdf-page canvas) {
+    display: block;
+  }
+  .window :global(.textLayer mark) {
+    color: transparent;
+    background: rgb(255 214 0 / 0.45);
+  }
+  .window :global(.docx-holder) {
+    background: #e5eaf1;
+  }
+  .window :global(.docx-holder .docx-wrapper) {
+    padding: 0.5rem;
+    background: transparent;
+  }
+  .window :global(.epub-holder) {
+    height: 100%;
+  }
+  .window :global(mark[data-saved]) {
+    background: rgb(255 214 0 / 0.45);
+    color: inherit;
   }
 </style>

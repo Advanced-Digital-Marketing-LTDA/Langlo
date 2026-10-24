@@ -102,7 +102,7 @@ An insert-time approval trigger rejects delivery for a draft/rejected card; clai
 
 The trigger SQL is deliberately hand-authored because Drizzle snapshots do not model triggers. Future table-rebuild migrations must preserve/recreate these triggers explicitly and test them. Once adopted outside disposable fixtures, applied migration files are immutable; add a new version instead of editing history. No down migration or automatic production rollback is provided. Code rollback and supported data restore remain separate; Turso provisioning/PITR/recovery are unverified release gates.
 
-Migration `0037_light_drax.sql` adds owner-scoped `library_documents` with extracted text, source language, sentence count and resumable sentence position; account deletion cascades. Migration `0038_demonic_garia.sql` adds per-owner daily Library AI call counters, also deleted with the owner. The uploaded binary is not retained.
+Migration `0037_light_drax.sql` adds owner-scoped `library_documents` with extracted text, source language, sentence count and resumable sentence position; account deletion cascades. Migration `0038_demonic_garia.sql` adds per-owner daily Library AI call counters, also deleted with the owner. Migration `0039_medical_maria_hill.sql` adds `library_document_files`, which keeps the uploaded PDF, DOCX or EPUB (up to 10 MB, owner-scoped through its document and deleted with it) so the reader can show the book itself, and adds `library_documents.progress_location`, the page or EPUB location where the reader stopped. TXT uploads keep only their extracted text.
 
 ## Guarded fixture commands
 

@@ -1,5 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import {
+  blob,
   check,
   foreignKey,
   index,
@@ -214,6 +215,8 @@ export const libraryDocuments = sqliteTable(
     content: text('content').notNull(),
     sentenceCount: integer('sentence_count').notNull(),
     progressIndex: integer('progress_index').notNull().default(0),
+    // Where the original-file reader stopped: a page number, or an EPUB location.
+    progressLocation: text('progress_location'),
     createdAt: createdAt()
   },
   (table) => [
@@ -230,6 +233,27 @@ export const libraryDocuments = sqliteTable(
     check(
       'library_documents_progress',
       sql`${table.progressIndex} BETWEEN 0 AND ${table.sentenceCount}`
+    )
+  ]
+);
+
+export const libraryDocumentFiles = sqliteTable(
+  'library_document_files',
+  {
+    documentId: text('document_id')
+      .primaryKey()
+      .references(() => libraryDocuments.id, { onDelete: 'cascade' }),
+    format: text('format', { enum: ['pdf', 'docx', 'epub'] }).notNull(),
+    data: blob('data', { mode: 'buffer' }).notNull()
+  },
+  (table) => [
+    check(
+      'library_document_files_format',
+      sql`${table.format} IN ('pdf', 'docx', 'epub')`
+    ),
+    check(
+      'library_document_files_size',
+      sql`length(${table.data}) BETWEEN 1 AND 10000000`
     )
   ]
 );

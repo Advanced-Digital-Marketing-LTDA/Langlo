@@ -4,6 +4,7 @@ import {
   createLibraryDocument,
   deleteLibraryDocument,
   getLibraryDocument,
+  getLibraryDocumentFile,
   listLibraryDocuments,
   listLibraryVocabulary,
   renameLibraryDocument,
@@ -16,6 +17,7 @@ import {
   createDeck,
   updateNote
 } from '../src/lib/server/flashcards';
+import { libraryMaxFileBytes } from '../src/lib/library-text';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   disposeFlashcardFixtures,
@@ -55,7 +57,8 @@ describe('Library documents', () => {
         create: () => createLibraryDocument(client, ownerA, document),
         rename: () =>
           renameLibraryDocument(client, ownerA, document.id, 'Renamed'),
-        progress: () => updateLibraryProgress(client, ownerA, document.id, 1),
+        progress: () =>
+          updateLibraryProgress(client, ownerA, document.id, 'page:1', 1),
         delete: () => deleteLibraryDocument(client, ownerA, document.id)
       };
       let finished = false;
@@ -159,6 +162,29 @@ describe('Library documents', () => {
     }
   );
 
+  it('saves a phrase that spans a line break in the stored text', async () => {
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-line-break',
+      title: 'Words',
+      language: 'en',
+      content: 'The river\nbank is steep.'
+    });
+    await createDeck(client, ownerA, {
+      id: 'deck-en',
+      name: 'English',
+      language: 'en'
+    });
+    const note = await saveLibraryVocabulary(client, ownerA, {
+      documentId: 'library-line-break',
+      deckId: 'deck-en',
+      term: 'river bank',
+      definition: 'a slope beside water'
+    });
+    expect(await getNote(client, ownerA, note.id)).toMatchObject({
+      content: { front: 'river bank' }
+    });
+  });
+
   it('accepts a definition at the advertised length limit', async () => {
     const input = await vocabularyFixture();
     const note = await saveLibraryVocabulary(client, ownerA, {
@@ -188,7 +214,7 @@ describe('Library documents', () => {
     ).rejects.toThrow('NOT_FOUND');
 
     await expect(
-      updateLibraryProgress(client, ownerB, document.id, 1)
+      updateLibraryProgress(client, ownerB, document.id, 'page:1', 0.5)
     ).rejects.toThrow('NOT_FOUND');
     await expect(
       renameLibraryDocument(client, ownerB, document.id, 'Stolen')
@@ -218,7 +244,7 @@ describe('Library documents', () => {
     );
     expect(await listLibraryVocabulary(client, ownerB, 'fr')).toEqual([]);
 
-    await updateLibraryProgress(client, ownerA, document.id, 1);
+    await updateLibraryProgress(client, ownerA, document.id, 'page:1', 0.5);
     await renameLibraryDocument(client, ownerA, document.id, 'Le livre');
     expect(await getLibraryDocument(client, ownerA, document.id)).toMatchObject(
       {
@@ -243,5 +269,133 @@ describe('Library documents', () => {
     expect(
       (await client.execute('SELECT id FROM library_documents')).rows
     ).toEqual([]);
+  });
+
+  it('stores the original file with the document and removes it with the document', async () => {
+    const bytes = new Uint8Array([1, 2, 3, 250]);
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-original',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.',
+      original: { format: 'epub', bytes }
+    });
+    expect(
+      await getLibraryDocument(client, ownerA, 'library-original')
+    ).toMatchObject({ originalFormat: 'epub', progressLocation: null });
+    expect(
+      await getLibraryDocumentFile(client, ownerA, 'library-original')
+    ).toEqual({ format: 'epub', bytes });
+    await expect(
+      getLibraryDocumentFile(client, ownerB, 'library-original')
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    await deleteLibraryDocument(client, ownerA, 'library-original');
+    expect(
+      (await client.execute('SELECT * FROM library_document_files')).rows
+    ).toEqual([]);
+  });
+
+  it('does not keep a document whose original file cannot be stored', async () => {
+    await expect(
+      createLibraryDocument(client, ownerA, {
+        id: 'library-empty-original',
+        title: 'Book',
+        language: 'fr',
+        content: 'Bonjour.',
+        original: { format: 'pdf', bytes: new Uint8Array() }
+      })
+    ).rejects.toThrow();
+    expect(await listLibraryDocuments(client, ownerA)).toEqual([]);
+  });
+
+  it('stores an original file of exactly the maximum size but not one byte more', async () => {
+    const original = (size: number) => ({
+      format: 'pdf' as const,
+      bytes: new Uint8Array(size)
+    });
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-max-original',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.',
+      original: original(libraryMaxFileBytes)
+    });
+    await expect(
+      createLibraryDocument(client, ownerA, {
+        id: 'library-over-original',
+        title: 'Book',
+        language: 'fr',
+        content: 'Bonjour.',
+        original: original(libraryMaxFileBytes + 1)
+      })
+    ).rejects.toThrow(/library_document_files_size/u);
+    expect(
+      (await listLibraryDocuments(client, ownerA)).map(({ id }) => id)
+    ).toEqual(['library-max-original']);
+  });
+
+  it.each([
+    ['txt', null, 'epubcfi(/6/4!/4/2)'],
+    ['pdf', 'pdf', 'epubcfi(/6/4!/4/2)'],
+    ['docx', 'docx', 'epubcfi(/6/4!/4/2)'],
+    ['epub', 'epub', 'page:2']
+  ] as const)(
+    'rejects a position of the wrong kind for a %s document',
+    async (_name, format, location) => {
+      await createLibraryDocument(client, ownerA, {
+        id: 'library-kind',
+        title: 'Book',
+        language: 'fr',
+        content: 'Bonjour.',
+        ...(format ? { original: { format, bytes: new Uint8Array([1]) } } : {})
+      });
+      await expect(
+        updateLibraryProgress(client, ownerA, 'library-kind', location, 0.5)
+      ).rejects.toMatchObject({ code: 'INVALID_LIBRARY_PROGRESS' });
+    }
+  );
+
+  it('accepts an EPUB location for an EPUB document', async () => {
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-epub-position',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.',
+      original: { format: 'epub', bytes: new Uint8Array([1]) }
+    });
+    await updateLibraryProgress(
+      client,
+      ownerA,
+      'library-epub-position',
+      'epubcfi(/6/4!/4/2)',
+      0.5
+    );
+    expect(
+      await getLibraryDocument(client, ownerA, 'library-epub-position')
+    ).toMatchObject({ progressLocation: 'epubcfi(/6/4!/4/2)' });
+  });
+
+  it.each([
+    ['', 0.5],
+    ['page:1', -0.1],
+    ['page:1', 1.1],
+    ['page:1', Number.NaN],
+    ['x'.repeat(513), 0.5]
+  ])('rejects the position %j at %j', async (location, fraction) => {
+    await createLibraryDocument(client, ownerA, {
+      id: 'library-position',
+      title: 'Book',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    await expect(
+      updateLibraryProgress(
+        client,
+        ownerA,
+        'library-position',
+        location,
+        fraction
+      )
+    ).rejects.toMatchObject({ code: 'INVALID_LIBRARY_PROGRESS' });
   });
 });

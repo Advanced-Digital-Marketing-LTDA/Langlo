@@ -357,7 +357,8 @@ describe('migration 0026 Portuguese tracks', () => {
         '0035_dapper_nehzno',
         '0036_deck_language',
         '0037_light_drax',
-        '0038_demonic_garia'
+        '0038_demonic_garia',
+        '0039_medical_maria_hill'
       ]);
       const result = await applyRemoteTestPlan(client, migrations, {
         host,
