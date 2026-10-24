@@ -126,6 +126,12 @@ it('rejects oversized public form bodies before auth handling', async () => {
     'content-length': String(512 * 1024 + 1)
   });
   expect(response.status).toBe(413);
+  expect(response.headers.get('cache-control')).toBe('private, no-store');
+  expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+  expect(await response.json()).toEqual({
+    message: 'This request is too large.',
+    correlationId: response.headers.get('x-correlation-id')
+  });
   expect(resolve).not.toHaveBeenCalled();
   expect(mocks.handler).not.toHaveBeenCalled();
 });
@@ -136,6 +142,25 @@ it('keeps the larger body allowance scoped to the upload action', async () => {
   });
   expect(response.status).toBe(401);
   expect(resolve).not.toHaveBeenCalled();
+});
+
+it.each([
+  '/app/library?/rename',
+  '/app/api/library?/upload',
+  '/signup?/upload'
+])('keeps the ordinary body limit for %s', async (path) => {
+  const { response, resolve } = await request(path, 'POST', {
+    'content-length': String(512 * 1024 + 1)
+  });
+  expect(response.status).toBe(413);
+  expect(resolve).not.toHaveBeenCalled();
+  expect(mocks.handler).not.toHaveBeenCalled();
+});
+
+it('propagates auth handler failures unrelated to request size', async () => {
+  const failure = new Error('synthetic auth handler failure');
+  mocks.handler.mockRejectedValue(failure);
+  await expect(request('/api/auth/sign-up/email')).rejects.toBe(failure);
 });
 
 it('bounds chunked auth API requests when Content-Length is absent', async () => {
@@ -154,6 +179,11 @@ it('bounds chunked auth API requests when Content-Length is absent', async () =>
     'x'.repeat(512 * 1024 + 1)
   );
   expect(response.status).toBe(413);
+  expect(mocks.handler).not.toHaveBeenCalled();
+  expect(await response.json()).toEqual({
+    message: 'This request is too large.',
+    correlationId: response.headers.get('x-correlation-id')
+  });
 });
 
 it('bounds chunked public form bodies without Content-Length', async () => {

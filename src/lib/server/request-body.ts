@@ -2,6 +2,14 @@ import { StudyError } from './study-error';
 
 export const MAX_REQUEST_BODY_BYTES = 512 * 1024;
 
+export function requestBodyLimit(request: Request, url: URL): number {
+  const uploadAction =
+    request.method === 'POST' &&
+    url.pathname.replace(/\/+$/, '') === '/app/library' &&
+    url.searchParams.has('/upload');
+  return uploadAction ? 11 * 1024 * 1024 : MAX_REQUEST_BODY_BYTES;
+}
+
 export async function limitRequestBody(
   request: Request,
   maxBytes = MAX_REQUEST_BODY_BYTES
