@@ -31,9 +31,7 @@ try {
     }
   });
   const { value } = await ast.to('text');
-  if (value.length > 1_000_000)
-    parentPort.postMessage({ code: 'LIBRARY_CONTENT_TOO_LARGE' });
-  else parentPort.postMessage({ text: value });
+  parentPort.postMessage({ text: value });
 } catch {
   parentPort.postMessage({
     code: controller.signal.aborted

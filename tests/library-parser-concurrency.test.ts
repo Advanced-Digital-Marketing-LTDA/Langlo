@@ -159,10 +159,10 @@ describe('Library parser concurrency', () => {
       'fr'
     );
     const rejected = expect(parsed).rejects.toMatchObject({
-      code: 'LIBRARY_CONTENT_TOO_LARGE'
+      code: 'LIBRARY_PARSE_TIMEOUT'
     });
     await tick();
-    workers[0].emit('message', { code: 'LIBRARY_CONTENT_TOO_LARGE' });
+    workers[0].emit('message', { code: 'LIBRARY_PARSE_TIMEOUT' });
     await rejected;
     await tick();
     await expectBothSlotsFree();
@@ -192,17 +192,17 @@ describe('Library parser concurrency', () => {
     await expectBothSlotsFree();
   });
 
-  it('rejects office text over the content ceiling', async () => {
+  it('accepts office text of any length', async () => {
     const parsed = parseLibraryDocument(
       new File(['synthetic'], 'book.pdf'),
       'fr'
     );
-    const rejected = expect(parsed).rejects.toMatchObject({
-      code: 'LIBRARY_CONTENT_TOO_LARGE'
+    const accepted = expect(parsed).resolves.toMatchObject({
+      content: 'a'.repeat(2_000_000)
     });
     await tick();
-    workers[0].emit('message', { text: 'a'.repeat(1_000_001) });
-    await rejected;
+    workers[0].emit('message', { text: 'a'.repeat(2_000_000) });
+    await accepted;
     await tick();
     await expectBothSlotsFree();
   });
