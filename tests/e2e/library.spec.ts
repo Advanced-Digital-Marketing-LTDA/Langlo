@@ -136,35 +136,43 @@ async function uploadFixture(page: Page, language: string, name: string) {
   await expect(page).toHaveURL(/\/app\/library\/library-/u);
 }
 
+/** Runs in the page: the viewport rectangle of `text` in the visible text. */
+function visiblePhraseRect(text: string) {
+  const walker = document.createTreeWalker(document.body, 4);
+  const nodes: Text[] = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+  let seen = 0;
+  const spans = nodes
+    .filter((node) => node.parentElement?.checkVisibility())
+    .map((node) => {
+      const span = { node, from: seen };
+      seen += node.data.length;
+      return span;
+    });
+  const from = spans
+    .map(({ node }) => node.data)
+    .join('')
+    .indexOf(text);
+  if (from === -1) return null;
+  const locate = (offset: number) => {
+    const span = spans.find(
+      (item) => offset <= item.from + item.node.data.length
+    );
+    if (!span) throw new Error('offset beyond text');
+    return { node: span.node, offset: offset - span.from };
+  };
+  const start = locate(from);
+  const end = locate(from + text.length);
+  const range = document.createRange();
+  range.setStart(start.node, start.offset);
+  range.setEnd(end.node, end.offset);
+  const { left, right, top, bottom } = range.getBoundingClientRect();
+  return { left, right, top, bottom };
+}
+
 /** The viewport rectangle of `phrase`, which may span highlighted words. */
 async function phraseBox(scope: Page | Frame, phrase: string) {
-  const box = await scope.evaluate((text) => {
-    const walker = document.createTreeWalker(document.body, 4);
-    const nodes: Text[] = [];
-    while (walker.nextNode()) {
-      const node = walker.currentNode as Text;
-      if (node.parentElement?.checkVisibility()) nodes.push(node);
-    }
-    const all = nodes.map((node) => node.data).join('');
-    const from = all.indexOf(text);
-    if (from === -1) return null;
-    const locate = (offset: number) => {
-      let seen = 0;
-      for (const node of nodes) {
-        if (offset <= seen + node.data.length)
-          return { node, offset: offset - seen };
-        seen += node.data.length;
-      }
-      throw new Error('offset beyond text');
-    };
-    const start = locate(from);
-    const end = locate(from + text.length);
-    const range = document.createRange();
-    range.setStart(start.node, start.offset);
-    range.setEnd(end.node, end.offset);
-    const { left, right, top, bottom } = range.getBoundingClientRect();
-    return { left, right, top, bottom };
-  }, phrase);
+  const box = await scope.evaluate(visiblePhraseRect, phrase);
   if (!box) throw new Error(`"${phrase}" is not on the page`);
   if (!('frameElement' in scope)) return box;
   const offset = await (await scope.frameElement()).boundingBox();

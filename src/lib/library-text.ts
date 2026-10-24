@@ -51,46 +51,58 @@ export function highlightSavedTerms(text: string, terms: string[]) {
 export const collapseWhitespace = (text: string) =>
   text.replace(/\s+/gu, ' ').trim();
 
+/** Cut `text` into consecutive pieces of at most `maxChars` characters. */
+function cutHard(text: string, maxChars: number): string[] {
+  const pieces: string[] = [];
+  for (let at = 0; at < text.length; at += maxChars)
+    pieces.push(text.slice(at, at + maxChars));
+  return pieces;
+}
+
+/** Cut a paragraph longer than a page at sentence boundaries. */
+function splitLongParagraph(paragraph: string, maxChars: number): string[] {
+  const pieces: string[] = [];
+  let chunk = '';
+  for (const sentence of splitSentences(paragraph)) {
+    if (chunk && chunk.length + sentence.length + 1 > maxChars) {
+      pieces.push(chunk);
+      chunk = '';
+    }
+    if (sentence.length > maxChars) pieces.push(...cutHard(sentence, maxChars));
+    else chunk = chunk ? `${chunk} ${sentence}` : sentence;
+  }
+  if (chunk) pieces.push(chunk);
+  return pieces;
+}
+
 /**
  * Split a document into reading pages of at most `maxChars` characters. Pages
  * end at a paragraph break when they can; a paragraph longer than a page is
  * cut at sentence boundaries, and a sentence longer than a page is cut hard.
  */
 export function paginateText(text: string, maxChars: number): string[] {
+  const pieces = text
+    .split(/\n+/u)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+    .flatMap((paragraph) =>
+      paragraph.length <= maxChars
+        ? [paragraph]
+        : splitLongParagraph(paragraph, maxChars)
+    );
   const pages: string[] = [];
   let page: string[] = [];
   let length = 0;
-  const flush = () => {
-    if (page.length) pages.push(page.join('\n'));
-    page = [];
-    length = 0;
-  };
-  const add = (piece: string) => {
-    if (length && length + piece.length + 1 > maxChars) flush();
+  for (const piece of pieces) {
+    if (length && length + piece.length + 1 > maxChars) {
+      pages.push(page.join('\n'));
+      page = [];
+      length = 0;
+    }
     page.push(piece);
     length += piece.length + 1;
-  };
-  for (const paragraph of text.split(/\n+/u)) {
-    const trimmed = paragraph.trim();
-    if (!trimmed) continue;
-    if (trimmed.length <= maxChars) {
-      add(trimmed);
-      continue;
-    }
-    let chunk = '';
-    for (const sentence of splitSentences(trimmed)) {
-      if (chunk && chunk.length + sentence.length + 1 > maxChars) {
-        add(chunk);
-        chunk = '';
-      }
-      if (sentence.length > maxChars) {
-        for (let at = 0; at < sentence.length; at += maxChars)
-          add(sentence.slice(at, at + maxChars));
-      } else chunk = chunk ? `${chunk} ${sentence}` : sentence;
-    }
-    if (chunk) add(chunk);
   }
-  flush();
+  if (page.length) pages.push(page.join('\n'));
   return pages;
 }
 

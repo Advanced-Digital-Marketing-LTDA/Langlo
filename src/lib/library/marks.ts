@@ -7,6 +7,24 @@ export function unmarkSavedTerms(root: Element) {
   root.normalize();
 }
 
+/** The text node's content with each saved term wrapped in a `<mark>`. */
+function markedFragment(doc: Document, text: string, terms: string[]) {
+  const parts = highlightSavedTerms(text, terms);
+  if (parts.length === 1 && !parts[0].saved) return null;
+  const fragment = doc.createDocumentFragment();
+  for (const part of parts) {
+    if (!part.saved) {
+      fragment.append(doc.createTextNode(part.text));
+      continue;
+    }
+    const mark = doc.createElement('mark');
+    mark.dataset.saved = '';
+    mark.textContent = part.text;
+    fragment.append(mark);
+  }
+  return fragment;
+}
+
 /** Highlight the learner's saved words in the text nodes under `root`. */
 export function markSavedTerms(root: Element, terms: string[]) {
   unmarkSavedTerms(root);
@@ -16,19 +34,7 @@ export function markSavedTerms(root: Element, terms: string[]) {
   const nodes: Text[] = [];
   while (walker.nextNode()) nodes.push(walker.currentNode as Text);
   for (const node of nodes) {
-    const parts = highlightSavedTerms(node.data, terms);
-    if (parts.length === 1 && !parts[0].saved) continue;
-    const fragment = doc.createDocumentFragment();
-    for (const part of parts) {
-      if (!part.saved) {
-        fragment.append(doc.createTextNode(part.text));
-        continue;
-      }
-      const mark = doc.createElement('mark');
-      mark.dataset.saved = '';
-      mark.textContent = part.text;
-      fragment.append(mark);
-    }
-    node.replaceWith(fragment);
+    const fragment = markedFragment(doc, node.data, terms);
+    if (fragment) node.replaceWith(fragment);
   }
 }
