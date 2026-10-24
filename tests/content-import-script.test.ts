@@ -77,9 +77,6 @@ const revisedLessons = lessons.filter((lesson) =>
 const revisedWithPt = revisedLessons.filter(
   (lesson) => lesson.version.translations?.pt
 );
-const authoredTranslations = lessons.filter(
-  (lesson) => lesson.version.translations?.pt
-);
 const skills = new Set(lessons.map((lesson) => lesson.skill_id)).size;
 const questions = lessons.reduce((n, l) => n + l.version.questions.length, 0);
 const latestMigrationTag = (
@@ -316,6 +313,13 @@ describe('revision totals', () => {
       )
     ).toHaveLength(revisedLessons.length);
     expect(revisedWithPt).toHaveLength(25 + english.length);
+    // The pinned literals used in the tests below, checked against the raw JSON.
+    expect(revisedWithPt).toHaveLength(44);
+    expect(lessons.filter((l) => l.version.translations?.pt)).toHaveLength(89);
+    expect(lessons.flatMap((l) => l.version.questions)).toHaveLength(questions);
+    expect(
+      revisedLessons.reduce((n, l) => n + l.version.questions.length, 0)
+    ).toBe(82 * 15);
   });
 });
 
@@ -366,7 +370,7 @@ describe('revising already imported lessons', () => {
         "SELECT kind, count(*) AS n FROM content_changes WHERE curriculum_version = '1.3.0' GROUP BY kind ORDER BY kind"
       );
       expect(changes.rows.map((row) => [row.kind, Number(row.n)])).toEqual([
-        ['lesson-translation-added', revisedWithPt.length],
+        ['lesson-translation-added', 44],
         ['question-same', revisions.length * 15],
         ['version-added', revisions.length]
       ]);
@@ -501,7 +505,9 @@ describe('module package', () => {
   });
 
   it('passes every authored Portuguese translation through the import package', () => {
-    const authored = authoredTranslations;
+    const authored = lessons.filter(
+      (lesson) => lesson.version.translations?.pt
+    );
     // 45 first versions plus 44 English revisions that repeat their translation.
     expect(authored).toHaveLength(89);
 
@@ -580,7 +586,7 @@ describe('module package', () => {
       lesson.version.questions.filter((question) => question.change)
     );
     // 82 revision lessons of 15 questions each.
-    expect(declared).toHaveLength(revisedLessons.length * 15);
+    expect(declared).toHaveLength(82 * 15);
     const imported = new Map(
       modulesPackage(root).versions.flatMap((version) =>
         version.questions.map((question) => [question.id, question] as const)
