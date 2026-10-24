@@ -39,6 +39,10 @@ earlier migration, snapshot or journal entry changed.
   five oldest, so "Due today" can start while more than five topics are
   overdue. The five-topic session limit is unchanged, and the Practice page
   still offers the five oldest.
+- `tests/db-migrations.test.ts` lists `0036_deck_language` as the newest
+  pending migration in its expected pending-tag array. This is the forward
+  migration this PR adds; the applied count (27) and every other tag are
+  unchanged, and the test still fails if the file is missing or misnamed.
 - Tests that call `createDeck` now pass a language. Two legacy migration
   fixtures insert their deck with SQL, because the old schema has no language.
 
