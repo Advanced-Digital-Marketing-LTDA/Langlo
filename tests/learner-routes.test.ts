@@ -5,10 +5,10 @@ import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
-  createDeck,
   createNote,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -59,11 +59,7 @@ beforeEach(async () => {
   target = await fixture();
   ({ client, close } = await openFixtureDatabase(target));
   const ownerB = testSession('learner-b');
-  await createDeck(client, ownerB, {
-    language: 'fr',
-    id: 'deck-b',
-    name: 'Deutsch'
-  });
+  await createDeck(client, ownerB, { id: 'deck-b', name: 'Deutsch' });
   await createNote(client, ownerB, {
     id: 'note-b',
     sourceId: testSourceId('b'),

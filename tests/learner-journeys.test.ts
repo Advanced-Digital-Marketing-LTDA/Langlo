@@ -29,7 +29,6 @@ import {
 } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
-  createDeck,
   createNote,
   getStudySchedule,
   getNote,
@@ -40,6 +39,7 @@ import {
   submitReview,
   updateNote
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -144,15 +144,10 @@ const todaysCards = () =>
 
 async function seedReviewAnalyticsNotes() {
   await createDeck(client, learner, {
-    language: 'fr',
     id: 'analytics-deck-a',
     name: 'Analytics'
   });
-  await createDeck(client, other, {
-    language: 'fr',
-    id: 'analytics-deck-b',
-    name: 'Other'
-  });
+  await createDeck(client, other, { id: 'analytics-deck-b', name: 'Other' });
   const notes = [
     { id: 'analytics-overdue', owner: learner, deck: 'analytics-deck-a' },
     { id: 'analytics-today', owner: learner, deck: 'analytics-deck-a' },
@@ -913,11 +908,7 @@ describe('decks, review and Anki export', () => {
   const deckId = 'deck-journey';
 
   beforeEach(async () => {
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: deckId,
-      name: 'French basics'
-    });
+    await createDeck(client, learner, { id: deckId, name: 'French basics' });
   });
 
   it('adds basic and cloze notes as drafts and lists them for the owner only', async () => {
@@ -1383,11 +1374,7 @@ describe('decks, review and Anki export', () => {
 
   it('persists validated account-wide study schedule without rescheduling existing cards', async () => {
     const deckId = 'deck-fsrs-settings';
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: deckId,
-      name: 'Schedule'
-    });
+    await createDeck(client, learner, { id: deckId, name: 'Schedule' });
     await createNote(client, learner, {
       id: 'note-fsrs-settings',
       sourceId: `langlo:v1:${'a'.repeat(64)}`,
@@ -1462,11 +1449,7 @@ describe('decks, review and Anki export', () => {
 
   it('uses newly saved parameters for new cards and the next rating only', async () => {
     const deckId = 'deck-fsrs-deferred';
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: deckId,
-      name: 'Deferred'
-    });
+    await createDeck(client, learner, { id: deckId, name: 'Deferred' });
     const makeNote = async (id: string) => {
       await createNote(client, learner, {
         id,
@@ -1521,21 +1504,9 @@ describe('decks, review and Anki export', () => {
   it('searches every status across owned decks and returns tags and deck labels', async () => {
     const firstDeck = 'deck-search-first';
     const secondDeck = 'deck-search-second';
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: firstDeck,
-      name: 'First'
-    });
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: secondDeck,
-      name: 'Second'
-    });
-    await createDeck(client, other, {
-      language: 'fr',
-      id: 'deck-search-other',
-      name: 'Other'
-    });
+    await createDeck(client, learner, { id: firstDeck, name: 'First' });
+    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
+    await createDeck(client, other, { id: 'deck-search-other', name: 'Other' });
     for (const [id, deckId, status, tags] of [
       ['note-search-approved', secondDeck, 'approved', 'shared, grammar'],
       ['note-search-draft', firstDeck, 'draft', 'shared'],
@@ -1614,16 +1585,8 @@ describe('decks, review and Anki export', () => {
   it('normalizes tags and moves notes without replacing card identity, schedule, or review events', async () => {
     const firstDeck = 'deck-tags-first';
     const secondDeck = 'deck-tags-second';
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: firstDeck,
-      name: 'First'
-    });
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: secondDeck,
-      name: 'Second'
-    });
+    await createDeck(client, learner, { id: firstDeck, name: 'First' });
+    await createDeck(client, learner, { id: secondDeck, name: 'Second' });
     await createNote(client, learner, {
       id: 'note-tags-move',
       sourceId: `langlo:v1:${'d'.repeat(64)}`,
@@ -1667,11 +1630,7 @@ describe('decks, review and Anki export', () => {
 
   it('suspends and resumes only the learner’s approved cards and removes them from due counts', async () => {
     const deckId = 'deck-suspension';
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: deckId,
-      name: 'Suspension'
-    });
+    await createDeck(client, learner, { id: deckId, name: 'Suspension' });
     await createNote(client, learner, {
       id: 'note-suspension',
       sourceId: `langlo:v1:${'e'.repeat(64)}`,
@@ -1700,11 +1659,7 @@ describe('decks, review and Anki export', () => {
   });
 
   it('validates suspension forms and rejects cards that are not approved', async () => {
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: 'deck-pending',
-      name: 'Pending'
-    });
+    await createDeck(client, learner, { id: 'deck-pending', name: 'Pending' });
     await createNote(client, learner, {
       id: 'note-pending',
       sourceId: `langlo:v1:${'f'.repeat(64)}`,

@@ -43,8 +43,9 @@ earlier migration, snapshot or journal entry changed.
   pending migration in its expected pending-tag array. This is the forward
   migration this PR adds; the applied count (27) and every other tag are
   unchanged, and the test still fails if the file is missing or misnamed.
-- Tests that call `createDeck` now pass a language. Two legacy migration
-  fixtures insert their deck with SQL, because the old schema has no language.
+- Tests that do not depend on a deck's language create French decks through
+  the `tests/fixtures/french-deck.ts` helper. Two legacy migration fixtures
+  insert their deck with SQL, because the old schema has no language.
 
 ## Checks run
 

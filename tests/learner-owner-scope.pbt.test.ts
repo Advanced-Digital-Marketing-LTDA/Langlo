@@ -4,12 +4,12 @@ import { propertyOptions } from './property-options';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listReviewEvents,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   getAttempt,
   getStudySession,
@@ -37,11 +37,7 @@ it('guessed identifiers give another owner zero reads and zero writes', async ()
   try {
     const ownerA = testSession('learner-a');
     const ownerB = testSession('learner-b');
-    await createDeck(client, ownerA, {
-      language: 'fr',
-      id: 'deck-a',
-      name: 'Français'
-    });
+    await createDeck(client, ownerA, { id: 'deck-a', name: 'Français' });
     await createNote(client, ownerA, {
       id: 'note-a',
       sourceId: testSourceId('a'),

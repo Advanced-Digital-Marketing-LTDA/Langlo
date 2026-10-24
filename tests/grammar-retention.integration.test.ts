@@ -205,7 +205,7 @@ describe('grammar retention storage and session flow', () => {
         sql: "UPDATE grammar_retention_schedules SET due_at = ? WHERE owner_id = ? AND skill_id = 'fr-a1-001'",
         args: [dueAt, learner.userId]
       });
-    const day = { start: 10_000, end: 20_000 };
+    const day = { start: 10_000, end: 20_000, now: 15_000 };
     const topic = (dueAt: number, ready: boolean) => ({
       skillId: 'fr-a1-001',
       title: 'Synthetic fr-a1-001',
@@ -213,26 +213,26 @@ describe('grammar retention storage and session flow', () => {
       ready
     });
     await setDue(9_999);
-    expect(await grammarDueToday(client, learner, 'fr', day, 15_000)).toEqual({
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
       overdue: [topic(9_999, true)],
       today: []
     });
     await setDue(10_000);
-    expect(await grammarDueToday(client, learner, 'fr', day, 15_000)).toEqual({
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
       overdue: [],
       today: [topic(10_000, true)]
     });
     await setDue(18_000);
-    expect(await grammarDueToday(client, learner, 'fr', day, 15_000)).toEqual({
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
       overdue: [],
       today: [topic(18_000, false)]
     });
     await setDue(20_000);
-    expect(await grammarDueToday(client, learner, 'fr', day, 15_000)).toEqual({
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
       overdue: [],
       today: []
     });
-    expect(await grammarDueToday(client, other, 'fr', day, 15_000)).toEqual({
+    expect(await grammarDueToday(client, other, 'fr', day)).toEqual({
       overdue: [],
       today: []
     });

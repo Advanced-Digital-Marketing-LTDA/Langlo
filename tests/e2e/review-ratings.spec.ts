@@ -4,11 +4,8 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client/sqlite3';
-import {
-  approveNote,
-  createDeck,
-  createNote
-} from '../../src/lib/server/flashcards';
+import { approveNote, createNote } from '../../src/lib/server/flashcards';
+import { createDeck } from '../fixtures/french-deck';
 import {
   createFixtureDatabase,
   disposeFixtureDatabase,
@@ -93,11 +90,7 @@ test('reveals each answer and stores every rating', async ({
   const client = createClient({ url: `file://${dbFile}` });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
-    await createDeck(client, learner, {
-      language: 'fr',
-      id: 'deck-rita',
-      name: 'Rita FR'
-    });
+    await createDeck(client, learner, { id: 'deck-rita', name: 'Rita FR' });
     for (const [index, rating] of ratings.entries()) {
       await createNote(client, learner, {
         id: `note-${rating}`,

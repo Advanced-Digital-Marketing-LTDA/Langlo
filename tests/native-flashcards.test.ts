@@ -5,12 +5,12 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { listDueCards, searchNotes } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listReviewEvents,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -187,7 +187,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-many-bad',
         name: 'Due'
       });
@@ -326,7 +325,6 @@ describe('native flashcard persistence feasibility', () => {
         ['b', ownerB]
       ] as const) {
         await createDeck(db.client, owner, {
-          language: 'fr',
           id: `deck-identical-${label}`,
           name: 'French'
         });
@@ -370,7 +368,6 @@ describe('native flashcard persistence feasibility', () => {
     const first = await openFixtureDatabase(target);
     try {
       await createDeck(first.client, ownerA, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000001',
         name: 'French'
       });
@@ -648,7 +645,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000025',
         name: 'French'
       });
@@ -695,7 +691,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, ownerA, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000003',
         name: 'French'
       });
@@ -746,7 +741,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000030',
         name: 'French'
       });
@@ -802,7 +796,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000006',
         name: 'French'
       });
@@ -863,7 +856,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000007',
         name: 'French'
       });
@@ -911,7 +903,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000008',
         name: 'French'
       });
@@ -969,7 +960,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000009',
         name: 'French'
       });
@@ -1028,7 +1018,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000011',
         name: 'French'
       });
@@ -1094,7 +1083,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000012',
         name: 'French'
       });
@@ -1127,7 +1115,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000030',
         name: 'French'
       });
@@ -1157,7 +1144,6 @@ describe('native flashcard persistence feasibility', () => {
     const db = await openFixtureDatabase(target);
     try {
       await createDeck(db.client, learner, {
-        language: 'fr',
         id: 'deck-10000000-0000-4000-8000-000000000031',
         name: 'French'
       });

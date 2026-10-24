@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   approveOwnNote,
   countDueCards,
@@ -391,11 +391,7 @@ describe('mistake-card validation and explanation fallbacks', () => {
     const { db } = await setup();
     try {
       const deckId = 'deck-validation';
-      await createDeck(db.client, learner, {
-        language: 'fr',
-        id: deckId,
-        name: 'Validation'
-      });
+      await createDeck(db.client, learner, { id: deckId, name: 'Validation' });
       const validContent = { front: 'Bonjour', back: 'Hello' };
 
       await expect(

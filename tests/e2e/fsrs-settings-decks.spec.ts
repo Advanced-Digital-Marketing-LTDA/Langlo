@@ -6,13 +6,13 @@ import { join } from 'node:path';
 import { createClient } from '@libsql/client/sqlite3';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listReviewEvents,
   rejectNote,
   submitReview
 } from '../../src/lib/server/flashcards';
+import { createDeck } from '../fixtures/french-deck';
 import { countDueCards } from '../../src/lib/server/flashcard-views';
 import { studyDayStart } from '../../src/lib/server/study-days';
 import {
@@ -97,13 +97,8 @@ test('saves FSRS settings, searches all note statuses, moves notes and suspends 
   const client = createClient({ url: `file://${dbFile}` });
   try {
     await client.execute('PRAGMA foreign_keys = ON');
+    await createDeck(client, learner, { id: 'deck-first', name: 'First deck' });
     await createDeck(client, learner, {
-      language: 'fr',
-      id: 'deck-first',
-      name: 'First deck'
-    });
-    await createDeck(client, learner, {
-      language: 'fr',
       id: 'deck-second',
       name: 'Second deck'
     });
@@ -230,7 +225,6 @@ async function reviewOneCard(
   learner: { userId: string }
 ) {
   await createDeck(client, learner, {
-    language: 'fr',
     id: 'deck-analytics',
     name: 'Analytics deck'
   });

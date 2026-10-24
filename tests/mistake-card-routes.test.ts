@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeConfig } from '../src/lib/server/config';
-import { createDeck, getNote } from '../src/lib/server/flashcards';
+import { getNote } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import { createMistakeDraft } from '../src/lib/server/mistake-cards';
 import { disposeFlashcardFixtures } from './fixtures/flashcards';
 import {
@@ -290,11 +291,7 @@ describe('mistake-card pages', () => {
     const { db, target } = await setup();
     try {
       const deckId = 'deck-page-cloze';
-      await createDeck(db.client, learner, {
-        language: 'fr',
-        id: deckId,
-        name: 'Cloze'
-      });
+      await createDeck(db.client, learner, { id: deckId, name: 'Cloze' });
       expect(
         await deckActions.addNote(
           formEvent({

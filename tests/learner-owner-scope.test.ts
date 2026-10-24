@@ -3,13 +3,13 @@ import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listDecks,
   listReviewEvents,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   getAttempt,
   getStudySession,
@@ -38,11 +38,7 @@ beforeEach(async () => {
   const target = await fixture();
   ({ client, close } = await openFixtureDatabase(target));
   // Owner B's flashcard history: deck, approved note, reviewed card.
-  await createDeck(client, ownerB, {
-    language: 'fr',
-    id: 'deck-b',
-    name: 'Deutsch'
-  });
+  await createDeck(client, ownerB, { id: 'deck-b', name: 'Deutsch' });
   await createNote(client, ownerB, {
     id: 'note-b',
     sourceId: testSourceId('b'),

@@ -251,22 +251,22 @@ export async function dueGrammarReviews(
 
 /**
  * Every available grammar skill of a track that falls due before the study
- * day ends: overdue ones fell due before it started, today's ones since.
+ * day (`start` to `end`) ends: overdue ones fell due before it started,
+ * today's ones since.
  * `ready` marks the skills a review session can include now.
  */
 export async function grammarDueToday(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
   language: string,
-  day: { start: number; end: number },
-  now = Date.now()
+  { start, end, now }: { start: number; end: number; now: number }
 ) {
   const due = (await grammarRetentionFor(client, learner, language, now))
     .filter(
       (skill): skill is SkillRetention & { retention: { dueAt: number } } =>
         skill.available &&
         skill.retention.dueAt !== null &&
-        skill.retention.dueAt < day.end
+        skill.retention.dueAt < end
     )
     .sort(
       (a, b) =>
@@ -280,8 +280,8 @@ export async function grammarDueToday(
       ready: retention.dueAt <= now
     }));
   return {
-    overdue: due.filter((skill) => skill.dueAt < day.start),
-    today: due.filter((skill) => skill.dueAt >= day.start)
+    overdue: due.filter((skill) => skill.dueAt < start),
+    today: due.filter((skill) => skill.dueAt >= start)
   };
 }
 

@@ -51,7 +51,7 @@ export const load: PageServerLoad = (event) =>
     const grammar =
       language === UNASSIGNED_LANGUAGE
         ? null
-        : await grammarDueToday(client, learner, language, day, now);
+        : await grammarDueToday(client, learner, language, { ...day, now });
     const laterToday = (items: { dueAt: number; ready: boolean }[]) =>
       items.find((item) => !item.ready)?.dueAt ?? null;
     return {
@@ -84,7 +84,10 @@ async function startDueGrammarReview(
       throw new StudyError('NOT_FOUND');
     const now = Date.now();
     const day = await currentStudyDay(client, learner, now);
-    const due = await grammarDueToday(client, learner, language, day, now);
+    const due = await grammarDueToday(client, learner, language, {
+      ...day,
+      now
+    });
     const skillIds = due[bucket]
       .filter((skill) => skill.ready)
       .slice(0, grammarSessionLimit)
