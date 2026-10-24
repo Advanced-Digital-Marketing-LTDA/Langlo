@@ -42,6 +42,7 @@
     "better-auth": "1.7.7",
     "drizzle-orm": "0.45.3",
     "nodemailer": "10.0.13",
+    "officeparser": "8.2.0",
     "ts-fsrs": "5.4.2"
   },
   "overrides": {

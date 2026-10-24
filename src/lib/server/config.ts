@@ -17,7 +17,8 @@ export const configVariables = [
   'PROTON_SMTP_TOKEN',
   'MAIL_CAPTURE_DIR',
   'APP_BUILD_SHA',
-  'TYPESAFE_API_KEY'
+  'TYPESAFE_API_KEY',
+  'OPENAI_API_KEY'
 ] as const;
 
 export type ConfigVariable = (typeof configVariables)[number];
@@ -91,6 +92,10 @@ export interface RuntimeConfig {
   typesafeApiKey?: string;
   /** Set when TYPESAFE_API_KEY is unusable; the app keeps serving and the fallback stays off. */
   typesafeApiKeyError?: ConfigError;
+  /** Optional key for learner-requested Library translation and lookup. */
+  openAiApiKey?: string;
+  /** Set when OPENAI_API_KEY is unusable; Library AI stays off. */
+  openAiApiKeyError?: ConfigError;
 }
 
 /** Validate private runtime metadata without connecting to a provider; retain credentials only for selected remote libSQL. */
@@ -209,6 +214,22 @@ function typesafeApiKeyConfig(
   }
 }
 
+function openAiApiKeyConfig(
+  env: Record<string, string | undefined>
+): Pick<RuntimeConfig, 'openAiApiKey' | 'openAiApiKeyError'> {
+  const raw = env.OPENAI_API_KEY;
+  if (raw === undefined || raw === '') return {};
+  try {
+    const key = raw.trim();
+    if (key !== raw || !/^[\x21-\x7e]{20,}$/u.test(key))
+      throw new ConfigError('OPENAI_API_KEY');
+    return { openAiApiKey: key };
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    return { openAiApiKeyError: error };
+  }
+}
+
 export function parseRuntimeConfig(
   env: Record<string, string | undefined>
 ): RuntimeConfig {
@@ -284,6 +305,7 @@ export function parseRuntimeConfig(
     databaseToken,
     revision,
     auth: dataEnabled ? parseAuthConfig(env, environment) : undefined,
-    ...(dataEnabled ? typesafeApiKeyConfig(env) : {})
+    ...(dataEnabled ? typesafeApiKeyConfig(env) : {}),
+    ...(dataEnabled ? openAiApiKeyConfig(env) : {})
   };
 }

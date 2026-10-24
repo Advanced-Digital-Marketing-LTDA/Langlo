@@ -202,6 +202,57 @@ export const enrollments = sqliteTable(
   ]
 );
 
+export const libraryDocuments = sqliteTable(
+  'library_documents',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    language: text('language', { enum: ['fr', 'de', 'en', 'pt'] }).notNull(),
+    content: text('content').notNull(),
+    sentenceCount: integer('sentence_count').notNull(),
+    progressIndex: integer('progress_index').notNull().default(0),
+    createdAt: createdAt()
+  },
+  (table) => [
+    index('library_documents_owner_created').on(table.ownerId, table.createdAt),
+    check(
+      'library_documents_title',
+      sql`length(trim(${table.title})) BETWEEN 1 AND 160 AND length(${table.title}) <= 160 AND instr(${table.title}, char(0)) = 0`
+    ),
+    check(
+      'library_documents_language',
+      sql`${table.language} IN ('fr', 'de', 'en', 'pt')`
+    ),
+    check('library_documents_sentence_count', sql`${table.sentenceCount} > 0`),
+    check(
+      'library_documents_progress',
+      sql`${table.progressIndex} BETWEEN 0 AND ${table.sentenceCount}`
+    )
+  ]
+);
+
+export const libraryAiUsage = sqliteTable(
+  'library_ai_usage',
+  {
+    day: text('day').notNull(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    calls: integer('calls').notNull().default(0)
+  },
+  (table) => [
+    primaryKey({ columns: [table.day, table.ownerId] }),
+    check(
+      'library_ai_usage_day',
+      sql`length(${table.day}) = 10 AND ${table.day} GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'`
+    ),
+    check('library_ai_usage_calls', sql`${table.calls} >= 0`)
+  ]
+);
+
 export const skills = sqliteTable(
   'skills',
   {

@@ -13,6 +13,11 @@ import { resolveAuth } from './lib/server/auth-runtime';
 import { withCorrelationId } from './lib/server/request-context';
 import { authRequestHeaders } from './lib/server/auth-request';
 import { requestLog } from './lib/server/request-log';
+import {
+  MAX_REQUEST_BODY_BYTES,
+  limitRequestBody
+} from './lib/server/request-body';
+import { StudyError } from './lib/server/study-error';
 
 Sentry.init({
   dsn: publicEnv.PUBLIC_GLITCHTIP_DSN,
@@ -48,6 +53,22 @@ const appHandle: Handle = async ({ event, resolve }) => {
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'same-origin'
   };
+  const contentLength = event.request.headers.get('content-length');
+  const uploadAction =
+    event.request.method === 'POST' &&
+    path === '/app/library' &&
+    event.url.searchParams.has('/upload');
+  const maxBodyBytes = uploadAction ? 11 * 1024 * 1024 : MAX_REQUEST_BODY_BYTES;
+  if (
+    contentLength &&
+    /^\d+$/u.test(contentLength) &&
+    Number(contentLength) > maxBodyBytes
+  ) {
+    return Response.json(
+      { message: 'This request is too large.', correlationId },
+      { status: 413, headers }
+    );
+  }
   const prototypeRoute =
     path === '/prototype' || path.startsWith('/prototype/');
   if (
@@ -151,9 +172,25 @@ const appHandle: Handle = async ({ event, resolve }) => {
         { status: 503, headers }
       );
     }
-    const authResponse = await withCorrelationId(correlationId, () =>
-      auth.handler(new Request(event.request, { headers: authHeaders }))
-    );
+    let authResponse: Response;
+    try {
+      const authRequest = await limitRequestBody(
+        new Request(event.request, { headers: authHeaders })
+      );
+      authResponse = await withCorrelationId(correlationId, () =>
+        auth.handler(authRequest)
+      );
+    } catch (error) {
+      if (
+        error instanceof StudyError &&
+        error.code === 'REQUEST_BODY_TOO_LARGE'
+      )
+        return Response.json(
+          { message: 'This request is too large.', correlationId },
+          { status: 413, headers }
+        );
+      throw error;
+    }
     const output = new Response(authResponse.body, authResponse);
     if (
       path.startsWith('/api/auth/reset-password/') &&
@@ -215,7 +252,27 @@ const appHandle: Handle = async ({ event, resolve }) => {
       );
     }
   }
-  const response = await withCorrelationId(correlationId, () => resolve(event));
+  let response: Response;
+  try {
+    const request = await limitRequestBody(event.request, maxBodyBytes);
+    const boundedEvent = new Proxy(event, {
+      get(target, property) {
+        return property === 'request'
+          ? request
+          : Reflect.get(target, property, target);
+      }
+    });
+    response = await withCorrelationId(correlationId, () =>
+      resolve(boundedEvent)
+    );
+  } catch (error) {
+    if (error instanceof StudyError && error.code === 'REQUEST_BODY_TOO_LARGE')
+      return Response.json(
+        { message: 'This request is too large.', correlationId },
+        { status: 413, headers }
+      );
+    throw error;
+  }
   const output = new Response(response.body, response);
   for (const [key, value] of Object.entries(headers))
     output.headers.set(key, value);
