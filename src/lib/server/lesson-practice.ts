@@ -92,13 +92,20 @@ export async function practiceFor(
   studySessionId: string | null,
   skillId: string
 ) {
-  if (!studySessionId) return { exercise: null, feedback: null };
+  if (!studySessionId)
+    return { exercise: null, feedback: null, reviewSessionId: null };
   const pending = sessionFeedback(client, learner, studySessionId, skillId);
   const [exercise, answered] = await Promise.all([
     exerciseAfter(client, learner, studySessionId, skillId, pending),
     pending
   ]);
-  return { exercise, feedback: answered.feedback };
+  return {
+    exercise,
+    feedback: answered.feedback,
+    // A grammar review is a list of topics, so its lessons lead back to it.
+    reviewSessionId:
+      answered.study.mode === 'mixed-review' ? studySessionId : null
+  };
 }
 
 async function exerciseAfter(

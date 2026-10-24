@@ -78,6 +78,22 @@ export async function unfinishedPractice(
   return row ? { id: String(row.id), answered: Number(row.answered) } : null;
 }
 
+/** The learner's newest grammar review in a track that is not finished yet. */
+export async function unfinishedGrammarReview(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string
+): Promise<{ id: string } | null> {
+  const found = await client.execute({
+    sql: `SELECT id FROM study_sessions
+      WHERE owner_id = ? AND language = ? AND mode = 'mixed-review' AND state IN ('active', 'paused')
+      ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+    args: [learner.userId, language]
+  });
+  const row = found.rows[0];
+  return row ? { id: String(row.id) } : null;
+}
+
 /**
  * Start a practice session in an enrolled track, or continue the learner's
  * unfinished one: a new session begins only after the old one is finished.

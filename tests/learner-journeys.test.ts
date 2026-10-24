@@ -80,7 +80,10 @@ import {
 
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
-import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import {
+  actions as lessonActions,
+  load as lessonLoad
+} from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
 import { actions as dashboardActions } from '../src/routes/app/+page.server';
 import { load as analyticsLoad } from '../src/routes/app/analytics/+page.server';
 import * as authRuntime from '../src/lib/server/auth-runtime';
@@ -1865,6 +1868,31 @@ describe('grammar practice rating and review actions', () => {
       await sessionLoad(event({ params: { id: reviewId } }))
     ).toMatchObject({
       skills: [{ skillId: 'fr-a1-001', available: true, answered: false }]
+    });
+    // Clicking a review button again continues the unfinished review.
+    await expect(
+      reviewTabActions.grammar(
+        event({
+          fields: { ...fields, submissionKey: randomUUID(), due: 'today' }
+        })
+      )
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(reviewId)}`
+    });
+    // Its lessons lead back to it; a practice session's lessons do not.
+    const lessonIn = (sessionId: string) =>
+      lessonLoad(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          query: `/learn/fr/lesson/fr-a1-001?session=${encodeURIComponent(sessionId)}`
+        })
+      );
+    expect(await lessonIn(reviewId)).toMatchObject({
+      reviewSessionId: reviewId
+    });
+    expect(await lessonIn(session.id)).toMatchObject({
+      reviewSessionId: null
     });
   });
 

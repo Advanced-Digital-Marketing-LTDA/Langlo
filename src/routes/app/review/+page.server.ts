@@ -9,7 +9,10 @@ import {
   flashcardDueGroups
 } from '../../../lib/server/flashcard-views';
 import { grammarDueToday } from '../../../lib/server/grammar-retention';
-import { startGrammarReview } from '../../../lib/server/practice';
+import {
+  startGrammarReview,
+  unfinishedGrammarReview
+} from '../../../lib/server/practice';
 import { StudyError } from '../../../lib/server/study-error';
 import {
   reviewLanguageParam,
@@ -121,6 +124,9 @@ async function startDueGrammarReview(
       !enrolled.some((item) => item.language === language)
     )
       throw new StudyError('NOT_FOUND');
+    // An unfinished review is continued, so its answers are not left behind.
+    const unfinished = await unfinishedGrammarReview(client, learner, language);
+    if (unfinished) return unfinished;
     const now = Date.now();
     const day = await currentStudyDay(client, learner, now);
     const due = await grammarDueToday(client, learner, language, {
