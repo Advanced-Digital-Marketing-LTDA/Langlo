@@ -13,6 +13,7 @@ import { pauseStudySession, recordAttempt } from '../src/lib/server/study';
 import {
   discardPractice,
   finishPractice,
+  finishReviewedGrammarReview,
   practiceResultsPath,
   practiceSummary,
   startPractice,
@@ -2029,6 +2030,28 @@ describe('grammar practice rating and review actions', () => {
       reviewSessionId: reviewId,
       feedback: { answer: 'Wrong.' }
     });
+  });
+
+  it('never finishes a practice session on its own', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    // Only a grammar review has a fixed list of topics to finish.
+    await finishReviewedGrammarReview(client, learner, {
+      id: session.id,
+      mode: 'practice'
+    });
+    expect((await practiceSummary(client, learner, session.id)).state).toBe(
+      'active'
+    );
   });
 
   it('finishes the review when the last topic is rated', async () => {
