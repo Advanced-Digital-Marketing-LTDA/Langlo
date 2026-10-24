@@ -67,6 +67,10 @@ language`, `listDecks` returned no `language`, and the reviewer and Review
   rating the first card: the page reloaded without `language`/`due` and showed
   "Page unavailable". Reproduced locally, then passed after the form actions
   kept the query.
+- Codecov patch coverage was 78.5% (target 87.37%). Added learner-journey
+  tests for the "next card/topic is due at" times, the tab without
+  enrollments, an unknown reviewer language, and starting overdue grammar from
+  the Review tab; both Review route files now have every line covered.
 - `svelte-check`, ESLint and Prettier pass on changed files.
 - Not run here: the full suite and the e2e specs (`review-ratings`,
   `fsrs-settings-decks`, `owner-routes`), which CI runs.

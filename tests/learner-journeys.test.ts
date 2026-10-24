@@ -1322,6 +1322,33 @@ describe('decks, review and Anki export', () => {
     ).toMatchObject({ status: 409 });
   });
 
+  it('shows when the next card is due and an empty tab without enrollments', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.UTC(2026, 9, 24, 12));
+    const note = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Later', back: 'x' })
+    );
+    await approveNote(client, learner, note.id);
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ?',
+      args: [Date.UTC(2026, 9, 24, 15, 30), note.id]
+    });
+    expect(await reviewTabLoad(event())).toMatchObject({
+      flashcards: { overdue: 0, today: 1, todayReady: 0, nextDueAt: '15:30' }
+    });
+    expect(await reviewTabLoad(event({ userId: 'fresh' }))).toEqual({
+      languages: [],
+      language: null,
+      submissionKey: ''
+    });
+    await expect(
+      reviewLoad(event({ query: '/review/flashcards?language=xx&due=today' }))
+    ).rejects.toMatchObject({ status: 404 });
+  });
+
   it('shows cards without a deck or source language under Unassigned', async () => {
     const note = await addNoteFromForm(
       client,
@@ -1775,6 +1802,53 @@ describe('grammar practice rating and review actions', () => {
     await expect(
       lessonActions.rate(event({ userId: null, fields: {} }))
     ).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('starts overdue grammar from the Review tab and shows when the next topic is due', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.UTC(2026, 9, 24, 12));
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute({
+      sql: 'UPDATE grammar_retention_schedules SET due_at = ?',
+      args: [Date.UTC(2026, 9, 24, 18, 5)]
+    });
+    expect(await reviewTabLoad(event())).toMatchObject({
+      grammar: {
+        overdue: [],
+        today: [{ skillId: 'fr-a1-001', ready: false }],
+        nextDueAt: '18:05'
+      }
+    });
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    expect(
+      await reviewTabActions.grammar(
+        event({ fields: { ...fields, due: 'soon' } })
+      )
+    ).toMatchObject({ status: 404 });
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(reviewId)}`
+    });
+    expect(
+      await sessionLoad(event({ params: { id: reviewId } }))
+    ).toMatchObject({
+      skills: [{ skillId: 'fr-a1-001', available: true, answered: false }]
+    });
   });
 
   it('starts a due review from the practice action and lists its frozen skill', async () => {
