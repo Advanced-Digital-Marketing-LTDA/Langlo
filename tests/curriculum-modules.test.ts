@@ -262,6 +262,12 @@ const revisedSkills = new Set([
   'fr-a1-023',
   'fr-a1-024'
 ]);
+// A listed skill's version 2 is the correction of what databases held; later
+// versions are wording revisions that continue it.
+const isCorrection = (skillId: string, version: number) =>
+  revisedSkills.has(skillId) && version === 2;
+const isLaterRevision = (skillId: string, version: number) =>
+  revisedSkills.has(skillId) && version > 2;
 const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .flatMap((dir) =>
@@ -637,8 +643,8 @@ describe.each(files)('%s', (path) => {
         );
         // A listed skill's later versions (wording revisions that continue the
         // correction) are not part of what the database held before.
-        const later = historical.versions.filter(
-          (version) => revisedSkills.has(version.skillId) && version.version > 2
+        const later = historical.versions.filter((version) =>
+          isLaterRevision(version.skillId, version.version)
         );
         historical.versions = historical.versions.filter(
           (version) => !later.includes(version)
@@ -672,7 +678,7 @@ describe.each(files)('%s', (path) => {
         );
         // A correction follows the historical version, so it declares itself.
         for (const version of corrected.versions)
-          if (revisedSkills.has(version.skillId) && version.version === 2)
+          if (isCorrection(version.skillId, version.version))
             for (const question of version.questions) question.change = 'new';
         const result = await importContent(db.client, corrected);
         expect(result.versions).toBe(revised.length + later.length);
@@ -687,9 +693,8 @@ describe.each(files)('%s', (path) => {
         expect(
           (await db.client.execute('SELECT * FROM questions ORDER BY id')).rows
         ).toEqual(expect.arrayContaining(oldQuestions));
-        for (const lesson of module.lessons.filter(
-          (lesson) =>
-            revisedSkills.has(lesson.skill_id) && lesson.version.version === 2
+        for (const lesson of module.lessons.filter((lesson) =>
+          isCorrection(lesson.skill_id, lesson.version.version)
         ))
           expect(lesson.version).toMatchObject({
             id: `${lesson.skill_id}@2`,
