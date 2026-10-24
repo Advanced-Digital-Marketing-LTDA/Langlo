@@ -76,6 +76,14 @@ language`, `listDecks` returned no `language`, and the reviewer and Review
 - Codex review: returning to `?language=unassigned` after its last card was
   reviewed gave 404. The new learner-journey assertion failed with 404 before
   the fix and passes after it.
+- Claude review gaps, closed with new tests: the study day follows a saved
+  New York timezone and keeps owners apart (`tests/review-due.test.ts`); with
+  seven due topics, the two newest still start and a six-topic selection is
+  rejected (`tests/grammar-retention.integration.test.ts`; it fails with
+  `STALE_GRAMMAR_REVIEW` if `startGrammarReview` checks only the five oldest);
+  the Unassigned scope test now seeds an Unassigned card. Starting grammar for
+  a language the learner is not enrolled in now returns 404 instead of the
+  "reload" message.
 - `svelte-check`, ESLint and Prettier pass on changed files.
 - Not run here: the full suite and the e2e specs (`review-ratings`,
   `fsrs-settings-decks`, `owner-routes`), which CI runs.

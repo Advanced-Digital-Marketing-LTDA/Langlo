@@ -238,6 +238,93 @@ describe('grammar retention storage and session flow', () => {
     });
   });
 
+  it('starts any due topic past the five oldest and caps a session at five', async () => {
+    // A track with seven topics, so more than five can be due at once.
+    close();
+    ({ client, close } = await openFixtureDatabase(await fixture()));
+    const content = approvedPackage();
+    const extra = ['101', '102', '103', '104', '105', '106'].map(
+      (n) => `fr-a1-${n}`
+    );
+    for (const id of extra) {
+      content.skills.push({
+        id,
+        language: 'fr',
+        level: 'A1',
+        review: 'approved',
+        prerequisites: []
+      });
+      content.versions.push({
+        id: `${id}@1`,
+        skillId: id,
+        version: 1,
+        review: 'approved',
+        questions: [
+          {
+            id: `${id}@1:q1`,
+            format: 'typed-blank',
+            prompt: 'Tu ___ ici.',
+            answer: 'es'
+          }
+        ]
+      });
+    }
+    for (const version of content.versions)
+      version.lesson = {
+        title: `Synthetic ${version.skillId}`,
+        explanation: 'Synthetic lesson',
+        examples: [],
+        references: []
+      };
+    await importContent(client, content);
+    await reviewedSkill();
+    // Every topic gets fr-a1-001's schedule, due one after another.
+    for (const [index, id] of extra.entries())
+      await client.execute({
+        sql: `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, reset_required, scheduler_version, parameters_json)
+          SELECT owner_id, language, ?, ?, state_json, ?, revision, reset_required, scheduler_version, parameters_json
+          FROM grammar_retention_schedules WHERE owner_id = ? AND skill_id = 'fr-a1-001'`,
+        args: [id, `${id}@1`, index + 2, learner.userId]
+      });
+    await client.execute({
+      sql: "UPDATE grammar_retention_schedules SET due_at = 1 WHERE owner_id = ? AND skill_id = 'fr-a1-001'",
+      args: [learner.userId]
+    });
+
+    const { overdue } = await grammarDueToday(client, learner, 'fr', {
+      start: 100,
+      end: 200,
+      now: Date.now()
+    });
+    expect(overdue.map((topic) => topic.skillId)).toEqual([
+      'fr-a1-001',
+      ...extra
+    ]);
+    expect(
+      (await dueGrammarReviews(client, learner, 'fr')).map(
+        (topic) => topic.skillId
+      )
+    ).toEqual(['fr-a1-001', ...extra.slice(0, 4)]);
+    // The two newest are outside the five oldest but still start.
+    const review = await startGrammarReview(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID(),
+      skillIds: extra.slice(4)
+    });
+    expect(
+      (await grammarReviewPlan(client, learner, review.id)).map(
+        (topic) => topic.skillId
+      )
+    ).toEqual(extra.slice(4));
+    await expect(
+      startGrammarReview(client, learner, {
+        language: 'fr',
+        submissionKey: randomUUID(),
+        skillIds: extra
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_REVIEW_SELECTION' });
+  });
+
   it('aggregates the lowest rating once and isolates the other learner', async () => {
     const { session, incorrect } = await reviewedSkill();
     const firstEvent = await client.execute({

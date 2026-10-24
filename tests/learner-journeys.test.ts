@@ -1849,6 +1849,11 @@ describe('grammar practice rating and review actions', () => {
         event({ fields: { ...fields, due: 'soon' } })
       )
     ).toMatchObject({ status: 404 });
+    expect(
+      await reviewTabActions.grammar(
+        event({ fields: { ...fields, language: 'de', due: 'overdue' } })
+      )
+    ).toMatchObject({ status: 404 });
     const reviewId = `grammar-review:${fields.submissionKey}`;
     await expect(
       reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))

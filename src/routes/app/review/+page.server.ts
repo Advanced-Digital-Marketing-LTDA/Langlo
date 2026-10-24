@@ -115,7 +115,11 @@ async function startDueGrammarReview(
   const language = String(form.get('language') ?? '');
   const bucket = form.get('due');
   return studyPage(event, async (client, learner) => {
-    if (bucket !== 'overdue' && bucket !== 'today')
+    const enrolled = await listEnrollments(client, learner);
+    if (
+      (bucket !== 'overdue' && bucket !== 'today') ||
+      !enrolled.some((item) => item.language === language)
+    )
       throw new StudyError('NOT_FOUND');
     const now = Date.now();
     const day = await currentStudyDay(client, learner, now);
