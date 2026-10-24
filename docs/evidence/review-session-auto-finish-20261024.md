@@ -12,8 +12,9 @@ Date: 2026-10-24. Requested and approved by Andrew in the project thread.
 - "Continue Review Session" then leads to the session page, which sends a
   finished review to its results.
 - The session page's "All topics are answered. Finish the session…" message
-  (from PR 175) is removed, since it can no longer be reached; its render test
-  `tests/review-session-topics.test.ts` is removed with it.
+  (from PR 175) is removed, since it can no longer be reached. Its render test
+  in `tests/review-session-topics.test.ts` now checks the topic list a review
+  still shows, and that the removed message is gone.
 
 Unchanged: Practice-page sessions, the Finish session button, the Review tab
 lists, the five-topic limit. No migration.
