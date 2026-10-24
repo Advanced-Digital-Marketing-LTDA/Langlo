@@ -71,8 +71,10 @@ it('offers Continue Review Session after the difficulty rating', async () => {
   expect(rated).toContain('Continue Review Session');
   expect(rated).toContain(link);
   // The link sits at the bottom, after the lesson's report form.
+  const reportForm = rated.lastIndexOf('<form');
+  expect(reportForm).toBeGreaterThan(-1);
   expect(rated.lastIndexOf('Continue Review Session')).toBeGreaterThan(
-    rated.lastIndexOf('<form')
+    reportForm
   );
 });
 
@@ -80,7 +82,8 @@ it('offers it at once when an answer takes no rating', async () => {
   for (const answered of [
     { outcome: 'incorrect' },
     { outcome: 'uncertain', notSure: true },
-    { receivedHelp: true }
+    { receivedHelp: true },
+    { requiresRating: false }
   ])
     expect(await render(data(reviewId, answered))).toContain(link);
 });

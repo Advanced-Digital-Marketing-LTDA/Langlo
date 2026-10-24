@@ -17,6 +17,7 @@ import {
   practiceSummary,
   startPractice,
   startPracticeOver,
+  unfinishedGrammarReview,
   unfinishedPractice
 } from '../src/lib/server/practice';
 import {
@@ -1863,6 +1864,47 @@ describe('grammar practice rating and review actions', () => {
     expect(await lessonIn(session.id)).toMatchObject({
       reviewSessionId: null
     });
+  });
+
+  it("continues only the learner's own live unfinished review", async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    expect(await unfinishedGrammarReview(client, learner, 'fr')).toEqual({
+      id: reviewId
+    });
+    // Another learner is never handed this review.
+    expect(await unfinishedGrammarReview(client, other, 'fr')).toBeNull();
+    // A review whose topic was retired cannot load, so it is not continued
+    // and the Review tab still loads.
+    await client.execute(
+      "UPDATE skills SET retired_at = 1 WHERE id = 'fr-a1-001'"
+    );
+    expect(await unfinishedGrammarReview(client, learner, 'fr')).toBeNull();
+    await expect(reviewTabLoad(event())).resolves.toMatchObject({
+      language: 'fr'
+    });
+    await client.execute(
+      "UPDATE skills SET retired_at = NULL WHERE id = 'fr-a1-001'"
+    );
+    // A finished review is not continued.
+    await finishPractice(client, learner, reviewId);
+    expect(await unfinishedGrammarReview(client, learner, 'fr')).toBeNull();
   });
 
   it('drops a reviewed topic from the review session and the Review tab', async () => {

@@ -78,7 +78,10 @@ export async function unfinishedPractice(
   return row ? { id: String(row.id), answered: Number(row.answered) } : null;
 }
 
-/** The learner's newest grammar review in a track that is not finished yet. */
+/**
+ * The learner's newest grammar review in a track that is not finished yet.
+ * A review with a retired or missing topic cannot load, so it is not one.
+ */
 export async function unfinishedGrammarReview(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
@@ -87,6 +90,9 @@ export async function unfinishedGrammarReview(
   const found = await client.execute({
     sql: `SELECT id FROM study_sessions
       WHERE owner_id = ? AND language = ? AND mode = 'mixed-review' AND state IN ('active', 'paused')
+        AND NOT EXISTS (SELECT 1 FROM json_each(study_sessions.grammar_retention_plan, '$.questions') p
+          WHERE NOT EXISTS (SELECT 1 FROM skills sk WHERE sk.id = json_extract(p.value, '$.skillId')
+            AND sk.language = study_sessions.language AND sk.retired_at IS NULL))
       ORDER BY created_at DESC, rowid DESC LIMIT 1`,
     args: [learner.userId, language]
   });

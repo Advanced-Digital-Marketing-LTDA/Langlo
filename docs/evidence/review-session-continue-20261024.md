@@ -27,6 +27,10 @@ returning to the Review tab and clicking again opened a new, empty session.
   Finish the session to update their schedules." instead of "No lessons are
   published in this track yet."
 
+- An unfinished review with a retired or missing topic cannot load, so the
+  Review tab does not continue it (or read its topics); it starts a new review
+  as before this change.
+
 Unchanged: Practice-page reviews, the five-topic limit, and how a review is
 finished and rated. No migration.
 
@@ -46,5 +50,9 @@ finished and rated. No migration.
   reports `reviewed`), `tests/grammar-retention.test.ts`,
   `tests/practice-render.test.ts`, `tests/review-render.test.ts`,
   `tests/review-session-continue.test.ts` and `tests/learner-routes.test.ts`.
+- Review follow-up: the new journey case "continues only the learner's own
+  live unfinished review" failed before the retired-topic check (a review
+  with a retired topic was still continued) and passes after it. It also
+  covers another learner and a finished review.
 - `svelte-check`, ESLint and Prettier pass on changed files.
 - Not run here: the full suite and the e2e specs, which CI runs.
