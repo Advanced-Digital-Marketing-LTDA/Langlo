@@ -336,8 +336,7 @@ describe('lesson rating round trips', () => {
     expect(data).toMatchObject({
       feedback: {
         attemptId,
-        rating: 'good',
-        retryQuestion: { id: 'fr-a1-001@1:q1' }
+        rating: 'good'
       },
       exercise: { question: { id: 'fr-a1-001@1:q2' } }
     });

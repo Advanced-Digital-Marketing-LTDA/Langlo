@@ -8,17 +8,14 @@ Date: 2026-10-24. Requested and approved by Andrew in the project thread.
   that topic's difficulty rating is saved, or when its answer is recorded if
   it takes no rating (incorrect, Not sure, uncertain). Finishing is the same
   as pressing "Finish session": the topics' schedules update.
-- A correct answer still waiting for its rating does not finish the review,
-  even when a later assisted retry on the same question needs no rating: a
-  topic counts as reviewed only when none of its answers waits for a rating.
-- A correct assisted retry takes no rating, so it does not hold its topic
-  open: only unassisted answers that are not Not sure can wait for a rating.
+- A correct answer still waiting for its rating does not finish the review:
+  a topic counts as reviewed only when none of its answers waits for a rating.
+  Assisted and Not sure answers recorded before retries were removed never
+  take a rating, so they do not hold a topic open.
 - A resent last answer (same submission) also finishes the review, so a try
   that stopped before finishing heals itself.
 - Opening the session page of a review whose topics are all reviewed, such
   as one answered before this change, finishes it and goes to its results.
-- After a wrong answer on the last topic the review is finished, so the
-  assisted retry ("Try this question again") is no longer offered for it.
 - "Continue Review Session" then leads to the session page, which sends a
   finished review to its results.
 - The session page's "All topics are answered. Finish the session…" message
@@ -26,7 +23,19 @@ Date: 2026-10-24. Requested and approved by Andrew in the project thread.
   in `tests/review-session-topics.test.ts` now checks the topic list a review
   still shows, and that the removed message is gone.
 
-Unchanged: Practice-page sessions, the Finish session button, the Review tab
+## Assisted retries removed
+
+Andrew asked to remove assisted retries altogether, for practice sessions and
+reviews alike:
+
+- The lesson feedback no longer offers "Try this question again (assisted)",
+  and the exercise form has no retry field.
+- A retry form from an older page is refused as out of date and records
+  nothing.
+- Unchanged: past assisted answers and how they score, the
+  `/app/api/attempts` endpoint, ratings and auto-finish. No migration.
+
+Unchanged by auto-finish: Practice-page sessions, the Finish session button, the Review tab
 lists, the five-topic limit. No migration.
 
 ## Checks run
@@ -46,4 +55,12 @@ lists, the five-topic limit. No migration.
   the Review tab" was replaced by the first case above: with one topic, rating
   it now finishes the review, so the case uses two topics.
 - `svelte-check`, ESLint and Prettier pass on changed files.
-- Not run here: the full suite and the e2e specs, which CI runs.
+- Retry removal: red first on the old code, where the feedback still carried
+  a retry and the browser check for no retry failed; green after.
+  `tests/assessment-feedback.test.ts`, `tests/lesson-load-round-trips.test.ts`,
+  `tests/review-session-continue.test.ts`, `tests/learner-journeys.test.ts`
+  and the edited `tests/e2e/exercises.spec.ts` cases pass on desktop and
+  mobile. "keeps refresh blocked until every mounted exercise is clear" is now
+  "keeps refresh blocked while the next answer is being typed", since only
+  one exercise is ever mounted.
+- Not run here: the full suite and the other e2e specs, which CI runs.

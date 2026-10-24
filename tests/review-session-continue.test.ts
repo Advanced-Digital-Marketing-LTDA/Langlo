@@ -23,8 +23,6 @@ const feedback = (fields: Record<string, unknown>) => ({
   requiresRating: true,
   rating: null,
   notSure: false,
-  retryQuestion: null,
-  submissionKey: 'retry-key',
   ...fields
 });
 
