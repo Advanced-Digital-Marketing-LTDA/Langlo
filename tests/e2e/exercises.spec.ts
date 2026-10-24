@@ -606,7 +606,8 @@ test('restores the map position after returning from a lesson', async ({
   page,
   context
 }) => {
-  await page.setViewportSize({ width: 320, height: 900 });
+  // Phones show the study list instead of the map; stay just above 720px.
+  await page.setViewportSize({ width: 760, height: 900 });
   const userId = await signIn(page, context);
   await seedSession(userId, 'map-scroll-session');
   await page.goto(`${base}/app/map?language=fr&skill=fr-a1-003`);
@@ -706,6 +707,8 @@ test('opens a dashboard topic in its language when another language sorts first'
   );
   try {
     await page.goto(`${base}/app`);
+    // Phones hide the map's topic details; open the topic at map width.
+    await page.setViewportSize({ width: 760, height: 900 });
     await page
       .getByRole('region', { name: 'FR dashboard' })
       .getByRole('link', { name: 'Synthetic exercise lesson', exact: true })
@@ -751,6 +754,8 @@ test('does not rewrite the lesson URL after leaving a freshly scrolled map', asy
   page,
   context
 }) => {
+  // Phones show the study list instead of the map; stay just above 720px.
+  await page.setViewportSize({ width: 760, height: 900 });
   const userId = await signIn(page, context);
   await seedSession(userId, 'map-fast-exit-session');
   await page.goto(`${base}/app/map`);
@@ -789,6 +794,9 @@ test('does not rewrite the lesson URL after leaving a freshly scrolled map', asy
 });
 
 async function exploreSkillMap(page: Page) {
+  // Phones show the study list instead of the map; explore it just above 720px.
+  const phoneViewport = page.viewportSize();
+  await page.setViewportSize({ width: 760, height: 900 });
   await page.goto(`${base}/app/map`);
   await expect(
     page.getByRole('heading', { name: 'Grammar skill map', exact: true })
@@ -826,7 +834,7 @@ async function exploreSkillMap(page: Page) {
     'true'
   );
   await expect(
-    page.getByRole('list').getByText('Synthetic exercise lesson')
+    page.locator('.nodes.list').getByText('Synthetic exercise lesson')
   ).toBeVisible();
   await page.getByRole('button', { name: 'Map', exact: true }).click();
   await expect(
@@ -842,12 +850,16 @@ async function exploreSkillMap(page: Page) {
   ).toBeVisible();
   await page.getByRole('link', { name: 'Back to skill map' }).click();
   await expect(page).toHaveURL(/\/app\/map\?.*skill=fr-a1-001/);
-  await page.getByRole('button', { name: 'Practise this topic' }).click();
+  await page
+    .getByRole('complementary')
+    .getByRole('button', { name: 'Practise this topic' })
+    .click();
   await expect(page).toHaveURL(/\/app\/learn\/fr\/lesson\/fr-a1-001\?session=/);
   await expect(
     page.getByRole('heading', { name: 'Synthetic exercise lesson' })
   ).toBeVisible();
   await page.getByRole('link', { name: 'Back to skill map' }).click();
+  if (phoneViewport) await page.setViewportSize(phoneViewport);
 }
 
 async function exerciseRetryAndReport(page: Page, userId: string) {
