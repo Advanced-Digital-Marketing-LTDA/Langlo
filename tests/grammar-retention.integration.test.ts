@@ -389,6 +389,13 @@ describe('grammar retention storage and session flow', () => {
     ).toHaveLength(2);
   }
 
+  const unansweredTopic = {
+    skillId: 'fr-a1-001',
+    title: 'Synthetic fr-a1-001',
+    answered: false,
+    reviewed: false
+  };
+
   it('keeps due dates stable until a review uses updated settings', async () => {
     await reviewedSkill();
     const dueBeforeSettingsChange = Number(
@@ -451,12 +458,7 @@ describe('grammar retention storage and session flow', () => {
       skillIds: ['fr-a1-001']
     });
     expect(await grammarReviewPlan(client, learner, review.id)).toEqual([
-      {
-        skillId: 'fr-a1-001',
-        title: 'Synthetic fr-a1-001',
-        answered: false,
-        reviewed: false
-      }
+      unansweredTopic
     ]);
     expect(
       await exerciseFor(client, learner, review.id, 'fr-a1-001')
