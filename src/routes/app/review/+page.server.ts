@@ -31,15 +31,21 @@ function timeOfDay(timestamp: number | null, timezone: string) {
 type DueGroup = Awaited<ReturnType<typeof flashcardDueGroups>>[number];
 type DueTopic = { dueAt: number; ready: boolean };
 
-/** The switcher's choices and the chosen one; an unknown choice is not found. */
+/**
+ * The switcher's choices and the chosen one; an unknown choice is not found.
+ * Unassigned is offered while its cards are due and stays valid once chosen,
+ * so returning from its emptied queue still works.
+ */
 function chosenLanguage(
   enrolled: string[],
   groups: DueGroup[],
   requested: string | null
 ) {
-  const languages = groups.some((group) => group.language === null)
-    ? [...enrolled, UNASSIGNED_LANGUAGE]
-    : enrolled;
+  const languages =
+    requested === UNASSIGNED_LANGUAGE ||
+    groups.some((group) => group.language === null)
+      ? [...enrolled, UNASSIGNED_LANGUAGE]
+      : enrolled;
   if (requested !== null && !languages.includes(requested))
     throw new StudyError('NOT_FOUND');
   return { languages, language: requested ?? languages[0] ?? null };

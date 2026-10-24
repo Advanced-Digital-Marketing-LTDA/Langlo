@@ -1378,6 +1378,18 @@ describe('decks, review and Anki export', () => {
     await expect(
       reviewLoad(event({ query: '/review/flashcards?language=fr&due=soon' }))
     ).rejects.toMatchObject({ status: 404 });
+    // Back from the emptied Unassigned queue, the tab still opens on it.
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ?',
+      args: [Date.now() + 7 * 86_400_000, note.id]
+    });
+    expect(
+      await reviewTabLoad(event({ query: '/review?language=unassigned' }))
+    ).toMatchObject({
+      languages: ['fr', 'unassigned'],
+      language: 'unassigned',
+      flashcards: { overdue: 0, today: 0 }
+    });
   });
 
   it('creates a deck through the page and rejects a blank name on the form', async () => {

@@ -25,7 +25,9 @@ Due today with a count and its own button.
   page at the form's action URL after a submission.
 - A card's language is its deck's language. For decks made before decks had a
   language, it is the card's source content language. Cards with neither
-  appear under an "Unassigned" option, shown only when such cards are due.
+  appear under an "Unassigned" option, shown when such cards are due and kept
+  while it is the chosen option, so "Back to review" from its emptied queue
+  still opens the tab.
 - Creating a deck requires choosing one of the learner's enrolled languages.
   New mistake decks get their language.
 
@@ -71,6 +73,9 @@ language`, `listDecks` returned no `language`, and the reviewer and Review
   tests for the "next card/topic is due at" times, the tab without
   enrollments, an unknown reviewer language, and starting overdue grammar from
   the Review tab; both Review route files now have every line covered.
+- Codex review: returning to `?language=unassigned` after its last card was
+  reviewed gave 404. The new learner-journey assertion failed with 404 before
+  the fix and passes after it.
 - `svelte-check`, ESLint and Prettier pass on changed files.
 - Not run here: the full suite and the e2e specs (`review-ratings`,
   `fsrs-settings-decks`, `owner-routes`), which CI runs.
