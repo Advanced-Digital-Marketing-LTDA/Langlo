@@ -129,10 +129,15 @@ describe('due flashcards on the Review tab', () => {
     await withDatabase(async (client) => {
       await deck(client, 'deck-fr', 'fr');
       await deck(client, 'deck-de', 'de');
+      await deck(client, 'deck-legacy', 'fr');
+      await client.execute(
+        "UPDATE native_flashcard_decks SET language = NULL WHERE id = 'deck-legacy'"
+      );
       await dueCard(client, 'deck-fr', 'fr overdue', day.start - 1);
       await dueCard(client, 'deck-fr', 'fr now', now);
       await dueCard(client, 'deck-fr', 'fr later', 18_000);
       await dueCard(client, 'deck-de', 'de now', now);
+      await dueCard(client, 'deck-legacy', 'legacy now', now);
       const scope = (
         language: DeckLanguage | null,
         bucket: DueScope['bucket']
@@ -146,7 +151,8 @@ describe('due flashcards on the Review tab', () => {
       // No early review: the card due later today is not served yet.
       expect(await fronts(scope('fr', 'today'))).toEqual(['fr now']);
       expect(await fronts(scope('de', 'today'))).toEqual(['de now']);
-      expect(await fronts(scope(null, 'today'))).toEqual([]);
+      expect(await fronts(scope(null, 'today'))).toEqual(['legacy now']);
+      expect(await fronts(scope(null, 'overdue'))).toEqual([]);
       expect(
         await countDueCards(client, learner, now, scope('fr', 'today'))
       ).toBe(1);
