@@ -8,7 +8,9 @@ Date: 2026-10-24. Requested and approved by Andrew in the project thread.
   that topic's difficulty rating is saved, or when its answer is recorded if
   it takes no rating (incorrect, Not sure, uncertain). Finishing is the same
   as pressing "Finish session": the topics' schedules update.
-- A correct answer still waiting for its rating does not finish the review.
+- A correct answer still waiting for its rating does not finish the review,
+  even when a later assisted retry on the same question needs no rating: a
+  topic counts as reviewed only when none of its answers waits for a rating.
 - A resent last answer (same submission) also finishes the review, so a try
   that stopped before finishing heals itself.
 - Opening the session page of a review whose topics are all reviewed, such

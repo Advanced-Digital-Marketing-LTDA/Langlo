@@ -396,14 +396,17 @@ export async function grammarReviewPlan(
           AND a.study_session_id = s.id AND a.question_id = json_extract(p.value, '$.questionId')) AS answered,
         EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
           AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
-          AND NOT (${awaitingRatingSql})) AS reviewed
+          AND NOT (${awaitingRatingSql}))
+        AND NOT EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
+          AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
+          AND ${awaitingRatingSql}) AS reviewed
       FROM study_sessions s JOIN json_each(s.grammar_retention_plan, '$.questions') p
       JOIN skills sk ON sk.id = json_extract(p.value, '$.skillId') AND sk.language = s.language
       LEFT JOIN content_versions v ON v.id = json_extract(p.value, '$.contentVersionId')
       LEFT JOIN lessons l ON l.content_version_id = v.id
       WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'mixed-review'
       ORDER BY CAST(p.key AS INTEGER)`,
-    args: [...awaitingRatingArgs, id, learner.userId]
+    args: [...awaitingRatingArgs, ...awaitingRatingArgs, id, learner.userId]
   });
   if (!found.rows.length) throw new StudyError('NOT_FOUND');
   assertGrammarPlan(found.rows);
@@ -411,7 +414,8 @@ export async function grammarReviewPlan(
     skillId: String(row.skill_id),
     title: String(row.title),
     answered: Boolean(row.answered),
-    // Answered with nothing left to do, so the topic leaves the review's list.
+    // Answered with no answer still waiting for its rating, so the topic
+    // leaves the review's list.
     reviewed: Boolean(row.reviewed)
   }));
 }
