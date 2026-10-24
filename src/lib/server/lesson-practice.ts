@@ -27,6 +27,7 @@ import {
 import { feedbackOutcome } from './assessment';
 import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 import { reportContentForm } from './content-reports';
+import { finishReviewedGrammarReview } from './practice';
 import type { ExerciseQuestion } from '../components/exercises/answer';
 
 // The practice half of the lesson page: serving the session's next exercise
@@ -177,12 +178,15 @@ export async function ratePracticeAnswer(
   const rated = rating as 'hard' | 'good' | 'easy';
   // The skill, session and practice-mode checks run on the attempt rows the
   // rating transaction reads anyway.
-  await rateGrammarAttempt(client, learner, {
+  const { mode } = await rateGrammarAttempt(client, learner, {
     attemptId,
     rating: rated,
     expectedSessionId: studySessionId,
     practiceSkillId: skillId
   });
+  // A grammar review finishes by itself once its last topic is rated.
+  if (mode === 'mixed-review')
+    await finishReviewedGrammarReview(client, learner, studySessionId);
   return {
     rated: true as const,
     rating: rated,
@@ -284,6 +288,9 @@ export async function recordAnswer(
     },
     { fallback }
   );
+  // A grammar review finishes by itself once its last topic is reviewed.
+  if (study.mode === 'mixed-review')
+    await finishReviewedGrammarReview(client, learner, studySessionId);
   return { recorded: true as const, duplicate: attempt.duplicate };
 }
 

@@ -38,8 +38,6 @@
       </li>
     {/each}
   </ul>
-{:else if data.summary.mode === 'mixed-review'}
-  <p>All topics are answered. Finish the session to update their schedules.</p>
 {:else}
   <p>No lessons are published in this track yet.</p>
 {/if}

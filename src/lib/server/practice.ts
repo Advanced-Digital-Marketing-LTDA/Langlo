@@ -485,6 +485,17 @@ export async function finishPractice(
   }
 }
 
+/** Finish a grammar review once every one of its topics is reviewed. */
+export async function finishReviewedGrammarReview(
+  client: Client,
+  learner: LearnerSession,
+  id: string
+): Promise<void> {
+  const plan = await grammarReviewPlan(client, learner, id);
+  if (plan.every((topic) => topic.reviewed))
+    await finishPractice(client, learner, id);
+}
+
 /**
  * What a practice session has covered so far. Each attempt counts once, by
  * its verdict: Jev, historical Decisions, prepared, then newest evaluation.
