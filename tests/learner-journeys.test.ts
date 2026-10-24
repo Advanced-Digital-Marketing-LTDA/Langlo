@@ -29,7 +29,6 @@ import {
 } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
-  createDeck,
   createNote,
   getStudySchedule,
   getNote,
@@ -40,6 +39,7 @@ import {
   submitReview,
   updateNote
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   disposeFlashcardFixtures,
   fixture,
@@ -72,6 +72,10 @@ import { GET as exportDeck } from '../src/routes/app/decks/[id]/export/+server';
 import {
   actions as reviewActions,
   load as reviewLoad
+} from '../src/routes/app/review/flashcards/+page.server';
+import {
+  actions as reviewTabActions,
+  load as reviewTabLoad
 } from '../src/routes/app/review/+page.server';
 
 import { importContent } from '../src/lib/server/content-import';
@@ -133,6 +137,10 @@ function event(
     )
   } as never;
 }
+
+/** The flashcard reviewer opened for today's French cards. */
+const todaysCards = () =>
+  event({ query: '/review/flashcards?language=fr&due=today' });
 
 async function seedReviewAnalyticsNotes() {
   await createDeck(client, learner, {
@@ -962,7 +970,7 @@ describe('decks, review and Anki export', () => {
     expect((await listDueCards(client, other)).cards).toEqual([]);
     expect((await listDueCards(client, learner, 0)).cards).toEqual([]);
 
-    const { submissionKey, cards } = (await reviewLoad(event())) as {
+    const { submissionKey, cards } = (await reviewLoad(todaysCards())) as {
       submissionKey: string;
       cards: { scheduleKey: string }[];
     };
@@ -1014,7 +1022,7 @@ describe('decks, review and Anki export', () => {
       noteForm({ kind: 'basic', front: 'Schedule', back: 'Changed' })
     );
     await approveNote(client, learner, draft.id);
-    const page = (await reviewLoad(event())) as {
+    const page = (await reviewLoad(todaysCards())) as {
       cards: { scheduleKey: string }[];
       submissionKey: string;
     };
@@ -1038,7 +1046,7 @@ describe('decks, review and Anki export', () => {
     expect(stale).toMatchObject({ status: 409 });
     expect(await getNote(client, learner, draft.id)).toEqual(before);
     expect(await listReviewEvents(client, learner, draft.cardId)).toEqual([]);
-    const refreshed = (await reviewLoad(event())) as {
+    const refreshed = (await reviewLoad(todaysCards())) as {
       cards: { scheduleKey: string }[];
       submissionKey: string;
     };
@@ -1102,7 +1110,7 @@ describe('decks, review and Anki export', () => {
     ).toHaveLength(2);
     expect(await countDueCards(client, learner)).toBe(3);
     expect(await countDueCards(client, other)).toBe(0);
-    expect(await reviewLoad(event())).toMatchObject({ total: 3 });
+    expect(await reviewLoad(todaysCards())).toMatchObject({ total: 3 });
   });
 
   it('stores the chosen rating for every rating button', async () => {
@@ -1268,9 +1276,127 @@ describe('decks, review and Anki export', () => {
     ).toEqual({ saved: true });
   });
 
+  it('refuses a deck language the learner is not enrolled in', async () => {
+    expect(
+      await decksActions.createDeck(
+        event({ fields: { name: 'German', language: 'de' } })
+      )
+    ).toMatchObject({
+      status: 400,
+      data: { message: 'Choose one of your languages for the deck.' }
+    });
+    expect(
+      await decksActions.createDeck(event({ fields: { name: 'German' } }))
+    ).toMatchObject({ status: 400 });
+    expect(await decksLoad(event())).toMatchObject({ languages: ['fr'] });
+  });
+
+  it('lists due flashcards and grammar per language on the Review tab', async () => {
+    const note = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Today', back: 'x' })
+    );
+    await approveNote(client, learner, note.id);
+    expect(await reviewTabLoad(event())).toMatchObject({
+      languages: ['fr'],
+      language: 'fr',
+      flashcards: { overdue: 0, today: 1, todayReady: 1, nextDueAt: null },
+      grammar: { overdue: [], today: [], nextDueAt: null }
+    });
+    await expect(
+      reviewTabLoad(event({ query: '/review?language=de' }))
+    ).rejects.toMatchObject({ status: 404 });
+    // Nothing is due, so no grammar review can start.
+    expect(
+      await reviewTabActions.grammar(
+        event({
+          fields: {
+            language: 'fr',
+            due: 'today',
+            submissionKey: 'b0000000-0000-4000-8000-000000000009'
+          }
+        })
+      )
+    ).toMatchObject({ status: 409 });
+  });
+
+  it('shows when the next card is due and an empty tab without enrollments', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.UTC(2026, 9, 24, 12));
+    const note = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Later', back: 'x' })
+    );
+    await approveNote(client, learner, note.id);
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ?',
+      args: [Date.UTC(2026, 9, 24, 15, 30), note.id]
+    });
+    expect(await reviewTabLoad(event())).toMatchObject({
+      flashcards: { overdue: 0, today: 1, todayReady: 0, nextDueAt: '15:30' }
+    });
+    expect(await reviewTabLoad(event({ userId: 'fresh' }))).toEqual({
+      languages: [],
+      language: null,
+      submissionKey: ''
+    });
+    await expect(
+      reviewLoad(event({ query: '/review/flashcards?language=xx&due=today' }))
+    ).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('shows cards without a deck or source language under Unassigned', async () => {
+    const note = await addNoteFromForm(
+      client,
+      learner,
+      deckId,
+      noteForm({ kind: 'basic', front: 'Loose', back: 'x' })
+    );
+    await approveNote(client, learner, note.id);
+    await client.execute({
+      sql: 'UPDATE native_flashcard_decks SET language = NULL WHERE id = ?',
+      args: [deckId]
+    });
+    const page = await reviewTabLoad(
+      event({ query: '/review?language=unassigned' })
+    );
+    expect(page).toMatchObject({
+      languages: ['fr', 'unassigned'],
+      language: 'unassigned',
+      flashcards: { today: 1, todayReady: 1 },
+      grammar: null
+    });
+    expect(
+      await reviewLoad(
+        event({ query: '/review/flashcards?language=unassigned&due=today' })
+      )
+    ).toMatchObject({ total: 1, language: 'unassigned' });
+    await expect(
+      reviewLoad(event({ query: '/review/flashcards?language=fr&due=soon' }))
+    ).rejects.toMatchObject({ status: 404 });
+    // Back from the emptied Unassigned queue, the tab still opens on it.
+    await client.execute({
+      sql: 'UPDATE native_flashcards SET due_at = ? WHERE note_id = ?',
+      args: [Date.now() + 7 * 86_400_000, note.id]
+    });
+    expect(
+      await reviewTabLoad(event({ query: '/review?language=unassigned' }))
+    ).toMatchObject({
+      languages: ['fr', 'unassigned'],
+      language: 'unassigned',
+      flashcards: { overdue: 0, today: 0 }
+    });
+  });
+
   it('creates a deck through the page and rejects a blank name on the form', async () => {
     await expect(
-      decksActions.createDeck(event({ fields: { name: 'German' } }))
+      decksActions.createDeck(
+        event({ fields: { name: 'German', language: 'fr' } })
+      )
     ).rejects.toMatchObject({ status: 303 });
     const names = (
       await client.execute(
@@ -1279,7 +1405,9 @@ describe('decks, review and Anki export', () => {
     ).rows.map((row) => row.name);
     expect(names).toEqual(['French basics', 'German']);
     expect(
-      await decksActions.createDeck(event({ fields: { name: '   ' } }))
+      await decksActions.createDeck(
+        event({ fields: { name: '   ', language: 'fr' } })
+      )
     ).toMatchObject({ status: 400 });
   });
 
@@ -1686,6 +1814,58 @@ describe('grammar practice rating and review actions', () => {
     await expect(
       lessonActions.rate(event({ userId: null, fields: {} }))
     ).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('starts overdue grammar from the Review tab and shows when the next topic is due', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.UTC(2026, 9, 24, 12));
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute({
+      sql: 'UPDATE grammar_retention_schedules SET due_at = ?',
+      args: [Date.UTC(2026, 9, 24, 18, 5)]
+    });
+    expect(await reviewTabLoad(event())).toMatchObject({
+      grammar: {
+        overdue: [],
+        today: [{ skillId: 'fr-a1-001', ready: false }],
+        nextDueAt: '18:05'
+      }
+    });
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    expect(
+      await reviewTabActions.grammar(
+        event({ fields: { ...fields, due: 'soon' } })
+      )
+    ).toMatchObject({ status: 404 });
+    expect(
+      await reviewTabActions.grammar(
+        event({ fields: { ...fields, language: 'de', due: 'overdue' } })
+      )
+    ).toMatchObject({ status: 404 });
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(reviewId)}`
+    });
+    expect(
+      await sessionLoad(event({ params: { id: reviewId } }))
+    ).toMatchObject({
+      skills: [{ skillId: 'fr-a1-001', available: true, answered: false }]
+    });
   });
 
   it('starts a due review from the practice action and lists its frozen skill', async () => {

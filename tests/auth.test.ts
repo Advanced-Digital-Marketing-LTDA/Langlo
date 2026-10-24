@@ -15,11 +15,11 @@ import { provisionAccount } from '../src/lib/server/accounts';
 import { resolveAuth } from '../src/lib/server/auth-runtime';
 import { CaptureMailer } from '../src/lib/server/mail';
 import {
-  createDeck,
   createNote,
   getNote,
   FlashcardError
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import type { RuntimeConfig } from '../src/lib/server/config';
 
 const ORIGIN = 'http://localhost:3000';

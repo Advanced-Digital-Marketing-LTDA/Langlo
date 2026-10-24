@@ -5,10 +5,10 @@ import type { FixtureTarget } from '../src/lib/server/db/fixture-target';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
-  createDeck,
   createNote,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   disposeFlashcardFixtures,
   fixture,

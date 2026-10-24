@@ -851,6 +851,8 @@ export const nativeFlashcardDecks = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
+    // Decks created before migration 0036 have no language.
+    language: text('language', { enum: ['fr', 'de', 'en', 'pt'] }),
     createdAt: createdAt()
   },
   (table) => [

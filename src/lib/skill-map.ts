@@ -190,3 +190,47 @@ export function layoutSkillMap(skills: SkillMapSkill[]) {
     positions
   };
 }
+
+type StudyListSkill = SkillMapSkill & { practisedSessions: number };
+
+const studyPriority: Record<GrammarStatus, number> = {
+  weak: 0,
+  practising: 1,
+  unknown: 2,
+  secure: 3
+};
+
+function compareStudy(a: StudyListSkill, b: StudyListSkill) {
+  return (
+    studyPriority[a.status] - studyPriority[b.status] ||
+    a.practisedSessions - b.practisedSessions ||
+    a.skillId.localeCompare(b.skillId)
+  );
+}
+
+/** A topic's non-secure prerequisites, in ranked order. */
+function unfinishedFoundations<T extends StudyListSkill>(
+  skill: T,
+  ranked: T[]
+) {
+  return ranked.filter(
+    (item) =>
+      item.status !== 'secure' && skill.prerequisites.includes(item.skillId)
+  );
+}
+
+/** Rank available topics: weakest and least practised first, foundations ahead of the topics that need them. */
+export function rankStudyList<T extends StudyListSkill>(skills: T[]) {
+  const ranked = skills.filter((skill) => skill.available).sort(compareStudy);
+  const visited = new Set<string>();
+  const ordered: { skill: T; foundationFor: T | null }[] = [];
+  const place = (skill: T, foundationFor: T | null) => {
+    if (visited.has(skill.skillId)) return;
+    visited.add(skill.skillId);
+    for (const prerequisite of unfinishedFoundations(skill, ranked))
+      place(prerequisite, skill);
+    ordered.push({ skill, foundationFor });
+  };
+  for (const skill of ranked) place(skill, null);
+  return ordered;
+}

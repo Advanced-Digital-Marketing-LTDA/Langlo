@@ -6,13 +6,13 @@ import { join } from 'node:path';
 import { createClient } from '@libsql/client/sqlite3';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listReviewEvents,
   rejectNote,
   submitReview
 } from '../../src/lib/server/flashcards';
+import { createDeck } from '../fixtures/french-deck';
 import { countDueCards } from '../../src/lib/server/flashcard-views';
 import { studyDayStart } from '../../src/lib/server/study-days';
 import {

@@ -4,12 +4,12 @@ import { propertyOptions } from './property-options';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listReviewEvents,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   getAttempt,
   getStudySession,

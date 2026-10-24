@@ -3,11 +3,8 @@ import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { join } from 'node:path';
 import { createClient, type Client } from '@libsql/client/sqlite3';
-import {
-  approveNote,
-  createDeck,
-  createNote
-} from '../../src/lib/server/flashcards';
+import { approveNote, createNote } from '../../src/lib/server/flashcards';
+import { createDeck } from '../fixtures/french-deck';
 import { importContent } from '../../src/lib/server/content-import';
 import { privateState } from '../fixtures/owner-scope';
 import { approvedPackage } from '../fixtures/content-package';

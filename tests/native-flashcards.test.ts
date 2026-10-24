@@ -5,12 +5,12 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { listDueCards, searchNotes } from '../src/lib/server/flashcard-views';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listReviewEvents,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   disposeFlashcardFixtures,
   fixture,

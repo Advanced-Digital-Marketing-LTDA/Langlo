@@ -13,6 +13,7 @@
     skillStateDistribution
   } from '../skill-map';
   import SkillProgressBar from './SkillProgressBar.svelte';
+  import StudyList from './StudyList.svelte';
 
   let {
     tracks,
@@ -595,6 +596,12 @@
               </div>
             {/if}
             {#if !shown.length}<p>No topics match these filters.</p>{/if}
+            <StudyList
+              skills={progress.skills}
+              {language}
+              {submissionKey}
+              returnTo={map}
+            />
             <p class="evidence-note">
               Grammar evidence comes from qualifying independent exercises and
               completed assessments. Flashcard recall and session completion are
@@ -893,6 +900,11 @@
     }
     .list-workspace .topic-panel {
       position: fixed;
+    }
+    .filters,
+    .map-controls,
+    .workspace {
+      display: none;
     }
   }
 </style>

@@ -219,6 +219,8 @@ for (const initialLanguage of ['fr', 'en']) {
 test('keeps a successful language map usable when another language progress fails', async ({
   page
 }) => {
+  // Phones show the study list instead of the map; stay just above 720px.
+  await page.setViewportSize({ width: 760, height: 900 });
   await enrollEnglish();
   await controlProgress(page);
   await page.context().addCookies((await learner.storageState()).cookies);
@@ -241,8 +243,9 @@ test('keeps a successful language map usable when another language progress fail
 test('pans the map with a touch gesture and remembers its position', async ({
   browser
 }) => {
+  // Phones show the study list instead of the map; pan a touch screen just above 720px.
   const context = await browser.newContext({
-    viewport: { width: 390, height: 844 },
+    viewport: { width: 760, height: 844 },
     hasTouch: true,
     isMobile: true
   });
@@ -311,6 +314,8 @@ test('a track whose catalog cannot load shows a topics alert', async ({
 test('keeps lessons without an openable version selectable but out of progress totals', async ({
   page
 }) => {
+  // Phones show the study list instead of the map; stay just above 720px.
+  await page.setViewportSize({ width: 760, height: 900 });
   await openMap(page);
   await expect(
     page.getByText('No skills available to measure yet').first()
@@ -385,4 +390,64 @@ test('switches enrolled languages while keeping the overall progress view', asyn
   await expect(
     overall.getByText('No skills available to measure yet')
   ).toBeVisible();
+});
+
+test('phones show the recommended study list instead of the map', async ({
+  page
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  // The practise form posts back to a server that trusts this header for its origin.
+  await page.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
+  await withDatabase(async (client) => {
+    const extra = Array.from(
+      { length: 9 },
+      (_, index) => `fr-a1-${101 + index}`
+    );
+    await client.batch(
+      [
+        ...extra.flatMap((skillId) => [
+          {
+            sql: "INSERT INTO skills (id, language, level) VALUES (?, 'fr', 'A1')",
+            args: [skillId]
+          },
+          {
+            sql: "INSERT INTO content_versions (id, skill_id, language, version, status) VALUES (?, ?, 'fr', 1, 'pilot-ready')",
+            args: [`${skillId}@1`, skillId]
+          }
+        ]),
+        ...['fr-a1-001', 'fr-a1-002', ...extra].map((skillId) => ({
+          sql: "INSERT INTO lessons (content_version_id, skill_id, language, title, explanation, examples, refs, fingerprint) VALUES (?, ?, 'fr', ?, 'Synthetic lesson.', '[]', '[]', ?)",
+          args: [`${skillId}@1`, skillId, `Lesson ${skillId}`, '0'.repeat(64)]
+        }))
+      ],
+      'write'
+    );
+  });
+  await openMap(page);
+  const list = page.getByRole('region', { name: 'Recommended study list' });
+  await expect(list.getByRole('listitem')).toHaveCount(10);
+  await expect(list.getByRole('listitem').first()).toContainText(
+    'Lesson fr-a1-001'
+  );
+  await expect(
+    page.getByRole('region', { name: /FR topic map/u })
+  ).toBeHidden();
+  await expect(
+    page.getByRole('searchbox', { name: 'Search topics' })
+  ).toBeHidden();
+  await expect(page.getByRole('button', { name: 'List view' })).toBeHidden();
+  await expect(
+    page.getByRole('region', { name: 'Overall skill progress', exact: true })
+  ).toBeVisible();
+  await list.getByRole('button', { name: 'View more' }).click();
+  await expect(list.getByRole('listitem')).toHaveCount(11);
+  await expect(list.getByRole('button', { name: 'View more' })).toHaveCount(0);
+  await list
+    .getByRole('listitem')
+    .first()
+    .getByRole('button', { name: 'Practise this topic' })
+    .click();
+  await expect(page).toHaveURL(
+    /\/app\/learn\/fr\/lesson\/fr-a1-001\?session=/u
+  );
 });
