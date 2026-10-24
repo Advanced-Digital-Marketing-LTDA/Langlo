@@ -79,6 +79,28 @@ export async function unfinishedPractice(
 }
 
 /**
+ * The learner's newest grammar review in a track that is not finished yet.
+ * A review with a retired or missing topic cannot load, so it is not one.
+ */
+export async function unfinishedGrammarReview(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string
+): Promise<{ id: string } | null> {
+  const found = await client.execute({
+    sql: `SELECT id FROM study_sessions
+      WHERE owner_id = ? AND language = ? AND mode = 'mixed-review' AND state IN ('active', 'paused')
+        AND NOT EXISTS (SELECT 1 FROM json_each(study_sessions.grammar_retention_plan, '$.questions') p
+          WHERE NOT EXISTS (SELECT 1 FROM skills sk WHERE sk.id = json_extract(p.value, '$.skillId')
+            AND sk.language = study_sessions.language AND sk.retired_at IS NULL))
+      ORDER BY created_at DESC, rowid DESC LIMIT 1`,
+    args: [learner.userId, language]
+  });
+  const row = found.rows[0];
+  return row ? { id: String(row.id) } : null;
+}
+
+/**
  * Start a practice session in an enrolled track, or continue the learner's
  * unfinished one: a new session begins only after the old one is finished.
  * The submission key makes the start idempotent: a repeated tap returns the
@@ -371,23 +393,52 @@ export async function grammarReviewPlan(
     sql: `SELECT s.language, s.grammar_retention_plan, p.value AS plan_item,
         sk.id AS skill_id, sk.retired_at, COALESCE(l.title, sk.id) AS title,
         EXISTS (SELECT 1 FROM attempts a WHERE a.owner_id = s.owner_id
-          AND a.study_session_id = s.id AND a.question_id = json_extract(p.value, '$.questionId')) AS answered
+          AND a.study_session_id = s.id AND a.question_id = json_extract(p.value, '$.questionId')) AS answered,
+        EXISTS (SELECT 1 FROM attempts WHERE attempts.owner_id = s.owner_id
+          AND attempts.study_session_id = s.id AND attempts.question_id = json_extract(p.value, '$.questionId')
+          AND NOT (${awaitingRatingSql})) AS reviewed
       FROM study_sessions s JOIN json_each(s.grammar_retention_plan, '$.questions') p
       JOIN skills sk ON sk.id = json_extract(p.value, '$.skillId') AND sk.language = s.language
       LEFT JOIN content_versions v ON v.id = json_extract(p.value, '$.contentVersionId')
       LEFT JOIN lessons l ON l.content_version_id = v.id
       WHERE s.id = ? AND s.owner_id = ? AND s.mode = 'mixed-review'
       ORDER BY CAST(p.key AS INTEGER)`,
-    args: [id, learner.userId]
+    args: [...awaitingRatingArgs, id, learner.userId]
   });
   if (!found.rows.length) throw new StudyError('NOT_FOUND');
   assertGrammarPlan(found.rows);
   return found.rows.map((row) => ({
     skillId: String(row.skill_id),
     title: String(row.title),
-    answered: Boolean(row.answered)
+    answered: Boolean(row.answered),
+    // Answered with nothing left to do, so the topic leaves the review's list.
+    reviewed: Boolean(row.reviewed)
   }));
 }
+
+/**
+ * An attempt whose correct answer still waits for its difficulty rating. Such
+ * answers are discarded when the session finishes.
+ */
+const awaitingRatingSql = `attempts.grammar_rating IS NULL AND EXISTS (
+    SELECT 1 FROM study_sessions s WHERE s.id = attempts.study_session_id
+      AND s.owner_id = attempts.owner_id AND s.grammar_retention_policy_version = ?
+  ) AND (
+    EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
+      AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id AND f.outcome = 'correct')
+    OR (NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
+        AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id)
+      AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
+        AND p.evaluator_version = ? AND p.rubric_version = attempts.content_version_id AND p.outcome = 'correct'))
+  )`;
+const awaitingRatingArgs = [
+  GRAMMAR_RETENTION_POLICY_VERSION,
+  FALLBACK_EVALUATOR_VERSION,
+  FALLBACK_RUBRIC_VERSION,
+  FALLBACK_EVALUATOR_VERSION,
+  FALLBACK_RUBRIC_VERSION,
+  PREPARED_EVALUATOR_VERSION
+];
 
 async function discardUnratedPracticeAnswers(
   tx: Pick<Client, 'execute'>,
@@ -396,27 +447,8 @@ async function discardUnratedPracticeAnswers(
 ) {
   await tx.execute({
     sql: `DELETE FROM attempts WHERE owner_id = ? AND study_session_id = ?
-        AND grammar_rating IS NULL AND EXISTS (
-          SELECT 1 FROM study_sessions s WHERE s.id = attempts.study_session_id
-            AND s.owner_id = attempts.owner_id AND s.grammar_retention_policy_version = ?
-        ) AND (
-          EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
-            AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id AND f.outcome = 'correct')
-          OR (NOT EXISTS (SELECT 1 FROM evaluations f WHERE f.attempt_id = attempts.id AND f.owner_id = attempts.owner_id
-              AND f.evaluator_version = ? AND f.rubric_version = ? || ':' || attempts.content_version_id)
-            AND EXISTS (SELECT 1 FROM evaluations p WHERE p.attempt_id = attempts.id AND p.owner_id = attempts.owner_id
-              AND p.evaluator_version = ? AND p.rubric_version = attempts.content_version_id AND p.outcome = 'correct'))
-        )`,
-    args: [
-      learner.userId,
-      id,
-      GRAMMAR_RETENTION_POLICY_VERSION,
-      FALLBACK_EVALUATOR_VERSION,
-      FALLBACK_RUBRIC_VERSION,
-      FALLBACK_EVALUATOR_VERSION,
-      FALLBACK_RUBRIC_VERSION,
-      PREPARED_EVALUATOR_VERSION
-    ]
+        AND ${awaitingRatingSql}`,
+    args: [learner.userId, id, ...awaitingRatingArgs]
   });
 }
 

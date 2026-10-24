@@ -17,6 +17,7 @@ import {
   practiceSummary,
   startPractice,
   startPracticeOver,
+  unfinishedGrammarReview,
   unfinishedPractice
 } from '../src/lib/server/practice';
 import {
@@ -80,7 +81,10 @@ import {
 
 import { importContent } from '../src/lib/server/content-import';
 import { approvedPackage } from './fixtures/content-package';
-import { actions as lessonActions } from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
+import {
+  actions as lessonActions,
+  load as lessonLoad
+} from '../src/routes/app/learn/[language]/lesson/[skill]/+page.server';
 import { actions as dashboardActions } from '../src/routes/app/+page.server';
 import { load as analyticsLoad } from '../src/routes/app/analytics/+page.server';
 import * as authRuntime from '../src/lib/server/auth-runtime';
@@ -1814,6 +1818,161 @@ describe('grammar practice rating and review actions', () => {
     await expect(
       lessonActions.rate(event({ userId: null, fields: {} }))
     ).rejects.toMatchObject({ status: 401 });
+  });
+
+  it('continues the unfinished review from the Review tab and links its lessons back', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    // Clicking a review button again continues the unfinished review.
+    await expect(
+      reviewTabActions.grammar(
+        event({
+          fields: { ...fields, submissionKey: randomUUID(), due: 'today' }
+        })
+      )
+    ).rejects.toMatchObject({
+      status: 303,
+      location: `/app/session/${encodeURIComponent(reviewId)}`
+    });
+    // Its lessons lead back to it; a practice session's lessons do not.
+    const lessonIn = (sessionId: string) =>
+      lessonLoad(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          query: `/learn/fr/lesson/fr-a1-001?session=${encodeURIComponent(sessionId)}`
+        })
+      );
+    expect(await lessonIn(reviewId)).toMatchObject({
+      reviewSessionId: reviewId
+    });
+    expect(await lessonIn(session.id)).toMatchObject({
+      reviewSessionId: null
+    });
+  });
+
+  it("continues only the learner's own live unfinished review", async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    expect(await unfinishedGrammarReview(client, learner, 'fr')).toEqual({
+      id: reviewId
+    });
+    // Another learner is never handed this review.
+    expect(await unfinishedGrammarReview(client, other, 'fr')).toBeNull();
+    // A review whose topic was retired cannot load, so it is not continued
+    // and the Review tab still loads.
+    await client.execute(
+      "UPDATE skills SET retired_at = 1 WHERE id = 'fr-a1-001'"
+    );
+    expect(await unfinishedGrammarReview(client, learner, 'fr')).toBeNull();
+    await expect(reviewTabLoad(event())).resolves.toMatchObject({
+      language: 'fr'
+    });
+    await client.execute(
+      "UPDATE skills SET retired_at = NULL WHERE id = 'fr-a1-001'"
+    );
+    // A finished review is not continued.
+    await finishPractice(client, learner, reviewId);
+    expect(await unfinishedGrammarReview(client, learner, 'fr')).toBeNull();
+  });
+
+  it('drops a reviewed topic from the review session and the Review tab', async () => {
+    const session = await startPractice(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID()
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      answer: 'es',
+      evidenceKind: 'independent'
+    });
+    await finishPractice(client, learner, session.id);
+    await client.execute('UPDATE grammar_retention_schedules SET due_at = 0');
+    const fields = { language: 'fr', submissionKey: randomUUID() };
+    const reviewId = `grammar-review:${fields.submissionKey}`;
+    await expect(
+      reviewTabActions.grammar(event({ fields: { ...fields, due: 'overdue' } }))
+    ).rejects.toMatchObject({ status: 303 });
+    const planned = await client.execute({
+      sql: `SELECT json_extract(grammar_retention_plan, '$.questions[0].questionId') AS id
+        FROM study_sessions WHERE id = ?`,
+      args: [reviewId]
+    });
+    const questionId = String(planned.rows[0]?.id);
+    const answers: Record<string, string> = {
+      'fr-a1-001@1:q1': 'suis',
+      'fr-a1-001@1:q2': 'es'
+    };
+    const attempt = await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId,
+      submissionKey: randomUUID(),
+      answer: answers[questionId] ?? '',
+      evidenceKind: 'independent'
+    });
+    const listed = async () => {
+      const sessionPage = (await sessionLoad(
+        event({ params: { id: reviewId } })
+      )) as { skills: { skillId: string }[] };
+      const reviewTab = (await reviewTabLoad(event())) as {
+        grammar: { overdue: { skillId: string }[] };
+      };
+      return {
+        session: sessionPage.skills.map((skill) => skill.skillId),
+        reviewTab: reviewTab.grammar.overdue.map((skill) => skill.skillId)
+      };
+    };
+    // A correct answer still waiting for its rating keeps the topic listed.
+    expect(await listed()).toEqual({
+      session: ['fr-a1-001'],
+      reviewTab: ['fr-a1-001']
+    });
+    expect(
+      await lessonActions.rate(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          fields: {
+            attemptId: attempt.id,
+            studySessionId: reviewId,
+            rating: 'good'
+          }
+        })
+      )
+    ).toMatchObject({ rated: true });
+    expect(await listed()).toEqual({ session: [], reviewTab: [] });
   });
 
   it('starts overdue grammar from the Review tab and shows when the next topic is due', async () => {

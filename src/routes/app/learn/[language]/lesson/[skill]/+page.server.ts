@@ -92,7 +92,8 @@ export const load: PageServerLoad = async (event) => {
         reportSubmissionKey: randomUUID(),
         lesson,
         exercise: practice.exercise,
-        feedback: practice.feedback
+        feedback: practice.feedback,
+        reviewSessionId: practice.reviewSessionId
       };
     });
   } catch (thrown) {

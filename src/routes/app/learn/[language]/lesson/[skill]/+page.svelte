@@ -31,6 +31,13 @@
       : data.feedback
   );
   const exercise = $derived(rated ? rated.exercise : data.exercise);
+  // The difficulty buttons are still waiting for this answer's rating.
+  const ratingPending = $derived(
+    !!feedback?.requiresRating &&
+      !feedback.receivedHelp &&
+      feedback.outcome === 'correct' &&
+      !feedback.rating
+  );
 
   const outcomeLabel = $derived(
     feedback?.outcome === 'correct'
@@ -303,6 +310,13 @@
       submissionKey={data.reportSubmissionKey}
       actionUrl={lessonActionUrl('report')}
     />
+  {/if}
+  {#if data.reviewSessionId && feedback && !ratingPending}
+    <p>
+      <a href={`/app/session/${encodeURIComponent(data.reviewSessionId)}`}
+        >Continue Review Session</a
+      >
+    </p>
   {/if}
 {/if}
 
