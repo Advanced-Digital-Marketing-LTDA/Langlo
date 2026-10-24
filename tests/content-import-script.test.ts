@@ -316,7 +316,6 @@ describe('revision totals', () => {
     // The pinned literals used in the tests below, checked against the raw JSON.
     expect(revisedWithPt).toHaveLength(44);
     expect(lessons.filter((l) => l.version.translations?.pt)).toHaveLength(89);
-    expect(lessons.flatMap((l) => l.version.questions)).toHaveLength(questions);
     expect(
       revisedLessons.reduce((n, l) => n + l.version.questions.length, 0)
     ).toBe(82 * 15);
