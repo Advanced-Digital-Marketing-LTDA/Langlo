@@ -46,7 +46,7 @@ export function mountTextReader(
     index = to;
     show();
   };
-  const stopSelection = watchSelection({
+  const selectionWatch = watchSelection({
     root: view,
     language: options.language,
     onSelect: options.onSelect,
@@ -61,12 +61,13 @@ export function mountTextReader(
   return {
     next: () => go(index + 1),
     prev: () => go(index - 1),
+    lookup: selectionWatch.read,
     markSaved: (next) => {
       terms = next;
       markSavedTerms(view, terms);
     },
     destroy: () => {
-      stopSelection();
+      selectionWatch.stop();
       stopSwipe();
       container.replaceChildren();
     }

@@ -158,6 +158,12 @@
     void (direction === 'next' ? renderer?.next() : renderer?.prev());
   }
 
+  function lookupSelection() {
+    message = '';
+    if (!renderer?.lookup())
+      message = 'Select a word or phrase in the text first.';
+  }
+
   function onKeydown(event: KeyboardEvent) {
     const target = event.target as HTMLElement;
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName)) return;
@@ -208,6 +214,11 @@
   <p class="hint">
     Select a word or phrase to translate and explain it. Click a word, or press
     and hold on a phone.
+  </p>
+  <p>
+    <button type="button" onclick={lookupSelection} disabled={loading}
+      >Look up selection</button
+    >
   </p>
 </section>
 

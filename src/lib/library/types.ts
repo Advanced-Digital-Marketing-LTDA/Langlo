@@ -33,5 +33,7 @@ export type ReaderRenderer = {
   next: () => Promise<void>;
   prev: () => Promise<void>;
   markSaved: (terms: string[]) => void;
+  /** Look up the current selection; false when nothing is selected. */
+  lookup: () => boolean;
   destroy: () => void;
 };

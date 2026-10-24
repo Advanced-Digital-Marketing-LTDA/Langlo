@@ -103,15 +103,22 @@ type SelectionOptions = {
   onError: (message: string) => void;
 };
 
-/** Pass a read result to the matching callback. */
+/** Pass a read result to the matching callback; false when nothing is selected. */
 function deliver(
   result: SelectionRead,
   { onSelect, onError }: Pick<SelectionOptions, 'onSelect' | 'onError'>
 ) {
-  if (!result) return;
+  if (!result) return false;
   if ('error' in result) onError(result.error);
   else onSelect(result.selection);
+  return true;
 }
+
+export type SelectionWatch = {
+  stop: () => void;
+  /** Look up the current selection now; false when nothing is selected. */
+  read: () => boolean;
+};
 
 /** A primary-button click made with a mouse rather than touch or a pen. */
 const isMouseClick = (event: MouseEvent, pointer: string) =>
@@ -128,13 +135,13 @@ function settleMouseSelection(win: Window, doc: Document, language: string) {
  * drag with the mouse, or a press-and-hold selection with touch. `frame` is
  * the iframe element when `root` lives in one.
  */
-export function watchSelection(options: SelectionOptions): () => void {
+export function watchSelection(options: SelectionOptions): SelectionWatch {
   const { language, frame } = options;
   const rootOf = () =>
     typeof options.root === 'function' ? options.root() : options.root;
   const doc = rootOf().ownerDocument;
   const win = doc.defaultView;
-  if (!win) return () => undefined;
+  if (!win) return { stop: () => undefined, read: () => false };
   let pointer = 'mouse';
   let timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -166,13 +173,14 @@ export function watchSelection(options: SelectionOptions): () => void {
   doc.addEventListener('keydown', onKeyDown);
   doc.addEventListener('mouseup', onMouseUp);
   doc.addEventListener('selectionchange', onSelectionChange);
-  return () => {
+  const stop = () => {
     clearTimeout(timer);
     doc.removeEventListener('pointerdown', onPointerDown);
     doc.removeEventListener('keydown', onKeyDown);
     doc.removeEventListener('mouseup', onMouseUp);
     doc.removeEventListener('selectionchange', onSelectionChange);
   };
+  return { stop, read };
 }
 
 /** Flip pages with a horizontal swipe, unless the learner is selecting text. */

@@ -94,7 +94,7 @@ export async function mountPdfReader(
     await show();
   };
   // The text layer is replaced on every page; selections are read from the holder.
-  const stopSelection = watchSelection({
+  const selectionWatch = watchSelection({
     root: holder,
     language: options.language,
     onSelect: options.onSelect,
@@ -107,12 +107,13 @@ export async function mountPdfReader(
   return {
     next: () => go(pageNumber + 1),
     prev: () => go(pageNumber - 1),
+    lookup: selectionWatch.read,
     markSaved: (next) => {
       terms = next;
       if (textLayer) markSavedTerms(textLayer, terms);
     },
     destroy: () => {
-      stopSelection();
+      selectionWatch.stop();
       stopSwipe();
       container.replaceChildren();
       void documentTask.destroy();

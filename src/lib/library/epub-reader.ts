@@ -41,28 +41,27 @@ function attachToSection(
   rendition: EpubRendition,
   options: ReaderOptions,
   terms: string[]
-): (() => void)[] {
+) {
   const doc = contents.document;
   markSavedTerms(doc.body, terms);
   doc.addEventListener('keyup', (event) => {
     if (event.key === 'ArrowRight') void rendition.next();
     if (event.key === 'ArrowLeft') void rendition.prev();
   });
-  return [
-    watchSelection({
-      root: doc.body,
-      language: options.language,
-      frame: (doc.defaultView?.frameElement as HTMLElement | null) ?? undefined,
-      onSelect: options.onSelect,
-      onError: options.onError
-    }),
-    watchSwipe(
-      doc,
-      doc,
-      (direction) =>
-        void (direction === 'next' ? rendition.next() : rendition.prev())
-    )
-  ];
+  const selectionWatch = watchSelection({
+    root: doc.body,
+    language: options.language,
+    frame: (doc.defaultView?.frameElement as HTMLElement | null) ?? undefined,
+    onSelect: options.onSelect,
+    onError: options.onError
+  });
+  const stopSwipe = watchSwipe(
+    doc,
+    doc,
+    (direction) =>
+      void (direction === 'next' ? rendition.next() : rendition.prev())
+  );
+  return { stops: [selectionWatch.stop, stopSwipe], read: selectionWatch.read };
 }
 
 /** Flipping the pages of an EPUB in its own layout, inside a sandboxed frame. */
@@ -89,9 +88,12 @@ export async function mountEpubReader(
   });
   let terms = options.savedTerms;
   const stops: (() => void)[] = [];
+  const reads = new Map<Document, () => boolean>();
 
   rendition.hooks.content.register((contents: Contents) => {
-    stops.push(...attachToSection(contents, rendition, options, terms));
+    const section = attachToSection(contents, rendition, options, terms);
+    stops.push(...section.stops);
+    reads.set(contents.document, section.read);
   });
   rendition.on('relocated', (location: EpubLocation) => {
     const sections = Math.max(
@@ -111,6 +113,10 @@ export async function mountEpubReader(
     prev: async () => {
       await rendition.prev();
     },
+    lookup: () =>
+      (rendition.getContents() as unknown as Contents[]).some((contents) =>
+        reads.get(contents.document)?.()
+      ),
     markSaved: (next) => {
       terms = next;
       for (const contents of rendition.getContents() as unknown as Contents[])

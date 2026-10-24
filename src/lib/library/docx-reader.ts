@@ -60,7 +60,7 @@ export async function mountDocxReader(
     index = to;
     show();
   };
-  const stopSelection = watchSelection({
+  const selectionWatch = watchSelection({
     root: () => pages[index],
     language: options.language,
     onSelect: options.onSelect,
@@ -73,12 +73,13 @@ export async function mountDocxReader(
   return {
     next: () => go(index + 1),
     prev: () => go(index - 1),
+    lookup: selectionWatch.read,
     markSaved: (next) => {
       terms = next;
       markSavedTerms(pages[index], terms);
     },
     destroy: () => {
-      stopSelection();
+      selectionWatch.stop();
       stopSwipe();
       container.replaceChildren();
     }

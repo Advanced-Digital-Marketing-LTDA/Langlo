@@ -466,6 +466,33 @@ test('saves reading positions one at a time and in order', async ({ page }) => {
   await page.unroute('**/app/api/library/*');
 });
 
+test('the Look up selection button opens the lookup for selected text', async ({
+  page
+}) => {
+  await uploadText(page, 'en', 'The river bank is steep. The path is long.');
+  const lookupButton = page.getByRole('button', { name: 'Look up selection' });
+  await lookupButton.click();
+  await expect(
+    page.getByText('Select a word or phrase in the text first.')
+  ).toBeVisible();
+  await expect(panel(page)).toHaveCount(0);
+  await page.evaluate(() => {
+    const range = document.createRange();
+    range.selectNodeContents(document.querySelector('.text-page p') as Element);
+    const selection = document.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+  });
+  await lookupButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(panel(page).locator('.term')).toHaveText(
+    'The river bank is steep. The path is long'
+  );
+  await expect(
+    page.getByText('Select a word or phrase in the text first.')
+  ).toHaveCount(0);
+});
+
 test('drops a lookup reply that arrives after another word is selected', async ({
   page
 }) => {
