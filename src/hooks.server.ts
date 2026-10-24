@@ -59,6 +59,8 @@ function requestPath(url: URL) {
   return url.pathname.replace(/\/+$/, '') || '/';
 }
 
+type RoutePolicy = ReturnType<typeof routePolicy>;
+
 function routePolicy(path: string) {
   const appPath = withinPath(path, '/app');
   const authPath = withinPath(path, '/api/auth');
@@ -66,6 +68,7 @@ function routePolicy(path: string) {
   const privateRoute =
     appPath || ['/login', '/signup', '/recover', '/reset'].includes(path);
   return {
+    path,
     appPath,
     authPath,
     accountPage,
@@ -80,24 +83,43 @@ function routePolicy(path: string) {
   };
 }
 
-function requestHeaders(privateRoute: boolean, correlationId: string) {
+function requestHeaders(route: RoutePolicy, correlationId: string) {
   return {
     'x-correlation-id': correlationId,
-    'cache-control': privateRoute ? 'private, no-store' : 'no-store',
+    'cache-control': route.privateRoute ? 'private, no-store' : 'no-store',
     'x-content-type-options': 'nosniff',
     'referrer-policy': 'same-origin'
   };
 }
 
+type Failure = { status: number; message: string };
+
+const failures = {
+  unavailable: {
+    status: 503,
+    message: 'Service unavailable. Please try again.'
+  },
+  accountsNotReady: { status: 503, message: 'Accounts are not ready yet.' },
+  recoveryUnavailable: {
+    status: 503,
+    message: 'Password recovery is temporarily unavailable.'
+  },
+  alreadySignedIn: {
+    status: 409,
+    message: 'Sign out before registering another account.'
+  },
+  signInRequired: { status: 401, message: 'Sign in required.' },
+  tooLarge: { status: 413, message: 'This request is too large.' }
+} satisfies Record<string, Failure>;
+
 function failureResponse(
   event: HookEvent,
   headers: Record<string, string>,
-  status: number,
-  message: string
+  failure: Failure
 ) {
   return Response.json(
-    { message, correlationId: event.locals.correlationId },
-    { status, headers }
+    { message: failure.message, correlationId: event.locals.correlationId },
+    { status: failure.status, headers }
   );
 }
 
@@ -110,9 +132,9 @@ function addResponseHeaders(
   return response;
 }
 
-function configureRequest(event: HookEvent, path: string) {
+function configureRequest(event: HookEvent, route: RoutePolicy) {
   // Liveness never depends on application config, schema, auth or a provider.
-  if (path === '/health/live') return;
+  if (route.path === '/health/live') return;
   try {
     event.locals.config = parseRuntimeConfig(env);
   } catch (error) {
@@ -128,11 +150,11 @@ function configureRequest(event: HookEvent, path: string) {
 
 function recoveryFailure(
   event: HookEvent,
-  path: string,
+  route: RoutePolicy,
   headers: Record<string, string>
 ) {
   if (
-    path !== '/api/auth/request-password-reset' ||
+    route.path !== '/api/auth/request-password-reset' ||
     !event.locals.config?.auth?.mailError
   )
     return;
@@ -145,12 +167,7 @@ function recoveryFailure(
       )
     )
   );
-  return failureResponse(
-    event,
-    headers,
-    503,
-    'Password recovery is temporarily unavailable.'
-  );
+  return failureResponse(event, headers, failures.recoveryUnavailable);
 }
 
 async function configuredAuth(
@@ -199,50 +216,35 @@ async function authenticateRequest(
 
 function signupFailure(
   event: HookEvent,
-  path: string,
+  route: RoutePolicy,
   sessionLookupFailed: boolean,
   headers: Record<string, string>
 ) {
-  const signupApi = path === '/api/auth/sign-up/email';
-  if (sessionLookupFailed && (path === '/signup' || signupApi))
-    return failureResponse(
-      event,
-      headers,
-      503,
-      'Service unavailable. Please try again.'
-    );
+  const signupApi = route.signupApi;
+  if (sessionLookupFailed && (route.path === '/signup' || signupApi))
+    return failureResponse(event, headers, failures.unavailable);
   if (signupApi && event.locals.user)
-    return failureResponse(
-      event,
-      headers,
-      409,
-      'Sign out before registering another account.'
-    );
+    return failureResponse(event, headers, failures.alreadySignedIn);
 }
 
 function appAccessFailure(
   event: HookEvent,
-  appPath: boolean,
+  route: RoutePolicy,
   authentication: RequestAuth,
   headers: Record<string, string>
 ) {
-  if (!appPath) return;
+  if (!route.appPath) return;
   if (!authentication.auth)
-    return failureResponse(event, headers, 503, 'Accounts are not ready yet.');
+    return failureResponse(event, headers, failures.accountsNotReady);
   if (event.locals.user) return;
   if (authentication.sessionLookupFailed)
-    return failureResponse(
-      event,
-      headers,
-      503,
-      'Service unavailable. Please try again.'
-    );
+    return failureResponse(event, headers, failures.unavailable);
   if (['GET', 'HEAD'].includes(event.request.method))
     return new Response(null, {
       status: 303,
       headers: { ...headers, location: '/login' }
     });
-  return failureResponse(event, headers, 401, 'Sign in required.');
+  return failureResponse(event, headers, failures.signInRequired);
 }
 
 function resetTokenCookie(token: string, secure: boolean) {
@@ -254,9 +256,13 @@ function resetTokenCookie(token: string, secure: boolean) {
   );
 }
 
-function handoffResetToken(event: HookEvent, path: string, response: Response) {
+function handoffResetToken(
+  event: HookEvent,
+  route: RoutePolicy,
+  response: Response
+) {
   if (
-    !path.startsWith('/api/auth/reset-password/') ||
+    !route.path.startsWith('/api/auth/reset-password/') ||
     response.status < 300 ||
     response.status >= 400
   )
@@ -292,7 +298,7 @@ async function bodyLimitedResponse(
     return await run();
   } catch (error) {
     if (error instanceof StudyError && error.code === 'REQUEST_BODY_TOO_LARGE')
-      return failureResponse(event, headers, 413, 'This request is too large.');
+      return failureResponse(event, headers, failures.tooLarge);
     throw error;
   }
 }
@@ -300,10 +306,10 @@ async function bodyLimitedResponse(
 async function forwardAuth(
   event: HookEvent,
   auth: RequestAuth['auth'],
+  route: RoutePolicy,
   headers: Record<string, string>
 ) {
-  if (!auth)
-    return failureResponse(event, headers, 503, 'Accounts are not ready yet.');
+  if (!auth) return failureResponse(event, headers, failures.accountsNotReady);
   let authHeaders: Headers;
   try {
     authHeaders = authRequestHeaders(event);
@@ -311,7 +317,7 @@ async function forwardAuth(
     console.warn(
       JSON.stringify(safeDiagnostic('auth', error, event.locals.correlationId))
     );
-    return failureResponse(event, headers, 503, 'Accounts are not ready yet.');
+    return failureResponse(event, headers, failures.accountsNotReady);
   }
   return bodyLimitedResponse(
     async () => {
@@ -322,7 +328,7 @@ async function forwardAuth(
         auth.handler(request)
       );
       const output = new Response(response.body, response);
-      handoffResetToken(event, requestPath(event.url), output);
+      handoffResetToken(event, route, output);
       return addResponseHeaders(output, headers);
     },
     event,
@@ -358,10 +364,9 @@ async function resolvePage(
 
 const appHandle: Handle = async ({ event, resolve }) => {
   event.locals.correlationId = randomUUID();
-  const path = requestPath(event.url);
-  const route = routePolicy(path);
+  const route = routePolicy(requestPath(event.url));
   const headers: Record<string, string> = requestHeaders(
-    route.privateRoute,
+    route,
     event.locals.correlationId
   );
   const maxBodyBytes = requestBodyLimit(event.request, event.url);
@@ -371,26 +376,22 @@ const appHandle: Handle = async ({ event, resolve }) => {
       maxBodyBytes
     )
   )
-    return failureResponse(event, headers, 413, 'This request is too large.');
+    return failureResponse(event, headers, failures.tooLarge);
   if (route.noIndex) headers['x-robots-tag'] = 'noindex, nofollow';
-  configureRequest(event, path);
-  const recovery = recoveryFailure(event, path, headers);
+  configureRequest(event, route);
+  const recovery = recoveryFailure(event, route, headers);
   if (recovery) return recovery;
   const authentication = await authenticateRequest(event, route);
   const signup = signupFailure(
     event,
-    path,
+    route,
     authentication.sessionLookupFailed,
     headers
   );
   if (signup) return signup;
-  if (route.authPath) return forwardAuth(event, authentication.auth, headers);
-  const access = appAccessFailure(
-    event,
-    route.appPath,
-    authentication,
-    headers
-  );
+  if (route.authPath)
+    return forwardAuth(event, authentication.auth, route, headers);
+  const access = appAccessFailure(event, route, authentication, headers);
   if (access) return access;
   return resolvePage(event, resolve, maxBodyBytes, headers);
 };
