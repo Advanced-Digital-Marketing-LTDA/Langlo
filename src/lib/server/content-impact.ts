@@ -40,6 +40,7 @@ type PackageVersion = ContentPackage['versions'][number];
 type Earlier = { questions: PriorQuestion[] };
 type Counted = { itemKey: string; contentVersionId: string };
 type Qualified = ReturnType<typeof qualifyingGrammarEvidence>[number];
+type VersionCandidate = { id: string; version: number; status: string };
 
 /** The grammar status mastery scores for these qualifying answers. */
 const standing = (items: Qualified[]) =>
@@ -354,39 +355,73 @@ async function currentKeysAfterPackage(
     sql: 'SELECT id, version, status FROM content_versions WHERE skill_id = ?',
     args: [skillId]
   });
+  const candidates = versionCandidates(stored.rows, versions, skillId);
+  const current = candidates
+    .sort((a, b) => b.version - a.version)
+    .find((candidate) => candidate.status !== 'quarantined');
+  if (current === undefined) return undefined;
+  return candidateKeys(client, current, plannedVersions);
+}
+
+/** Stored and planned versions with their final package review state. */
+function versionCandidates(
+  storedRows: Row[],
+  versions: PackageVersion[],
+  skillId: string
+): VersionCandidate[] {
   const packageVersions = new Map(
     versions
       .filter((version) => version.skillId === skillId)
       .map((version) => [version.id, version])
   );
-  const storedIds = new Set(stored.rows.map((row) => String(row.id)));
-  const candidates = stored.rows.map((row) => {
+  const stored = storedRows.map((row) => {
     const id = String(row.id);
-    return {
-      id,
-      version: Number(row.version),
-      status:
-        packageVersions.get(id)?.review === 'quarantined'
-          ? 'quarantined'
-          : String(row.status)
-    };
+    return storedCandidate(row, id, packageVersions.get(id));
   });
-  for (const version of versions)
-    if (version.skillId === skillId && !storedIds.has(version.id))
-      candidates.push({
-        id: version.id,
-        version: version.version,
-        status:
-          version.review === 'quarantined' ? 'quarantined' : 'schema-validated'
-      });
-  candidates.sort((a, b) => b.version - a.version);
-  const current = candidates.find(
-    (candidate) => candidate.status !== 'quarantined'
-  );
-  if (current === undefined) return undefined;
-  const planned = plannedVersions.get(current.id);
+  const storedIds = new Set(stored.map((candidate) => candidate.id));
+  const planned = versions
+    .filter(
+      (version) => version.skillId === skillId && !storedIds.has(version.id)
+    )
+    .map(packageCandidate);
+  return [...stored, ...planned];
+}
+
+function storedCandidate(
+  row: Row,
+  id: string,
+  packageVersion: PackageVersion | undefined
+): VersionCandidate {
+  return {
+    id,
+    version: Number(row.version),
+    status: statusAfterReview(packageVersion?.review, String(row.status))
+  };
+}
+
+function packageCandidate(version: PackageVersion): VersionCandidate {
+  return {
+    id: version.id,
+    version: version.version,
+    status: statusAfterReview(version.review, 'schema-validated')
+  };
+}
+
+function statusAfterReview(
+  review: PackageVersion['review'] | undefined,
+  current: string
+) {
+  return review === 'quarantined' ? 'quarantined' : current;
+}
+
+function candidateKeys(
+  client: Client,
+  candidate: VersionCandidate,
+  plannedVersions: Map<string, Earlier>
+) {
+  const planned = plannedVersions.get(candidate.id);
   return planned === undefined
-    ? versionKeys(client, current.id)
+    ? versionKeys(client, candidate.id)
     : plannedKeys(planned);
 }
 
@@ -402,66 +437,139 @@ async function packageStatusChanges(
 ) {
   for (const line of lines) line.statusChanges = [];
   const skillIds = [...new Set(lines.map((line) => line.skillId))];
-  const quarantinedVersions = new Set(
+  const quarantinedVersions = quarantinedVersionIds(versions);
+  for (const skillId of skillIds)
+    await packageSkillStatusChanges(
+      client,
+      lines,
+      skillId,
+      versions,
+      plannedVersions,
+      quarantinedVersions
+    );
+}
+
+function quarantinedVersionIds(versions: PackageVersion[]) {
+  return new Set(
     versions
       .filter((version) => version.review === 'quarantined')
       .map((version) => version.id)
   );
-  for (const skillId of skillIds) {
-    const skill = await client.execute({
-      sql: 'SELECT language FROM skills WHERE id = ?',
-      args: [skillId]
-    });
-    if (skill.rows.length === 0)
-      throw new Error(`impact report: skill ${skillId} is not stored`);
-    const before = await currentContent(client, String(skill.rows[0].language));
-    const after: CurrentContent = {
-      keys: new Map([...before.keys].map(([id, keys]) => [id, new Set(keys)])),
-      carry: before.carry
-    };
-    const nextKeys = await currentKeysAfterPackage(
-      client,
-      skillId,
-      versions,
-      plannedVersions
-    );
-    if (nextKeys === undefined) after.keys.delete(skillId);
-    else after.keys.set(skillId, nextKeys);
+}
 
-    const sources = [
+async function packageSkillStatusChanges(
+  client: Client,
+  lines: ImpactLine[],
+  skillId: string,
+  versions: PackageVersion[],
+  plannedVersions: Map<string, Earlier>,
+  quarantinedVersions: Set<string>
+) {
+  const skill = await client.execute({
+    sql: 'SELECT language FROM skills WHERE id = ?',
+    args: [skillId]
+  });
+  if (skill.rows.length === 0)
+    throw new Error(`impact report: skill ${skillId} is not stored`);
+  const before = await currentContent(client, String(skill.rows[0].language));
+  const nextKeys = await currentKeysAfterPackage(
+    client,
+    skillId,
+    versions,
+    plannedVersions
+  );
+  const after = contentWithSkillKeys(before, skillId, nextKeys);
+  const sources = skillEvidenceSources(skillId, before.carry);
+  const byOwner = await evidenceByOwner(client, sources);
+  const changes = statusChangesByOwner(
+    byOwner,
+    skillId,
+    before,
+    after,
+    quarantinedVersions
+  );
+  const lastLine = [...lines]
+    .reverse()
+    .find((line) => line.skillId === skillId);
+  if (lastLine) lastLine.statusChanges = sortedStatusChanges(changes);
+}
+
+function contentWithSkillKeys(
+  before: CurrentContent,
+  skillId: string,
+  nextKeys: Set<string> | undefined
+): CurrentContent {
+  const keys = new Map(
+    [...before.keys].map(([id, held]) => [id, new Set(held)])
+  );
+  if (nextKeys === undefined) keys.delete(skillId);
+  else keys.set(skillId, nextKeys);
+  return { keys, carry: before.carry };
+}
+
+function skillEvidenceSources(skillId: string, carry: CurrentContent['carry']) {
+  return [
+    skillId,
+    ...[...carry.keys()].filter((id) => carriedTo(id, carry) === skillId)
+  ];
+}
+
+function statusChangesByOwner(
+  byOwner: Map<string, Row[]>,
+  skillId: string,
+  before: CurrentContent,
+  after: CurrentContent,
+  quarantinedVersions: Set<string>
+) {
+  const changes = new Map<string, StatusChange>();
+  for (const ownerRows of byOwner.values()) {
+    const { from, to } = ownerStatusChange(
+      ownerRows,
       skillId,
-      ...[...before.carry.keys()].filter(
-        (id) => carriedTo(id, before.carry) === skillId
-      )
-    ];
-    const byOwner = await evidenceByOwner(client, sources);
-    const changes = new Map<string, StatusChange>();
-    for (const ownerRows of byOwner.values()) {
-      const from = standing(
-        qualifyingGrammarEvidence(ownerRows, before).filter(
-          (item) => item.countsFor === skillId
-        )
-      );
-      const projectedRows = ownerRows.map((row) =>
-        quarantinedVersions.has(String(row.content_version_id))
-          ? { ...row, status: 'quarantined' }
-          : row
-      );
-      const to = standing(
-        qualifyingGrammarEvidence(projectedRows, after).filter(
-          (item) => item.countsFor === skillId
-        )
-      );
-      if (from !== to) tally(changes, from, to);
-    }
-    const lastLine = [...lines]
-      .reverse()
-      .find((line) => line.skillId === skillId);
-    if (lastLine)
-      lastLine.statusChanges = [...changes.values()].sort(
-        (a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to)
-      );
+      before,
+      after,
+      quarantinedVersions
+    );
+    if (from !== to) tally(changes, from, to);
   }
+  return changes;
+}
+
+function ownerStatusChange(
+  ownerRows: Row[],
+  skillId: string,
+  before: CurrentContent,
+  after: CurrentContent,
+  quarantinedVersions: Set<string>
+) {
+  const from = standingForSkill(ownerRows, skillId, before);
+  const projectedRows = ownerRows.map((row) =>
+    quarantinedVersions.has(String(row.content_version_id))
+      ? { ...row, status: 'quarantined' }
+      : row
+  );
+  return {
+    from,
+    to: standingForSkill(projectedRows, skillId, after)
+  };
+}
+
+function standingForSkill(
+  rows: Row[],
+  skillId: string,
+  content: CurrentContent
+) {
+  return standing(
+    qualifyingGrammarEvidence(rows, content).filter(
+      (item) => item.countsFor === skillId
+    )
+  );
+}
+
+function sortedStatusChanges(changes: Map<string, StatusChange>) {
+  return [...changes.values()].sort(
+    (a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to)
+  );
 }
 
 export async function contentImpact(

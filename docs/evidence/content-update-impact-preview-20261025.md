@@ -52,4 +52,14 @@ Internal adversarial review: GPT-6.1 Sol, Medium effort, read-only; approved wit
 - No tracker was updated.
 - PR #186's OpenAI guard paths remain unchanged.
 
-Pending acceptance: new draft PR review and exact-head CI. The tracker remains as previously marked Done pending the parent's coordination.
+## Published-head review and local follow-up
+
+The initial draft was opened as [PR #188](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/pull/188) on `fix/content-import-impact-preview-accuracy`, based on `main` at `8d491c0`. The published head is `18e06d49a9dd09b3f0a18d92b277ebda648bc068`; `git ls-remote` confirmed the remote branch still points to that commit. PR #188 is open, draft, and unmerged.
+
+All exact-head GitHub workflows completed successfully, including Quality, Dependency review, Ratchets, OSSAR, ESLint, Adversarial review, rewardguard, merge-evidence-gate, Codecov, and APKG feasibility. The merge-evidence-gate passed but noted that `docs/content-update.md` and `src/lib/server/content-impact.ts` were not named in the PR description. The description has not been updated pending parent approval for post-publication changes.
+
+CodeScene reported `packageStatusChanges` complexity 11 (threshold 9), `currentKeysAfterPackage` complexity 9 (threshold 9), two nested logic blocks in `packageStatusChanges`, and module mean complexity 4.12 across 17 functions (threshold 4). A local-only refactor splits version candidate selection and per-skill/per-owner status projection into helpers and centralizes quarantine status selection. The GPT-6.1 Sol Medium adversarial follow-up review approved it with no material findings. The final local behavior assertions, full unit suite, property tests, type/lint/format checks, build, and browser E2E all passed after this refactor. CodeScene has not reviewed a new head; the local refactor remains unpublished while awaiting parent approval for another push.
+
+Codacy's PR comment reported one medium complexity issue and duplication metric 2 (threshold 1), without identifying the duplicated lines. Its dashboard was inaccessible from this environment, so the duplication finding could not be verified. The local refactor addresses the reported complexity through helper extraction and consolidates the repeated quarantine-state selection, but Codacy has not rechecked it. SonarCloud's PR comment reported a passed quality gate and four new issues; the issue details page was also inaccessible from this environment.
+
+The PR remains a draft pending review. No tracker update was made; LANGLO-167 and LANGLO-214 remain in their previously recorded Done state pending the parent's coordination.
