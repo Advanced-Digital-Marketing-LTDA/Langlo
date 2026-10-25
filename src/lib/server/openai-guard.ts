@@ -26,22 +26,24 @@ const injectionPatterns = [
   /\b(?:reveal|print|repeat|affiche|montre|zeige|mostre)\b[^.!?\n]{0,40}\b(?:prompt|instructions|anweisungen|instrucoes)\b/
 ];
 
-/** Control, zero-width and bidirectional override characters hide text from readers. */
-function hasHiddenCharacter(text: string): boolean {
-  for (const char of text) {
-    const code = char.codePointAt(0) ?? 0;
-    if (
-      (code < 0x20 && code !== 0x09 && code !== 0x0a && code !== 0x0d) ||
-      code === 0x7f ||
-      (code >= 0x200b && code <= 0x200f) ||
-      (code >= 0x202a && code <= 0x202e) ||
-      (code >= 0x2060 && code <= 0x2064) ||
-      code === 0xfeff
-    )
-      return true;
-  }
-  return false;
-}
+/** Code point ranges of control, zero-width and bidirectional override characters. */
+const hiddenRanges: readonly (readonly [number, number])[] = [
+  [0x00, 0x08],
+  [0x0b, 0x0c],
+  [0x0e, 0x1f],
+  [0x7f, 0x7f],
+  [0x200b, 0x200f],
+  [0x202a, 0x202e],
+  [0x2060, 0x2064],
+  [0xfeff, 0xfeff]
+];
+
+const isHidden = (code: number) =>
+  hiddenRanges.some(([low, high]) => code >= low && code <= high);
+
+/** Hidden characters let text mean something other than what a reader sees. */
+const hasHiddenCharacter = (text: string) =>
+  [...text].some((char) => isHidden(char.codePointAt(0) ?? 0));
 
 /** True when the text matches a known instruction-override pattern in en/fr/de/pt. */
 export function matchesInjectionPattern(text: string): boolean {
@@ -56,6 +58,20 @@ export function matchesInjectionPattern(text: string): boolean {
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isProbability = (value: unknown): value is number =>
+  typeof value === 'number' && value >= 0 && value <= 1;
+
+/** The single `injection` probability of a Jev answer; anything else is malformed. */
+function readInjectionProbability(body: unknown): number {
+  const answers = isRecord(body) ? body.answers : undefined;
+  const answer = isRecord(answers) ? answers.injection : undefined;
+  if (!isRecord(answer) || answer.type !== 'noul')
+    throw new Error('Jev guard answer was malformed');
+  if (!isProbability(answer.noul))
+    throw new Error('Jev guard probability was malformed');
+  return answer.noul;
+}
 
 /** Ask Jev for the probability that the text holds instructions for a model. */
 async function injectionProbability(
@@ -76,21 +92,7 @@ async function injectionProbability(
     signal: AbortSignal.timeout(GUARD_TIMEOUT_MS)
   });
   if (!response.ok) throw new Error('Jev guard request failed');
-  const body: unknown = await response.json();
-  const answer =
-    isRecord(body) && isRecord(body.answers)
-      ? body.answers.injection
-      : undefined;
-  if (
-    !isRecord(answer) ||
-    answer.type !== 'noul' ||
-    typeof answer.noul !== 'number' ||
-    !Number.isFinite(answer.noul) ||
-    answer.noul < 0 ||
-    answer.noul > 1
-  )
-    throw new Error('Jev guard answer was malformed');
-  return answer.noul;
+  return readInjectionProbability(await response.json());
 }
 
 /**
