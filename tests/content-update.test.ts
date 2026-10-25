@@ -506,6 +506,13 @@ describe('retiring a skill', () => {
 });
 
 describe('the impact report', () => {
+  /** The fixture evaluator cannot call a typed answer wrong, so mark the evaluation. */
+  const markIncorrect = (attemptId: string) =>
+    client.execute({
+      sql: "UPDATE evaluations SET outcome = 'incorrect' WHERE attempt_id = ?",
+      args: [attemptId]
+    });
+
   const answer = (questionId: string, key: string, value = 'réponse') =>
     recordAttempt(client, testSession('learner-a'), {
       studySessionId: 'study-a',
@@ -528,10 +535,63 @@ describe('the impact report', () => {
         skillId: 'fr-a1-001',
         reason: '1 question(s) changed or removed in fr-a1-001@2',
         answers: 1,
-        learners: 1
+        learners: 1,
+        statusChanges: []
       }
     ]);
     expect(await storedState()).toEqual(before);
+  });
+
+  it('lists where the learners whose status would move are going', async () => {
+    await answer('fr-a1-001@1:q1', 'one', 'suis');
+    await markIncorrect((await answer('fr-a1-001@1:q2', 'two', 'suis')).id);
+    const pkg = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      question('fr-a1-001@2:q3', { change: 'new' })
+    ]);
+    // One right and one wrong is weak; dropping the wrong one leaves practising.
+    expect(await contentImpact(client, pkg)).toMatchObject([
+      {
+        skillId: 'fr-a1-001',
+        answers: 1,
+        learners: 1,
+        statusChanges: [{ from: 'weak', to: 'practising', learners: 1 }]
+      }
+    ]);
+  });
+
+  it('reports the status change when quarantining a version drops its answers', async () => {
+    await answer('fr-a1-001@1:q1', 'one', 'suis');
+    await importContent(
+      client,
+      update('0.1.1', [
+        same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+        same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+      ])
+    );
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('study-two', 'learner-a', 'enrollment-a', 'fr', 'practice')"
+    );
+    const wrong = await recordAttempt(client, testSession('learner-a'), {
+      studySessionId: 'study-two',
+      questionId: 'fr-a1-001@2:q2',
+      submissionKey: 'wrong',
+      evidenceKind: 'independent',
+      answer: 'suis'
+    });
+    await markIncorrect(wrong.id);
+    const withdrawn = update('0.1.2', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      same('fr-a1-001@2:q2', 'fr-a1-001@1:q2')
+    ]);
+    withdrawn.versions[0].review = 'quarantined';
+    expect(await contentImpact(client, withdrawn)).toMatchObject([
+      {
+        skillId: 'fr-a1-001',
+        answers: 1,
+        statusChanges: [{ from: 'weak', to: 'practising', learners: 1 }]
+      }
+    ]);
   });
 
   it('leaves out answers that mastery does not count, such as Not sure', async () => {
@@ -701,6 +761,18 @@ describe('the impact report', () => {
     await expect(
       contentImpact(client, update('0.2.0', [question('fr-a1-001@2:q1')]))
     ).rejects.toMatchObject({ code: 'MISSING_CHANGE' });
+  });
+
+  it('reports no status change for a retired skill, which leaves the catalog', async () => {
+    await answer('fr-a1-002@1:q1', 'three', 'On est ici.');
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '1.0.0';
+    pkg.skills = pkg.skills.filter((skill) => skill.id !== 'fr-a1-002');
+    pkg.versions = pkg.versions.filter((v) => v.skillId !== 'fr-a1-002');
+    pkg.retirements = [{ skillId: 'fr-a1-002' }];
+    const [line] = await contentImpact(client, pkg);
+    expect(line).toMatchObject({ skillId: 'fr-a1-002', answers: 1 });
+    expect(line).not.toHaveProperty('statusChanges');
   });
 
   it('counts a retired skill that does not carry over, and only the unmatched items of one that does', async () => {
