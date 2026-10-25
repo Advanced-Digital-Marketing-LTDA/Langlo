@@ -201,8 +201,8 @@ async function ensureMistakeDeck(
     .update(`${learner.userId}\0${language}`)
     .digest('hex')}`;
   await executeWrite(client, {
-    sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?) ON CONFLICT (id) DO NOTHING',
-    args: [id, learner.userId, `Mistakes (${language})`]
+    sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name, language) VALUES (?, ?, ?, ?) ON CONFLICT (id) DO NOTHING',
+    args: [id, learner.userId, `Mistakes (${language})`, language]
   });
   return id;
 }

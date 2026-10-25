@@ -1024,6 +1024,229 @@
           }
         }
       }
+    },
+    {
+      "skill_id": "en-a2-023",
+      "title": "Verb + -ing patterns",
+      "explanation": "After some verbs and after prepositions use the -ing form: I enjoy swimming. She finished writing. We are interested in learning Spanish. He is good at cooking. Enjoy and finish take -ing. Like, love, hate and start can take either -ing or a to-infinitive; stop to do something has a different meaning from stop doing it. After a preposition always use -ing: thank you for helping, before leaving. After enjoy, do not use the base verb or a to-infinitive: not I enjoy to swim.",
+      "examples": [
+        {
+          "en": "I enjoy swimming."
+        },
+        {
+          "en": "She finished writing the email."
+        },
+        {
+          "en": "He is good at cooking."
+        }
+      ],
+      "references": ["CAM-A2-KEY", "BC-A1-A2"],
+      "version": {
+        "id": "en-a2-023@3",
+        "version": 3,
+        "questions": [
+          {
+            "id": "en-a2-023@3:q01",
+            "format": "multiple-choice",
+            "prompt": "Which verb is followed by the -ing form?",
+            "answer": "enjoy",
+            "alternatives": ["enjoy", "decide", "hope"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q01"
+          },
+          {
+            "id": "en-a2-023@3:q02",
+            "format": "multiple-choice",
+            "prompt": "Which verb form follows a preposition like 'at'?",
+            "answer": "the -ing form",
+            "alternatives": [
+              "the -ing form",
+              "the base verb",
+              "to + base verb"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q02"
+          },
+          {
+            "id": "en-a2-023@3:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence is correct?",
+            "answer": "I enjoy swimming.",
+            "alternatives": [
+              "I enjoy swimming.",
+              "I enjoy to swim.",
+              "I enjoy swim."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q03"
+          },
+          {
+            "id": "en-a2-023@3:q04",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses a preposition plus -ing?",
+            "answer": "He is good at cooking.",
+            "alternatives": [
+              "He is good at cook.",
+              "He is good at cooking.",
+              "He is good at to cook."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q04"
+          },
+          {
+            "id": "en-a2-023@3:q05",
+            "format": "typed-blank",
+            "prompt": "I enjoy ___. (swim)",
+            "answer": "swimming",
+            "near_misses": ["swim", "to swim"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q05"
+          },
+          {
+            "id": "en-a2-023@3:q06",
+            "format": "typed-blank",
+            "prompt": "She finished ___ the email. (write)",
+            "answer": "writing",
+            "near_misses": ["write", "wrote"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q06"
+          },
+          {
+            "id": "en-a2-023@3:q07",
+            "format": "typed-blank",
+            "prompt": "He is good at ___. (cook)",
+            "answer": "cooking",
+            "near_misses": ["cook", "cooked"],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q07"
+          },
+          {
+            "id": "en-a2-023@3:q08",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: I / enjoy / swim",
+            "answer": "I enjoy swimming.",
+            "near_misses": ["I enjoy to swim.", "I enjoy swim."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q08"
+          },
+          {
+            "id": "en-a2-023@3:q09",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: she / finish / write / the email",
+            "answer": "She finished writing the email.",
+            "near_misses": [
+              "She finished to write the email.",
+              "She finished write the email."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q09"
+          },
+          {
+            "id": "en-a2-023@3:q10",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: he / be good at / cook",
+            "answer": "He is good at cooking.",
+            "alternatives": ["He's good at cooking."],
+            "near_misses": ["He is good at cook.", "He is good at to cook."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q10"
+          },
+          {
+            "id": "en-a2-023@3:q11",
+            "format": "correction",
+            "prompt": "Correct the sentence: She loves to dancing.",
+            "answer": "She loves dancing.",
+            "alternatives": ["She loves to dance."],
+            "near_misses": ["She loves to dancing.", "She loves dance."],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q11"
+          },
+          {
+            "id": "en-a2-023@3:q12",
+            "format": "correction",
+            "prompt": "Correct the sentence: Thank you for help me.",
+            "answer": "Thank you for helping me.",
+            "near_misses": [
+              "Thank you for help me.",
+              "Thank you for to help me."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "en-a2-023@2:q12"
+          },
+          {
+            "id": "en-a2-023@3:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence uses 'stop' with the right verb form?",
+            "answer": "We stopped talking when the teacher came in.",
+            "alternatives": [
+              "We stopped talk when the teacher came in.",
+              "We stopped talking when the teacher came in.",
+              "We stopped to talking when the teacher came in."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-023@2:h01"
+          },
+          {
+            "id": "en-a2-023@3:h02",
+            "format": "typed-blank",
+            "prompt": "He hates ___ up early. (get) (-ing form)",
+            "answer": "getting",
+            "near_misses": ["get", "to getting"],
+            "holdout": true,
+            "alternatives": ["to get"],
+            "change": "same",
+            "continues": "en-a2-023@2:h02"
+          },
+          {
+            "id": "en-a2-023@3:h03",
+            "format": "translation",
+            "prompt": "Write the sentence with a verb + -ing pattern: they / be interested in / learn / Spanish",
+            "answer": "They are interested in learning Spanish.",
+            "alternatives": ["They're interested in learning Spanish."],
+            "near_misses": [
+              "They are interested in learn Spanish.",
+              "They are interested in to learn Spanish."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "en-a2-023@2:h03"
+          }
+        ],
+        "translations": {
+          "pt": {
+            "title": "Padrões com verbo + -ing",
+            "explanation": "Depois de alguns verbos e de preposições, use a forma do verbo terminada em -ing: I enjoy swimming. She finished writing. We are interested in learning Spanish. He is good at cooking. Enjoy e finish são seguidos por -ing. Like, love, hate e start podem ser seguidos por -ing ou pelo infinitivo com to; stop to do something tem um sentido diferente de stop doing it. Depois de uma preposição, use sempre -ing: thank you for helping, before leaving. Depois de enjoy, não use a forma base nem o infinitivo com to: não diga I enjoy to swim.",
+            "examples": [
+              {
+                "en": "I enjoy swimming.",
+                "pt": "Gosto de nadar."
+              },
+              {
+                "en": "She finished writing the email.",
+                "pt": "Ela terminou de escrever o e-mail."
+              },
+              {
+                "en": "He is good at cooking.",
+                "pt": "Ele é bom em cozinhar."
+              }
+            ],
+            "references": ["CAM-A2-KEY", "BC-A1-A2"]
+          }
+        }
+      }
     }
   ]
 }

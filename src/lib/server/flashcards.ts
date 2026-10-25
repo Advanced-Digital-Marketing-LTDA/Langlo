@@ -10,7 +10,7 @@ import {
   type Grade,
   type FSRSParameters
 } from 'ts-fsrs';
-import type { Client, Row } from '@libsql/client';
+import type { Client, InStatement, Row } from '@libsql/client';
 import { beginWrite, executeWrite } from './db-transactions';
 export { beginRead, beginWrite, executeWrite } from './db-transactions';
 import { studyDayStart } from './study-days';
@@ -139,15 +139,16 @@ function parametersForSchedule(
   });
 }
 
-async function readStudySchedule(
-  client: Pick<Client, 'execute'>,
-  ownerId: string
-): Promise<StudySchedule> {
-  const result = await client.execute({
+/** The read `readStudySchedule` is built from, so a caller can batch it. */
+export function studyScheduleStatement(ownerId: string): InStatement {
+  return {
     sql: 'SELECT desired_retention, new_card_preset, relearning_preset FROM native_flashcard_preferences WHERE owner_id = ?',
     args: [ownerId]
-  });
-  const row = result.rows[0];
+  };
+}
+
+export function studyScheduleOf(rows: Row[]): StudySchedule {
+  const row = rows[0];
   return row
     ? {
         desiredRetention: Number(row.desired_retention),
@@ -155,6 +156,14 @@ async function readStudySchedule(
         relearningPreset: String(row.relearning_preset) as RelearningPreset
       }
     : defaultStudySchedule;
+}
+
+async function readStudySchedule(
+  client: Pick<Client, 'execute'>,
+  ownerId: string
+): Promise<StudySchedule> {
+  const result = await client.execute(studyScheduleStatement(ownerId));
+  return studyScheduleOf(result.rows);
 }
 
 export async function getStudySchedule(
@@ -452,10 +461,14 @@ export function studyRetrievability(
   ).scheduler.get_retrievability(decodeCard(input.stateJson), now, false);
 }
 
+/** The track languages a deck can belong to. */
+export const DECK_LANGUAGES = ['fr', 'de', 'en', 'pt'] as const;
+export type DeckLanguage = (typeof DECK_LANGUAGES)[number];
+
 export async function createDeck(
   client: Client,
   session: LearnerSession,
-  input: { id: string; name: string }
+  input: { id: string; name: string; language: DeckLanguage }
 ) {
   if (
     !isRecord(input) ||
@@ -468,9 +481,11 @@ export async function createDeck(
     exceedsCodePointLimit(input.name, 160)
   )
     throw new FlashcardError('INVALID_DECK');
+  if (!(DECK_LANGUAGES as readonly unknown[]).includes(input.language))
+    throw new FlashcardError('INVALID_DECK_LANGUAGE');
   await executeWrite(client, {
-    sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?)',
-    args: [input.id, session.userId, input.name]
+    sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name, language) VALUES (?, ?, ?, ?)',
+    args: [input.id, session.userId, input.name, input.language]
   });
 }
 
@@ -551,12 +566,14 @@ export async function createNote(
 
 export async function listDecks(client: Client, session: LearnerSession) {
   const result = await client.execute({
-    sql: 'SELECT id, name, created_at FROM native_flashcard_decks WHERE owner_id = ? ORDER BY created_at, id',
+    sql: 'SELECT id, name, language, created_at FROM native_flashcard_decks WHERE owner_id = ? ORDER BY created_at, id',
     args: [session.userId]
   });
   return result.rows.map((row) => ({
     id: String(row.id),
     name: String(row.name),
+    language:
+      row.language === null ? null : (String(row.language) as DeckLanguage),
     createdAt: Number(row.created_at)
   }));
 }

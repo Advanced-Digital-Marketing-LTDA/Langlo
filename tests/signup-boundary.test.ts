@@ -46,11 +46,28 @@ beforeEach(() => {
   mocks.handler.mockResolvedValue(Response.json({ ok: true }));
 });
 
-async function request(path: string, method = 'POST') {
-  const resolve = vi.fn().mockResolvedValue(new Response('public'));
+async function request(
+  path: string,
+  method = 'POST',
+  headers?: Record<string, string>,
+  body = ''
+) {
+  const resolve = vi.fn(async (boundedEvent?: { request: Request }) => {
+    // Framework handlers turn body errors into responses before resolve returns.
+    try {
+      if (boundedEvent) await boundedEvent.request.text();
+    } catch {
+      return new Response('Framework error', { status: 500 });
+    }
+    return new Response('public');
+  });
   const event = {
     url: new URL(path, 'http://localhost:3000'),
-    request: new Request(new URL(path, 'http://localhost:3000'), { method }),
+    request: new Request(new URL(path, 'http://localhost:3000'), {
+      method,
+      headers,
+      body: method === 'GET' || method === 'HEAD' ? undefined : body
+    }),
     locals: {},
     getClientAddress: () => '192.0.2.10'
   };
@@ -102,4 +119,80 @@ it('allows anonymous API registration to reach auth', async () => {
   const { response } = await request('/api/auth/sign-up/email');
   expect(response.status).toBe(200);
   expect(mocks.handler).toHaveBeenCalledOnce();
+});
+
+it('rejects oversized public form bodies before auth handling', async () => {
+  const { response, resolve } = await request('/signup', 'POST', {
+    'content-length': String(512 * 1024 + 1)
+  });
+  expect(response.status).toBe(413);
+  expect(response.headers.get('cache-control')).toBe('private, no-store');
+  expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+  expect(await response.json()).toEqual({
+    message: 'This request is too large.',
+    correlationId: response.headers.get('x-correlation-id')
+  });
+  expect(resolve).not.toHaveBeenCalled();
+  expect(mocks.handler).not.toHaveBeenCalled();
+});
+
+it('keeps the larger body allowance scoped to the upload action', async () => {
+  const { response, resolve } = await request('/app/library?/upload', 'POST', {
+    'content-length': String(10 * 1024 * 1024)
+  });
+  expect(response.status).toBe(401);
+  expect(resolve).not.toHaveBeenCalled();
+});
+
+it.each([
+  '/app/library?/rename',
+  '/app/api/library?/upload',
+  '/signup?/upload'
+])('keeps the ordinary body limit for %s', async (path) => {
+  const { response, resolve } = await request(path, 'POST', {
+    'content-length': String(512 * 1024 + 1)
+  });
+  expect(response.status).toBe(413);
+  expect(resolve).not.toHaveBeenCalled();
+  expect(mocks.handler).not.toHaveBeenCalled();
+});
+
+it('propagates auth handler failures unrelated to request size', async () => {
+  const failure = new Error('synthetic auth handler failure');
+  mocks.handler.mockRejectedValue(failure);
+  await expect(request('/api/auth/sign-up/email')).rejects.toBe(failure);
+});
+
+it('bounds chunked auth API requests when Content-Length is absent', async () => {
+  mocks.handler.mockImplementation(async (boundedRequest: Request) => {
+    try {
+      await boundedRequest.text();
+    } catch {
+      return new Response(null, { status: 500 });
+    }
+    return Response.json({ ok: true });
+  });
+  const { response } = await request(
+    '/api/auth/sign-up/email',
+    'POST',
+    { 'content-type': 'application/json' },
+    'x'.repeat(512 * 1024 + 1)
+  );
+  expect(response.status).toBe(413);
+  expect(mocks.handler).not.toHaveBeenCalled();
+  expect(await response.json()).toEqual({
+    message: 'This request is too large.',
+    correlationId: response.headers.get('x-correlation-id')
+  });
+});
+
+it('bounds chunked public form bodies without Content-Length', async () => {
+  const { response, resolve } = await request(
+    '/signup',
+    'POST',
+    { 'content-type': 'application/x-www-form-urlencoded' },
+    `value=${'x'.repeat(512 * 1024)}`
+  );
+  expect(response.status).toBe(413);
+  expect(resolve).not.toHaveBeenCalled();
 });

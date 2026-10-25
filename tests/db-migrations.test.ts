@@ -101,9 +101,10 @@ async function seedLegacyReviewHistory(
   const { client, close } = await openFixtureDatabase(target);
   try {
     const owner = { userId: 'learner-a' };
-    await createDeck(client, owner, {
-      id: 'deck-langlo10',
-      name: 'French'
+    // Legacy schemas have no deck language, so seed the deck directly.
+    await client.execute({
+      sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?)',
+      args: ['deck-langlo10', owner.userId, 'French']
     });
     const notes = await Promise.all(
       ['draft', 'rejected', 'rejected-reviewed', 'approved-reviewed'].map(
@@ -203,9 +204,10 @@ async function seedDraftWithReviewHistory(
   const { client, close } = await openFixtureDatabase(target);
   try {
     const owner = { userId: 'learner-a' };
-    await createDeck(client, owner, {
-      id: 'deck-langlo10-gate',
-      name: 'French'
+    // Legacy schemas have no deck language, so seed the deck directly.
+    await client.execute({
+      sql: 'INSERT INTO native_flashcard_decks (id, owner_id, name) VALUES (?, ?, ?)',
+      args: ['deck-langlo10-gate', owner.userId, 'French']
     });
     const note = await createLegacyNote(client, owner, {
       id: 'note-langlo10-draft-history',
@@ -299,7 +301,13 @@ describe('disposable libSQL migrations', () => {
           '0030_portuguese_grammar_retention',
           '0031_retention_transfers_to_new_versions',
           '0032_question_and_attempt_lookup_indexes',
-          '0033_typesafe_ai_usage'
+          '0033_typesafe_ai_usage',
+          '0034_holdout_question_lookup_indexes',
+          '0035_dapper_nehzno',
+          '0036_deck_language',
+          '0037_light_drax',
+          '0038_demonic_garia',
+          '0039_medical_maria_hill'
         ]);
         await migrateFixtureDatabase(target);
         expect(
@@ -567,8 +575,9 @@ describe('disposable libSQL migrations', () => {
         const pkg = await seedLegacyPackage(client);
         const contentSql =
           'SELECT id, skill_id, language, version, status, created_at FROM content_versions ORDER BY id';
+        // New Library objects are checked separately in library-migrations.test.ts.
         const objectsSql =
-          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT LIKE 'grammar_retention_%' AND name NOT IN ('sqlite_autoindex_lessons_1', 'sqlite_autoindex_grammar_retention_events_1', 'sqlite_autoindex_grammar_retention_schedules_1', 'attempts_session_question_independent', 'attempts_owner_session_question_idx', 'questions_content_version_idx', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'sqlite_autoindex_native_flashcard_preferences_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_owner_cursor', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update', 'enrollments_supported_track_insert', 'enrollments_supported_track_update', 'enrollments_portuguese_explanation_insert', 'enrollments_portuguese_explanation_update') ORDER BY name";
+          "SELECT type, name, sql FROM sqlite_master WHERE type IN ('index', 'trigger') AND name NOT LIKE 'grammar_retention_%' AND name NOT IN ('sqlite_autoindex_lessons_1', 'sqlite_autoindex_grammar_retention_events_1', 'sqlite_autoindex_grammar_retention_schedules_1', 'attempts_session_question_independent', 'attempts_owner_session_question_idx', 'questions_content_version_idx', 'attempts_owner_skill_idx', 'questions_language_holdout_idx', 'sqlite_autoindex_ai_usage_1', 'sqlite_autoindex_content_reports_1', 'content_reports_owner_submission', 'content_reports_owner_created', 'sqlite_autoindex_learner_preferences_1', 'sqlite_autoindex_content_changes_1', 'content_changes_skill', 'sqlite_autoindex_lesson_translations_1', 'sqlite_autoindex_native_flashcard_preferences_1', 'native_flashcard_notes_owner_source_attempt_unique', 'native_flashcard_notes_owner_cursor', 'native_flashcard_notes_source_shape_insert', 'native_flashcard_notes_source_shape_update', 'native_flashcard_notes_source_attempt_insert', 'native_flashcard_notes_source_attempt_update', 'enrollments_supported_track_insert', 'enrollments_supported_track_update', 'enrollments_portuguese_explanation_insert', 'enrollments_portuguese_explanation_update', 'sqlite_autoindex_study_time_segments_1', 'study_time_segments_owner_start', 'library_documents_owner_created', 'sqlite_autoindex_library_documents_1', 'sqlite_autoindex_library_ai_usage_1', 'sqlite_autoindex_library_document_files_1') ORDER BY name";
         const content = (await client.execute(contentSql)).rows;
         const attempts = (
           await client.execute(

@@ -3,13 +3,13 @@ import type { Client } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import {
   approveNote,
-  createDeck,
   createNote,
   getNote,
   listDecks,
   listReviewEvents,
   submitReview
 } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import {
   getAttempt,
   getStudySession,

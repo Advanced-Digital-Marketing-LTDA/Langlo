@@ -5,7 +5,11 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import {
   dueGrammarReviews,
-  grammarRetentionFor
+  grammarDueToday,
+  grammarReviewedToday,
+  grammarRetentionFor,
+  grammarRetentionOf,
+  grammarRetentionStatements
 } from '../src/lib/server/grammar-retention';
 import {
   finishPractice,
@@ -195,6 +199,168 @@ describe('grammar retention storage and session flow', () => {
     return { session, incorrect };
   }
 
+  it('counts reviewed topics only for the learner and language that reviewed them', async () => {
+    await reviewedSkill();
+    const window = { start: 0, end: Number.MAX_SAFE_INTEGER };
+    expect(await grammarReviewedToday(client, learner, 'fr', window)).toBe(1);
+    expect(await grammarReviewedToday(client, other, 'fr', window)).toBe(0);
+    expect(await grammarReviewedToday(client, learner, 'es', window)).toBe(0);
+  });
+
+  it('counts a topic answered Not sure in a finished review, without scheduling it', async () => {
+    const session = await start();
+    await client.execute({
+      sql: "UPDATE study_sessions SET mode = 'mixed-review' WHERE id = ?",
+      args: [session.id]
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      evidenceKind: 'independent',
+      answer: '',
+      notSure: true
+    });
+    const window = { start: 0, end: Number.MAX_SAFE_INTEGER };
+    expect(await grammarReviewedToday(client, learner, 'fr', window)).toBe(0);
+    await finishPractice(client, learner, session.id);
+    expect(await grammarReviewedToday(client, learner, 'fr', window)).toBe(1);
+    expect(await grammarReviewedToday(client, other, 'fr', window)).toBe(0);
+    expect(await grammarReviewedToday(client, learner, 'es', window)).toBe(0);
+    const schedules = await client.execute(
+      'SELECT 1 FROM grammar_retention_schedules WHERE owner_id = ?',
+      [learner.userId]
+    );
+    expect(schedules.rows).toHaveLength(0);
+  });
+
+  it('splits due topics into overdue and today, marking ones due later today', async () => {
+    await reviewedSkill();
+    const setDue = (dueAt: number) =>
+      client.execute({
+        sql: "UPDATE grammar_retention_schedules SET due_at = ? WHERE owner_id = ? AND skill_id = 'fr-a1-001'",
+        args: [dueAt, learner.userId]
+      });
+    const day = { start: 10_000, end: 20_000, now: 15_000 };
+    const topic = (dueAt: number, ready: boolean) => ({
+      skillId: 'fr-a1-001',
+      title: 'Synthetic fr-a1-001',
+      dueAt,
+      ready
+    });
+    await setDue(9_999);
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
+      overdue: [topic(9_999, true)],
+      today: []
+    });
+    await setDue(10_000);
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
+      overdue: [],
+      today: [topic(10_000, true)]
+    });
+    await setDue(18_000);
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
+      overdue: [],
+      today: [topic(18_000, false)]
+    });
+    await setDue(20_000);
+    expect(await grammarDueToday(client, learner, 'fr', day)).toEqual({
+      overdue: [],
+      today: []
+    });
+    expect(await grammarDueToday(client, other, 'fr', day)).toEqual({
+      overdue: [],
+      today: []
+    });
+  });
+
+  it('starts any due topic past the five oldest and caps a session at five', async () => {
+    // A track with seven topics, so more than five can be due at once.
+    close();
+    ({ client, close } = await openFixtureDatabase(await fixture()));
+    const content = approvedPackage();
+    const extra = ['101', '102', '103', '104', '105', '106'].map(
+      (n) => `fr-a1-${n}`
+    );
+    for (const id of extra) {
+      content.skills.push({
+        id,
+        language: 'fr',
+        level: 'A1',
+        review: 'approved',
+        prerequisites: []
+      });
+      content.versions.push({
+        id: `${id}@1`,
+        skillId: id,
+        version: 1,
+        review: 'approved',
+        questions: [
+          {
+            id: `${id}@1:q1`,
+            format: 'typed-blank',
+            prompt: 'Tu ___ ici.',
+            answer: 'es'
+          }
+        ]
+      });
+    }
+    for (const version of content.versions)
+      version.lesson = {
+        title: `Synthetic ${version.skillId}`,
+        explanation: 'Synthetic lesson',
+        examples: [],
+        references: []
+      };
+    await importContent(client, content);
+    await reviewedSkill();
+    // Every topic gets fr-a1-001's schedule, due one after another.
+    for (const [index, id] of extra.entries())
+      await client.execute({
+        sql: `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, reset_required, scheduler_version, parameters_json)
+          SELECT owner_id, language, ?, ?, state_json, ?, revision, reset_required, scheduler_version, parameters_json
+          FROM grammar_retention_schedules WHERE owner_id = ? AND skill_id = 'fr-a1-001'`,
+        args: [id, `${id}@1`, index + 2, learner.userId]
+      });
+    await client.execute({
+      sql: "UPDATE grammar_retention_schedules SET due_at = 1 WHERE owner_id = ? AND skill_id = 'fr-a1-001'",
+      args: [learner.userId]
+    });
+
+    const { overdue } = await grammarDueToday(client, learner, 'fr', {
+      start: 100,
+      end: 200,
+      now: Date.now()
+    });
+    expect(overdue.map((topic) => topic.skillId)).toEqual([
+      'fr-a1-001',
+      ...extra
+    ]);
+    expect(
+      (await dueGrammarReviews(client, learner, 'fr')).map(
+        (topic) => topic.skillId
+      )
+    ).toEqual(['fr-a1-001', ...extra.slice(0, 4)]);
+    // The two newest are outside the five oldest but still start.
+    const review = await startGrammarReview(client, learner, {
+      language: 'fr',
+      submissionKey: randomUUID(),
+      skillIds: extra.slice(4)
+    });
+    expect(
+      (await grammarReviewPlan(client, learner, review.id)).map(
+        (topic) => topic.skillId
+      )
+    ).toEqual(extra.slice(4));
+    await expect(
+      startGrammarReview(client, learner, {
+        language: 'fr',
+        submissionKey: randomUUID(),
+        skillIds: extra
+      })
+    ).rejects.toMatchObject({ code: 'INVALID_REVIEW_SELECTION' });
+  });
+
   it('aggregates the lowest rating once and isolates the other learner', async () => {
     const { session, incorrect } = await reviewedSkill();
     const firstEvent = await client.execute({
@@ -259,6 +425,13 @@ describe('grammar retention storage and session flow', () => {
     ).toHaveLength(2);
   }
 
+  const unansweredTopic = {
+    skillId: 'fr-a1-001',
+    title: 'Synthetic fr-a1-001',
+    answered: false,
+    reviewed: false
+  };
+
   it('keeps due dates stable until a review uses updated settings', async () => {
     await reviewedSkill();
     const dueBeforeSettingsChange = Number(
@@ -321,7 +494,7 @@ describe('grammar retention storage and session flow', () => {
       skillIds: ['fr-a1-001']
     });
     expect(await grammarReviewPlan(client, learner, review.id)).toEqual([
-      { skillId: 'fr-a1-001', title: 'Synthetic fr-a1-001', answered: false }
+      unansweredTopic
     ]);
     expect(
       await exerciseFor(client, learner, review.id, 'fr-a1-001')
@@ -826,4 +999,91 @@ describe('grammar retention storage and session flow', () => {
       (await client.execute('SELECT * FROM grammar_retention_events')).rows
     ).toHaveLength(0);
   });
+
+  it('builds retention from the batched schedule, skill and stored-schedule reads', async () => {
+    const reviewedAt = new Date('2026-10-20T12:00:00.000Z');
+    const dueAt = await storeSchedule(learner.userId, 'good', reviewedAt);
+    const otherDueAt = await storeSchedule(other.userId, 'again', reviewedAt);
+    expect(otherDueAt).not.toBe(dueAt);
+    await saveStudySchedule(client, learner, {
+      desiredRetention: 80,
+      newCardPreset: '30m',
+      relearningPreset: '1h'
+    });
+
+    const read = await client.batch(
+      grammarRetentionStatements(learner, 'fr'),
+      'read'
+    );
+    const retention = grammarRetentionOf(
+      read.map((result) => result.rows),
+      reviewedAt.getTime()
+    );
+
+    // Only the learner's own schedule counts, against the learner's target.
+    expect(retention.find((skill) => skill.skillId === 'fr-a1-001')).toEqual({
+      skillId: 'fr-a1-001',
+      title: 'Synthetic fr-a1-001',
+      available: true,
+      retention: {
+        state: 'scheduled',
+        dueAt,
+        lastReviewedAt: null,
+        retrievability: expect.any(Number),
+        target: 0.8
+      }
+    });
+    expect(
+      retention
+        .filter((skill) => skill.skillId !== 'fr-a1-001')
+        .map((skill) => skill.retention)
+    ).toEqual(
+      retention
+        .filter((skill) => skill.skillId !== 'fr-a1-001')
+        .map(() => ({
+          state: 'not-assessed',
+          dueAt: null,
+          lastReviewedAt: null,
+          retrievability: null,
+          target: 0.8
+        }))
+    );
+    expect(retention.map((skill) => skill.skillId)).toEqual(
+      (await grammarRetentionFor(client, learner, 'fr')).map(
+        (skill) => skill.skillId
+      )
+    );
+  });
 });
+
+// Store a learner's fr-a1-001 schedule as one review would leave it.
+async function storeSchedule(
+  ownerId: string,
+  rating: 'good' | 'again',
+  reviewedAt: Date
+) {
+  const scheduled = scheduleStudyReview({
+    id: `${ownerId}:fr-a1-001`,
+    rating,
+    schedule: await getStudySchedule(client, testSession(ownerId)),
+    stateJson: null,
+    schedulerVersion: null,
+    parametersJson: null,
+    resetRequired: false,
+    expectedRevision: 0,
+    now: reviewedAt,
+    timezone: 'UTC'
+  });
+  await client.execute({
+    sql: `INSERT INTO grammar_retention_schedules (owner_id, language, skill_id, content_version_id, state_json, due_at, revision, scheduler_version, parameters_json)
+      VALUES (?, 'fr', 'fr-a1-001', 'fr-a1-001@1', ?, ?, 1, ?, ?)`,
+    args: [
+      ownerId,
+      scheduled.stateJson,
+      scheduled.dueAt,
+      scheduled.schedulerVersion,
+      scheduled.parametersJson
+    ]
+  });
+  return scheduled.dueAt;
+}

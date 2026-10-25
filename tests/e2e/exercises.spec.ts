@@ -606,7 +606,8 @@ test('restores the map position after returning from a lesson', async ({
   page,
   context
 }) => {
-  await page.setViewportSize({ width: 320, height: 900 });
+  // Phones show the study list instead of the map; stay just above 720px.
+  await page.setViewportSize({ width: 760, height: 900 });
   const userId = await signIn(page, context);
   await seedSession(userId, 'map-scroll-session');
   await page.goto(`${base}/app/map?language=fr&skill=fr-a1-003`);
@@ -641,7 +642,7 @@ test('restores the map position after returning from a lesson', async ({
     .toBe(0);
 });
 
-test('preserves map context through answer, retry, and report posts', async ({
+test('preserves map context through answer and report posts', async ({
   browser
 }) => {
   const context = await browser.newContext();
@@ -670,15 +671,11 @@ test('preserves map context through answer, retry, and report posts', async ({
       .click();
     await expect(back).toHaveAttribute('href', returnTo);
     const feedback = page.getByRole('region', { name: 'Practice feedback' });
-    await feedback.getByText('Try this question again (assisted)').click();
-    await feedback.getByRole('radio', { name: 'suis', exact: true }).check();
-    await feedback
-      .getByRole('button', { name: 'Submit assisted retry' })
-      .click();
-    await expect(back).toHaveAttribute('href', returnTo);
     await feedback.getByText('Report a content issue', { exact: true }).click();
     await feedback.getByRole('button', { name: 'Send report' }).click();
-    await expect(page.getByRole('status')).toContainText('Report saved');
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Report saved' })
+    ).toContainText('Report saved');
     await expect(back).toHaveAttribute('href', returnTo);
     await page.goto(
       `${base}/app/learn/fr/lesson/fr-a1-001?returnTo=${encodeURIComponent(returnTo)}`
@@ -706,6 +703,8 @@ test('opens a dashboard topic in its language when another language sorts first'
   );
   try {
     await page.goto(`${base}/app`);
+    // Phones hide the map's topic details; open the topic at map width.
+    await page.setViewportSize({ width: 760, height: 900 });
     await page
       .getByRole('region', { name: 'FR dashboard' })
       .getByRole('link', { name: 'Synthetic exercise lesson', exact: true })
@@ -751,6 +750,8 @@ test('does not rewrite the lesson URL after leaving a freshly scrolled map', asy
   page,
   context
 }) => {
+  // Phones show the study list instead of the map; stay just above 720px.
+  await page.setViewportSize({ width: 760, height: 900 });
   const userId = await signIn(page, context);
   await seedSession(userId, 'map-fast-exit-session');
   await page.goto(`${base}/app/map`);
@@ -789,6 +790,9 @@ test('does not rewrite the lesson URL after leaving a freshly scrolled map', asy
 });
 
 async function exploreSkillMap(page: Page) {
+  // Phones show the study list instead of the map; explore it just above 720px.
+  const phoneViewport = page.viewportSize();
+  await page.setViewportSize({ width: 760, height: 900 });
   await page.goto(`${base}/app/map`);
   await expect(
     page.getByRole('heading', { name: 'Grammar skill map', exact: true })
@@ -826,7 +830,7 @@ async function exploreSkillMap(page: Page) {
     'true'
   );
   await expect(
-    page.getByRole('list').getByText('Synthetic exercise lesson')
+    page.locator('.nodes.list').getByText('Synthetic exercise lesson')
   ).toBeVisible();
   await page.getByRole('button', { name: 'Map', exact: true }).click();
   await expect(
@@ -842,29 +846,34 @@ async function exploreSkillMap(page: Page) {
   ).toBeVisible();
   await page.getByRole('link', { name: 'Back to skill map' }).click();
   await expect(page).toHaveURL(/\/app\/map\?.*skill=fr-a1-001/);
-  await page.getByRole('button', { name: 'Practise this topic' }).click();
+  await page
+    .getByRole('complementary')
+    .getByRole('button', { name: 'Practise this topic' })
+    .click();
   await expect(page).toHaveURL(/\/app\/learn\/fr\/lesson\/fr-a1-001\?session=/);
   await expect(
     page.getByRole('heading', { name: 'Synthetic exercise lesson' })
   ).toBeVisible();
   await page.getByRole('link', { name: 'Back to skill map' }).click();
+  if (phoneViewport) await page.setViewportSize(phoneViewport);
 }
 
-async function exerciseRetryAndReport(page: Page, userId: string) {
+async function exerciseReport(page: Page, userId: string) {
   const feedback = page.getByRole('region', { name: 'Practice feedback' });
-  await feedback.getByText('Try this question again (assisted)').click();
-  await feedback
-    .getByRole('button', { name: 'Submit assisted retry', exact: true })
-    .click();
+  // The feedback offers no assisted retry.
+  await expect(
+    feedback.getByText('Try this question again (assisted)')
+  ).toHaveCount(0);
+  // An empty answer shows one alert with its own id, now that the feedback
+  // holds no second exercise form.
   await page
     .getByRole('button', { name: 'Submit answer', exact: true })
     .click();
   const ids = await page
     .getByRole('alert')
     .evaluateAll((nodes) => nodes.map((node) => node.id));
-  expect(ids).toHaveLength(2);
-  expect(new Set(ids).size).toBe(2);
-  await feedback.getByText('Try this question again (assisted)').click();
+  expect(ids).toHaveLength(1);
+  expect(ids[0]).not.toBe('');
   await feedback.getByText('Report a content issue', { exact: true }).click();
   await feedback
     .getByRole('button', { name: 'Send report', exact: true })
@@ -914,16 +923,9 @@ async function verifyCompletedExercises(
   ).toContainText('You have answered every question');
   const feedback = page.getByRole('region', { name: 'Practice feedback' });
   await expect(feedback).toContainText('Correct');
-  await feedback.getByText('Try this question again (assisted)').click();
-  await feedback
-    .getByRole('textbox', { name: 'Your answer', exact: true })
-    .fill('Je suis ici.');
-  await feedback.getByRole('button', { name: 'Submit assisted retry' }).click();
-  await expect(feedback).toContainText(
-    'Assisted retry — this does not add independent grammar evidence.'
-  );
-  await page.reload();
-  await expect(feedback).toContainText('Assisted retry');
+  await expect(
+    feedback.getByText('Try this question again (assisted)')
+  ).toHaveCount(0);
 }
 
 async function expectProgressAndHome(page: Page) {
@@ -1016,7 +1018,7 @@ test('all four exercise formats render and submit without overflow', async ({
   for (const index of exercises.keys()) {
     await answerExercise(page, testInfo, userId, index);
     if (index === 0) {
-      await exerciseRetryAndReport(page, userId);
+      await exerciseReport(page, userId);
     }
   }
 
@@ -1178,7 +1180,7 @@ test('releases the refresh block when a dirty exercise is destroyed', async ({
   ).toBeVisible();
 });
 
-test('keeps refresh blocked until every mounted exercise is clear', async ({
+test('keeps refresh blocked while the next answer is being typed', async ({
   page,
   context
 }) => {
@@ -1189,24 +1191,14 @@ test('keeps refresh blocked until every mounted exercise is clear', async ({
   await page
     .getByRole('button', { name: 'Submit answer', exact: true })
     .click();
-  const feedback = page.getByRole('region', { name: 'Practice feedback' });
-  await feedback.getByText('Try this question again (assisted)').click();
-  await expect(page.locator('input[name="studySessionId"]')).toHaveCount(2);
-  await feedback.getByRole('radio', { name: 'suis', exact: true }).check();
+  // The feedback holds no second exercise, so only the next answer is mounted.
+  await expect(page.locator('input[name="studySessionId"]')).toHaveCount(1);
   const currentAnswer = page.getByRole('textbox', {
     name: 'Your answer',
     exact: true
   });
   await currentAnswer.fill('es');
   await detectUpdateAfterFiveMinutes(page, scenario);
-  expect(scenario.documentRequests()).toBe(1);
-
-  await feedback
-    .getByRole('button', { name: 'Submit assisted retry', exact: true })
-    .click();
-  await expect(
-    feedback.getByRole('radio', { name: 'suis', exact: true })
-  ).not.toBeChecked();
   await expect(currentAnswer).toHaveValue('es');
   expect(scenario.documentRequests()).toBe(1);
 
@@ -1224,10 +1216,36 @@ test('keeps refresh blocked until every mounted exercise is clear', async ({
     answers
       .filter(({ question_id }) => question_id === 'fr-a1-001@1:q1')
       .map(({ answer }) => answer)
-  ).toEqual(['suis', 'suis']);
+  ).toEqual(['suis']);
   expect(answers).toContainEqual(
     expect.objectContaining({ question_id: 'fr-a1-001@1:q2', answer: 'es' })
   );
+});
+
+test('refuses a retry form from an older page and records nothing', async ({
+  page,
+  context
+}) => {
+  const { userId, studySessionId } = await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  // A page from before retries were removed could still send this field.
+  await page
+    .locator('form:has(input[name="questionId"])')
+    .first()
+    .evaluate((form) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'retryAttemptId';
+      input.value = 'attempt-from-an-older-page';
+      form.append(input);
+    });
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  await expect(page.getByRole('alert')).toContainText(
+    'This question is out of date. Reload to continue.'
+  );
+  expect(await storedAnswers(userId, studySessionId)).toHaveLength(0);
 });
 
 /** A short viewport, so the practice page scrolls and a reload is visible. */
@@ -1268,6 +1286,11 @@ test('rating an answer updates in place and keeps the scroll position', async ({
   await expect(feedback).toContainText('Correct');
 
   await scrollToBottomAndTag(page);
+  // The rating result carries the next question, so no page data is reloaded.
+  const reloads: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().includes('__data.json')) reloads.push(request.url());
+  });
   await feedback.getByRole('button', { name: 'Good', exact: true }).click();
 
   const rated = page
@@ -1275,8 +1298,52 @@ test('rating an answer updates in place and keeps the scroll position', async ({
     .filter({ hasText: /^You rated this good\./ });
   await expect(rated).toBeFocused();
   await expect(rated).toBeInViewport();
+  await expect(page.getByText(/^Question 2 of \d+$/)).toBeVisible();
+  expect(reloads).toEqual([]);
   expect(await documentTag(page)).toBe('same-document');
   expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+});
+
+test('keeps the rated feedback and next question when the next answer is refused', async ({
+  page,
+  context
+}) => {
+  test.setTimeout(40000);
+  const { studySessionId } = await startScrollScenario(page, context);
+  await page.getByRole('radio', { name: 'suis', exact: true }).check();
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+  const feedback = page.getByRole('region', { name: 'Practice feedback' });
+  await expect(feedback).toContainText('Correct');
+  await feedback.getByRole('button', { name: 'Good', exact: true }).click();
+  const rated = page
+    .getByRole('status')
+    .filter({ hasText: /^You rated this good\./ });
+  await expect(rated).toBeVisible();
+  await expect(page.getByText(/^Question 2 of \d+$/)).toBeVisible();
+
+  // Pausing the session elsewhere makes the next answer a handled failure.
+  await withDatabase((client) =>
+    client.execute({
+      sql: "UPDATE study_sessions SET state = 'paused' WHERE id = ?",
+      args: [studySessionId]
+    })
+  );
+  await page
+    .locator('form[action*="?/answer"]')
+    .getByRole('textbox')
+    .fill('suis');
+  await page
+    .getByRole('button', { name: 'Submit answer', exact: true })
+    .click();
+
+  await expect(page.getByRole('alert')).toBeVisible();
+  await expect(rated).toBeVisible();
+  await expect(page.getByText(/^Question 2 of \d+$/)).toBeVisible();
+  await expect(
+    feedback.getByRole('button', { name: 'Good', exact: true })
+  ).toHaveCount(0);
 });
 
 test('keeps the rating buttons when the server cannot be reached and records the rating once on retry', async ({

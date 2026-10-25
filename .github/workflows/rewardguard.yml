@@ -9,13 +9,15 @@ name: rewardguard
 
 on:
   pull_request:
+  push:
 
 jobs:
   rewardguard:
-    uses: Advanced-Digital-Marketing-LTDA/workflows/.github/workflows/rewardguard.yml@198827e1a8dc2e8e5fc33953fb5d4ae6be2bd418 # main, 2026-10-22
+    uses: Advanced-Digital-Marketing-LTDA/workflows/.github/workflows/rewardguard.yml@v0 # reviewed shared release channel
     permissions:
       contents: read
       pull-requests: write
+      checks: write
     with:
       run-tests: false # must match run_tests in .rewardguard.toml
       node-version: '24'

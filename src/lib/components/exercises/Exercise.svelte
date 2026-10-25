@@ -18,7 +18,6 @@
     submissionKey,
     failure = undefined,
     actionUrl = undefined,
-    retryAttemptId = undefined,
     submitLabel = 'Submit answer',
     onanswered = undefined
   }: {
@@ -28,7 +27,6 @@
     submissionKey: string;
     failure?: string | undefined;
     actionUrl?: string | undefined;
-    retryAttemptId?: string | undefined;
     submitLabel?: string;
     /** Runs after an accepted answer has updated the page. */
     onanswered?: (() => Promise<void>) | undefined;
@@ -118,11 +116,6 @@
   <input type="hidden" name="studySessionId" value={studySessionId} />
   <input type="hidden" name="questionId" value={question.id} />
   <input type="hidden" name="submissionKey" value={submissionKey} />
-  {#if retryAttemptId}<input
-      type="hidden"
-      name="retryAttemptId"
-      value={retryAttemptId}
-    />{/if}
 
   <fieldset>
     <legend id={legendId}>{instructions[question.format]}</legend>

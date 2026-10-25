@@ -1,35 +1,200 @@
 import { randomUUID } from 'node:crypto';
+import { redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { studyForm, studyPage } from '../../../lib/server/learner-api';
-import { submitReview } from '../../../lib/server/flashcards';
+import { formResult, studyPage } from '../../../lib/server/learner-api';
+import { requireLearnerApi } from '../../../lib/server/learner-session';
+import { listEnrollments } from '../../../lib/server/enrollment';
 import {
-  countDueCards,
-  listDueCards
+  currentStudyDay,
+  flashcardDueGroups
 } from '../../../lib/server/flashcard-views';
+import {
+  grammarDueToday,
+  grammarReviewedToday
+} from '../../../lib/server/grammar-retention';
+import {
+  grammarReviewPlan,
+  startGrammarReview,
+  unfinishedGrammarReview
+} from '../../../lib/server/practice';
+import { StudyError } from '../../../lib/server/study-error';
+import {
+  reviewLanguageParam,
+  UNASSIGNED_LANGUAGE
+} from '../../../lib/review-due';
 
-type ReviewRating = Parameters<typeof submitReview>[2]['rating'];
+/** A grammar review session takes at most this many topics. */
+const grammarSessionLimit = 5;
+
+function timeOfDay(timestamp: number | null, timezone: string) {
+  if (timestamp === null) return null;
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(timestamp);
+}
+
+type DueGroup = Awaited<ReturnType<typeof flashcardDueGroups>>[number];
+type DueTopic = { dueAt: number; ready: boolean };
+
+/**
+ * The switcher's choices and the chosen one; an unknown choice is not found.
+ * Unassigned is offered while its cards are due and stays valid once chosen,
+ * so returning from its emptied queue still works.
+ */
+function chosenLanguage(
+  enrolled: string[],
+  groups: DueGroup[],
+  requested: string | null
+) {
+  const languages =
+    requested === UNASSIGNED_LANGUAGE ||
+    groups.some((group) => group.language === null)
+      ? [...enrolled, UNASSIGNED_LANGUAGE]
+      : enrolled;
+  if (requested !== null && !languages.includes(requested))
+    throw new StudyError('NOT_FOUND');
+  return { languages, language: requested ?? languages[0] ?? null };
+}
+
+/** The chosen language's card counts; no group means nothing is due today. */
+function flashcardSummary(
+  groups: DueGroup[],
+  language: string,
+  timezone: string
+) {
+  const group = groups.find(
+    (item) => reviewLanguageParam(item.language) === language
+  ) ?? { overdue: 0, todayReady: 0, todayLater: 0, nextDueAt: null };
+  return {
+    overdue: group.overdue,
+    today: group.todayReady + group.todayLater,
+    todayReady: group.todayReady,
+    nextDueAt: timeOfDay(group.nextDueAt, timezone)
+  };
+}
+
+function grammarSummary(
+  grammar: { overdue: DueTopic[]; today: DueTopic[]; reviewedToday: number },
+  timezone: string
+) {
+  const later = grammar.today.find((topic) => !topic.ready);
+  return {
+    overdue: grammar.overdue,
+    today: grammar.today,
+    reviewedToday: grammar.reviewedToday,
+    nextDueAt: later ? timeOfDay(later.dueAt, timezone) : null
+  };
+}
+
+/** Due topics, without those already reviewed in the unfinished review. */
+async function dueGrammar(
+  client: Parameters<typeof grammarReviewPlan>[0],
+  learner: Parameters<typeof grammarReviewPlan>[1],
+  language: string,
+  day: Parameters<typeof grammarDueToday>[3]
+) {
+  const [due, reviewed, reviewedToday] = await Promise.all([
+    grammarDueToday(client, learner, language, day),
+    reviewedTopics(client, learner, language),
+    grammarReviewedToday(client, learner, language, day)
+  ]);
+  const open = (topics: typeof due.today) =>
+    topics.filter((topic) => !reviewed.has(topic.skillId));
+  return {
+    overdue: open(due.overdue),
+    today: open(due.today),
+    reviewedToday
+  };
+}
+
+/** Topics already reviewed in the unfinished review; they leave the lists. */
+async function reviewedTopics(
+  client: Parameters<typeof grammarReviewPlan>[0],
+  learner: Parameters<typeof grammarReviewPlan>[1],
+  language: string
+) {
+  const unfinished = await unfinishedGrammarReview(client, learner, language);
+  if (!unfinished) return new Set<string>();
+  const plan = await grammarReviewPlan(client, learner, unfinished.id);
+  return new Set(
+    plan.filter((topic) => topic.reviewed).map((topic) => topic.skillId)
+  );
+}
 
 export const load: PageServerLoad = (event) =>
-  studyPage(event, async (client, learner) => ({
-    ...(await listDueCards(client, learner)),
-    total: await countDueCards(client, learner),
-    submissionKey: randomUUID()
-  }));
+  studyPage(event, async (client, learner) => {
+    const now = Date.now();
+    const day = await currentStudyDay(client, learner, now);
+    const [enrollments, groups] = await Promise.all([
+      listEnrollments(client, learner),
+      flashcardDueGroups(client, learner, day, now)
+    ]);
+    const { languages, language } = chosenLanguage(
+      enrollments.map((item) => item.language),
+      groups,
+      event.url.searchParams.get('language')
+    );
+    if (language === null) return { languages, language, submissionKey: '' };
+    const grammar =
+      language === UNASSIGNED_LANGUAGE
+        ? null
+        : await dueGrammar(client, learner, language, { ...day, now });
+    return {
+      languages,
+      language,
+      submissionKey: randomUUID(),
+      flashcards: flashcardSummary(groups, language, day.timezone),
+      grammar: grammar && grammarSummary(grammar, day.timezone)
+    };
+  });
+
+/** Start a grammar review of the oldest ready topics of one part of the day. */
+async function startDueGrammarReview(
+  event: Parameters<Actions[string]>[0],
+  form: FormData
+) {
+  const language = String(form.get('language') ?? '');
+  const bucket = form.get('due');
+  return studyPage(event, async (client, learner) => {
+    const enrolled = await listEnrollments(client, learner);
+    if (
+      (bucket !== 'overdue' && bucket !== 'today') ||
+      !enrolled.some((item) => item.language === language)
+    )
+      throw new StudyError('NOT_FOUND');
+    // An unfinished review is continued, so its answers are not left behind.
+    const unfinished = await unfinishedGrammarReview(client, learner, language);
+    if (unfinished) return unfinished;
+    const now = Date.now();
+    const day = await currentStudyDay(client, learner, now);
+    const due = await grammarDueToday(client, learner, language, {
+      ...day,
+      now
+    });
+    const skillIds = due[bucket]
+      .filter((skill) => skill.ready)
+      .slice(0, grammarSessionLimit)
+      .map((skill) => skill.skillId);
+    if (!skillIds.length) throw new StudyError('STALE_GRAMMAR_REVIEW');
+    return startGrammarReview(client, learner, {
+      language,
+      submissionKey: form.get('submissionKey'),
+      skillIds
+    });
+  });
+}
 
 export const actions: Actions = {
-  rate: async (event) => {
+  grammar: async (event) => {
+    requireLearnerApi(event);
     const form = await event.request.formData();
-    return studyForm(
-      event,
-      (client, learner) =>
-        submitReview(client, learner, {
-          cardId: String(form.get('cardId') ?? ''),
-          submissionId: String(form.get('submissionKey') ?? ''),
-          expectedRevision: Number(form.get('revision')),
-          expectedScheduleKey: String(form.get('scheduleKey') ?? ''),
-          rating: String(form.get('rating') ?? '') as ReviewRating
-        }),
-      { reviewed: true }
-    );
+    let reviewId = '';
+    const failed = await formResult(async () => {
+      reviewId = (await startDueGrammarReview(event, form)).id;
+    }, null);
+    if (failed) return failed;
+    redirect(303, `/app/session/${encodeURIComponent(reviewId)}`);
   }
 };

@@ -10,21 +10,23 @@ import type { FallbackEvaluator } from './evaluation/runtime';
 import { describeLearnerError } from './learner-api';
 import type { LearnerSession } from './learner-session';
 import {
-  getAttempt,
   findReplay,
   getLesson,
-  getSessionLesson,
-  getStudySession,
   nextQuestion,
   rateGrammarAttempt,
   recordAttempt,
   StudyError
 } from './study';
-import { ownSession } from './study-content';
+import {
+  nextQuestionIn,
+  ownSession,
+  sessionLessonIn,
+  type SessionRow
+} from './study-content';
 import { feedbackOutcome } from './assessment';
 import { GRAMMAR_RETENTION_POLICY_VERSION } from './grammar-retention';
 import { reportContentForm } from './content-reports';
-import type { ExerciseQuestion } from '../components/exercises/answer';
+import { finishReviewedGrammarReview } from './practice';
 
 // The practice half of the lesson page: serving the session's next exercise
 // and recording the answer to it.
@@ -40,9 +42,13 @@ export async function lessonFor(
 ) {
   if (!page.studySessionId)
     return getLesson(client, learner, page.language, page.skillId);
-  const study = await getStudySession(client, learner, page.studySessionId);
+  const study = await ownSession(client, learner, page.studySessionId);
   if (study.language !== page.language) throw new StudyError('NOT_FOUND');
-  return getSessionLesson(client, learner, page.studySessionId, page.skillId);
+  return sessionLessonIn(client, learner, {
+    studySessionId: page.studySessionId,
+    skillId: page.skillId,
+    study
+  });
 }
 
 function needsPracticeRating(
@@ -70,7 +76,7 @@ export async function exerciseFor(
     learner,
     studySessionId,
     skillId,
-    practiceFeedback(client, learner, studySessionId, skillId)
+    sessionFeedback(client, learner, studySessionId, skillId)
   );
 }
 
@@ -85,14 +91,28 @@ export async function practiceFor(
   studySessionId: string | null,
   skillId: string
 ) {
-  const feedback = practiceFeedback(client, learner, studySessionId, skillId);
+  if (!studySessionId)
+    return {
+      exercise: null,
+      feedback: null,
+      reviewSessionId: null,
+      reviewFinished: false
+    };
+  const pending = sessionFeedback(client, learner, studySessionId, skillId);
   const [exercise, answered] = await Promise.all([
-    studySessionId
-      ? exerciseAfter(client, learner, studySessionId, skillId, feedback)
-      : null,
-    feedback
+    exerciseAfter(client, learner, studySessionId, skillId, pending),
+    pending
   ]);
-  return { exercise, feedback: answered };
+  return {
+    exercise,
+    feedback: answered.feedback,
+    // A grammar review is a list of topics, so its lessons lead back to it.
+    reviewSessionId:
+      answered.study.mode === 'mixed-review' ? studySessionId : null,
+    reviewFinished:
+      answered.study.mode === 'mixed-review' &&
+      answered.study.state === 'completed'
+  };
 }
 
 async function exerciseAfter(
@@ -100,17 +120,32 @@ async function exerciseAfter(
   learner: LearnerSession,
   studySessionId: string,
   skillId: string,
-  pendingFeedback: ReturnType<typeof practiceFeedback>
+  pending: ReturnType<typeof sessionFeedback>
 ) {
   try {
-    const feedback = await pendingFeedback;
+    const { study, feedback } = await pending;
     if (needsPracticeRating(feedback))
       return {
         studySessionId,
         notice: 'Rate this answer before continuing with this topic.',
         question: null
       };
-    const next = await nextQuestion(client, learner, studySessionId, skillId);
+    // The session read for the feedback serves the question lookup too.
+    return await nextExercise(studySessionId, () =>
+      nextQuestionIn(client, learner, { studySessionId, skillId, study })
+    );
+  } catch (thrown) {
+    return describedNotice(studySessionId, thrown);
+  }
+}
+
+/** The session's next question as the page serves it, or a notice instead. */
+async function nextExercise(
+  studySessionId: string,
+  read: () => ReturnType<typeof nextQuestion>
+) {
+  try {
+    const next = await read();
     // One key per page load: a repeated tap of Submit replays, not duplicates.
     return {
       studySessionId,
@@ -119,14 +154,22 @@ async function exerciseAfter(
       ...next
     };
   } catch (thrown) {
-    const described =
-      thrown instanceof StudyError && describeLearnerError(thrown.code);
-    if (!described) throw thrown;
-    return { studySessionId, notice: described.message, question: null };
+    return describedNotice(studySessionId, thrown);
   }
 }
 
-/** Save a correct practice response's difficulty rating. */
+/** A learner-facing study error becomes a notice; anything else is rethrown. */
+function describedNotice(studySessionId: string, thrown: unknown) {
+  const described =
+    thrown instanceof StudyError && describeLearnerError(thrown.code);
+  if (!described) throw thrown;
+  return { studySessionId, notice: described.message, question: null };
+}
+
+/**
+ * Save a correct practice response's difficulty rating. The result carries the
+ * session's next exercise, so the page moves on without reloading.
+ */
 export async function ratePracticeAnswer(
   client: Client,
   learner: LearnerSession,
@@ -138,18 +181,28 @@ export async function ratePracticeAnswer(
   const rating = field(form, 'rating');
   if (!['hard', 'good', 'easy'].includes(rating))
     return fail(400, { message: 'Choose Hard, Good, or Easy.' });
-  const attempt = await getAttempt(client, learner, attemptId);
-  const session = await getStudySession(client, learner, studySessionId);
-  if (attempt.skillId !== skillId) throw new StudyError('NOT_FOUND');
-  if (attempt.studySessionId !== studySessionId)
-    throw new StudyError('NOT_FOUND');
-  if (session.mode === 'assessment') throw new StudyError('NOT_FOUND');
-  await rateGrammarAttempt(client, learner, {
+  const rated = rating as 'hard' | 'good' | 'easy';
+  // The skill, session and practice-mode checks run on the attempt rows the
+  // rating transaction reads anyway.
+  const { mode } = await rateGrammarAttempt(client, learner, {
     attemptId,
-    rating: rating as 'hard' | 'good' | 'easy',
-    expectedSessionId: studySessionId
+    rating: rated,
+    expectedSessionId: studySessionId,
+    practiceSkillId: skillId
   });
-  return { rated: true as const };
+  // A grammar review finishes by itself once its last topic is rated.
+  const reviewFinished = await finishReviewedGrammarReview(client, learner, {
+    id: studySessionId,
+    mode
+  });
+  return {
+    rated: true as const,
+    rating: rated,
+    reviewFinished,
+    exercise: await nextExercise(studySessionId, () =>
+      nextQuestion(client, learner, studySessionId, skillId)
+    )
+  };
 }
 
 /**
@@ -183,19 +236,32 @@ async function repeatedAnswer(
   client: Client,
   learner: LearnerSession,
   form: FormData,
-  studySessionId: string
+  session: { id: string; mode: string }
 ) {
+  const studySessionId = session.id;
   const raw = form.get('intent') === 'unsure' ? '' : form.get('answer');
   if (typeof raw !== 'string') return null;
   const replay = await findReplay(client, learner, {
     studySessionId,
     questionId: field(form, 'questionId'),
     submissionKey: field(form, 'submissionKey'),
-    evidenceKind: form.has('retryAttemptId') ? 'assisted' : 'independent',
+    evidenceKind: 'independent',
     answer: form.get('intent') === 'unsure' ? '' : normalizeAnswer(raw),
     notSure: form.get('intent') === 'unsure'
   });
-  return replay && { recorded: true as const, duplicate: replay.duplicate };
+  if (!replay) return null;
+  // A retried last answer still finishes its review, even if the first try
+  // stopped before it could.
+  const reviewFinished = await finishReviewedGrammarReview(
+    client,
+    learner,
+    session
+  );
+  return {
+    recorded: true as const,
+    duplicate: replay.duplicate,
+    reviewFinished
+  };
 }
 
 /** Record the answer to the question the session is currently on. */
@@ -212,16 +278,21 @@ export async function recordAnswer(
   const studySessionId = field(form, 'studySessionId');
   const study = await ownSession(client, learner, studySessionId);
   if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
-  const repeated = await repeatedAnswer(client, learner, form, studySessionId);
+  // Assisted retries are gone; a retry form from an older page is out of date.
+  if (form.has('retryAttemptId')) throw new StudyError('STALE_QUESTION');
+  const session = { id: studySessionId, mode: study.mode };
+  const repeated = await repeatedAnswer(client, learner, form, session);
   if (repeated) return repeated;
-  const retry = field(form, 'retryAttemptId');
-  const question = retry
-    ? await retryQuestion(client, learner, studySessionId, skillId, retry)
-    : (await nextQuestion(client, learner, studySessionId, skillId)).question;
+  const { question } = await nextQuestion(
+    client,
+    learner,
+    studySessionId,
+    skillId
+  );
   if (!question || question.id !== field(form, 'questionId')) {
     // A concurrent request may have recorded this very submission after the
     // first lookup; it is a retry then, not a stale question.
-    const raced = await repeatedAnswer(client, learner, form, studySessionId);
+    const raced = await repeatedAnswer(client, learner, form, session);
     if (raced) return raced;
     throw new StudyError('STALE_QUESTION');
   }
@@ -238,39 +309,22 @@ export async function recordAnswer(
       studySessionId,
       questionId: question.id,
       submissionKey: field(form, 'submissionKey'),
-      evidenceKind: retry ? 'assisted' : 'independent',
+      evidenceKind: 'independent',
       answer: notSure ? '' : checked.ok ? checked.answer : '',
       notSure
     },
     { fallback }
   );
-  return { recorded: true as const, duplicate: attempt.duplicate };
-}
-
-async function retryQuestion(
-  client: Client,
-  learner: LearnerSession,
-  sessionId: string,
-  skillId: string,
-  attemptId: string
-): Promise<ExerciseQuestion> {
-  const prior = await getAttempt(client, learner, attemptId);
-  if (prior.studySessionId !== sessionId || prior.skillId !== skillId)
-    throw new StudyError('NOT_FOUND');
-  const found = await client.execute({
-    sql: 'SELECT id, format, prompt, alternatives FROM questions WHERE id = ? AND holdout = 0',
-    args: [prior.questionId]
-  });
-  const row = found.rows[0];
-  if (!row) throw new StudyError('CONTENT_UNAVAILABLE');
+  // A grammar review finishes by itself once its last topic is reviewed.
+  const reviewFinished = await finishReviewedGrammarReview(
+    client,
+    learner,
+    session
+  );
   return {
-    id: String(row.id),
-    format: row.format as ExerciseQuestion['format'],
-    prompt: String(row.prompt),
-    alternatives:
-      row.format === 'multiple-choice' && row.alternatives !== null
-        ? JSON.parse(String(row.alternatives))
-        : undefined
+    recorded: true as const,
+    duplicate: attempt.duplicate,
+    reviewFinished
   };
 }
 
@@ -309,8 +363,31 @@ export async function practiceFeedback(
   skillId: string
 ) {
   if (!sessionId) return null;
+  return (await sessionFeedback(client, learner, sessionId, skillId)).feedback;
+}
+
+/** The session row with the feedback on its last answer, read once for both. */
+async function sessionFeedback(
+  client: Client,
+  learner: LearnerSession,
+  sessionId: string,
+  skillId: string
+) {
   const study = await ownSession(client, learner, sessionId);
   if (study.mode === 'assessment') throw new StudyError('ASSESSMENT_MODE');
+  return {
+    study,
+    feedback: await feedbackIn(client, learner, sessionId, skillId, study)
+  };
+}
+
+async function feedbackIn(
+  client: Client,
+  learner: LearnerSession,
+  sessionId: string,
+  skillId: string,
+  study: SessionRow
+) {
   const found = await client.execute({
     sql: `SELECT a.*, q.answer AS expected_answer, v.status FROM attempts a
       JOIN questions q ON q.id = a.question_id JOIN content_versions v ON v.id = a.content_version_id
@@ -324,22 +401,9 @@ export async function practiceFeedback(
     sql: 'SELECT * FROM evaluations WHERE owner_id = ? AND attempt_id = ?',
     args: [learner.userId, row.id]
   });
-  return {
-    ...practiceFeedbackFields(
-      row,
-      evaluations.rows,
-      study.grammarRetentionPolicyVersion
-    ),
-    retryQuestion:
-      study.state === 'active'
-        ? await retryQuestion(
-            client,
-            learner,
-            sessionId,
-            skillId,
-            String(row.id)
-          )
-        : null,
-    submissionKey: randomUUID()
-  };
+  return practiceFeedbackFields(
+    row,
+    evaluations.rows,
+    study.grammarRetentionPolicyVersion
+  );
 }

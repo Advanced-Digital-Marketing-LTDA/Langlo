@@ -1,5 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import {
+  blob,
   check,
   foreignKey,
   index,
@@ -202,6 +203,80 @@ export const enrollments = sqliteTable(
   ]
 );
 
+export const libraryDocuments = sqliteTable(
+  'library_documents',
+  {
+    id: text('id').primaryKey(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    language: text('language', { enum: ['fr', 'de', 'en', 'pt'] }).notNull(),
+    content: text('content').notNull(),
+    sentenceCount: integer('sentence_count').notNull(),
+    progressIndex: integer('progress_index').notNull().default(0),
+    // Where the original-file reader stopped: a page number, or an EPUB location.
+    progressLocation: text('progress_location'),
+    createdAt: createdAt()
+  },
+  (table) => [
+    index('library_documents_owner_created').on(table.ownerId, table.createdAt),
+    check(
+      'library_documents_title',
+      sql`length(trim(${table.title})) BETWEEN 1 AND 160 AND length(${table.title}) <= 160 AND instr(${table.title}, char(0)) = 0`
+    ),
+    check(
+      'library_documents_language',
+      sql`${table.language} IN ('fr', 'de', 'en', 'pt')`
+    ),
+    check('library_documents_sentence_count', sql`${table.sentenceCount} > 0`),
+    check(
+      'library_documents_progress',
+      sql`${table.progressIndex} BETWEEN 0 AND ${table.sentenceCount}`
+    )
+  ]
+);
+
+export const libraryDocumentFiles = sqliteTable(
+  'library_document_files',
+  {
+    documentId: text('document_id')
+      .primaryKey()
+      .references(() => libraryDocuments.id, { onDelete: 'cascade' }),
+    format: text('format', { enum: ['pdf', 'docx', 'epub'] }).notNull(),
+    data: blob('data', { mode: 'buffer' }).notNull()
+  },
+  (table) => [
+    check(
+      'library_document_files_format',
+      sql`${table.format} IN ('pdf', 'docx', 'epub')`
+    ),
+    check(
+      'library_document_files_size',
+      sql`length(${table.data}) BETWEEN 1 AND 10000000`
+    )
+  ]
+);
+
+export const libraryAiUsage = sqliteTable(
+  'library_ai_usage',
+  {
+    day: text('day').notNull(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    calls: integer('calls').notNull().default(0)
+  },
+  (table) => [
+    primaryKey({ columns: [table.day, table.ownerId] }),
+    check(
+      'library_ai_usage_day',
+      sql`length(${table.day}) = 10 AND ${table.day} GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9]'`
+    ),
+    check('library_ai_usage_calls', sql`${table.calls} >= 0`)
+  ]
+);
+
 export const skills = sqliteTable(
   'skills',
   {
@@ -340,6 +415,8 @@ export const questions = sqliteTable(
   (table) => [
     // Questions are looked up by the content version they belong to.
     index('questions_content_version_idx').on(table.contentVersionId),
+    // An assessment picks its holdout questions by language.
+    index('questions_language_holdout_idx').on(table.language, table.holdout),
     uniqueIndex('questions_identity_version_skill_language').on(
       table.id,
       table.contentVersionId,
@@ -511,6 +588,8 @@ export const attempts = sqliteTable(
       table.studySessionId,
       table.questionId
     ),
+    // An assessment checks a learner's earlier answers per skill.
+    index('attempts_owner_skill_idx').on(table.ownerId, table.skillId),
     uniqueIndex('attempts_owner_submission_unique').on(
       table.ownerId,
       table.submissionKey
@@ -847,6 +926,8 @@ export const nativeFlashcardDecks = sqliteTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     name: text('name').notNull(),
+    // Decks created before migration 0036 have no language.
+    language: text('language', { enum: ['fr', 'de', 'en', 'pt'] }),
     createdAt: createdAt()
   },
   (table) => [
@@ -1327,6 +1408,34 @@ export const contentChanges = sqliteTable(
     check(
       'content_changes_kind',
       sql`${table.kind} IN (${contentChangeKindsSql})`
+    )
+  ]
+);
+
+// Active study time measured in the browser on the review, lesson and
+// assessment pages: one row per stretch the timer ran without a long pause.
+export const studyTimeSegments = sqliteTable(
+  'study_time_segments',
+  {
+    id: text('id').notNull(),
+    ownerId: text('owner_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    category: text('category', { enum: ['flashcards', 'grammar'] }).notNull(),
+    startedAt: integer('started_at').notNull(),
+    endedAt: integer('ended_at').notNull(),
+    createdAt: createdAt()
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerId, table.id] }),
+    index('study_time_segments_owner_start').on(table.ownerId, table.startedAt),
+    check(
+      'study_time_segments_category',
+      sql`${table.category} IN ('flashcards', 'grammar')`
+    ),
+    check(
+      'study_time_segments_span',
+      sql`${table.startedAt} < ${table.endedAt}`
     )
   ]
 );

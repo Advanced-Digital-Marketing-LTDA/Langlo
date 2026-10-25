@@ -8,7 +8,7 @@ export const configVariables = [
   'APP_ORIGIN',
   'DATA_ENABLED',
   'DATABASE_URL',
-  'TURSO_AUTH_TOKEN',
+  'TURSO_AUTH_TOKEN_2',
   'BETTER_AUTH_SECRET',
   'MAIL_TRANSPORT',
   'SMTP_HOST',
@@ -17,7 +17,8 @@ export const configVariables = [
   'PROTON_SMTP_TOKEN',
   'MAIL_CAPTURE_DIR',
   'APP_BUILD_SHA',
-  'TYPESAFE_API_KEY'
+  'TYPESAFE_API_KEY',
+  'OPENAI_API_KEY'
 ] as const;
 
 export type ConfigVariable = (typeof configVariables)[number];
@@ -91,6 +92,10 @@ export interface RuntimeConfig {
   typesafeApiKey?: string;
   /** Set when TYPESAFE_API_KEY is unusable; the app keeps serving and the fallback stays off. */
   typesafeApiKeyError?: ConfigError;
+  /** Optional key for learner-requested Library translation and lookup. */
+  openAiApiKey?: string;
+  /** Set when OPENAI_API_KEY is unusable; Library AI stays off. */
+  openAiApiKeyError?: ConfigError;
 }
 
 /** Validate private runtime metadata without connecting to a provider; retain credentials only for selected remote libSQL. */
@@ -209,6 +214,29 @@ function typesafeApiKeyConfig(
   }
 }
 
+function openAiApiKeyConfig(
+  env: Record<string, string | undefined>
+): Pick<RuntimeConfig, 'openAiApiKey' | 'openAiApiKeyError'> {
+  const raw = env.OPENAI_API_KEY;
+  if (raw === undefined || raw === '') return {};
+  try {
+    const key = raw.trim();
+    if (key !== raw || !/^[\x21-\x7e]{20,}$/u.test(key))
+      throw new ConfigError('OPENAI_API_KEY');
+    return { openAiApiKey: key };
+  } catch (error) {
+    if (!(error instanceof ConfigError)) throw error;
+    return { openAiApiKeyError: error };
+  }
+}
+
+function optionalKeyConfig(
+  env: Record<string, string | undefined>
+): ReturnType<typeof typesafeApiKeyConfig> &
+  ReturnType<typeof openAiApiKeyConfig> {
+  return { ...typesafeApiKeyConfig(env), ...openAiApiKeyConfig(env) };
+}
+
 export function parseRuntimeConfig(
   env: Record<string, string | undefined>
 ): RuntimeConfig {
@@ -262,8 +290,8 @@ export function parseRuntimeConfig(
         !['', '/'].includes(target.pathname)
       )
         throw new ConfigError('DATABASE_URL');
-      databaseToken = env.TURSO_AUTH_TOKEN?.trim();
-      if (!databaseToken) throw new ConfigError('TURSO_AUTH_TOKEN');
+      databaseToken = env.TURSO_AUTH_TOKEN_2?.trim();
+      if (!databaseToken) throw new ConfigError('TURSO_AUTH_TOKEN_2');
     } else if (
       !/^file:\.\/\.fixtures\/[a-zA-Z0-9_-]+\.db$/u.test(databaseUrl)
     ) {
@@ -284,6 +312,6 @@ export function parseRuntimeConfig(
     databaseToken,
     revision,
     auth: dataEnabled ? parseAuthConfig(env, environment) : undefined,
-    ...(dataEnabled ? typesafeApiKeyConfig(env) : {})
+    ...(dataEnabled ? optionalKeyConfig(env) : {})
   };
 }

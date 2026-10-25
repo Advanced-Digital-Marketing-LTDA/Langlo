@@ -612,6 +612,205 @@
           }
         ]
       }
+    },
+    {
+      "skill_id": "de-a1-011",
+      "title": "Choosing definite and indefinite articles",
+      "explanation": "Use the indefinite article (ein, eine) when you introduce something new: Da ist ein Kind. Use the definite article (der, die, das) when it is already known or specific: Das Kind ist klein. With a profession or nationality after sein, German usually has no article: Anna ist Lehrerin. The gender of the noun decides the form, so learn nouns with their article.",
+      "examples": [
+        {
+          "de": "Da ist ein Kind.",
+          "en": "There is a child."
+        },
+        {
+          "de": "Das Kind ist klein.",
+          "en": "The child is small."
+        },
+        {
+          "de": "Anna ist Lehrerin.",
+          "en": "Anna is a teacher."
+        }
+      ],
+      "references": ["GOETHE-A1"],
+      "version": {
+        "id": "de-a1-011@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "de-a1-011@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence introduces a new person?",
+            "answer": "Da ist eine Frau.",
+            "alternatives": [
+              "Da ist die Frau.",
+              "Da ist eine Frau.",
+              "Da ist Frau."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q01"
+          },
+          {
+            "id": "de-a1-011@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Which kind of article is used for something already mentioned?",
+            "answer": "the definite article",
+            "alternatives": [
+              "the definite article",
+              "the indefinite article",
+              "no article"
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q02"
+          },
+          {
+            "id": "de-a1-011@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Which sentence states a profession in the usual way?",
+            "answer": "Anna ist Lehrerin.",
+            "alternatives": [
+              "Anna ist ein Lehrerin.",
+              "Anna ist Lehrerin.",
+              "Anna ist das Lehrerin."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q03"
+          },
+          {
+            "id": "de-a1-011@2:q04",
+            "format": "multiple-choice",
+            "prompt": "Which pair is correct?",
+            "answer": "Da ist ein Tisch. Der Tisch ist alt.",
+            "alternatives": [
+              "Da ist der Tisch. Ein Tisch ist alt.",
+              "Da ist ein Tisch. Der Tisch ist alt.",
+              "Da ist ein Tisch. Ein Tisch ist alt."
+            ],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q04"
+          },
+          {
+            "id": "de-a1-011@2:q05",
+            "format": "typed-blank",
+            "prompt": "Da ist ___ Kind. (a)",
+            "answer": "ein",
+            "near_misses": ["eine", "der"],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q05"
+          },
+          {
+            "id": "de-a1-011@2:q06",
+            "format": "typed-blank",
+            "prompt": "Da ist eine Lampe. ___ Lampe ist neu. (the)",
+            "answer": "Die",
+            "near_misses": ["Eine", "Der"],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q06"
+          },
+          {
+            "id": "de-a1-011@2:q07",
+            "format": "typed-blank",
+            "prompt": "Da ist ein Buch. ___ Buch ist alt. (the)",
+            "answer": "Das",
+            "near_misses": ["Ein", "Der"],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q07"
+          },
+          {
+            "id": "de-a1-011@2:q08",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): There is a table.",
+            "answer": "Da ist ein Tisch.",
+            "near_misses": ["Da ist eine Tisch.", "Da ist der Tisch."],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q08"
+          },
+          {
+            "id": "de-a1-011@2:q09",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): The child is small.",
+            "answer": "Das Kind ist klein.",
+            "near_misses": ["Der Kind ist klein.", "Ein Kind ist klein."],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q09"
+          },
+          {
+            "id": "de-a1-011@2:q10",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): Paul is a teacher. (no article)",
+            "answer": "Paul ist Lehrer.",
+            "near_misses": ["Paul ist der Lehrer.", "Paul ist das Lehrer."],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q10"
+          },
+          {
+            "id": "de-a1-011@2:q11",
+            "format": "correction",
+            "prompt": "Correct the article: Da ist eine Tisch.",
+            "answer": "Da ist ein Tisch.",
+            "near_misses": ["Da ist eine Tisch.", "Da ist einen Tisch."],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q11"
+          },
+          {
+            "id": "de-a1-011@2:q12",
+            "format": "correction",
+            "prompt": "Correct the article: Die Buch ist neu.",
+            "answer": "Das Buch ist neu.",
+            "near_misses": ["Die Buch ist neu.", "Der Buch ist neu."],
+            "holdout": false,
+            "change": "same",
+            "continues": "de-a1-011@1:q12"
+          },
+          {
+            "id": "de-a1-011@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Which sentence mentions a house for the first time?",
+            "answer": "Da ist ein Haus.",
+            "alternatives": [
+              "Da ist das Haus.",
+              "Da ist ein Haus.",
+              "Da ist Haus."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "de-a1-011@1:h01"
+          },
+          {
+            "id": "de-a1-011@2:h02",
+            "format": "translation",
+            "prompt": "Translate (choose the articles): Lisa is a student. (no article)",
+            "answer": "Lisa ist Studentin.",
+            "near_misses": [
+              "Lisa ist die Studentin.",
+              "Lisa ist ein Studentin."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "de-a1-011@1:h02"
+          },
+          {
+            "id": "de-a1-011@2:h03",
+            "format": "correction",
+            "prompt": "Correct the article: Die Haus ist alt.",
+            "answer": "Das Haus ist alt.",
+            "near_misses": ["Die Haus ist alt.", "Der Haus ist alt."],
+            "holdout": true,
+            "change": "same",
+            "continues": "de-a1-011@1:h03"
+          }
+        ]
+      }
     }
   ]
 }

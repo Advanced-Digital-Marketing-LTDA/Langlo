@@ -13,6 +13,7 @@ import {
   requireLearnerPage,
   type LearnerSession
 } from './learner-session';
+import { libraryFileTooLargeMessage } from '../library-text';
 import { StudyError } from './study';
 import { span } from './tracing';
 
@@ -40,7 +41,15 @@ const statusFor: Record<string, number> = {
   ASSESSMENT_MODE: 409,
   STALE_GRAMMAR_RATING: 409,
   STALE_GRAMMAR_REVIEW: 409,
-  REPORT_LIMIT: 429
+  REPORT_LIMIT: 429,
+  LIBRARY_FILE_TOO_LARGE: 413,
+  LIBRARY_PARSE_TIMEOUT: 422,
+  LIBRARY_AI_UNAVAILABLE: 503,
+  LIBRARY_AI_LIMIT: 429,
+  LIBRARY_PARSE_BUSY: 429,
+  LIBRARY_CONTEXT_TOO_LARGE: 413,
+  LIBRARY_VOCABULARY_CHANGED: 409,
+  INVALID_LIBRARY_ACTION: 400
 };
 
 // Codes whose cause the learner can act on get their own message; the rest
@@ -48,6 +57,7 @@ const statusFor: Record<string, number> = {
 const messageForCode: Record<string, string> = {
   ALREADY_ENROLLED: 'You are already enrolled in this track.',
   INVALID_DECK: 'Give the deck a name of up to 160 characters.',
+  INVALID_DECK_LANGUAGE: 'Choose one of your languages for the deck.',
   INVALID_CONTENT:
     'Fill in both sides of a basic note, or the text of a cloze note (up to 4096 characters each).',
   INVALID_CLOZE:
@@ -88,7 +98,29 @@ const messageForCode: Record<string, string> = {
     'Your last answer is still being checked. Reload in a few seconds.',
   ASSESSMENT_MODE:
     'Use the assessment page to continue. Lessons and feedback are hidden during assessments.',
-  REPORT_LIMIT: 'You have reached the daily report limit. Try again tomorrow.'
+  REPORT_LIMIT: 'You have reached the daily report limit. Try again tomorrow.',
+  INVALID_LIBRARY_FILE: 'Upload a TXT, text-based PDF, DOCX, or EPUB file.',
+  INVALID_LIBRARY_DOCUMENT:
+    'This document has no readable text. Scanned PDFs and unreadable files are not supported.',
+  INVALID_LIBRARY_LANGUAGE: 'Choose a supported document language.',
+  INVALID_LIBRARY_TITLE: 'Use a title of up to 160 characters.',
+  INVALID_LIBRARY_DECK: 'Choose a deck for this document’s language.',
+  LIBRARY_VOCABULARY_CHANGED:
+    'This vocabulary card was edited or moved. Manage the existing card in Decks.',
+  INVALID_LIBRARY_TERM: 'Choose a word or phrase from the document.',
+  INVALID_LIBRARY_DEFINITION: 'Enter a definition of up to 4096 characters.',
+  INVALID_LIBRARY_PROGRESS: 'Choose a place in this document.',
+  INVALID_LIBRARY_ACTION: 'Choose translation or vocabulary lookup.',
+  LIBRARY_FILE_TOO_LARGE: libraryFileTooLargeMessage,
+  LIBRARY_PARSE_TIMEOUT:
+    'This document could not be read within the supported limits.',
+  LIBRARY_AI_UNAVAILABLE:
+    'Translation and vocabulary lookup are unavailable right now. Please try again later.',
+  LIBRARY_AI_LIMIT: 'Daily Library AI limit reached. Try again tomorrow.',
+  LIBRARY_PARSE_BUSY:
+    'The Library is processing other uploads. Try again in a moment.',
+  LIBRARY_CONTEXT_TOO_LARGE:
+    'This sentence and its context are too long to send for study.'
 };
 
 function httpStatusFor(code: string): number | undefined {
@@ -100,7 +132,10 @@ function httpStatusFor(code: string): number | undefined {
 const messageFor: Record<number, string> = {
   400: 'Invalid request.',
   404: 'Not found.',
-  409: 'This change conflicts with the current state.'
+  409: 'This change conflicts with the current state.',
+  413: 'This request is too large.',
+  422: 'This request could not be processed.',
+  503: 'This feature is not available right now.'
 };
 
 /** The HTTP status and learner-safe message for a repository error code. */
@@ -122,6 +157,16 @@ export async function learnerApi(
   run: (client: Client, learner: LearnerSession) => Promise<unknown>,
   status = 200
 ): Promise<Response> {
+  return learnerResponse(event, async (client, learner) =>
+    json(await run(client, learner), { status })
+  );
+}
+
+/** Like learnerApi, for a handler that builds its own response (a file). */
+export async function learnerResponse(
+  event: LearnerEvent,
+  run: (client: Client, learner: LearnerSession) => Promise<Response>
+): Promise<Response> {
   const learner = requireLearnerApi(event);
   const config = event.locals.config;
   if (!config?.dataEnabled || !config.databaseUrl)
@@ -130,9 +175,7 @@ export async function learnerApi(
     openAppDatabase(config)
   );
   try {
-    return json(await span('study.run', () => run(client, learner)), {
-      status
-    });
+    return await span('study.run', () => run(client, learner));
   } catch (error_) {
     if (error_ instanceof FlashcardError || error_ instanceof StudyError) {
       const described = describeLearnerError(error_.code);

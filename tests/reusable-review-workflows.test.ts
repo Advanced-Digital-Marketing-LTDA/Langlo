@@ -141,13 +141,13 @@ describe('reusable Claude review gate', () => {
 });
 
 describe('rewardguard caller', () => {
-  it('pins the shared workflow to a full commit SHA', () => {
+  it('uses the exact reviewed shared v0 release channel', () => {
     const uses = [...rewardguard.matchAll(/^\s+uses:\s*(\S+)/gmu)].map(
       (m) => m[1]
     );
     expect(uses).toHaveLength(1);
-    expect(uses[0]).toMatch(
-      /^Advanced-Digital-Marketing-LTDA\/workflows\/\.github\/workflows\/rewardguard\.yml@[0-9a-f]{40}$/u
+    expect(uses[0]).toBe(
+      'Advanced-Digital-Marketing-LTDA/workflows/.github/workflows/rewardguard.yml@v0'
     );
   });
 });

@@ -9,7 +9,7 @@ export const variables = defineEnvVars({
   APP_ORIGIN: { schema: (value) => value },
   DATA_ENABLED: { schema: (value) => value },
   DATABASE_URL: { schema: (value) => value },
-  TURSO_AUTH_TOKEN: { schema: (value) => value },
+  TURSO_AUTH_TOKEN_2: { schema: (value) => value },
   APP_BUILD_SHA: { schema: (value) => value },
   BETTER_AUTH_SECRET: { schema: (value) => value },
   MAIL_TRANSPORT: { schema: (value) => value },
@@ -18,5 +18,6 @@ export const variables = defineEnvVars({
   SMTP_HOST: { schema: (value) => value },
   SMTP_PORT: { schema: (value) => value },
   MAIL_CAPTURE_DIR: { schema: (value) => value },
-  TYPESAFE_API_KEY: { schema: (value) => value }
+  TYPESAFE_API_KEY: { schema: (value) => value },
+  OPENAI_API_KEY: { schema: (value) => value }
 });

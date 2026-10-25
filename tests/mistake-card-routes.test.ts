@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { RuntimeConfig } from '../src/lib/server/config';
-import { createDeck, getNote } from '../src/lib/server/flashcards';
+import { getNote } from '../src/lib/server/flashcards';
+import { createDeck } from './fixtures/french-deck';
 import { createMistakeDraft } from '../src/lib/server/mistake-cards';
 import { disposeFlashcardFixtures } from './fixtures/flashcards';
 import {

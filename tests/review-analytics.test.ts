@@ -1,6 +1,10 @@
 import { createClient } from '@libsql/client';
 import { expect, it } from 'vitest';
-import { loadReviewAnalytics } from '../src/lib/server/review-analytics';
+import {
+  loadReviewAnalytics,
+  loadReviewCounts,
+  reviewAnalyticsDays
+} from '../src/lib/server/review-analytics';
 import { studyDayStart } from '../src/lib/server/study-days';
 
 async function analyticsClient() {
@@ -83,15 +87,21 @@ type Day = Awaited<ReturnType<typeof loadReviewAnalytics>>[number];
 function expectedDays(
   now: Date,
   timezone: string,
-  length: number,
+  {
+    length,
+    firstDayOffset = -365
+  }: { length: number; firstDayOffset?: number },
   overrides: Record<number, Partial<Day>>
 ): Day[] {
   return Array.from({ length }, (_, index) => ({
-    date: localDate(studyDayStart(now, timezone, index - 365), timezone),
-    flashcardsCompleted: index <= 365 ? 0 : null,
-    grammarCompleted: index <= 365 ? 0 : null,
-    flashcardsScheduled: index >= 365 ? 0 : null,
-    grammarScheduled: index >= 365 ? 0 : null,
+    date: localDate(
+      studyDayStart(now, timezone, index + firstDayOffset),
+      timezone
+    ),
+    flashcardsCompleted: index + firstDayOffset <= 0 ? 0 : null,
+    grammarCompleted: index + firstDayOffset <= 0 ? 0 : null,
+    flashcardsScheduled: index + firstDayOffset >= 0 ? 0 : null,
+    grammarScheduled: index + firstDayOffset >= 0 ? 0 : null,
     ...overrides[index]
   }));
 }
@@ -122,10 +132,15 @@ it('counts completed reviews by owner and study day across the last 365 days', a
     );
 
     expect(days).toEqual(
-      expectedDays(now, timezone, 366, {
-        0: { flashcardsCompleted: 1, grammarCompleted: 1 },
-        365: { flashcardsCompleted: 2, grammarCompleted: 1 }
-      })
+      expectedDays(
+        now,
+        timezone,
+        { length: 366 },
+        {
+          0: { flashcardsCompleted: 1, grammarCompleted: 1 },
+          365: { flashcardsCompleted: 2, grammarCompleted: 1 }
+        }
+      )
     );
   } finally {
     client.close();
@@ -171,11 +186,16 @@ it('counts current due work from today, including overdue work, by study day', a
     );
 
     expect(days).toEqual(
-      expectedDays(now, timezone, 396, {
-        365: { flashcardsScheduled: 2, grammarScheduled: 2 },
-        366: { flashcardsScheduled: 1, grammarScheduled: 1 },
-        395: { flashcardsScheduled: 1, grammarScheduled: 1 }
-      })
+      expectedDays(
+        now,
+        timezone,
+        { length: 31, firstDayOffset: 0 },
+        {
+          0: { flashcardsScheduled: 2, grammarScheduled: 2 },
+          1: { flashcardsScheduled: 1, grammarScheduled: 1 },
+          30: { flashcardsScheduled: 1, grammarScheduled: 1 }
+        }
+      )
     );
   } finally {
     client.close();
@@ -204,9 +224,129 @@ it('ends at the farthest due day, capped at 365 study days ahead', async () => {
     );
 
     expect(days).toEqual(
-      expectedDays(now, timezone, 731, {
-        730: { flashcardsScheduled: 1, grammarScheduled: 1 }
-      })
+      expectedDays(
+        now,
+        timezone,
+        { length: 366, firstDayOffset: 0 },
+        {
+          365: { flashcardsScheduled: 1, grammarScheduled: 1 }
+        }
+      )
+    );
+  } finally {
+    client.close();
+  }
+});
+
+it.each([
+  'native_flashcard_review_events',
+  'grammar_retention_events'
+] as const)(
+  'starts at the first retained %s review and keeps zero days within the range',
+  async (table) => {
+    const timezone = 'America/Sao_Paulo';
+    const now = new Date('2026-10-22T12:00:00.000Z');
+    const firstDay = studyDayStart(now, timezone, -30);
+    const lastDay = studyDayStart(now, timezone, 30);
+    const client = await analyticsClient();
+    try {
+      await addEvent(client, table, 'learner-a', firstDay.getTime());
+      await addEvent(
+        client,
+        table,
+        'learner-a',
+        studyDayStart(now, timezone, -366).getTime()
+      );
+      await addEvent(
+        client,
+        table,
+        'learner-b',
+        studyDayStart(now, timezone, -90).getTime()
+      );
+      await addCard(client, { noteId: 'last-due', dueAt: lastDay.getTime() });
+
+      const days = await loadReviewAnalytics(
+        client,
+        { userId: 'learner-a' },
+        [],
+        now
+      );
+
+      expect(days).toHaveLength(61);
+      expect(days[0].date).toBe(localDate(firstDay, timezone));
+      expect(days[1]).toMatchObject({
+        flashcardsCompleted: 0,
+        grammarCompleted: 0,
+        flashcardsScheduled: null,
+        grammarScheduled: null
+      });
+      expect(days[30].date).toBe('2026-10-22');
+      expect(days.at(-1)).toMatchObject({
+        date: localDate(lastDay, timezone),
+        flashcardsScheduled: 1
+      });
+    } finally {
+      client.close();
+    }
+  }
+);
+
+it('shows only today when there are no retained reviews or scheduled work', async () => {
+  const client = await analyticsClient();
+  try {
+    expect(
+      await loadReviewAnalytics(
+        client,
+        { userId: 'learner-a' },
+        [],
+        new Date('2026-10-22T12:00:00.000Z')
+      )
+    ).toEqual([
+      {
+        date: '2026-10-22',
+        flashcardsCompleted: 0,
+        grammarCompleted: 0,
+        flashcardsScheduled: 0,
+        grammarScheduled: 0
+      }
+    ]);
+  } finally {
+    client.close();
+  }
+});
+
+it('counts reviews in the timezone it is given, not the stored one', async () => {
+  const client = await analyticsClient();
+  try {
+    // 05:00 UTC is today's study day in UTC (from 04:00) but yesterday's in
+    // the stored America/Sao_Paulo (from 07:00 UTC).
+    const reviewedAt = new Date('2026-10-22T05:00:00.000Z').getTime();
+    await addEvent(client, 'grammar_retention_events', 'learner-a', reviewedAt);
+    await addEvent(client, 'grammar_retention_events', 'learner-b', reviewedAt);
+    await addCard(client, {
+      noteId: 'due-tomorrow',
+      dueAt: studyDayStart(now, 'UTC', 1).getTime()
+    });
+
+    const counts = await loadReviewCounts(
+      client,
+      { userId: 'learner-a' },
+      'UTC',
+      now.getTime()
+    );
+
+    expect(counts.timezone).toBe('UTC');
+    expect(counts.boundaries[365]).toEqual(studyDayStart(now, 'UTC', 0));
+    expect(counts.grammarCompleted[365]).toBe(1);
+    expect(counts.grammarCompleted[364]).toBe(0);
+    expect(counts.flashcardsScheduled[366]).toBe(1);
+    expect(reviewAnalyticsDays(counts, [])).toEqual(
+      expectedDays(
+        now,
+        'UTC',
+        { length: 2, firstDayOffset: 0 },
+        { 0: { grammarCompleted: 1 }, 1: { flashcardsScheduled: 1 } }
+      )
     );
   } finally {
     client.close();

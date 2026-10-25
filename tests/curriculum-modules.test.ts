@@ -15,6 +15,7 @@ import {
   type Module,
   type Question
 } from './fixtures/curriculum-module';
+import { clarifiedPrompts } from './fixtures/clarified-prompts';
 
 // Authored curriculum modules after French A1 module 01 (which keeps its own
 // test): every module is checked against the approved bundle, the local
@@ -98,7 +99,7 @@ const correctedAlternatives = new Map<string, string[] | undefined>([
   ['pt-b1-033@1:q08', ['A casa dela é bem grande.']],
   ['pt-b1-039@1:q03', ['foram', 'foi', 'é']]
 ]);
-// Returns whether the question's prompt gained a grammar form hint.
+// Returns whether the question's prompt was reworded (a grammar form hint or a clarified prompt).
 function assertHintedQuestion(
   question: Question,
   before: Question,
@@ -126,6 +127,12 @@ function assertHintedQuestion(
       );
     } else
       expect(question[field], `${question.id} ${field}`).toEqual(before[field]);
+  }
+  if (clarifiedPrompts.has(before.id)) {
+    expect(question.prompt, question.id).toBe(clarifiedPrompts.get(before.id));
+    expect(question.prompt, question.id).not.toBe(before.prompt);
+    expect(question.holdout, question.id).toBe(true);
+    return true;
   }
   if (question.prompt === before.prompt) return false;
   expect(question.holdout, question.id).toBe(true);
@@ -200,6 +207,18 @@ const revisedSkills = new Set([
   'fr-a1-023',
   'fr-a1-024'
 ]);
+// A listed skill's version 2 is the correction of what databases held; later
+// versions are wording revisions that continue it.
+const isCorrection = (skillId: string, version: number) =>
+  revisedSkills.has(skillId) && version === 2;
+const isLaterRevision = (skillId: string, version: number) =>
+  revisedSkills.has(skillId) && version > 2;
+const splitLaterRevisions = <T extends { skillId: string; version: number }>(
+  versions: T[]
+) => ({
+  later: versions.filter((v) => isLaterRevision(v.skillId, v.version)),
+  kept: versions.filter((v) => !isLaterRevision(v.skillId, v.version))
+});
 const allModules = readdirSync(join(root, 'content'), { withFileTypes: true })
   .filter((entry) => entry.isDirectory())
   .flatMap((dir) =>
@@ -251,6 +270,19 @@ it('has a lesson for every active Portuguese skill and no others', () => {
       .sort();
     expect(authored, track).toEqual(expected);
   }
+});
+
+it('finds every clarified holdout prompt it pins in the authored modules', () => {
+  const ids = new Set(
+    allModules.flatMap((module) =>
+      module.lessons.flatMap((lesson) =>
+        lesson.version.questions.map((q) => q.id)
+      )
+    )
+  );
+  for (const earlierId of clarifiedPrompts.keys())
+    expect(ids.has(earlierId), earlierId).toBe(true);
+  expect(clarifiedPrompts.size).toBe(27);
 });
 
 describe('reviewed curriculum answer keys', () => {
@@ -512,6 +544,28 @@ describe.each(files)('%s', (path) => {
     }
   });
 
+  it('carries every clarified holdout prompt in the next version of its skill', () => {
+    for (const [earlierId, prompt] of clarifiedPrompts) {
+      const skillId = earlierId.split('@')[0];
+      const earlier = module.lessons.find((lesson) =>
+        lesson.version.questions.some((q) => q.id === earlierId)
+      );
+      if (!earlier) continue;
+      expect(earlier.skill_id, earlierId).toBe(skillId);
+      const revision = module.lessons.find(
+        (lesson) =>
+          lesson.skill_id === skillId &&
+          lesson.version.version === earlier.version.version + 1
+      );
+      expect(revision, earlierId).toBeDefined();
+      const revised = revision?.version.questions.find(
+        (q) => q.continues === earlierId
+      );
+      expect(revised?.prompt, earlierId).toBe(prompt);
+      expect(revised?.change, earlierId).toBe('same');
+    }
+  });
+
   it('keeps the module review status and the evidence decision in agreement', () => {
     const decisions = {
       'pending-owner-review': 'pending',
@@ -538,6 +592,10 @@ describe.each(files)('%s', (path) => {
           module.review_status,
           '1.0.0'
         );
+        // A listed skill's later versions (wording revisions that continue the
+        // correction) are not part of what the database held before.
+        const { later, kept } = splitLaterRevisions(historical.versions);
+        historical.versions = kept;
         const revised = historical.versions.filter((version) =>
           revisedSkills.has(version.skillId)
         );
@@ -566,12 +624,16 @@ describe.each(files)('%s', (path) => {
           '1.1.0'
         );
         // A correction follows the historical version, so it declares itself.
-        for (const version of corrected.versions)
-          if (revisedSkills.has(version.skillId))
-            for (const question of version.questions) question.change = 'new';
+        const corrections = corrected.versions.filter((version) =>
+          isCorrection(version.skillId, version.version)
+        );
+        for (const version of corrections)
+          for (const question of version.questions) question.change = 'new';
         const result = await importContent(db.client, corrected);
-        expect(result.versions).toBe(revised.length);
-        expect(result.questions).toBe(revised.length * 15);
+        // Each historical correction is imported, then the later revisions.
+        expect(corrections).toHaveLength(revised.length);
+        expect(result.versions).toBe(corrections.length + later.length);
+        expect(result.questions).toBe((corrections.length + later.length) * 15);
         expect(
           (
             await db.client.execute(
@@ -583,7 +645,7 @@ describe.each(files)('%s', (path) => {
           (await db.client.execute('SELECT * FROM questions ORDER BY id')).rows
         ).toEqual(expect.arrayContaining(oldQuestions));
         for (const lesson of module.lessons.filter((lesson) =>
-          revisedSkills.has(lesson.skill_id)
+          isCorrection(lesson.skill_id, lesson.version.version)
         ))
           expect(lesson.version).toMatchObject({
             id: `${lesson.skill_id}@2`,

@@ -34,6 +34,7 @@ export function testSourceId(identity: string): string {
 
 export async function seedBasicNote(client: Client, learner: LearnerSession) {
   await createDeck(client, learner, {
+    language: 'fr',
     id: 'deck-10000000-0000-4000-8000-000000000002',
     name: 'French'
   });

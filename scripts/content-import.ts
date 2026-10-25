@@ -48,8 +48,8 @@ function parseTarget(env: Record<string, string | undefined>): Target {
     throw new ScriptError(
       'DATABASE_URL must be a file: URL or a bare libsql://<name>.turso.io URL'
     );
-  const authToken = env.TURSO_AUTH_TOKEN?.trim();
-  if (!authToken) throw new ScriptError('TURSO_AUTH_TOKEN is not set');
+  const authToken = env.TURSO_AUTH_TOKEN_2?.trim();
+  if (!authToken) throw new ScriptError('TURSO_AUTH_TOKEN_2 is not set');
   const host = url.hostname.toLowerCase();
   return { url: `libsql://${host}`, host, authToken };
 }

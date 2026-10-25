@@ -806,6 +806,187 @@
           }
         ]
       }
+    },
+    {
+      "skill_id": "pt-b2-040",
+      "title": "Spelling reform of 1990",
+      "explanation": "The Orthographic Agreement of 1990, in force in Brazil, changed several spellings. The circumflex was dropped in the words ending in -oo and in the forms êem: voo, enjoo, veem, creem, leem. The acute was dropped in the diphthong éi and ói of paroxytone words: ideia, heroico, jiboia. The trema was dropped except in foreign names: frequência, linguiça. Hyphens follow the prefix: no hyphen before a different vowel, or before r or s, which are doubled (autoescola, antirreligioso), and a hyphen before the same vowel or h (micro-ondas, anti-inflamatório). The letters k, w and y are now part of the alphabet. Do not write the old forms (idéia, vôo, vêem), and do not hyphenate where the rule joins the word.",
+      "examples": [
+        {
+          "pt": "Tenho uma ideia.",
+          "en": "I have an idea."
+        },
+        {
+          "pt": "O voo foi longo.",
+          "en": "The flight was long."
+        },
+        {
+          "pt": "Eles veem tudo.",
+          "en": "They see everything."
+        }
+      ],
+      "references": ["COE-CV20"],
+      "version": {
+        "id": "pt-b2-040@2",
+        "version": 2,
+        "questions": [
+          {
+            "id": "pt-b2-040@2:q01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: a thought or plan",
+            "answer": "ideia",
+            "alternatives": ["idéia", "idea", "ideia"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q01"
+          },
+          {
+            "id": "pt-b2-040@2:q02",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: a trip by plane",
+            "answer": "voo",
+            "alternatives": ["voo", "vôo", "vo"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q02"
+          },
+          {
+            "id": "pt-b2-040@2:q03",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: a school for learning to drive",
+            "answer": "autoescola",
+            "alternatives": ["auto-escola", "autoescola", "auto escola"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q03"
+          },
+          {
+            "id": "pt-b2-040@2:q04",
+            "format": "typed-blank",
+            "prompt": "Reform spelling: eles ___ (ver, presente)",
+            "answer": "veem",
+            "near_misses": ["vêem", "vem"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q04"
+          },
+          {
+            "id": "pt-b2-040@2:q05",
+            "format": "typed-blank",
+            "prompt": "Reform spelling: a ___ (freqüência, sem trema)",
+            "answer": "frequência",
+            "near_misses": ["freqüência", "frequencia"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q05"
+          },
+          {
+            "id": "pt-b2-040@2:q06",
+            "format": "typed-blank",
+            "prompt": "Reform spelling: o ___ (aparelho de cozinha)",
+            "answer": "micro-ondas",
+            "near_misses": ["microondas", "micro ondas"],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q06"
+          },
+          {
+            "id": "pt-b2-040@2:q07",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): I have an idea.",
+            "answer": "Tenho uma ideia.",
+            "alternatives": ["Eu tenho uma ideia."],
+            "near_misses": ["Tenho uma idéia.", "Tenho uma idea."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q07"
+          },
+          {
+            "id": "pt-b2-040@2:q08",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): The flight was long.",
+            "answer": "O voo foi longo.",
+            "near_misses": ["O vôo foi longo.", "O vo foi longo."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q08"
+          },
+          {
+            "id": "pt-b2-040@2:q09",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): They see everything.",
+            "answer": "Eles veem tudo.",
+            "near_misses": ["Eles vêem tudo.", "Eles vem tudo."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q09"
+          },
+          {
+            "id": "pt-b2-040@2:q10",
+            "format": "correction",
+            "prompt": "Correct to the 1990 spelling: Ela teve uma idéia.",
+            "answer": "Ela teve uma ideia.",
+            "near_misses": ["Ela teve uma idéia.", "Ela teve uma idea."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q10"
+          },
+          {
+            "id": "pt-b2-040@2:q11",
+            "format": "correction",
+            "prompt": "Correct to the 1990 spelling: O vôo atrasou.",
+            "answer": "O voo atrasou.",
+            "near_misses": ["O vôo atrasou.", "O vo atrasou."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q11"
+          },
+          {
+            "id": "pt-b2-040@2:q12",
+            "format": "correction",
+            "prompt": "Correct to the 1990 spelling: Eles vêem o mar.",
+            "answer": "Eles veem o mar.",
+            "near_misses": ["Eles vêem o mar.", "Eles vem o mar."],
+            "holdout": false,
+            "change": "same",
+            "continues": "pt-b2-040@1:q12"
+          },
+          {
+            "id": "pt-b2-040@2:h01",
+            "format": "multiple-choice",
+            "prompt": "Choose the correct spelling under the 1990 reform: (ortografia atual)",
+            "answer": "heroico",
+            "alternatives": ["herôico", "heroico", "heróico"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-040@1:h01"
+          },
+          {
+            "id": "pt-b2-040@2:h02",
+            "format": "typed-blank",
+            "prompt": "Eles ___ . (crer, presente, 1990 spelling) (ortografia atual)",
+            "answer": "creem",
+            "near_misses": ["crêem", "crem"],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-040@1:h02"
+          },
+          {
+            "id": "pt-b2-040@2:h03",
+            "format": "translation",
+            "prompt": "Translate (reform spelling): I live near a driving school. (ortografia atual)",
+            "answer": "Moro perto de uma autoescola.",
+            "alternatives": ["Eu moro perto de uma autoescola."],
+            "near_misses": [
+              "Moro perto de uma auto-escola.",
+              "Moro perto de uma auto escola."
+            ],
+            "holdout": true,
+            "change": "same",
+            "continues": "pt-b2-040@1:h03"
+          }
+        ]
+      }
     }
   ]
 }

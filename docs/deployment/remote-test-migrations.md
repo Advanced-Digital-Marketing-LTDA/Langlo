@@ -9,7 +9,7 @@ Set these only in the shell that runs the command (or as Coolify runtime variabl
 | Variable                  | Value                                                                            |
 | ------------------------- | -------------------------------------------------------------------------------- |
 | `DATABASE_URL`            | `libsql://<database>-<org>.<region>.turso.io` with no token, user, query or path |
-| `TURSO_AUTH_TOKEN`        | Database token, read only from the runtime environment                           |
+| `TURSO_AUTH_TOKEN_2`      | Database token, read only from the runtime environment                           |
 | `LANGLO_MIGRATION_TARGET` | Exactly `remote-test`. Any other value, or none, stops before connecting         |
 
 The command refuses any host outside `.turso.io` (the token is sent on connect), `file:`, in-memory, `http(s):`, IP-address hosts, `localhost` names, ports, credential-bearing URLs and any host containing a `prod` or `production` label. The host check is a name heuristic only; it does not prove the database is not production. The owner verifies database identity.

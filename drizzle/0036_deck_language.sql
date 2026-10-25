@@ -1,0 +1,1 @@
+ALTER TABLE `native_flashcard_decks` ADD `language` text;
