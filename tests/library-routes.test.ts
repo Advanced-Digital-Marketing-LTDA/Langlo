@@ -398,6 +398,33 @@ describe('Library API', () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
+  it("refuses a study request on another learner's document before any provider call", async () => {
+    await createLibraryDocument(client, testSession('learner-a'), {
+      id: 'library-a',
+      title: 'French text',
+      language: 'fr',
+      content: 'Bonjour.'
+    });
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', withGuard(fetch));
+    const result = await call(
+      studyRoute.POST as Handler,
+      event(
+        'POST',
+        'learner-b',
+        '/app/api/library/library-a/study',
+        { action: 'translate', sentence: 'Bonjour.' },
+        'synthetic-openai-test-key'
+      )
+    );
+    expect(result.status).toBeGreaterThanOrEqual(400);
+    expect(result.status).not.toBe(200);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(
+      (await client.execute('SELECT * FROM library_ai_usage')).rows
+    ).toEqual([]);
+  });
+
   it('limits daily AI calls before contacting the provider', async () => {
     await createLibraryDocument(client, testSession('learner-a'), {
       id: 'library-a',

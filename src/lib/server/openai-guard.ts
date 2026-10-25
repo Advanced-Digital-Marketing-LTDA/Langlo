@@ -1,3 +1,4 @@
+import type { RuntimeConfig } from './config';
 import { JEV_MODEL } from './evaluation/fallback';
 import { SYSTEM_ONE_URL } from './evaluation/typesafe-jev';
 import { StudyError } from './study-error';
@@ -7,6 +8,27 @@ export const GUARD_TIMEOUT_MS = 10_000;
 const openAiTimeoutMs = 15_000;
 
 export type OpenAiKeys = { openAi?: string; typesafe?: string };
+
+/** The keys Library AI needs; a malformed TypeSafe key is logged, not silently dropped. */
+export function openAiKeysFromConfig(
+  config:
+    | Pick<
+        RuntimeConfig,
+        'openAiApiKey' | 'typesafeApiKey' | 'typesafeApiKeyError'
+      >
+    | undefined
+): OpenAiKeys {
+  if (config?.typesafeApiKeyError)
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        operation: 'openai-guard',
+        reason: 'invalid-config',
+        variable: config.typesafeApiKeyError.variable
+      })
+    );
+  return { openAi: config?.openAiApiKey, typesafe: config?.typesafeApiKey };
+}
 
 /** Untrusted text by field name, e.g. the sentence and the selected term. */
 export type UntrustedText = Readonly<Record<string, string>>;
@@ -18,12 +40,25 @@ const instructionVerb =
   'ignore|ignorez|ignorer|ignora|ignorar|ignoriere|ignorieren|disregard|forget|oublie|oubliez|oublier|vergiss|vergessen|esqueca|esquecer|desconsidere|desconsiderar|override|bypass|contourne|contournez|umgehe|umgehen|contorne|contornar';
 const instructionNoun =
   'instruction|instructions|consigne|consignes|anweisung|anweisungen|instruktion|instruktionen|instrucao|instrucoes|prompt|prompts|regra|regras|regel|regeln|rules|directives|diretrizes|richtlinien';
+// Only wording that points at the model's own earlier or private instructions
+// blocks; "ignore the rules of grammar" is ordinary study text.
+const instructionScope =
+  'previous|prior|above|earlier|preceding|all|any|your|these|those|anteriores|anterieures|precedentes|precedents|tous|toutes|votre|vos|vorherigen|alle|deine|deinen|todas|todos|suas|seus';
+const trailingScope =
+  'previous|prior|above|earlier|preceding|anteriores|anterieures|precedentes|precedents|vorherigen';
+const hiddenScope = 'hidden|secret|initial|original|system|developer';
+const notEnd = '[^.!?\\n]';
 const injectionPatterns = [
   new RegExp(
-    `\\b(?:${instructionVerb})\\b[^.!?\\n]{0,60}\\b(?:${instructionNoun})\\b`
+    `\\b(?:${instructionVerb})\\b${notEnd}{0,30}\\b(?:${instructionScope})\\b${notEnd}{0,20}\\b(?:${instructionNoun})\\b`
+  ),
+  new RegExp(
+    `\\b(?:${instructionVerb})\\b${notEnd}{0,30}\\b(?:${instructionNoun})\\b${notEnd}{0,20}\\b(?:${trailingScope})\\b`
   ),
   /\b(?:system|developer|systeme|sistema)[ -]?(?:prompt|message|nachricht|mensagem)\b/,
-  /\b(?:reveal|print|repeat|affiche|montre|zeige|mostre)\b[^.!?\n]{0,40}\b(?:prompt|instructions|anweisungen|instrucoes)\b/
+  new RegExp(
+    `\\b(?:reveal|print|repeat|show|affiche|montre|zeige|mostre)\\b${notEnd}{0,30}\\b(?:${hiddenScope})\\b${notEnd}{0,10}\\b(?:${instructionNoun})\\b`
+  )
 ];
 
 /** Code point ranges of control, zero-width and bidirectional override characters. */
@@ -56,6 +91,30 @@ export function matchesInjectionPattern(text: string): boolean {
   return injectionPatterns.some((pattern) => pattern.test(normalized));
 }
 
+/** A guard failure with a short reason code that is safe to log. */
+class GuardError extends Error {
+  constructor(readonly reason: string) {
+    super(reason);
+  }
+}
+
+function failureReason(error: unknown): string {
+  if (error instanceof GuardError) return error.reason;
+  if (error instanceof DOMException && error.name === 'TimeoutError')
+    return 'timeout';
+  return error instanceof SyntaxError ? 'malformed' : 'network';
+}
+
+/** One structured line per guard decision: reason codes and field names, never text or keys. */
+function logGuard(
+  level: 'warn' | 'error',
+  operation: string,
+  reason: string,
+  field?: string
+) {
+  console.error(JSON.stringify({ level, operation, reason, field }));
+}
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -67,9 +126,8 @@ function readInjectionProbability(body: unknown): number {
   const answers = isRecord(body) ? body.answers : undefined;
   const answer = isRecord(answers) ? answers.injection : undefined;
   if (!isRecord(answer) || answer.type !== 'noul')
-    throw new Error('Jev guard answer was malformed');
-  if (!isProbability(answer.noul))
-    throw new Error('Jev guard probability was malformed');
+    throw new GuardError('malformed');
+  if (!isProbability(answer.noul)) throw new GuardError('malformed');
   return answer.noul;
 }
 
@@ -91,7 +149,7 @@ async function injectionProbability(
     }),
     signal: AbortSignal.timeout(GUARD_TIMEOUT_MS)
   });
-  if (!response.ok) throw new Error('Jev guard request failed');
+  if (!response.ok) throw new GuardError(`http-${response.status}`);
   return readInjectionProbability(await response.json());
 }
 
@@ -105,20 +163,31 @@ async function assertSafe(
   untrusted: UntrustedText
 ): Promise<void> {
   if (!typesafeKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
-  if (Object.values(untrusted).some(matchesInjectionPattern))
+  const hit = Object.entries(untrusted).find(([, text]) =>
+    matchesInjectionPattern(text)
+  );
+  if (hit) {
+    logGuard('warn', 'openai-guard', 'pattern', hit[0]);
     throw new StudyError('LIBRARY_AI_BLOCKED');
+  }
   let probability: number;
   try {
     probability = await injectionProbability(typesafeKey, untrusted);
-  } catch {
+  } catch (error) {
+    logGuard('error', 'openai-guard', failureReason(error));
     throw new StudyError('LIBRARY_AI_UNAVAILABLE');
   }
-  if (probability >= 0.5) throw new StudyError('LIBRARY_AI_BLOCKED');
+  if (probability >= 0.5) {
+    logGuard('warn', 'openai-guard', 'jev-flagged');
+    throw new StudyError('LIBRARY_AI_BLOCKED');
+  }
 }
 
 /**
  * The only function that sends a request to OpenAI. The guard runs first on
- * every untrusted field; if it blocks or cannot run, OpenAI is never called.
+ * the `untrusted` fields; if it blocks or cannot run, OpenAI is never called.
+ * Callers must list every learner-supplied field in `untrusted`; the guard
+ * does not scan `body`.
  */
 export async function guardedOpenAiResponse(
   keys: OpenAiKeys,
@@ -137,9 +206,10 @@ export async function guardedOpenAiResponse(
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(openAiTimeoutMs)
     });
-    if (!response.ok) throw new Error('OpenAI request failed');
+    if (!response.ok) throw new GuardError(`http-${response.status}`);
     return (await response.json()) as unknown;
-  } catch {
+  } catch (error) {
+    logGuard('error', 'openai-request', failureReason(error));
     throw new StudyError('LIBRARY_AI_UNAVAILABLE');
   }
 }

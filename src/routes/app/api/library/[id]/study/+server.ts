@@ -15,6 +15,7 @@ import {
   type LibraryAiInput
 } from '../../../../../../lib/server/library-ai';
 import { containsTerm } from '../../../../../../lib/library-text';
+import { openAiKeysFromConfig } from '../../../../../../lib/server/openai-guard';
 import { StudyError } from '../../../../../../lib/server/study-error';
 
 const maxSentenceLength = 2000;
@@ -61,10 +62,7 @@ export const POST: RequestHandler = (event) =>
       ...(body.action === 'lookup' ? { term: normalizedTerm } : {})
     };
     validateLibraryAiInput(input);
-    const keys = {
-      openAi: event.locals.config?.openAiApiKey,
-      typesafe: event.locals.config?.typesafeApiKey
-    };
+    const keys = openAiKeysFromConfig(event.locals.config);
     if (!keys.openAi || !keys.typesafe)
       throw new StudyError('LIBRARY_AI_UNAVAILABLE');
     if (!(await reserveLibraryAiCall(client, learner.userId)))
