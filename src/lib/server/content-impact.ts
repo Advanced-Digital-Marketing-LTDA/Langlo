@@ -10,30 +10,74 @@ import {
   carriedTo,
   currentContent,
   loadEvidenceRows,
-  qualifyingGrammarEvidence
+  qualifyingGrammarEvidence,
+  scoreGrammar,
+  type GrammarStatus
 } from './mastery';
 
 // Read-only report of what a package would do to learner progress, printed
 // before an owner applies it. It counts the answers that would stop counting
-// toward mastery; it does not recompute anyone's status.
+// toward mastery and, for the skill they were given on, how many learners'
+// grammar status would change as a result. A retired skill leaves the
+// catalog, so its lines carry no status change.
+
+export type StatusChange = {
+  from: GrammarStatus;
+  to: GrammarStatus;
+  learners: number;
+};
 
 export type ImpactLine = {
   skillId: string;
   reason: string;
   answers: number;
   learners: number;
+  statusChanges?: StatusChange[];
 };
 
 type PackageVersion = ContentPackage['versions'][number];
 type Earlier = { questions: PriorQuestion[] };
 type Counted = { itemKey: string; contentVersionId: string };
+type Qualified = ReturnType<typeof qualifyingGrammarEvidence>[number];
+
+/** The grammar status mastery scores for these qualifying answers. */
+const standing = (items: Qualified[]) =>
+  scoreGrammar({
+    correct: items.filter((item) => item.correct).length,
+    incorrect: items.filter((item) => !item.correct).length,
+    sessions: new Set(items.map((item) => item.sessionId)).size
+  }).status;
+
+/** Count one learner whose status moves from `from` to `to`. */
+function tally(
+  changes: Map<string, StatusChange>,
+  from: GrammarStatus,
+  to: GrammarStatus
+) {
+  const key = `${from}>${to}`;
+  const found = changes.get(key);
+  if (found) found.learners += 1;
+  else changes.set(key, { from, to, learners: 1 });
+}
+
+/** The evidence rows of these skills, grouped by the learner who gave them. */
+async function evidenceByOwner(client: Client, skillIds: string[]) {
+  const byOwner = new Map<string, Row[]>();
+  for (const skillId of skillIds)
+    for (const row of await loadEvidenceRows(client, { skillId })) {
+      const owner = String(row.owner_id);
+      byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
+    }
+  return byOwner;
+}
 
 /**
  * The answers mastery counts now for `skillId` whose item `stops` matches, by
  * the same rules mastery applies: the first response to an item, independent,
  * evaluated, from a version that is not quarantined, to an item in the
  * skill's current version. Answers given on retired skills that carry to it
- * (directly or through other carries) count for it.
+ * (directly or through other carries) count for it. `statusChanges` lists the
+ * learners whose status for the skill differs once those answers are gone.
  */
 async function countedAnswers(
   client: Client,
@@ -53,22 +97,26 @@ async function countedAnswers(
       (id) => carriedTo(id, current.carry) === skillId
     )
   ];
-  const byOwner = new Map<string, Row[]>();
-  for (const source of sources)
-    for (const row of await loadEvidenceRows(client, { skillId: source })) {
-      const owner = String(row.owner_id);
-      byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
-    }
+  const byOwner = await evidenceByOwner(client, sources);
   let answers = 0;
   let learners = 0;
+  const changes = new Map<string, StatusChange>();
   for (const ownerRows of byOwner.values()) {
-    const counted = qualifyingGrammarEvidence(ownerRows, current).filter(
-      (item) => item.countsFor === skillId && stops(item)
+    const held = qualifyingGrammarEvidence(ownerRows, current).filter(
+      (item) => item.countsFor === skillId
     );
+    const counted = held.filter(stops);
     answers += counted.length;
-    if (counted.length > 0) learners += 1;
+    if (counted.length === 0) continue;
+    learners += 1;
+    const from = standing(held);
+    const to = standing(held.filter((item) => !stops(item)));
+    if (from !== to) tally(changes, from, to);
   }
-  return { answers, learners };
+  const statusChanges = [...changes.values()].sort(
+    (a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to)
+  );
+  return { answers, learners, statusChanges };
 }
 
 /** The lineage keys of a stored version's questions. */
@@ -223,6 +271,17 @@ async function carriedKeys(
   return target === undefined ? new Set<string>() : versionKeys(client, target);
 }
 
+/** A retirement line: the skill leaves the catalog, so no status change is reported. */
+async function retirementLine(
+  client: Client,
+  skillId: string,
+  reason: string,
+  stops: (answer: Counted) => boolean
+): Promise<ImpactLine> {
+  const { answers, learners } = await countedAnswers(client, skillId, stops);
+  return { skillId, reason, answers, learners };
+}
+
 /** The impact of retiring one skill that is still live, if any. */
 async function retirementImpact(
   client: Client,
@@ -236,21 +295,19 @@ async function retirementImpact(
   if (skill.rows.length === 0 || skill.rows[0].retired_at !== null)
     return undefined;
   if (retirement.carry !== true || retirement.replacedBy === undefined)
-    return {
-      skillId: retirement.skillId,
-      reason: 'retired, answers no longer shown',
-      ...(await countedAnswers(client, retirement.skillId, () => true))
-    };
-  const carried = await carriedKeys(client, retirement.replacedBy, planned);
-  return {
-    skillId: retirement.skillId,
-    reason: `retired, answers carry to ${retirement.replacedBy} where the items match`,
-    ...(await countedAnswers(
+    return retirementLine(
       client,
       retirement.skillId,
-      (item) => !carried.has(item.itemKey)
-    ))
-  };
+      'retired, answers no longer shown',
+      () => true
+    );
+  const carried = await carriedKeys(client, retirement.replacedBy, planned);
+  return retirementLine(
+    client,
+    retirement.skillId,
+    `retired, answers carry to ${retirement.replacedBy} where the items match`,
+    (item) => !carried.has(item.itemKey)
+  );
 }
 
 /** Remember a planned version: it continues the chain, and is current unless quarantined. */
