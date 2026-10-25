@@ -540,22 +540,24 @@ async function completePractice(
 }
 
 /**
- * Finish a grammar review once every one of its topics is reviewed. Sessions
- * of other modes are left as they are.
+ * Finish a grammar review once every one of its topics is reviewed, and say
+ * whether it is finished. Sessions of other modes are left as they are.
  */
 export async function finishReviewedGrammarReview(
   client: Client,
   learner: LearnerSession,
   session: { id: string; mode: string }
-): Promise<void> {
-  if (session.mode !== 'mixed-review') return;
+): Promise<boolean> {
+  if (session.mode !== 'mixed-review') return false;
   const id = session.id;
+  let finished = false;
   // The check and the finish share one write, so no answer lands between them.
   await inWrite(client, async (tx) => {
     const plan = await grammarReviewPlan(tx, learner, id);
-    if (plan.every((topic) => topic.reviewed))
-      await completePractice(tx, learner, id);
+    finished = plan.every((topic) => topic.reviewed);
+    if (finished) await completePractice(tx, learner, id);
   });
+  return finished;
 }
 
 /**

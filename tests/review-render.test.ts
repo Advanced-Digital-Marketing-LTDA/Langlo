@@ -117,6 +117,20 @@ it('lets the learner switch language and go to overdue or today reviews', async 
   expect(html).toContain('0 topics');
 });
 
+it('shows how many grammar topics were already reviewed today only when there are some', async () => {
+  const none = await renderSvelte(reviewTab, {
+    data: { ...tabData, grammar: { ...tabData.grammar, reviewedToday: 0 } },
+    form: null
+  });
+  expect(none).not.toContain('grammar-reviewed-today');
+  const one = await renderSvelte(reviewTab, {
+    data: { ...tabData, grammar: { ...tabData.grammar, reviewedToday: 1 } },
+    form: null
+  });
+  expect(one).toContain('data-testid="grammar-reviewed-today"');
+  expect(one).toContain('1 topic already reviewed today.');
+});
+
 it('asks for a language when the learner has none', async () => {
   const html = await renderSvelte(reviewTab, {
     data: { languages: [], language: null, submissionKey: '' },

@@ -92,7 +92,12 @@ export async function practiceFor(
   skillId: string
 ) {
   if (!studySessionId)
-    return { exercise: null, feedback: null, reviewSessionId: null };
+    return {
+      exercise: null,
+      feedback: null,
+      reviewSessionId: null,
+      reviewFinished: false
+    };
   const pending = sessionFeedback(client, learner, studySessionId, skillId);
   const [exercise, answered] = await Promise.all([
     exerciseAfter(client, learner, studySessionId, skillId, pending),
@@ -103,7 +108,10 @@ export async function practiceFor(
     feedback: answered.feedback,
     // A grammar review is a list of topics, so its lessons lead back to it.
     reviewSessionId:
-      answered.study.mode === 'mixed-review' ? studySessionId : null
+      answered.study.mode === 'mixed-review' ? studySessionId : null,
+    reviewFinished:
+      answered.study.mode === 'mixed-review' &&
+      answered.study.state === 'completed'
   };
 }
 
@@ -183,13 +191,14 @@ export async function ratePracticeAnswer(
     practiceSkillId: skillId
   });
   // A grammar review finishes by itself once its last topic is rated.
-  await finishReviewedGrammarReview(client, learner, {
+  const reviewFinished = await finishReviewedGrammarReview(client, learner, {
     id: studySessionId,
     mode
   });
   return {
     rated: true as const,
     rating: rated,
+    reviewFinished,
     exercise: await nextExercise(studySessionId, () =>
       nextQuestion(client, learner, studySessionId, skillId)
     )
@@ -243,8 +252,16 @@ async function repeatedAnswer(
   if (!replay) return null;
   // A retried last answer still finishes its review, even if the first try
   // stopped before it could.
-  await finishReviewedGrammarReview(client, learner, session);
-  return { recorded: true as const, duplicate: replay.duplicate };
+  const reviewFinished = await finishReviewedGrammarReview(
+    client,
+    learner,
+    session
+  );
+  return {
+    recorded: true as const,
+    duplicate: replay.duplicate,
+    reviewFinished
+  };
 }
 
 /** Record the answer to the question the session is currently on. */
@@ -299,8 +316,16 @@ export async function recordAnswer(
     { fallback }
   );
   // A grammar review finishes by itself once its last topic is reviewed.
-  await finishReviewedGrammarReview(client, learner, session);
-  return { recorded: true as const, duplicate: attempt.duplicate };
+  const reviewFinished = await finishReviewedGrammarReview(
+    client,
+    learner,
+    session
+  );
+  return {
+    recorded: true as const,
+    duplicate: attempt.duplicate,
+    reviewFinished
+  };
 }
 
 /** Practice feedback is persisted history, so a reload cannot erase or upgrade it. */
