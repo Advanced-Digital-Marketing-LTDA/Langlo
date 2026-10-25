@@ -35,9 +35,11 @@ Local implementation evidence captured on 2026-10-25.
 
 ## Test method
 
-The tests were written together with the implementation, not first, so no red
-run was observed for this change. They assert behavior through the public
-functions and the study route with stubbed providers.
+The tests were written together with the implementation, not first, so no
+test-first history exists for this change. To show the tests detect a missing
+guard, the guard call in `guardedOpenAiResponse` was temporarily bypassed and
+the three focused test files were run: 21 of 82 tests failed (red). With the
+guard restored, all 82 passed (green). The bypass was not committed.
 
 ## Pending acceptance
 
@@ -45,12 +47,14 @@ functions and the study route with stubbed providers.
   stubbed providers. They are unverified against the live TypeSafe and OpenAI
   services.
 - `npm test` (full suite), `npm run test:property`, `npm run build` and
-  `npm run test:e2e` were not run locally; CI runs them.
+  `npm run test:e2e` were not run locally: the project owner's rule is that the
+  full suite is never run in the cloud environment because it is far too slow.
+  CI runs them on this branch.
 - `TYPESAFE_API_KEY` is now required for Library translation and lookup, and
   learner text is sent to Jev.
 
 ## Local checks
 
-- `npx vitest run tests/openai-guard.test.ts tests/library-ai.test.ts tests/library-routes.test.ts`: 82 tests passed. The full suite was not run locally.
+- `npx vitest run tests/openai-guard.test.ts tests/library-ai.test.ts tests/library-routes.test.ts`: 84 tests passed. The full suite was not run locally.
 - `npm run check`: 0 errors, 0 warnings.
 - `npx eslint` on the changed files and `npx prettier --check src tests`: clean.

@@ -60,7 +60,11 @@ const instructionScope =
   'previous|prior|above|earlier|preceding|all|your|these|those|anteriores|anterieures|precedentes|precedents|tous|toutes|votre|vos|vorherigen|alle|deine|deinen|todas|todos|suas|seus';
 const trailingScope =
   'previous|prior|above|earlier|preceding|anteriores|anterieures|precedentes|precedents|vorherigen';
-const hiddenScope = 'hidden|secret|initial|original|system|developer';
+const revealVerb =
+  'reveal|print|repeat|show|output|display|leak|affiche|montre|zeige|mostre';
+const messageNoun = 'message|nachricht|mensagem';
+const hiddenScope =
+  'hidden|secret|initial|original|system|developer|systeme|sistema';
 const notEnd = '[^.!?\\n]';
 const injectionPatterns = [
   new RegExp(
@@ -69,9 +73,8 @@ const injectionPatterns = [
   new RegExp(
     `\\b(?:${instructionVerb})\\b${notEnd}{0,30}\\b(?:${instructionNoun})\\b${notEnd}{0,20}\\b(?:${trailingScope})\\b`
   ),
-  /\b(?:system|developer|systeme|sistema)[ -]?(?:prompt|message|nachricht|mensagem)\b/,
   new RegExp(
-    `\\b(?:reveal|print|repeat|show|affiche|montre|zeige|mostre)\\b${notEnd}{0,30}\\b(?:${hiddenScope})\\b${notEnd}{0,10}\\b(?:${instructionNoun})\\b`
+    `\\b(?:${revealVerb})\\b${notEnd}{0,30}\\b(?:${hiddenScope})\\b${notEnd}{0,10}\\b(?:${instructionNoun}|${messageNoun})\\b`
   )
 ];
 

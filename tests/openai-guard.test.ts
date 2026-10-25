@@ -43,6 +43,8 @@ describe('pattern check', () => {
     'Ele esqueceu o livro em casa.',
     'Ignore the noise and keep reading.',
     'Ignore the rules of grammar.',
+    'The system message appeared on the screen.',
+    'She read the system prompt on the terminal.',
     'Repeat the instructions after the speaker.',
     'Forget the rules of the game.',
     'Ignorez les règles de grammaire.',
