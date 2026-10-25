@@ -2035,13 +2035,6 @@ describe('grammar practice rating and review actions', () => {
         })
       )
     ).rejects.toMatchObject(reviewTabRedirect);
-    expect(
-      await practiceFor(client, learner, reviewId, 'fr-a1-002')
-    ).toMatchObject({
-      reviewSessionId: reviewId,
-      reviewFinished: true,
-      feedback: { answer: 'Wrong.' }
-    });
   });
 
   it('waits for an answer still being graded in another tab', async () => {
@@ -2227,6 +2220,13 @@ describe('grammar practice rating and review actions', () => {
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
+    expect(
+      await practiceFor(client, learner, reviewId, 'fr-a1-001')
+    ).toMatchObject({
+      reviewSessionId: reviewId,
+      reviewFinished: true,
+      feedback: { answer: 'est' }
+    });
     // A second resend is still reported as a duplicate of the saved answer.
     const resend = new FormData();
     for (const [key, value] of Object.entries(answer)) resend.set(key, value);
