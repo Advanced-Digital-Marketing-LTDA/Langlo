@@ -2003,8 +2003,7 @@ describe('grammar practice rating and review actions', () => {
       session: ['fr-a1-002'],
       reviewTab: ['fr-a1-002']
     });
-    // The last topic's answer takes no rating, so the review finishes and the
-    // learner goes to the Review tab.
+    // The last answer takes no rating: the review finishes, to the Review tab.
     await expect(
       lessonActions.answer(
         event({
@@ -2028,7 +2027,6 @@ describe('grammar practice rating and review actions', () => {
       status: 303,
       location: `/app/session/${encodeURIComponent(reviewId)}/results`
     });
-    // Reopening a lesson of the finished review leads to the Review tab.
     await expect(
       lessonLoad(
         event({
@@ -2037,10 +2035,13 @@ describe('grammar practice rating and review actions', () => {
         })
       )
     ).rejects.toMatchObject(reviewTabRedirect);
-    // The finished review keeps the last answer's feedback.
     expect(
       await practiceFor(client, learner, reviewId, 'fr-a1-002')
-    ).toMatchObject({ feedback: { answer: 'Wrong.' } });
+    ).toMatchObject({
+      reviewSessionId: reviewId,
+      reviewFinished: true,
+      feedback: { answer: 'Wrong.' }
+    });
   });
 
   it('waits for an answer still being graded in another tab', async () => {
