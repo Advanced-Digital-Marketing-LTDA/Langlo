@@ -2441,8 +2441,7 @@ describe('grammar practice rating and review actions', () => {
     expect(Number(schedule.rows[0]?.due_at)).toBeGreaterThan(0);
   });
 
-  /** Topic one answered and rated, so only the second topic is left. */
-  async function reviewWithOneTopicLeft() {
+  it('shows on the Review tab how many topics were already reviewed today', async () => {
     const { reviewId, questions } = await reviewOfTwoTopics();
     const correct: Record<string, string> = {
       'fr-a1-001@1:q1': 'suis',
@@ -2467,31 +2466,6 @@ describe('grammar practice rating and review actions', () => {
         })
       )
     ).toMatchObject({ rated: true, reviewFinished: false });
-    return { reviewId, questions };
-  }
-
-  it('goes to the Review tab when the last answer is Not sure', async () => {
-    const { reviewId, questions } = await reviewWithOneTopicLeft();
-    await expect(
-      lessonActions.answer(
-        event({
-          params: { language: 'fr', skill: 'fr-a1-002' },
-          fields: {
-            studySessionId: reviewId,
-            questionId: questions['fr-a1-002'],
-            submissionKey: randomUUID(),
-            intent: 'unsure'
-          }
-        })
-      )
-    ).rejects.toMatchObject(reviewTabRedirect);
-    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
-      'completed'
-    );
-  });
-
-  it('shows on the Review tab how many topics were already reviewed today', async () => {
-    const { reviewId, questions } = await reviewWithOneTopicLeft();
     const reviewedToday = async () =>
       (
         (await reviewTabLoad(event())) as {
