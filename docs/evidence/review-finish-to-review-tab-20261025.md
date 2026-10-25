@@ -16,7 +16,9 @@ Date: 2026-10-25. Requested and approved by Andrew in the project thread.
 - The Review tab's Grammar section shows "N topics already reviewed today":
   the distinct topics with a saved review within the 4am study day. Topics
   that come due again the same day stay listed as due today, as set on
-  2026-10-24; only the count is new.
+  2026-10-24; only the count is new. A topic answered "Not sure" in a finished
+  grammar review counts too (Andrew, 2026-10-25), although it saves no review
+  and keeps its schedule.
 - `finishReviewedGrammarReview` now reports whether the review finished.
 
 Unchanged: scheduling and FSRS, due and overdue rules, flashcards, the session
@@ -41,6 +43,11 @@ page, assessments, practice sessions. No migration.
   grader settles. The last-answer redirect is asserted by the updated cases for
   a rated answer, an incorrect answer and a resent answer, and the lesson of a
   finished review by the updated lesson-load assertion.
+- "Not sure" count: the new case "counts a topic answered Not sure in a
+  finished review, without scheduling it" in
+  `tests/grammar-retention.integration.test.ts` failed on the old query (0
+  instead of 1) and passes; it also checks another learner and another
+  language count 0, and that no schedule is written.
 - `svelte-check`, ESLint and Prettier pass on changed files.
 
 ## Pending

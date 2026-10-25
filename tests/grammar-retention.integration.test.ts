@@ -207,6 +207,33 @@ describe('grammar retention storage and session flow', () => {
     expect(await grammarReviewedToday(client, learner, 'es', window)).toBe(0);
   });
 
+  it('counts a topic answered Not sure in a finished review, without scheduling it', async () => {
+    const session = await start();
+    await client.execute({
+      sql: "UPDATE study_sessions SET mode = 'mixed-review' WHERE id = ?",
+      args: [session.id]
+    });
+    await recordAttempt(client, learner, {
+      studySessionId: session.id,
+      questionId: 'fr-a1-001@1:q1',
+      submissionKey: randomUUID(),
+      evidenceKind: 'independent',
+      answer: '',
+      notSure: true
+    });
+    const window = { start: 0, end: Number.MAX_SAFE_INTEGER };
+    expect(await grammarReviewedToday(client, learner, 'fr', window)).toBe(0);
+    await finishPractice(client, learner, session.id);
+    expect(await grammarReviewedToday(client, learner, 'fr', window)).toBe(1);
+    expect(await grammarReviewedToday(client, other, 'fr', window)).toBe(0);
+    expect(await grammarReviewedToday(client, learner, 'es', window)).toBe(0);
+    const schedules = await client.execute(
+      'SELECT 1 FROM grammar_retention_schedules WHERE owner_id = ?',
+      [learner.userId]
+    );
+    expect(schedules.rows).toHaveLength(0);
+  });
+
   it('splits due topics into overdue and today, marking ones due later today', async () => {
     await reviewedSkill();
     const setDue = (dueAt: number) =>

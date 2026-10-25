@@ -285,7 +285,11 @@ export async function grammarDueToday(
   };
 }
 
-/** How many topics of a track have a saved review within the study day. */
+/**
+ * How many topics of a track were reviewed within the study day: those with a
+ * saved review, and those answered "Not sure" in a finished grammar review,
+ * which saves no review of its own.
+ */
 export async function grammarReviewedToday(
   client: Pick<Client, 'execute'>,
   learner: LearnerSession,
@@ -293,9 +297,26 @@ export async function grammarReviewedToday(
   { start, end }: { start: number; end: number }
 ) {
   const result = await client.execute({
-    sql: `SELECT COUNT(DISTINCT skill_id) AS reviewed FROM grammar_retention_events
-      WHERE owner_id = ? AND language = ? AND reviewed_at >= ? AND reviewed_at < ?`,
-    args: [learner.userId, language, start, end]
+    sql: `SELECT COUNT(*) AS reviewed FROM (
+        SELECT skill_id FROM grammar_retention_events
+          WHERE owner_id = ? AND language = ? AND reviewed_at >= ? AND reviewed_at < ?
+        UNION
+        SELECT a.skill_id FROM attempts a
+          JOIN study_sessions s ON s.id = a.study_session_id AND s.owner_id = a.owner_id
+          WHERE a.owner_id = ? AND a.language = ? AND a.not_sure = 1
+            AND s.mode = 'mixed-review' AND s.state = 'completed'
+            AND a.created_at >= ? AND a.created_at < ?
+      )`,
+    args: [
+      learner.userId,
+      language,
+      start,
+      end,
+      learner.userId,
+      language,
+      start,
+      end
+    ]
   });
   return Number(result.rows[0].reviewed);
 }
