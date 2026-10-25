@@ -6,7 +6,10 @@ import {
   importContent,
   validatePackage
 } from '../src/lib/server/content-import.ts';
-import { contentImpact } from '../src/lib/server/content-impact.ts';
+import {
+  contentImpact,
+  type ImpactLine
+} from '../src/lib/server/content-impact.ts';
 import { modulesPackage } from '../src/lib/server/content-modules.ts';
 import {
   isBareRemoteUrl,
@@ -100,6 +103,19 @@ function failureLine(error: unknown) {
   return `Content import failed. ${known ? (error as Error).message : 'UNEXPECTED: nothing was confirmed written'}`;
 }
 
+export function writeImpactLine(
+  line: ImpactLine,
+  write: (line: string) => void
+) {
+  write(
+    `impact: ${line.skillId}: ${line.reason}; ${line.answers} independent answer(s) by ${line.learners} learner(s) would stop counting`
+  );
+  for (const change of line.statusChanges ?? [])
+    write(
+      `impact: ${line.skillId}: ${change.learners} learner(s) would change from ${change.from} to ${change.to}`
+    );
+}
+
 async function writeImpact(
   client: Client,
   pkg: ContentPackage,
@@ -110,10 +126,7 @@ async function writeImpact(
   write(`target host: ${host}`);
   if (lines.length === 0)
     write('impact: no learner answers would stop counting');
-  for (const line of lines)
-    write(
-      `impact: ${line.skillId}: ${line.reason}; ${line.answers} independent answer(s) by ${line.learners} learner(s) would stop counting`
-    );
+  for (const line of lines) writeImpactLine(line, write);
   write('impact report only: nothing written');
 }
 
