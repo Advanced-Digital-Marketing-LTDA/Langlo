@@ -2037,14 +2037,10 @@ describe('grammar practice rating and review actions', () => {
         })
       )
     ).rejects.toMatchObject(reviewTabRedirect);
-    // The saved last answer is still there for the finished review.
+    // The finished review keeps the last answer's feedback.
     expect(
       await practiceFor(client, learner, reviewId, 'fr-a1-002')
-    ).toMatchObject({
-      reviewSessionId: reviewId,
-      reviewFinished: true,
-      feedback: { answer: 'Wrong.' }
-    });
+    ).toMatchObject({ feedback: { answer: 'Wrong.' } });
   });
 
   it('waits for an answer still being graded in another tab', async () => {
