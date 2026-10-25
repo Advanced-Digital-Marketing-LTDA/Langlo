@@ -297,7 +297,7 @@ export async function grammarReviewedToday(
       WHERE owner_id = ? AND language = ? AND reviewed_at >= ? AND reviewed_at < ?`,
     args: [learner.userId, language, start, end]
   });
-  return Number(result.rows[0]?.reviewed ?? 0);
+  return Number(result.rows[0].reviewed);
 }
 
 function groupedAttempts(rows: Row[]) {
