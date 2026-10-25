@@ -11,23 +11,22 @@ export type OpenAiKeys = { openAi?: string; typesafe?: string };
 
 /** The keys Library AI needs; a malformed TypeSafe key is logged, not silently dropped. */
 export function openAiKeysFromConfig(
-  config:
-    | Pick<
-        RuntimeConfig,
-        'openAiApiKey' | 'typesafeApiKey' | 'typesafeApiKeyError'
-      >
-    | undefined
+  config: Partial<
+    Pick<
+      RuntimeConfig,
+      'openAiApiKey' | 'typesafeApiKey' | 'typesafeApiKeyError'
+    >
+  > = {}
 ): OpenAiKeys {
-  if (config?.typesafeApiKeyError)
-    console.error(
-      JSON.stringify({
-        level: 'error',
-        operation: 'openai-guard',
-        reason: 'invalid-config',
-        variable: config.typesafeApiKeyError.variable
-      })
+  const { openAiApiKey, typesafeApiKey, typesafeApiKeyError } = config;
+  if (typesafeApiKeyError)
+    logGuard(
+      'error',
+      'openai-guard',
+      'invalid-config',
+      typesafeApiKeyError.variable
     );
-  return { openAi: config?.openAiApiKey, typesafe: config?.typesafeApiKey };
+  return { openAi: openAiApiKey, typesafe: typesafeApiKey };
 }
 
 /** Untrusted text by field name, e.g. the sentence and the selected term. */
@@ -153,6 +152,29 @@ async function injectionProbability(
   return readInjectionProbability(await response.json());
 }
 
+/** Block, with a log line naming only the field, when a local pattern matches. */
+function blockOnPattern(untrusted: UntrustedText) {
+  const hit = Object.entries(untrusted).find(([, text]) =>
+    matchesInjectionPattern(text)
+  );
+  if (!hit) return;
+  logGuard('warn', 'openai-guard', 'pattern', hit[0]);
+  throw new StudyError('LIBRARY_AI_BLOCKED');
+}
+
+/** Jev's injection probability, or LIBRARY_AI_UNAVAILABLE when it cannot be had. */
+async function jevProbability(
+  typesafeKey: string,
+  untrusted: UntrustedText
+): Promise<number> {
+  try {
+    return await injectionProbability(typesafeKey, untrusted);
+  } catch (error) {
+    logGuard('error', 'openai-guard', failureReason(error));
+    throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+  }
+}
+
 /**
  * Throws LIBRARY_AI_BLOCKED when the text looks like an injection, and
  * LIBRARY_AI_UNAVAILABLE when the check cannot run. A probability of 0.5 or
@@ -163,24 +185,24 @@ async function assertSafe(
   untrusted: UntrustedText
 ): Promise<void> {
   if (!typesafeKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
-  const hit = Object.entries(untrusted).find(([, text]) =>
-    matchesInjectionPattern(text)
-  );
-  if (hit) {
-    logGuard('warn', 'openai-guard', 'pattern', hit[0]);
-    throw new StudyError('LIBRARY_AI_BLOCKED');
-  }
-  let probability: number;
-  try {
-    probability = await injectionProbability(typesafeKey, untrusted);
-  } catch (error) {
-    logGuard('error', 'openai-guard', failureReason(error));
-    throw new StudyError('LIBRARY_AI_UNAVAILABLE');
-  }
-  if (probability >= 0.5) {
-    logGuard('warn', 'openai-guard', 'jev-flagged');
-    throw new StudyError('LIBRARY_AI_BLOCKED');
-  }
+  blockOnPattern(untrusted);
+  if ((await jevProbability(typesafeKey, untrusted)) < 0.5) return;
+  logGuard('warn', 'openai-guard', 'jev-flagged');
+  throw new StudyError('LIBRARY_AI_BLOCKED');
+}
+
+async function postToOpenAi(apiKey: string, body: unknown): Promise<unknown> {
+  const response = await fetch(OPENAI_RESPONSES_URL, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${apiKey}`,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(openAiTimeoutMs)
+  });
+  if (!response.ok) throw new GuardError(`http-${response.status}`);
+  return (await response.json()) as unknown;
 }
 
 /**
@@ -197,17 +219,7 @@ export async function guardedOpenAiResponse(
   if (!keys.openAi) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
   await assertSafe(keys.typesafe, untrusted);
   try {
-    const response = await fetch(OPENAI_RESPONSES_URL, {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${keys.openAi}`,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(openAiTimeoutMs)
-    });
-    if (!response.ok) throw new GuardError(`http-${response.status}`);
-    return (await response.json()) as unknown;
+    return await postToOpenAi(keys.openAi, body);
   } catch (error) {
     logGuard('error', 'openai-request', failureReason(error));
     throw new StudyError('LIBRARY_AI_UNAVAILABLE');

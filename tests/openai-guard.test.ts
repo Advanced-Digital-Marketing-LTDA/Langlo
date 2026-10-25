@@ -215,7 +215,7 @@ describe('guardedOpenAiResponse', () => {
     expect(JSON.parse(String(log.mock.calls[0][0]))).toMatchObject({
       operation: 'openai-guard',
       reason: 'invalid-config',
-      variable: 'TYPESAFE_API_KEY'
+      field: 'TYPESAFE_API_KEY'
     });
   });
 
