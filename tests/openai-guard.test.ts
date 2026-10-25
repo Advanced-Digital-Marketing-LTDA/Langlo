@@ -6,6 +6,7 @@ import {
   matchesInjectionPattern,
   OPENAI_RESPONSES_URL
 } from '../src/lib/server/openai-guard';
+import { ConfigError } from '../src/lib/server/config';
 import { SYSTEM_ONE_URL } from '../src/lib/server/evaluation/typesafe-jev';
 import { guardAnswer, guardKeys, withGuard } from './fixtures/openai-guard';
 
@@ -215,7 +216,7 @@ describe('guardedOpenAiResponse', () => {
     const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const keys = openAiKeysFromConfig({
       openAiApiKey: guardKeys.openAi,
-      typesafeApiKeyError: { variable: 'TYPESAFE_API_KEY' } as never
+      typesafeApiKeyError: new ConfigError('TYPESAFE_API_KEY')
     });
     expect(keys).toEqual({ openAi: guardKeys.openAi, typesafe: undefined });
     expect(JSON.parse(String(log.mock.calls[0][0]))).toMatchObject({
