@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, redirect } from '@sveltejs/kit';
 import { randomUUID } from 'node:crypto';
 import type { Client } from '@libsql/client';
 import type { Actions, PageServerLoad } from './$types';
@@ -18,6 +18,10 @@ import {
 } from '../../../../../../lib/server/lesson-practice';
 import { StudyError } from '../../../../../../lib/server/study';
 import { normalizeMapReturnTo } from '../../../../../../lib/skill-map';
+
+/** A finished grammar review ends on the Review tab of its language. */
+const reviewTab = (language: string) =>
+  `/app/review?language=${encodeURIComponent(language)}`;
 
 /** Withdrawn content gets an honest notice instead of an error page. */
 function lessonFailure(thrown: unknown, language: string, returnTo: string) {
@@ -85,6 +89,7 @@ export const load: PageServerLoad = async (event) => {
         throw mostSevereFailure(settled);
       const lesson = lessonRead.value;
       const practice = practiceRead.value;
+      if (practice.reviewFinished) redirect(303, reviewTab(language));
       return {
         language,
         returnTo,
@@ -123,8 +128,9 @@ export const actions: Actions = {
   answer: async (event) => {
     const learner = requireLearnerApi(event);
     const form = await event.request.formData();
+    let result;
     try {
-      return await withDatabase(event.locals.config, (client) =>
+      result = await withDatabase(event.locals.config, (client) =>
         recordAnswer(
           client,
           learner,
@@ -139,12 +145,16 @@ export const actions: Actions = {
       if (!described) throw thrown;
       return fail(described.status, { message: described.message });
     }
+    if ('reviewFinished' in result && result.reviewFinished)
+      redirect(303, reviewTab(event.params.language));
+    return result;
   },
   rate: async (event) => {
     const learner = requireLearnerApi(event);
     const form = await event.request.formData();
+    let result;
     try {
-      return await withDatabase(event.locals.config, (client) =>
+      result = await withDatabase(event.locals.config, (client) =>
         ratePracticeAnswer(client, learner, form, event.params.skill)
       );
     } catch (thrown) {
@@ -153,5 +163,8 @@ export const actions: Actions = {
       if (!described) throw thrown;
       return fail(described.status, { message: described.message });
     }
+    if ('reviewFinished' in result && result.reviewFinished)
+      redirect(303, reviewTab(event.params.language));
+    return result;
   }
 };

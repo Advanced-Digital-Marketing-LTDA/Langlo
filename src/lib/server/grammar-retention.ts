@@ -285,6 +285,21 @@ export async function grammarDueToday(
   };
 }
 
+/** How many topics of a track have a saved review within the study day. */
+export async function grammarReviewedToday(
+  client: Pick<Client, 'execute'>,
+  learner: LearnerSession,
+  language: string,
+  { start, end }: { start: number; end: number }
+) {
+  const result = await client.execute({
+    sql: `SELECT COUNT(DISTINCT skill_id) AS reviewed FROM grammar_retention_events
+      WHERE owner_id = ? AND language = ? AND reviewed_at >= ? AND reviewed_at < ?`,
+    args: [learner.userId, language, start, end]
+  });
+  return Number(result.rows[0]?.reviewed ?? 0);
+}
+
 function groupedAttempts(rows: Row[]) {
   const grouped = new Map<string, Row[]>();
   for (const row of rows) {

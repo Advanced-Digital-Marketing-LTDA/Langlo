@@ -1742,6 +1742,12 @@ describe('decks, review and Anki export', () => {
 });
 
 describe('grammar practice rating and review actions', () => {
+  // A review that finishes sends the learner to the Review tab of its language.
+  const reviewTabRedirect = {
+    status: 303,
+    location: '/app/review?language=fr'
+  };
+
   beforeEach(async () => {
     await closeSeededPractice();
     const content = approvedPackage();
@@ -1796,6 +1802,7 @@ describe('grammar practice rating and review actions', () => {
     expect(await lessonActions.rate(event({ params, fields }))).toEqual({
       rated: true,
       rating: 'good',
+      reviewFinished: false,
       exercise: {
         studySessionId: session.id,
         submissionKey: expect.any(String),
@@ -1996,9 +2003,10 @@ describe('grammar practice rating and review actions', () => {
       session: ['fr-a1-002'],
       reviewTab: ['fr-a1-002']
     });
-    // The last topic's answer takes no rating, so the review finishes.
-    expect(
-      await lessonActions.answer(
+    // The last topic's answer takes no rating, so the review finishes and the
+    // learner goes to the Review tab.
+    await expect(
+      lessonActions.answer(
         event({
           params: { language: 'fr', skill: 'fr-a1-002' },
           fields: {
@@ -2009,7 +2017,7 @@ describe('grammar practice rating and review actions', () => {
           }
         })
       )
-    ).toMatchObject({ recorded: true });
+    ).rejects.toMatchObject(reviewTabRedirect);
     expect(await practiceSummary(client, learner, reviewId)).toMatchObject({
       state: 'completed',
       answered: 2
@@ -2020,18 +2028,15 @@ describe('grammar practice rating and review actions', () => {
       status: 303,
       location: `/app/session/${encodeURIComponent(reviewId)}/results`
     });
-    // The lesson still shows the last answer and leads to the review.
-    expect(
-      await lessonLoad(
+    // Reopening a lesson of the finished review leads to the Review tab.
+    await expect(
+      lessonLoad(
         event({
           params: { language: 'fr', skill: 'fr-a1-002' },
           query: `/learn/fr/lesson/fr-a1-002?session=${encodeURIComponent(reviewId)}`
         })
       )
-    ).toMatchObject({
-      reviewSessionId: reviewId,
-      feedback: { answer: 'Wrong.' }
-    });
+    ).rejects.toMatchObject(reviewTabRedirect);
   });
 
   it('waits for an answer still being graded in another tab', async () => {
@@ -2126,16 +2131,18 @@ describe('grammar practice rating and review actions', () => {
       answer: correct[questions['fr-a1-001']] ?? '',
       evidenceKind: 'independent'
     });
-    await lessonActions.rate(
-      event({
-        params: { language: 'fr', skill: 'fr-a1-001' },
-        fields: {
-          attemptId: first.id,
-          studySessionId: reviewId,
-          rating: 'good'
-        }
-      })
-    );
+    await expect(
+      lessonActions.rate(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          fields: {
+            attemptId: first.id,
+            studySessionId: reviewId,
+            rating: 'good'
+          }
+        })
+      )
+    ).rejects.toMatchObject(reviewTabRedirect);
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
@@ -2201,14 +2208,14 @@ describe('grammar practice rating and review actions', () => {
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'active'
     );
-    expect(
-      await lessonActions.answer(
+    await expect(
+      lessonActions.answer(
         event({
           params: { language: 'fr', skill: 'fr-a1-001' },
           fields: answer
         })
       )
-    ).toMatchObject({ recorded: true, duplicate: true });
+    ).rejects.toMatchObject(reviewTabRedirect);
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
@@ -2310,8 +2317,8 @@ describe('grammar practice rating and review actions', () => {
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'active'
     );
-    expect(
-      await lessonActions.rate(
+    await expect(
+      lessonActions.rate(
         event({
           params: { language: 'fr', skill: 'fr-a1-001' },
           fields: {
@@ -2321,7 +2328,7 @@ describe('grammar practice rating and review actions', () => {
           }
         })
       )
-    ).toMatchObject({ rated: true });
+    ).rejects.toMatchObject(reviewTabRedirect);
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
@@ -2351,8 +2358,8 @@ describe('grammar practice rating and review actions', () => {
       session: ['fr-a1-002'],
       reviewTab: ['fr-a1-002']
     });
-    expect(
-      await lessonActions.answer(
+    await expect(
+      lessonActions.answer(
         event({
           params: { language: 'fr', skill: 'fr-a1-002' },
           fields: {
@@ -2363,7 +2370,7 @@ describe('grammar practice rating and review actions', () => {
           }
         })
       )
-    ).toMatchObject({ recorded: true });
+    ).rejects.toMatchObject(reviewTabRedirect);
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
@@ -2409,6 +2416,42 @@ describe('grammar practice rating and review actions', () => {
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'active'
     );
+    await expect(
+      lessonActions.rate(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-001' },
+          fields: {
+            attemptId: attempt.id,
+            studySessionId: reviewId,
+            rating: 'good'
+          }
+        })
+      )
+    ).rejects.toMatchObject(reviewTabRedirect);
+    expect((await practiceSummary(client, learner, reviewId)).state).toBe(
+      'completed'
+    );
+    // Finishing commits the rated review, so the topic gets a new due date.
+    const schedule = await client.execute(
+      "SELECT due_at FROM grammar_retention_schedules WHERE skill_id = 'fr-a1-001'"
+    );
+    expect(Number(schedule.rows[0]?.due_at)).toBeGreaterThan(0);
+  });
+
+  /** Topic one answered and rated, so only the second topic is left. */
+  async function reviewWithOneTopicLeft() {
+    const { reviewId, questions } = await reviewOfTwoTopics();
+    const correct: Record<string, string> = {
+      'fr-a1-001@1:q1': 'suis',
+      'fr-a1-001@1:q2': 'es'
+    };
+    const attempt = await recordAttempt(client, learner, {
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-001'],
+      submissionKey: randomUUID(),
+      answer: correct[questions['fr-a1-001']] ?? '',
+      evidenceKind: 'independent'
+    });
     expect(
       await lessonActions.rate(
         event({
@@ -2420,15 +2463,90 @@ describe('grammar practice rating and review actions', () => {
           }
         })
       )
-    ).toMatchObject({ rated: true, rating: 'good' });
+    ).toMatchObject({ rated: true, reviewFinished: false });
+    return { reviewId, questions };
+  }
+
+  it('goes to the Review tab when the last answer is Not sure', async () => {
+    const { reviewId, questions } = await reviewWithOneTopicLeft();
+    await expect(
+      lessonActions.answer(
+        event({
+          params: { language: 'fr', skill: 'fr-a1-002' },
+          fields: {
+            studySessionId: reviewId,
+            questionId: questions['fr-a1-002'],
+            submissionKey: randomUUID(),
+            intent: 'unsure'
+          }
+        })
+      )
+    ).rejects.toMatchObject(reviewTabRedirect);
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
-    // Finishing commits the rated review, so the topic gets a new due date.
-    const schedule = await client.execute(
-      "SELECT due_at FROM grammar_retention_schedules WHERE skill_id = 'fr-a1-001'"
+  });
+
+  it('reports the review finished once the AI grader settles the last answer', async () => {
+    const { reviewId, questions } = await reviewWithOneTopicLeft();
+    let grade: (result: FallbackResult) => void = () => undefined;
+    const graded = new Promise<FallbackResult>((resolve) => (grade = resolve));
+    const form = new FormData();
+    for (const [key, value] of Object.entries({
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-002'],
+      submissionKey: randomUUID(),
+      answer: 'Wrong.'
+    }))
+      form.set(key, value);
+    const pending = recordAnswer(
+      client,
+      learner,
+      form,
+      'fr-a1-002',
+      () => graded
     );
-    expect(Number(schedule.rows[0]?.due_at)).toBeGreaterThan(0);
+    await vi.waitFor(async () => {
+      const rows = await client.execute({
+        sql: 'SELECT 1 FROM attempts WHERE study_session_id = ? AND skill_id = ?',
+        args: [reviewId, 'fr-a1-002']
+      });
+      expect(rows.rows).toHaveLength(1);
+    });
+    grade({ outcome: 'incorrect', reason: 'answered', evaluated: true });
+    await expect(pending).resolves.toMatchObject({
+      recorded: true,
+      reviewFinished: true
+    });
+  });
+
+  it('shows on the Review tab how many topics were already reviewed today', async () => {
+    const { reviewId, questions } = await reviewWithOneTopicLeft();
+    const reviewedToday = async () =>
+      (
+        (await reviewTabLoad(event())) as {
+          grammar: { reviewedToday: number };
+        }
+      ).grammar.reviewedToday;
+    // The first topic's earlier practice is saved; the review's own answers
+    // are saved once the whole review finishes.
+    expect(await reviewedToday()).toBe(1);
+    const form = new FormData();
+    for (const [key, value] of Object.entries({
+      studySessionId: reviewId,
+      questionId: questions['fr-a1-002'],
+      submissionKey: randomUUID(),
+      answer: 'Wrong.'
+    }))
+      form.set(key, value);
+    await expect(
+      recordAnswer(client, learner, form, 'fr-a1-002', async () => ({
+        outcome: 'incorrect',
+        reason: 'answered',
+        evaluated: true
+      }))
+    ).resolves.toMatchObject({ reviewFinished: true });
+    expect(await reviewedToday()).toBe(2);
   });
 
   it('starts overdue grammar from the Review tab and shows when the next topic is due', async () => {

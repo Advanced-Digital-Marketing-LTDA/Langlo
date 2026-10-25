@@ -8,7 +8,10 @@ import {
   currentStudyDay,
   flashcardDueGroups
 } from '../../../lib/server/flashcard-views';
-import { grammarDueToday } from '../../../lib/server/grammar-retention';
+import {
+  grammarDueToday,
+  grammarReviewedToday
+} from '../../../lib/server/grammar-retention';
 import {
   grammarReviewPlan,
   startGrammarReview,
@@ -73,13 +76,14 @@ function flashcardSummary(
 }
 
 function grammarSummary(
-  grammar: { overdue: DueTopic[]; today: DueTopic[] },
+  grammar: { overdue: DueTopic[]; today: DueTopic[]; reviewedToday: number },
   timezone: string
 ) {
   const later = grammar.today.find((topic) => !topic.ready);
   return {
     overdue: grammar.overdue,
     today: grammar.today,
+    reviewedToday: grammar.reviewedToday,
     nextDueAt: later ? timeOfDay(later.dueAt, timezone) : null
   };
 }
@@ -91,13 +95,18 @@ async function dueGrammar(
   language: string,
   day: Parameters<typeof grammarDueToday>[3]
 ) {
-  const [due, reviewed] = await Promise.all([
+  const [due, reviewed, reviewedToday] = await Promise.all([
     grammarDueToday(client, learner, language, day),
-    reviewedTopics(client, learner, language)
+    reviewedTopics(client, learner, language),
+    grammarReviewedToday(client, learner, language, day)
   ]);
   const open = (topics: typeof due.today) =>
     topics.filter((topic) => !reviewed.has(topic.skillId));
-  return { overdue: open(due.overdue), today: open(due.today) };
+  return {
+    overdue: open(due.overdue),
+    today: open(due.today),
+    reviewedToday
+  };
 }
 
 /** Topics already reviewed in the unfinished review; they leave the lists. */
