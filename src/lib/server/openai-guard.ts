@@ -108,7 +108,11 @@ export function matchesInjectionPattern(text: string): boolean {
   return injectionPatterns.some((pattern) => pattern.test(normalized));
 }
 
-/** A StudyError raised by the guard itself, so callers can tell it from a provider failure. */
+/**
+ * A StudyError for a request that cost no provider call or never got a verdict
+ * (a local pattern block, or Jev unavailable), so its quota slot can be given
+ * back. A Jev flag is a real, learner-caused Jev call and keeps its slot.
+ */
 export class GuardStudyError extends StudyError {}
 
 /** A guard failure with a short reason code that is safe to log. */
@@ -208,7 +212,7 @@ async function assertSafe(
   blockOnPattern(untrusted);
   if ((await jevProbability(typesafeKey, untrusted)) < 0.5) return;
   logGuard('warn', 'openai-guard', 'jev-flagged');
-  throw new GuardStudyError('LIBRARY_AI_BLOCKED');
+  throw new StudyError('LIBRARY_AI_BLOCKED');
 }
 
 async function postToOpenAi(apiKey: string, body: unknown): Promise<unknown> {

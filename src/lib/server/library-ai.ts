@@ -203,9 +203,9 @@ export async function requestLibraryAi(
 }
 
 /**
- * Runs a request whose daily slot was reserved at `reservedAt`. A request the
- * guard blocks or cannot check never reaches OpenAI, so its slot is released;
- * a failed OpenAI attempt keeps its slot.
+ * Runs a request whose daily slot was reserved at `reservedAt`. A local
+ * pattern block or a Jev outage gives the slot back; a Jev flag and a failed
+ * OpenAI attempt keep it, so repeated flagged text still reaches the daily cap.
  */
 export async function requestReservedLibraryAi(
   client: Client,

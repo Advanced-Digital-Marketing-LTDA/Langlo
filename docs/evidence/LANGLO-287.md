@@ -29,10 +29,11 @@ Local implementation evidence captured on 2026-10-25.
   reason code (`pattern`, `jev-flagged`, `http-401`, `timeout`, `network`,
   `malformed`, `invalid-config`, `openai-key-missing`, `typesafe-key-missing`) and, for pattern blocks, the field name. It
   never logs learner text or keys.
-- A request the guard blocks or cannot check never reaches OpenAI, so its
-  daily Library AI slot is given back (`releaseLibraryAiCall`). A failed OpenAI
-  attempt keeps its slot, as before. Route tests pin both for a local pattern
-  block, a Jev flag and a Jev outage.
+- A local pattern block or a Jev outage never reaches OpenAI and gives its
+  daily Library AI slot back (`releaseLibraryAiCall`). A Jev flag keeps its
+  slot because it cost a real Jev call caused by the learner, so repeated
+  flagged text still reaches the daily cap; a failed OpenAI attempt keeps its
+  slot too. Route tests pin all three guard paths.
 - The Decisions API is not used.
 
 ## Test method
@@ -62,4 +63,4 @@ guard restored, all 82 passed (green). The bypass was not committed.
 - `npx eslint` on the changed files and `npx prettier --check src tests`: clean.
 
 The quota refund tests were also run red: with the release call disabled, the
-three new route tests failed (3 of 24), and they pass with it restored.
+pattern-block and Jev-outage route tests failed (2 of 24), and they pass with it restored.
