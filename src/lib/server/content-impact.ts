@@ -60,6 +60,17 @@ function tally(
   else changes.set(key, { from, to, learners: 1 });
 }
 
+/** The evidence rows of these skills, grouped by the learner who gave them. */
+async function evidenceByOwner(client: Client, skillIds: string[]) {
+  const byOwner = new Map<string, Row[]>();
+  for (const skillId of skillIds)
+    for (const row of await loadEvidenceRows(client, { skillId })) {
+      const owner = String(row.owner_id);
+      byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
+    }
+  return byOwner;
+}
+
 /**
  * The answers mastery counts now for `skillId` whose item `stops` matches, by
  * the same rules mastery applies: the first response to an item, independent,
@@ -86,12 +97,7 @@ async function countedAnswers(
       (id) => carriedTo(id, current.carry) === skillId
     )
   ];
-  const byOwner = new Map<string, Row[]>();
-  for (const source of sources)
-    for (const row of await loadEvidenceRows(client, { skillId: source })) {
-      const owner = String(row.owner_id);
-      byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
-    }
+  const byOwner = await evidenceByOwner(client, sources);
   let answers = 0;
   let learners = 0;
   const changes = new Map<string, StatusChange>();
