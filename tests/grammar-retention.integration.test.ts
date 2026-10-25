@@ -6,6 +6,7 @@ import { importContent } from '../src/lib/server/content-import';
 import {
   dueGrammarReviews,
   grammarDueToday,
+  grammarReviewedToday,
   grammarRetentionFor,
   grammarRetentionOf,
   grammarRetentionStatements
@@ -197,6 +198,14 @@ describe('grammar retention storage and session flow', () => {
 
     return { session, incorrect };
   }
+
+  it('counts reviewed topics only for the learner and language that reviewed them', async () => {
+    await reviewedSkill();
+    const window = { start: 0, end: Number.MAX_SAFE_INTEGER };
+    expect(await grammarReviewedToday(client, learner, 'fr', window)).toBe(1);
+    expect(await grammarReviewedToday(client, other, 'fr', window)).toBe(0);
+    expect(await grammarReviewedToday(client, learner, 'es', window)).toBe(0);
+  });
 
   it('splits due topics into overdue and today, marking ones due later today', async () => {
     await reviewedSkill();

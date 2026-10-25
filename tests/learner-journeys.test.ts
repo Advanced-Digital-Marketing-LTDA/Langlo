@@ -10,7 +10,7 @@ import {
 } from '../src/lib/server/enrollment';
 import { getTimezone, setTimezone } from '../src/lib/server/preferences';
 import { pauseStudySession, recordAttempt } from '../src/lib/server/study';
-import { recordAnswer } from '../src/lib/server/lesson-practice';
+import { practiceFor, recordAnswer } from '../src/lib/server/lesson-practice';
 import type { FallbackResult } from '../src/lib/server/evaluation/fallback';
 import {
   discardPractice,
@@ -2037,6 +2037,14 @@ describe('grammar practice rating and review actions', () => {
         })
       )
     ).rejects.toMatchObject(reviewTabRedirect);
+    // The saved last answer is still there for the finished review.
+    expect(
+      await practiceFor(client, learner, reviewId, 'fr-a1-002')
+    ).toMatchObject({
+      reviewSessionId: reviewId,
+      reviewFinished: true,
+      feedback: { answer: 'Wrong.' }
+    });
   });
 
   it('waits for an answer still being graded in another tab', async () => {
@@ -2222,6 +2230,16 @@ describe('grammar practice rating and review actions', () => {
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
+    // A second resend is still reported as a duplicate of the saved answer.
+    const resend = new FormData();
+    for (const [key, value] of Object.entries(answer)) resend.set(key, value);
+    await expect(
+      recordAnswer(client, learner, resend, 'fr-a1-001', async () => ({
+        outcome: 'incorrect',
+        reason: 'answered',
+        evaluated: true
+      }))
+    ).resolves.toMatchObject({ recorded: true, duplicate: true });
   });
 
   it('finishes an already answered review when its page opens', async () => {
