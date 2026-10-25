@@ -41,6 +41,19 @@ type Earlier = { questions: PriorQuestion[] };
 type Counted = { itemKey: string; contentVersionId: string };
 type Qualified = ReturnType<typeof qualifyingGrammarEvidence>[number];
 type VersionCandidate = { id: string; version: number; status: string };
+type PackageStatusContext = {
+  client: Client;
+  lines: ImpactLine[];
+  versions: PackageVersion[];
+  plannedVersions: Map<string, Earlier>;
+  quarantinedVersions: Set<string>;
+};
+type StatusProjectionContext = {
+  skillId: string;
+  before: CurrentContent;
+  after: CurrentContent;
+  quarantinedVersions: Set<string>;
+};
 
 /** The grammar status mastery scores for these qualifying answers. */
 const standing = (items: Qualified[]) =>
@@ -437,16 +450,15 @@ async function packageStatusChanges(
 ) {
   for (const line of lines) line.statusChanges = [];
   const skillIds = [...new Set(lines.map((line) => line.skillId))];
-  const quarantinedVersions = quarantinedVersionIds(versions);
+  const context: PackageStatusContext = {
+    client,
+    lines,
+    versions,
+    plannedVersions,
+    quarantinedVersions: quarantinedVersionIds(versions)
+  };
   for (const skillId of skillIds)
-    await packageSkillStatusChanges(
-      client,
-      lines,
-      skillId,
-      versions,
-      plannedVersions,
-      quarantinedVersions
-    );
+    await packageSkillStatusChanges(context, skillId);
 }
 
 function quarantinedVersionIds(versions: PackageVersion[]) {
@@ -458,13 +470,11 @@ function quarantinedVersionIds(versions: PackageVersion[]) {
 }
 
 async function packageSkillStatusChanges(
-  client: Client,
-  lines: ImpactLine[],
-  skillId: string,
-  versions: PackageVersion[],
-  plannedVersions: Map<string, Earlier>,
-  quarantinedVersions: Set<string>
+  context: PackageStatusContext,
+  skillId: string
 ) {
+  const { client, lines, versions, plannedVersions, quarantinedVersions } =
+    context;
   const skill = await client.execute({
     sql: 'SELECT language FROM skills WHERE id = ?',
     args: [skillId]
@@ -481,13 +491,12 @@ async function packageSkillStatusChanges(
   const after = contentWithSkillKeys(before, skillId, nextKeys);
   const sources = skillEvidenceSources(skillId, before.carry);
   const byOwner = await evidenceByOwner(client, sources);
-  const changes = statusChangesByOwner(
-    byOwner,
+  const changes = statusChangesByOwner(byOwner, {
     skillId,
     before,
     after,
     quarantinedVersions
-  );
+  });
   const lastLine = [...lines]
     .reverse()
     .find((line) => line.skillId === skillId);
@@ -516,32 +525,18 @@ function skillEvidenceSources(skillId: string, carry: CurrentContent['carry']) {
 
 function statusChangesByOwner(
   byOwner: Map<string, Row[]>,
-  skillId: string,
-  before: CurrentContent,
-  after: CurrentContent,
-  quarantinedVersions: Set<string>
+  context: StatusProjectionContext
 ) {
   const changes = new Map<string, StatusChange>();
   for (const ownerRows of byOwner.values()) {
-    const { from, to } = ownerStatusChange(
-      ownerRows,
-      skillId,
-      before,
-      after,
-      quarantinedVersions
-    );
+    const { from, to } = ownerStatusChange(ownerRows, context);
     if (from !== to) tally(changes, from, to);
   }
   return changes;
 }
 
-function ownerStatusChange(
-  ownerRows: Row[],
-  skillId: string,
-  before: CurrentContent,
-  after: CurrentContent,
-  quarantinedVersions: Set<string>
-) {
+function ownerStatusChange(ownerRows: Row[], context: StatusProjectionContext) {
+  const { skillId, before, after, quarantinedVersions } = context;
   const from = standingForSkill(ownerRows, skillId, before);
   const projectedRows = ownerRows.map((row) =>
     quarantinedVersions.has(String(row.content_version_id))
