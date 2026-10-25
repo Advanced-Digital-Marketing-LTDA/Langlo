@@ -9,7 +9,7 @@ import {
   type LibraryLanguage
 } from '../../../../../../lib/server/library';
 import {
-  requestLibraryAi,
+  requestReservedLibraryAi,
   reserveLibraryAiCall,
   validateLibraryAiInput,
   type LibraryAiInput
@@ -66,8 +66,15 @@ export const POST: RequestHandler = (event) =>
     };
     validateLibraryAiInput(input);
     const keys = requireKeys(openAiKeysFromConfig(event.locals.config));
-    if (!(await reserveLibraryAiCall(client, learner.userId)))
+    const reservedAt = Date.now();
+    if (!(await reserveLibraryAiCall(client, learner.userId, reservedAt)))
       throw new StudyError('LIBRARY_AI_LIMIT');
-    const result = await requestLibraryAi(keys, input);
+    const result = await requestReservedLibraryAi(
+      client,
+      learner.userId,
+      reservedAt,
+      keys,
+      input
+    );
     return typeof result === 'string' ? { result } : result;
   });

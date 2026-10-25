@@ -2,6 +2,7 @@ import type { Client } from '@libsql/client';
 import { beginWrite } from './db-transactions';
 import type { LibraryLanguage } from './library';
 import {
+  GuardStudyError,
   guardedOpenAiResponse,
   requireKeys,
   type OpenAiKeys
@@ -82,6 +83,19 @@ export async function reserveLibraryAiCall(
   } finally {
     transaction.close();
   }
+}
+
+/** Gives back a reservation made at `reservedAt` when the guard refused the request. */
+export async function releaseLibraryAiCall(
+  client: Client,
+  ownerId: string,
+  reservedAt: number
+): Promise<void> {
+  const day = new Date(reservedAt).toISOString().slice(0, 10);
+  await client.execute({
+    sql: 'UPDATE library_ai_usage SET calls = calls - 1 WHERE day = ? AND owner_id = ? AND calls > 0',
+    args: [day, ownerId]
+  });
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -185,5 +199,26 @@ export async function requestLibraryAi(
       : libraryAiResult(body);
   } catch {
     throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+  }
+}
+
+/**
+ * Runs a request whose daily slot was reserved at `reservedAt`. A request the
+ * guard blocks or cannot check never reaches OpenAI, so its slot is released;
+ * a failed OpenAI attempt keeps its slot.
+ */
+export async function requestReservedLibraryAi(
+  client: Client,
+  ownerId: string,
+  reservedAt: number,
+  keys: OpenAiKeys,
+  input: LibraryAiInput
+): Promise<string | LibraryLookup> {
+  try {
+    return await requestLibraryAi(keys, input);
+  } catch (error) {
+    if (error instanceof GuardStudyError)
+      await releaseLibraryAiCall(client, ownerId, reservedAt);
+    throw error;
   }
 }

@@ -23,14 +23,16 @@ Local implementation evidence captured on 2026-10-25.
   called in any of these cases. There is no fallback provider, model or
   skipped check.
 - `TYPESAFE_API_KEY` is now also required for Library translation and lookup.
-  The guard is not counted against the grading monthly cap. Each guarded
-  request still counts once against the daily Library AI budget.
+  The guard is not counted against the grading monthly cap. Each request
+  that reaches OpenAI counts once against the daily Library AI budget.
 - Each guard block or failure logs one structured line with an operation, a
   reason code (`pattern`, `jev-flagged`, `http-401`, `timeout`, `network`,
   `malformed`, `invalid-config`, `openai-key-missing`, `typesafe-key-missing`) and, for pattern blocks, the field name. It
   never logs learner text or keys.
-- Blocked or guard-failed requests still count against the daily Library AI
-  budget, as failed OpenAI attempts already do.
+- A request the guard blocks or cannot check never reaches OpenAI, so its
+  daily Library AI slot is given back (`releaseLibraryAiCall`). A failed OpenAI
+  attempt keeps its slot, as before. Route tests pin both for a local pattern
+  block, a Jev flag and a Jev outage.
 - The Decisions API is not used.
 
 ## Test method
@@ -55,6 +57,9 @@ guard restored, all 82 passed (green). The bypass was not committed.
 
 ## Local checks
 
-- `npx vitest run tests/openai-guard.test.ts tests/library-ai.test.ts tests/library-routes.test.ts`: 84 tests passed. The full suite was not run locally.
+- `npx vitest run tests/openai-guard.test.ts tests/library-ai.test.ts tests/library-routes.test.ts tests/library-ai-usage.test.ts`: 91 tests passed (adds `tests/library-ai-usage.test.ts`). The full suite was not run locally.
 - `npm run check`: 0 errors, 0 warnings.
 - `npx eslint` on the changed files and `npx prettier --check src tests`: clean.
+
+The quota refund tests were also run red: with the release call disabled, the
+three new route tests failed (3 of 24), and they pass with it restored.

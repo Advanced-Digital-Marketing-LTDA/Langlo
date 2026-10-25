@@ -108,6 +108,9 @@ export function matchesInjectionPattern(text: string): boolean {
   return injectionPatterns.some((pattern) => pattern.test(normalized));
 }
 
+/** A StudyError raised by the guard itself, so callers can tell it from a provider failure. */
+export class GuardStudyError extends StudyError {}
+
 /** A guard failure with a short reason code that is safe to log. */
 class GuardError extends Error {
   constructor(readonly reason: string) {
@@ -177,7 +180,7 @@ function blockOnPattern(untrusted: UntrustedText) {
   );
   if (!hit) return;
   logGuard('warn', 'openai-guard', 'pattern', hit[0]);
-  throw new StudyError('LIBRARY_AI_BLOCKED');
+  throw new GuardStudyError('LIBRARY_AI_BLOCKED');
 }
 
 /** Jev's injection probability, or LIBRARY_AI_UNAVAILABLE when it cannot be had. */
@@ -189,7 +192,7 @@ async function jevProbability(
     return await injectionProbability(typesafeKey, untrusted);
   } catch (error) {
     logGuard('error', 'openai-guard', failureReason(error));
-    throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+    throw new GuardStudyError('LIBRARY_AI_UNAVAILABLE');
   }
 }
 
@@ -205,7 +208,7 @@ async function assertSafe(
   blockOnPattern(untrusted);
   if ((await jevProbability(typesafeKey, untrusted)) < 0.5) return;
   logGuard('warn', 'openai-guard', 'jev-flagged');
-  throw new StudyError('LIBRARY_AI_BLOCKED');
+  throw new GuardStudyError('LIBRARY_AI_BLOCKED');
 }
 
 async function postToOpenAi(apiKey: string, body: unknown): Promise<unknown> {
