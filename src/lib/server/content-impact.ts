@@ -12,6 +12,7 @@ import {
   loadEvidenceRows,
   qualifyingGrammarEvidence,
   scoreGrammar,
+  type CurrentContent,
   type GrammarStatus
 } from './mastery';
 
@@ -100,7 +101,6 @@ async function countedAnswers(
   const byOwner = await evidenceByOwner(client, sources);
   let answers = 0;
   let learners = 0;
-  const changes = new Map<string, StatusChange>();
   for (const ownerRows of byOwner.values()) {
     const held = qualifyingGrammarEvidence(ownerRows, current).filter(
       (item) => item.countsFor === skillId
@@ -109,14 +109,8 @@ async function countedAnswers(
     answers += counted.length;
     if (counted.length === 0) continue;
     learners += 1;
-    const from = standing(held);
-    const to = standing(held.filter((item) => !stops(item)));
-    if (from !== to) tally(changes, from, to);
   }
-  const statusChanges = [...changes.values()].sort(
-    (a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to)
-  );
-  return { answers, learners, statusChanges };
+  return { answers, learners };
 }
 
 /** The lineage keys of a stored version's questions. */
@@ -330,6 +324,7 @@ async function packageVersionImpact(
 ) {
   const lines: ImpactLine[] = [];
   const plans = new Map<string, SkillPlan>();
+  const plannedVersions = new Map<string, Earlier>();
   for (const version of versions) {
     const { line, planned } = await versionImpact(
       client,
@@ -337,12 +332,136 @@ async function packageVersionImpact(
       plans.get(version.skillId)
     );
     if (line) lines.push(line);
-    if (planned) recordPlan(plans, version, planned);
+    if (planned) {
+      plannedVersions.set(version.id, planned);
+      recordPlan(plans, version, planned);
+    }
   }
   const projected = new Map<string, Earlier>();
   for (const [skillId, plan] of plans)
     if (plan.current) projected.set(skillId, plan.current);
-  return { lines, projected };
+  return { lines, projected, plannedVersions };
+}
+
+/** The current question keys for one skill after applying package version states. */
+async function currentKeysAfterPackage(
+  client: Client,
+  skillId: string,
+  versions: PackageVersion[],
+  plannedVersions: Map<string, Earlier>
+) {
+  const stored = await client.execute({
+    sql: 'SELECT id, version, status FROM content_versions WHERE skill_id = ?',
+    args: [skillId]
+  });
+  const packageVersions = new Map(
+    versions
+      .filter((version) => version.skillId === skillId)
+      .map((version) => [version.id, version])
+  );
+  const storedIds = new Set(stored.rows.map((row) => String(row.id)));
+  const candidates = stored.rows.map((row) => {
+    const id = String(row.id);
+    return {
+      id,
+      version: Number(row.version),
+      status:
+        packageVersions.get(id)?.review === 'quarantined'
+          ? 'quarantined'
+          : String(row.status)
+    };
+  });
+  for (const version of versions)
+    if (version.skillId === skillId && !storedIds.has(version.id))
+      candidates.push({
+        id: version.id,
+        version: version.version,
+        status:
+          version.review === 'quarantined' ? 'quarantined' : 'schema-validated'
+      });
+  candidates.sort((a, b) => b.version - a.version);
+  const current = candidates.find(
+    (candidate) => candidate.status !== 'quarantined'
+  );
+  if (current === undefined) return undefined;
+  const planned = plannedVersions.get(current.id);
+  return planned === undefined
+    ? versionKeys(client, current.id)
+    : plannedKeys(planned);
+}
+
+/**
+ * Status changes are one package-level before/after comparison per skill.
+ * Answer counts stay per version; one line carries the cumulative status result.
+ */
+async function packageStatusChanges(
+  client: Client,
+  lines: ImpactLine[],
+  versions: PackageVersion[],
+  plannedVersions: Map<string, Earlier>
+) {
+  for (const line of lines) line.statusChanges = [];
+  const skillIds = [...new Set(lines.map((line) => line.skillId))];
+  const quarantinedVersions = new Set(
+    versions
+      .filter((version) => version.review === 'quarantined')
+      .map((version) => version.id)
+  );
+  for (const skillId of skillIds) {
+    const skill = await client.execute({
+      sql: 'SELECT language FROM skills WHERE id = ?',
+      args: [skillId]
+    });
+    if (skill.rows.length === 0)
+      throw new Error(`impact report: skill ${skillId} is not stored`);
+    const before = await currentContent(client, String(skill.rows[0].language));
+    const after: CurrentContent = {
+      keys: new Map([...before.keys].map(([id, keys]) => [id, new Set(keys)])),
+      carry: before.carry
+    };
+    const nextKeys = await currentKeysAfterPackage(
+      client,
+      skillId,
+      versions,
+      plannedVersions
+    );
+    if (nextKeys === undefined) after.keys.delete(skillId);
+    else after.keys.set(skillId, nextKeys);
+
+    const sources = [
+      skillId,
+      ...[...before.carry.keys()].filter(
+        (id) => carriedTo(id, before.carry) === skillId
+      )
+    ];
+    const byOwner = await evidenceByOwner(client, sources);
+    const changes = new Map<string, StatusChange>();
+    for (const ownerRows of byOwner.values()) {
+      const from = standing(
+        qualifyingGrammarEvidence(ownerRows, before).filter(
+          (item) => item.countsFor === skillId
+        )
+      );
+      const projectedRows = ownerRows.map((row) =>
+        quarantinedVersions.has(String(row.content_version_id))
+          ? { ...row, status: 'quarantined' }
+          : row
+      );
+      const to = standing(
+        qualifyingGrammarEvidence(projectedRows, after).filter(
+          (item) => item.countsFor === skillId
+        )
+      );
+      if (from !== to) tally(changes, from, to);
+    }
+    const lastLine = [...lines]
+      .reverse()
+      .find((line) => line.skillId === skillId);
+    if (lastLine)
+      lastLine.statusChanges = [...changes.values()].sort(
+        (a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to)
+      );
+  }
 }
 
 export async function contentImpact(
@@ -352,7 +471,11 @@ export async function contentImpact(
   const ordered = [...pkg.versions].sort(
     (a, b) => a.skillId.localeCompare(b.skillId) || a.version - b.version
   );
-  const { lines, projected } = await packageVersionImpact(client, ordered);
+  const { lines, projected, plannedVersions } = await packageVersionImpact(
+    client,
+    ordered
+  );
+  await packageStatusChanges(client, lines, ordered, plannedVersions);
   for (const retirement of pkg.retirements ?? []) {
     const line = await retirementImpact(client, retirement, projected);
     if (line) lines.push(line);
