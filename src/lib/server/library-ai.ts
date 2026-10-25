@@ -1,7 +1,11 @@
 import type { Client } from '@libsql/client';
 import { beginWrite } from './db-transactions';
 import type { LibraryLanguage } from './library';
-import { guardedOpenAiResponse, type OpenAiKeys } from './openai-guard';
+import {
+  guardedOpenAiResponse,
+  requireKeys,
+  type OpenAiKeys
+} from './openai-guard';
 import { StudyError } from './study-error';
 
 export const LIBRARY_AI_DAILY_USER_LIMIT = 100;
@@ -162,7 +166,7 @@ export async function requestLibraryAi(
   keys: OpenAiKeys,
   input: LibraryAiInput
 ): Promise<string | LibraryLookup> {
-  if (!keys.openAi) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+  requireKeys(keys);
   validateLibraryAiInput(input);
   const { instructions, context } = libraryAiPrompt(input);
 

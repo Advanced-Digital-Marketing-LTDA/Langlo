@@ -132,15 +132,21 @@ describe('guardedOpenAiResponse', () => {
   });
 
   it.each([
-    ['TypeSafe key', { openAi: guardKeys.openAi }],
-    ['OpenAI key', { typesafe: guardKeys.typesafe }]
-  ])('fails closed without the %s and calls nothing', async (_name, keys) => {
+    ['TypeSafe key', { openAi: guardKeys.openAi }, 'typesafe-key-missing'],
+    ['OpenAI key', { typesafe: guardKeys.typesafe }, 'openai-key-missing']
+  ])('fails closed and logs without the %s', async (_name, keys, reason) => {
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);
     await expect(
       guardedOpenAiResponse(keys, untrusted, {})
     ).rejects.toMatchObject({ code: 'LIBRARY_AI_UNAVAILABLE' });
     expect(fetch).not.toHaveBeenCalled();
+    expect(JSON.parse(String(log.mock.calls[0][0]))).toMatchObject({
+      level: 'error',
+      operation: 'openai-guard',
+      reason
+    });
   });
 
   it('reports an OpenAI failure as unavailable after a passing guard', async () => {

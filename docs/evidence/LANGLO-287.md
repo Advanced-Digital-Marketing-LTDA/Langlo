@@ -27,7 +27,7 @@ Local implementation evidence captured on 2026-10-25.
   request still counts once against the daily Library AI budget.
 - Each guard block or failure logs one structured line with an operation, a
   reason code (`pattern`, `jev-flagged`, `http-401`, `timeout`, `network`,
-  `malformed`, `invalid-config`) and, for pattern blocks, the field name. It
+  `malformed`, `invalid-config`, `openai-key-missing`, `typesafe-key-missing`) and, for pattern blocks, the field name. It
   never logs learner text or keys.
 - Blocked or guard-failed requests still count against the daily Library AI
   budget, as failed OpenAI attempts already do.

@@ -29,6 +29,21 @@ export function openAiKeysFromConfig(
   return { openAi: openAiApiKey, typesafe: typesafeApiKey };
 }
 
+/** Both keys, or LIBRARY_AI_UNAVAILABLE with a log line naming which one is missing. */
+export function requireKeys(keys: OpenAiKeys): {
+  openAi: string;
+  typesafe: string;
+} {
+  const { openAi, typesafe } = keys;
+  if (openAi && typesafe) return { openAi, typesafe };
+  logGuard(
+    'error',
+    'openai-guard',
+    openAi ? 'typesafe-key-missing' : 'openai-key-missing'
+  );
+  throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+}
+
 /** Untrusted text by field name, e.g. the sentence and the selected term. */
 export type UntrustedText = Readonly<Record<string, string>>;
 
@@ -181,10 +196,9 @@ async function jevProbability(
  * more blocks; there is no fallback and no skipped check.
  */
 async function assertSafe(
-  typesafeKey: string | undefined,
+  typesafeKey: string,
   untrusted: UntrustedText
 ): Promise<void> {
-  if (!typesafeKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
   blockOnPattern(untrusted);
   if ((await jevProbability(typesafeKey, untrusted)) < 0.5) return;
   logGuard('warn', 'openai-guard', 'jev-flagged');
@@ -216,10 +230,10 @@ export async function guardedOpenAiResponse(
   untrusted: UntrustedText,
   body: Record<string, unknown>
 ): Promise<unknown> {
-  if (!keys.openAi) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
-  await assertSafe(keys.typesafe, untrusted);
+  const { openAi, typesafe } = requireKeys(keys);
+  await assertSafe(typesafe, untrusted);
   try {
-    return await postToOpenAi(keys.openAi, body);
+    return await postToOpenAi(openAi, body);
   } catch (error) {
     logGuard('error', 'openai-request', failureReason(error));
     throw new StudyError('LIBRARY_AI_UNAVAILABLE');
