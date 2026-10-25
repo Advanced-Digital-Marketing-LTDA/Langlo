@@ -2095,7 +2095,10 @@ describe('grammar practice rating and review actions', () => {
     );
     // Once the grader answers, the review finishes.
     grade({ outcome: 'incorrect', reason: 'answered', evaluated: true });
-    await expect(pending).resolves.toMatchObject({ recorded: true });
+    await expect(pending).resolves.toMatchObject({
+      recorded: true,
+      reviewFinished: true
+    });
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
@@ -2485,39 +2488,6 @@ describe('grammar practice rating and review actions', () => {
     expect((await practiceSummary(client, learner, reviewId)).state).toBe(
       'completed'
     );
-  });
-
-  it('reports the review finished once the AI grader settles the last answer', async () => {
-    const { reviewId, questions } = await reviewWithOneTopicLeft();
-    let grade: (result: FallbackResult) => void = () => undefined;
-    const graded = new Promise<FallbackResult>((resolve) => (grade = resolve));
-    const form = new FormData();
-    for (const [key, value] of Object.entries({
-      studySessionId: reviewId,
-      questionId: questions['fr-a1-002'],
-      submissionKey: randomUUID(),
-      answer: 'Wrong.'
-    }))
-      form.set(key, value);
-    const pending = recordAnswer(
-      client,
-      learner,
-      form,
-      'fr-a1-002',
-      () => graded
-    );
-    await vi.waitFor(async () => {
-      const rows = await client.execute({
-        sql: 'SELECT 1 FROM attempts WHERE study_session_id = ? AND skill_id = ?',
-        args: [reviewId, 'fr-a1-002']
-      });
-      expect(rows.rows).toHaveLength(1);
-    });
-    grade({ outcome: 'incorrect', reason: 'answered', evaluated: true });
-    await expect(pending).resolves.toMatchObject({
-      recorded: true,
-      reviewFinished: true
-    });
   });
 
   it('shows on the Review tab how many topics were already reviewed today', async () => {
