@@ -61,10 +61,14 @@ export const POST: RequestHandler = (event) =>
       ...(body.action === 'lookup' ? { term: normalizedTerm } : {})
     };
     validateLibraryAiInput(input);
-    const apiKey = event.locals.config?.openAiApiKey;
-    if (!apiKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+    const keys = {
+      openAi: event.locals.config?.openAiApiKey,
+      typesafe: event.locals.config?.typesafeApiKey
+    };
+    if (!keys.openAi || !keys.typesafe)
+      throw new StudyError('LIBRARY_AI_UNAVAILABLE');
     if (!(await reserveLibraryAiCall(client, learner.userId)))
       throw new StudyError('LIBRARY_AI_LIMIT');
-    const result = await requestLibraryAi(apiKey, input);
+    const result = await requestLibraryAi(keys, input);
     return typeof result === 'string' ? { result } : result;
   });

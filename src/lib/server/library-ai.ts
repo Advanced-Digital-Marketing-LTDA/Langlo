@@ -1,6 +1,7 @@
 import type { Client } from '@libsql/client';
 import { beginWrite } from './db-transactions';
 import type { LibraryLanguage } from './library';
+import { guardedOpenAiResponse, type OpenAiKeys } from './openai-guard';
 import { StudyError } from './study-error';
 
 export const LIBRARY_AI_DAILY_USER_LIMIT = 100;
@@ -158,35 +159,23 @@ function libraryLookupResult(value: unknown): LibraryLookup {
 }
 
 export async function requestLibraryAi(
-  apiKey: string | undefined,
+  keys: OpenAiKeys,
   input: LibraryAiInput
 ): Promise<string | LibraryLookup> {
-  if (!apiKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+  if (!keys.openAi) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
   validateLibraryAiInput(input);
   const { instructions, context } = libraryAiPrompt(input);
 
+  const body = await guardedOpenAiResponse(keys, context, {
+    model: 'gpt-6-luna',
+    reasoning: { effort: 'low' },
+    store: false,
+    instructions,
+    input: [{ role: 'user', content: JSON.stringify(context) }],
+    ...(input.action === 'lookup' ? { text: { format: lookupFormat } } : {}),
+    max_output_tokens: input.action === 'lookup' ? 500 : 300
+  });
   try {
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-6-luna',
-        reasoning: { effort: 'low' },
-        store: false,
-        instructions,
-        input: [{ role: 'user', content: JSON.stringify(context) }],
-        ...(input.action === 'lookup'
-          ? { text: { format: lookupFormat } }
-          : {}),
-        max_output_tokens: input.action === 'lookup' ? 500 : 300
-      }),
-      signal: AbortSignal.timeout(15_000)
-    });
-    if (!response.ok) throw new Error('OpenAI request failed');
-    const body: unknown = await response.json();
     return input.action === 'lookup'
       ? libraryLookupResult(body)
       : libraryAiResult(body);
