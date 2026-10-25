@@ -43,7 +43,7 @@ const instructionNoun =
 // Only wording that points at the model's own earlier or private instructions
 // blocks; "ignore the rules of grammar" is ordinary study text.
 const instructionScope =
-  'previous|prior|above|earlier|preceding|all|any|your|these|those|anteriores|anterieures|precedentes|precedents|tous|toutes|votre|vos|vorherigen|alle|deine|deinen|todas|todos|suas|seus';
+  'previous|prior|above|earlier|preceding|all|your|these|those|anteriores|anterieures|precedentes|precedents|tous|toutes|votre|vos|vorherigen|alle|deine|deinen|todas|todos|suas|seus';
 const trailingScope =
   'previous|prior|above|earlier|preceding|anteriores|anterieures|precedentes|precedents|vorherigen';
 const hiddenScope = 'hidden|secret|initial|original|system|developer';
