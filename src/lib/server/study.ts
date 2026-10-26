@@ -9,6 +9,8 @@ import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
   FALLBACK_SETTLED_EVALUATOR_VERSION,
+  HISTORICAL_JEV_EVALUATOR_VERSION,
+  HISTORICAL_JEV_RUBRIC_VERSION,
   type FallbackReason
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
@@ -841,6 +843,21 @@ function hasCorrectGrammarEvaluation(rows: Row[]) {
   );
 }
 
+function hasRateableGrammarOutcome(rows: Row[]) {
+  const contentVersionId = String(rows[0].content_version_id);
+  const evaluation = feedbackEvaluation(rows, contentVersionId);
+  if (evaluation?.outcome === 'correct') return true;
+  if (evaluation?.evaluator_version === FALLBACK_EVALUATOR_VERSION)
+    return false;
+  return rows.some(
+    (row) =>
+      row.evaluator_version === HISTORICAL_JEV_EVALUATOR_VERSION &&
+      row.rubric_version ===
+        `${HISTORICAL_JEV_RUBRIC_VERSION}:${contentVersionId}` &&
+      row.outcome === 'correct'
+  );
+}
+
 /** A lesson page rates only its own skill's practice answers. */
 function assertLessonPractice(
   rows: Row[],
@@ -860,7 +877,7 @@ function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
     !['active', 'completed'].includes(String(row.state))
   )
     throw new StudyError('NOT_FOUND');
-  if (!hasCorrectGrammarEvaluation(rows))
+  if (!hasRateableGrammarOutcome(rows))
     throw new StudyError('INVALID_GRAMMAR_RATING');
   if (!['schema-validated', 'pilot-ready'].includes(String(row.status)))
     throw new StudyError('CONTENT_UNAVAILABLE');
