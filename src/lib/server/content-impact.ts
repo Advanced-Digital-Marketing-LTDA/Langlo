@@ -47,6 +47,8 @@ type PackageStatusContext = {
   versions: PackageVersion[];
   plannedVersions: Map<string, Earlier>;
   quarantinedVersions: Set<string>;
+  // Retired skill -> replacement, for the carries this package approves.
+  carries: Map<string, string>;
 };
 type StatusProjectionContext = {
   skillId: string;
@@ -446,7 +448,8 @@ async function packageStatusChanges(
   client: Client,
   lines: ImpactLine[],
   versions: PackageVersion[],
-  plannedVersions: Map<string, Earlier>
+  plannedVersions: Map<string, Earlier>,
+  retirements: NonNullable<ContentPackage['retirements']>
 ) {
   for (const line of lines) line.statusChanges = [];
   const skillIds = [...new Set(lines.map((line) => line.skillId))];
@@ -455,10 +458,22 @@ async function packageStatusChanges(
     lines,
     versions,
     plannedVersions,
-    quarantinedVersions: quarantinedVersionIds(versions)
+    quarantinedVersions: quarantinedVersionIds(versions),
+    carries: packageCarries(retirements)
   };
   for (const skillId of skillIds)
     await packageSkillStatusChanges(context, skillId);
+}
+
+/** The carries a package approves: answers to a retired skill count for its replacement. */
+function packageCarries(
+  retirements: NonNullable<ContentPackage['retirements']>
+) {
+  const carries = new Map<string, string>();
+  for (const retirement of retirements)
+    if (retirement.carry === true && retirement.replacedBy !== undefined)
+      carries.set(retirement.skillId, retirement.replacedBy);
+  return carries;
 }
 
 function quarantinedVersionIds(versions: PackageVersion[]) {
@@ -473,8 +488,14 @@ async function packageSkillStatusChanges(
   context: PackageStatusContext,
   skillId: string
 ) {
-  const { client, lines, versions, plannedVersions, quarantinedVersions } =
-    context;
+  const {
+    client,
+    lines,
+    versions,
+    plannedVersions,
+    quarantinedVersions,
+    carries
+  } = context;
   const skill = await client.execute({
     sql: 'SELECT language FROM skills WHERE id = ?',
     args: [skillId]
@@ -488,8 +509,8 @@ async function packageSkillStatusChanges(
     versions,
     plannedVersions
   );
-  const after = contentWithSkillKeys(before, skillId, nextKeys);
-  const sources = skillEvidenceSources(skillId, before.carry);
+  const after = contentWithSkillKeys(before, skillId, nextKeys, carries);
+  const sources = skillEvidenceSources(skillId, after.carry);
   const byOwner = await evidenceByOwner(client, sources);
   const changes = statusChangesByOwner(byOwner, {
     skillId,
@@ -506,14 +527,15 @@ async function packageSkillStatusChanges(
 function contentWithSkillKeys(
   before: CurrentContent,
   skillId: string,
-  nextKeys: Set<string> | undefined
+  nextKeys: Set<string> | undefined,
+  carries: Map<string, string>
 ): CurrentContent {
   const keys = new Map(
     [...before.keys].map(([id, held]) => [id, new Set(held)])
   );
   if (nextKeys === undefined) keys.delete(skillId);
   else keys.set(skillId, nextKeys);
-  return { keys, carry: before.carry };
+  return { keys, carry: new Map([...before.carry, ...carries]) };
 }
 
 function skillEvidenceSources(skillId: string, carry: CurrentContent['carry']) {
@@ -578,7 +600,13 @@ export async function contentImpact(
     client,
     ordered
   );
-  await packageStatusChanges(client, lines, ordered, plannedVersions);
+  await packageStatusChanges(
+    client,
+    lines,
+    ordered,
+    plannedVersions,
+    pkg.retirements ?? []
+  );
   for (const retirement of pkg.retirements ?? []) {
     const line = await retirementImpact(client, retirement, projected);
     if (line) lines.push(line);

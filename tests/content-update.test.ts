@@ -922,6 +922,42 @@ describe('the impact report', () => {
     expect(line).not.toHaveProperty('statusChanges');
   });
 
+  it('counts answers carried into a skill by a retirement in the same package', async () => {
+    const twin = approvedPackage();
+    twin.curriculumVersion = '0.2.0';
+    twin.versions.push({
+      id: 'fr-a1-003@1',
+      skillId: 'fr-a1-003',
+      version: 1,
+      review: 'approved',
+      questions: [question('fr-a1-003@1:q1'), question('fr-a1-003@1:q2')]
+    });
+    await importContent(client, twin);
+    await answer('fr-a1-002@1:q1', 'carried', 'Nous sommes ici.');
+    await markIncorrect((await answer('fr-a1-003@1:q2', 'own', 'x')).id);
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '0.3.0';
+    pkg.skills = pkg.skills.filter((skill) => skill.id !== 'fr-a1-002');
+    pkg.versions = [
+      {
+        id: 'fr-a1-003@2',
+        skillId: 'fr-a1-003',
+        version: 2,
+        review: 'approved',
+        questions: [same('fr-a1-003@2:q1', 'fr-a1-003@1:q1')]
+      }
+    ];
+    pkg.retirements = [
+      { skillId: 'fr-a1-002', replacedBy: 'fr-a1-003', carry: true }
+    ];
+    // The skill's own wrong answer stops counting, and the carried right one
+    // starts: weak becomes practising, not unknown.
+    const lines = await contentImpact(client, pkg);
+    expect(lines.find((line) => line.skillId === 'fr-a1-003')).toMatchObject({
+      statusChanges: [{ from: 'weak', to: 'practising', learners: 1 }]
+    });
+  });
+
   it('counts a retired skill that does not carry over, and only the unmatched items of one that does', async () => {
     await answer('fr-a1-002@1:q1', 'three', 'On est ici.');
     const retire = (carry: boolean) => {
