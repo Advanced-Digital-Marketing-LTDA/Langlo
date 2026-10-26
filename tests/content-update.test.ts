@@ -13,6 +13,12 @@ import {
   testSession
 } from './fixtures/flashcards';
 import { contentImpact } from '../src/lib/server/content-impact';
+import {
+  currentContent,
+  loadEvidenceRows,
+  qualifyingGrammarEvidence,
+  scoreGrammar
+} from '../src/lib/server/mastery';
 import { recordAttempt } from '../src/lib/server/study';
 import { approvedPackage } from './fixtures/content-package';
 
@@ -513,14 +519,35 @@ describe('the impact report', () => {
       args: [attemptId]
     });
 
-  const answer = (questionId: string, key: string, value = 'réponse') =>
-    recordAttempt(client, testSession('learner-a'), {
-      studySessionId: 'study-a',
+  const answerFor = (
+    ownerId: string,
+    studySessionId: string,
+    questionId: string,
+    key: string,
+    value = 'réponse'
+  ) =>
+    recordAttempt(client, testSession(ownerId), {
+      studySessionId,
       questionId,
       submissionKey: key,
       evidenceKind: 'independent',
       answer: value
     });
+  const answer = (questionId: string, key: string, value = 'réponse') =>
+    answerFor('learner-a', 'study-a', questionId, key, value);
+
+  /** Use mastery’s production qualification against the content currently stored. */
+  const actualStatus = async (ownerId: string) => {
+    const items = qualifyingGrammarEvidence(
+      await loadEvidenceRows(client, { ownerId, skillId: 'fr-a1-001' }),
+      await currentContent(client, 'fr')
+    ).filter((item) => item.countsFor === 'fr-a1-001');
+    return scoreGrammar({
+      correct: items.filter((item) => item.correct).length,
+      incorrect: items.filter((item) => !item.correct).length,
+      sessions: new Set(items.map((item) => item.sessionId)).size
+    }).status;
+  };
 
   it('counts the independent answers that would stop counting, and writes nothing', async () => {
     await answer('fr-a1-001@1:q1', 'one');
@@ -560,6 +587,53 @@ describe('the impact report', () => {
     ]);
   });
 
+  it('counts learners per status pair and sorts multiple pairs on a line', async () => {
+    await answer('fr-a1-001@1:q1', 'a-right', 'suis');
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('study-b-practice', 'learner-b', 'enrollment-b', 'fr', 'practice')"
+    );
+    await client.execute("INSERT INTO users (id) VALUES ('learner-c')");
+    await client.execute(
+      "INSERT INTO enrollments (id, owner_id, language, starting_level, explanation_language) VALUES ('enrollment-c', 'learner-c', 'fr', 'A1', 'en')"
+    );
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('study-c-practice', 'learner-c', 'enrollment-c', 'fr', 'practice')"
+    );
+    await answerFor(
+      'learner-b',
+      'study-b-practice',
+      'fr-a1-001@1:q1',
+      'b-right',
+      'suis'
+    );
+    await answerFor(
+      'learner-c',
+      'study-c-practice',
+      'fr-a1-001@1:q1',
+      'c-right',
+      'suis'
+    );
+    const cWrong = await answerFor(
+      'learner-c',
+      'study-c-practice',
+      'fr-a1-001@1:q2',
+      'c-wrong',
+      'suis'
+    );
+    await markIncorrect(cWrong.id);
+
+    const line = await contentImpact(
+      client,
+      update('0.2.0', [question('fr-a1-001@2:q3', { change: 'new' })])
+    );
+    expect(line[0].answers).toBe(4);
+    expect(line[0].learners).toBe(3);
+    expect(line[0].statusChanges).toEqual([
+      { from: 'practising', to: 'unknown', learners: 2 },
+      { from: 'weak', to: 'unknown', learners: 1 }
+    ]);
+  });
+
   it('reports the status change when quarantining a version drops its answers', async () => {
     await answer('fr-a1-001@1:q1', 'one', 'suis');
     await importContent(
@@ -592,6 +666,79 @@ describe('the impact report', () => {
         statusChanges: [{ from: 'weak', to: 'practising', learners: 1 }]
       }
     ]);
+  });
+
+  it('requalifies full answer history against the fallback version after quarantine', async () => {
+    const published = update('0.2.0', [
+      same('fr-a1-001@2:q1', 'fr-a1-001@1:q1'),
+      question('fr-a1-001@2:q3', { change: 'new' })
+    ]);
+    const oldWrong = await answer('fr-a1-001@1:q2', 'old-wrong');
+    await markIncorrect(oldWrong.id);
+    await importContent(client, published);
+    await client.execute(
+      "INSERT INTO study_sessions (id, owner_id, enrollment_id, language, mode) VALUES ('study-two', 'learner-a', 'enrollment-a', 'fr', 'practice')"
+    );
+    await recordAttempt(client, testSession('learner-a'), {
+      studySessionId: 'study-two',
+      questionId: 'fr-a1-001@2:q3',
+      submissionKey: 'current-right',
+      evidenceKind: 'independent',
+      answer: 'réponse'
+    });
+
+    const withdrawn = structuredClone(published);
+    withdrawn.curriculumVersion = '0.2.1';
+    withdrawn.versions[0].review = 'quarantined';
+    expect(await actualStatus('learner-a')).toBe('practising');
+    const beforePreview = await storedState();
+    expect(await contentImpact(client, withdrawn)).toMatchObject([
+      {
+        skillId: 'fr-a1-001',
+        statusChanges: [{ from: 'practising', to: 'weak', learners: 1 }]
+      }
+    ]);
+    expect(await storedState()).toEqual(beforePreview);
+
+    // Applying only to this disposable fixture confirms the preview matches
+    // mastery after it selects the older, non-quarantined version.
+    await importContent(client, withdrawn);
+    expect(await actualStatus('learner-a')).toBe('weak');
+  });
+
+  it('reports the cumulative status change across successive versions in one package', async () => {
+    await answer('fr-a1-001@1:q1', 'first-right', 'suis');
+    await answer('fr-a1-001@1:q2', 'second-right', 'es');
+    const pkg = update('0.2.0', [
+      same('fr-a1-001@2:q2', 'fr-a1-001@1:q2'),
+      question('fr-a1-001@2:q3', { change: 'new' })
+    ]);
+    pkg.versions.push({
+      id: 'fr-a1-001@3',
+      skillId: 'fr-a1-001',
+      version: 3,
+      review: 'approved',
+      questions: [question('fr-a1-001@3:q4', { change: 'new' })]
+    });
+
+    const before = await storedState();
+    expect(await actualStatus('learner-a')).toBe('practising');
+    expect(await contentImpact(client, pkg)).toMatchObject([
+      {
+        reason: '1 question(s) changed or removed in fr-a1-001@2',
+        answers: 1,
+        statusChanges: []
+      },
+      {
+        reason: '2 question(s) changed or removed in fr-a1-001@3',
+        answers: 1,
+        statusChanges: [{ from: 'practising', to: 'unknown', learners: 1 }]
+      }
+    ]);
+    expect(await storedState()).toEqual(before);
+
+    await importContent(client, pkg);
+    expect(await actualStatus('learner-a')).toBe('unknown');
   });
 
   it('leaves out answers that mastery does not count, such as Not sure', async () => {
@@ -773,6 +920,42 @@ describe('the impact report', () => {
     const [line] = await contentImpact(client, pkg);
     expect(line).toMatchObject({ skillId: 'fr-a1-002', answers: 1 });
     expect(line).not.toHaveProperty('statusChanges');
+  });
+
+  it('counts answers carried into a skill by a retirement in the same package', async () => {
+    const twin = approvedPackage();
+    twin.curriculumVersion = '0.2.0';
+    twin.versions.push({
+      id: 'fr-a1-003@1',
+      skillId: 'fr-a1-003',
+      version: 1,
+      review: 'approved',
+      questions: [question('fr-a1-003@1:q1'), question('fr-a1-003@1:q2')]
+    });
+    await importContent(client, twin);
+    await answer('fr-a1-002@1:q1', 'carried', 'Nous sommes ici.');
+    await markIncorrect((await answer('fr-a1-003@1:q2', 'own', 'x')).id);
+    const pkg = approvedPackage();
+    pkg.curriculumVersion = '0.3.0';
+    pkg.skills = pkg.skills.filter((skill) => skill.id !== 'fr-a1-002');
+    pkg.versions = [
+      {
+        id: 'fr-a1-003@2',
+        skillId: 'fr-a1-003',
+        version: 2,
+        review: 'approved',
+        questions: [same('fr-a1-003@2:q1', 'fr-a1-003@1:q1')]
+      }
+    ];
+    pkg.retirements = [
+      { skillId: 'fr-a1-002', replacedBy: 'fr-a1-003', carry: true }
+    ];
+    // The skill's own wrong answer stops counting, and the carried right one
+    // starts: weak becomes practising, not unknown.
+    const lines = await contentImpact(client, pkg);
+    expect(lines.find((line) => line.skillId === 'fr-a1-003')).toMatchObject({
+      statusChanges: [{ from: 'weak', to: 'practising', learners: 1 }]
+    });
   });
 
   it('counts a retired skill that does not carry over, and only the unmatched items of one that does', async () => {
