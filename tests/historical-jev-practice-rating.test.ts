@@ -216,78 +216,66 @@ describe('historical Jev practice rating', () => {
     });
   });
 
-  it('does not let historical Jev correct feedback override a current uncertain verdict', async () => {
-    const { session, attemptId } = await resumedPendingGrammarAttempt({
-      evaluatorVersion: 'jev-2',
-      outcome: 'uncertain',
-      historicalOutcome: 'correct'
-    });
-    const resumed = await practiceFor(client, learner, session.id, 'fr-a1-001');
-    expect(resumed.feedback).toMatchObject({ attemptId, outcome: 'uncertain' });
-    expect(resumed.exercise).toMatchObject({
-      notice: null,
-      question: { id: 'fr-a1-001@1:q1' }
-    });
-    expect(
-      await lessonActions.rate(
-        event({
-          params: { language: 'fr', skill: 'fr-a1-001' },
-          fields: { attemptId, studySessionId: session.id, rating: 'good' }
-        })
-      )
-    ).toMatchObject({ status: 400 });
-  });
+  const negativeCases: Array<{
+    name: string;
+    attempt: Parameters<typeof resumedPendingGrammarAttempt>[0];
+    feedback: Record<string, unknown>;
+    ratingStatus: number;
+  }> = [
+    {
+      name: 'current uncertain verdict takes precedence over historical correct',
+      attempt: {
+        evaluatorVersion: 'jev-2',
+        outcome: 'uncertain',
+        historicalOutcome: 'correct'
+      },
+      feedback: { outcome: 'uncertain' },
+      ratingStatus: 400
+    },
+    {
+      name: 'incorrect historical answer needs no rating',
+      attempt: { evaluatorVersion: 'jev-1', outcome: 'incorrect' },
+      feedback: { outcome: 'incorrect', rating: null },
+      ratingStatus: 400
+    },
+    {
+      name: 'assisted historical answer remains unrated',
+      attempt: {
+        evaluatorVersion: 'jev-1',
+        outcome: 'correct',
+        evidenceKind: 'assisted',
+        receivedHelp: true
+      },
+      feedback: { outcome: 'correct', rating: null, receivedHelp: true },
+      ratingStatus: 404
+    }
+  ];
 
-  it('does not require a rating for an incorrect historical Jev answer', async () => {
-    const { session, attemptId } = await resumedPendingGrammarAttempt({
-      evaluatorVersion: 'jev-1',
-      outcome: 'incorrect'
-    });
-    const resumed = await practiceFor(client, learner, session.id, 'fr-a1-001');
-    expect(resumed.feedback).toMatchObject({
-      attemptId,
-      outcome: 'incorrect',
-      rating: null
-    });
-    expect(resumed.exercise).toMatchObject({
-      notice: null,
-      question: { id: 'fr-a1-001@1:q1' }
-    });
-    expect(
-      await lessonActions.rate(
-        event({
-          params: { language: 'fr', skill: 'fr-a1-001' },
-          fields: { attemptId, studySessionId: session.id, rating: 'good' }
-        })
-      )
-    ).toMatchObject({ status: 400 });
-  });
+  it.each(negativeCases)(
+    '$name',
+    async ({ attempt, feedback, ratingStatus }) => {
+      const { session, attemptId } =
+        await resumedPendingGrammarAttempt(attempt);
+      const resumed = await practiceFor(
+        client,
+        learner,
+        session.id,
+        'fr-a1-001'
+      );
 
-  it('does not require or allow a rating for an assisted historical Jev answer', async () => {
-    const { session, attemptId } = await resumedPendingGrammarAttempt({
-      evaluatorVersion: 'jev-1',
-      outcome: 'correct',
-      evidenceKind: 'assisted',
-      receivedHelp: true
-    });
-    const resumed = await practiceFor(client, learner, session.id, 'fr-a1-001');
-    expect(resumed.feedback).toMatchObject({
-      attemptId,
-      outcome: 'correct',
-      rating: null,
-      receivedHelp: true
-    });
-    expect(resumed.exercise).toMatchObject({
-      notice: null,
-      question: { id: 'fr-a1-001@1:q1' }
-    });
-    expect(
-      await lessonActions.rate(
-        event({
-          params: { language: 'fr', skill: 'fr-a1-001' },
-          fields: { attemptId, studySessionId: session.id, rating: 'good' }
-        })
-      )
-    ).toMatchObject({ status: 404 });
-  });
+      expect(resumed.feedback).toMatchObject({ attemptId, ...feedback });
+      expect(resumed.exercise).toMatchObject({
+        notice: null,
+        question: { id: 'fr-a1-001@1:q1' }
+      });
+      expect(
+        await lessonActions.rate(
+          event({
+            params: { language: 'fr', skill: 'fr-a1-001' },
+            fields: { attemptId, studySessionId: session.id, rating: 'good' }
+          })
+        )
+      ).toMatchObject({ status: ratingStatus });
+    }
+  );
 });
