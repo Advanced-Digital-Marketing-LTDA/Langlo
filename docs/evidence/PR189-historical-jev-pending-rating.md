@@ -1,7 +1,9 @@
 # PR 189: historical Jev pending-rating deadlock
 
-Date: 2026-10-26. Draft PR #190 is open from commit
-`8fa0ce74d7e2568d04574dd2577ce7b50bf86925`.
+Date: 2026-10-26. Draft PR #190 was opened from commit
+`8fa0ce74d7e2568d04574dd2577ce7b50bf86925`. This evidence snapshot records
+CI and review results for code commit
+`29adc58f04c7cc12e63a3792f7b23486e68654ed`.
 
 ## Behavior and scope
 
@@ -37,17 +39,21 @@ Using Node 24.19.0 and npm 11.9.0:
 
 - `npm ci --ignore-scripts`: passed with npm cache redirected to `/tmp` because
   the default cache directory was outside the workspace's writable paths.
-- `npm run check`: passed, zero Svelte errors or warnings.
-- `npm run lint`: passed.
-- `npm run format:check`: passed.
-- `npm test`: passed, 128 files and 2,176 tests.
-- `npm run test:property`: passed, 6 files and 9 tests.
-- `npm run build`: passed.
+- `npm run check`: passed with zero Svelte errors or warnings.
+- `npm run lint` and `npm run format:check`: passed.
+- Initial local `npm test`: 128 files and 2,176 tests passed. The current-head
+  CI report validated 2,176/2,176 tests across 129 suites.
+- `npm run test:property`: 6 files and 9 tests passed.
+- `npm run build` and `npm run build:e2e-coverage`: passed.
+- `npm test -- tests/historical-jev-practice-rating.test.ts`: 5 tests passed
+  after the test-only table-driven cleanup.
 - `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium npm run test:e2e`:
-  passed, 190 desktop and mobile tests, zero failures, flaky tests, or skips.
-  The pinned Playwright download endpoint returned HTTP 403, so the installed
-  system Chromium was used through the repository's supported executable-path
-  setting.
+  the local run passed 190 tests with zero failures, flaky tests, or skips
+  before the unit-test-only cleanup. On current head `29adc58`, hosted E2E
+  passed 190/190 tests in 5m 5s.
+- The pinned Playwright download endpoint returned HTTP 403 in the local
+  environment, so system Chromium was used locally through the supported
+  executable-path setting. Hosted CI installed Chromium successfully.
 - Internal adversarial review found no production correctness issues. Its
   copy-locking test concern was removed; tests assert behavior without fixing
   notice wording.
@@ -55,26 +61,41 @@ Using Node 24.19.0 and npm 11.9.0:
 No schema changes or migrations were made. No production data, provider
 credentials, external grader calls, deployment, or release were used.
 
-## Remote review snapshot
+## Remote CI and review snapshot
 
-The initial commit, push, and draft PR creation completed. PR #190 targets
-`main` at `fc66471c52308406711d7c898b280c8caa2aebb7` and remains a draft.
+This is a fixed snapshot as of 2026-10-26 17:03 UTC for tested code commit
+[`29adc58f04c7cc12e63a3792f7b23486e68654ed`](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/commit/29adc58f04c7cc12e63a3792f7b23486e68654ed).
+These results apply to that commit; they do not claim validation of later
+documentation-only commits.
 
-At the last check, Dependency review, Ratchets, ESLint, OSSAR, and rewardguard
-had passed. Quality was still running: unit tests, property tests, and build
-had passed; its foundation job was provisioning Playwright Chromium and had
-not yet started browser tests. SonarCloud reported a passed quality gate with
-zero new issues or security hotspots. CodeScene flagged
-`tests/learner-journeys.test.ts` at 81 functions against its 75-function
-threshold. A local-only repair moves the five new rating cases and their
-helper to `tests/historical-jev-practice-rating.test.ts`; the full suite
-passes (129 files, 2,176 tests), as do the two-file and new-file focused runs.
-This candidate repair has not been committed or pushed.
+- [Quality run 40362739329](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/40362739329)
+  passed: 2,176/2,176 unit tests across 129 suites, property tests (6 files,
+  9 tests), check, lint, format check, build, E2E coverage build, Chromium
+  installation, and hosted E2E (190/190 tests, 5m 5s). Coverage and evidence
+  validation passed. TestTrust reported one changed test file, zero findings,
+  and 100/100. The APKG feasibility, merge-evidence, and Codecov upload jobs
+  passed.
+- [Dependency review 40362739061](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/40362739061),
+  [Ratchets 40362739113](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/40362739113),
+  [ESLint 40362739047](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/40362739047),
+  [OSSAR 40362739365](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/40362739365),
+  [rewardguard 40362739634](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/40362739634),
+  and [adversarial review 40362739110](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/actions/runs/40362739110)
+  passed.
+- The [merge-evidence gate](https://github.com/Advanced-Digital-Marketing-LTDA/Langlo/pull/190#issuecomment-6420958271)
+  passed for `29adc58`. Its informational changed-files note used the PR-body
+  snapshot captured when the push triggered CI, before the file list was added
+  to the description. The description now lists all three changed files.
+- [SonarCloud](https://sonarcloud.io/dashboard?id=Advanced-Digital-Marketing-LTDA_Langlo&pullRequest=190)
+  passed with zero new issues and zero security hotspots. [CodeScene](https://codescene.io/projects/86244/delta/results/8137355)
+  passed all six quality gates after the similar negative cases were
+  consolidated with `it.each`. Codecov accepted the coverage upload for
+  processing.
+- The adversarial review refuted one preliminary finding and retained one
+  below-gate documentation note that the earlier remote-review snapshot was
+  stale. This snapshot is scoped to the tested commit and its linked results;
+  no later CI result is implied.
 
-The remote adversarial-review workflow failed in its verification pass after
-two preliminary findings were collected. The Claude CLI exited with status 1,
-so no verified findings were published; this workflow result is inconclusive.
-The separate internal Codex review found no production correctness issues.
-
-These are review and CI observations for the draft commit, not release
-acceptance. No later PR update or push has been made.
+The preceding Quality run on `0b6589b` was cancelled during Chromium setup at
+the foundation job timeout, before browser tests. The successful hosted browser
+run on `29adc58` supersedes that result.
