@@ -1,6 +1,12 @@
 import type { Client } from '@libsql/client';
 import { beginWrite } from './db-transactions';
 import type { LibraryLanguage } from './library';
+import {
+  GuardStudyError,
+  guardedOpenAiResponse,
+  requireKeys,
+  type OpenAiKeys
+} from './openai-guard';
 import { StudyError } from './study-error';
 
 export const LIBRARY_AI_DAILY_USER_LIMIT = 100;
@@ -77,6 +83,19 @@ export async function reserveLibraryAiCall(
   } finally {
     transaction.close();
   }
+}
+
+/** Gives back a reservation made at `reservedAt` when the guard refused the request. */
+export async function releaseLibraryAiCall(
+  client: Client,
+  ownerId: string,
+  reservedAt: number
+): Promise<void> {
+  const day = new Date(reservedAt).toISOString().slice(0, 10);
+  await client.execute({
+    sql: 'UPDATE library_ai_usage SET calls = calls - 1 WHERE day = ? AND owner_id = ? AND calls > 0',
+    args: [day, ownerId]
+  });
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -158,39 +177,48 @@ function libraryLookupResult(value: unknown): LibraryLookup {
 }
 
 export async function requestLibraryAi(
-  apiKey: string | undefined,
+  keys: OpenAiKeys,
   input: LibraryAiInput
 ): Promise<string | LibraryLookup> {
-  if (!apiKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+  requireKeys(keys);
   validateLibraryAiInput(input);
   const { instructions, context } = libraryAiPrompt(input);
 
+  const body = await guardedOpenAiResponse(keys, context, {
+    model: 'gpt-6-luna',
+    reasoning: { effort: 'low' },
+    store: false,
+    instructions,
+    input: [{ role: 'user', content: JSON.stringify(context) }],
+    ...(input.action === 'lookup' ? { text: { format: lookupFormat } } : {}),
+    max_output_tokens: input.action === 'lookup' ? 500 : 300
+  });
   try {
-    const response = await fetch('https://api.openai.com/v1/responses', {
-      method: 'POST',
-      headers: {
-        authorization: `Bearer ${apiKey}`,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-6-luna',
-        reasoning: { effort: 'low' },
-        store: false,
-        instructions,
-        input: [{ role: 'user', content: JSON.stringify(context) }],
-        ...(input.action === 'lookup'
-          ? { text: { format: lookupFormat } }
-          : {}),
-        max_output_tokens: input.action === 'lookup' ? 500 : 300
-      }),
-      signal: AbortSignal.timeout(15_000)
-    });
-    if (!response.ok) throw new Error('OpenAI request failed');
-    const body: unknown = await response.json();
     return input.action === 'lookup'
       ? libraryLookupResult(body)
       : libraryAiResult(body);
   } catch {
     throw new StudyError('LIBRARY_AI_UNAVAILABLE');
+  }
+}
+
+/**
+ * Runs a request whose daily slot was reserved at `reservedAt`. A local
+ * pattern block or a Jev outage gives the slot back; a Jev flag and a failed
+ * OpenAI attempt keep it, so repeated flagged text still reaches the daily cap.
+ */
+export async function requestReservedLibraryAi(
+  client: Client,
+  ownerId: string,
+  reservedAt: number,
+  keys: OpenAiKeys,
+  input: LibraryAiInput
+): Promise<string | LibraryLookup> {
+  try {
+    return await requestLibraryAi(keys, input);
+  } catch (error) {
+    if (error instanceof GuardStudyError)
+      await releaseLibraryAiCall(client, ownerId, reservedAt);
+    throw error;
   }
 }

@@ -9,12 +9,16 @@ import {
   type LibraryLanguage
 } from '../../../../../../lib/server/library';
 import {
-  requestLibraryAi,
+  requestReservedLibraryAi,
   reserveLibraryAiCall,
   validateLibraryAiInput,
   type LibraryAiInput
 } from '../../../../../../lib/server/library-ai';
 import { containsTerm } from '../../../../../../lib/library-text';
+import {
+  openAiKeysFromConfig,
+  requireKeys
+} from '../../../../../../lib/server/openai-guard';
 import { StudyError } from '../../../../../../lib/server/study-error';
 
 const maxSentenceLength = 2000;
@@ -61,10 +65,16 @@ export const POST: RequestHandler = (event) =>
       ...(body.action === 'lookup' ? { term: normalizedTerm } : {})
     };
     validateLibraryAiInput(input);
-    const apiKey = event.locals.config?.openAiApiKey;
-    if (!apiKey) throw new StudyError('LIBRARY_AI_UNAVAILABLE');
-    if (!(await reserveLibraryAiCall(client, learner.userId)))
+    const keys = requireKeys(openAiKeysFromConfig(event.locals.config));
+    const reservedAt = Date.now();
+    if (!(await reserveLibraryAiCall(client, learner.userId, reservedAt)))
       throw new StudyError('LIBRARY_AI_LIMIT');
-    const result = await requestLibraryAi(apiKey, input);
+    const result = await requestReservedLibraryAi(
+      client,
+      learner.userId,
+      reservedAt,
+      keys,
+      input
+    );
     return typeof result === 'string' ? { result } : result;
   });
