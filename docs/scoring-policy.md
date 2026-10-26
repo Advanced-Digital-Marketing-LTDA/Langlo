@@ -13,13 +13,19 @@ uncertain/unresolved evaluations, assisted responses and quarantined content
 cannot add independent evidence. Evaluator uncertainty does not count toward
 the five-choice stop rule. Prepared evaluator
 `prepared-1` must name the attempt's content version as its rubric; current Jev
-fallback `jev-1` must name `jev-rubric-1:<contentVersionId>`. Jev asks whether the
+fallback `jev-2` must name `jev-rubric-1:<contentVersionId>`. Jev asks whether the
 answer fulfills the prompt's intended meaning in the target language. Accepted
 answers are examples, equivalent grammatically correct forms are allowed,
 required grammar/forms and spelling/accents are checked, and capitalization or
 punctuation is ignored unless tested by the exercise. Recognized fallback
 supersedes the prepared uncertainty, even when fallback remains uncertain.
-Historical OpenAI Decisions evaluations (`decisions-1`) and prior `grammar-1`
+As of 2026-10-26, written-answer fallback probabilities below `0.60` are
+incorrect, from `0.60` inclusive to `0.80` exclusive are unsure (`uncertain`),
+and `0.80` or higher are correct. Compare raw probabilities without rounding.
+The unchanged rubric remains `jev-rubric-1`; evaluator `jev-2` identifies the
+new thresholds. Earlier Jev verdicts remain available in feedback with their
+matching rubric, but are not current mastery evidence.
+Historical Jev evaluations (`jev-1`), OpenAI Decisions evaluations (`decisions-1`) and prior `grammar-1`
 evidence remain stored but do not qualify under `grammar-2`. Unknown evaluator or
 rubric versions are excluded until a reviewed policy update.
 
