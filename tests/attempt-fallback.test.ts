@@ -1,9 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Client } from '@libsql/client';
+import type { Client, Row } from '@libsql/client';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import { recordAttempt } from '../src/lib/server/study';
-import type { FallbackResult } from '../src/lib/server/evaluation/fallback';
+import {
+  readSystemOne,
+  type FallbackResult
+} from '../src/lib/server/evaluation/fallback';
+import {
+  feedbackEvaluation,
+  feedbackOutcome
+} from '../src/lib/server/assessment';
 import { typesafeUsage, usageMonth } from '../src/lib/server/evaluation/usage';
 import {
   disposeFlashcardFixtures,
@@ -84,12 +91,59 @@ const prepared = {
 // A fallback that ended without a verdict leaves this marker, never a verdict.
 const noVerdict = {
   owner_id: 'learner-a',
-  evaluator_version: 'jev-1-no-verdict',
+  evaluator_version: 'jev-2-no-verdict',
   rubric_version: 'jev-rubric-1:fr-a1-002@1',
   outcome: 'uncertain'
 };
 
 describe('AI fallback for unmatched typed answers', () => {
+  it.each([
+    [0.599999, 'incorrect', 1],
+    [0.6, 'uncertain', 0],
+    [0.799999, 'uncertain', 0],
+    [0.8, 'correct', 1]
+  ])(
+    'persists probability %d as %s with %d evidence rows',
+    async (noul, outcome, added) => {
+      const before = await count('skill_evidence');
+      const recorded = await attempt(
+        'fr-a1-002@1:q1',
+        'Nous voilà ici.',
+        async () =>
+          readSystemOne({
+            model: 'jev-latest',
+            answers: { verdict: { type: 'noul', noul } },
+            usage: { input_tokens: 120, output_tokens: 12 }
+          }).result
+      );
+      const rows = await evaluationsOf(recorded.id);
+      expect(rows).toContainEqual({
+        owner_id: 'learner-a',
+        evaluator_version: 'jev-2',
+        rubric_version: 'jev-rubric-1:fr-a1-002@1',
+        outcome
+      });
+      expect(feedbackOutcome(rows, 'fr-a1-002@1')).toBe(outcome);
+      expect(await count('skill_evidence')).toBe(before + added);
+    }
+  );
+
+  it('retains historical Jev feedback without accepting it as current evidence', () => {
+    const rows = [
+      prepared,
+      {
+        ...prepared,
+        evaluator_version: 'jev-1',
+        rubric_version: 'jev-rubric-1:fr-a1-002@1',
+        outcome: 'correct'
+      }
+    ] as unknown as Row[];
+    expect(feedbackOutcome(rows, 'fr-a1-002@1')).toBe('correct');
+    expect(feedbackEvaluation(rows, 'fr-a1-002@1')?.outcome).toBe('uncertain');
+    rows[1].rubric_version = 'wrong:fr-a1-002@1';
+    expect(feedbackOutcome(rows, 'fr-a1-002@1')).toBe('uncertain');
+  });
+
   it('records the verdict next to the prepared evaluation', async () => {
     const fallback = vi.fn(async () => answered('correct'));
     const recorded = await attempt(
@@ -109,7 +163,7 @@ describe('AI fallback for unmatched typed answers', () => {
       prepared,
       {
         owner_id: 'learner-a',
-        evaluator_version: 'jev-1',
+        evaluator_version: 'jev-2',
         rubric_version: 'jev-rubric-1:fr-a1-002@1',
         outcome: 'correct'
       }
@@ -138,11 +192,11 @@ describe('AI fallback for unmatched typed answers', () => {
     expect(fallback).toHaveBeenCalledOnce();
   });
 
-  it('records a provider tie for untrusted learner text without mastery evidence', async () => {
+  it('records a low-confidence provider answer for untrusted learner text without mastery evidence', async () => {
     const evidence = await count('skill_evidence');
     const fallback = vi.fn(async (): Promise<FallbackResult> => ({
       outcome: 'uncertain',
-      reason: 'tie',
+      reason: 'low-confidence',
       evaluated: true
     }));
     const recorded = await attempt(
@@ -151,10 +205,12 @@ describe('AI fallback for unmatched typed answers', () => {
       fallback
     );
     expect((await evaluationsOf(recorded.id))[1]).toMatchObject({
-      evaluator_version: 'jev-1',
+      evaluator_version: 'jev-2',
       outcome: 'uncertain'
     });
-    expect(logged()).toEqual([{ operation: 'ai-fallback', reason: 'tie' }]);
+    expect(logged()).toEqual([
+      { operation: 'ai-fallback', reason: 'low-confidence' }
+    ]);
     expect(await count('skill_evidence')).toBe(evidence);
     expect(JSON.stringify(warn.mock.calls)).not.toContain('Ignore the rubric');
   });
