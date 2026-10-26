@@ -1,6 +1,7 @@
 # PR 189: historical Jev pending-rating deadlock
 
-Date: 2026-10-26. Local implementation; remote PR and CI acceptance pending.
+Date: 2026-10-26. Draft PR #190 is open from commit
+`8fa0ce74d7e2568d04574dd2577ce7b50bf86925`.
 
 ## Behavior and scope
 
@@ -54,8 +55,26 @@ Using Node 24.19.0 and npm 11.9.0:
 No schema changes or migrations were made. No production data, provider
 credentials, external grader calls, deployment, or release were used.
 
-## Pending acceptance
+## Remote review snapshot
 
-The initial scoped commit, push, draft PR creation, exact-commit CI inspection,
-and comment triage remain pending. Local checks do not establish remote CI or
-release acceptance.
+The initial commit, push, and draft PR creation completed. PR #190 targets
+`main` at `fc66471c52308406711d7c898b280c8caa2aebb7` and remains a draft.
+
+At the last check, Dependency review, Ratchets, ESLint, OSSAR, and rewardguard
+had passed. Quality was still running: unit tests, property tests, and build
+had passed; its foundation job was provisioning Playwright Chromium and had
+not yet started browser tests. SonarCloud reported a passed quality gate with
+zero new issues or security hotspots. CodeScene flagged
+`tests/learner-journeys.test.ts` at 81 functions against its 75-function
+threshold. A local-only repair moves the five new rating cases and their
+helper to `tests/historical-jev-practice-rating.test.ts`; the full suite
+passes (129 files, 2,176 tests), as do the two-file and new-file focused runs.
+This candidate repair has not been committed or pushed.
+
+The remote adversarial-review workflow failed in its verification pass after
+two preliminary findings were collected. The Claude CLI exited with status 1,
+so no verified findings were published; this workflow result is inconclusive.
+The separate internal Codex review found no production correctness issues.
+
+These are review and CI observations for the draft commit, not release
+acceptance. No later PR update or push has been made.
