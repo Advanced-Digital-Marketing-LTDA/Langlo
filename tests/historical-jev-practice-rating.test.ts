@@ -80,6 +80,7 @@ describe('historical Jev practice rating', () => {
   async function resumedPendingGrammarAttempt(options: {
     evaluatorVersion: 'jev-1' | 'jev-2';
     outcome: 'correct' | 'incorrect' | 'uncertain';
+    rubricVersion?: string;
     historicalOutcome?: 'correct' | 'incorrect' | 'uncertain';
     evidenceKind?: 'independent' | 'assisted';
     receivedHelp?: boolean;
@@ -117,12 +118,13 @@ describe('historical Jev practice rating', () => {
       {
         sql: `INSERT INTO evaluations
           (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome)
-          VALUES (?, ?, ?, ?, 'jev-rubric-1:fr-a1-001@1', ?)`,
+          VALUES (?, ?, ?, ?, ?, ?)`,
         args: [
           `fallback-${attemptId}`,
           learner.userId,
           attemptId,
           options.evaluatorVersion,
+          options.rubricVersion ?? 'jev-rubric-1:fr-a1-001@1',
           options.outcome
         ]
       }
@@ -233,13 +235,33 @@ describe('historical Jev practice rating', () => {
       ratingStatus: 400
     },
     {
+      name: 'current incorrect verdict takes precedence over historical correct',
+      attempt: {
+        evaluatorVersion: 'jev-2',
+        outcome: 'incorrect',
+        historicalOutcome: 'correct'
+      },
+      feedback: { outcome: 'incorrect' },
+      ratingStatus: 400
+    },
+    {
+      name: 'historical correct verdict with another content version is not rateable',
+      attempt: {
+        evaluatorVersion: 'jev-1',
+        outcome: 'correct',
+        rubricVersion: 'jev-rubric-1:fr-a1-001@2'
+      },
+      feedback: { outcome: 'uncertain' },
+      ratingStatus: 400
+    },
+    {
       name: 'incorrect historical answer needs no rating',
       attempt: { evaluatorVersion: 'jev-1', outcome: 'incorrect' },
       feedback: { outcome: 'incorrect', rating: null },
       ratingStatus: 400
     },
     {
-      name: 'assisted historical answer remains unrated',
+      name: 'assisted historical answer is rejected before the rating gate',
       attempt: {
         evaluatorVersion: 'jev-1',
         outcome: 'correct',
