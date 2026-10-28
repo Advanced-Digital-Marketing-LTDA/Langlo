@@ -20,6 +20,6 @@ See [routes](routes.md), [environment](environment.md), [schema](schema.md), [co
 
 ## Source provenance and license
 
-The setup follows App-Bootstrap-ADM at b658231eb20d8920a538ac355a4563c1e4c53096: https://github.com/Bonobo791/App-Bootstrap-ADM/tree/b658231eb20d8920a538ac355a4563c1e4c53096. It is guidance and templates, not an app scaffold. No Moderaty application source, branding, credentials or learner records were copied. `BOOTSTRAP-LICENSE` preserves attribution for the source guidance.
+The setup follows App-Bootstrap-ADM at b658231eb20d8920a538ac355a4563c1e4c53096: <https://github.com/Bonobo791/App-Bootstrap-ADM/tree/b658231eb20d8920a538ac355a4563c1e4c53096>. It is guidance and templates, not an app scaffold. No Moderaty application source, branding, credentials or learner records were copied. `BOOTSTRAP-LICENSE` preserves attribution for the source guidance.
 
 T001 selected PolyForm Shield 1.0.0. Its license text is now present in `LICENSE`, with licensing guidance in `COMMERCIAL.md` and package metadata pointing to `LICENSE`. This local license status does not imply remote publication or deployment.
