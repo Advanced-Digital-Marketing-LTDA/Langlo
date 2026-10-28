@@ -1,12 +1,22 @@
+---
+id: langlo-curriculum-bundle-contract
+type: submodule-design
+status: active
+title: Curriculum Bundle Validation Contract
+parent: langlo-server
+references: [langlo-content-versioning]
+tags: [curriculum, import]
+---
+
 # Curriculum import contract
 
-This contract versions the grammar catalog, lifecycle ledger, and prerequisite graph as one bundle. It defines validation behavior for a future importer; it does not implement or provision an importer.
+This contract versions the grammar catalog, lifecycle ledger, and prerequisite graph as one bundle. The local import path is implemented: `scripts/content-import.ts` assembles the validated bundle through `src/lib/server/content-bundle.ts` with authored `content/<track>/module-NN.json` lessons via `src/lib/server/content-modules.ts`; `src/lib/server/content-import.ts` validates and transactionally writes shared curriculum records, but does not directly write learner tables. Migration `drizzle/0031_retention_transfers_to_new_versions.sql` installs triggers on qualifying `content_versions` inserts and status updates; those triggers can transfer existing `grammar_retention_schedules` to the new current version and increment their revisions in the same transaction. See [content import](content-import.md) for CLI usage.
 
 ## Bundle manifest and approval
 
-`content/curriculum-manifest.json` is the bundle entry point. `manifest_version` versions this contract. A `draft` bundle must use a semantic pre-release version; an `approved` bundle must use a stable version. Evidence status on a skill describes its source/placement support and is separate from publication approval. A future importer must reject any bundle whose status is not exactly `approved`; no row status can override a draft bundle. An approved bundle must also contain no active `provisional` skills.
+`content/curriculum-manifest.json` is the bundle entry point. `manifest_version` versions this contract. A `draft` bundle must use a semantic pre-release version; an `approved` bundle must use a stable version. Evidence status on a skill describes its source/placement support and is separate from publication approval. The local importer requires exactly `approved` and a stable version. The contract rejects `provisional` evidence anywhere in an approved catalog, including retired rows retained as ID tombstones; row status cannot override a draft bundle.
 
-The manifest names and SHA-256 hashes the coverage CSV, prerequisite JSON, and append-only skill ID registry at their fixed repository paths. Validation rejects any different manifest path, missing file, malformed digest, or digest mismatch. The prior registry snapshot uses the fixed path `.t004-prior-registry.json`; the CLI accepts no path arguments. Any edit to a hashed file requires updating its digest and the curriculum version according to the version rules below. `dependency_semantics` must equal `recommended_teaching_order`; other values are invalid and must be rejected, not interpreted as mastery gates.
+The manifest names and SHA-256 hashes the coverage CSV, prerequisite JSON, and append-only skill ID registry at their fixed repository paths. Validation rejects any different manifest path, missing file, malformed digest, or digest mismatch. The prior registry snapshot uses the fixed path `.t004-prior-registry.json`; the CLI accepts no path arguments. Any edit to a hashed file requires updating its digest and the curriculum version according to the version rules below. `dependency_semantics` must equal `recommended_teaching_order`; the local importer rejects other values rather than interpreting them as mastery gates.
 
 `included_tracks` declares the audited tracks: the five original ones, then Portuguese B1, then Portuguese B2 once the catalog holds them (B2 never without B1). The list must match the tracks the catalog contains. `selected_subset_tracks` explicitly identifies French A1 as a selected subset; French A2 is out of scope. A selected-subset declaration prevents the bundle from implying complete coverage of a larger reference inventory.
 
@@ -40,8 +50,8 @@ An ID's learning meaning must not be narrowed, broadened, or reassigned. If an o
 
 `content/prerequisites.json` has `schema_version: 1` and one node for every catalog ID, including retired tombstones. Each node contains a `skill_id` and an array of prerequisite IDs. IDs must match the catalog exactly. The validator rejects missing or duplicate nodes, duplicate prerequisites, dangling or self edges, dependencies on retired skills, cross-language edges, edges from a higher level to a lower level, and cycles. Retired nodes have no prerequisites.
 
-These edges express recommended teaching order only. A future importer must reject structurally invalid bundle data and any dependency semantics other than `recommended_teaching_order`, but must not use edges as learner mastery gates. Any later mastery gates need a separate contract and explicit thresholds.
+These edges express recommended teaching order only. The local importer rejects structurally invalid bundle data and any dependency semantics other than `recommended_teaching_order`; it does not use edges as learner mastery gates. Any mastery gates need a separate contract and explicit thresholds.
 
 ## Acceptance boundary
 
-Validation covers manifest shape, version syntax and status compatibility, rejection of provisional skills from approval, file digests, CSV schema, source registration, skill lifecycle, ID registry, historical registry continuity in CI, and graph consistency. It does not validate CEFR certification, exam equivalence, mastery thresholds, or placement truth from citations alone. Runtime import, learner-evidence migration, and publication remain separate approval gates.
+The contract specifies validation requirements for manifest shape, version syntax and status compatibility, rejection of provisional evidence throughout the catalog, file digests, CSV schema, source registration, skill lifecycle, ID registry, historical registry continuity in CI, and graph consistency. The local importer and validation scripts have corresponding implementation paths, but full conformance to every contract requirement remains unconfirmed. The contract does not validate CEFR certification, exam equivalence, mastery thresholds, or placement truth from citations alone. The checked-in manifest is marked `approved` at `1.5.0`; that repository status gates the local importer but does not establish production publication or curriculum truth and completeness. Production-database import, learner-evidence migration, and owner/learner acceptance remain pending.

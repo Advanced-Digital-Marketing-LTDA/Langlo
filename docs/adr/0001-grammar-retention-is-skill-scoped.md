@@ -1,3 +1,13 @@
+---
+id: langlo-grammar-retention
+type: submodule-design
+status: active
+title: Grammar Retention Scope
+parent: langlo-server
+references: [langlo-grammar-evidence]
+tags: [grammar, retention]
+---
+
 # Grammar retention is skill-scoped
 
 Status: accepted

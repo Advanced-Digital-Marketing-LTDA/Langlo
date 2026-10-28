@@ -1,3 +1,13 @@
+---
+id: langlo-grammar-evidence
+type: submodule-design
+status: active
+title: Grammar Evidence Policy
+parent: langlo-server
+references: [langlo-assessment-scope-stop, langlo-content-versioning]
+tags: [grammar, mastery]
+---
+
 # Grammar evidence policy: grammar-2
 
 Version `grammar-2`, 2026-10-22. Local instructional heuristics, not CEFR
@@ -6,12 +16,20 @@ certification or a calibrated prediction of language proficiency.
 Only the owner's independent grammar responses with a recognized, certain
 prepared/fallback evaluation qualify. Practice and mixed review qualify after
 submission; assessment responses qualify after the assessment is completed,
-either by answering every planned question or by submitting five explicit
-`Not sure` choices in that assessment. On an early finalization, only submitted
-certain answers are considered; unreached questions are not scored. `Not sure`,
+by answering every planned question, by the fifth confirmed incorrect answer,
+or by the fifth explicit `Not sure` choice. The two five-answer thresholds are
+counted separately and need not be consecutive. Only recognized
+prepared/fallback verdicts count as confirmed incorrect; evaluator uncertainty
+and replayed submissions do not increase either threshold, and fallback
+verdicts take precedence. For sessions using grammar retention, completion may
+additionally wait for required ratings on qualifying correct answers and for
+recent prepared-uncertain evaluations to settle or pass the fallback wait
+window. These gates affect completion and evidence-sync timing, not which
+submitted responses qualify. On early finalization, only submitted certain
+answers are considered; unreached questions are not scored. `Not sure`,
 uncertain/unresolved evaluations, assisted responses and quarantined content
-cannot add independent evidence. Evaluator uncertainty does not count toward
-the five-choice stop rule. Prepared evaluator
+cannot add independent evidence. Evaluator uncertainty does not count as an explicit `Not sure` choice or a
+confirmed incorrect answer. Prepared evaluator
 `prepared-1` must name the attempt's content version as its rubric; current Jev
 fallback `jev-2` must name `jev-rubric-1:<contentVersionId>`. Jev asks whether the
 answer fulfills the prompt's intended meaning in the target language. Accepted

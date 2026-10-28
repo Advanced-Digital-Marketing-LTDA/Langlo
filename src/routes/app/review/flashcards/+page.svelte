@@ -1,6 +1,7 @@
 <script lang="ts">
   import { enhance } from '$app/forms';
   import StudyTimer from '../../../../lib/components/StudyTimer.svelte';
+  import { hydration } from '../../../../lib/hydration.svelte';
   import type { ActionData, PageData } from './$types';
   let { data, form }: { data: PageData; form: ActionData } = $props();
   let revealed = $state(false);
@@ -36,7 +37,11 @@
   </p>
   <p><strong>{front}</strong></p>
   {#if !revealed}
-    <button type="button" onclick={() => (revealed = true)}>Show answer</button>
+    <button
+      type="button"
+      disabled={!hydration.ready}
+      onclick={() => (revealed = true)}>Show answer</button
+    >
   {:else}
     <p>{card.kind === 'basic' ? card.content.back : card.content.text}</p>
     {#if card.explanation}
