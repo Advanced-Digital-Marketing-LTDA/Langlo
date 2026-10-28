@@ -46,7 +46,7 @@ The application computes owner-scoped learner review and study-time analytics lo
 
 SMTP delivery errors after a recovery request starts are logged as `mail-delivery` diagnostics without changing the response shared by known and unknown addresses. This preserves enumeration resistance but does not confirm delivery. See [auth.md](auth.md#6-provisioning-and-mail-delivery) for the current limitation.
 
-Framework/adapter sources inspected 2026-10-06: https://svelte.dev/docs/kit/adapter-node and https://svelte.dev/docs/kit/server-only-modules. Node adapter uses runtime environment; production .env loading requires an explicit documented operator mechanism.
+Framework/adapter sources inspected 2026-10-06: <https://svelte.dev/docs/kit/adapter-node> and https://svelte.dev/docs/kit/server-only-modules. Node adapter uses runtime environment; production .env loading requires an explicit documented operator mechanism.
 
 ## Playwright browser environment
 
