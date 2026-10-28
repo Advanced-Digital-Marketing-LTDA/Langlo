@@ -1,6 +1,6 @@
 # Owner decisions
 
-This record captures the owner decisions reconciled for T001 (LANGLO-23, It’s a Plan issue 870) on 2026-10-09. The source comments are 6874–6877. These decisions define the planning scope; they do not claim that the pilot or its integrations are implemented or released.
+This record captures the owner decisions reconciled for T001 (LANGLO-23, It’s a Plan issue 870) on 2026-10-09. The source comments are 6874–6877. These decisions define the planning scope; they do not claim that the pilot or its integrations are implemented or released. The original private two-learner/no-public-registration restriction was superseded by the owner-approved public self-registration policy on 2026-10-13; the pilot bullets below preserve the historical scope.
 
 ## Pilot scope — retained
 
@@ -23,7 +23,7 @@ Open-source alternatives were researched. No migration to an alternative and no 
 
 - Repository: `Bonobo791/Langlo`.
 - Selected license: PolyForm Shield 1.0.0, matching the license identified in Bonobo791/Moderaty’s [LICENSE](https://github.com/Bonobo791/Moderaty/blob/main/LICENSE) (blob `f88d3d68982bd77db576b39874b59e251ba74a94`). The license text is at [PolyForm Shield 1.0.0](https://polyformproject.org/licenses/shield/1.0.0).
-- This records the choice only. Langlo still needs a separate license-file and package-metadata implementation, including appropriate notices. No license file was created or publication authorized by T001.
+- This records the choice only. Langlo still needs a separate license-file and package-metadata implementation, including appropriate notices. No license file was created or publication authorized by T001. (Implemented later in `LICENSE` and `COMMERCIAL.md`; package metadata now points to `LICENSE`.)
 - Implemented: `LICENSE` (PolyForm Shield 1.0.0) and `COMMERCIAL.md` at the repository root, and `license` set to `SEE LICENSE IN LICENSE` in `package.json`. Publication is still not authorized.
 
 ## Anki profile setup

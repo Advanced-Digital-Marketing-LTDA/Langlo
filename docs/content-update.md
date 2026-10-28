@@ -1,3 +1,13 @@
+---
+id: langlo-content-versioning
+type: submodule-design
+status: active
+title: Versioned Curriculum Updates
+parent: langlo-server
+references: [langlo-grammar-evidence]
+tags: [curriculum, content-versioning]
+---
+
 # Updating content that is already imported
 
 Imported content is immutable. A correction is a new lesson version of the same skill, imported under a newer curriculum version. What a learner already answered is never edited or deleted; the rules below decide what still counts toward mastery. The importer (`src/lib/server/content-import.ts` and `content-update.ts`) enforces them and fails loudly.

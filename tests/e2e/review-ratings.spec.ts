@@ -107,7 +107,28 @@ test('reveals each answer and stores every rating', async ({
       });
     }
 
-    await page.goto(`${base}/app/review/flashcards?language=fr&due=overdue`);
+    let releaseScripts!: () => void;
+    const scriptsReleased = new Promise<void>((resolve) => {
+      releaseScripts = resolve;
+    });
+    await page.route('**/*.js', async (route) => {
+      if (route.request().resourceType() === 'script') await scriptsReleased;
+      await route.continue();
+    });
+    try {
+      await page.goto(`${base}/app/review/flashcards?language=fr&due=overdue`, {
+        waitUntil: 'domcontentloaded'
+      });
+      const reveal = page.getByRole('button', { name: 'Show answer' });
+      await expect(reveal).toBeDisabled();
+      releaseScripts();
+      await expect(reveal).toBeEnabled();
+      await page.waitForLoadState('load');
+    } finally {
+      releaseScripts();
+      await page.waitForLoadState('load').catch(() => {});
+      await page.unroute('**/*.js');
+    }
     const shown = page.locator('p > strong').first();
     let previous = '';
     for (const rating of ratings) {

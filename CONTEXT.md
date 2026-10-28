@@ -1,3 +1,12 @@
+---
+id: langlo-domain-context
+type: module-design
+status: active
+title: Langlo Domain Concepts
+parent: langlo-goal
+tags: [domain-language]
+---
+
 # Langlo domain terms
 
 - **Study schedule**: account-wide desired retention plus the fixed learning and relearning presets used when a card is first approved or next rated.
