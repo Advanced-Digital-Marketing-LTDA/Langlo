@@ -678,8 +678,11 @@ async function recordFallbackEvaluation(
   attempt: FallbackAttempt,
   fallback: FallbackEvaluator | undefined
 ) {
-  const prepared = preparedQuestion(attempt.questionId, attempt.question);
-  if (prepared.format === 'multiple-choice' || prepared.answer === null) {
+  const { format, answer, alternatives } = preparedQuestion(
+    attempt.questionId,
+    attempt.question
+  );
+  if (format === 'multiple-choice' || answer === null) {
     await settleFallback(client, session, attempt, true);
     return;
   }
@@ -689,7 +692,13 @@ async function recordFallbackEvaluation(
       await recordFallbackVerdict(client, session, attempt, saved);
       return;
     }
-    await runFallbackProvider({ client, session, attempt, prepared, fallback });
+    await runFallbackProvider({
+      client,
+      session,
+      attempt,
+      prepared: { format, answer, alternatives },
+      fallback
+    });
   } catch (error) {
     // The attempt is already saved; the answer stays uncertain for review.
     logFallback('failed');
@@ -734,7 +743,11 @@ async function runFallbackProvider({
   client: Client;
   session: LearnerSession;
   attempt: FallbackAttempt;
-  prepared: ReturnType<typeof preparedQuestion>;
+  prepared: {
+    format: Exclude<ExerciseFormat, 'multiple-choice'>;
+    answer: string;
+    alternatives: string[];
+  };
   fallback: FallbackEvaluator | undefined;
 }) {
   if (!fallback) {

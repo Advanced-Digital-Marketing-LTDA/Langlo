@@ -33,7 +33,7 @@ The original reuse tests bypassed usage accounting and used a text date in an in
 
 Two tests seed conflicting verdicts to distinguish descending creation time from descending ID on equal timestamps. A fast-check property generates Unicode answer text and sequences across two owners and two distinct answers, checks first-judgment reuse against an independent map, separate evaluation/attempt identities, idempotent replay and real call/token accounting. It uses the repository's 100-run defaults and seed/path controls, with seed 0 for recorded runs. The usage clock is fixed; all provider responses are local synthetic data.
 
-The normal mutation runner now includes a `fallback-cache` scope for the lookup and provider handling in study.ts (lines 687–759) and both example/property test files. Update that range if the block moves. The configured 80% threshold is unchanged.
+The normal mutation runner now includes a `fallback-cache` scope for the lookup and provider handling in study.ts (lines 687–772) and both example/property test files. Update that range if the block moves. The configured 80% threshold is unchanged.
 
 ### Observed red/green proof
 
@@ -80,3 +80,4 @@ Final publication-branch validation on Node 24.19.0 / npm 11.9.0, FC_SEED=0:
 - The hosted Quality run on the prior review commit passed npm ci, type checking and lint before the provider-handling extraction. Its full test and browser steps were still running at the time of this evidence update.
 - The latest local full-suite attempt was blocked by sandbox process/socket restrictions: 8 files failed (including subprocess permission failures and one localhost listener denial), while 122 files and 2,162 tests passed. The local Stryker logging server also could not bind to 0.0.0.0 (`EPERM`), so the updated 687–759 mutation range has not been rerun locally.
 - Local `svelte-check` showed 178 generated-route type errors on both the working PR clone and a clean clone of the prior PR head. The hosted Quality run passed `npm run check` on that prior commit.
+- The next hosted check caught that the extracted provider helper accepted the un-narrowed prepared question type. Its input now describes the typed-answer shape guaranteed by the eligibility check; the new hosted run is pending.

@@ -28,7 +28,7 @@ export const mutationScopes = [
   {
     name: 'fallback-cache',
     mutate: ['src/lib/server/study.ts'],
-    mutationRange: '687-759',
+    mutationRange: '687-772',
     tests: [
       'tests/attempt-fallback.test.ts',
       'tests/attempt-fallback.pbt.test.ts'
