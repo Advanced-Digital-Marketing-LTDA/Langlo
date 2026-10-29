@@ -684,29 +684,9 @@ async function recordFallbackEvaluation(
     return;
   }
   try {
-    const saved = await client.execute({
-      sql: `SELECT e.outcome FROM attempts a
-        JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
-        WHERE a.owner_id = ? AND a.question_id = ? AND a.content_version_id = ?
-          AND a.answer = ? AND e.evaluator_version = ? AND e.rubric_version = ?
-          AND e.outcome IN ('correct', 'incorrect')
-        ORDER BY e.created_at DESC, e.id DESC LIMIT 1`,
-      args: [
-        session.userId,
-        attempt.questionId,
-        attempt.contentVersionId,
-        attempt.answer,
-        FALLBACK_EVALUATOR_VERSION,
-        `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
-      ]
-    });
-    if (saved.rows[0]) {
-      await recordFallbackVerdict(
-        client,
-        session,
-        attempt,
-        String(saved.rows[0].outcome)
-      );
+    const saved = await findSavedFallbackVerdict(client, session, attempt);
+    if (saved) {
+      await recordFallbackVerdict(client, session, attempt, saved);
       return;
     }
     if (!fallback) {
@@ -738,6 +718,30 @@ async function recordFallbackEvaluation(
       console.error(settling)
     );
   }
+}
+
+async function findSavedFallbackVerdict(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt
+): Promise<string | null> {
+  const saved = await client.execute({
+    sql: `SELECT e.outcome FROM attempts a
+      JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+      WHERE a.owner_id = ? AND a.question_id = ? AND a.content_version_id = ?
+        AND a.answer = ? AND e.evaluator_version = ? AND e.rubric_version = ?
+        AND e.outcome IN ('correct', 'incorrect')
+      ORDER BY e.created_at DESC, e.id DESC LIMIT 1`,
+    args: [
+      session.userId,
+      attempt.questionId,
+      attempt.contentVersionId,
+      attempt.answer,
+      FALLBACK_EVALUATOR_VERSION,
+      `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
+    ]
+  });
+  return saved.rows[0] ? String(saved.rows[0].outcome) : null;
 }
 
 /**

@@ -13,6 +13,113 @@ import {
 import { approvedPackage } from './fixtures/content-package';
 import { propertyOptions } from './property-options';
 
+type GeneratedOperation = {
+  ownerB: boolean;
+  alternate: boolean;
+  correct: boolean;
+};
+
+type SequenceContext = {
+  client: Awaited<ReturnType<typeof openFixtureDatabase>>['client'];
+  text: string;
+  state: {
+    judgments: Map<string, string>;
+    attemptIds: Set<string>;
+    usage: ReturnType<typeof typesafeUsage>;
+  };
+};
+
+async function runGeneratedSequence(
+  text: string,
+  operations: GeneratedOperation[]
+) {
+  const { client, close } = await openFixtureDatabase(await fixture());
+  try {
+    await importContent(client, approvedPackage());
+    await client.execute(
+      "UPDATE study_sessions SET mode = 'practice' WHERE id = 'study-b'"
+    );
+    const state = {
+      judgments: new Map<string, string>(),
+      attemptIds: new Set<string>(),
+      usage: typesafeUsage(client, () => Date.UTC(2026, 9, 28))
+    };
+    for (const [index, operation] of operations.entries()) {
+      await verifyGeneratedSubmission(
+        { client, text, state },
+        index,
+        operation
+      );
+    }
+  } finally {
+    close();
+    await disposeFlashcardFixtures();
+  }
+}
+
+async function verifyGeneratedSubmission(
+  context: SequenceContext,
+  index: number,
+  operation: GeneratedOperation
+) {
+  const { client, text, state } = context;
+  const owner = operation.ownerB ? 'learner-b' : 'learner-a';
+  const answer = `Cache ${operation.alternate ? 'B' : 'A'}: ${text}`;
+  const identity = JSON.stringify([owner, answer]);
+  const expected =
+    state.judgments.get(identity) ??
+    (operation.correct ? 'correct' : 'incorrect');
+  const fallback = (input: Parameters<typeof evaluateFallback>[0]) =>
+    evaluateFallback(
+      input,
+      async () => ({
+        model: 'jev-latest',
+        answers: {
+          verdict: {
+            type: 'noul',
+            noul: operation.correct ? 0.9 : 0.1
+          }
+        },
+        usage: { input_tokens: 1, output_tokens: 1 }
+      }),
+      state.usage
+    );
+  const input = {
+    studySessionId: operation.ownerB ? 'study-b' : 'study-a',
+    questionId: 'fr-a1-002@1:q1',
+    submissionKey: `generated-${index}`,
+    evidenceKind: 'assisted' as const,
+    answer
+  };
+  const result = await recordAttempt(client, testSession(owner), input, {
+    fallback
+  });
+  state.judgments.set(identity, expected);
+  state.attemptIds.add(result.id);
+  expect(state.attemptIds.size).toBe(index + 1);
+  const evaluations = await client.execute({
+    sql: "SELECT owner_id, outcome FROM evaluations WHERE attempt_id = ? AND evaluator_version = 'jev-2'",
+    args: [result.id]
+  });
+  expect(evaluations.rows.map((row) => ({ ...row }))).toEqual([
+    { owner_id: owner, outcome: expected }
+  ]);
+  expect(
+    await recordAttempt(client, testSession(owner), input, { fallback })
+  ).toEqual({ id: result.id, duplicate: true });
+  const expectedCalls = state.judgments.size;
+  const counters = await client.execute(
+    "SELECT calls, input_tokens, output_tokens FROM ai_usage WHERE api = 'typesafe' AND month = '2026-10'"
+  );
+  expect(counters.rows.map((row) => ({ ...row }))).toEqual([
+    {
+      calls: expectedCalls,
+      input_tokens: expectedCalls,
+      output_tokens: expectedCalls
+    }
+  ]);
+}
+
 it('keeps grading reuse owner-scoped and preserves separate attempts across generated submission sequences', async () => {
   await fc.assert(
     fc.asyncProperty(
@@ -25,82 +132,7 @@ it('keeps grading reuse owner-scoped and preserves separate attempts across gene
         }),
         { minLength: 1, maxLength: 8 }
       ),
-      async (text, operations) => {
-        const { client, close } = await openFixtureDatabase(await fixture());
-        try {
-          await importContent(client, approvedPackage());
-          await client.execute(
-            "UPDATE study_sessions SET mode = 'practice' WHERE id = 'study-b'"
-          );
-          const usage = typesafeUsage(client, () => Date.UTC(2026, 9, 28));
-          const judgments = new Map<string, string>();
-          const attemptIds = new Set<string>();
-          for (const [index, operation] of operations.entries()) {
-            const owner = operation.ownerB ? 'learner-b' : 'learner-a';
-            const answer = `Cache ${operation.alternate ? 'B' : 'A'}: ${text}`;
-            const identity = JSON.stringify([owner, answer]);
-            const expected =
-              judgments.get(identity) ??
-              (operation.correct ? 'correct' : 'incorrect');
-            const fallback = (input: Parameters<typeof evaluateFallback>[0]) =>
-              evaluateFallback(
-                input,
-                async () => ({
-                  model: 'jev-latest',
-                  answers: {
-                    verdict: {
-                      type: 'noul',
-                      noul: operation.correct ? 0.9 : 0.1
-                    }
-                  },
-                  usage: { input_tokens: 1, output_tokens: 1 }
-                }),
-                usage
-              );
-            const input = {
-              studySessionId: operation.ownerB ? 'study-b' : 'study-a',
-              questionId: 'fr-a1-002@1:q1',
-              submissionKey: `generated-${index}`,
-              evidenceKind: 'assisted' as const,
-              answer
-            };
-            const result = await recordAttempt(
-              client,
-              testSession(owner),
-              input,
-              { fallback }
-            );
-            judgments.set(identity, expected);
-            attemptIds.add(result.id);
-            expect(attemptIds.size).toBe(index + 1);
-            const evaluations = await client.execute({
-              sql: "SELECT owner_id, outcome FROM evaluations WHERE attempt_id = ? AND evaluator_version = 'jev-2'",
-              args: [result.id]
-            });
-            expect(evaluations.rows.map((row) => ({ ...row }))).toEqual([
-              { owner_id: owner, outcome: expected }
-            ]);
-            expect(
-              await recordAttempt(client, testSession(owner), input, {
-                fallback
-              })
-            ).toEqual({ id: result.id, duplicate: true });
-            const counters = await client.execute(
-              "SELECT calls, input_tokens, output_tokens FROM ai_usage WHERE api = 'typesafe' AND month = '2026-10'"
-            );
-            expect(counters.rows.map((row) => ({ ...row }))).toEqual([
-              {
-                calls: judgments.size,
-                input_tokens: judgments.size,
-                output_tokens: judgments.size
-              }
-            ]);
-          }
-        } finally {
-          close();
-          await disposeFlashcardFixtures();
-        }
-      }
+      (text, operations) => runGeneratedSequence(text, operations)
     ),
     {
       ...propertyOptions(),

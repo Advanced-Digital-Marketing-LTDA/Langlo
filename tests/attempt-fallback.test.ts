@@ -179,11 +179,23 @@ describe('AI fallback for unmatched typed answers', () => {
   );
 
   it.each([
-    ['newest timestamp', 1000, 2000, 'z-old', 'a-new'],
-    ['descending ID on equal timestamps', 2000, 2000, 'a-old', 'z-new']
+    {
+      label: 'newest timestamp',
+      oldTime: 1000,
+      newTime: 2000,
+      oldId: 'z-old',
+      newId: 'a-new'
+    },
+    {
+      label: 'descending ID on equal timestamps',
+      oldTime: 2000,
+      newTime: 2000,
+      oldId: 'a-old',
+      newId: 'z-new'
+    }
   ])(
-    'selects the verdict by %s',
-    async (_label, oldTime, newTime, oldId, newId) => {
+    'selects the verdict by $label',
+    async ({ oldTime, newTime, oldId, newId }) => {
       const first = await attempt('fr-a1-002@1:q1', 'Nous voilà ici.');
       const other = await repeat();
       for (const [id, attemptId, outcome, time] of [
