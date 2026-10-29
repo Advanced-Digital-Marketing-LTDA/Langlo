@@ -1,6 +1,6 @@
 # LANGLO-289: reuse saved Jev verdicts
 
-Task: https://plan.advanceddigitalmarketingltda.com/LANGLO-289
+Task: <https://plan.advanceddigitalmarketingltda.com/LANGLO-289>
 
 ## Behavior
 
