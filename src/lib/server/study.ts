@@ -683,28 +683,13 @@ async function recordFallbackEvaluation(
     await settleFallback(client, session, attempt, true);
     return;
   }
-  if (!fallback) {
-    logFallback('not-configured');
-    await settleFallback(client, session, attempt, true);
-    return;
-  }
   try {
-    const result = await fallback({
-      language: attempt.language,
-      format: prepared.format,
-      prompt:
-        attempt.question.prompt === null
-          ? null
-          : String(attempt.question.prompt),
-      accepted: [prepared.answer, ...prepared.alternatives],
-      answer: attempt.answer
-    });
-    if (result.reason !== 'answered') logFallback(result.reason);
-    if (!result.evaluated) {
-      await settleFallback(client, session, attempt);
+    const saved = await findSavedFallbackVerdict(client, session, attempt);
+    if (saved) {
+      await recordFallbackVerdict(client, session, attempt, saved);
       return;
     }
-    await recordFallbackVerdict(client, session, attempt, result.outcome);
+    await runFallbackProvider({ client, session, attempt, prepared, fallback });
   } catch (error) {
     // The attempt is already saved; the answer stays uncertain for review.
     logFallback('failed');
@@ -713,6 +698,64 @@ async function recordFallbackEvaluation(
       console.error(settling)
     );
   }
+}
+
+async function findSavedFallbackVerdict(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt
+): Promise<string | null> {
+  const saved = await client.execute({
+    sql: `SELECT e.outcome FROM attempts a
+      JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+      WHERE a.owner_id = ? AND a.question_id = ? AND a.content_version_id = ?
+        AND a.answer = ? AND e.evaluator_version = ? AND e.rubric_version = ?
+        AND e.outcome IN ('correct', 'incorrect')
+      ORDER BY e.created_at DESC, e.id DESC LIMIT 1`,
+    args: [
+      session.userId,
+      attempt.questionId,
+      attempt.contentVersionId,
+      attempt.answer,
+      FALLBACK_EVALUATOR_VERSION,
+      `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
+    ]
+  });
+  return saved.rows[0] ? String(saved.rows[0].outcome) : null;
+}
+
+async function runFallbackProvider({
+  client,
+  session,
+  attempt,
+  prepared,
+  fallback
+}: {
+  client: Client;
+  session: LearnerSession;
+  attempt: FallbackAttempt;
+  prepared: ReturnType<typeof preparedQuestion>;
+  fallback: FallbackEvaluator | undefined;
+}) {
+  if (!fallback) {
+    logFallback('not-configured');
+    await settleFallback(client, session, attempt, true);
+    return;
+  }
+  const result = await fallback({
+    language: attempt.language,
+    format: prepared.format,
+    prompt:
+      attempt.question.prompt === null ? null : String(attempt.question.prompt),
+    accepted: [prepared.answer, ...prepared.alternatives],
+    answer: attempt.answer
+  });
+  if (result.reason !== 'answered') logFallback(result.reason);
+  if (!result.evaluated) {
+    await settleFallback(client, session, attempt);
+    return;
+  }
+  await recordFallbackVerdict(client, session, attempt, result.outcome);
 }
 
 /**

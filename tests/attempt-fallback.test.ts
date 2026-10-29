@@ -4,6 +4,7 @@ import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { importContent } from '../src/lib/server/content-import';
 import { recordAttempt } from '../src/lib/server/study';
 import {
+  evaluateFallback,
   readSystemOne,
   type FallbackResult
 } from '../src/lib/server/evaluation/fallback';
@@ -28,7 +29,12 @@ let warn: { mock: { calls: unknown[][] } };
 
 beforeEach(async () => {
   ({ client, close } = await openFixtureDatabase(await fixture()));
-  await importContent(client, approvedPackage());
+  const content = approvedPackage();
+  content.versions[1].questions.push({
+    ...content.versions[1].questions[0],
+    id: 'fr-a1-002@1:q2'
+  });
+  await importContent(client, content);
   warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
 });
 
@@ -48,7 +54,9 @@ const answered = (outcome: 'correct' | 'incorrect'): FallbackResult => ({
 const attempt = (
   questionId: string,
   answer: string,
-  fallback?: (input: unknown) => Promise<FallbackResult>
+  fallback?: (
+    input: Parameters<typeof evaluateFallback>[0]
+  ) => Promise<FallbackResult>
 ) =>
   recordAttempt(
     client,
@@ -97,6 +105,189 @@ const noVerdict = {
 };
 
 describe('AI fallback for unmatched typed answers', () => {
+  const repeat = (
+    fallback?: (
+      input: Parameters<typeof evaluateFallback>[0]
+    ) => Promise<FallbackResult>
+  ) =>
+    recordAttempt(
+      client,
+      ownerA,
+      {
+        studySessionId: 'study-a',
+        questionId: 'fr-a1-002@1:q1',
+        submissionKey: 'repeat',
+        evidenceKind: 'assisted',
+        answer: 'Nous voilà ici.'
+      },
+      { fallback }
+    );
+
+  it.each(['correct', 'incorrect'] as const)(
+    'reuses an old %s verdict without provider usage',
+    async (outcome) => {
+      const provider = vi.fn(async () => ({
+        model: 'jev-latest',
+        answers: {
+          verdict: { type: 'noul', noul: outcome === 'correct' ? 0.9 : 0.1 }
+        },
+        usage: { input_tokens: 120, output_tokens: 12 }
+      }));
+      const usage = typesafeUsage(client, () => Date.UTC(2026, 9, 28));
+      const fallback = (input: Parameters<typeof evaluateFallback>[0]) =>
+        evaluateFallback(input, provider, usage);
+      const first = await attempt(
+        'fr-a1-002@1:q1',
+        'Nous voilà ici.',
+        fallback
+      );
+      await client.execute({
+        sql: 'UPDATE evaluations SET created_at = 946684800000 WHERE attempt_id = ?',
+        args: [first.id]
+      });
+      const usageBefore = await client.execute('SELECT * FROM ai_usage');
+      expect(usageBefore.rows).toMatchObject([
+        {
+          month: '2026-10',
+          api: 'typesafe',
+          calls: 1,
+          input_tokens: 120,
+          output_tokens: 12
+        }
+      ]);
+      const second = await repeat(fallback);
+      expect(second.id).not.toBe(first.id);
+      expect(provider).toHaveBeenCalledOnce();
+      expect(
+        feedbackOutcome(
+          (await evaluationsOf(second.id)) as Row[],
+          'fr-a1-002@1'
+        )
+      ).toBe(outcome);
+      expect((await client.execute('SELECT * FROM ai_usage')).rows).toEqual(
+        usageBefore.rows
+      );
+      expect(
+        (
+          await client.execute({
+            sql: 'SELECT evidence_kind FROM attempts WHERE id = ?',
+            args: [second.id]
+          })
+        ).rows[0].evidence_kind
+      ).toBe('assisted');
+    }
+  );
+
+  it.each([
+    {
+      label: 'newest timestamp',
+      oldTime: 1000,
+      newTime: 2000,
+      oldId: 'z-old',
+      newId: 'a-new'
+    },
+    {
+      label: 'descending ID on equal timestamps',
+      oldTime: 2000,
+      newTime: 2000,
+      oldId: 'a-old',
+      newId: 'z-new'
+    }
+  ])(
+    'selects the verdict by $label',
+    async ({ oldTime, newTime, oldId, newId }) => {
+      const first = await attempt('fr-a1-002@1:q1', 'Nous voilà ici.');
+      const other = await repeat();
+      for (const [id, attemptId, outcome, time] of [
+        [oldId, first.id, 'correct', oldTime],
+        [newId, other.id, 'incorrect', newTime]
+      ] as const) {
+        await client.execute({
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          args: [
+            id,
+            'learner-a',
+            attemptId,
+            'jev-2',
+            'jev-rubric-1:fr-a1-002@1',
+            outcome,
+            time
+          ]
+        });
+      }
+      const result = await recordAttempt(client, ownerA, {
+        studySessionId: 'study-a',
+        questionId: 'fr-a1-002@1:q1',
+        submissionKey: 'ordered',
+        evidenceKind: 'assisted',
+        answer: 'Nous voilà ici.'
+      });
+      expect(
+        feedbackOutcome(
+          (await evaluationsOf(result.id)) as Row[],
+          'fr-a1-002@1'
+        )
+      ).toBe('incorrect');
+    }
+  );
+
+  it('reuses a verdict with no configured provider', async () => {
+    await attempt('fr-a1-002@1:q1', 'Nous voilà ici.', async () =>
+      answered('correct')
+    );
+    const second = await repeat();
+    expect(
+      feedbackOutcome((await evaluationsOf(second.id)) as Row[], 'fr-a1-002@1')
+    ).toBe('correct');
+  });
+
+  it.each([
+    ["UPDATE attempts SET answer = 'nous voilà ici.' WHERE id = ?"],
+    ["UPDATE evaluations SET evaluator_version = 'jev-1' WHERE attempt_id = ?"],
+    [
+      "UPDATE evaluations SET rubric_version = 'jev-rubric-1:other-content' WHERE attempt_id = ?"
+    ],
+    ["UPDATE evaluations SET outcome = 'uncertain' WHERE attempt_id = ?"],
+    [
+      "UPDATE evaluations SET evaluator_version = 'jev-2-no-verdict', outcome = 'uncertain' WHERE attempt_id = ?"
+    ]
+  ])('does not reuse incompatible or non-definitive rows: %s', async (sql) => {
+    const first = await attempt('fr-a1-002@1:q1', 'Nous voilà ici.', async () =>
+      answered('correct')
+    );
+    await client.execute({ sql, args: [first.id] });
+    const fallback = vi.fn(async () => answered('incorrect'));
+    await repeat(fallback);
+    expect(fallback).toHaveBeenCalledOnce();
+  });
+
+  it('does not reuse another question in the same content version', async () => {
+    await attempt('fr-a1-002@1:q2', 'Nous voilà ici.', async () =>
+      answered('correct')
+    );
+    const fallback = vi.fn(async () => answered('incorrect'));
+    await repeat(fallback);
+    expect(fallback).toHaveBeenCalledOnce();
+  });
+
+  it('does not reuse another owner’s verdict', async () => {
+    await recordAttempt(
+      client,
+      testSession('learner-b'),
+      {
+        studySessionId: 'study-b',
+        questionId: 'fr-a1-002@1:q1',
+        submissionKey: 'other',
+        evidenceKind: 'independent',
+        answer: 'Nous voilà ici.'
+      },
+      { fallback: async () => answered('correct') }
+    );
+    const fallback = vi.fn(async () => answered('incorrect'));
+    await repeat(fallback);
+    expect(fallback).toHaveBeenCalledOnce();
+  });
+
   it.each([
     [0.599999, 'incorrect', 1],
     [0.6, 'uncertain', 0],
