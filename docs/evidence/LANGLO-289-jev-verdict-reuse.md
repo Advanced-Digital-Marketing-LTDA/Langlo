@@ -33,7 +33,7 @@ The original reuse tests bypassed usage accounting and used a text date in an in
 
 Two tests seed conflicting verdicts to distinguish descending creation time from descending ID on equal timestamps. A fast-check property generates Unicode answer text and sequences across two owners and two distinct answers, checks first-judgment reuse against an independent map, separate evaluation/attempt identities, idempotent replay and real call/token accounting. It uses the repository's 100-run defaults and seed/path controls, with seed 0 for recorded runs. The usage clock is fixed; all provider responses are local synthetic data.
 
-The normal mutation runner now includes a `fallback-cache` scope for the lookup block in study.ts (lines 687–716) and both example/property test files. Update that range if the block moves. The configured 80% threshold is unchanged.
+The normal mutation runner now includes a `fallback-cache` scope for the lookup and provider handling in study.ts (lines 687–759) and both example/property test files. Update that range if the block moves. The configured 80% threshold is unchanged.
 
 ### Observed red/green proof
 
@@ -65,9 +65,18 @@ Final publication-branch validation on Node 24.19.0 / npm 11.9.0, FC_SEED=0:
 
 - Fresh npm ci --ignore-scripts passed.
 - Type checking: zero errors/warnings; lint passed.
-- Formatting: changed files passed; repository-wide check reports only unchanged docs/environment.md and docs/schema.md.
+- Formatting: the initial publication branch reported docs/environment.md and docs/schema.md; the review follow-up formatted both, and repository-wide Prettier now passes locally.
 - Full suite: 2190 passed / 1 failed across 130 files. The sole failure remains the analytics date assertion in tests/home-analytics-round-trips.test.ts:186 (expected 2026-10-29, received 2026-10-28).
 - Property suite: all 10 tests across 7 files passed.
 - Adjusted fallback-cache scope: all 13 mutants killed; no survivors, timeouts, uncovered mutants or errors. The report validator accepted the report and its source matches this branch.
 - Fresh build passed, followed sequentially by all 190 desktop/mobile browser tests passing. The earlier navigation timer failures did not reproduce on this final branch; no navigation fix is included.
 - No live provider, production database or deployment validation. Push and PR publication were explicitly authorized by the owner; merge and deployment are outside scope.
+
+## PR review and CI follow-up (2026-10-29)
+
+- Extracted the saved-verdict lookup and no-provider/provider-result handling from recordFallbackEvaluation. The fast-check body now delegates fixture setup and each generated submission to helpers. The ordering test now passes each case as one object argument.
+- Formatted docs/environment.md and docs/schema.md, and wrapped the tracker URL in angle brackets. The full repository Prettier check passes.
+- Focused fallback tests: 36 passed. Property suite: 10 passed. ESLint and the production build passed.
+- The hosted Quality run on the prior review commit passed npm ci, type checking and lint before the provider-handling extraction. Its full test and browser steps were still running at the time of this evidence update.
+- The latest local full-suite attempt was blocked by sandbox process/socket restrictions: 8 files failed (including subprocess permission failures and one localhost listener denial), while 122 files and 2,162 tests passed. The local Stryker logging server also could not bind to 0.0.0.0 (`EPERM`), so the updated 687–759 mutation range has not been rerun locally.
+- Local `svelte-check` showed 178 generated-route type errors on both the working PR clone and a clean clone of the prior PR head. The hosted Quality run passed `npm run check` on that prior commit.
