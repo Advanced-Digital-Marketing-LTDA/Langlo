@@ -26,6 +26,15 @@ export const mutationScopes = [
     tests: ['tests/progress-routes.test.ts']
   },
   {
+    name: 'fallback-cache',
+    mutate: ['src/lib/server/study.ts'],
+    mutationRange: '687-716',
+    tests: [
+      'tests/attempt-fallback.test.ts',
+      'tests/attempt-fallback.pbt.test.ts'
+    ]
+  },
+  {
     name: 'fallback',
     mutate: ['src/lib/server/evaluation/fallback.ts'],
     tests: [
@@ -42,7 +51,9 @@ if (!scope) throw new Error(`Unknown LANGLO_STRYKER_SCOPE: ${scopeName}`);
 
 /** @satisfies {import('@stryker-mutator/api/core').PartialStrykerOptions} */
 const config = {
-  mutate: scope.mutate,
+  mutate: scope.mutate.map((file) =>
+    'mutationRange' in scope ? `${file}:${scope.mutationRange}` : file
+  ),
   testRunner: 'langlo-vitest',
   plugins: ['./scripts/stryker-vitest-runner.mjs'],
   coverageAnalysis: 'perTest',
