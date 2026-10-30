@@ -1,9 +1,10 @@
-import { expect } from '@playwright/test';
+import { expect, type BrowserContext, type Page } from '@playwright/test';
 import { test } from './coverage-fixture';
 import { spawn, type ChildProcess } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client/sqlite3';
+import type { Client } from '@libsql/client';
 import { approveNote, createNote } from '../../src/lib/server/flashcards';
 import { createDeck } from '../fixtures/french-deck';
 import {
@@ -71,87 +72,103 @@ test.afterAll(async () => {
   await disposeFixtureDatabase(fixtureRoot, dbFile);
 });
 
+const reviewUrl = () => `${base}/app/review/flashcards?language=fr&due=overdue`;
+
+async function signIn(context: BrowserContext) {
+  await context.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
+  const login = await context.request.post(`${base}/login`, {
+    form: { email: 'rita@example.test', password },
+    maxRedirects: 0,
+    headers: { origin: base, accept: 'text/html' }
+  });
+  expect(login.status()).toBe(303);
+}
+
+/** One approved card that is due now. */
+async function seedDueCard(client: Client, learner: { userId: string }) {
+  await client.execute('PRAGMA foreign_keys = ON');
+  await createDeck(client, learner, { id: 'deck-rita', name: 'Rita FR' });
+  await createNote(client, learner, {
+    id: 'note-shared',
+    sourceId: `langlo:v1:${'7'.repeat(64)}`,
+    deckId: 'deck-rita',
+    kind: 'basic',
+    content: { front: 'Front shared', back: 'Back shared' }
+  });
+  await approveNote(client, learner, 'note-shared');
+  await client.execute({
+    sql: 'UPDATE native_flashcards SET due_at = 0 WHERE note_id = ? AND owner_id = ?',
+    args: ['note-shared', learner.userId]
+  });
+}
+
+async function openDueCard(page: Page) {
+  await page.goto(reviewUrl());
+  await page.waitForLoadState('load');
+  await expect(page.locator('p > strong').first()).toHaveText('Front shared');
+  await expect(page.getByTestId('remaining-due')).toContainText('1 due');
+  await expect(page.getByRole('button', { name: 'Show answer' })).toBeEnabled();
+}
+
+async function rate(page: Page, rating: string) {
+  await page.getByRole('button', { name: 'Show answer' }).click();
+  await page
+    .getByRole('button', { name: new RegExp(`^${rating} · .+$`) })
+    .click();
+}
+
+async function expectOneStoredRating(
+  client: Client,
+  learner: { userId: string }
+) {
+  const events = await client.execute({
+    sql: 'SELECT rating FROM native_flashcard_review_events WHERE owner_id = ?',
+    args: [learner.userId]
+  });
+  expect(events.rows.map((row) => row.rating)).toEqual(['good']);
+  const card = await client.execute({
+    sql: 'SELECT revision FROM native_flashcards WHERE note_id = ? AND owner_id = ?',
+    args: ['note-shared', learner.userId]
+  });
+  expect(card.rows[0].revision).toBe(1);
+}
+
 test('keeps one rating across a reload and a second browser', async ({
   browser,
   context,
   page
 }) => {
   const second = await browser.newContext();
+  const client = createClient({ url: `file://${dbFile}` });
   try {
-    for (const each of [context, second]) {
-      await each.setExtraHTTPHeaders({ 'x-forwarded-proto': 'http' });
-      const login = await each.request.post(`${base}/login`, {
-        form: { email: 'rita@example.test', password },
-        maxRedirects: 0,
-        headers: { origin: base, accept: 'text/html' }
-      });
-      expect(login.status()).toBe(303);
-    }
+    await signIn(context);
+    await signIn(second);
     const session = await (
       await context.request.get(`${base}/api/auth/get-session`)
     ).json();
     const learner = { userId: String(session.user.id) };
+    await seedDueCard(client, learner);
 
-    const client = createClient({ url: `file://${dbFile}` });
-    try {
-      await client.execute('PRAGMA foreign_keys = ON');
-      await createDeck(client, learner, { id: 'deck-rita', name: 'Rita FR' });
-      await createNote(client, learner, {
-        id: 'note-shared',
-        sourceId: `langlo:v1:${'7'.repeat(64)}`,
-        deckId: 'deck-rita',
-        kind: 'basic',
-        content: { front: 'Front shared', back: 'Back shared' }
-      });
-      await approveNote(client, learner, 'note-shared');
-      await client.execute({
-        sql: 'UPDATE native_flashcards SET due_at = 0 WHERE note_id = ? AND owner_id = ?',
-        args: ['note-shared', learner.userId]
-      });
+    const other = await second.newPage();
+    await openDueCard(page);
+    await openDueCard(other);
 
-      const url = `${base}/app/review/flashcards?language=fr&due=overdue`;
-      const other = await second.newPage();
-      for (const each of [page, other]) {
-        await each.goto(url);
-        await each.waitForLoadState('load');
-        await expect(each.locator('p > strong').first()).toHaveText(
-          'Front shared'
-        );
-        await expect(each.getByTestId('remaining-due')).toContainText('1 due');
-        await expect(
-          each.getByRole('button', { name: 'Show answer' })
-        ).toBeEnabled();
-      }
+    await rate(page, 'good');
+    await expect(page.getByText('Nothing is due right now.')).toBeVisible();
+    await page.reload();
+    await expect(page.getByText('Nothing is due right now.')).toBeVisible();
 
-      await page.getByRole('button', { name: 'Show answer' }).click();
-      await page.getByRole('button', { name: /^good · .+$/ }).click();
-      await expect(page.getByText('Nothing is due right now.')).toBeVisible();
-      await page.reload();
-      await expect(page.getByText('Nothing is due right now.')).toBeVisible();
+    // The second browser still shows the card it loaded before the rating.
+    await rate(other, 'easy');
+    await expect(other.getByRole('alert')).toContainText(
+      'This card changed in another tab.'
+    );
+    await other.reload();
+    await expect(other.getByText('Nothing is due right now.')).toBeVisible();
 
-      // The second browser still shows the card it loaded before the rating.
-      await other.getByRole('button', { name: 'Show answer' }).click();
-      await other.getByRole('button', { name: /^easy · .+$/ }).click();
-      await expect(other.getByRole('alert')).toContainText(
-        'This card changed in another tab.'
-      );
-      await other.reload();
-      await expect(other.getByText('Nothing is due right now.')).toBeVisible();
-
-      const events = await client.execute({
-        sql: 'SELECT rating FROM native_flashcard_review_events WHERE owner_id = ?',
-        args: [learner.userId]
-      });
-      expect(events.rows.map((row) => row.rating)).toEqual(['good']);
-      const card = await client.execute({
-        sql: 'SELECT revision FROM native_flashcards WHERE note_id = ? AND owner_id = ?',
-        args: ['note-shared', learner.userId]
-      });
-      expect(card.rows[0].revision).toBe(1);
-    } finally {
-      client.close();
-    }
+    await expectOneStoredRating(client, learner);
   } finally {
+    client.close();
     await second.close();
   }
 });
