@@ -28,6 +28,7 @@ import {
 import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
+import { span } from './tracing';
 import type { ExerciseFormat } from '../components/exercises/answer';
 import {
   assertAssessmentQuestion,
@@ -755,13 +756,19 @@ async function runFallbackProvider({
     await settleFallback(client, session, attempt, true);
     return;
   }
-  const result = await fallback({
-    language: attempt.language,
-    format: prepared.format,
-    prompt:
-      attempt.question.prompt === null ? null : String(attempt.question.prompt),
-    accepted: [prepared.answer, ...prepared.alternatives],
-    answer: attempt.answer
+  const result = await span('study.jev-call', async (active) => {
+    const answered = await fallback({
+      language: attempt.language,
+      format: prepared.format,
+      prompt:
+        attempt.question.prompt === null
+          ? null
+          : String(attempt.question.prompt),
+      accepted: [prepared.answer, ...prepared.alternatives],
+      answer: attempt.answer
+    });
+    active.setAttribute('evaluated', answered.evaluated);
+    return answered;
   });
   if (result.reason !== 'answered') logFallback(result.reason);
   if (!result.evaluated) {
@@ -844,13 +851,13 @@ export async function recordAttempt(
 ) {
   validateAttemptInput(input);
   const recorded = await recordAttemptWrite(client, session, input);
-  if ('attempt' in recorded)
-    await recordFallbackEvaluation(
-      client,
-      session,
-      recorded.attempt,
-      options.fallback
+  if ('attempt' in recorded) {
+    const { attempt } = recorded;
+    // Grading runs before the learner sees a result, so a trace shows its time.
+    await span('study.grade-fallback', () =>
+      recordFallbackEvaluation(client, session, attempt, options.fallback)
     );
+  }
   return recorded.result;
 }
 

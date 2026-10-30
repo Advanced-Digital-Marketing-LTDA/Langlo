@@ -283,12 +283,12 @@ export async function recordAnswer(
   const session = { id: studySessionId, mode: study.mode };
   const repeated = await repeatedAnswer(client, learner, form, session);
   if (repeated) return repeated;
-  const { question } = await nextQuestion(
-    client,
-    learner,
+  // The session read above is reused, so it costs no second round trip.
+  const { question } = await nextQuestionIn(client, learner, {
     studySessionId,
-    skillId
-  );
+    skillId,
+    study
+  });
   if (!question || question.id !== field(form, 'questionId')) {
     // A concurrent request may have recorded this very submission after the
     // first lookup; it is a retry then, not a stale question.
