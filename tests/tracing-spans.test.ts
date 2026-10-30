@@ -77,6 +77,49 @@ it('span propagates the step error unchanged', async () => {
   ).rejects.toBe(failure);
 });
 
+it('an unmatched typed answer times its grading and the grading call', async () => {
+  await recordAttempt(
+    client,
+    learner,
+    {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-002@1:q1',
+      submissionKey: 'graded',
+      evidenceKind: 'independent',
+      answer: 'Nous voilà ici.'
+    },
+    {
+      fallback: async () => ({
+        outcome: 'correct',
+        reason: 'answered',
+        evaluated: true
+      })
+    }
+  );
+  const names = recorded.map((entry) => entry.name);
+  expect(names).toContain('study.grade-fallback');
+  // The call span sits inside the grading span and carries only a flag.
+  expect(names.indexOf('study.jev-call')).toBeGreaterThan(
+    names.indexOf('study.grade-fallback')
+  );
+  expect(
+    recorded.find((entry) => entry.name === 'study.jev-call')?.set
+  ).toEqual({ evaluated: true });
+});
+
+it('a prepared match makes no grading spans', async () => {
+  await recordAttempt(client, learner, {
+    studySessionId: 'study-a',
+    questionId: 'fr-a1-001@1:q1',
+    submissionKey: 'prepared',
+    evidenceKind: 'independent',
+    answer: 'suis'
+  });
+  const names = recorded.map((entry) => entry.name);
+  expect(names).not.toContain('study.grade-fallback');
+  expect(names).not.toContain('study.jev-call');
+});
+
 it('mastery reads trace one batch while answer creation traces ledger sync', async () => {
   await recordAttempt(client, learner, {
     studySessionId: 'study-a',
