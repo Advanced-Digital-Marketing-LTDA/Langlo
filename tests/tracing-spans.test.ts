@@ -98,13 +98,37 @@ it('an unmatched typed answer times its grading and the grading call', async () 
   );
   const names = recorded.map((entry) => entry.name);
   expect(names).toContain('study.grade-fallback');
-  // The call span sits inside the grading span and carries only a flag.
+  // The call span starts after the grading span and carries only a flag.
   expect(names.indexOf('study.jev-call')).toBeGreaterThan(
     names.indexOf('study.grade-fallback')
   );
   expect(
     recorded.find((entry) => entry.name === 'study.jev-call')?.set
   ).toEqual({ evaluated: true });
+});
+
+it('a grading call with no usable answer records evaluated false', async () => {
+  await recordAttempt(
+    client,
+    learner,
+    {
+      studySessionId: 'study-a',
+      questionId: 'fr-a1-002@1:q1',
+      submissionKey: 'not-evaluated',
+      evidenceKind: 'independent',
+      answer: 'Nous voilà ici.'
+    },
+    {
+      fallback: async () => ({
+        outcome: 'uncertain',
+        reason: 'timeout',
+        evaluated: false
+      })
+    }
+  );
+  expect(
+    recorded.find((entry) => entry.name === 'study.jev-call')?.set
+  ).toEqual({ evaluated: false });
 });
 
 it('a prepared match makes no grading spans', async () => {
