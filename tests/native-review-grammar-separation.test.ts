@@ -46,12 +46,9 @@ describe('native reviews and grammar progress', () => {
         rows: await Promise.all(
           grammarTables.map(
             async (table) =>
-              (
-                await client.execute({
-                  sql: `SELECT * FROM ${table} WHERE owner_id = ? ORDER BY rowid`,
-                  args: [learner.userId]
-                })
-              ).rows
+              // Every owner's rows, so a write for another learner shows too.
+              (await client.execute(`SELECT * FROM ${table} ORDER BY rowid`))
+                .rows
           )
         )
       });

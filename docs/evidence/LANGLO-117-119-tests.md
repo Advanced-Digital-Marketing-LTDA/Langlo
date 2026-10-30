@@ -14,8 +14,8 @@ Date: 2026-10-30. Test-only change; no application code changed.
   study-day start).
 - `tests/native-review-grammar-separation.test.ts` (LANGLO-119): records a
   grammar answer, then rates one native card with all four ratings. Grammar
-  mastery from `loadProgress` and the study session, attempt, evaluation,
-  skill evidence and grammar retention rows stay identical.
+  mastery from `loadProgress` and every owner's study session, attempt,
+  evaluation, skill evidence and grammar retention rows stay identical.
 - `tests/e2e/review-second-browser.spec.ts` (LANGLO-119): one learner signed in
   from two browsers. A Good rating in the first survives a reload. The second
   browser's stale page cannot add another rating and shows the stale-card
@@ -24,13 +24,24 @@ Date: 2026-10-30. Test-only change; no application code changed.
 
 ## Observed
 
-- The golden values were captured from the first run of the current scheduler
-  (the placeholder expectation failed with the values above), then pinned. Two
-  more runs passed with the same values.
-- Local: Node 24.19.0, npm 11.9.0. `npm run check`, `npm run format:check`,
-  ESLint on the new files and `npm test` (132 files, 2,196 tests) passed.
-- The browser test was not run locally because this environment cannot
-  download Playwright browsers. It runs in CI.
+- These are characterization tests, not test-first tests. The golden values
+  were copied from the current implementation: a placeholder expectation failed
+  and printed the values above, which were then pinned. Two more runs passed
+  with the same values.
+- Red, golden schedule: with Again's expected preview changed locally to `2m`,
+  the test failed with an `AssertionError` on the outcomes object (`1m`
+  received). Restored, it passed.
+- Red, grammar separation: with a local
+  `UPDATE study_sessions SET created_at = created_at + 1 WHERE owner_id = 'learner-b'`
+  added after the reviews, the test failed on `created_at` (`1793400317000`
+  expected, `1793400317001` received). The earlier version, which only read
+  `learner-a`'s rows, passed with the same change. Restored, it passed.
+- No red run was recorded for the browser test, because it cannot run here.
+- Local: Node 24.19.0, npm 11.9.0. `npm run check`, `npm run lint`,
+  `npm run format:check`, `npm test` (132 files, 2,196 tests),
+  `npm run test:property` (7 files, 10 tests) and `npm run build` passed.
+- `npm run test:e2e` was not run locally because this environment cannot
+  download Playwright browsers. It runs in CI in the foundation job.
 
 ## Pending
 
