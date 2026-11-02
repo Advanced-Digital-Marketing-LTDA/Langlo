@@ -1,3 +1,13 @@
+---
+id: langlo-content-reports
+type: submodule-design
+status: active
+title: Learner Content Reports and Corrections
+parent: langlo-server
+references: [langlo-content-versioning, langlo-grammar-evidence]
+tags: [curriculum, reports]
+---
+
 # Content reports and versioned corrections
 
 Learners can report a lesson/current exercise or a completed assessment response.

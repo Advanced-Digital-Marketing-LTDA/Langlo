@@ -10,30 +10,91 @@ import {
   carriedTo,
   currentContent,
   loadEvidenceRows,
-  qualifyingGrammarEvidence
+  qualifyingGrammarEvidence,
+  scoreGrammar,
+  type CurrentContent,
+  type GrammarStatus
 } from './mastery';
 
 // Read-only report of what a package would do to learner progress, printed
 // before an owner applies it. It counts the answers that would stop counting
-// toward mastery; it does not recompute anyone's status.
+// toward mastery and, for the skill they were given on, how many learners'
+// grammar status would change as a result. A retired skill leaves the
+// catalog, so its lines carry no status change.
+
+export type StatusChange = {
+  from: GrammarStatus;
+  to: GrammarStatus;
+  learners: number;
+};
 
 export type ImpactLine = {
   skillId: string;
   reason: string;
   answers: number;
   learners: number;
+  statusChanges?: StatusChange[];
 };
 
 type PackageVersion = ContentPackage['versions'][number];
 type Earlier = { questions: PriorQuestion[] };
 type Counted = { itemKey: string; contentVersionId: string };
+type Qualified = ReturnType<typeof qualifyingGrammarEvidence>[number];
+type VersionCandidate = { id: string; version: number; status: string };
+type PackageStatusContext = {
+  client: Client;
+  lines: ImpactLine[];
+  versions: PackageVersion[];
+  plannedVersions: Map<string, Earlier>;
+  quarantinedVersions: Set<string>;
+  // Retired skill -> replacement, for the carries this package approves.
+  carries: Map<string, string>;
+};
+type StatusProjectionContext = {
+  skillId: string;
+  before: CurrentContent;
+  after: CurrentContent;
+  quarantinedVersions: Set<string>;
+};
+
+/** The grammar status mastery scores for these qualifying answers. */
+const standing = (items: Qualified[]) =>
+  scoreGrammar({
+    correct: items.filter((item) => item.correct).length,
+    incorrect: items.filter((item) => !item.correct).length,
+    sessions: new Set(items.map((item) => item.sessionId)).size
+  }).status;
+
+/** Count one learner whose status moves from `from` to `to`. */
+function tally(
+  changes: Map<string, StatusChange>,
+  from: GrammarStatus,
+  to: GrammarStatus
+) {
+  const key = `${from}>${to}`;
+  const found = changes.get(key);
+  if (found) found.learners += 1;
+  else changes.set(key, { from, to, learners: 1 });
+}
+
+/** The evidence rows of these skills, grouped by the learner who gave them. */
+async function evidenceByOwner(client: Client, skillIds: string[]) {
+  const byOwner = new Map<string, Row[]>();
+  for (const skillId of skillIds)
+    for (const row of await loadEvidenceRows(client, { skillId })) {
+      const owner = String(row.owner_id);
+      byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
+    }
+  return byOwner;
+}
 
 /**
  * The answers mastery counts now for `skillId` whose item `stops` matches, by
  * the same rules mastery applies: the first response to an item, independent,
  * evaluated, from a version that is not quarantined, to an item in the
  * skill's current version. Answers given on retired skills that carry to it
- * (directly or through other carries) count for it.
+ * (directly or through other carries) count for it. `statusChanges` lists the
+ * learners whose status for the skill differs once those answers are gone.
  */
 async function countedAnswers(
   client: Client,
@@ -53,20 +114,17 @@ async function countedAnswers(
       (id) => carriedTo(id, current.carry) === skillId
     )
   ];
-  const byOwner = new Map<string, Row[]>();
-  for (const source of sources)
-    for (const row of await loadEvidenceRows(client, { skillId: source })) {
-      const owner = String(row.owner_id);
-      byOwner.set(owner, [...(byOwner.get(owner) ?? []), row]);
-    }
+  const byOwner = await evidenceByOwner(client, sources);
   let answers = 0;
   let learners = 0;
   for (const ownerRows of byOwner.values()) {
-    const counted = qualifyingGrammarEvidence(ownerRows, current).filter(
-      (item) => item.countsFor === skillId && stops(item)
+    const held = qualifyingGrammarEvidence(ownerRows, current).filter(
+      (item) => item.countsFor === skillId
     );
+    const counted = held.filter(stops);
     answers += counted.length;
-    if (counted.length > 0) learners += 1;
+    if (counted.length === 0) continue;
+    learners += 1;
   }
   return { answers, learners };
 }
@@ -223,6 +281,17 @@ async function carriedKeys(
   return target === undefined ? new Set<string>() : versionKeys(client, target);
 }
 
+/** A retirement line: the skill leaves the catalog, so no status change is reported. */
+async function retirementLine(
+  client: Client,
+  skillId: string,
+  reason: string,
+  stops: (answer: Counted) => boolean
+): Promise<ImpactLine> {
+  const { answers, learners } = await countedAnswers(client, skillId, stops);
+  return { skillId, reason, answers, learners };
+}
+
 /** The impact of retiring one skill that is still live, if any. */
 async function retirementImpact(
   client: Client,
@@ -236,21 +305,19 @@ async function retirementImpact(
   if (skill.rows.length === 0 || skill.rows[0].retired_at !== null)
     return undefined;
   if (retirement.carry !== true || retirement.replacedBy === undefined)
-    return {
-      skillId: retirement.skillId,
-      reason: 'retired, answers no longer shown',
-      ...(await countedAnswers(client, retirement.skillId, () => true))
-    };
-  const carried = await carriedKeys(client, retirement.replacedBy, planned);
-  return {
-    skillId: retirement.skillId,
-    reason: `retired, answers carry to ${retirement.replacedBy} where the items match`,
-    ...(await countedAnswers(
+    return retirementLine(
       client,
       retirement.skillId,
-      (item) => !carried.has(item.itemKey)
-    ))
-  };
+      'retired, answers no longer shown',
+      () => true
+    );
+  const carried = await carriedKeys(client, retirement.replacedBy, planned);
+  return retirementLine(
+    client,
+    retirement.skillId,
+    `retired, answers carry to ${retirement.replacedBy} where the items match`,
+    (item) => !carried.has(item.itemKey)
+  );
 }
 
 /** Remember a planned version: it continues the chain, and is current unless quarantined. */
@@ -273,6 +340,7 @@ async function packageVersionImpact(
 ) {
   const lines: ImpactLine[] = [];
   const plans = new Map<string, SkillPlan>();
+  const plannedVersions = new Map<string, Earlier>();
   for (const version of versions) {
     const { line, planned } = await versionImpact(
       client,
@@ -280,12 +348,245 @@ async function packageVersionImpact(
       plans.get(version.skillId)
     );
     if (line) lines.push(line);
-    if (planned) recordPlan(plans, version, planned);
+    if (planned) {
+      plannedVersions.set(version.id, planned);
+      recordPlan(plans, version, planned);
+    }
   }
   const projected = new Map<string, Earlier>();
   for (const [skillId, plan] of plans)
     if (plan.current) projected.set(skillId, plan.current);
-  return { lines, projected };
+  return { lines, projected, plannedVersions };
+}
+
+/** The current question keys for one skill after applying package version states. */
+async function currentKeysAfterPackage(
+  client: Client,
+  skillId: string,
+  versions: PackageVersion[],
+  plannedVersions: Map<string, Earlier>
+) {
+  const stored = await client.execute({
+    sql: 'SELECT id, version, status FROM content_versions WHERE skill_id = ?',
+    args: [skillId]
+  });
+  const candidates = versionCandidates(stored.rows, versions, skillId);
+  const current = candidates
+    .sort((a, b) => b.version - a.version)
+    .find((candidate) => candidate.status !== 'quarantined');
+  if (current === undefined) return undefined;
+  return candidateKeys(client, current, plannedVersions);
+}
+
+/** Stored and planned versions with their final package review state. */
+function versionCandidates(
+  storedRows: Row[],
+  versions: PackageVersion[],
+  skillId: string
+): VersionCandidate[] {
+  const packageVersions = new Map(
+    versions
+      .filter((version) => version.skillId === skillId)
+      .map((version) => [version.id, version])
+  );
+  const stored = storedRows.map((row) => {
+    const id = String(row.id);
+    return storedCandidate(row, id, packageVersions.get(id));
+  });
+  const storedIds = new Set(stored.map((candidate) => candidate.id));
+  const planned = versions
+    .filter(
+      (version) => version.skillId === skillId && !storedIds.has(version.id)
+    )
+    .map(packageCandidate);
+  return [...stored, ...planned];
+}
+
+function storedCandidate(
+  row: Row,
+  id: string,
+  packageVersion: PackageVersion | undefined
+): VersionCandidate {
+  return {
+    id,
+    version: Number(row.version),
+    status: statusAfterReview(packageVersion?.review, String(row.status))
+  };
+}
+
+function packageCandidate(version: PackageVersion): VersionCandidate {
+  return {
+    id: version.id,
+    version: version.version,
+    status: statusAfterReview(version.review, 'schema-validated')
+  };
+}
+
+function statusAfterReview(
+  review: PackageVersion['review'] | undefined,
+  current: string
+) {
+  return review === 'quarantined' ? 'quarantined' : current;
+}
+
+function candidateKeys(
+  client: Client,
+  candidate: VersionCandidate,
+  plannedVersions: Map<string, Earlier>
+) {
+  const planned = plannedVersions.get(candidate.id);
+  return planned === undefined
+    ? versionKeys(client, candidate.id)
+    : plannedKeys(planned);
+}
+
+/**
+ * Status changes are one package-level before/after comparison per skill.
+ * Answer counts stay per version; one line carries the cumulative status result.
+ */
+async function packageStatusChanges(
+  client: Client,
+  lines: ImpactLine[],
+  versions: PackageVersion[],
+  plannedVersions: Map<string, Earlier>,
+  retirements: NonNullable<ContentPackage['retirements']>
+) {
+  for (const line of lines) line.statusChanges = [];
+  const skillIds = [...new Set(lines.map((line) => line.skillId))];
+  const context: PackageStatusContext = {
+    client,
+    lines,
+    versions,
+    plannedVersions,
+    quarantinedVersions: quarantinedVersionIds(versions),
+    carries: packageCarries(retirements)
+  };
+  for (const skillId of skillIds)
+    await packageSkillStatusChanges(context, skillId);
+}
+
+/** The carries a package approves: answers to a retired skill count for its replacement. */
+function packageCarries(
+  retirements: NonNullable<ContentPackage['retirements']>
+) {
+  const carries = new Map<string, string>();
+  for (const retirement of retirements)
+    if (retirement.carry === true && retirement.replacedBy !== undefined)
+      carries.set(retirement.skillId, retirement.replacedBy);
+  return carries;
+}
+
+function quarantinedVersionIds(versions: PackageVersion[]) {
+  return new Set(
+    versions
+      .filter((version) => version.review === 'quarantined')
+      .map((version) => version.id)
+  );
+}
+
+async function packageSkillStatusChanges(
+  context: PackageStatusContext,
+  skillId: string
+) {
+  const {
+    client,
+    lines,
+    versions,
+    plannedVersions,
+    quarantinedVersions,
+    carries
+  } = context;
+  const skill = await client.execute({
+    sql: 'SELECT language FROM skills WHERE id = ?',
+    args: [skillId]
+  });
+  if (skill.rows.length === 0)
+    throw new Error(`impact report: skill ${skillId} is not stored`);
+  const before = await currentContent(client, String(skill.rows[0].language));
+  const nextKeys = await currentKeysAfterPackage(
+    client,
+    skillId,
+    versions,
+    plannedVersions
+  );
+  const after = contentWithSkillKeys(before, skillId, nextKeys, carries);
+  const sources = skillEvidenceSources(skillId, after.carry);
+  const byOwner = await evidenceByOwner(client, sources);
+  const changes = statusChangesByOwner(byOwner, {
+    skillId,
+    before,
+    after,
+    quarantinedVersions
+  });
+  const lastLine = [...lines]
+    .reverse()
+    .find((line) => line.skillId === skillId);
+  if (lastLine) lastLine.statusChanges = sortedStatusChanges(changes);
+}
+
+function contentWithSkillKeys(
+  before: CurrentContent,
+  skillId: string,
+  nextKeys: Set<string> | undefined,
+  carries: Map<string, string>
+): CurrentContent {
+  const keys = new Map(
+    [...before.keys].map(([id, held]) => [id, new Set(held)])
+  );
+  if (nextKeys === undefined) keys.delete(skillId);
+  else keys.set(skillId, nextKeys);
+  return { keys, carry: new Map([...before.carry, ...carries]) };
+}
+
+function skillEvidenceSources(skillId: string, carry: CurrentContent['carry']) {
+  return [
+    skillId,
+    ...[...carry.keys()].filter((id) => carriedTo(id, carry) === skillId)
+  ];
+}
+
+function statusChangesByOwner(
+  byOwner: Map<string, Row[]>,
+  context: StatusProjectionContext
+) {
+  const changes = new Map<string, StatusChange>();
+  for (const ownerRows of byOwner.values()) {
+    const { from, to } = ownerStatusChange(ownerRows, context);
+    if (from !== to) tally(changes, from, to);
+  }
+  return changes;
+}
+
+function ownerStatusChange(ownerRows: Row[], context: StatusProjectionContext) {
+  const { skillId, before, after, quarantinedVersions } = context;
+  const from = standingForSkill(ownerRows, skillId, before);
+  const projectedRows = ownerRows.map((row) =>
+    quarantinedVersions.has(String(row.content_version_id))
+      ? { ...row, status: 'quarantined' }
+      : row
+  );
+  return {
+    from,
+    to: standingForSkill(projectedRows, skillId, after)
+  };
+}
+
+function standingForSkill(
+  rows: Row[],
+  skillId: string,
+  content: CurrentContent
+) {
+  return standing(
+    qualifyingGrammarEvidence(rows, content).filter(
+      (item) => item.countsFor === skillId
+    )
+  );
+}
+
+function sortedStatusChanges(changes: Map<string, StatusChange>) {
+  return [...changes.values()].sort(
+    (a, b) => a.from.localeCompare(b.from) || a.to.localeCompare(b.to)
+  );
 }
 
 export async function contentImpact(
@@ -295,7 +596,17 @@ export async function contentImpact(
   const ordered = [...pkg.versions].sort(
     (a, b) => a.skillId.localeCompare(b.skillId) || a.version - b.version
   );
-  const { lines, projected } = await packageVersionImpact(client, ordered);
+  const { lines, projected, plannedVersions } = await packageVersionImpact(
+    client,
+    ordered
+  );
+  await packageStatusChanges(
+    client,
+    lines,
+    ordered,
+    plannedVersions,
+    pkg.retirements ?? []
+  );
   for (const retirement of pkg.retirements ?? []) {
     const line = await retirementImpact(client, retirement, projected);
     if (line) lines.push(line);

@@ -1,3 +1,13 @@
+---
+id: langlo-grammar-evidence
+type: submodule-design
+status: active
+title: Grammar Evidence Policy
+parent: langlo-server
+references: [langlo-assessment-scope-stop, langlo-content-versioning]
+tags: [grammar, mastery]
+---
+
 # Grammar evidence policy: grammar-2
 
 Version `grammar-2`, 2026-10-22. Local instructional heuristics, not CEFR
@@ -6,20 +16,34 @@ certification or a calibrated prediction of language proficiency.
 Only the owner's independent grammar responses with a recognized, certain
 prepared/fallback evaluation qualify. Practice and mixed review qualify after
 submission; assessment responses qualify after the assessment is completed,
-either by answering every planned question or by submitting five explicit
-`Not sure` choices in that assessment. On an early finalization, only submitted
-certain answers are considered; unreached questions are not scored. `Not sure`,
+by answering every planned question, by the fifth confirmed incorrect answer,
+or by the fifth explicit `Not sure` choice. The two five-answer thresholds are
+counted separately and need not be consecutive. Only recognized
+prepared/fallback verdicts count as confirmed incorrect; evaluator uncertainty
+and replayed submissions do not increase either threshold, and fallback
+verdicts take precedence. For sessions using grammar retention, completion may
+additionally wait for required ratings on qualifying correct answers and for
+recent prepared-uncertain evaluations to settle or pass the fallback wait
+window. These gates affect completion and evidence-sync timing, not which
+submitted responses qualify. On early finalization, only submitted certain
+answers are considered; unreached questions are not scored. `Not sure`,
 uncertain/unresolved evaluations, assisted responses and quarantined content
-cannot add independent evidence. Evaluator uncertainty does not count toward
-the five-choice stop rule. Prepared evaluator
+cannot add independent evidence. Evaluator uncertainty does not count as an explicit `Not sure` choice or a
+confirmed incorrect answer. Prepared evaluator
 `prepared-1` must name the attempt's content version as its rubric; current Jev
-fallback `jev-1` must name `jev-rubric-1:<contentVersionId>`. Jev asks whether the
+fallback `jev-2` must name `jev-rubric-1:<contentVersionId>`. Jev asks whether the
 answer fulfills the prompt's intended meaning in the target language. Accepted
 answers are examples, equivalent grammatically correct forms are allowed,
 required grammar/forms and spelling/accents are checked, and capitalization or
 punctuation is ignored unless tested by the exercise. Recognized fallback
 supersedes the prepared uncertainty, even when fallback remains uncertain.
-Historical OpenAI Decisions evaluations (`decisions-1`) and prior `grammar-1`
+As of 2026-10-26, written-answer fallback probabilities below `0.60` are
+incorrect, from `0.60` inclusive to `0.80` exclusive are unsure (`uncertain`),
+and `0.80` or higher are correct. Compare raw probabilities without rounding.
+The unchanged rubric remains `jev-rubric-1`; evaluator `jev-2` identifies the
+new thresholds. Earlier Jev verdicts remain available in feedback with their
+matching rubric, but are not current mastery evidence.
+Historical Jev evaluations (`jev-1`), OpenAI Decisions evaluations (`decisions-1`) and prior `grammar-1`
 evidence remain stored but do not qualify under `grammar-2`. Unknown evaluator or
 rubric versions are excluded until a reviewed policy update.
 

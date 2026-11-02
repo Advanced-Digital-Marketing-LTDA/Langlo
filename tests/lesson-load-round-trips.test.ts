@@ -28,8 +28,9 @@ import {
 // a network round trip in production, so the number of calls and whether they
 // overlap are part of the page's behavior.
 
-// Measured: 4 reads, begin, 11 statements and commit. Raising it needs a reason.
-const ANSWER_BUDGET = 15;
+// Measured: 3 reads, begin, 4 statements, 3 batches and commit; the study
+// session is read once. Raising it needs a reason.
+const ANSWER_BUDGET = 12;
 // A rating is saved with begin, the attempt read, the update, one batch of
 // ledger reads, the evidence insert and commit.
 const RATING_WRITE_BUDGET = 6;

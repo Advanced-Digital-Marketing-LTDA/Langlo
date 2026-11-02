@@ -1,3 +1,11 @@
+---
+id: langlo-shared-workflows
+type: module-design
+status: draft
+title: Shared CI Workflows
+parent: langlo-architecture
+---
+
 # Shared CI workflows
 
 Langlo hosts the reusable workflows that other repos in the

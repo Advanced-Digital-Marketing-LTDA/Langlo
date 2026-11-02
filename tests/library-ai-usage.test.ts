@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Client } from '@libsql/client';
-import { reserveLibraryAiCall } from '../src/lib/server/library-ai';
+import {
+  releaseLibraryAiCall,
+  reserveLibraryAiCall
+} from '../src/lib/server/library-ai';
 import { openFixtureDatabase } from '../src/lib/server/db/connection';
 import { disposeFlashcardFixtures, fixture } from './fixtures/flashcards';
 
@@ -39,6 +42,18 @@ describe('Library AI call budget', () => {
         })
       ).rows[0].calls
     ).toBe(2);
+  });
+
+  it('gives back one reserved slot and never goes below zero', async () => {
+    const now = Date.UTC(2026, 9, 24, 12);
+    await reserveLibraryAiCall(client, 'learner-a', now);
+    await releaseLibraryAiCall(client, 'learner-a', now);
+    await releaseLibraryAiCall(client, 'learner-a', now);
+    await releaseLibraryAiCall(client, 'learner-b', now);
+    expect(
+      (await client.execute('SELECT owner_id, calls FROM library_ai_usage'))
+        .rows
+    ).toEqual([{ owner_id: 'learner-a', calls: 0 }]);
   });
 
   it('starts a fresh budget on the next UTC day', async () => {

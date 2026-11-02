@@ -1,11 +1,14 @@
+---
+id: langlo-auth
+type: submodule-design
+status: draft
+title: Authentication Contract
+parent: langlo-server
+---
+
 # Langlo authentication contract
 
-**Status:** T010a selection approved 2026-10-10; **T010b implementation complete
-on `codex/t010b-langlo-29`** — real `/api/auth/**`, `/login`, `/recover`,
-`/reset` routes and a minimal authenticated `/app` landing exist against
-disposable fixtures, with observed behavior recorded in
-`docs/evidence/T010.md`. T010c route-level acceptance remains pending; no live
-provider, production database, or real account has been touched.
+**Status:** T010a selected the contract and T010b implemented it against disposable fixtures. T010c local route verification is recorded in `docs/evidence/T010.md`; T011 adds selected service- and route-level owner-isolation checks using fixture accounts. The full acceptance matrix remains incomplete: broader cross-owner coverage across private surfaces, recovery replay under a real multi-process barrier, the complete request-protection/header matrix, and provisioning-output checks remain open. These local checks do not establish live SMTP, production database/proxy acceptance, or production account behavior. T010 records production signup only as owner-reported, not independently verified here.
 
 **Owner direction revised 2026-10-13:** public self-service email/password
 registration is now in scope. This supersedes the earlier two-private-pilot
@@ -117,12 +120,7 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   is configured — `verifications.identifier` holds a hash of
   `reset-password:<token>` while `value` holds the user id. Raw reset tokens
   are never persisted (observed in T010b).
-- Single-use: a redeemed token must be unusable again (replay), and two
-  concurrent redemptions of the same token must produce exactly one success.
-  Better Auth's atomic `consumeVerificationValue` (delete-if-match) provides
-  this — observed in T010b: replay returns 400 `INVALID_TOKEN` and a
-  concurrent barrier yields exactly one 200. T010c re-proves it under a real
-  process barrier (same technique as `tests/db-concurrency.test.ts`).
+- Better Auth’s atomic `consumeVerificationValue` supports delete-if-match. Fixture tests recorded replay rejection and one winner under same-process concurrency. T010’s T010c evidence says the real multi-process redemption barrier remains unverified; keep that as an acceptance gate.
 - A successful reset revokes all existing sessions (§2) and issues a fresh
   session only through the normal sign-in path or framework-authenticated
   response.
@@ -134,12 +132,12 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   (401 `INVALID_EMAIL_OR_PASSWORD` for unknown email and wrong password
   alike; identical reset-request success body for both). T010c asserts
   response equality, not copy text.
+- Signup enumeration is not prevented: T010c observed a duplicate direct API signup returning `422 USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL`. This is distinct from the uniform login-failure and reset-request responses; changing signup’s duplicate-email behavior remains an owner decision.
 - Timing: `sendResetPassword` is deliberately fire-and-forget so known vs
   unknown delivery does not skew the response; Better Auth also runs a dummy
   verification lookup for unknown emails. Delivery failure is confined to
   allowlisted safe diagnostics.
-- Rate limits (as configured; observed deterministic 429s in T010b; T010c
-  re-asserts at route level):
+- Rate limits are configured as follows. T010b records deterministic local-fixture results and SQLite persistence for selected sign-in/recovery paths; T010c records local signup-rate-limit and proxy-header checks. The full configured endpoint/form/header matrix and production proxy behavior remain unaccepted.
   - `/api/auth/sign-up/email`: 5 per 3600 seconds per client.
   - `/api/auth/sign-in/email`: 5 per 300 seconds per client.
   - `/api/auth/request-password-reset`: 3 per 600 seconds per client.
@@ -149,12 +147,7 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
     environment, since the framework default only enforces in production.
     Observed: `rate_limits` rows persist in SQLite across restarts, and the
     counter saturates at `max` rather than growing on rejected requests.
-- Both auth API requests and form actions overwrite the internal
-  `x-langlo-client-address` header with `event.getClientAddress()`. Better Auth
-  uses only that header for rate-limit identity, so client-supplied forwarded
-  address headers cannot create new buckets. Adapter proxy trust remains an
-  operator configuration requirement; without trusted proxy forwarding,
-  requests behind the same proxy conservatively share its address.
+- Both auth API requests and form actions replace `x-langlo-client-address` with `event.getClientAddress()`. In production, `authRequestHeaders` fails closed unless the adapter policy is `ADDRESS_HEADER=x-forwarded-for` and `XFF_DEPTH=1`; `docs/deployment/docker-compose.md` fixes those values for the documented direct browser → Traefik → web topology. Traefik must append its observed peer address, and the container must not be reachable through a bypass or an unreviewed extra proxy hop. Local tests simulate this policy; they do not verify the deployed proxy chain, append behavior, or ingress isolation.
 
 ### 5. Learner ownership across sessions
 
@@ -167,7 +160,7 @@ exact patch. Note: `better-auth@1.7.7` declares an outdated optional peer range
   plus composite foreign keys on `enrollments`, `study_sessions`, `attempts`,
   `evaluations`, `skill_evidence`, `card_drafts`, `deliveries`, and the native
   flashcard tables. Auth adds the verified principal; it does not replace the
-  ownership model. T011 still owns query-authorization hardening.
+  ownership model. T011 records service-level isolation and selected route-level checks with two locally signed-in fixture accounts. The broader T010 owner-isolation matrix across all private surfaces remains incomplete; fixture evidence does not establish production authorization.
 - The `/app/**` deny-by-default guard is preserved: without a valid session it
   behaves exactly as today (GET → `/login`, mutation → safe denial).
 
@@ -333,7 +326,6 @@ delivery.
 - Proton: paid plan, custom-domain verification, SPF/DKIM/DMARC, SMTP-token
   generation, secret storage, and a real delivery check are all unresolved
   external steps.
-- Turso production provisioning, real account provisioning, deployment,
-  reverse-proxy trust settings, and release acceptance remain separate gates.
+- Production Turso provisioning/migration, real-account provisioning, actual proxy topology and ingress isolation, live SMTP delivery, and release acceptance remain separate gates. The repository’s fixed proxy policy is implemented, but its deployed configuration is unverified.
 - T010a selected the contract only; it does not prove implementation,
   delivery, or live access.

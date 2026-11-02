@@ -10,7 +10,7 @@ export class ProvisionError extends Error {
 const emailPattern = /^[^\s@]{1,254}@[^\s@]{1,253}\.[^\s@]{2,63}$/u;
 
 /**
- * Server-only account creation for the closed pilot. Mirrors the framework's
+ * Server-only operator provisioning helper, separate from public sign-up. Mirrors the framework's
  * sign-up writes exactly: a users row plus a credential account row whose
  * accountId is the new user's id, with the password hashed by the framework's
  * own hasher so sign-in verification stays single-sourced.

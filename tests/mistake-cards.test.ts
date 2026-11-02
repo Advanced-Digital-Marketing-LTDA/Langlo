@@ -648,36 +648,39 @@ describe('mistake-card editing and rejection', () => {
     }
   });
 
-  it('keeps the fallback verdict authoritative over a newer prepared one', async () => {
-    const { db } = await setup();
-    try {
-      // The prepared verdict is newer, but the Jev verdict is the one the
-      // results summary counts, so it also decides draft eligibility.
-      await db.client.execute({
-        sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, unixepoch() * 1000 - 60000)',
-        args: [
-          'evaluation-fallback',
-          'learner-a',
-          'attempt-a',
-          'jev-1',
-          'jev-rubric-1:content-v1',
-          'correct'
-        ]
-      });
-      await expect(
-        createMistakeDraft(db.client, learner, {
-          attemptId,
-          format: 'basic'
-        })
-      ).rejects.toMatchObject({ code: 'NOT_A_MISTAKE' });
-      expect(
-        await listMistakeCandidates(db.client, learner, 'study-a')
-      ).toEqual([]);
-      expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
-    } finally {
-      db.close();
+  it.each(['jev-1', 'jev-2'])(
+    'keeps %s authoritative over a newer prepared verdict',
+    async (version) => {
+      const { db } = await setup();
+      try {
+        // The prepared verdict is newer, but the Jev verdict is the one the
+        // results summary counts, so it also decides draft eligibility.
+        await db.client.execute({
+          sql: 'INSERT INTO evaluations (id, owner_id, attempt_id, evaluator_version, rubric_version, outcome, created_at) VALUES (?, ?, ?, ?, ?, ?, unixepoch() * 1000 - 60000)',
+          args: [
+            'evaluation-fallback',
+            'learner-a',
+            'attempt-a',
+            version,
+            'jev-rubric-1:content-v1',
+            'correct'
+          ]
+        });
+        await expect(
+          createMistakeDraft(db.client, learner, {
+            attemptId,
+            format: 'basic'
+          })
+        ).rejects.toMatchObject({ code: 'NOT_A_MISTAKE' });
+        expect(
+          await listMistakeCandidates(db.client, learner, 'study-a')
+        ).toEqual([]);
+        expect(await noteCounts(db.client)).toEqual([0, 0, 0]);
+      } finally {
+        db.close();
+      }
     }
-  });
+  );
 
   it('uses a matching historical Decisions verdict for mistake eligibility', async () => {
     const { db } = await setup();

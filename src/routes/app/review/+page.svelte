@@ -67,6 +67,11 @@
     {@const grammar = data.grammar}
     <section aria-labelledby="review-grammar">
       <h2 id="review-grammar">Grammar</h2>
+      {#if grammar.reviewedToday}
+        <p data-testid="grammar-reviewed-today">
+          {count(grammar.reviewedToday, 'topic', 'topics')} already reviewed today.
+        </p>
+      {/if}
       <div class="due">
         {#each [{ due: 'overdue', title: 'Overdue', topics: grammar.overdue }, { due: 'today', title: 'Due today', topics: grammar.today }] as part (part.due)}
           <div data-testid={`grammar-${part.due}`}>

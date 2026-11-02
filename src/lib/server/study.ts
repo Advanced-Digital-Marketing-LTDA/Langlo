@@ -9,6 +9,8 @@ import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
   FALLBACK_SETTLED_EVALUATOR_VERSION,
+  HISTORICAL_JEV_EVALUATOR_VERSION,
+  HISTORICAL_JEV_RUBRIC_VERSION,
   type FallbackReason
 } from './evaluation/fallback';
 import type { FallbackEvaluator } from './evaluation/runtime';
@@ -26,6 +28,7 @@ import {
 import { currentCorrelationId } from './request-context';
 import { ownSession } from './study-content';
 import { StudyError } from './study-error';
+import { span } from './tracing';
 import type { ExerciseFormat } from '../components/exercises/answer';
 import {
   assertAssessmentQuestion,
@@ -676,18 +679,85 @@ async function recordFallbackEvaluation(
   attempt: FallbackAttempt,
   fallback: FallbackEvaluator | undefined
 ) {
-  const prepared = preparedQuestion(attempt.questionId, attempt.question);
-  if (prepared.format === 'multiple-choice' || prepared.answer === null) {
+  const { format, answer, alternatives } = preparedQuestion(
+    attempt.questionId,
+    attempt.question
+  );
+  if (format === 'multiple-choice' || answer === null) {
     await settleFallback(client, session, attempt, true);
     return;
   }
+  try {
+    const saved = await findSavedFallbackVerdict(client, session, attempt);
+    if (saved) {
+      await recordFallbackVerdict(client, session, attempt, saved);
+      return;
+    }
+    await runFallbackProvider({
+      client,
+      session,
+      attempt,
+      prepared: { format, answer, alternatives },
+      fallback
+    });
+  } catch (error) {
+    // The attempt is already saved; the answer stays uncertain for review.
+    logFallback('failed');
+    console.error(error);
+    await settleFallback(client, session, attempt).catch((settling) =>
+      console.error(settling)
+    );
+  }
+}
+
+async function findSavedFallbackVerdict(
+  client: Client,
+  session: LearnerSession,
+  attempt: FallbackAttempt
+): Promise<string | null> {
+  const saved = await client.execute({
+    sql: `SELECT e.outcome FROM attempts a
+      JOIN evaluations e ON e.attempt_id = a.id AND e.owner_id = a.owner_id
+      WHERE a.owner_id = ? AND a.question_id = ? AND a.content_version_id = ?
+        AND a.answer = ? AND e.evaluator_version = ? AND e.rubric_version = ?
+        AND e.outcome IN ('correct', 'incorrect')
+      ORDER BY e.created_at DESC, e.id DESC LIMIT 1`,
+    args: [
+      session.userId,
+      attempt.questionId,
+      attempt.contentVersionId,
+      attempt.answer,
+      FALLBACK_EVALUATOR_VERSION,
+      `${FALLBACK_RUBRIC_VERSION}:${attempt.contentVersionId}`
+    ]
+  });
+  return saved.rows[0] ? String(saved.rows[0].outcome) : null;
+}
+
+async function runFallbackProvider({
+  client,
+  session,
+  attempt,
+  prepared,
+  fallback
+}: {
+  client: Client;
+  session: LearnerSession;
+  attempt: FallbackAttempt;
+  prepared: {
+    format: Exclude<ExerciseFormat, 'multiple-choice'>;
+    answer: string;
+    alternatives: string[];
+  };
+  fallback: FallbackEvaluator | undefined;
+}) {
   if (!fallback) {
     logFallback('not-configured');
     await settleFallback(client, session, attempt, true);
     return;
   }
-  try {
-    const result = await fallback({
+  const result = await span('study.jev-call', async (active) => {
+    const answered = await fallback({
       language: attempt.language,
       format: prepared.format,
       prompt:
@@ -697,20 +767,15 @@ async function recordFallbackEvaluation(
       accepted: [prepared.answer, ...prepared.alternatives],
       answer: attempt.answer
     });
-    if (result.reason !== 'answered') logFallback(result.reason);
-    if (!result.evaluated) {
-      await settleFallback(client, session, attempt);
-      return;
-    }
-    await recordFallbackVerdict(client, session, attempt, result.outcome);
-  } catch (error) {
-    // The attempt is already saved; the answer stays uncertain for review.
-    logFallback('failed');
-    console.error(error);
-    await settleFallback(client, session, attempt).catch((settling) =>
-      console.error(settling)
-    );
+    active.setAttribute('evaluated', answered.evaluated);
+    return answered;
+  });
+  if (result.reason !== 'answered') logFallback(result.reason);
+  if (!result.evaluated) {
+    await settleFallback(client, session, attempt);
+    return;
   }
+  await recordFallbackVerdict(client, session, attempt, result.outcome);
 }
 
 /**
@@ -786,13 +851,13 @@ export async function recordAttempt(
 ) {
   validateAttemptInput(input);
   const recorded = await recordAttemptWrite(client, session, input);
-  if ('attempt' in recorded)
-    await recordFallbackEvaluation(
-      client,
-      session,
-      recorded.attempt,
-      options.fallback
+  if ('attempt' in recorded) {
+    const { attempt } = recorded;
+    // Grading runs before the learner sees a result, so a trace shows its time.
+    await span('study.grade-fallback', () =>
+      recordFallbackEvaluation(client, session, attempt, options.fallback)
     );
+  }
   return recorded.result;
 }
 
@@ -841,6 +906,21 @@ function hasCorrectGrammarEvaluation(rows: Row[]) {
   );
 }
 
+function hasRateableGrammarOutcome(rows: Row[]) {
+  const contentVersionId = String(rows[0].content_version_id);
+  const evaluation = feedbackEvaluation(rows, contentVersionId);
+  if (evaluation?.outcome === 'correct') return true;
+  if (evaluation?.evaluator_version === FALLBACK_EVALUATOR_VERSION)
+    return false;
+  return rows.some(
+    (row) =>
+      row.evaluator_version === HISTORICAL_JEV_EVALUATOR_VERSION &&
+      row.rubric_version ===
+        `${HISTORICAL_JEV_RUBRIC_VERSION}:${contentVersionId}` &&
+      row.outcome === 'correct'
+  );
+}
+
 /** A lesson page rates only its own skill's practice answers. */
 function assertLessonPractice(
   rows: Row[],
@@ -860,7 +940,7 @@ function assertRateableAttempt(rows: Row[], expectedSessionId: string) {
     !['active', 'completed'].includes(String(row.state))
   )
     throw new StudyError('NOT_FOUND');
-  if (!hasCorrectGrammarEvaluation(rows))
+  if (!hasRateableGrammarOutcome(rows))
     throw new StudyError('INVALID_GRAMMAR_RATING');
   if (!['schema-validated', 'pilot-ready'].includes(String(row.status)))
     throw new StudyError('CONTENT_UNAVAILABLE');

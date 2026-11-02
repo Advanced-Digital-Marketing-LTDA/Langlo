@@ -1,8 +1,16 @@
+---
+id: langlo-test-invariants
+type: submodule-design
+status: draft
+title: Testing Invariants
+parent: langlo-tests
+---
+
 # Foundation invariant register
 
 ## CFG-01: remote origins cannot masquerade as local fixtures
 
-Non-production app origins are exactly localhost, 127.0.0.1 or [::1], with no credentials, query, fragment or non-root path. Production requires an explicit HTTPS origin. The independent oracle is the stated allowlist, not the parser. Property inputs use arbitrary alphabetic lookalike suffixes. Detectable fault: change exact localhost equality to prefix matching. Regression: localhost.example. No live provider calls exist in this slice.
+Non-production app origins are exactly localhost, 127.0.0.1 or [::1], with no credentials, query, fragment or non-root path. Production requires an explicit HTTPS origin. The independent oracle is the stated allowlist, not the parser. Property inputs use arbitrary alphabetic lookalike suffixes. Detectable fault: change exact localhost equality to prefix matching. Regression: localhost.example. This configuration-validation invariant does not itself call or authorize a live provider.
 
 ## LOG-01: diagnostics cannot include learner answers or arbitrary exception payloads
 
@@ -18,4 +26,4 @@ Owner identity must match across enrollment, session, attempt, evaluation, card 
 
 ## Limits
 
-No authentication, assessment, mastery, AI, cards workflow or real Windows delivery is implemented yet. These invariants do not establish those tasks or real provider integration. CI cannot be called passed until a remote run for an exact commit is observed. Stryker is deferred to T025; scoped concrete faults are required for this foundation.
+This register covers only the listed invariants, not complete product acceptance. The application now contains authentication, assessment/practice, mastery and retention, optional AI grading/Library requests, native flashcards and learner analytics; the presence of code and fixture tests does not establish live-provider, production database, deployment or real-account acceptance. There is no Windows connector or two-way Anki sync in the current boundary. A local result does not establish hosted CI for a revision; observe that run against its exact commit separately.

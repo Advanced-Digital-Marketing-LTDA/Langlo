@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createClient } from '@libsql/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { runContentImport } from '../scripts/content-import';
+import { runContentImport, writeImpactLine } from '../scripts/content-import';
 import { importContent } from '../src/lib/server/content-import';
 import { modulesPackage } from '../src/lib/server/content-modules';
 import { migrateFixtureDatabase } from '../src/lib/server/db/migrate';
@@ -204,6 +204,28 @@ describe('content import script', () => {
     expect(out).toContain('impact report only: nothing written');
     expect(await count('skills')).toBe(0);
     expect(await count('curriculum_imports')).toBe(0);
+  });
+
+  it('prints each status change of an impact line after its answer count', () => {
+    const lines: string[] = [];
+    writeImpactLine(
+      {
+        skillId: 'fr-a1-001',
+        reason: '1 question(s) changed or removed in fr-a1-001@2',
+        answers: 3,
+        learners: 2,
+        statusChanges: [
+          { from: 'weak', to: 'practising', learners: 1 },
+          { from: 'secure', to: 'practising', learners: 1 }
+        ]
+      },
+      (line) => lines.push(line)
+    );
+    expect(lines).toEqual([
+      'impact: fr-a1-001: 1 question(s) changed or removed in fr-a1-001@2; 3 independent answer(s) by 2 learner(s) would stop counting',
+      'impact: fr-a1-001: 1 learner(s) would change from weak to practising',
+      'impact: fr-a1-001: 1 learner(s) would change from secure to practising'
+    ]);
   });
 
   it('refuses an impact report without a confirmed host or on an unmigrated database', async () => {

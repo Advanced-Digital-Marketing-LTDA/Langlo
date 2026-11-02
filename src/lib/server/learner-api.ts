@@ -46,6 +46,7 @@ const statusFor: Record<string, number> = {
   LIBRARY_PARSE_TIMEOUT: 422,
   LIBRARY_AI_UNAVAILABLE: 503,
   LIBRARY_AI_LIMIT: 429,
+  LIBRARY_AI_BLOCKED: 422,
   LIBRARY_PARSE_BUSY: 429,
   LIBRARY_CONTEXT_TOO_LARGE: 413,
   LIBRARY_VOCABULARY_CHANGED: 409,
@@ -117,6 +118,8 @@ const messageForCode: Record<string, string> = {
   LIBRARY_AI_UNAVAILABLE:
     'Translation and vocabulary lookup are unavailable right now. Please try again later.',
   LIBRARY_AI_LIMIT: 'Daily Library AI limit reached. Try again tomorrow.',
+  LIBRARY_AI_BLOCKED:
+    'This text looks like it contains instructions for an AI model, so it was not sent for translation or lookup.',
   LIBRARY_PARSE_BUSY:
     'The Library is processing other uploads. Try again in a moment.',
   LIBRARY_CONTEXT_TOO_LARGE:

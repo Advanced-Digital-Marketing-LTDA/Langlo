@@ -1,12 +1,14 @@
 import type { ExerciseFormat } from '../../components/exercises/answer';
 
 // Bounded AI grading for unmatched typed answers only.
-export const FALLBACK_EVALUATOR_VERSION = 'jev-1';
+export const FALLBACK_EVALUATOR_VERSION = 'jev-2';
 /** Retained for historical learner feedback; not current mastery evidence. */
+export const HISTORICAL_JEV_EVALUATOR_VERSION = 'jev-1';
+export const HISTORICAL_JEV_RUBRIC_VERSION = 'jev-rubric-1';
 export const HISTORICAL_FALLBACK_EVALUATOR_VERSION = 'decisions-1';
 export const HISTORICAL_FALLBACK_RUBRIC_VERSION = 'fallback-rubric-1';
 /** A settled fallback without a usable verdict does not qualify as evidence. */
-export const FALLBACK_SETTLED_EVALUATOR_VERSION = 'jev-1-no-verdict';
+export const FALLBACK_SETTLED_EVALUATOR_VERSION = 'jev-2-no-verdict';
 /** Bump when the rubric text or question changes. */
 export const FALLBACK_RUBRIC_VERSION = 'jev-rubric-1';
 export const JEV_MODEL = 'jev-latest';
@@ -26,7 +28,7 @@ export type FallbackInput = {
 
 export type FallbackReason =
   | 'answered'
-  | 'tie'
+  | 'low-confidence'
   | 'malformed'
   | 'timeout'
   | 'provider-error'
@@ -121,7 +123,7 @@ const uncertain = (reason: FallbackReason, evaluated: boolean) => ({
   evaluated
 });
 
-/** Read the single Noul probability; exactly 0.5 is not a verdict. */
+/** Read the raw Noul probability; [0.60, 0.80) stays unsure. */
 export function readSystemOne(raw: unknown): {
   result: FallbackResult;
   usage?: TokenUsage;
@@ -145,10 +147,11 @@ export function readSystemOne(raw: unknown): {
       !isProbability(verdict.noul)
     )
       throw new MalformedSystemOne();
-    if (verdict.noul === 0.5) return { result: uncertain('tie', true), usage };
+    if (verdict.noul >= 0.6 && verdict.noul < 0.8)
+      return { result: uncertain('low-confidence', true), usage };
     return {
       result: {
-        outcome: verdict.noul > 0.5 ? 'correct' : 'incorrect',
+        outcome: verdict.noul >= 0.8 ? 'correct' : 'incorrect',
         reason: 'answered',
         evaluated: true
       },

@@ -6,6 +6,8 @@ import {
   FALLBACK_RUBRIC_VERSION,
   FALLBACK_SETTLED_EVALUATOR_VERSION,
   FALLBACK_TIMEOUT_MS,
+  HISTORICAL_JEV_EVALUATOR_VERSION,
+  HISTORICAL_JEV_RUBRIC_VERSION,
   HISTORICAL_FALLBACK_EVALUATOR_VERSION,
   HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
@@ -540,27 +542,29 @@ async function completePractice(
 }
 
 /**
- * Finish a grammar review once every one of its topics is reviewed. Sessions
- * of other modes are left as they are.
+ * Finish a grammar review once every one of its topics is reviewed, and say
+ * whether it is finished. Sessions of other modes are left as they are.
  */
 export async function finishReviewedGrammarReview(
   client: Client,
   learner: LearnerSession,
   session: { id: string; mode: string }
-): Promise<void> {
-  if (session.mode !== 'mixed-review') return;
+): Promise<boolean> {
+  if (session.mode !== 'mixed-review') return false;
   const id = session.id;
+  let finished = false;
   // The check and the finish share one write, so no answer lands between them.
   await inWrite(client, async (tx) => {
     const plan = await grammarReviewPlan(tx, learner, id);
-    if (plan.every((topic) => topic.reviewed))
-      await completePractice(tx, learner, id);
+    finished = plan.every((topic) => topic.reviewed);
+    if (finished) await completePractice(tx, learner, id);
   });
+  return finished;
 }
 
 /**
  * What a practice session has covered so far. Each attempt counts once, by
- * its verdict: Jev, historical Decisions, prepared, then newest evaluation.
+ * its verdict: current Jev, historical Jev/Decisions, prepared, then newest evaluation.
  * An attempt not yet evaluated counts as pending.
  */
 export async function practiceSummary(
@@ -579,19 +583,23 @@ export async function practiceSummary(
           AND CASE e.evaluator_version
             WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
             WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+            WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
             WHEN ? THEN e.rubric_version = a.content_version_id
             ELSE 1 END
-          ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END,
+          ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 ELSE 4 END,
             e.created_at DESC, e.id DESC LIMIT 1) AS outcome
       FROM attempts a WHERE a.study_session_id = ? AND a.owner_id = ?
       ORDER BY a.created_at, a.id`,
     args: [
       FALLBACK_EVALUATOR_VERSION,
       FALLBACK_RUBRIC_VERSION,
+      HISTORICAL_JEV_EVALUATOR_VERSION,
+      HISTORICAL_JEV_RUBRIC_VERSION,
       HISTORICAL_FALLBACK_EVALUATOR_VERSION,
       HISTORICAL_FALLBACK_RUBRIC_VERSION,
       PREPARED_EVALUATOR_VERSION,
       FALLBACK_EVALUATOR_VERSION,
+      HISTORICAL_JEV_EVALUATOR_VERSION,
       HISTORICAL_FALLBACK_EVALUATOR_VERSION,
       PREPARED_EVALUATOR_VERSION,
       id,

@@ -1,3 +1,13 @@
+---
+id: langlo-assessment-scope-stop
+type: submodule-design
+status: active
+title: Assessment Coverage and Early Finalization
+parent: langlo-server
+references: [langlo-grammar-evidence, langlo-content-versioning]
+tags: [assessment]
+---
+
 # ADR 0001: Assessment coverage and early finalization
 
 - Status: accepted

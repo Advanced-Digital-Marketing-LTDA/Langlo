@@ -8,6 +8,8 @@ import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
   FALLBACK_SETTLED_EVALUATOR_VERSION,
+  HISTORICAL_JEV_EVALUATOR_VERSION,
+  HISTORICAL_JEV_RUBRIC_VERSION,
   HISTORICAL_FALLBACK_EVALUATOR_VERSION,
   HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
@@ -460,6 +462,12 @@ export function feedbackOutcome(
       contentVersionId,
       FALLBACK_EVALUATOR_VERSION,
       FALLBACK_RUBRIC_VERSION
+    )?.outcome ??
+    fallbackEvaluation(
+      rows,
+      contentVersionId,
+      HISTORICAL_JEV_EVALUATOR_VERSION,
+      HISTORICAL_JEV_RUBRIC_VERSION
     )?.outcome ??
     fallbackEvaluation(
       rows,

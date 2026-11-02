@@ -93,7 +93,11 @@ describe('TypeSafe System One request', () => {
 describe('reading a TypeSafe Noul answer', () => {
   it.each([
     [1, 'correct'],
-    [0.51, 'correct'],
+    [0.800001, 'correct'],
+    [0.8, 'correct'],
+    [0.599999, 'incorrect'],
+    [0.5, 'incorrect'],
+    [0.51, 'incorrect'],
     [0.49, 'incorrect'],
     [0, 'incorrect']
   ])('maps probability %d to %s', (noul, outcome) => {
@@ -103,12 +107,19 @@ describe('reading a TypeSafe Noul answer', () => {
     });
   });
 
-  it('leaves exactly 0.5 uncertain', () => {
-    expect(readSystemOne(systemOneResponse(0.5))).toEqual({
-      result: { outcome: 'uncertain', reason: 'tie', evaluated: true },
-      usage: { inputTokens: 120, outputTokens: 12 }
-    });
-  });
+  it.each([0.6, 0.600001, 0.79, 0.799999])(
+    'leaves probability %d unsure without rounding',
+    (noul) => {
+      expect(readSystemOne(systemOneResponse(noul))).toEqual({
+        result: {
+          outcome: 'uncertain',
+          reason: 'low-confidence',
+          evaluated: true
+        },
+        usage: { inputTokens: 120, outputTokens: 12 }
+      });
+    }
+  );
 
   const malformed: [string, (raw: Record<string, unknown>) => unknown][] = [
     ['null', () => null],
@@ -188,12 +199,12 @@ describe('running the fallback', () => {
     expect(recorded).toEqual([{ inputTokens: 120, outputTokens: 12 }]);
   });
 
-  it('records TypeSafe token usage for an uncertain tie', async () => {
+  it('records TypeSafe token usage for an unsure answer', async () => {
     const { usage, recorded } = counter();
-    const provider = vi.fn(async () => systemOneResponse(0.5));
+    const provider = vi.fn(async () => systemOneResponse(0.7));
     await expect(evaluateFallback(input, provider, usage)).resolves.toEqual({
       outcome: 'uncertain',
-      reason: 'tie',
+      reason: 'low-confidence',
       evaluated: true
     });
     expect(recorded).toEqual([{ inputTokens: 120, outputTokens: 12 }]);

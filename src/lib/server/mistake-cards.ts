@@ -4,6 +4,8 @@ import { createSourceId } from './db/source-id';
 import {
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
+  HISTORICAL_JEV_EVALUATOR_VERSION,
+  HISTORICAL_JEV_RUBRIC_VERSION,
   HISTORICAL_FALLBACK_EVALUATOR_VERSION,
   HISTORICAL_FALLBACK_RUBRIC_VERSION
 } from './evaluation/fallback';
@@ -26,25 +28,29 @@ const clozeBlank = '___';
 const clozeSpanPattern = /\{\{c1::[^{}]+\}\}/gu;
 const clozeNumberPattern = /\{\{c\d+::/u;
 
-// The results page prefers Jev, historical Decisions, then prepared verdicts
+// Results prefer current Jev, historical Jev/Decisions, then prepared verdicts
 // (see practiceSummary). Card eligibility uses the same rule.
 const evaluationOutcome = `(SELECT e.outcome FROM evaluations e
   WHERE e.attempt_id = a.id AND e.owner_id = a.owner_id
     AND CASE e.evaluator_version
       WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
       WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
+      WHEN ? THEN e.rubric_version = ? || ':' || a.content_version_id
       WHEN ? THEN e.rubric_version = a.content_version_id
       ELSE 1 END
-  ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 ELSE 3 END,
+  ORDER BY CASE e.evaluator_version WHEN ? THEN 0 WHEN ? THEN 1 WHEN ? THEN 2 WHEN ? THEN 3 ELSE 4 END,
     e.created_at DESC, e.id DESC LIMIT 1)`;
 
 const evaluationOrderArgs = [
   FALLBACK_EVALUATOR_VERSION,
   FALLBACK_RUBRIC_VERSION,
+  HISTORICAL_JEV_EVALUATOR_VERSION,
+  HISTORICAL_JEV_RUBRIC_VERSION,
   HISTORICAL_FALLBACK_EVALUATOR_VERSION,
   HISTORICAL_FALLBACK_RUBRIC_VERSION,
   PREPARED_EVALUATOR_VERSION,
   FALLBACK_EVALUATOR_VERSION,
+  HISTORICAL_JEV_EVALUATOR_VERSION,
   HISTORICAL_FALLBACK_EVALUATOR_VERSION,
   PREPARED_EVALUATOR_VERSION
 ];
